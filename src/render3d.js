@@ -1032,7 +1032,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
   let lastMe = 0;
   const cam = Camera3D(THREE, camera, renderer.domElement, {
     width: BW, depth: BD,
-    onTap: (p, cx, cy) => { if (opts.onTap) opts.onTap(pick(groundHit(cx, cy) || p, cx, cy)); },
+    onTap: (p, cx, cy) => { if (birdTap(cx, cy)) return; if (opts.onTap) opts.onTap(pick(groundHit(cx, cy) || p, cx, cy)); },
     // a press on a squad never moves the camera: one the page doesn't drag is held still, as on the 2D board
     onPress: (p, cx, cy) => { const t = pick(groundHit(cx, cy) || p, cx, cy); return !!(opts.onPress && opts.onPress(t)) || !!(t && squadTiles.has(t.col + ',' + t.row)); },
     onDrag: (p) => { if (opts.onDrag) opts.onDrag(tileOfGround(p, lastMe)); },
@@ -1086,6 +1086,20 @@ const Render3D = (THREE, el, view, opts = {}) => {
     renderer.render(scene, camera);
   }
   // where a touch meets the ground, raised or lowered (a couple of steps toward the ground's height there)
+  // a tap on one of Savanna's vultures (within its wingspan on screen, at least a fingertip): they fly off to sit in a
+  // tree, or come back (scenery.roost); the tap goes no further
+  const tmpB = new THREE.Vector3(), camW = new THREE.Vector3();
+  function birdTap(cx, cy) {
+    const list = scenery && scenery.birds ? scenery.birds() : []; if (!list.length) return false;
+    const r = renderer.domElement.getBoundingClientRect(), fpx = r.height / (2 * Math.tan(camera.fov * Math.PI / 360));
+    camera.getWorldPosition(camW);
+    for (const p of list) {
+      tmpB.copy(p).project(camera); if (tmpB.z > 1) continue;
+      const sx = r.left + (tmpB.x + 1) / 2 * r.width, sy = r.top + (1 - tmpB.y) / 2 * r.height;
+      if (Math.hypot(cx - sx, cy - sy) < Math.max(26, 3 / camW.distanceTo(p) * fpx)) { scenery.roost(); if (opts.onInput) opts.onInput(); return true; }
+    }
+    return false;
+  }
   function groundHit(clientX, clientY) {
     let p = cam.groundAt(clientX, clientY);
     for (let k = 0; k < 3 && p && hGrid; k++) p = cam.groundAt(clientX, clientY, groundY(p.x, p.z)) || p;

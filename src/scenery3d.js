@@ -217,7 +217,11 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
   const savMat = (col, key) => { const m = new THREE.MeshLambertMaterial({ color: col, flatShading: true }); m.onBeforeCompile = shadeLit; m.customProgramCacheKey = () => key; mats.push(m); return m; };
   const addModel = (name, geo, mat) => { geo.computeBoundingBox(); const b = geo.boundingBox; lib[name] = { h: b.max.y, r: Math.max(b.max.x - b.min.x, b.max.z - b.min.z) / 2, parts: [{ geo, mat }] }; };
   function addSavanna() {
-    for (const [name, kk] of [['Acacia_A', 'acacia_A'], ['Acacia_B', 'acacia_B'], ['Acacia_C', 'acacia_C']]) { const g = kkGeo(kk); if (g) { const c = g.clone(); addModel(name, c, propMat); } }
+    for (const [name, kk] of [['Acacia_A', 'acacia_A'], ['Acacia_B', 'acacia_B'], ['Acacia_C', 'acacia_C']]) { const g = kkGeo(kk); if (g) { const c = g.clone(); addModel(name, c, propMat);
+      // the top of its highest canopy (where perching vultures sit): the middle of the corners near the top
+      const p = c.attributes.position; let top = -Infinity, x = 0, z = 0, n = 0; for (let k = 0; k < p.count; k++) top = Math.max(top, p.getY(k));
+      for (let k = 0; k < p.count; k++) if (p.getY(k) > top - 0.15) { x += p.getX(k); z += p.getZ(k); n++; }
+      lib[name].top = [x / n, top, z / n]; } }
     const thorn = savMat('#7C8150', 'pb-thorn'), granite = savMat('#B4A493', 'pb-granite'), earth = savMat('#A9603C', 'pb-termite');
     addModel('Thorn_1', merge([lumpGeo(1, 1.1, 0.75, 0.9, 0.3, 0.22), lumpGeo(1, 0.7, 0.6, 0.7, 2.1, 0.25, 0.8, 0, 0.4)]), thorn);
     addModel('Thorn_2', merge([lumpGeo(1, 0.8, 0.55, 1.0, 1.4, 0.24), lumpGeo(1, 0.55, 0.45, 0.55, 0.7, 0.2, -0.6, 0, -0.5)]), thorn);
@@ -705,7 +709,9 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
   // home: the wide circle each keeps (r, y, c: each circles a point up-sun of the board, so its shadow, thrown far by
   // the low sun, sweeps across the board); now: where it flies at the moment, gliding toward home or, while the
   // opponent is ready (prey(at) from render3d), toward a low, tight circle over your own tower
-  let vultureT = 0, preyAt = null;
+  // roost: a tap on a vulture sends them all to sit on a tree near the board (perch: one spot per bird, set per layout),
+  // another tap brings them back; while the opponent is ready they still go to your tower, then back to the tree
+  let vultureT = 0, preyAt = null, roosting = false, perch = [];
   function showVultures(n, sun) {
     vultures.visible = n > 0; if (!n) return;
     vultures.children.forEach((b, i) => { const y = 24 + (i * 3.7) % 9, f = 0.85 * y / sun[1];
@@ -714,6 +720,9 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
   }
   // the vultures circle over { x, z } (scene metres), or go back to their wide circles (null)
   function prey(at) { preyAt = at; }
+  function roost() { roosting = !roosting; }
+  // where the visible vultures are now (scene metres), for taps on them (render3d)
+  const birds = () => vultures.visible ? vultures.children.filter((b) => b.visible).map((b) => b.position) : [];
   // true while something round the board lives on its own (the vultures): the page keeps drawing frames for it
   const alive = () => vultures.visible || ex.on;
   // ---------- Darkwoods: banks of ground mist drifting between the trunks, pairs of eyes blinking in the dark, and pale
@@ -889,15 +898,25 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       const ease = 1 - Math.exp(-dt * 0.6); // a few seconds to gather or drift apart
       for (const b of vultures.children) {
         if (!b.visible) continue;
-        const u = b.userData, n = u.now, to = preyAt ? { r: 6 + u.i * 2.8, y: 15 + u.i * 2.5, c: [preyAt.x, preyAt.z] } : u.home;
-        n.r += (to.r - n.r) * ease; n.y += (to.y - n.y) * ease; n.c[0] += (to.c[0] - n.c[0]) * ease; n.c[1] += (to.c[1] - n.c[1]) * ease;
-        u.ang = (u.ang == null ? u.a0 : u.ang) + dt * u.w * (1 + 0.8 * smoothstep(23, 16, n.y)); // a tighter circle turns faster
+        const u = b.userData, n = u.now, ps = !preyAt && roosting && perch[u.i];
+        // to the tree they spiral down onto their spot (the circle shrinks to nothing), a little quicker than they gather
+        const to = preyAt ? { r: 6 + u.i * 2.8, y: 15 + u.i * 2.5, c: [preyAt.x, preyAt.z] } : ps ? { r: 0, y: ps[1], c: [ps[0], ps[2]] } : u.home;
+        const e = ps ? 1 - Math.exp(-dt * 0.9) : ease;
+        n.r += (to.r - n.r) * e; n.y += (to.y - n.y) * e; n.c[0] += (to.c[0] - n.c[0]) * e; n.c[1] += (to.c[1] - n.c[1]) * e;
+        const sit = ps && n.r < 0.35 && Math.hypot(n.c[0] - to.c[0], n.c[1] - to.c[1]) < 0.35 && Math.abs(n.y - to.y) < 0.3;
+        const air = smoothstep(0.4, 4, n.r); // 0 on the perch: no bobbing or banking
+        if (!sit) u.ang = (u.ang == null ? u.a0 : u.ang) + dt * u.w * (1 + 0.8 * smoothstep(23, 16, n.y)); // a tighter circle turns faster
         const a = u.ang, x = n.c[0] + Math.cos(a) * n.r, z = n.c[1] + Math.sin(a) * n.r;
-        b.position.set(x, n.y + Math.sin(vultureT * 0.3 + u.a0) * 1.5, z);
-        b.rotation.set(0, -a + (u.w > 0 ? Math.PI : 0), 0, 'YXZ'); b.rotateZ(u.w > 0 ? -0.3 : 0.3); // nose along the circle, banked into it
+        b.position.set(x, n.y + Math.sin(vultureT * 0.3 + u.a0) * 1.5 * air, z);
+        if (sit) { // perched: facing its own way, wings folded back along the body
+          b.position.set(ps[0], ps[1], ps[2]); b.rotation.set(0, ps[3], 0, 'YXZ');
+          u.wings[0].rotation.set(0, -1.35, -0.4); u.wings[1].rotation.set(0, 1.35, 0.4); u.wings[0].scale.x = 0.5; u.wings[1].scale.x = -0.5; // short, hunched
+          continue;
+        }
+        b.rotation.set(0, -a + (u.w > 0 ? Math.PI : 0), 0, 'YXZ'); b.rotateZ((u.w > 0 ? -0.3 : 0.3) * air); // nose along the circle, banked into it
         const beat = Math.max(0, Math.sin(vultureT * 0.45 + u.a0 * 3)) ** 12; // a few slow beats now and then, otherwise gliding
-        const ang = 0.12 + beat * 0.55 * Math.sin(vultureT * 9);
-        u.wings[0].rotation.z = ang; u.wings[1].rotation.z = -ang;
+        const ang = 0.12 + (ps && n.r < 3 ? 0.4 * Math.sin(vultureT * 8 + u.a0) : beat * 0.55 * Math.sin(vultureT * 9)); // flapping as it lands
+        u.wings[0].rotation.set(0, 0, ang); u.wings[1].rotation.set(0, 0, -ang); u.wings[0].scale.x = 1; u.wings[1].scale.x = -1;
       }
     }
     if (fly) {
@@ -1166,6 +1185,21 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       gm.receiveShadow = true; gm.raycast = () => {}; gm.name = 'grass sea'; scene.add(gm); meshes.push(gm);
     }
     showVultures(bi.vultures || 0, (bi.light && bi.light.pos) || [-30, 60, 25]);
+    // the perch: the real acacia nearest the board on the far half (easy to see from your end), else the giant one
+    perch = [];
+    if (bi.vultures) {
+      let best = null;
+      for (const [k, list] of placed) if (/^Acacia/.test(k) && !k.endsWith('~') && lib[k].top) for (const e of list) {
+        const sc = (e[2] < hd * 0.2 ? 0 : 50) + outside(e[0], e[2]) + (e[4] > 2.6 ? 30 : 0); if (!best || sc < best.sc) best = { sc, k, e };
+      }
+      if (best) {
+        const [x, y, z, ang, s, , sy] = best.e, t = lib[best.k].top, ys = s * (0.95 + (ang % 1) * 0.15) * sy, ca = Math.cos(ang), sa = Math.sin(ang);
+        [[0, 0], [0.45, 0.3], [-0.4, 0.35], [0.3, -0.42], [-0.35, -0.4], [0.6, -0.05], [-0.6, 0.02], [0.05, 0.55]].forEach(([ox, oz], i) => {
+          const lx = (t[0] + ox) * s, lz = (t[2] + oz) * s;
+          perch.push([x + lx * ca + lz * sa, y + t[1] * ys + 0.3, z - lx * sa + lz * ca, ang + i * 2.1]); // (the body's middle, above the leaves)
+        });
+      }
+    }
     // Darkwoods: banks of mist round the board (thinner deep in the dark), the spots the eyes open at (well out in the
     // dark, never behind your own end), the light shafts onto the clearing
     if (bi.mist || bi.eyes || bi.shafts) {
@@ -1226,7 +1260,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
   function shadows(on) { if (on !== castShadows) { castShadows = on; key = ''; } }
   function dispose() { clear(); clearWoods(); scene.remove(woods, explorer); explorer.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.isSprite) { o.material.map.dispose(); o.material.dispose(); } }); for (const m of exMats) m.dispose(); eyeMat.dispose(); shaftMat.dispose(); shaftGeo.dispose(); mistTex.dispose(); shaftTex.dispose(); for (const m of Object.values(glowMats)) m.dispose();
     scene.remove(flakes, flakes2, cabin, cabinLight, veil, xmas, horizon, dragonShadow, smokeCols, vultures); dragonTex.dispose(); dragonShadow.geometry.dispose(); smokeCols.children.forEach((o) => o.material.dispose()); grassGeo.dispose(); grassMat.dispose(); groundMat.dispose(); vultureMat.dispose(); vultures.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); flake2Mat.dispose(); sootMat.dispose(); emberGlowMat.dispose(); horizonMat.dispose(); horizonTex.dispose(); horizon.geometry.dispose(); dragonMat.dispose(); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
-  return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, alive, prey, flyover, foeReady, explore, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
+  return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, alive, prey, roost, birds, flyover, foeReady, explore, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
 };
 
 // The painted floors and the looks live in src/floors.js (loaded with the main page, before this file)
