@@ -20,6 +20,13 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 7 November 2026 – See what your opponent starts with
+
+- **Round 1:** once your opponent has picked their starting package, its squads show at the back of their side of the board as see-through figures, side by side, with a label: *Starting units · placement hidden*. You see which units they start with, but not where they're going to stand. Their leader and anything else they buy stay hidden until the fight, as before.
+- Works against the AI and online (rooms, ranked and invite links), on the 2D and 3D boards. From round 2 on the board shows their real squads as usual.
+
+---
+
 ## 7 November 2026 – The AI presses Ready
 
 - **No more Fight now against the AI:** you get the same **Ready** / **Not ready** button as online. The AI presses Ready 5 seconds into each deploy (counting from when you can place: not while you pick a package, tower or leader). The fight starts as soon as you're both ready, or when the clock runs out. Press Ready first and the fight starts the moment the AI is ready.

@@ -337,6 +337,9 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (kind === 'tag') { // a unit's 3-letter tag (two cells wide)
       g.font = '600 34px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.lineWidth = 7; g.strokeStyle = 'rgba(8,12,14,0.9)'; g.strokeText(a, 64, 34); g.fillStyle = '#E5ECE9'; g.fillText(a, 64, 34);
+    } else if (kind === 'label') { // a short line of text (four cells wide)
+      g.font = '600 26px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.lineWidth = 6; g.strokeStyle = 'rgba(8,12,14,0.9)'; g.strokeText(a, 128, 33); g.fillStyle = '#E5ECE9'; g.fillText(a, 128, 33);
     } else if (kind === 'arms') Art.armsFlag(g, a, 6, 12, 52, b); // a coat of arms on a flag edged in a side's colour
     else if (kind === 'rider') { // what rides inside a carrier: its shape on a disc
       g.fillStyle = css('--bg'); g.strokeStyle = c; g.lineWidth = 4; g.beginPath(); g.arc(32, 32, 27, 0, Math.PI * 2); g.fill(); g.stroke();
@@ -345,7 +348,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
   }
   function cell(key) {
     if (cells[key]) return cells[key];
-    const wide = key.startsWith('tag|') ? 2 : 1;
+    const wide = key.startsWith('tag|') ? 2 : key.startsWith('label|') ? 4 : 1;
     if (nextCell % PER + wide > PER) nextCell += PER - nextCell % PER;
     if (nextCell + wide > PER * PER) { cells = {}; nextCell = 0; actx.clearRect(0, 0, 1024, 1024); } // full: start over
     const cx = nextCell % PER, cy = Math.floor(nextCell / PER);
@@ -663,6 +666,18 @@ const Render3D = (THREE, el, view, opts = {}) => {
       const p = deploying ? Game.seenAt(m, sq) : sq;
       const look = Game.shownUnit(m, me, foe, sq.unit); // a disguised unit shows as what it pretends to be
       squad(deploying ? { ...sq, unit: look, col: p.col, row: p.row, level: Game.seenLevel(m, sq) } : { ...sq, unit: look }, foe, false); // a level-up bought this round stays hidden
+    }
+    // round 1: the opponent's starting squads, see-through side by side along the back of their zone, with a label (the
+    // page's foeStart, as on the 2D board): which units, not where they stand
+    if (deploying && v.foeStart && v.foeStart.length) {
+      let sx = 0, sz = 0;
+      v.foeStart.forEach((e, k) => {
+        const u = units[e.unit]; if (!u) return;
+        for (const b of Engine.buildSquad(u, foe, e.x, e.y, -100 - k, T)) bodies.push({ u, side: foe, x: b.x, y: b.y, look: 'ghost', tag: 'start|' + k }); // (its tag goes under it, as a squad's)
+        const [wx, wz] = world(f, e.x, e.y); sx += wx; sz += wz;
+      });
+      const n = v.foeStart.length, ls = viewMode === 'strategic' ? 4.2 : viewMode === 'tilted' ? 3.4 : 2.6, d = 6.5 + ls * 0.3; // (under their tags)
+      icon('label|STARTING UNITS', sx / n + camDown.x * d, 0.3, sz / n + camDown.z * d, ls, teamColor(foe, me), 0.95);
     }
     // what rides inside a carrier: an icon beside it (only its team sees it), in its player's colour in 2v2
     const riderIcon = (wx, wz, rider) => {

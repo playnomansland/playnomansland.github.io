@@ -6040,6 +6040,10 @@ const Game = (() => {
   }
   const packOf = (m, side) => m.packages && m.pack && m.pack[side] != null ? m.packages[side][m.pack[side]] : null;
   const needsPack = (m, side) => !!(m.packages && m.packages[side] && m.packages[side].length && m.pack[side] == null);
+  // round 1 (2026-11-07): the unit of each of a player's package squads, which their opponent may see (not where they
+  // stand, nor the leader). From the package where this screen has it (the AI's, the PeerJS host's guest), else from the
+  // view the opponent was sent (Referee.hide, syncState: m.packSeen { side: [unit indexes] }); null before they pick
+  const startSeen = (m, side) => { if (!m || m.round !== 1) return null; const p = packOf(m, side); return p ? p.squads.slice() : (m.packSeen && m.packSeen[side]) || null; };
   // package squads still waiting to be placed
   function freeLeft(m, side) {
     const p = packOf(m, side);
@@ -8328,7 +8332,7 @@ const Game = (() => {
     COLS, ROWS, TILE, ZONE, START_HP, LATE, startHp, capped, capCount, capFull, START_GOLD, INCOME, incomeFor, LOSER_BONUS, LOSER_BONUS_ROUND, TOWER_FALL_HP, CARRY_CAP, SHUTDOWN, shutdownGold, CREDIT_LINE, loanTerms, loanTaken, treasurySteal, SQUAD_COST, SETTINGS, XP_STEPS, xpNeeded, unitCostOf,
     levelCost, isReady, levelUp, undoLevel, levelAllPlan, levelAll, upgradeOffer, seenLevel, aiLevel, AI, CONFIG,
     deploysAllowed, deploysLeft, deployedThisRound, canBuyDeploy, buyDeploy, refundDeploy, musterOn, deployBuyable,
-    PACKAGE, allPackages, packOf, needsPack, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
+    PACKAGE, allPackages, packOf, needsPack, startSeen, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
     unlockCost, tierOf, startLevel, shopCost, mapFreeOf, mapFreeLeft, isUnlocked, unlockVisible, unlock, undoUnlock,
     isHunter, preyOf, canHunt, huntMark, undoHunt, preyShown, preyOn, aiHunt, skillDef, skillCost, SKILL_STEP, skillsBought, isInnate, hasSkill, skillVisible, skillNeeds, skillNeedsAny, skillNeedsMissing, skillHeldUp, isFlat, isMaster, isAwaken, awakenSlot, awakenCost, wokeUnit, awakenBlock, canAwaken, awaken, undoAwaken, seenAwake, isEvolve, evolveSlot, evolveReady, isEvolved, shownAwake, glutOf, glutMax, glutFull, skillOr, skillOrTaken, respecNow, unitFor, withCharacter,
     footprint, blockOf, spotFree, buildingRecords, recordOf, recordWorld, buildingEffects,
@@ -8451,6 +8455,8 @@ if (typeof module !== 'undefined') module.exports = Game;
     if (s.moved) s.moved[h] = null;
     for (const ui in (s.tech && s.tech[h]) || {}) s.tech[h][ui] = s.tech[h][ui].map(r => r === round ? 0 : r); // skills bought this round
     if (round === 1) { // the leader, buff tiles, slot spins and package stay hidden until the first fight
+      const pk = s.packages && s.pack && s.pack[h] != null && s.packages[h] && s.packages[h][s.pack[h]];
+      if (pk) s.packSeen = { ...(s.packSeen || {}), [h]: pk.squads.slice() }; // but not which units its squads are (G.startSeen)
       if (s.chars) s.chars[h] = null;
       if (s.slots) s.slots[h] = {};
       if (s.buff) s.buff[h] = [];
@@ -8495,7 +8501,7 @@ if (typeof module !== 'undefined') module.exports = Game;
 
   // ----- Undo all: one side's part of the match, to put back -----
   // Every per-side field ([side 0, side 1] arrays, also in m.dev) plus this side's entries in the shared lists.
-  const UNDO_SKIP = new Set(['units', 'matrix', 'history', 'round', 'over', 'winner', 'seed', 'off', 'offTowers', 'rules', 'factions', 'map', 'dev', 'altar', 'hp', 'packages']);
+  const UNDO_SKIP = new Set(['units', 'matrix', 'history', 'round', 'over', 'winner', 'seed', 'off', 'offTowers', 'rules', 'factions', 'map', 'dev', 'altar', 'hp', 'packages', 'packSeen']);
   const UNDO_NULL = new Set(['chars', 'elfOwn', 'loanT', 'mageGen', 'mark', 'moved', 'pack', 'towers', 'vote', 'woke']); // per-side fields that start as null (see game.js)
   const perSide = (v) => Array.isArray(v) && v.length === 2;
   function sideState(m, side) {
@@ -13216,8 +13222,8 @@ const Art = (() => {
 const Render2D = (cv, view, opts = {}) => {
   let ctx = cv.getContext('2d'); // swapped for a moment while drawing map thumbnails (thumb)
   let m = null, me = 0, phase = 'start', units = [], mode = 'ai', bt = null, battlePre = null, fx = [], battleCam = null, win = null;
-  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null;
-  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null } = view()); };
+  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null, foeStart = null;
+  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null, foeStart = null } = view()); };
   // win (a 2v2 fight on a phone): { aspect, cols, x } the canvas is shaped for `aspect` columns, shows `cols` of them
   // (zoomed out up to the whole wide board) and starts at screen column x; the board sits in the middle top to bottom
   const foe = () => 1 - me;
@@ -13952,6 +13958,33 @@ const Render2D = (cv, view, opts = {}) => {
     }
   }
 
+  // round 1: the opponent's starting squads (view.foeStart from the page: [{ unit, x, y }] in board metres), see-through
+  // side by side along the back of their zone, with a label: which units, not where they stand
+  function drawFoeStart() {
+    const side = foe(), col = teamCol(side), t = tilePx();
+    let sx = 0, sy = 0;
+    foeStart.forEach((e, k) => {
+      const u = units[e.unit]; if (!u) return;
+      const r = radius(u) * 0.85;
+      for (const b of Engine.buildSquad(u, side, e.x, e.y, -100 - k, Game.TILE)) {
+        ctx.globalAlpha = 0.5; Shapes.body(ctx, u.shape, PX(b.x), PY(b.y), r, upOf(side), u.color, col, 0.6);
+      }
+      if (t >= 26) { // its tag under it, as a squad's
+        ctx.font = `500 ${Math.max(8, Math.round(t * 0.26))}px "IBM Plex Mono", monospace`; ctx.fillStyle = css('--ink'); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.globalAlpha = 0.7; ctx.fillText(tag(u), PX(e.x), PY(e.y) + t / 2 - 1);
+      }
+      sx += PX(e.x); sy += PY(e.y);
+    });
+    ctx.globalAlpha = 1;
+    const n = foeStart.length, cy = sy / n + t * 0.85; let cx = sx / n; // under them on the screen: toward no man's land
+    const fs = Math.max(8, Math.round(t * 0.24));
+    ctx.font = `600 ${fs}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const text = 'STARTING UNITS · PLACEMENT HIDDEN', w = ctx.measureText(text).width + fs;
+    cx = Math.max(w / 2, Math.min(Game.COLS * t - w / 2, cx));
+    ctx.fillStyle = css('--bg'); ctx.globalAlpha = 0.7; ctx.fillRect(cx - w / 2, cy - fs * 0.75, w, fs * 1.5);
+    ctx.globalAlpha = 0.95; ctx.fillStyle = col; ctx.fillText(text, cx, cy); ctx.globalAlpha = 1;
+  }
+
   // the Leafblade suit: two long leaf blades held out from the body, turned by a (radians)
   function bladeMark(x, y, r, a) {
     ctx.globalAlpha = 1; ctx.fillStyle = '#7BE05A'; ctx.strokeStyle = '#1F5E1A'; ctx.lineWidth = 1;
@@ -14674,6 +14707,7 @@ const Render2D = (cv, view, opts = {}) => {
       const look = Game.shownUnit(m, me, foe(), sq.unit); // a disguised unit shows as what it pretends to be
       drawSquad(phase === 'deploy' ? { ...sq, unit: look, col: p.col, row: p.row, level: Game.seenLevel(m, sq) } : { ...sq, unit: look }, foe(), false); // a level-up bought this round stays hidden
     }
+    if (phase === 'deploy' && foeStart) drawFoeStart();
     // what rides inside a carrier: a small disc with its shape, bottom left of the tile (only its team sees it), ringed in
     // its player's colour in 2v2 (yours in your teammate's horse, theirs in yours)
     const riderBadge = (at, rider) => {
@@ -15547,6 +15581,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   let phase = 'start';      // start | lobby | draft | deploy | battle | result | end
   try { if (/[?&]test\b/.test(location.search)) window.__tour = () => tour.t && JSON.parse(JSON.stringify(tour.t)); if (/[?&]test\b/.test(location.search)) window.__pb = () => ({ m, me, board3d, board, bt, phase, fx, summary: lastSummary, liveSpeed: liveSpeed.slice(), playSpeed: playSpeed(), away, timeUp, ready: ready.slice(), team: m && m.team ? JSON.parse(JSON.stringify(m.team)) : null, pings: duoPings.slice(), rings: duoOn() ? [0, 1, 2, 3].map(k => duoRing(k).col) : null, expireDeploy: () => { deadline = now() - 400; tick(); } }); } catch (e) {} // read-only peek and countdown trigger for UI tests
   try { if (/[?&]test\b/.test(location.search)) window.__pbRedraw = () => { if (phase === 'deploy') panelDeploy(); render(); }; } catch (e) {} // UI tests that set up a board state: draw it
+  try { if (/[?&]test\b/.test(location.search)) window.__pbView = () => JSON.parse(JSON.stringify({ foeStart: boardView().foeStart, foeReady: boardView().foeReady })); } catch (e) {} // UI tests: what the boards are told
   try { if (/[?&]test\b/.test(location.search)) window.__pbSheet = (side, key) => openMpbSheet(side, key); } catch (e) {} // UI tests: open a 2v2 building's sheet (every kind, either team's)
   try { if (/[?&]test\b/.test(location.search)) window.__pbTeamBSheet = (side, b) => openTeamBuildingSheet(side, b); } catch (e) {} // UI tests: the other lane's building's read-only sheet (2026-11-07)
   let selected = null;      // unit index chosen in the shop
@@ -16273,7 +16308,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '7 Nov 2026 · c39c7db'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '7 Nov 2026 · 790f27e'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -16713,7 +16748,20 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     battleCam: cam && cam.k > 0 ? { zoom: 1 + (CAM.zoom - 1) * cam.k, x: cam.x, y: cam.y, k: cam.k } : null,
     aim: phase === 'deploy' && (aimMode != null || aimDrag) ? { id: aimDrag ? aimDrag.id : aimMode, end: aimDrag ? aimDrag.end : hoverTile } : null, // (aimDrag without aimMode: a head dragged)
     placingBuilding: placingBuilding(), win: null, duo: duoBoard(),
-    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me] }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
+    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me], foeStart: foeStart() }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
+  // round 1 (2026-11-07): the opponent's package squads, as see-through figures side by side along the back row of their
+  // zone, on the side away from their tower: which units they start with, not where they stand (Game.startSeen). Both
+  // boards draw it (render2d drawFoeStart, render3d collectDeploy): [{ unit, x, y }] in board metres, or null
+  function foeStart() {
+    if (phase !== 'deploy' || !m || m.round !== 1 || mode === 'spec' || mode === 'tutorial' || mode === 'sandbox' || duoOn()) return null;
+    const list = Game.startSeen(m, foe());
+    if (!list || !list.length) return null;
+    const n = list.length, back = Game.zoneRows(foe()).slice(-1)[0], tw = (m.towers && m.towers[foe()]) || Game.towerSpot(m, foe());
+    const gap = Math.min(1.4, (Game.COLS - 1) / Math.max(1, n - 1)), wide = (n - 1) * gap;
+    const mid = (Game.COLS - 1) * (tw && tw.col >= Game.COLS / 2 ? 0.3 : 0.7);
+    const c0 = Math.max(0, Math.min(Game.COLS - 1 - wide, mid - wide / 2));
+    return list.map((ui, k) => ({ unit: Game.shownUnit(m, me, foe(), ui), ...Game.tileToWorld(c0 + k * gap, back) }));
+  }
   const board = Render2D(cv, boardView);
   let board3d = null; // the 3D board when it's on (see "the 3D board" below)
   const size = () => (board3d || board).size();
@@ -17145,6 +17193,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (o.kind === 'pack') {
       if (!Game.choosePack(m, me, +key)) return;
       const f = Game.freeLeft(m, me); if (f.length) shopTier = tierOf(f[0]); // show the tier of the first free squad
+      if (mode === 'host') sendStatus(); // the guest sees which units it starts with (Game.startSeen)
       changed();
     } else if (o.kind === 'dev') {
       if (!Game.devPick(m, me, key)) return;
@@ -21369,7 +21418,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
-  const V3D = 'a77ad6d9bf'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '62656ac7e1'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
@@ -22704,7 +22753,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (s.map && s.map.removed) s.map.removed = s.map.removed.filter(x => !(x.side === 0 && x.round === m.round)); // and mushroom tiles removed this round
       if (s.altar) s.altar = s.altar.filter(x => !(x.side === 0 && x.round === m.round)); // and altar purchases
       if (s.unlocks && s.unlocks[0]) for (const ui in s.unlocks[0]) if (s.unlocks[0][ui] === m.round) delete s.unlocks[0][ui]; // so do this round's unlocks
-      if (m.round === 1 && s.packages) { s.packages = [[], s.packages[1]]; s.pack = [null, s.pack ? s.pack[1] : null]; } // and the host's package
+      if (m.round === 1 && s.packages) { const pk = Game.packOf(s, 0); if (pk) s.packSeen = { 0: pk.squads.slice() }; s.packages = [[], s.packages[1]]; s.pack = [null, s.pack ? s.pack[1] : null]; } // and the host's package (not which units its squads are: Game.startSeen)
     }
     return s;
   }
@@ -22717,7 +22766,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const ph = phase === 'battle' ? 'result' : phase;
     send({ ...base, phase: ph, m: syncState(), remaining: phase === 'deploy' && deadline ? deadline - now() : 0, ready, nextReady, rematch, summary: lastSummary });
   }
-  const sendStatus = () => send({ t: 'status', ready, nextReady, rematch });
+  const sendStatus = () => send({ t: 'status', ready, nextReady, rematch, start: m && m.round === 1 && phase === 'deploy' ? Game.startSeen(m, 0) : null }); // start: round 1, the host's starting units (Game.startSeen)
 
   function hostRecv(d) {
     if (sbxHold(hostRecv, d)) return;
@@ -23111,6 +23160,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (d.ready) ready[0] = !!d.ready[0];
       if (d.nextReady) nextReady[0] = !!d.nextReady[0];
       if (d.rematch) rematch[0] = !!d.rematch[0];
+      if (phase === 'deploy' && m && m.round === 1 && Array.isArray(d.start) && d.start.every(Number.isInteger)) { m.packSeen = { 0: d.start.slice() }; render(); } // the host's starting units
       if (phase === 'deploy') panelDeploy();
       else if (phase === 'end') showResult(lastSummary);
     } else if (d.t === 'speed') { if (SPEEDS.includes(d.s)) { liveSpeed[0] = d.s; showSpeed(); } }

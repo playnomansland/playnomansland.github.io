@@ -22,8 +22,8 @@
 const Render2D = (cv, view, opts = {}) => {
   let ctx = cv.getContext('2d'); // swapped for a moment while drawing map thumbnails (thumb)
   let m = null, me = 0, phase = 'start', units = [], mode = 'ai', bt = null, battlePre = null, fx = [], battleCam = null, win = null;
-  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null;
-  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null } = view()); };
+  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null, foeStart = null;
+  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null, foeStart = null } = view()); };
   // win (a 2v2 fight on a phone): { aspect, cols, x } the canvas is shaped for `aspect` columns, shows `cols` of them
   // (zoomed out up to the whole wide board) and starts at screen column x; the board sits in the middle top to bottom
   const foe = () => 1 - me;
@@ -758,6 +758,33 @@ const Render2D = (cv, view, opts = {}) => {
     }
   }
 
+  // round 1: the opponent's starting squads (view.foeStart from the page: [{ unit, x, y }] in board metres), see-through
+  // side by side along the back of their zone, with a label: which units, not where they stand
+  function drawFoeStart() {
+    const side = foe(), col = teamCol(side), t = tilePx();
+    let sx = 0, sy = 0;
+    foeStart.forEach((e, k) => {
+      const u = units[e.unit]; if (!u) return;
+      const r = radius(u) * 0.85;
+      for (const b of Engine.buildSquad(u, side, e.x, e.y, -100 - k, Game.TILE)) {
+        ctx.globalAlpha = 0.5; Shapes.body(ctx, u.shape, PX(b.x), PY(b.y), r, upOf(side), u.color, col, 0.6);
+      }
+      if (t >= 26) { // its tag under it, as a squad's
+        ctx.font = `500 ${Math.max(8, Math.round(t * 0.26))}px "IBM Plex Mono", monospace`; ctx.fillStyle = css('--ink'); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.globalAlpha = 0.7; ctx.fillText(tag(u), PX(e.x), PY(e.y) + t / 2 - 1);
+      }
+      sx += PX(e.x); sy += PY(e.y);
+    });
+    ctx.globalAlpha = 1;
+    const n = foeStart.length, cy = sy / n + t * 0.85; let cx = sx / n; // under them on the screen: toward no man's land
+    const fs = Math.max(8, Math.round(t * 0.24));
+    ctx.font = `600 ${fs}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const text = 'STARTING UNITS · PLACEMENT HIDDEN', w = ctx.measureText(text).width + fs;
+    cx = Math.max(w / 2, Math.min(Game.COLS * t - w / 2, cx));
+    ctx.fillStyle = css('--bg'); ctx.globalAlpha = 0.7; ctx.fillRect(cx - w / 2, cy - fs * 0.75, w, fs * 1.5);
+    ctx.globalAlpha = 0.95; ctx.fillStyle = col; ctx.fillText(text, cx, cy); ctx.globalAlpha = 1;
+  }
+
   // the Leafblade suit: two long leaf blades held out from the body, turned by a (radians)
   function bladeMark(x, y, r, a) {
     ctx.globalAlpha = 1; ctx.fillStyle = '#7BE05A'; ctx.strokeStyle = '#1F5E1A'; ctx.lineWidth = 1;
@@ -1480,6 +1507,7 @@ const Render2D = (cv, view, opts = {}) => {
       const look = Game.shownUnit(m, me, foe(), sq.unit); // a disguised unit shows as what it pretends to be
       drawSquad(phase === 'deploy' ? { ...sq, unit: look, col: p.col, row: p.row, level: Game.seenLevel(m, sq) } : { ...sq, unit: look }, foe(), false); // a level-up bought this round stays hidden
     }
+    if (phase === 'deploy' && foeStart) drawFoeStart();
     // what rides inside a carrier: a small disc with its shape, bottom left of the tile (only its team sees it), ringed in
     // its player's colour in 2v2 (yours in your teammate's horse, theirs in yours)
     const riderBadge = (at, rider) => {

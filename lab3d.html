@@ -5131,6 +5131,10 @@ const Game = (() => {
   }
   const packOf = (m, side) => m.packages && m.pack && m.pack[side] != null ? m.packages[side][m.pack[side]] : null;
   const needsPack = (m, side) => !!(m.packages && m.packages[side] && m.packages[side].length && m.pack[side] == null);
+  // round 1 (2026-11-07): the unit of each of a player's package squads, which their opponent may see (not where they
+  // stand, nor the leader). From the package where this screen has it (the AI's, the PeerJS host's guest), else from the
+  // view the opponent was sent (Referee.hide, syncState: m.packSeen { side: [unit indexes] }); null before they pick
+  const startSeen = (m, side) => { if (!m || m.round !== 1) return null; const p = packOf(m, side); return p ? p.squads.slice() : (m.packSeen && m.packSeen[side]) || null; };
   // package squads still waiting to be placed
   function freeLeft(m, side) {
     const p = packOf(m, side);
@@ -7419,7 +7423,7 @@ const Game = (() => {
     COLS, ROWS, TILE, ZONE, START_HP, LATE, startHp, capped, capCount, capFull, START_GOLD, INCOME, incomeFor, LOSER_BONUS, LOSER_BONUS_ROUND, TOWER_FALL_HP, CARRY_CAP, SHUTDOWN, shutdownGold, CREDIT_LINE, loanTerms, loanTaken, treasurySteal, SQUAD_COST, SETTINGS, XP_STEPS, xpNeeded, unitCostOf,
     levelCost, isReady, levelUp, undoLevel, levelAllPlan, levelAll, upgradeOffer, seenLevel, aiLevel, AI, CONFIG,
     deploysAllowed, deploysLeft, deployedThisRound, canBuyDeploy, buyDeploy, refundDeploy, musterOn, deployBuyable,
-    PACKAGE, allPackages, packOf, needsPack, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
+    PACKAGE, allPackages, packOf, needsPack, startSeen, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
     unlockCost, tierOf, startLevel, shopCost, mapFreeOf, mapFreeLeft, isUnlocked, unlockVisible, unlock, undoUnlock,
     isHunter, preyOf, canHunt, huntMark, undoHunt, preyShown, preyOn, aiHunt, skillDef, skillCost, SKILL_STEP, skillsBought, isInnate, hasSkill, skillVisible, skillNeeds, skillNeedsAny, skillNeedsMissing, skillHeldUp, isFlat, isMaster, isAwaken, awakenSlot, awakenCost, wokeUnit, awakenBlock, canAwaken, awaken, undoAwaken, seenAwake, isEvolve, evolveSlot, evolveReady, isEvolved, shownAwake, glutOf, glutMax, glutFull, skillOr, skillOrTaken, respecNow, unitFor, withCharacter,
     footprint, blockOf, spotFree, buildingRecords, recordOf, recordWorld, buildingEffects,
@@ -7638,8 +7642,8 @@ const Art = (() => {
 const Render2D = (cv, view, opts = {}) => {
   let ctx = cv.getContext('2d'); // swapped for a moment while drawing map thumbnails (thumb)
   let m = null, me = 0, phase = 'start', units = [], mode = 'ai', bt = null, battlePre = null, fx = [], battleCam = null, win = null;
-  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null;
-  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null } = view()); };
+  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null, foeStart = null;
+  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null, foeStart = null } = view()); };
   // win (a 2v2 fight on a phone): { aspect, cols, x } the canvas is shaped for `aspect` columns, shows `cols` of them
   // (zoomed out up to the whole wide board) and starts at screen column x; the board sits in the middle top to bottom
   const foe = () => 1 - me;
@@ -8374,6 +8378,33 @@ const Render2D = (cv, view, opts = {}) => {
     }
   }
 
+  // round 1: the opponent's starting squads (view.foeStart from the page: [{ unit, x, y }] in board metres), see-through
+  // side by side along the back of their zone, with a label: which units, not where they stand
+  function drawFoeStart() {
+    const side = foe(), col = teamCol(side), t = tilePx();
+    let sx = 0, sy = 0;
+    foeStart.forEach((e, k) => {
+      const u = units[e.unit]; if (!u) return;
+      const r = radius(u) * 0.85;
+      for (const b of Engine.buildSquad(u, side, e.x, e.y, -100 - k, Game.TILE)) {
+        ctx.globalAlpha = 0.5; Shapes.body(ctx, u.shape, PX(b.x), PY(b.y), r, upOf(side), u.color, col, 0.6);
+      }
+      if (t >= 26) { // its tag under it, as a squad's
+        ctx.font = `500 ${Math.max(8, Math.round(t * 0.26))}px "IBM Plex Mono", monospace`; ctx.fillStyle = css('--ink'); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.globalAlpha = 0.7; ctx.fillText(tag(u), PX(e.x), PY(e.y) + t / 2 - 1);
+      }
+      sx += PX(e.x); sy += PY(e.y);
+    });
+    ctx.globalAlpha = 1;
+    const n = foeStart.length, cy = sy / n + t * 0.85; let cx = sx / n; // under them on the screen: toward no man's land
+    const fs = Math.max(8, Math.round(t * 0.24));
+    ctx.font = `600 ${fs}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const text = 'STARTING UNITS · PLACEMENT HIDDEN', w = ctx.measureText(text).width + fs;
+    cx = Math.max(w / 2, Math.min(Game.COLS * t - w / 2, cx));
+    ctx.fillStyle = css('--bg'); ctx.globalAlpha = 0.7; ctx.fillRect(cx - w / 2, cy - fs * 0.75, w, fs * 1.5);
+    ctx.globalAlpha = 0.95; ctx.fillStyle = col; ctx.fillText(text, cx, cy); ctx.globalAlpha = 1;
+  }
+
   // the Leafblade suit: two long leaf blades held out from the body, turned by a (radians)
   function bladeMark(x, y, r, a) {
     ctx.globalAlpha = 1; ctx.fillStyle = '#7BE05A'; ctx.strokeStyle = '#1F5E1A'; ctx.lineWidth = 1;
@@ -9096,6 +9127,7 @@ const Render2D = (cv, view, opts = {}) => {
       const look = Game.shownUnit(m, me, foe(), sq.unit); // a disguised unit shows as what it pretends to be
       drawSquad(phase === 'deploy' ? { ...sq, unit: look, col: p.col, row: p.row, level: Game.seenLevel(m, sq) } : { ...sq, unit: look }, foe(), false); // a level-up bought this round stays hidden
     }
+    if (phase === 'deploy' && foeStart) drawFoeStart();
     // what rides inside a carrier: a small disc with its shape, bottom left of the tile (only its team sees it), ringed in
     // its player's colour in 2v2 (yours in your teammate's horse, theirs in yours)
     const riderBadge = (at, rider) => {
@@ -13107,6 +13139,9 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (kind === 'tag') { // a unit's 3-letter tag (two cells wide)
       g.font = '600 34px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.lineWidth = 7; g.strokeStyle = 'rgba(8,12,14,0.9)'; g.strokeText(a, 64, 34); g.fillStyle = '#E5ECE9'; g.fillText(a, 64, 34);
+    } else if (kind === 'label') { // a short line of text (four cells wide)
+      g.font = '600 26px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.lineWidth = 6; g.strokeStyle = 'rgba(8,12,14,0.9)'; g.strokeText(a, 128, 33); g.fillStyle = '#E5ECE9'; g.fillText(a, 128, 33);
     } else if (kind === 'arms') Art.armsFlag(g, a, 6, 12, 52, b); // a coat of arms on a flag edged in a side's colour
     else if (kind === 'rider') { // what rides inside a carrier: its shape on a disc
       g.fillStyle = css('--bg'); g.strokeStyle = c; g.lineWidth = 4; g.beginPath(); g.arc(32, 32, 27, 0, Math.PI * 2); g.fill(); g.stroke();
@@ -13115,7 +13150,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
   }
   function cell(key) {
     if (cells[key]) return cells[key];
-    const wide = key.startsWith('tag|') ? 2 : 1;
+    const wide = key.startsWith('tag|') ? 2 : key.startsWith('label|') ? 4 : 1;
     if (nextCell % PER + wide > PER) nextCell += PER - nextCell % PER;
     if (nextCell + wide > PER * PER) { cells = {}; nextCell = 0; actx.clearRect(0, 0, 1024, 1024); } // full: start over
     const cx = nextCell % PER, cy = Math.floor(nextCell / PER);
@@ -13433,6 +13468,18 @@ const Render3D = (THREE, el, view, opts = {}) => {
       const p = deploying ? Game.seenAt(m, sq) : sq;
       const look = Game.shownUnit(m, me, foe, sq.unit); // a disguised unit shows as what it pretends to be
       squad(deploying ? { ...sq, unit: look, col: p.col, row: p.row, level: Game.seenLevel(m, sq) } : { ...sq, unit: look }, foe, false); // a level-up bought this round stays hidden
+    }
+    // round 1: the opponent's starting squads, see-through side by side along the back of their zone, with a label (the
+    // page's foeStart, as on the 2D board): which units, not where they stand
+    if (deploying && v.foeStart && v.foeStart.length) {
+      let sx = 0, sz = 0;
+      v.foeStart.forEach((e, k) => {
+        const u = units[e.unit]; if (!u) return;
+        for (const b of Engine.buildSquad(u, foe, e.x, e.y, -100 - k, T)) bodies.push({ u, side: foe, x: b.x, y: b.y, look: 'ghost', tag: 'start|' + k }); // (its tag goes under it, as a squad's)
+        const [wx, wz] = world(f, e.x, e.y); sx += wx; sz += wz;
+      });
+      const n = v.foeStart.length, ls = viewMode === 'strategic' ? 4.2 : viewMode === 'tilted' ? 3.4 : 2.6, d = 6.5 + ls * 0.3; // (under their tags)
+      icon('label|STARTING UNITS', sx / n + camDown.x * d, 0.3, sz / n + camDown.z * d, ls, teamColor(foe, me), 0.95);
     }
     // what rides inside a carrier: an icon beside it (only its team sees it), in its player's colour in 2v2
     const riderIcon = (wx, wz, rider) => {

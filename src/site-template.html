@@ -1171,6 +1171,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   let phase = 'start';      // start | lobby | draft | deploy | battle | result | end
   try { if (/[?&]test\b/.test(location.search)) window.__tour = () => tour.t && JSON.parse(JSON.stringify(tour.t)); if (/[?&]test\b/.test(location.search)) window.__pb = () => ({ m, me, board3d, board, bt, phase, fx, summary: lastSummary, liveSpeed: liveSpeed.slice(), playSpeed: playSpeed(), away, timeUp, ready: ready.slice(), team: m && m.team ? JSON.parse(JSON.stringify(m.team)) : null, pings: duoPings.slice(), rings: duoOn() ? [0, 1, 2, 3].map(k => duoRing(k).col) : null, expireDeploy: () => { deadline = now() - 400; tick(); } }); } catch (e) {} // read-only peek and countdown trigger for UI tests
   try { if (/[?&]test\b/.test(location.search)) window.__pbRedraw = () => { if (phase === 'deploy') panelDeploy(); render(); }; } catch (e) {} // UI tests that set up a board state: draw it
+  try { if (/[?&]test\b/.test(location.search)) window.__pbView = () => JSON.parse(JSON.stringify({ foeStart: boardView().foeStart, foeReady: boardView().foeReady })); } catch (e) {} // UI tests: what the boards are told
   try { if (/[?&]test\b/.test(location.search)) window.__pbSheet = (side, key) => openMpbSheet(side, key); } catch (e) {} // UI tests: open a 2v2 building's sheet (every kind, either team's)
   try { if (/[?&]test\b/.test(location.search)) window.__pbTeamBSheet = (side, b) => openTeamBuildingSheet(side, b); } catch (e) {} // UI tests: the other lane's building's read-only sheet (2026-11-07)
   let selected = null;      // unit index chosen in the shop
@@ -2337,7 +2338,20 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     battleCam: cam && cam.k > 0 ? { zoom: 1 + (CAM.zoom - 1) * cam.k, x: cam.x, y: cam.y, k: cam.k } : null,
     aim: phase === 'deploy' && (aimMode != null || aimDrag) ? { id: aimDrag ? aimDrag.id : aimMode, end: aimDrag ? aimDrag.end : hoverTile } : null, // (aimDrag without aimMode: a head dragged)
     placingBuilding: placingBuilding(), win: null, duo: duoBoard(),
-    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me] }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
+    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me], foeStart: foeStart() }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
+  // round 1 (2026-11-07): the opponent's package squads, as see-through figures side by side along the back row of their
+  // zone, on the side away from their tower: which units they start with, not where they stand (Game.startSeen). Both
+  // boards draw it (render2d drawFoeStart, render3d collectDeploy): [{ unit, x, y }] in board metres, or null
+  function foeStart() {
+    if (phase !== 'deploy' || !m || m.round !== 1 || mode === 'spec' || mode === 'tutorial' || mode === 'sandbox' || duoOn()) return null;
+    const list = Game.startSeen(m, foe());
+    if (!list || !list.length) return null;
+    const n = list.length, back = Game.zoneRows(foe()).slice(-1)[0], tw = (m.towers && m.towers[foe()]) || Game.towerSpot(m, foe());
+    const gap = Math.min(1.4, (Game.COLS - 1) / Math.max(1, n - 1)), wide = (n - 1) * gap;
+    const mid = (Game.COLS - 1) * (tw && tw.col >= Game.COLS / 2 ? 0.3 : 0.7);
+    const c0 = Math.max(0, Math.min(Game.COLS - 1 - wide, mid - wide / 2));
+    return list.map((ui, k) => ({ unit: Game.shownUnit(m, me, foe(), ui), ...Game.tileToWorld(c0 + k * gap, back) }));
+  }
   const board = Render2D(cv, boardView);
   let board3d = null; // the 3D board when it's on (see "the 3D board" below)
   const size = () => (board3d || board).size();
@@ -2769,6 +2783,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (o.kind === 'pack') {
       if (!Game.choosePack(m, me, +key)) return;
       const f = Game.freeLeft(m, me); if (f.length) shopTier = tierOf(f[0]); // show the tier of the first free squad
+      if (mode === 'host') sendStatus(); // the guest sees which units it starts with (Game.startSeen)
       changed();
     } else if (o.kind === 'dev') {
       if (!Game.devPick(m, me, key)) return;
@@ -8266,7 +8281,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (s.map && s.map.removed) s.map.removed = s.map.removed.filter(x => !(x.side === 0 && x.round === m.round)); // and mushroom tiles removed this round
       if (s.altar) s.altar = s.altar.filter(x => !(x.side === 0 && x.round === m.round)); // and altar purchases
       if (s.unlocks && s.unlocks[0]) for (const ui in s.unlocks[0]) if (s.unlocks[0][ui] === m.round) delete s.unlocks[0][ui]; // so do this round's unlocks
-      if (m.round === 1 && s.packages) { s.packages = [[], s.packages[1]]; s.pack = [null, s.pack ? s.pack[1] : null]; } // and the host's package
+      if (m.round === 1 && s.packages) { const pk = Game.packOf(s, 0); if (pk) s.packSeen = { 0: pk.squads.slice() }; s.packages = [[], s.packages[1]]; s.pack = [null, s.pack ? s.pack[1] : null]; } // and the host's package (not which units its squads are: Game.startSeen)
     }
     return s;
   }
@@ -8279,7 +8294,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const ph = phase === 'battle' ? 'result' : phase;
     send({ ...base, phase: ph, m: syncState(), remaining: phase === 'deploy' && deadline ? deadline - now() : 0, ready, nextReady, rematch, summary: lastSummary });
   }
-  const sendStatus = () => send({ t: 'status', ready, nextReady, rematch });
+  const sendStatus = () => send({ t: 'status', ready, nextReady, rematch, start: m && m.round === 1 && phase === 'deploy' ? Game.startSeen(m, 0) : null }); // start: round 1, the host's starting units (Game.startSeen)
 
   function hostRecv(d) {
     if (sbxHold(hostRecv, d)) return;
@@ -8673,6 +8688,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (d.ready) ready[0] = !!d.ready[0];
       if (d.nextReady) nextReady[0] = !!d.nextReady[0];
       if (d.rematch) rematch[0] = !!d.rematch[0];
+      if (phase === 'deploy' && m && m.round === 1 && Array.isArray(d.start) && d.start.every(Number.isInteger)) { m.packSeen = { 0: d.start.slice() }; render(); } // the host's starting units
       if (phase === 'deploy') panelDeploy();
       else if (phase === 'end') showResult(lastSummary);
     } else if (d.t === 'speed') { if (SPEEDS.includes(d.s)) { liveSpeed[0] = d.s; showSpeed(); } }
