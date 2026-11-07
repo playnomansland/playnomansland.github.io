@@ -410,7 +410,7 @@ body.profile #usheet::before { background: #2C2820; } /* lifted off the ink fiel
   <div class="rsearch">
     <svg class="mag" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.8"/></svg>
     <button class="tok" id="r-tok" aria-haspopup="true" aria-expanded="false"><span></span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
-    <input id="r-q" placeholder="player or room code" autocomplete="off" spellcheck="false" aria-label="Search rooms">
+    <input id="r-q" placeholder="player or battlefield" autocomplete="off" spellcheck="false" aria-label="Search rooms">
     <ul class="tok-menu" id="r-menu" hidden>
       <li><button data-q="standard">1v1 Standard</button></li>
       <li><button data-q="ranked">1v1 Ranked</button></li>
@@ -450,7 +450,7 @@ body.profile #usheet::before { background: #2C2820; } /* lifted off the ink fiel
     <button class="item" id="w-guest"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,10 95,100 0,90"/></svg><span class="n">02</span>Play as guest<small>no account needed</small></button>
   </div>
 </nav>
-<div class="note" data-anchor="golemW" data-welcome><span class="tag">A friend invited you</span><br>Sign up with Google and finish an online match together. <b>You get this golem’s skin.</b></div>
+<div class="note" data-anchor="golemW" data-welcome><span class="tag">A friend invited you</span><br>Sign up with Google and finish an online match together. <b>Your friend gets this golem’s skin.</b></div>
 
 <!-- Sign up and Log in (the game's drawSignIn): a username, then Google; or a guest with that name -->
 <section class="signin" aria-label="Sign in">
@@ -1024,7 +1024,7 @@ const NOTE = { standard: 'On the Standard map. No stakes.', ranked: 'A best of 3
 const press = (sel, on) => document.querySelectorAll(sel).forEach(b => b.setAttribute('aria-pressed', on(b)));
 function setKind(k) { press('.newroom [data-kind]', b => b.dataset.kind === k); document.getElementById('nr-note').textContent = NOTE[k]; }
 document.querySelectorAll('.newroom [data-kind]:not([disabled])').forEach(b => b.addEventListener('click', () => setKind(b.dataset.kind)));
-document.querySelectorAll('.newroom [data-pub]').forEach(b => b.addEventListener('click', () => { press('.newroom [data-pub]', x => x === b); document.getElementById('nr-pub').textContent = b.dataset.pub === '1' ? 'Listed in Rooms for anyone to join.' : 'Not listed. Friends join with the room’s code.'; }));
+document.querySelectorAll('.newroom [data-pub]').forEach(b => b.addEventListener('click', () => { press('.newroom [data-pub]', x => x === b); document.getElementById('nr-pub').textContent = b.dataset.pub === '1' ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.'; }));
 document.querySelectorAll('.newroom [data-spec]').forEach(b => b.addEventListener('click', () => { press('.newroom [data-spec]', x => x === b); document.getElementById('nr-spec').textContent = b.dataset.spec === '1' ? 'Anyone can watch once it starts.' : 'No one can watch.'; }));
 // the room's battlefield: the host picks it here and the match is played on it; the island shows it while you pick
 let roomLook = 0;

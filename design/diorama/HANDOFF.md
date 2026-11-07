@@ -1,9 +1,13 @@
 # Handoff: the Diorama UI (mockup finished; next: putting it into the game, see INTEGRATION.md)
 
-A redesign of the game's UI, worked out as a standalone mockup in this folder. Nothing in the game itself (`src/`) has
-changed. Done so far: the main menu, the PLAY screen (with Rooms and New room), the playlist, battlefields (the
-island takes the look you pick), and a **first prototype of the Profile screen** (see "Profile", near the end). Work happens on the branch
-`claude/wonderful-carson-fdud2o`, which started from `design/diorama`.
+A redesign of the game's UI, worked out as a standalone mockup in this folder, on sample data. **Nothing in the game
+itself (`src/`) has changed yet.** The mockup is finished and tested (2026-11-07): Welcome / Sign up / Log in, the
+main menu (Units with skins, Rankings), Play (Rooms, New room), the playlist, battlefields, Profile with Match history,
+and the Friends and Settings dropdowns. Every screen is on one page: `screens/contact-sheet.jpg`.
+
+**Next: putting it into the game. That plan, and the owner's decisions for it, are in `INTEGRATION.md`.** This file is
+the design reference. The work is on the branch `claude/clever-tesla-l0aw0q` (from `claude/wonderful-carson-fdud2o`,
+which started from `design/diorama`; `main` merged in on 2026-11-07).
 
 ## What is here
 
@@ -15,7 +19,9 @@ island takes the look you pick), and a **first prototype of the Profile screen**
 | `build.js` | `node design/diorama/build.js` writes `diorama-menu.html`. Inlines `vendor/three*.js`, `src/kaykit3d.js`, `src/models3d.js`, `src/default-roster.json`, `src/floors.js`, `paintIce` lifted out of `src/render2d.js`, `img/title.png`, `fonts/`. |
 | `shots.js` | Screenshots of the built page in given states into `screens/` (PNG). Needs Playwright with Chromium; without a GPU it renders through SwiftShader, about 25 s a shot. Convert to JPG to keep (PIL is there). |
 | `diorama-language.html` | The original design language document. Older than everything below; this file is the current summary. |
-| `screens/` | Screenshots of the current state (listed below). |
+| `screens/` | Screenshots of the current state (listed below); `contact-sheet.jpg` has every screen. |
+| `test/` | The checks (2026-11-07): `collide.js` (text overlapping, note lines through words, text off screen, for every state in `states.json` at given window sizes; it can save shots), `flow.js` (a 39-step click-through of every screen), `contact-sheet.py`. Commands at the top of each file. |
+| `INTEGRATION.md` | The plan for putting the Diorama into the game, and the owner's decisions for it. |
 
 ```bash
 node design/diorama/build.js
@@ -111,6 +117,11 @@ Meadow, Autumn, Snow, Forest Glade, Desert, Ashlands, Moonlit Snow, Savanna.
 - Ashlands' dragon / Savanna's vultures circling the island (would break "same number of miniatures" unless every
   battlefield gets a flying piece).
 - Vs computer and Create room → do nothing in the mockup (in the game: start the match / open the room).
+- No join by code and no Play vs Friend (owner, 2026-11-07): everything goes through Rooms. Rooms' search line finds a
+  player or a battlefield; a private room is "Not listed. Invite friends to it from Friends."
+- Developer buttons are not designed yet (the game's developer extras: Factions, Devtest, Late game, 2v2, Exploit bot,
+  Load units, Vs Claude, Tournaments). A quick proposal is in `INTEGRATION.md`; design it before the integration.
+- On hold (owner, 2026-11-07): Rewards, Encyclopedia and the other extra buttons.
 
 ## Profile (first prototype, 2026-11-07)
 
@@ -156,7 +167,9 @@ The first screen before the menu (the game's `drawWelcome` / `drawSignIn`). Ultr
   LOG IN on the big saffron shard ("Your name, your record and your ranked results, back on this device."), then
   01 SIGN UP "new here" and 02 PLAY AS GUEST "no account needed". No account buttons, no island notes, except: from a
   friend's invite link, the golem's note ("A friend invited you · Sign up with Google and finish an online match
-  together. You get this golem's skin." Owner's wording, 2026-11-07.)
+  together. Your friend gets this golem's skin."). The reward is the inviter's (owner, 2026-11-07): the game says
+  "you get" to the one who sends the link (the menu's "Invite a friend. This golem skin is yours."), and this screen
+  is the invited friend's.
 - **Sign up / Log in.** A left column like New room (the logo back to its usual size, the island further right,
   "← Back"): kicker, SIGN UP / LOG IN, the game's lead line, then rows: Username (dashed line; a bad one turns the line
   saffron and its note into the rule), Keep it / Google (a stand-in for Google's own button, with "Sign-in is handled
@@ -185,18 +198,17 @@ clicking outside, Esc, or the button again closes them. On the menu only (the bu
   (2D/3D board, phone layout, 3D quality) are not in it; a line says so.
 - Sample data: `FRIENDS`, `REQ_IN`, `REQ_OUT`, `THREAD`, `SET` in `src/menu.html`.
 
-Open questions for the owner: is ink the right field for Profile; should skins you don't own show (locked) on the
-island; where Friends goes (its own screen or part of Profile); the phone layout (not done for Profile).
+Settled since the first Profile prototype: skins moved to the unit sheet; Friends is a dropdown off its button. Still
+open: phone layouts for every screen except the main menu (see `INTEGRATION.md`, "Phones").
 
-### What the game's Profile has (for reference) Opened from the account
-button top right (`Guest` in the mockup; the player's name once they have one).
+### What the game's Profile has (for reference)
 
-What the game's Profile has today (`openAccountSheet()` / `acctDraw()` in `src/site-template.html`, around line 4827;
-the account code from about line 4630):
+What the game's Profile has today (`openAccountSheet()` / `acctDraw()` in `src/site-template.html`; `INTEGRATION.md`
+has every function with its line):
 - **Account state.** Signed in with Google, or a guest on this phone (sign in with Google to keep it), or no account yet
   (Play as a guest / sign in). Developer accounts get a "Developer mode is on" line.
 - **Nameplate.** The username with the chosen title under it (`nameplate(tag, title, 'big')`).
-- **Title under your name.** Pick one of the titles you've earned, or None. Titles (`TITLES`, line 3475): Day 1, DEV,
+- **Title under your name.** Pick one of the titles you've earned, or None. Titles (`TITLES`): Day 1, DEV,
   Legend (top 5 when a month ends), BABABABA (joined the Discord), Initiate, Good sport (10 GGs). Each has a colour;
   why you got it is in `TITLE_WHY`.
 - **Skins.** Each owned unit skin with its picture (`img/skins/*.png`), name, unit and line, and On / Off
@@ -204,7 +216,7 @@ the account code from about line 4630):
   Omni-Per Brute (developers only), ...). Skins have 3D models in `Models3D` (`brute:champion`, `golem:aquamarine`, ...),
   so they can stand on the island.
 - **Username.** Change it once a week (developers any time).
-- **Match history** (`openHistorySheet()`, line 4511: "My matches", each online match with the opponent, result, time).
+- **Match history** (`openHistorySheet()`: "My matches", each online match with the opponent, result, time).
 - **Log out**, and **Delete account** (tap twice; a guest can't log back in).
 
 
