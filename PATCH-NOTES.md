@@ -20,9 +20,9 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
-## 7 November 2026 – New song: Broski
+## 7 November 2026 – New songs: Broski and DawnOnU
 
-- **Broski** by Snetänd is in the game as battle music. It isn't given to a look yet, so no match plays it on its own for now; you can find it under All music in the playlist panel.
+- **Broski** and **DawnOnU** by Snetänd are in the game as battle music. They aren't given to a look yet, so no match plays them on their own for now; you can find them under All music in the playlist panel.
 
 ---
 
