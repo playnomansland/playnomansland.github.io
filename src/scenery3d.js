@@ -36,9 +36,14 @@ const Scenery3D = (THREE, scene, opts = {}) => {
   // below); farLight: the far impostors' brightness, so they match the real models under a darker light; squash: models
   // drawn lower than tall ([pattern, height factor]); cabin: the cozy cabin off the board's far end.
   // Ashlands: a burnt forest. Charred pines and dead trees, bare rocks, embers rising through smoky air.
-  BIOMES.ash = { sky: '#4E4642', land: '#2E2A27', tint: [0.62, 0.58, 0.55], low: 'ash', trees: ['DeadTree_1', 'DeadTree_3', 'DeadTree_1', 'Pine_2', 'Pine_3'], grow: 0.85, dress: 0.5,
+  // The prototype (2026-11-07) gives it a story: the fire is still burning past the far end (a red glow on the
+  // horizon, a low red sun from that side), a burnt village stands in ruins there with embers in its rubble, broken
+  // swords and barricades from the battle that started it lie in the ash, smouldering hot spots glow by the board,
+  // ash falls while embers rise, and the dragon that burned it all circles high in the smoke.
+  BIOMES.ash = { sky: '#3A2C27', land: '#2B2522', tint: [0.62, 0.58, 0.55], low: 'ash', trees: ['DeadTree_1', 'DeadTree_3', 'DeadTree_1', 'Pine_2', 'Pine_3'], grow: 0.85, dress: 0.5,
     tints: [[/^Pine/, [0.3, 0.27, 0.25]], [/^Grass/, [1.05, 0.9, 0.7]], [/^DeadTree/, [0.7, 0.64, 0.6]]],
-    light: { hemi: ['#D2C1B2', '#2A2220', 1.35], sun: ['#FFCDA6', 1.8] }, fall: 'embers', farLight: 0.9 };
+    light: { hemi: ['#C9BAAE', '#2A1E1A', 1.3], sun: ['#FFC29A', 1.85], pos: [-40, 36, -38] }, fall: 'embers', fall2: 'ash', farLight: 0.8,
+    shade: [0.55, 3, 30], night: [0.62, 0.42, 0.32, 0.4], fire: ['#FF8A4A', 0.85], horizon: '#FF7A3A', ruins: true, remnants: true, dragon: true };
   // Moonlit Snow: Frozen Peak at night, blue moonlight, falling snow and a cabin with warm windows at the far end
   BIOMES.moonlit = { ...BIOMES.ice, sky: '#070A12', land: '#5A6880', low: 'moonlit', tint: [0.6, 0.68, 0.85], trees: ['Pine_1', 'Pine_2', 'Pine_3', 'Pine_5', 'Pine_1', 'DeadTree_3'], grow: 0.85,
     light: { hemi: ['#9DB2E0', '#1A2030', 1.05], sun: ['#C4D2F5', 1.35], pos: [30, 58, 18] }, drift: '#9AA9C2', farLight: 0.62, cabin: true,
@@ -57,8 +62,8 @@ const Scenery3D = (THREE, scene, opts = {}) => {
   // sees toward blue-green (the Purkinje shift): colours wash out, reds go dark first, and shadows sink into blue
   // rather than black. So far from the light a colour becomes its night brightness (weighted toward green and blue)
   // times a blue tint, with a faint blue floor. The cabin's warm light (uWarm: x, z, radius) is kept out of it.
-  const shadeU = { uShade: { value: new THREE.Vector3(0, 1, 2) }, uHalf: { value: new THREE.Vector2(40, 50) }, uNight: { value: new THREE.Vector4(0, 0, 0, 0) }, uWarm: { value: new THREE.Vector3(0, 0, 0) }, uDeep: { value: new THREE.Vector3(0, 1, 2) }, uLamps: { value: Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, 1, 0)) } };
-  const SHADE_GLSL = `uniform vec3 uShade; uniform vec2 uHalf; uniform vec4 uNight; uniform vec3 uWarm; uniform vec3 uDeep; uniform vec4 uLamps[8];
+  const shadeU = { uShade: { value: new THREE.Vector3(0, 1, 2) }, uHalf: { value: new THREE.Vector2(40, 50) }, uNight: { value: new THREE.Vector4(0, 0, 0, 0) }, uWarm: { value: new THREE.Vector3(0, 0, 0) }, uDeep: { value: new THREE.Vector3(0, 1, 2) }, uLamps: { value: Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, 1, 0)) }, uFire: { value: new THREE.Vector4(0, 0, 0, 0) } };
+  const SHADE_GLSL = `uniform vec3 uShade; uniform vec2 uHalf; uniform vec4 uNight; uniform vec3 uWarm; uniform vec3 uDeep; uniform vec4 uLamps[8]; uniform vec4 uFire;
 float pbDeep(vec2 xz) { return uDeep.x * smoothstep(uDeep.y, uDeep.z, length(max(abs(xz) - uHalf, 0.0))); }
 float pbK(vec2 xz) { float k = uShade.x * smoothstep(uShade.y, uShade.z, length(max(abs(xz) - uHalf, 0.0)));
   if (uWarm.z > 0.0) k *= smoothstep(uWarm.z * 0.55, uWarm.z, length(xz - uWarm.xy)); return k; }
@@ -67,7 +72,10 @@ float pbShade(vec2 xz) { return 1.0 - pbK(xz); }
 // bringing back their own colour out of the night, tinted orange
 float pbLamp(vec2 xz) { float w = 0.0; for (int i = 0; i < 8; i++) { vec4 l = uLamps[i]; if (l.w <= 0.0) continue;
   float f = 1.0 - smoothstep(0.0, l.z, length(xz - l.xy)); w += l.w * f * f; } return w; }
-vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz); if (k <= 0.0 && lw <= 0.0) return c;
+// the fire beyond the far end (uFire: colour, strength): everything past the far edge glows more and more in its
+// colour the further out it stands, as if backlit by a fire front out of sight (always -z: both players' far side)
+float pbFire(vec2 xz) { return uFire.w > 0.0 ? uFire.w * smoothstep(uHalf.y + 4.0, uHalf.y + 40.0, -xz.y) : 0.0; }
+vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(xz); if (k <= 0.0 && lw <= 0.0 && fw <= 0.0) return c;
   vec3 c0 = c;
   vec3 dark = uNight.w > 0.0 ? dot(c, vec3(0.08, 0.55, 0.37)) * uNight.rgb * uNight.w + uNight.rgb * 0.018 : vec3(0.0);
   c = mix(c, dark, k);
@@ -75,6 +83,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz); if (k <= 0.0
   if (uDeep.x > 0.0) { float d = length(max(abs(xz) - uHalf, 0.0)), q = uDeep.x * smoothstep(uDeep.y, uDeep.z, d);
     if (uWarm.z > 0.0) q *= smoothstep(uWarm.z * 0.55, uWarm.z, length(xz - uWarm.xy));
     c = mix(c, uNight.rgb * 0.012, q); }
+  if (fw > 0.0) c = mix(c, c0 * uFire.rgb * 1.6 + uFire.rgb * 0.06, fw);
   if (lw > 0.0) c = mix(c, c0 * vec3(1.15, 0.78, 0.45), clamp(lw, 0.0, 1.0) * 0.85) + vec3(0.16, 0.085, 0.025) * lw;
   return c; }
 `;
@@ -367,6 +376,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz); if (k <= 0.0
   const FALL = {
     snow: { col: [0.93, 0.96, 1.0], dir: 1, spd: 1, keep: 1, size: 1, flick: 0, sway: 1 },
     embers: { col: [1.0, 0.58, 0.26], dir: -1, spd: 0.75, keep: 0.5, size: 1.2, flick: 0.8, sway: 1.8 },
+    ash: { col: [0.66, 0.63, 0.6], dir: 1, spd: 0.32, keep: 0.5, size: 0.95, flick: 0, sway: 2.4 }, // grey ash drifting down (Ashlands, with the embers)
   };
   const fallU = { uCol: { value: new THREE.Vector3() }, uDir: { value: 1 }, uSpd: { value: 1 }, uKeep: { value: 1 }, uSize: { value: 1 }, uFlick: { value: 0 }, uSway: { value: 1 } };
   const flakeMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { uTime: snowTime, uPx: { value: 1 }, ...fallU, ...shadeU },
@@ -377,11 +387,16 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz); if (k <= 0.0
         vA = (0.55 + aSeed * 0.35) * (1.0 - uFlick * (0.5 + 0.5 * sin(uTime * (3.0 + aSeed * 4.0) + aSeed * 60.0))) * (uDir < 0.0 ? smoothstep(45.0, 20.0, p.y) : 1.0) * (0.35 + 0.65 * pbShade(p.xz)) * (1.0 - 0.85 * pbDeep(p.xz)); }`,
     fragmentShader: `uniform vec3 uCol; varying float vA; void main() { float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; gl_FragColor = vec4(uCol, vA * smoothstep(0.5, 0.2, d)); }` });
   const flakes = new THREE.Points(flakeGeo, flakeMat); flakes.visible = false; flakes.raycast = () => {}; scene.add(flakes);
-  function showFall(kind) {
-    const f = FALL[kind]; flakes.visible = !!f; if (!f) return;
-    fallU.uCol.value.set(...f.col); fallU.uDir.value = f.dir; fallU.uSpd.value = f.spd; fallU.uKeep.value = f.keep; fallU.uSize.value = f.size; fallU.uFlick.value = f.flick; fallU.uSway.value = f.sway;
-    flakeMat.blending = kind === 'embers' ? THREE.AdditiveBlending : THREE.NormalBlending; flakeMat.needsUpdate = true;
+  // a second layer of the same points with its own settings (Ashlands' falling ash, while the first carries embers)
+  const flake2Mat = flakeMat.clone();
+  for (const k of ['uTime', 'uPx', ...Object.keys(shadeU)]) flake2Mat.uniforms[k] = flakeMat.uniforms[k];
+  const flakes2 = new THREE.Points(flakeGeo, flake2Mat); flakes2.visible = false; flakes2.raycast = () => {}; flakes2.rotation.y = 1.3; scene.add(flakes2);
+  function setFall(pts, mat, kind) {
+    const f = FALL[kind], U = mat.uniforms; pts.visible = !!f; if (!f) return;
+    U.uCol.value.set(...f.col); U.uDir.value = f.dir; U.uSpd.value = f.spd; U.uKeep.value = f.keep; U.uSize.value = f.size; U.uFlick.value = f.flick; U.uSway.value = f.sway;
+    mat.blending = kind === 'embers' ? THREE.AdditiveBlending : THREE.NormalBlending; mat.needsUpdate = true;
   }
+  const showFall = (kind, kind2) => { setFall(flakes, flakeMat, kind); setFall(flakes2, flake2Mat, kind2); };
 
   // ---------- the cabin (Moonlit Snow): log walls, a snowy roof, a stone chimney with smoke, warm lit windows whose
   // light spills on the snow. Built once from simple shapes, moved and shown per layout (never disposed with it). ----------
@@ -469,24 +484,58 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz); if (k <= 0.0
     gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
   const lampGlowMat = new THREE.SpriteMaterial({ map: lampGlowTex, color: '#FFB257', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  // props: [{ kind: 'lantern' | 'snowman', x, z, y, ang, s }]
+  // soot: the same models blackened by fire (Ashlands' ruins, swords and barricades)
+  const sootMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, color: '#453C38' });
+  sootMat.onBeforeCompile = shadeLit; sootMat.customProgramCacheKey = () => 'pb-soot';
+  const emberGlowMat = new THREE.SpriteMaterial({ map: lampGlowTex, color: '#FF6A28', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const lampFlick = [], emberGlows = []; let lampT = 0;
+  // props: [{ kind: 'lantern' | 'snowman' | 'model' | 'ember', model, mat 'soot', x, z, y, ang, s, tilt }]; an ember is a
+  // smouldering spot: a flickering glow low on the ground and flickering warm light round it
   function showProps(props) {
     for (const o of [...xmas.children]) { xmas.remove(o); }
-    shadeU.uLamps.value.forEach((v) => v.set(0, 0, 1, 0));
+    shadeU.uLamps.value.forEach((v) => v.set(0, 0, 1, 0)); lampFlick.length = 0; emberGlows.length = 0;
     let li = 0;
+    const lamp = (x, z, reach, str, fl) => { if (li >= 8) return; shadeU.uLamps.value[li].set(x, z, reach, str); lampFlick.push([li, str, fl, x * 0.37 + z * 0.11]); li++; };
     for (const p of props || []) {
-      const g = kkGeo(p.kind === 'lantern' ? 'lantern' : 'snowman_A'); if (!g) continue;
-      const m = new THREE.Mesh(g, propMat); m.position.set(p.x, p.y, p.z); m.rotation.y = p.ang; m.scale.setScalar(p.s); m.castShadow = true; m.raycast = () => {}; xmas.add(m);
+      if (p.kind === 'ember') {
+        const gl = new THREE.Sprite(emberGlowMat); gl.position.set(p.x, p.y + 0.5, p.z); gl.scale.setScalar(p.s * 3); gl.raycast = () => {}; xmas.add(gl);
+        emberGlows.push([gl, p.s * 3, p.x + p.z]); if (p.lamp !== false) lamp(p.x, p.z, 8 * p.s, 1.3, 1); continue;
+      }
+      const g = kkGeo(p.model || (p.kind === 'lantern' ? 'lantern' : 'snowman_A')); if (!g) continue;
+      const m = new THREE.Mesh(g, p.mat === 'soot' ? sootMat : propMat); m.position.set(p.x, p.y, p.z); m.rotation.set(p.tilt || 0, p.ang, 0, 'YXZ'); m.scale.setScalar(p.s); m.castShadow = true; m.raycast = () => {}; xmas.add(m);
       if (p.kind === 'lantern') {
         const gl = new THREE.Sprite(lampGlowMat); gl.position.set(p.x, p.y + 3.25 * p.s, p.z); gl.scale.setScalar(3.2 * p.s); gl.raycast = () => {}; xmas.add(gl);
-        if (li < 8) shadeU.uLamps.value[li++].set(p.x, p.z, 12, 1.6);
+        lamp(p.x, p.z, 12, 1.6, 0);
       }
     }
+  }
+  // ---------- the fire on the horizon (biome .horizon): a wide glow behind the far woods, under the smoke ----------
+  const horizonTex = (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 128; const g = c.getContext('2d'), gr = g.createLinearGradient(0, 128, 0, 0);
+    gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(0.25, 'rgba(255,255,255,0.6)'); gr.addColorStop(0.6, 'rgba(255,255,255,0.18)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 4, 128); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const horizonMat = new THREE.MeshBasicMaterial({ map: horizonTex, transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending });
+  const horizon = new THREE.Mesh(new THREE.PlaneGeometry(900, 110), horizonMat); horizon.visible = false; horizon.raycast = () => {}; scene.add(horizon);
+  // ---------- the dragon (biome .dragon): a dark shape circling slowly, high in the smoke past the far end ----------
+  const dragonMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, color: '#5A4842' });
+  const dragon = new THREE.Group(); dragon.visible = false; scene.add(dragon); let dragonT = 0;
+  function showDragon(at) {
+    dragon.visible = !!at; if (!at) return;
+    if (!dragon.children.length) { const g = kkGeo('Dragon'); if (!g) { dragon.visible = false; return; } const m = new THREE.Mesh(g, dragonMat); m.scale.setScalar(4); m.raycast = () => {}; dragon.add(m); }
+    Object.assign(dragon.userData, at);
   }
   // the clock for the falling snow, embers and chimney smoke (the page calls it every frame it draws); px: the renderer's pixels per CSS pixel
   let smokeT = 0;
   function tick(dt, px = 1) {
-    if (flakes.visible) { snowTime.value += dt; flakeMat.uniforms.uPx.value = px; }
+    if (flakes.visible || flakes2.visible) { snowTime.value += dt; flakeMat.uniforms.uPx.value = px; }
+    lampT += dt;
+    lampFlick.forEach(([i, base, fl, ph]) => { if (fl) shadeU.uLamps.value[i].w = base * (1 - fl * 0.35 * (0.5 + 0.5 * Math.sin(lampT * 7.3 + ph) * Math.sin(lampT * 3.1 + ph * 2))); });
+    emberGlows.forEach(([sp, base, ph]) => { const f = 0.8 + 0.2 * Math.sin(lampT * 6.1 + ph) * Math.sin(lampT * 2.3 + ph); sp.scale.setScalar(base * f); });
+    if (dragon.visible) {
+      dragonT += dt;
+      const d = dragon.userData, a = d.a0 + dragonT * 0.07, x = d.cx + Math.cos(a) * d.r, z = d.cz + Math.sin(a) * d.r * 0.6;
+      dragon.position.set(x, d.y + Math.sin(dragonT * 0.5) * 2.5, z);
+      dragon.rotation.set(0, Math.atan2(-Math.sin(a), Math.cos(a) * 0.6) , 0); dragon.rotateZ(-0.35);
+    }
     if (cabin.visible) {
       smokeT += dt;
       smoke.forEach((s, i) => { const ph = (smokeT * 0.12 + i / smoke.length) % 1; s.position.set(smoke.top.x + ph * 1.8, smoke.top.y + ph * 7, smoke.top.z - ph * 0.6); s.scale.setScalar(0.9 + ph * 3); s.material.opacity = 0.42 * Math.sin(ph * Math.PI) * (1 - ph * 0.4); });
@@ -516,8 +565,27 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz); if (k <= 0.0
       ...[-1, 1].flatMap((sx) => [-1, 1].map((sz) => ({ kind: 'lantern', x: sx * (hw + 3), z: sz * (hd + 3), ang: sx > 0 ? Math.PI : 0, s: 0.9 }))),
       ...(cab ? [{ kind: 'snowman', x: cab.x - 9, z: cab.z + 5, ang: 0.5, s: 1.2 }] : []),
       { kind: 'snowman', x: -(hw + 7), z: -hd * 0.3, ang: 1.2, s: 1.15 }, { kind: 'snowman', x: hw + 6.5, z: hd * 0.25, ang: -1.0, s: 1.1 }] : [];
+    // Ashlands: the burnt village past the far end (KayKit Dungeon walls, pillars, rubble, stairs to nowhere, all
+    // sooty, embers in the rubble), and the battle's leftovers by the board: broken swords and shields stuck in the
+    // ash, broken barricades, smouldering hot spots
+    if (bi.ruins) {
+      const R = { x: -hw * 0.28, z: -hd - 17, ang: 0.12, s: 1.25 }, ca = Math.cos(R.ang), sa = Math.sin(R.ang);
+      const at = (lx, lz) => ({ x: R.x + (lx * ca + lz * sa) * R.s, z: R.z + (-lx * sa + lz * ca) * R.s });
+      [['wall_archedwindow_open', 0, 0, 0, 1], ['wall_broken', -4, 0, 0, 1], ['wall_half', 2, 0, 0, 1], ['pillar', -6.2, 0, 0, 1], ['pillar', 4.6, 0, 0, 0.75],
+        ['wall_broken', -6.2, -2.4, Math.PI / 2, 1], ['rubble_large', -1.6, 2.7, 0.2, 0.5], ['rubble_half', 3.1, 2.1, -0.5, 0.55], ['stairs', 7, -5, -0.35, 0.7]]
+        .forEach(([model, lx, lz, a, sc]) => props.push({ kind: 'model', model, mat: 'soot', ...at(lx, lz), ang: R.ang + a, s: R.s * sc, y: 0 }));
+      [[-1.6, 2.9, 0.9], [3.3, 2.3, 0.75], [0.2, -1.6, 0.8]].forEach(([lx, lz, sc]) => props.push({ kind: 'ember', ...at(lx, lz), s: sc * R.s, y: 0 }));
+      props.ruinsAt = R;
+    }
+    if (bi.remnants) {
+      [[-1, -0.62, 3.0, 0.4, 0.25], [-1, -0.1, 5.5, 2.1, -0.3], [-1, 0.48, 3.4, -0.8, 0.35], [1, -0.4, 3.2, 1.2, -0.25], [1, 0.15, 6.0, -2.4, 0.3], [1, 0.62, 3.6, 0.6, -0.2]]
+        .forEach(([sd, f, off, a, tl]) => props.push({ kind: 'model', model: 'sword_shield_broken', mat: 'soot', x: sd * (hw + off), z: f * hd, ang: a, tilt: tl, s: 1.5 }));
+      [[-1, -0.3, 5, 0.3], [1, 0.38, 4.6, -0.2], [-1, 0.75, 6.5, 1.3]].forEach(([sd, f, off, a]) => props.push({ kind: 'model', model: 'barrier_half', mat: 'soot', x: sd * (hw + off), z: f * hd, ang: a, s: 1.6 }));
+      [[-1, -0.3, 8.5], [1, -0.68, 7.5], [-1, 0.35, 9], [1, 0.5, 8.5]].forEach(([sd, f, off]) => props.push({ kind: 'ember', x: sd * (hw + off), z: f * hd, s: 1.0 }));
+    }
     const inPond = (x, z, k = 1.12) => ponds.some((p) => ((x - p.x) / p.rx) ** 2 + ((z - p.z) / p.rz) ** 2 < k * k) || (cab && Math.hypot(x - cab.x, z - cab.z) < cab.r)
-      || props.some((p) => Math.hypot(x - p.x, z - p.z) < (p.kind === 'lantern' ? 1.6 : 2.6));
+      || props.some((p) => Math.hypot(x - p.x, z - p.z) < (p.kind === 'lantern' ? 1.6 : p.kind === 'ember' ? 1.5 : 2.6))
+      || (props.ruinsAt && Math.hypot(x - props.ruinsAt.x, z - props.ruinsAt.z) < 13);
     const tintFor = (name) => { const t = (bi.tints || []).find(([re]) => re.test(name)); return t ? t[1] : [1, 1, 1]; };
     const squashOf = (name) => { const t = (bi.squash || []).find(([re]) => re.test(name)); return t ? t[1] : 1; };
     const put = (name, x, z, s, y = 0, wet = false) => {
@@ -617,10 +685,14 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz); if (k <= 0.0
 
     // far trees and bushes: impostors
     shadeU.uHalf.value.set(hw, hd); shadeU.uShade.value.set(...(bi.shade || [0, 1, 2])); veil.visible = !!bi.shade;
-    shadeU.uNight.value.set(...(bi.night || [0, 0, 0, 0])); shadeU.uDeep.value.set(...(bi.deep || [0, 1, 2])); shadeU.uWarm.value.set(cab ? cab.x : 0, cab ? cab.z : 0, cab ? cab.r * 1.5 : 0);
-    snowU.value = bi.snow || 0; showFall(bi.fall || (bi.snow ? 'snow' : null)); showCabin(cab);
-    for (const p of props) p.y = groundH(p.x, p.z) * 0.85;
+    shadeU.uNight.value.set(...(bi.night || [0, 0, 0, 0])); shadeU.uDeep.value.set(...(bi.deep || [0, 1, 2]));
+    if (bi.fire) shadeU.uFire.value.set(...new THREE.Color(bi.fire[0]).toArray(), bi.fire[1]); else shadeU.uFire.value.set(0, 0, 0, 0); shadeU.uWarm.value.set(cab ? cab.x : 0, cab ? cab.z : 0, cab ? cab.r * 1.5 : 0);
+    snowU.value = bi.snow || 0; showFall(bi.fall || (bi.snow ? 'snow' : null), bi.fall2); showCabin(cab);
+    for (const p of props) if (p.y === undefined) p.y = groundH(p.x, p.z) * 0.85;
     showProps(props);
+    horizon.visible = !!bi.horizon;
+    if (bi.horizon) { horizonMat.color.set(bi.horizon); horizon.position.set(0, 22, -hd - 120); }
+    showDragon(bi.dragon ? { cx: hw * 0.1, cz: -hd - 30, r: 55, y: 24, a0: 1.2 } : null);
     bake([...new Set([...placed.keys()].filter((k) => k.endsWith('~')).map((k) => k.slice(0, -1)).filter(impostorable))].sort());
     const far = [];
     for (const [k, list] of [...placed]) {
@@ -649,7 +721,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz); if (k <= 0.0
     }
   }
   function shadows(on) { if (on !== castShadows) { castShadows = on; key = ''; } }
-  function dispose() { clear(); scene.remove(flakes, cabin, cabinLight, veil, xmas); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
+  function dispose() { clear(); scene.remove(flakes, flakes2, cabin, cabinLight, veil, xmas, horizon, dragon); flake2Mat.dispose(); sootMat.dispose(); emberGlowMat.dispose(); horizonMat.dispose(); horizonTex.dispose(); horizon.geometry.dispose(); dragonMat.dispose(); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
   return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
 };
 
