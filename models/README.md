@@ -28,12 +28,8 @@ To put one in the game: copy its BUILD entry into `src/models3d.js` (and for a s
 
 `leaf_wizard.blend`, `leaf_wizard.glb`, `leaf_wizard_sheet.png` and `scenery.bin` are earlier assets made outside the Forge.
 
-## Leader heads (sketches, 2026-11-07)
+## Leader heads (2026-11-07)
 
-`heads/leader-heads.js` builds the leader heads from primitives, in the same part style as `src/models3d.js`, merged into one smooth-shaded mesh with vertex colours. Each head sits on a short neck with a collar in its leader's crest colour. `heads/preview.html` shows them turning, with triangle counts (open it from a local server at the repo root). Done so far: Frickolas Cage (971 triangles), Zoe (866), Emile (984). Not used by the game yet.
-
-`heads/emile.js` (2026-11-07): Emile, the chosen version (v1): built from Vilhelm's reference sheet, flat-shaded, no neck, 2,892 triangles. `heads/emile-v2.js` (EmileHeadV2) is the refined alternative (warmer smile, heavier jowls, chunkier tusks, neck and collar, 3,248 triangles); Vilhelm preferred v1.
-`heads/zoe.js` (2026-11-07): Zoe, the Overseer, v5 (v6 with a posed, more expressive face was judged worse and reverted): proportions measured against Vilhelm's reference sheet; 4,276 triangles.
-Contact sheet: `heads/sheet.html?src=zoe.js&fn=ZoeHead&back=1&dist=16&look=0.2` (Emile: `src=emile.js&fn=EmileHead&dist=11&look=-0.15`), from a local server at the repo root (3/4, front, side, back, silhouette, 64 px).
-
-sheet.html also takes `only=Front` (one view) and `yaw=` (radians, positive turns the face to the viewer's right) for side-by-side comparisons with a reference crop.
+UI heads for the leaders. Start with `heads/HANDOFF.md`: status, decisions, the model format, the reference sheets
+(`heads/refs/`), renders (`heads/renders/`) and the render/compare tool (`node tools/heads-render.js`).
+Done: Emile (`heads/emile.js`). Next: Zoe, redone from her reference with the image-to-three.js skill in Claude Code.
