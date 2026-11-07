@@ -42,7 +42,7 @@ const Scenery3D = (THREE, scene, opts = {}) => {
   // Moonlit Snow: Frozen Peak at night, blue moonlight, falling snow and a cabin with warm windows at the far end
   BIOMES.moonlit = { ...BIOMES.ice, sky: '#070A12', land: '#5A6880', low: 'moonlit', tint: [0.6, 0.68, 0.85], trees: ['Pine_1', 'Pine_2', 'Pine_3', 'Pine_5', 'Pine_1', 'DeadTree_3'], grow: 0.85,
     light: { hemi: ['#9DB2E0', '#1A2030', 1.05], sun: ['#C4D2F5', 1.35], pos: [30, 58, 18] }, drift: '#9AA9C2', farLight: 0.62, cabin: true,
-    shade: [0.92, 0.5, 18], night: [0.42, 0.56, 1.0, 0.26], deep: [0.95, 14, 50], deepSnow: 1.1 };
+    shade: [0.92, 0.5, 18], night: [0.42, 0.56, 1.0, 0.26], deep: [0.95, 14, 50], deepSnow: 1.1, season: 'xmas' };
   // Savanna: golden hour on dry grass, lone flat-topped trees like acacias, a low warm sun with long shadows
   BIOMES.savanna = { sky: '#DDB27C', land: '#8F7C43', tint: [1.06, 0.98, 0.82], low: 'savanna', trees: ['CommonTree_3', 'CommonTree_5', 'DeadTree_1', 'CommonTree_3'], grow: 0.42, dress: 0.8,
     squash: [[/^CommonTree/, 0.5]], tints: [[/^CommonTree/, [1.0, 0.92, 0.6]], [/^Grass/, [1.35, 1.1, 0.55]], [/^Bush/, [1.1, 0.95, 0.55]], [/^DeadTree/, [1.1, 0.95, 0.78]]],
@@ -57,19 +57,25 @@ const Scenery3D = (THREE, scene, opts = {}) => {
   // sees toward blue-green (the Purkinje shift): colours wash out, reds go dark first, and shadows sink into blue
   // rather than black. So far from the light a colour becomes its night brightness (weighted toward green and blue)
   // times a blue tint, with a faint blue floor. The cabin's warm light (uWarm: x, z, radius) is kept out of it.
-  const shadeU = { uShade: { value: new THREE.Vector3(0, 1, 2) }, uHalf: { value: new THREE.Vector2(40, 50) }, uNight: { value: new THREE.Vector4(0, 0, 0, 0) }, uWarm: { value: new THREE.Vector3(0, 0, 0) }, uDeep: { value: new THREE.Vector3(0, 1, 2) } };
-  const SHADE_GLSL = `uniform vec3 uShade; uniform vec2 uHalf; uniform vec4 uNight; uniform vec3 uWarm; uniform vec3 uDeep;
+  const shadeU = { uShade: { value: new THREE.Vector3(0, 1, 2) }, uHalf: { value: new THREE.Vector2(40, 50) }, uNight: { value: new THREE.Vector4(0, 0, 0, 0) }, uWarm: { value: new THREE.Vector3(0, 0, 0) }, uDeep: { value: new THREE.Vector3(0, 1, 2) }, uLamps: { value: Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, 1, 0)) } };
+  const SHADE_GLSL = `uniform vec3 uShade; uniform vec2 uHalf; uniform vec4 uNight; uniform vec3 uWarm; uniform vec3 uDeep; uniform vec4 uLamps[8];
 float pbDeep(vec2 xz) { return uDeep.x * smoothstep(uDeep.y, uDeep.z, length(max(abs(xz) - uHalf, 0.0))); }
 float pbK(vec2 xz) { float k = uShade.x * smoothstep(uShade.y, uShade.z, length(max(abs(xz) - uHalf, 0.0)));
   if (uWarm.z > 0.0) k *= smoothstep(uWarm.z * 0.55, uWarm.z, length(xz - uWarm.xy)); return k; }
 float pbShade(vec2 xz) { return 1.0 - pbK(xz); }
-vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz); if (k <= 0.0) return c;
+// lantern light (uLamps: x, z, reach m, strength; strength 0 = off): warm light on the snow and things round a lamp,
+// bringing back their own colour out of the night, tinted orange
+float pbLamp(vec2 xz) { float w = 0.0; for (int i = 0; i < 8; i++) { vec4 l = uLamps[i]; if (l.w <= 0.0) continue;
+  float f = 1.0 - smoothstep(0.0, l.z, length(xz - l.xy)); w += l.w * f * f; } return w; }
+vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz); if (k <= 0.0 && lw <= 0.0) return c;
+  vec3 c0 = c;
   vec3 dark = uNight.w > 0.0 ? dot(c, vec3(0.08, 0.55, 0.37)) * uNight.rgb * uNight.w + uNight.rgb * 0.018 : vec3(0.0);
   c = mix(c, dark, k);
   // deep darkness (biome .deep = [strength, from m, full at m]): further out still, the woods sink into near-black
   if (uDeep.x > 0.0) { float d = length(max(abs(xz) - uHalf, 0.0)), q = uDeep.x * smoothstep(uDeep.y, uDeep.z, d);
     if (uWarm.z > 0.0) q *= smoothstep(uWarm.z * 0.55, uWarm.z, length(xz - uWarm.xy));
     c = mix(c, uNight.rgb * 0.012, q); }
+  if (lw > 0.0) c = mix(c, c0 * vec3(1.15, 0.78, 0.45), clamp(lw, 0.0, 1.0) * 0.85) + vec3(0.16, 0.085, 0.025) * lw;
   return c; }
 `;
   // a lit material (scenery, drifts): darkened after lighting, by where each fragment stands
@@ -442,6 +448,41 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz); if (k <= 0.0) return c;
     cabin.position.set(at.x, 0, at.z); cabin.rotation.y = at.ang; cabin.scale.setScalar(at.s);
     cabinLight.position.set(at.x + Math.sin(at.ang) * 4.5 * at.s, 2.4 * at.s, at.z + Math.cos(at.ang) * 4.5 * at.s);
   }
+  // ---------- Christmas props (Moonlit Snow): KayKit Holiday Bits snowmen and lanterns (src/kaykit3d.js), each lantern
+  // with a glow at its lamp and warm light on the snow round it (uLamps). Rebuilt per layout from cached geometry. ----------
+  const xmas = new THREE.Group(); scene.add(xmas);
+  const kkCache = {};
+  const kkGeo = (name) => {
+    if (name in kkCache) return kkCache[name];
+    const d = typeof KAYKIT !== 'undefined' && KAYKIT[name]; if (!d) return (kkCache[name] = null);
+    const dec = (b) => Uint8Array.from(atob(b), (ch) => ch.charCodeAt(0));
+    const q = new Int16Array(dec(d[0]).buffer), rgb = dec(d[1]), [lo, hi] = [d[2], d[3]];
+    const pos = new Float32Array(q.length), col = new Float32Array(q.length), c = new THREE.Color();
+    for (let i = 0; i < q.length; i++) { const k = i % 3; pos[i] = lo[k] + (q[i] + 32767) / 65534 * (hi[k] - lo[k]); }
+    for (let t = 0; t < q.length / 9; t++) { c.setRGB(rgb[t * 3] / 255, rgb[t * 3 + 1] / 255, rgb[t * 3 + 2] / 255, THREE.SRGBColorSpace); for (let k = 0; k < 3; k++) col.set([c.r, c.g, c.b], t * 9 + k * 3); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
+    return (kkCache[name] = g);
+  };
+  const propMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  propMat.onBeforeCompile = shadeLit; propMat.customProgramCacheKey = () => 'pb-prop';
+  const lampGlowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const lampGlowMat = new THREE.SpriteMaterial({ map: lampGlowTex, color: '#FFB257', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  // props: [{ kind: 'lantern' | 'snowman', x, z, y, ang, s }]
+  function showProps(props) {
+    for (const o of [...xmas.children]) { xmas.remove(o); }
+    shadeU.uLamps.value.forEach((v) => v.set(0, 0, 1, 0));
+    let li = 0;
+    for (const p of props || []) {
+      const g = kkGeo(p.kind === 'lantern' ? 'lantern' : 'snowman_A'); if (!g) continue;
+      const m = new THREE.Mesh(g, propMat); m.position.set(p.x, p.y, p.z); m.rotation.y = p.ang; m.scale.setScalar(p.s); m.castShadow = true; m.raycast = () => {}; xmas.add(m);
+      if (p.kind === 'lantern') {
+        const gl = new THREE.Sprite(lampGlowMat); gl.position.set(p.x, p.y + 3.25 * p.s, p.z); gl.scale.setScalar(3.2 * p.s); gl.raycast = () => {}; xmas.add(gl);
+        if (li < 8) shadeU.uLamps.value[li++].set(p.x, p.z, 12, 1.6);
+      }
+    }
+  }
   // the clock for the falling snow, embers and chimney smoke (the page calls it every frame it draws); px: the renderer's pixels per CSS pixel
   let smokeT = 0;
   function tick(dt, px = 1) {
@@ -469,7 +510,15 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz); if (k <= 0.0) return c;
     const ponds = bi.ponds ? [{ x: hw * 0.2, z: -hd - 25, rx: 24, rz: 12 }, { x: -hw - 17, z: -hd * 0.25, rx: 9, rz: 16 }] : [];
     // the cabin (Moonlit Snow): off the far end, a little right of the middle, turned toward the board; its clearing stays open
     const cab = bi.cabin ? { x: hw * 0.32, z: -hd - 15, ang: -0.22, r: 11, s: 1.4 } : null;
-    const inPond = (x, z, k = 1.12) => ponds.some((p) => ((x - p.x) / p.rx) ** 2 + ((z - p.z) / p.rz) ** 2 < k * k) || (cab && Math.hypot(x - cab.x, z - cab.z) < cab.r);
+    // Christmas props (biome .season 'xmas'): lanterns along both sides of the board and by the cabin, snowmen near
+    // them; nothing else is placed on their spots
+    const props = bi.season === 'xmas' ? [
+      ...[-1, 1].flatMap((sd) => [-0.55, 0, 0.55].map((f) => ({ kind: 'lantern', x: sd * (hw + 3.2), z: f * hd, ang: sd > 0 ? Math.PI : 0, s: 0.9 }))),
+      ...(cab ? [{ kind: 'lantern', x: cab.x - 5.5, z: cab.z + 9, ang: 0.4, s: 0.9 }, { kind: 'lantern', x: cab.x + 6, z: cab.z + 8, ang: -0.4, s: 0.9 },
+        { kind: 'snowman', x: cab.x - 9, z: cab.z + 5, ang: 0.5, s: 1.2 }] : []),
+      { kind: 'snowman', x: -(hw + 7), z: -hd * 0.3, ang: 1.2, s: 1.15 }, { kind: 'snowman', x: hw + 6.5, z: hd * 0.25, ang: -1.0, s: 1.1 }] : [];
+    const inPond = (x, z, k = 1.12) => ponds.some((p) => ((x - p.x) / p.rx) ** 2 + ((z - p.z) / p.rz) ** 2 < k * k) || (cab && Math.hypot(x - cab.x, z - cab.z) < cab.r)
+      || props.some((p) => Math.hypot(x - p.x, z - p.z) < (p.kind === 'lantern' ? 1.6 : 2.6));
     const tintFor = (name) => { const t = (bi.tints || []).find(([re]) => re.test(name)); return t ? t[1] : [1, 1, 1]; };
     const squashOf = (name) => { const t = (bi.squash || []).find(([re]) => re.test(name)); return t ? t[1] : 1; };
     const put = (name, x, z, s, y = 0, wet = false) => {
@@ -571,6 +620,8 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz); if (k <= 0.0) return c;
     shadeU.uHalf.value.set(hw, hd); shadeU.uShade.value.set(...(bi.shade || [0, 1, 2])); veil.visible = !!bi.shade;
     shadeU.uNight.value.set(...(bi.night || [0, 0, 0, 0])); shadeU.uDeep.value.set(...(bi.deep || [0, 1, 2])); shadeU.uWarm.value.set(cab ? cab.x : 0, cab ? cab.z : 0, cab ? cab.r * 1.5 : 0);
     snowU.value = bi.snow || 0; showFall(bi.fall || (bi.snow ? 'snow' : null)); showCabin(cab);
+    for (const p of props) p.y = groundH(p.x, p.z) * 0.85;
+    showProps(props);
     bake([...new Set([...placed.keys()].filter((k) => k.endsWith('~')).map((k) => k.slice(0, -1)).filter(impostorable))].sort());
     const far = [];
     for (const [k, list] of [...placed]) {
@@ -599,7 +650,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz); if (k <= 0.0) return c;
     }
   }
   function shadows(on) { if (on !== castShadows) { castShadows = on; key = ''; } }
-  function dispose() { clear(); scene.remove(flakes, cabin, cabinLight, veil); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
+  function dispose() { clear(); scene.remove(flakes, cabin, cabinLight, veil, xmas); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
   return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
 };
 

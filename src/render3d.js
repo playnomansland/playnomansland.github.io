@@ -86,6 +86,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (!scenery) return;
     scenery.update(v, groundY, BW, BD, T);
     const bi = scenery.biome(v);
+    models.setSeason(bi.season); // Moonlit Snow is Christmas: the treasury becomes a pile of presents
     if (bi.sky === biomeKey) return;
     biomeKey = bi.sky;
     scene.background.set(bi.sky); scene.fog.color.set(bi.sky); around.material.color.set(bi.land);
