@@ -48,10 +48,17 @@ const Scenery3D = (THREE, scene, opts = {}) => {
   BIOMES.moonlit = { ...BIOMES.ice, sky: '#070A12', land: '#5A6880', low: 'moonlit', tint: [0.6, 0.68, 0.85], trees: ['Pine_1', 'Pine_2', 'Pine_3', 'Pine_5', 'Pine_1', 'DeadTree_3'], grow: 0.85,
     light: { hemi: ['#9DB2E0', '#1A2030', 1.05], sun: ['#C4D2F5', 1.35], pos: [30, 58, 18] }, drift: '#9AA9C2', farLight: 0.62, cabin: true,
     shade: [0.92, 0.5, 18], night: [0.42, 0.56, 1.0, 0.26], deep: [0.95, 14, 50], deepSnow: 1.1, season: 'xmas' };
-  // Savanna: golden hour on dry grass, lone flat-topped trees like acacias, a low warm sun with long shadows
-  BIOMES.savanna = { sky: '#DDB27C', land: '#8F7C43', tint: [1.06, 0.98, 0.82], low: 'savanna', trees: ['CommonTree_3', 'CommonTree_5', 'DeadTree_1', 'CommonTree_3'], grow: 0.42, dress: 0.8,
-    squash: [[/^CommonTree/, 0.5]], tints: [[/^CommonTree/, [1.0, 0.92, 0.6]], [/^Grass/, [1.35, 1.1, 0.55]], [/^Bush/, [1.1, 0.95, 0.55]], [/^DeadTree/, [1.1, 0.95, 0.78]]],
-    light: { hemi: ['#FFE0B8', '#3A2E1E', 1.35], sun: ['#FFCF94', 2.5], pos: [-52, 40, 22] } };
+  // Savanna (prototype 2026-11-07): golden hour on a sea of dry grass that rolls in the wind, wide-spaced flat-topped
+  // acacias (Quaternius' Simple Nature Pack), red termite mounds, granite kopjes (rock outcrops) with a lone giant
+  // acacia past the far end, grey-olive thorn scrub, dust drifting in the low sun, vultures circling over the board
+  // (their shadows cross it), cool violet shadow fill. The sun sinks a little every round (dusk: render3d).
+  // grassSea: the rolling grass round the board; ground: the land's colours [earth, straw]; kopjes: the outcrops and
+  // the giant acacia; vultures: how many circle overhead.
+  BIOMES.savanna = { sky: '#E9C48E', land: '#B39552', tint: [1, 1, 1], low: 'savanna', trees: ['Acacia_A', 'Acacia_B', 'Acacia_A', 'Acacia_C'], grow: 0.3, dress: 0.55,
+    tints: [[/^Grass/, [1.4, 1.12, 0.55]], [/^Acacia/, [1.05, 1.0, 0.9]]],
+    light: { hemi: ['#FFE7C4', '#5C5683', 1.25], sun: ['#FFD49C', 2.7], pos: [-58, 34, 20] },
+    dusk: { sky: '#E39A6A', hemi: ['#FFC9A0', '#4E4278', 1.05], sun: ['#FF9A58', 2.4], pos: [-70, 16, 12], per: 0.09 },
+    fall: 'dust', grassSea: 1, ground: ['#9C7F45', '#CFB26C'], kopjes: true, termites: 12, vultures: 3 };
   // a look (Scenery3D.LOOKS, below) -> its biome
   const biomeOf = (look) => BIOMES[(Scenery3D.LOOKS[look] || Scenery3D.LOOKS.meadow).biome] || BIOMES.meadow;
   const biome = (v) => biomeOf(Scenery3D.lookOf(v && (v.battlePre || v.m)));
@@ -178,7 +185,44 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       lib['SnowPile_' + (i + 1)] = { h: geo.boundingBox.max.y, r: Math.max(sx, sz), parts: [{ geo, mat }] };
     });
   }
-  const ready = load().then(() => { addSnowPiles(); if (opts.renderer) setupImpostors(); key = ''; opts.onReady && opts.onReady(); }).catch((e) => console.warn('No Mans Land: no 3D scenery', e));
+  // Savanna's models: the acacias (src/kaykit3d.js, flat coloured), and lumpy shapes made here: thorn scrub, granite
+  // boulders, termite mounds (a tall leaning spire with a smaller one at its foot, red earth)
+  const merge = (geos) => { const n = geos.reduce((s, g) => s + g.attributes.position.count, 0), P = new Float32Array(n * 3); let o = 0;
+    for (const g of geos) { P.set(g.attributes.position.array, o); o += g.attributes.position.array.length; g.dispose(); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere(); return g; };
+  // a lump: an icosahedron with a bumpy outline (the same for a shared corner, so it stays closed), scaled, its base cut flat
+  const lumpGeo = (det, sx, sy, sz, ph, bump, x = 0, y = 0, z = 0) => {
+    const geo = new THREE.IcosahedronGeometry(1, det).toNonIndexed(), pos = geo.attributes.position, v = new THREE.Vector3();
+    for (let k = 0; k < pos.count; k++) {
+      v.fromBufferAttribute(pos, k); const kx = Math.round(v.x * 1e4), ky = Math.round(v.y * 1e4), kz = Math.round(v.z * 1e4);
+      const f = 1 + bump * (Math.sin(kx * 3e-4 + ph) * Math.sin(kz * 2.7e-4 + 0.4 + ph) + 0.6 * Math.sin(ky * 5e-4 + ph * 2) * Math.cos(kx * 4.1e-4 - ph));
+      v.multiplyScalar(f); v.y = Math.max(v.y, -0.2); pos.setXYZ(k, v.x * sx + x, (v.y + 0.2) * sy + y, v.z * sz + z);
+    }
+    return geo;
+  };
+  const savMat = (col, key) => { const m = new THREE.MeshLambertMaterial({ color: col, flatShading: true }); m.onBeforeCompile = shadeLit; m.customProgramCacheKey = () => key; mats.push(m); return m; };
+  const addModel = (name, geo, mat) => { geo.computeBoundingBox(); const b = geo.boundingBox; lib[name] = { h: b.max.y, r: Math.max(b.max.x - b.min.x, b.max.z - b.min.z) / 2, parts: [{ geo, mat }] }; };
+  function addSavanna() {
+    for (const [name, kk] of [['Acacia_A', 'acacia_A'], ['Acacia_B', 'acacia_B'], ['Acacia_C', 'acacia_C']]) { const g = kkGeo(kk); if (g) { const c = g.clone(); addModel(name, c, propMat); } }
+    const thorn = savMat('#7C8150', 'pb-thorn'), granite = savMat('#B4A493', 'pb-granite'), earth = savMat('#A9603C', 'pb-termite');
+    addModel('Thorn_1', merge([lumpGeo(1, 1.1, 0.75, 0.9, 0.3, 0.22), lumpGeo(1, 0.7, 0.6, 0.7, 2.1, 0.25, 0.8, 0, 0.4)]), thorn);
+    addModel('Thorn_2', merge([lumpGeo(1, 0.8, 0.55, 1.0, 1.4, 0.24), lumpGeo(1, 0.55, 0.45, 0.55, 0.7, 0.2, -0.6, 0, -0.5)]), thorn);
+    addModel('Boulder_1', merge([lumpGeo(1, 1.2, 0.95, 1.0, 0.9, 0.16)]), granite);
+    addModel('Boulder_2', merge([lumpGeo(1, 1.0, 1.25, 0.85, 2.6, 0.18)]), granite);
+    addModel('Boulder_3', merge([lumpGeo(1, 1.3, 0.6, 1.1, 4.2, 0.14)]), granite);
+    // a termite mound: a lathe tapering to a blunt top, ribbed and leaning, with smaller spires at its foot
+    const spire = (h, r, lean, ph, x = 0, z = 0) => {
+      const pts = []; for (let i = 0; i <= 7; i++) { const t = i / 7; pts.push(new THREE.Vector2(Math.max(0.06, r * Math.pow(1 - t, 0.62) * (1 + 0.12 * Math.sin(t * 9 + ph))), t * h)); }
+      const g = new THREE.LatheGeometry(pts, 9).toNonIndexed(), p = g.attributes.position;
+      for (let k = 0; k < p.count; k++) { const y = p.getY(k), a = Math.atan2(p.getZ(k), p.getX(k)), f = 1 + 0.18 * Math.sin(a * 3 + ph) + 0.08 * Math.sin(a * 5 + y * 2.3);
+        p.setXYZ(k, p.getX(k) * f + lean * y * y / h + x, y, p.getZ(k) * f + z); }
+      return g;
+    };
+    addModel('Termite_1', merge([spire(3.6, 1.15, 0.5, 0.4), spire(1.7, 0.7, -0.2, 1.9, 0.9, 0.5), spire(1.1, 0.5, 0.1, 3.3, -0.7, 0.6)]), earth);
+    addModel('Termite_2', merge([spire(2.6, 1.0, -0.35, 2.2), spire(1.4, 0.6, 0.2, 0.8, -0.8, -0.3)]), earth);
+    addModel('Termite_3', merge([spire(1.5, 0.75, 0.2, 3.7), spire(0.8, 0.45, 0, 1.1, 0.6, 0.2)]), earth);
+  }
+  const ready = load().then(() => { addSnowPiles(); addSavanna(); if (opts.renderer) setupImpostors(); key = ''; opts.onReady && opts.onReady(); }).catch((e) => console.warn('No Mans Land: no 3D scenery', e));
 
   // ---------- impostors: pictures of the far trees and bushes, baked into one atlas ----------
   const ELEV = [8, 40, 90], ICELL = 256, IGRID = 8; // views per model, cell size in pixels, cells per atlas row
@@ -325,10 +369,10 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     rocks: [['SnowPile_1', 1], ['SnowPile_2', 1], ['SnowPile_3', 1], ['Rock_Medium_1', 0.25], ['Rock_Medium_3', 0.25]],
   };
   const SAVANNA = {
-    low: [['Grass_Common_Tall', 5], ['Grass_Wispy_Short', 2], ['Bush_Common', 1], ['DesertRock_1', 0.4], ['DesertRock_2', 0.4]],
-    tuft: [['Grass_Common_Tall', 4], ['Grass_Wispy_Short', 3], ['Grass_Common_Short', 2], ['Pebble_Round_1', 0.5]],
-    dress: [['Grass_Wispy_Short', 3], ['Grass_Common_Short', 3], ['Pebble_Round_1', 1], ['Pebble_Round_2', 1]],
-    rocks: [['DesertRock_1', 1], ['DesertRock_2', 1], ['DesertRock_3', 1]],
+    low: [['Thorn_1', 2], ['Thorn_2', 1.5], ['Grass_Common_Tall', 1.5], ['Termite_3', 0.25], ['Boulder_3', 0.3]],
+    tuft: [['Grass_Common_Tall', 2], ['Grass_Wispy_Short', 2], ['Thorn_2', 0.5], ['Pebble_Round_1', 0.5]],
+    dress: [['Grass_Wispy_Short', 3], ['Grass_Common_Short', 2], ['Pebble_Round_1', 1], ['Pebble_Round_2', 1]],
+    rocks: [['Boulder_1', 1], ['Boulder_2', 1], ['Boulder_3', 1]],
   };
   // the oasis's water (off the board): water, a shallow rim and wet sand round it
   const pondMats = [new THREE.MeshLambertMaterial({ color: '#8C7650' }), new THREE.MeshLambertMaterial({ color: '#86AE9E' }), new THREE.MeshStandardMaterial({ color: '#4E8C8E', roughness: 0.2, metalness: 0 })];
@@ -377,6 +421,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     snow: { col: [0.93, 0.96, 1.0], dir: 1, spd: 1, keep: 1, size: 1, flick: 0, sway: 1 },
     embers: { col: [1.0, 0.58, 0.26], dir: -1, spd: 0.75, keep: 0.5, size: 1.2, flick: 0.8, sway: 1.8 },
     ash: { col: [0.66, 0.63, 0.6], dir: 1, spd: 0.32, keep: 0.5, size: 0.95, flick: 0, sway: 2.4 }, // grey ash drifting down (Ashlands, with the embers)
+    dust: { col: [1.0, 0.9, 0.66], dir: 1, spd: 0.07, keep: 0.3, size: 0.75, flick: 0.35, sway: 3.2 }, // dust and grass seed hanging in the low sun (Savanna)
   };
   const fallU = { uCol: { value: new THREE.Vector3() }, uDir: { value: 1 }, uSpd: { value: 1 }, uKeep: { value: 1 }, uSize: { value: 1 }, uFlick: { value: 0 }, uSway: { value: 1 } };
   const flakeMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { uTime: snowTime, uPx: { value: 1 }, ...fallU, ...shadeU },
@@ -523,6 +568,62 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     if (!dragon.children.length) { const g = kkGeo('Dragon'); if (!g) { dragon.visible = false; return; } const m = new THREE.Mesh(g, dragonMat); m.scale.setScalar(4); m.raycast = () => {}; dragon.add(m); }
     Object.assign(dragon.userData, at);
   }
+  // ---------- Savanna: the sea of grass (one clump of blades, instanced thousands of times round the board) that the
+  // wind combs in long waves (bending the blades and lighting their tips as a gust passes, so the waves read even from
+  // straight above), the land's own colours under it, and vultures circling high over the board ----------
+  const windT = { value: 0 };
+  const grassGeo = (() => {
+    const P = [], C = [], N = [], c0 = new THREE.Color('#9C8346'), c1 = new THREE.Color('#EFD996'), c = new THREE.Color();
+    let sd = 4242; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+    for (let i = 0; i < 9; i++) {
+      const a = r() * Math.PI * 2, d = 0.05 + r() * 0.22, x = Math.cos(a) * d, z = Math.sin(a) * d, h = 0.75 + r() * 0.55, w = 0.05 + r() * 0.03;
+      const la = a + (r() - 0.5) * 0.8, lean = 0.15 + r() * 0.3, px = -Math.sin(la) * w, pz = Math.cos(la) * w;
+      P.push(x - px, 0, z - pz, x + px, 0, z + pz, x + Math.cos(la) * lean, h, z + Math.sin(la) * lean);
+      const tip = c.copy(c1).multiplyScalar(0.9 + r() * 0.2);
+      C.push(c0.r, c0.g, c0.b, c0.r, c0.g, c0.b, tip.r, tip.g, tip.b);
+      for (let k = 0; k < 3; k++) N.push(0.15 * Math.cos(la), 0.98, 0.15 * Math.sin(la));
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+    g.computeBoundingSphere(); return g;
+  })();
+  const grassMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  grassMat.onBeforeCompile = (sh) => {
+    sh.uniforms.uWind = windT;
+    sh.vertexShader = 'uniform float uWind; varying float vGust; varying float vTip;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      vec3 ip = (modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+      float g = 0.5 + 0.5 * sin(dot(ip.xz, vec2(0.085, 0.05)) - uWind * 1.25); g = g * g * g;
+      float g2 = 0.5 + 0.5 * sin(dot(ip.xz, vec2(-0.23, 0.19)) + uWind * 2.3);
+      float tip = clamp(position.y / 1.2, 0.0, 1.0); vTip = tip; vGust = g;
+      vec3 wdir = normalize(transpose(mat3(instanceMatrix)) * vec3(0.86, 0.0, 0.5));
+      transformed += wdir * (0.1 + 0.55 * g + 0.07 * g2) * tip * tip;
+      transformed.y -= 0.22 * g * tip * tip;`);
+    sh.fragmentShader = 'varying float vGust; varying float vTip;\n' + sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n  diffuseColor.rgb *= 1.0 + 0.32 * vGust * vTip;')
+      .replace('#include <normal_fragment_begin>', 'float faceDirection = 1.0; vec3 normal = normalize( vNormal ); vec3 nonPerturbedNormal = normal;'); // both faces lit as the front
+  };
+  grassMat.customProgramCacheKey = () => 'pb-grass-sea';
+  const groundMat = new THREE.MeshLambertMaterial({ vertexColors: true });
+  // vultures: a dark body and two long wings that hold a shallow V and now and then beat; they ride a thermal in wide
+  // circles over the board, banking into the turn
+  const vultureMat = new THREE.MeshLambertMaterial({ color: '#2F2823', side: THREE.DoubleSide, flatShading: true });
+  const vultures = new THREE.Group(); vultures.visible = false; scene.add(vultures);
+  {
+    const wing = new THREE.BufferGeometry(); // root at the body, out along +x; the tip's long "fingers"
+    wing.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0.35, 0, 0, -0.45, 1.1, 0, 0.32, 1.1, 0, 0.32, 0, 0, -0.45, 1.25, 0, -0.42, 1.1, 0, 0.32, 1.25, 0, -0.42, 2.0, 0, -0.05, 2.0, 0, -0.05, 1.25, 0, -0.42, 1.85, 0, -0.38], 3)); wing.computeVertexNormals();
+    const body = new THREE.ConeGeometry(0.2, 1.3, 5).rotateX(-Math.PI / 2), tail = new THREE.BufferGeometry();
+    tail.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0.5, -0.3, 0, 1.05, 0.3, 0, 1.05], 3)); tail.computeVertexNormals();
+    for (let i = 0; i < 8; i++) {
+      const b = new THREE.Group(), add = (g, sx = 1) => { const m = new THREE.Mesh(g, vultureMat); m.scale.x = sx; m.castShadow = true; m.raycast = () => {}; b.add(m); return m; };
+      add(body); add(tail); b.userData.wings = [add(wing, 1), add(wing, -1)]; b.scale.setScalar(1.35); b.visible = false; vultures.add(b);
+    }
+  }
+  let vultureT = 0;
+  // each circles a point up-sun of the board, so its shadow (thrown far by the low sun, sun: the light's position)
+  // sweeps across the board
+  function showVultures(n, sun) {
+    vultures.visible = n > 0; if (!n) return;
+    vultures.children.forEach((b, i) => { const u = b.userData, y = 24 + (i * 3.7) % 9, f = 0.85 * y / sun[1];
+      b.visible = i < n; Object.assign(u, { r: 8 + i * 4.5, y, w: (0.16 - i * 0.012) * (i % 3 === 2 ? -1 : 1), a0: i * 1.9, c: [sun[0] * f, sun[2] * f - (i % 2) * 8] }); });
+  }
   // the clock for the falling snow, embers and chimney smoke (the page calls it every frame it draws); px: the renderer's pixels per CSS pixel
   let smokeT = 0;
   function tick(dt, px = 1) {
@@ -530,6 +631,19 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     lampT += dt;
     lampFlick.forEach(([i, base, fl, ph]) => { if (fl) shadeU.uLamps.value[i].w = base * (1 - fl * 0.35 * (0.5 + 0.5 * Math.sin(lampT * 7.3 + ph) * Math.sin(lampT * 3.1 + ph * 2))); });
     emberGlows.forEach(([sp, base, ph]) => { const f = 0.8 + 0.2 * Math.sin(lampT * 6.1 + ph) * Math.sin(lampT * 2.3 + ph); sp.scale.setScalar(base * f); });
+    if (grassMat.userData.on) windT.value += dt;
+    if (vultures.visible) {
+      vultureT += dt;
+      for (const b of vultures.children) {
+        if (!b.visible) continue;
+        const u = b.userData, a = u.a0 + vultureT * u.w, x = u.c[0] + Math.cos(a) * u.r, z = u.c[1] + Math.sin(a) * u.r;
+        b.position.set(x, u.y + Math.sin(vultureT * 0.3 + u.a0) * 1.5, z);
+        b.rotation.set(0, -a + (u.w > 0 ? Math.PI : 0), 0, 'YXZ'); b.rotateZ(u.w > 0 ? -0.3 : 0.3); // nose along the circle, banked into it
+        const beat = Math.max(0, Math.sin(vultureT * 0.45 + u.a0 * 3)) ** 12; // a few slow beats now and then, otherwise gliding
+        const ang = 0.12 + beat * 0.55 * Math.sin(vultureT * 9);
+        u.wings[0].rotation.z = ang; u.wings[1].rotation.z = -ang;
+      }
+    }
     if (dragon.visible) {
       dragonT += dt;
       const d = dragon.userData, a = d.a0 + dragonT * 0.07, x = d.cx + Math.cos(a) * d.r, z = d.cz + Math.sin(a) * d.r * 0.6;
@@ -583,14 +697,17 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       [[-1, -0.3, 5, 0.3], [1, 0.38, 4.6, -0.2], [-1, 0.75, 6.5, 1.3]].forEach(([sd, f, off, a]) => props.push({ kind: 'model', model: 'barrier_half', mat: 'soot', x: sd * (hw + off), z: f * hd, ang: a, s: 1.6 }));
       [[-1, -0.3, 8.5], [1, -0.68, 7.5], [-1, 0.35, 9], [1, 0.5, 8.5]].forEach(([sd, f, off]) => props.push({ kind: 'ember', x: sd * (hw + off), z: f * hd, s: 1.0 }));
     }
-    const inPond = (x, z, k = 1.12) => ponds.some((p) => ((x - p.x) / p.rx) ** 2 + ((z - p.z) / p.rz) ** 2 < k * k) || (cab && Math.hypot(x - cab.x, z - cab.z) < cab.r)
+    // Savanna: two granite kopjes (piles of big boulders, the far one with the lone giant acacia beside it), the
+    // shapes on the horizon; nothing else grows on them
+    const kopjes = bi.kopjes ? [{ x: -hw * 0.42, z: -hd - 24, r: 10, s: 1.25, tree: true }, { x: hw + 21, z: -hd * 0.32, r: 7, s: 0.9 }] : [];
+    const inPond = (x, z, k = 1.12) => kopjes.some((q) => Math.hypot(x - q.x, z - q.z) < q.r * k) || ponds.some((p) => ((x - p.x) / p.rx) ** 2 + ((z - p.z) / p.rz) ** 2 < k * k) || (cab && Math.hypot(x - cab.x, z - cab.z) < cab.r)
       || props.some((p) => Math.hypot(x - p.x, z - p.z) < (p.kind === 'lantern' ? 1.6 : p.kind === 'ember' ? 1.5 : 2.6))
       || (props.ruinsAt && Math.hypot(x - props.ruinsAt.x, z - props.ruinsAt.z) < 13);
     const tintFor = (name) => { const t = (bi.tints || []).find(([re]) => re.test(name)); return t ? t[1] : [1, 1, 1]; };
     const squashOf = (name) => { const t = (bi.squash || []).find(([re]) => re.test(name)); return t ? t[1] : 1; };
-    const put = (name, x, z, s, y = 0, wet = false) => {
+    const put = (name, x, z, s, y = 0, wet = false, real = false) => {
       if (!lib[name] || (!wet && inPond(x, z))) return;
-      const d = outside(x, z), k = name + (d > 16 || (d > 6 && /^Bush/.test(name)) ? '~' : ''), sh = 0.85 + rr() * 0.3, t = tintFor(name);
+      const d = outside(x, z), k = name + (!real && (d > 16 || (d > 6 && /^Bush/.test(name))) ? '~' : ''), sh = 0.85 + rr() * 0.3, t = tintFor(name);
       y += groundH(x, z) * 0.7; // on deep snow (Moonlit Snow) things stand a little sunk in
       (placed.get(k) || placed.set(k, []).get(k)).push([x, y, z, rr() * Math.PI * 2, s, [bi.tint[0] * t[0] * sh, bi.tint[1] * t[1] * sh, bi.tint[2] * t[2] * sh], squashOf(name)]);
     };
@@ -683,6 +800,45 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       scene.add(sheet); meshes.push(sheet);
     }
 
+    // 8. Savanna: the kopjes, termite mounds, the land's colours and the sea of grass
+    for (const q of kopjes) {
+      [[0, 0, 4.2, 0], [3.6, 1.4, 3.1, 0], [-3.3, 1.9, 2.7, 0], [1.4, -3.4, 2.4, 0], [5.6, -1.6, 1.8, 0], [-1.2, 0.6, 2.3, 2.9], [1.8, 0.2, 1.6, 4.6], [-5.2, -1.2, 1.4, 0]]
+        .forEach(([lx, lz, sc, y], i) => put(['Boulder_2', 'Boulder_1', 'Boulder_3'][i % 3], q.x + lx * q.s, q.z + lz * q.s, sc * q.s, y * q.s, true, true));
+      for (let n = 0; n < 7; n++) { const a = rr() * Math.PI * 2, d = q.r * (0.7 + rr() * 0.35); put(rr() < 0.5 ? 'Thorn_1' : 'Grass_Common_Tall', q.x + Math.cos(a) * d, q.z + Math.sin(a) * d, 1 + rr() * 0.6, 0, true); }
+      if (q.tree) put('Acacia_A', q.x + q.r * 1.15, q.z + 2, 3.1, 0, true, true); // the lone giant acacia
+    }
+    for (let n = 0, tries = 0; n < (bi.termites || 0) && tries < 400; tries++) {
+      const x = (rr() * 2 - 1) * (hw + 40), z = -hd - 45 + rr() * (BD + 55), d = outside(x, z);
+      if (d < 2.5 || d > 42 || (z > hd - 4 && Math.abs(x) < hw + 10) || inPond(x, z, 1.3)) continue;
+      put('Termite_' + (1 + Math.floor(rr() * 3)), x, z, 0.75 + rr() * 0.75, 0, false, d < 30); n++;
+    }
+    if (bi.ground) { // the land under the grass: straw and bare earth in broad patches
+      const g = new THREE.PlaneGeometry(BW + 260, BD + 260, 110, 120).rotateX(-Math.PI / 2), pos = g.attributes.position, col = new Float32Array(pos.count * 3);
+      const lo = new THREE.Color(bi.ground[0]), hi = new THREE.Color(bi.ground[1]), c = new THREE.Color();
+      for (let k = 0; k < pos.count; k++) {
+        const x = pos.getX(k), z = pos.getZ(k), n = 0.65 * vnoise(x * 0.045 + 7.1, z * 0.05 - 2.3) + 0.35 * vnoise(x * 0.16, z * 0.14 + 4.4);
+        pos.setY(k, outside(x, z) > 0.5 ? 0 : -0.25);
+        c.copy(lo).lerp(hi, smoothstep(0.32, 0.62, n)); col.set([c.r, c.g, c.b], k * 3);
+      }
+      g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
+      const sheet = new THREE.Mesh(g, groundMat); sheet.position.y = -0.03; sheet.receiveShadow = true; sheet.raycast = () => {}; sheet.name = 'savanna ground';
+      scene.add(sheet); meshes.push(sheet);
+    }
+    grassMat.userData.on = !!bi.grassSea;
+    if (bi.grassSea) {
+      const N = Math.round(7000 * bi.grassSea), gm = new THREE.InstancedMesh(grassGeo, grassMat, N); let n = 0;
+      for (let k = 0; k < N * 3 && n < N; k++) {
+        const x = (rr() * 2 - 1) * (hw + 42), z = -hd - 58 + rr() * (BD + 88), d = outside(x, z);
+        if (d < 0.25 || (d > 22 && rr() < 0.55) || inPond(x, z, 0.85)) continue;
+        const mine = z > hd && Math.abs(x) < hw + 8 && d < 9; // short behind your end, so it never hides your own squads
+        const s = (mine ? 0.55 : 0.95 + rr() * 0.6) * (d > 22 ? 1.5 : 1), sh = 0.86 + rr() * 0.22;
+        gm.setMatrixAt(n, tmpM.compose(tmpP.set(x, 0, z), tmpQ.setFromAxisAngle(upY, rr() * 6.3), tmpS.set(s * 1.2, s * (0.85 + rr() * 0.4), s * 1.2)));
+        gm.setColorAt(n++, tmpC.setRGB(sh * (1 + (rr() - 0.5) * 0.08), sh, sh * (0.92 + rr() * 0.12)));
+      }
+      gm.count = n; gm.instanceMatrix.needsUpdate = true; gm.instanceColor.needsUpdate = true; gm.computeBoundingSphere();
+      gm.receiveShadow = true; gm.raycast = () => {}; gm.name = 'grass sea'; scene.add(gm); meshes.push(gm);
+    }
+    showVultures(bi.vultures || 0, (bi.light && bi.light.pos) || [-30, 60, 25]);
     // far trees and bushes: impostors
     shadeU.uHalf.value.set(hw, hd); shadeU.uShade.value.set(...(bi.shade || [0, 1, 2])); veil.visible = !!bi.shade;
     shadeU.uNight.value.set(...(bi.night || [0, 0, 0, 0])); shadeU.uDeep.value.set(...(bi.deep || [0, 1, 2]));
@@ -705,7 +861,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     impostors(far);
     // the rest: one mesh per model part, holding every placement of that model
     for (const [k, list] of placed) {
-      const md = lib[k.replace('~', '')], tall = md.h > 3 && !k.endsWith('~');
+      const md = lib[k.replace('~', '')], tall = md.h * Math.max(...list.map((e) => e[4])) > 3 && !k.endsWith('~'); // (big boulders scaled up cast shadows too)
       for (const part of md.parts) {
         const im = new THREE.InstancedMesh(part.geo, part.mat, list.length);
         list.forEach(([x, y, z, ang, s, col, sy], i) => {
@@ -721,7 +877,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     }
   }
   function shadows(on) { if (on !== castShadows) { castShadows = on; key = ''; } }
-  function dispose() { clear(); scene.remove(flakes, flakes2, cabin, cabinLight, veil, xmas, horizon, dragon); flake2Mat.dispose(); sootMat.dispose(); emberGlowMat.dispose(); horizonMat.dispose(); horizonTex.dispose(); horizon.geometry.dispose(); dragonMat.dispose(); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
+  function dispose() { clear(); scene.remove(flakes, flakes2, cabin, cabinLight, veil, xmas, horizon, dragon, vultures); grassGeo.dispose(); grassMat.dispose(); groundMat.dispose(); vultureMat.dispose(); vultures.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); flake2Mat.dispose(); sootMat.dispose(); emberGlowMat.dispose(); horizonMat.dispose(); horizonTex.dispose(); horizon.geometry.dispose(); dragonMat.dispose(); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
   return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
 };
 

@@ -12,8 +12,8 @@ Floors.FLOORS = {
     char: '#2A2523' }, // no man's land charred dark, with thin cracks still glowing
   // Moonlit Snow: fresh snow under a night sky with wind ripples; no man's land is pale blue ice with cracks and shine
   moonlit: { base: '#8F9BB0', patch: ['#99A5B9', '#8692A8', '#A3AFC2', '#808CA2'], mid: ['#8FB8E0', '#80ADD9', '#9DC2E6'], strokes: ['#AEB9CB', '#6F7B93'], ripples: true, ice: '#76A8DA' },
-  // Savanna: dry golden grass, dusty earth across no man's land
-  savanna: { base: '#9E8B4F', patch: ['#AA965A', '#917F46', '#B39F61', '#887840'], mid: ['#977852', '#8B6E49', '#A3855C'], strokes: ['#C4B06C', '#6F6337'], ripples: false },
+  // Savanna: pale straw grass with olive patches, red-brown earth trampled across no man's land
+  savanna: { base: '#B09A5C', patch: ['#BCA668', '#A08B50', '#C4AE72', '#98884F'], mid: ['#A2724C', '#986A46', '#AC7C54'], strokes: ['#D3BF80', '#7D703F'], ripples: false },
   sand: { base: '#B39A6C', patch: ['#BDA478', '#A88F62', '#C2AA7E', '#A38A5F'], mid: ['#9E8457', '#A78D60', '#94794E'], strokes: ['#C9B288', '#8F7650'], ripples: true },
 };
 // Looks: what each draws (its biome round the board, and its floor: one painted here, or a map's painted ground in the

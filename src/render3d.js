@@ -87,12 +87,17 @@ const Render3D = (THREE, el, view, opts = {}) => {
     scenery.update(v, groundY, BW, BD, T);
     const bi = scenery.biome(v);
     models.setSeason(bi.season); // Moonlit Snow is Christmas: the treasury becomes a pile of presents
-    if (bi.sky === biomeKey) return;
-    biomeKey = bi.sky;
-    scene.background.set(bi.sky); scene.fog.color.set(bi.sky); around.material.color.set(bi.land);
-    const li = { ...DAY, ...(bi.light || {}) };
-    hemi.color.set(li.hemi[0]); hemi.groundColor.set(li.hemi[1]); hemi.intensity = li.hemi[2];
-    sun.color.set(li.sun[0]); sun.intensity = li.sun[1]; sun.position.set(...li.pos);
+    // a look with dusk (Savanna) lets the sun sink a step each round, toward dusk's sky, lights and sun position
+    const src = v && (v.battlePre || v.m), du = bi.dusk, t = du && src ? Math.min(1, Math.max(0, ((src.round || 1) - 1) * du.per)) : 0;
+    if (bi.sky + t === biomeKey) return;
+    biomeKey = bi.sky + t;
+    const li = { ...DAY, ...(bi.light || {}) }, cl = (a, b) => new THREE.Color(a).lerp(new THREE.Color(b), t);
+    const sky = du ? cl(bi.sky, du.sky) : new THREE.Color(bi.sky);
+    scene.background.copy(sky); scene.fog.color.copy(sky); around.material.color.set(bi.land);
+    hemi.color.copy(du ? cl(li.hemi[0], du.hemi[0]) : new THREE.Color(li.hemi[0])); hemi.groundColor.copy(du ? cl(li.hemi[1], du.hemi[1]) : new THREE.Color(li.hemi[1]));
+    hemi.intensity = du ? li.hemi[2] + (du.hemi[2] - li.hemi[2]) * t : li.hemi[2];
+    sun.color.copy(du ? cl(li.sun[0], du.sun[0]) : new THREE.Color(li.sun[0])); sun.intensity = du ? li.sun[1] + (du.sun[1] - li.sun[1]) * t : li.sun[1];
+    sun.position.set(...(du ? li.pos.map((p, i) => p + (du.pos[i] - p) * t) : li.pos));
   }
   // ---------- ground height (a map's terrain: Game.groundHeight): the floor rises and falls with it, and everything
   // standing or drawn on it (models, rings, markers, shots) goes up and down with it. Heights are sampled HK times a

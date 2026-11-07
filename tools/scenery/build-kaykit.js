@@ -1,7 +1,8 @@
 // Builds src/kaykit3d.js: a few KayKit models (CC0, Kay Lousberg) as compact flat-coloured geometry for Models3D:
 // from the Dungeon Pack the treasury's gold chest and coin stacks and the towers' wall torch; from Holiday Bits the
 // presents of Moonlit Snow's treasury and its snowmen and lanterns; Ashlands' burnt village ruins (Dungeon Pack) and
-// its dragon (Quaternius' Animated Monster Pack, CC0: an OBJ, coloured from its MTL materials). KayKit colours its models from a palette texture, so each triangle takes the
+// its dragon (Quaternius' Animated Monster Pack, CC0: an OBJ, coloured from its MTL materials); Savanna's acacias (Quaternius'
+// Simple Nature Pack, CC0: OBJs). KayKit colours its models from a palette texture, so each triangle takes the
 // colour under the middle of its texture coordinates.
 //   node tools/scenery/build-kaykit.js <Assets/gltf folder> [<another pack's Assets/gltf (or OBJ) folder> ...]
 // Each picked model is read from the first folder that has it; models no folder has keep their entry from the
@@ -18,7 +19,8 @@ const PICK = ['chest_gold', 'coin_stack_medium', 'coin_stack_small', 'torch_moun
   'present_A_red', 'present_B_green', 'present_C_blue', 'present_D_white', 'present_E_yellow', 'present_F_red', // Holiday Bits
   'present_sphere_A_green', 'present_B_yellow', 'present_C_red', 'present_E_blue', 'snowman_A', 'lantern',
   'wall_broken', 'wall_archedwindow_open', 'wall_half', 'pillar', 'rubble_large', 'rubble_half', 'stairs', 'sword_shield_broken', 'barrier_half', // Dungeon Pack (Ashlands)
-  'Dragon']; // Animated Monster Pack (Ashlands)
+  'Dragon', // Animated Monster Pack (Ashlands)
+  'acacia_A', 'acacia_B', 'acacia_C']; // Simple Nature Pack (Quaternius, CC0; Savanna): Tree2, Tree4 and Tree3 renamed, with acacia.mtl's savanna colours
 // an OBJ with its MTL: triangles (faces fanned) with their material's diffuse colour (linear in the MTL, stored as sRGB)
 function readObj(file) {
   const dir = path.dirname(file), txt = fs.readFileSync(file, 'utf8'), v = [], pos = [], col = [], kd = {};
