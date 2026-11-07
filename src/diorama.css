@@ -521,3 +521,15 @@
 #dio .stay .w.go { opacity: 1; color: var(--ink); }
 #dio .stay .w.go::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 #dio.play .stay, #dio.profile .stay, #dio.welcome .stay { display: none; }
+
+/* ── Menu (step 3): a match to go back to sits above PLAY, a typed word on an ink shard ── */
+#dio .backto { display: grid; justify-items: start; gap: 4px; margin: 0 0 14px 4px; }
+#dio .backto[hidden] { display: none; }
+#dio .backto .bt { position: relative; isolation: isolate; padding: 6px 14px 3px; font: 700 26px/1 var(--stencil); text-transform: uppercase; color: var(--saffron); }
+#dio .backto .bt::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); }
+#dio .backto .bt b { margin-left: 8px; font: 700 18px var(--type); letter-spacing: .06em; }
+#dio .backto .bt:hover { transform: rotate(-1deg); }
+#dio .menu .item small { margin-left: 8px; font: 400 14px var(--type); text-transform: none; letter-spacing: 0; opacity: .85; }
+#dio .menu .item.hot small { color: var(--saffron); opacity: 1; }
+#dio .rw-note { cursor: pointer; }
+#dio .rw-note:hover b { text-decoration: underline; text-underline-offset: 4px; }

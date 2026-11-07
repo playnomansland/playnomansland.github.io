@@ -552,19 +552,27 @@
     }
     body.querySelector('.menu').addEventListener('mouseleave', () => { if (body.classList.contains('pinned')) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
     for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
+    // Puzzles and How to play open the game's sheets (until they're designed); the camera move on pointing stays
+    $('puzzles-open').addEventListener('click', openPuzzles);
+    $('how').addEventListener('click', openHowTo);
+    // the golem's note: the invite link lives in the game's Rewards sheet (owner, 2026-11-07: open it while Rewards is on hold)
+    { const rn = body.querySelector('.rw-note'); rn.addEventListener('click', () => openRewardsSheet()); rn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRewardsSheet(); } }); }
     const unpin = () => { body.classList.remove('pinned'); setMode('play'); picked = null; items.forEach(x => x.classList.toggle('on', x.id === 'play')); viewName = 'play'; want = VIEWS.play; };
-    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = VIEWS.orders; };
+    // the Play screen is the old PLAY popup: home.pop says it's open (it stays open across a match, and ?test opens it at once)
+    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = VIEWS.orders; home.pop = true; };
+    const closePlay = () => { body.classList.remove('play', 'mp-open'); setMp(false); unpin(); home.pop = false; };
     document.getElementById('play').addEventListener('click', openPlay);
     const backBtn = body.querySelector('.back');
     const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
-      if (body.classList.contains('in-rooms')) return closeRooms(); body.classList.remove('play', 'mp-open'); setMp(false); unpin(); };
+      if (body.classList.contains('in-rooms')) return closeRooms(); closePlay(); };
     backBtn.addEventListener('click', goBack);
 
     // Play: Vs computer starts at once; Multiplayer folds out its kinds, and a kind opens Rooms filtered to it
     const multi = document.getElementById('multi');
     const setMp = (on) => { body.classList.toggle('mp-open', on); multi.setAttribute('aria-expanded', on); };
     multi.addEventListener('click', () => setMp(!body.classList.contains('mp-open')));
-    document.getElementById('vs-ai').addEventListener('click', () => {}); // in the game: straight into a match vs the AI
+    // Vs computer: straight into a match against the AI (the old popup's #go), a normal Standard match
+    $('go').addEventListener('click', () => { home.mode = 'normal'; matchKind = 'standard'; lateGame = false; startAiMatch(); });
     // Developer (A.dev; in the game devMode()): 2v2 unlocks in Multiplayer and New room, and the extras show top left
     if (A && A.dev) {
       body.classList.add('dev');
@@ -928,7 +936,7 @@
     const bq = (H.match(/roombf=(\w+)/) || [])[1]; if (bq) setRoomLook(LOOKS.findIndex(l => l.id === bq));
     if (H.includes('private')) body.querySelector('.newroom [data-pub="0"]').click();
     const plh = (H.match(/plh=(\d+)/) || [])[1]; if (plh) body.querySelectorAll('.pl-row')[+plh].classList.add('hov'); // a song as if pointed at
-    const onq = (H.match(/on=([\w-]+)/) || [])[1]; // look as if pointed at: a Play choice (vs-ai, multi, standard, ranked) or a room row (r0, r1...)
+    const onq = ((H.match(/on=([\w-]+)/) || [])[1] || '').replace(/^vs-ai$/, 'go'); // look as if pointed at: a Play choice (vs-ai, multi, standard, ranked) or a room row (r0, r1...)
     if (onq) { const el = /^r\d+$/.test(onq) ? body.querySelectorAll('#r-list li')[+onq.slice(1)] : document.getElementById(onq) || body.querySelector(`.orders .mp [data-q="${onq}"]`); if (el) el.classList.add('on'); }
     // developer: #acct=dev with #play; #xb=<tactic> (Exploit bot picked), #dvon=<word> (a developer word as if pointed at)
     const xq = (H.match(/xb=(\w+)/) || [])[1]; if (xq && XB[xq]) setXb(xq);
@@ -969,6 +977,30 @@
       if (s === 'welcome' || s === 'signup' || s === 'login') openDoor(s === 'welcome' ? '' : s);
       else if (door.screen != null) closeDoor();
       drawStay();
+      // the Play screen follows home.pop (the old popup's flag), on the menu only
+      const onMenu = s === 'menu' || !s;
+      if (onMenu && home.pop && !body.classList.contains('play')) openPlay();
+      else if ((!onMenu || !home.pop) && body.classList.contains('play') && !body.classList.contains('in-rooms')) closePlay();
+      drawBackTo();
+      if (onMenu) { // what the old drawMenu did quietly on the menu: ranked's switch (and the leaderboard), a fresh account, Discord's answer
+        if (!home.asked) rankedCheck();
+        if (acct && !home.refreshed) { home.refreshed = true; acctCall('me', {}, true).then(r => { if (r.status === 200) { acctTake(r); if (phase === 'start') drawHome(); } }); }
+        if (discordBack && !discordBack.done && acct) discordFinish();
+      }
+    }
+    // a match or tournament to go back to (the old menu's Resume / Back to match / Back to tournament), above PLAY;
+    // a newcomer's Puzzles word says where to start (the old "New here? Try the tutorial puzzles")
+    function drawBackTo() {
+      const { resume, netBack, newcomer } = home.ctx || {}, el = $('dio-backto'), w = [];
+      if (tour.role) w.push(`<button class="bt" id="tour-back">Back to tournament <b>${esc(tour.code)}</b></button>`);
+      if (resume) w.push(`<button class="bt" id="resume">Resume match <b>${esc(resume.code)}</b></button>`);
+      if (netBack) w.push(`<button class="bt" id="net-resume">Back to match <b>${esc(netBack.code)}</b></button>`);
+      el.innerHTML = w.join(''); el.hidden = !w.length;
+      if ($('resume')) $('resume').addEventListener('click', () => resumeHost(resume));
+      if ($('net-resume')) $('net-resume').addEventListener('click', () => netBack.duo ? duoJoin(netBack.code, netBack.key) : srvJoin(netBack.code, { key: netBack.key, side: netBack.side }));
+      if ($('tour-back')) $('tour-back').addEventListener('click', () => { tour.menu = false; showStart(); });
+      const pz = $('puzzles-open'); pz.classList.toggle('hot', !!newcomer);
+      let sm = pz.querySelector('small'); if (newcomer && !sm) { sm = document.createElement('small'); sm.textContent = 'start here'; pz.appendChild(sm); } else if (!newcomer && sm) sm.remove();
     }
     dio.api = { pause, resume, draw: dioPaint };
     dioPaint();

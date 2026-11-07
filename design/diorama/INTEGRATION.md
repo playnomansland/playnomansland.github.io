@@ -181,8 +181,9 @@ breakpoints: `html.pc` (hover + fine pointer, width ≥ 900, ST:924), 640, 520, 
    rendering on the home screen (real looks via `pb-skin`, Change battlefield), disposed when a match starts, 2D
    fallback. The old home hidden under the switch.
 2. **Welcome, Sign up, Log in** on the real accounts and Google's button; Stay logged in; ids `w-guest` etc.
-3. **Menu and Play:** Vs computer (`#go`) starts a real match; Resume / Back to match; Units on the game's roster;
-   Rankings from `/leaderboard`; Puzzles and How to play open their sheets; the new-Title / new-Skin notes.
+3. **Menu and Play:** Vs computer (`#go`) starts a real match; Resume / Back to match; Puzzles and How to play open
+   their sheets; the invite note opens Rewards. **3.5:** Units on the game's roster; Rankings from `/leaderboard`; the
+   new-Title / new-Skin notes.
 4. **Multiplayer:** Rooms on the live lobby, Join / Watch, New room creating real rooms (look, privacy,
    spectators), Ranked gating, the developer buttons, 2v2 for developers. Friends' Invite brings them into your room.
 5. **Profile:** the real account (title, username, skins on the unit sheet, log out, delete, keep it), Match history
@@ -249,6 +250,25 @@ breakpoints: `html.pc` (hover + fine pointer, width ≥ 900, ST:924), 640, 520, 
 - Checked against a stubbed account API (the sandbox's local server answers 503 to account routes, on `main` too):
   welcome → guest → menu with the name → Stay note → Yes; Sign up with a bad, a refused and a good name; Log in,
   Sign up ↔ Log in, Back. Google's script throws `gis is not defined` headless here, on the old screens too.
+
+**Step 3 split (owner, 2026-11-07):** 3 = Vs computer, Resume / Back to match / Back to tournament, Puzzles and How to
+play, the invite note → Rewards, `?test` opening Play; 3.5 = Units on the game's roster, Rankings from `/leaderboard`,
+the new-Title / new-Skin notes.
+
+**Step 3 done (2026-11-07):**
+- **The Play screen is the old PLAY popup:** `home.pop` says it's open (`openPlay` / `closePlay` set it; `dioPaint`
+  follows it). So `?test` (`HOME_AUTO`) opens Play at once and `#go` is there, and after a match you land back on Play,
+  as the old popup stayed open.
+- **Vs computer** is `#go`: `home.mode = 'normal'`, `matchKind = 'standard'`, `lateGame = false`, `startAiMatch()`.
+  The old popup's option rows (pack, map, characters, deploy timer, Have a code?) aren't on the Play screen: tests
+  that set them through the popup need another way under the switch (step 9).
+- **Resume match / Back to match / Back to tournament** (`home.ctx.resume`, `netBack`, `tour.role`) are typed words on
+  an ink shard above PLAY (`#dio-backto`), with the old ids `#resume`, `#net-resume`, `#tour-back` and the old calls.
+- **Puzzles** (`#puzzles-open`) and **How to play** (`#how`) open `openPuzzles` / `openHowTo`; pointing at them still
+  moves the camera. A newcomer's Puzzles says "start here" in saffron (the old "New here? Try the tutorial puzzles").
+- **The golem's invite note** (`.rw-note`) opens `openRewardsSheet()` (click, Enter or Space).
+- The Diorama menu does what the old `drawMenu` did quietly: `rankedCheck()` (also fills `home.board` for Rankings),
+  the `me` refresh, `discordFinish()`.
 
 **Running the UI tests in this sandbox:** `export NODE_PATH=/opt/node-tools/node_modules` (they require
 `playwright-core`), and some tests launch `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: link it to

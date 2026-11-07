@@ -990,17 +990,18 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <section class="drop" id="dd-settings" hidden aria-label="Settings"></section>
 
   <nav class="menu" aria-label="Main menu">
+    <div class="backto" id="dio-backto"></div>
     <button class="item play on" data-cam="play" id="play"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,9 61,0 99,6 96,93 38,100 0,86"/></svg>Play<span class="go">Assemble your army.<br>Master your strategy.<br>Defeat your opponent.</span></button>
     <div class="sub">
-      <button class="item" data-cam="puzzles"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,12 92,0 100,84 7,100"/></svg><span class="n">01</span>Puzzles</button>
-      <button class="item" data-cam="rules"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,10 95,100 0,90"/></svg><span class="n">02</span>How to play</button>
+      <button class="item" data-cam="puzzles" id="puzzles-open"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,12 92,0 100,84 7,100"/></svg><span class="n">01</span>Puzzles</button>
+      <button class="item" data-cam="rules" id="how"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,10 95,100 0,90"/></svg><span class="n">02</span>How to play</button>
       <button class="item" data-cam="units"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,6 97,0 100,96 4,100"/></svg><span class="n">03</span>Units</button>
       <button class="item" data-cam="ranks"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,0 100,8 97,94 0,100"/></svg><span class="n">04</span>Rankings</button>
     </div>
   </nav>
 
   <!-- notes. data-home: shown on the menu; data-hover: shown while that thing is pointed at; data-btn: shown while that menu word is -->
-  <div class="note" data-anchor="golem" data-home><span class="tag">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></div>
+  <div class="note rw-note" data-anchor="golem" data-home role="button" tabindex="0" aria-label="Rewards: invite a friend"><span class="tag">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></div>
   <div class="note" data-anchor="sniper" data-home>Sniper.<small>Unit · Long range · Good against single targets</small></div>
   <div class="note" data-anchor="mage" data-home>Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
 
@@ -1058,7 +1059,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <!-- Play: one click on a choice starts it. Multiplayer folds out its kinds; a kind opens Rooms, filtered to it -->
   <section class="orders" aria-label="New match">
     <div class="who">
-      <button class="item" id="vs-ai"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,10 96,0 100,90 5,100"/></svg>Vs computer <small>it never gets tired</small></button>
+      <button class="item" id="go"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,10 96,0 100,90 5,100"/></svg>Vs computer <small>it never gets tired</small></button>
       <button class="item" id="multi" aria-expanded="false" aria-controls="mp-list"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,12 96,100 0,88"/></svg>Multiplayer<svg class="car" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg> <small>friendships may be tested</small></button>
       <ul class="mp" id="mp-list">
         <li><button class="item" data-q="standard"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,8 97,0 100,92 3,100"/></svg>1v1 Standard <small>no stakes</small></button></li>
