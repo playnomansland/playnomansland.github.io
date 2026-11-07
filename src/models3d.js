@@ -619,6 +619,24 @@ const Models3D = (THREE) => {
     ...KK('coin_stack_medium', [-1.25, 0.3, 0.75], [0, 0.6, 0], [1.1, 1.1, 1.1]), ...KK('coin_stack_small', [1.3, 0.3, 0.85], [0, 2.1, 0], [1.1, 1.1, 1.1]),
     ...KK('coin_stack_small', [1.45, 0.3, -0.85], [0, 4.0, 0]),
     P(cyl(0.06, 0.06, 3.0, 5), WOOD, [-1.3, 1.8, -1.05]), P(box(0.05, 0.75, 1.0), 'team', [-1.3, 2.85, -0.55])] : oldTreasury();
+  // the treasury in the Christmas season (Moonlit Snow): a heap of KayKit Holiday Bits presents on a mound of snow,
+  // big boxes at the bottom and smaller ones stacked on top, the team banner behind (the gold chest when the build
+  // has no presents)
+  BUILD['treasury:xmas'] = () => kk('present_F_red') ? [P(cyl(1.95, 2.1, 0.25, 12), '#E4EAF3', [0, 0.12, 0]),
+    ...KK('present_F_red', [0, 0.25, 0.55], [0, 0.05, 0], [1.5, 1.5, 1.5]),
+    ...KK('present_D_white', [-0.45, 0.25, -0.62], [0, 0.3, 0], [1.6, 1.6, 1.6]),
+    ...KK('present_B_green', [0.85, 0.25, -0.6], [0, 0.5, 0], [1.5, 1.5, 1.5]),
+    ...KK('present_B_yellow', [-1.65, 0.25, -0.2], [0, 0.2, 0], [1.3, 1.3, 1.3]),
+    ...KK('present_E_yellow', [1.55, 0.25, -0.5], [0, 1.57, 0], [1.2, 1.2, 1.2]),
+    ...KK('present_E_blue', [-0.3, 0.94, 0.55], [0, -0.2, 0], [1.3, 1.3, 1.3]),
+    ...KK('present_C_blue', [-0.3, 1.54, 0.55], [0, 0.6, 0], [1.1, 1.1, 1.1]),
+    ...KK('present_A_red', [0.75, 0.94, 0.5], [0, 0.7, 0], [1.3, 1.3, 1.3]),
+    ...KK('present_C_red', [0.85, 1.84, -0.6], [0, 0.9, 0], [1.2, 1.2, 1.2]),
+    ...KK('present_sphere_A_green', [-0.45, 2.35, -0.62], [0, 0, 0], [1.3, 1.3, 1.3]),
+    P(cyl(0.06, 0.06, 3.0, 5), WOOD, [1.65, 1.6, -1.45]), P(box(0.05, 0.75, 1.0), 'team', [1.65, 2.65, -0.95])] : BUILD.treasury();
+  // the season the board's look is set in (render3d sets it from the scenery's biome): 'xmas' swaps in the presents
+  let season = '';
+  const setSeason = (s) => { season = s || ''; };
   // the chest's lid, thrown open on its hinge at the back so the gold shows
   const chestLid = () => { const g = kk('chest_gold_lid'); if (!g) return [];
     g.applyMatrix4(m4.makeRotationX(-1.95)); g.translate(0, 0.5, -0.565);
@@ -959,6 +977,7 @@ const Models3D = (THREE) => {
     if (u.mpb) { const k = 'mpb:' + u.mpb + (u.mpbPart ? ':' + u.mpbPart : u.mpbSkin ? ':' + u.mpbSkin : ''); return BUILD[k] ? k : u.mpbPart ? 'mpb:part' : u.structure ? 'mpb' : 'brute'; } // a 2v2 building (src/mpb.js), or its walker
     if (u.spire) return 'spire';
     if (u.structure && u.kind === 'wall' && u.barrier) return 'stonewall';
+    if (u.structure && u.kind === 'treasury' && season === 'xmas') return 'treasury:xmas';
     if (u.structure && (u.kind === 'lesser' || u.kind === 'wall' || u.kind === 'treasury' || u.kind === 'watchtower')) return u.kind;
     if (u.building) { const k = 'building:' + u.building; return u.awake && BUILD[k + ':awake'] ? k + ':awake' : BUILD[k] ? k : 'building'; } // Core Awoken: its walking version
     if (u.structure) { const k = TOWERS[u.kind] ? 'tower:' + u.kind : /^f-/.test(u.kind || '') ? 'tower:faction' : 'tower:keep'; return u.awake && BUILD[k + ':awake'] ? k + ':awake' : k; } // Core Awoken: the Mecha Tower on wheels
@@ -995,5 +1014,5 @@ const Models3D = (THREE) => {
   }
   // models that roll (a roller's ball): the height of their middle, for a body of radius 1
   const ROLL_AT = { roller: 0.9 };
-  return { kindOf, parts, height, ROLL_AT, KINDS: Object.keys(BUILD) };
+  return { kindOf, parts, height, setSeason, ROLL_AT, KINDS: Object.keys(BUILD) };
 };
