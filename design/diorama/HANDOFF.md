@@ -90,3 +90,6 @@ What the real game's Play popup has (`playPop()` in `src/site-template.html`, ar
 2. Open: with the playlist up on PLAY / Rooms, the list sits over the board (plan view) and only the hovered song has a
    box; options raised were moving the island aside while it's open, and an ink shard on the playing track (the
    saffron accent turns to ink on saffron screens).
+3. Under discussion: a "Change battlefield" note on the island that steps through the maps. Experiment so far:
+   `#look=meadow|autumn|darkwoods|ash|moonlit|savanna|sand` paints the island's top with the game's own floor
+   (`src/floors.js`, inlined by the build); the toy trees, mud patches and soil are still the meadow ones.

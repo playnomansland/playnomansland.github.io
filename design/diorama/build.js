@@ -18,6 +18,7 @@ const fill = {
   THREE_MOD: dataUrl(mod, 'text/javascript'),
   MODELS3D: fromRoot('src/kaykit3d.js').toString() + '\n' + fromRoot('src/models3d.js').toString(),
   ROSTER: JSON.stringify({ units: roster.units.map(u => Object.fromEntries(keep.map(k => [k, u[k]]))), skills: Object.fromEntries(roster.skills.map(s => [s.id, s.name])) }),
+  FLOORS: 'var Game = { ROWS: 18, ZONE: 7 };\n' + fromRoot('src/floors.js').toString(),
   BASECSS: fromHere('src/base.css').toString(),
   CHAKRA_BOLD: dataUrl(fromHere('fonts/ChakraPetch-Bold.ttf'), 'font/ttf'),
   TITLE: dataUrl(fromRoot('img/title.png'), 'image/png'),
