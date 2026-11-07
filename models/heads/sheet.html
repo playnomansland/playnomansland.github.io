@@ -26,7 +26,8 @@ scene.add(new THREE.HemisphereLight('#FFF6EA', '#B9A89A', 1.6));
 const key = new THREE.DirectionalLight('#FFF1DE', 2.2); key.position.set(-3, 4, 5); scene.add(key);
 const rim = new THREE.DirectionalLight('#DDE6FF', 1.0); rim.position.set(4, 3, -4); scene.add(rim);
 const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
-const views = [['3/4', -0.55, false, SIZE], ['Front', 0, false, SIZE], ['Side', -PI2(), false, SIZE], ['Back', Math.PI, false, SIZE], ['Silhouette', -0.55, true, SIZE], ['64 px', -0.55, false, 64]].filter(v => v[0] !== 'Back' || qs.has('back'));
+const views = [['3/4', -0.55, false, SIZE], ['Front', 0, false, SIZE], ['Side', -PI2(), false, SIZE], ['Back', Math.PI, false, SIZE], ['Silhouette', -0.55, true, SIZE], ['64 px', -0.55, false, 64]].filter(v => v[0] !== 'Back' || qs.has('back')).filter(v => !qs.has('only') || v[0] === qs.get('only'));
+if (qs.has('yaw')) views.forEach(v => v[1] = +qs.get('yaw'));
 const DIST = +(qs.get('dist') || 8.6), LOOK = +(qs.get('look') || 0.05);
 function PI2() { return Math.PI / 2; }
 for (const k of M.KEYS) {
