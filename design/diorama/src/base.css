@@ -70,21 +70,63 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .build { position: fixed; left: 48px; bottom: 40px; font: 400 13px var(--type); opacity: .6; }
 
 /* ── Play: the screen turns saffron, the camera goes up to the plan view, the menu becomes the orders ── */
-.orders { position: fixed; left: 48px; bottom: 96px; display: none; }
+/* two choices, one click each. The block's top stays put so Multiplayer's list folds out downward */
+.orders { position: fixed; left: 48px; top: min(52vh, calc(100vh - 400px)); display: none; }
 body.play .orders { display: grid; } body.play .menu, body.play .note, body.play .zz, body.play #lines { display: none; }
-.orders .k { font: 700 14px var(--type); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
-.orders .who { display: grid; justify-items: start; margin-bottom: 26px; }
+.orders .who { display: grid; justify-items: start; }
 .orders .who .item { font-size: calc(76px * var(--k, 1)); }
-.orders .who .item .shard { fill: var(--ink); }
-.orders .who .item:hover, .orders .who .item.on { color: #F2B23A; }
-.orders .who .item small { font: 400 15px var(--type); text-transform: none; letter-spacing: 0; opacity: .8; }
-.orders .opts { display: grid; grid-template-columns: 100px auto; gap: 6px 20px; font: 400 16px var(--type); margin-bottom: 26px; align-items: baseline; }
-.orders .opts span { opacity: .7; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
-.orders .opts b { font-weight: 700; } .orders .opts i { font-style: normal; opacity: .45; }
-.orders .opts button:hover { text-decoration: underline; }
-.deploy { justify-self: start; display: inline-flex; align-items: center; gap: 18px; padding: 12px 26px 10px 22px; font: var(--st-wght, 900) calc(64px * var(--k, 1))/0.9 var(--stencil); font-variation-settings: var(--st-var, normal); font-style: var(--st-style, normal); letter-spacing: var(--st-ls, 0.01em); text-transform: uppercase; color: #F2B23A; background: var(--ink); clip-path: polygon(0 6%, 98% 0, 100% 90%, 2% 100%); transition: transform .12s ease; }
-.deploy:hover { transform: rotate(-1.5deg) scale(1.03); }
-.deploy svg { width: 40px; height: 40px; }
+.orders .item .shard { fill: var(--ink); }
+.orders .item:hover, .orders .item:focus-visible, .orders .item.on { color: #F2B23A; }
+.orders .item small { font: 400 15px var(--type); text-transform: none; letter-spacing: 0; opacity: .8; }
+.orders .car { width: .42em; height: .42em; align-self: center; margin-left: -4px; transition: transform .2s ease; }
+body.mp-open #multi .car { transform: rotate(180deg); }
+body.mp-open #multi { color: #F2B23A; } body.mp-open #multi .shard { opacity: 1; transform: none; }
+/* Multiplayer's kinds: a rail drops from the word, a tick to each kind. No panel */
+.orders .mp { list-style: none; margin: 6px 0 0 20px; padding: 0 0 0 26px; display: none; justify-items: start; }
+body.mp-open .orders .mp { display: grid; animation: mpin .24s cubic-bezier(.16,.9,.24,1) both; }
+@keyframes mpin { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+.orders .mp li { position: relative; }
+.orders .mp li { padding: 2px 0; }
+.orders .mp li::after { content: ""; position: absolute; left: -26px; top: 0; bottom: 0; width: 2px; background: var(--ink); } .orders .mp li:last-child::after { bottom: 50%; }
+.orders .mp li::before { content: ""; position: absolute; left: -26px; top: 50%; width: 16px; height: 2px; background: var(--ink); }
+.orders .mp .item { font-size: calc(54px * var(--k, 1)); }
+.orders .mp .item[disabled] { opacity: .42; cursor: not-allowed; color: var(--ink); }
+.orders .mp .item[disabled] .lock { width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; }
+
+/* Rooms: the list sits on the field where the choices were; the island stays on the right */
+.rooms { position: fixed; left: 48px; top: 128px; bottom: 96px; width: min(620px, 46vw); display: none; grid-template-rows: auto auto auto auto minmax(0, 1fr); align-content: start; }
+body.in-rooms .rooms { display: grid; } body.in-rooms .orders { display: none; }
+.rooms .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+.rooms h2 { margin: 0 0 14px; font: 700 76px/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+.rooms h2 small { font: 400 15px var(--type); text-transform: none; letter-spacing: 0; opacity: .75; margin-left: 10px; }
+.rsearch { position: relative; display: flex; align-items: center; gap: 10px; padding: 0 0 8px; border-bottom: 2px solid var(--ink); margin-bottom: 22px; }
+.rsearch .mag { width: 20px; height: 20px; flex: none; }
+.rsearch input { flex: 1; min-width: 0; font: 400 17px var(--type); color: var(--ink); background: none; border: 0; outline: 0; padding: 4px 0; }
+.rsearch input::placeholder { color: var(--ink); opacity: .5; }
+.tok { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 4px; font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; color: #F2B23A; background: var(--ink); clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
+.tok svg { width: 11px; height: 11px; transition: transform .2s ease; } .tok[aria-expanded="true"] svg { transform: rotate(180deg); }
+.tok-menu { position: absolute; left: 30px; top: 100%; z-index: 4; list-style: none; margin: 6px 0 0; padding: 10px 6px; display: grid; min-width: 200px; background: var(--ink); clip-path: polygon(0 0, 100% 3%, 100% 100%, 0 96%); filter: drop-shadow(0 10px 18px rgba(0,0,0,.3)); }
+.tok-menu[hidden] { display: none; }
+.tok-menu button { display: block; width: 100%; padding: 7px 12px; text-align: left; font: 700 14px var(--type); letter-spacing: .04em; text-transform: uppercase; color: #F4ECD8; }
+.tok-menu button:hover, .tok-menu button[aria-pressed="true"] { color: #F2B23A; }
+.tok-menu button[disabled] { opacity: .45; cursor: not-allowed; }
+.tok-menu small { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: .8; margin-left: 6px; }
+.create { justify-self: start; display: inline-flex; align-items: center; gap: 14px; margin-bottom: 18px; padding: 10px 22px 8px 18px; font: var(--st-wght, 900) calc(52px * var(--k, 1))/0.9 var(--stencil); font-variation-settings: var(--st-var, normal); font-style: var(--st-style, normal); letter-spacing: var(--st-ls, 0.01em); text-transform: uppercase; color: #F2B23A; background: var(--ink); clip-path: polygon(0 6%, 98% 0, 100% 90%, 2% 100%); transition: transform .12s ease; }
+.create:hover { transform: rotate(-1.5deg) scale(1.03); }
+.create svg { width: 26px; height: 26px; }
+.rlist { list-style: none; margin: 0; padding: 0 6px 0 0; overflow-y: auto; scrollbar-width: thin; }
+.rlist li { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 16px; padding: 11px 6px 11px 0; border-bottom: 1px dashed rgba(23,20,15,.3); }
+.rlist li:last-child { border-bottom: 0; }
+.rlist b { font: 700 20px/1.15 var(--sans); }
+.rlist .sc { font: 700 13px var(--type); margin-left: 8px; }
+.rlist .tg { display: inline-block; margin-left: 8px; padding: 1px 6px 0; font: 700 10px var(--type); letter-spacing: .08em; text-transform: uppercase; border: 1px solid currentColor; vertical-align: 3px; opacity: .75; }
+.rlist small { display: block; margin-top: 3px; font: 400 13px var(--type); opacity: .72; }
+.rlist .go { position: relative; isolation: isolate; padding: 6px 14px 3px; font: 700 26px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+.rlist .go::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); opacity: 0; transition: opacity .12s ease; }
+.rlist .go:hover, .rlist li.on .go { color: #F2B23A; } .rlist .go:hover::before, .rlist li.on .go::before { opacity: 1; }
+.rlist .go.watch { opacity: .7; } .rlist .go.watch:hover { opacity: 1; }
+.rlist .full { font: 400 13px var(--type); opacity: .55; padding-right: 14px; }
+.rlist .empty { display: block; padding: 18px 0; font: 400 15px var(--type); opacity: .8; border: 0; }
 .back { position: fixed; top: 38px; right: 48px; display: none; font: 700 15px var(--sans); }
 body.play .back { display: block; } body.play .acct { display: none; }
 

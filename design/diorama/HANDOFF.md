@@ -18,7 +18,9 @@ get by clicking PLAY.
 | `screens/` | Screenshots of the current state, including `play-current.jpg`. |
 
 Screenshot states (address hash): `#still` (no idle motion), `#play`, `#music`, `#view=puzzles|rules|units|ranks`,
-`#pin`, `#tier=1..4`, `#unit=N`, `#hover=keepYou|keepFoe|vaultYou|vaultFoe|mammoth|u:N`. For example:
+`#pin`, `#tier=1..4`, `#unit=N`, `#hover=keepYou|keepFoe|vaultYou|vaultFoe|mammoth|u:N`; on Play, `#multi` (Multiplayer
+folded out), `#rooms=standard|ranked` (Rooms, filtered), `#filter` (the filter's list open) and
+`#on=vs-ai|multi|standard|ranked|r0..` (look as if pointed at, a room row by index). For example:
 
 ```bash
 node design/diorama/build.js
@@ -57,13 +59,20 @@ lifts it and shows its note. Units: tier tabs above the island, a row of units o
 sheet (stats from the roster). Rankings: the board clears, five random tier 4 units on a numbered podium, names and
 scores printed on the tiles (sample data), the STANDINGS header top left.
 
-## The PLAY screen as it is now (`#play`, see `screens/play-current.jpg`)
+## The PLAY screen as it is now (`#play`, see `screens/play*.jpg` and `screens/rooms-*.jpg`)
 
 - The field turns saffron and the camera rises to the plan view, straight down on the island (right side).
-- Left: `Orders · new match`, then three big choices with typed asides: VS COMPUTER "it never gets tired", VS A FRIEND
-  "friendships may be tested", ONLINE ROOMS "make one or join one". The picked one has the ink shard.
-- Typed option rows: Mode `[Normal] Ranked`, Pack `Standard ▾`, Map `Standard ▾`, Timer `[On] Off`.
-- An ink DEPLOY → button; "← Menu" top right; the music player bottom right.
+- Left: two choices with typed asides, no kicker: VS COMPUTER "it never gets tired" and MULTIPLAYER ⌄ "friendships
+  may be tested". The ink shard shows on hover only; one click does the thing (no Deploy button, no option rows).
+  VS COMPUTER would start a match against the AI straight away (a no-op in the mockup).
+- MULTIPLAYER folds out its kinds below it on an ink rail with a tick to each (no panel): 1v1 STANDARD "no stakes",
+  1v1 RANKED "it goes on your record", 2v2 dimmed with a lock and "coming soon" (not clickable).
+- A kind opens **Rooms** in the same place: the kicker `Multiplayer · rooms`, ROOMS with "n open · n playing", a search
+  line (magnifier, the filter as an ink token set to the kind you picked, ⌄ to switch it, then free text for a player
+  or room code), one CREATE ROOM + button, then the list: "Host's room", ★ score for ranked, a NO WATCHERS tag,
+  `map · players · age or round · watching`, and JOIN / WATCH / full on the right (the ink shard on hover). Sample data,
+  shaped like the game's lobby (`roomCard()` in `src/site-template.html`). "← Menu" becomes "← Play" here; Escape too.
+- The music player bottom right, as before.
 
 What the real game's Play popup has (`playPop()` in `src/site-template.html`, around line 3821): vs Friend; vs AI
 (disabled in ranked); Online · Rooms (when the server is up); Normal / Ranked; the pack, map and leader pickers
@@ -71,5 +80,4 @@ What the real game's Play popup has (`playPop()` in `src/site-template.html`, ar
 
 ## Next tasks
 
-1. Remove the "Mode: Normal / Ranked" row from the PLAY screen.
-2. The owner had more PLAY-screen changes in mind but hadn't listed them yet: ask for the rest before going further.
+1. Done: the PLAY screen reworked as above (owner's list of 2026-11-07). Waiting on the owner's feedback.

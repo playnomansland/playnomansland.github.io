@@ -177,20 +177,35 @@ body.units .tiers { opacity: 1; pointer-events: auto; }
 <p class="phone-reward" style="display:none;position:relative;margin:22px 16px 0;font:400 14px/1.4 var(--type)"><span class="tag" style="display:inline-block;padding:3px 7px 2px;font:700 11px var(--type);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--saffron)">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></p>
 <div class="build">Music: Snetänd, Emil Helleday · Build 2026.11</div>
 
+<!-- Play: one click on a choice starts it. Multiplayer folds out its kinds; a kind opens Rooms, filtered to it -->
 <section class="orders" aria-label="New match">
-  <span class="k">Orders · new match</span>
   <div class="who">
-    <button class="item on"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,10 96,0 100,90 5,100"/></svg>Vs computer <small>it never gets tired</small></button>
-    <button class="item"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,12 96,100 0,88"/></svg>Vs a friend <small>friendships may be tested</small></button>
-    <button class="item"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,4 98,0 100,100 2,94"/></svg>Online rooms <small>make one or join one</small></button>
+    <button class="item" id="vs-ai"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,10 96,0 100,90 5,100"/></svg>Vs computer <small>it never gets tired</small></button>
+    <button class="item" id="multi" aria-expanded="false" aria-controls="mp-list"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,12 96,100 0,88"/></svg>Multiplayer<svg class="car" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg> <small>friendships may be tested</small></button>
+    <ul class="mp" id="mp-list">
+      <li><button class="item" data-q="standard"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,8 97,0 100,92 3,100"/></svg>1v1 Standard <small>no stakes</small></button></li>
+      <li><button class="item" data-q="ranked"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,0 100,10 98,100 0,90"/></svg>1v1 Ranked <small>it goes on your record</small></button></li>
+      <li><button class="item" data-q="2v2" disabled aria-disabled="true">2v2 <small><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg>coming soon</small></button></li>
+    </ul>
   </div>
-  <div class="opts">
-    <span>Mode</span><span><button><b>[Normal]</b></button> <button><i>Ranked</i></button></span>
-    <span>Pack</span><button style="text-align:left"><b>Standard ▾</b></button>
-    <span>Map</span><button style="text-align:left"><b>Standard ▾</b></button>
-    <span>Timer</span><span><button><b>[On]</b></button> <button><i>Off</i></button></span>
+</section>
+
+<!-- Rooms: the open matches of one kind. One button above the list -->
+<section class="rooms" aria-label="Rooms">
+  <span class="k">Multiplayer · rooms</span>
+  <h2>Rooms <small id="r-count"></small></h2>
+  <div class="rsearch">
+    <svg class="mag" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.8"/></svg>
+    <button class="tok" id="r-tok" aria-haspopup="true" aria-expanded="false"><span></span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+    <input id="r-q" placeholder="player or room code" autocomplete="off" spellcheck="false" aria-label="Search rooms">
+    <ul class="tok-menu" id="r-menu" hidden>
+      <li><button data-q="standard">1v1 Standard</button></li>
+      <li><button data-q="ranked">1v1 Ranked</button></li>
+      <li><button data-q="2v2" disabled>2v2 <small>coming soon</small></button></li>
+    </ul>
   </div>
-  <button class="deploy">Deploy <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3"/></svg></button>
+  <button class="create">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+  <ol class="rlist" id="r-list"></ol>
 </section>
 
 <script type="module">
@@ -464,19 +479,72 @@ for (const v of Object.keys(MODES)) document.querySelector(`.menu .item[data-cam
 const unpin = () => { body.classList.remove('pinned'); setMode('play'); picked = null; items.forEach(x => x.classList.toggle('on', x.id === 'play')); viewName = 'play'; want = VIEWS.play; };
 const openPlay = () => { unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = VIEWS.orders; };
 document.getElementById('play').addEventListener('click', openPlay);
-document.querySelector('.back').addEventListener('click', () => { body.classList.remove('play'); unpin(); });
-document.querySelectorAll('.orders .who .item').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.classList.toggle('on', x === b))));
+const backBtn = document.querySelector('.back');
+const goBack = () => { if (body.classList.contains('in-rooms')) return closeRooms(); body.classList.remove('play', 'mp-open'); setMp(false); unpin(); };
+backBtn.addEventListener('click', goBack);
+
+// Play: Vs computer starts at once; Multiplayer folds out its kinds, and a kind opens Rooms filtered to it
+const multi = document.getElementById('multi');
+const setMp = (on) => { body.classList.toggle('mp-open', on); multi.setAttribute('aria-expanded', on); };
+multi.addEventListener('click', () => setMp(!body.classList.contains('mp-open')));
+document.getElementById('vs-ai').addEventListener('click', () => {}); // in the game: straight into a match vs the AI
+document.querySelectorAll('.orders .mp .item:not([disabled])').forEach(b => b.addEventListener('click', () => openRooms(b.dataset.q)));
+
+// Rooms (sample data, shaped like the game's lobby list: host, map, players, age or round, watchers)
+const ROOMS = [
+  { q: 'standard', host: 'Pebble', map: 'Standard', p: 1, at: 0 },
+  { q: 'ranked', host: 'Ironmoss', score: 88, map: 'Standard', p: 1, at: 1 },
+  { q: 'standard', host: 'Sleepy Ent', map: 'Frozen Peak', p: 1, at: 4 },
+  { q: 'ranked', host: 'Captain Tuesday', score: 96, map: 'Standard', p: 2, round: 2, watch: 5 },
+  { q: 'standard', host: 'Captain Tuesday', map: 'Standard', p: 2, round: 3, watch: 2 },
+  { q: 'ranked', host: 'Pebble', score: 81, map: 'Standard', p: 1, at: 3 },
+  { q: 'standard', host: 'Bramble', map: 'Mushroom Cavern', p: 1, at: 7, noWatch: true },
+  { q: 'ranked', host: 'Hedgewitch', score: 74, map: 'Standard', p: 2, round: 4, watch: 1 },
+  { q: 'standard', host: 'Old Gus', map: 'Random', p: 2, round: 6, noWatch: true },
+  { q: 'standard', host: 'Moth', map: 'Ashlands', p: 1, at: 12 },
+];
+const KIND = { standard: '1v1 Standard', ranked: '1v1 Ranked', '2v2': '2v2' };
+let roomQ = 'standard';
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function drawRooms() {
+  const text = document.getElementById('r-q').value.trim().toLowerCase();
+  const rows = ROOMS.filter(r => r.q === roomQ && (!text || r.host.toLowerCase().includes(text) || r.map.toLowerCase().includes(text)));
+  const open = rows.filter(r => !r.round).length;
+  document.getElementById('r-count').textContent = `${open} open · ${rows.length - open} playing`;
+  document.getElementById('r-list').innerHTML = rows.length ? rows.map(r => {
+    const facts = [r.map === 'Random' ? 'Random map' : r.map, `${r.p}/2 players`, r.round ? `round ${r.round}` : r.at < 1 ? 'just now' : `${r.at} min ago`, r.watch ? `${r.watch} watching` : ''].filter(Boolean).join(' · ');
+    const act = !r.round ? '<button class="go">Join</button>' : !r.noWatch ? '<button class="go watch">Watch</button>' : '<span class="full">full</span>';
+    return `<li><span><b>${esc(r.host)}’s room</b>${r.score ? `<span class="sc">★ ${r.score}</span>` : ''}${r.noWatch ? '<span class="tg">No watchers</span>' : ''}<small>${esc(facts)}</small></span>${act}</li>`;
+  }).join('') : `<li class="empty">No ${KIND[roomQ]} rooms right now. Make one, and others can join you.</li>`;
+}
+function setRoomQ(q) {
+  roomQ = q; document.querySelector('#r-tok span').textContent = KIND[q];
+  document.querySelectorAll('#r-menu button').forEach(b => b.setAttribute('aria-pressed', b.dataset.q === q));
+  drawRooms();
+}
+const tokMenu = (on) => { document.getElementById('r-menu').hidden = !on; document.getElementById('r-tok').setAttribute('aria-expanded', on); };
+document.getElementById('r-tok').addEventListener('click', () => tokMenu(document.getElementById('r-menu').hidden));
+document.querySelectorAll('#r-menu button:not([disabled])').forEach(b => b.addEventListener('click', () => { setRoomQ(b.dataset.q); tokMenu(false); }));
+document.getElementById('r-q').addEventListener('input', drawRooms);
+function openRooms(q) { setRoomQ(q); tokMenu(false); body.classList.add('in-rooms'); backBtn.textContent = '← Play'; }
+function closeRooms() { body.classList.remove('in-rooms'); tokMenu(false); backBtn.textContent = '← Menu'; }
 // the playlist
 const openMusic = () => body.classList.toggle('music-open'), closeMusic = () => body.classList.remove('music-open');
 document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', openMusic));
 document.querySelectorAll('.pl-row').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.setAttribute('aria-current', x === b))));
 document.querySelectorAll('.pl-tabs button[aria-pressed]').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.setAttribute('aria-pressed', x === b))));
 document.querySelectorAll('.pl-modes button').forEach(b => b.addEventListener('click', () => b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true')));
-addEventListener('keydown', e => { if (e.key === 'Escape') { if (picked) return pickUnit(null); closeMusic(); body.classList.remove('play'); unpin(); } });
+addEventListener('keydown', e => { if (e.key === 'Escape') { if (picked) return pickUnit(null); if (!document.getElementById('r-menu').hidden) return tokMenu(false); closeMusic(); goBack(); } });
+addEventListener('pointerdown', e => { if (!e.target.closest('.rsearch')) tokMenu(false); });
 addEventListener('pointerdown', e => { if (body.classList.contains('music-open') && !e.target.closest('.music')) closeMusic(); });
 // states for screenshots: #play, #music, #view=<word>, #pin, #tier=<n>, #unit=<n>, #hover=<piece>
 const H = location.hash;
 if (H.includes('play')) { openPlay(); now = { ...VIEWS.orders, at: [...VIEWS.orders.at], off: [...VIEWS.orders.off] }; }
+if (H.includes('multi')) setMp(true);
+const rq = (H.match(/rooms=(\w+)/) || [])[1]; if (rq) { if (!H.includes('play')) { openPlay(); now = { ...VIEWS.orders, at: [...VIEWS.orders.at], off: [...VIEWS.orders.off] }; } openRooms(rq); }
+if (H.includes('filter')) tokMenu(true);
+const onq = (H.match(/on=([\w-]+)/) || [])[1]; // look as if pointed at: a Play choice (vs-ai, multi, standard, ranked) or a room row (r0, r1...)
+if (onq) { const el = /^r\d+$/.test(onq) ? document.querySelectorAll('#r-list li')[+onq.slice(1)] : document.getElementById(onq) || document.querySelector(`.orders .mp [data-q="${onq}"]`); if (el) el.classList.add('on'); }
 if (H.includes('music')) openMusic();
 const v = (H.match(/view=(\w+)/) || [])[1];
 if (v && VIEWS[v]) { want = VIEWS[v]; now = { ...want, at: [...want.at], off: [...want.off] }; items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; setMode(v); if (H.includes('pin')) body.classList.add('pinned'); }
