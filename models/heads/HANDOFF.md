@@ -4,6 +4,31 @@ Read this first. It is everything from the claude.ai session that started the le
 without that conversation. The Project doc "claude/leader-heads.md" in the Phone Bellum project says the same in
 short form.
 
+## NEW DIRECTION (2026-11-07, evening): heads are tokens
+
+After Claude Code's skill-based Zoe came out worse, Vilhelm changed the brief: **the head is also a token, a little
+artifact. The design language can be much more minimal and needs little detail.** His new Zoe sheet
+(`refs/zoe-token-reference.png`) shows it: bold faceted shapes, a clean iconic silhouette, **about 300–600
+triangles**, flat shading, a 4-colour palette, no pupils, no soft sculpting.
+
+The first token is built: **`zoe-token.js` (ZoeToken, 344 triangles)**, from that sheet, in the claude.ai session.
+Renders: `renders/zoe-token-sheet.png`, `renders/zoe-token-vs-reference.png`. It's waiting for Vilhelm's verdict.
+
+How the token is built (reuse it for the next leaders):
+- The head is an 8-sided LatheGeometry (profile bottom-to-top, a vertex facing -z so a ridge runs down the front),
+  scaled wider than deep, flat-shaded: a faceted gem. The profile sets the character's silhouette.
+- Face features are thin extruded slabs laid flat on a facet (`facet()` + `onFacet()`): Zoe's blank cream eye
+  wedges and heavy dark brows slanting into a V.
+- Props are simple solids: four-sided prisms for the antennae (each piece runs a little past the kink so the joint
+  has no gap), a faceted star (a star outline with its middle raised to a point on both sides), an 8-sided collar
+  band, an octahedron as the diamond.
+- Compare against the sheet's front turnaround and hero with `tools/heads-render.js` (add `--flat`). Crops of the
+  token sheet (1536 x 1024): front `400,65,200,280` (`--yaw 0`), hero `40,300,310,445` (`--yaw -0.55`).
+
+Everything below this section was written for the earlier, detailed style. The hand-built Zoe versions
+(`zoe.js` v5, `zoe-v6.js`) and the detailed Emile (`emile.js`, approved before the change) are kept, but whether
+Emile is redone as a token is Vilhelm's call.
+
 ## The task
 
 Every leader gets a small 3D head (no body): a symbol for the menus and the battle UI, not a model on the
