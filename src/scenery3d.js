@@ -616,14 +616,20 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       add(body); add(tail); b.userData.wings = [add(wing, 1), add(wing, -1)]; b.scale.setScalar(1.35); b.visible = false; vultures.add(b);
     }
   }
-  let vultureT = 0;
-  // each circles a point up-sun of the board, so its shadow (thrown far by the low sun, sun: the light's position)
-  // sweeps across the board
+  // home: the wide circle each keeps (r, y, c: each circles a point up-sun of the board, so its shadow, thrown far by
+  // the low sun, sweeps across the board); now: where it flies at the moment, gliding toward home or, while the
+  // opponent is ready (prey(at) from render3d), toward a low, tight circle over your own tower
+  let vultureT = 0, preyAt = null;
   function showVultures(n, sun) {
     vultures.visible = n > 0; if (!n) return;
-    vultures.children.forEach((b, i) => { const u = b.userData, y = 24 + (i * 3.7) % 9, f = 0.85 * y / sun[1];
-      b.visible = i < n; Object.assign(u, { r: 8 + i * 4.5, y, w: (0.16 - i * 0.012) * (i % 3 === 2 ? -1 : 1), a0: i * 1.9, c: [sun[0] * f, sun[2] * f - (i % 2) * 8] }); });
+    vultures.children.forEach((b, i) => { const y = 24 + (i * 3.7) % 9, f = 0.85 * y / sun[1];
+      const home = { r: 8 + i * 4.5, y, c: [sun[0] * f, sun[2] * f - (i % 2) * 8] }, u = b.userData;
+      b.visible = i < n; Object.assign(u, { home, now: u.now || { ...home, c: [...home.c] }, w: (0.16 - i * 0.012) * (i % 3 === 2 ? -1 : 1), a0: i * 1.9, i }); });
   }
+  // the vultures circle over { x, z } (scene metres), or go back to their wide circles (null)
+  function prey(at) { preyAt = at; }
+  // true while something round the board lives on its own (the vultures): the page keeps drawing frames for it
+  const alive = () => vultures.visible;
   // the clock for the falling snow, embers and chimney smoke (the page calls it every frame it draws); px: the renderer's pixels per CSS pixel
   let smokeT = 0;
   function tick(dt, px = 1) {
@@ -634,10 +640,14 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     if (grassMat.userData.on) windT.value += dt;
     if (vultures.visible) {
       vultureT += dt;
+      const ease = 1 - Math.exp(-dt * 0.6); // a few seconds to gather or drift apart
       for (const b of vultures.children) {
         if (!b.visible) continue;
-        const u = b.userData, a = u.a0 + vultureT * u.w, x = u.c[0] + Math.cos(a) * u.r, z = u.c[1] + Math.sin(a) * u.r;
-        b.position.set(x, u.y + Math.sin(vultureT * 0.3 + u.a0) * 1.5, z);
+        const u = b.userData, n = u.now, to = preyAt ? { r: 6 + u.i * 2.8, y: 15 + u.i * 2.5, c: [preyAt.x, preyAt.z] } : u.home;
+        n.r += (to.r - n.r) * ease; n.y += (to.y - n.y) * ease; n.c[0] += (to.c[0] - n.c[0]) * ease; n.c[1] += (to.c[1] - n.c[1]) * ease;
+        u.ang = (u.ang == null ? u.a0 : u.ang) + dt * u.w * (1 + 0.8 * smoothstep(23, 16, n.y)); // a tighter circle turns faster
+        const a = u.ang, x = n.c[0] + Math.cos(a) * n.r, z = n.c[1] + Math.sin(a) * n.r;
+        b.position.set(x, n.y + Math.sin(vultureT * 0.3 + u.a0) * 1.5, z);
         b.rotation.set(0, -a + (u.w > 0 ? Math.PI : 0), 0, 'YXZ'); b.rotateZ(u.w > 0 ? -0.3 : 0.3); // nose along the circle, banked into it
         const beat = Math.max(0, Math.sin(vultureT * 0.45 + u.a0 * 3)) ** 12; // a few slow beats now and then, otherwise gliding
         const ang = 0.12 + beat * 0.55 * Math.sin(vultureT * 9);
@@ -878,7 +888,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
   }
   function shadows(on) { if (on !== castShadows) { castShadows = on; key = ''; } }
   function dispose() { clear(); scene.remove(flakes, flakes2, cabin, cabinLight, veil, xmas, horizon, dragon, vultures); grassGeo.dispose(); grassMat.dispose(); groundMat.dispose(); vultureMat.dispose(); vultures.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); flake2Mat.dispose(); sootMat.dispose(); emberGlowMat.dispose(); horizonMat.dispose(); horizonTex.dispose(); horizon.geometry.dispose(); dragonMat.dispose(); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
-  return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
+  return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, alive, prey, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
 };
 
 // The painted floors and the looks live in src/floors.js (loaded with the main page, before this file)

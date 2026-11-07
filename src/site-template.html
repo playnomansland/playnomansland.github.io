@@ -2332,7 +2332,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     dev: m && m.dev ? { bPlacing, castMode, guideMode, guideId: guideDrag ? guideDrag.id : guideMode !== 'pick' ? guideMode : null, guide: guideDrag ? guideDrag.pts : guideMode != null && guideMode !== 'pick' ? guideDraft : null } : null,
     battleCam: cam && cam.k > 0 ? { zoom: 1 + (CAM.zoom - 1) * cam.k, x: cam.x, y: cam.y, k: cam.k } : null,
     aim: phase === 'deploy' && (aimMode != null || aimDrag) ? { id: aimDrag ? aimDrag.id : aimMode, end: aimDrag ? aimDrag.end : hoverTile } : null, // (aimDrag without aimMode: a head dragged)
-    placingBuilding: placingBuilding(), win: null, duo: duoBoard() }); // duo (2v2): this phone's lane and each player's ring colour
+    placingBuilding: placingBuilding(), win: null, duo: duoBoard(),
+    foeReady: phase === 'deploy' && !solo() && !!ready[foe()] && !ready[me] }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
   const board = Render2D(cv, boardView);
   let board3d = null; // the 3D board when it's on (see "the 3D board" below)
   const size = () => (board3d || board).size();
@@ -6990,13 +6991,20 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     wakeUntil = performance.now() + 700;
     if (board3d && !raf3d) raf3d = requestAnimationFrame(frame3d);
   }
+  // While the scenery lives on its own (Savanna's vultures) the board keeps drawing when nothing else moves too, at
+  // about 30 frames a second, so the birds always fly smoothly.
+  let lastIdle = 0;
   function frame3d(ts) {
     raf3d = 0;
     if (!board3d) return;
-    board3d.draw();
-    boardMarks();
-    meterFrame(ts);
-    if (board3d && (phase === 'battle' || !board3d.still() || performance.now() < wakeUntil)) raf3d = requestAnimationFrame(frame3d);
+    const busy = phase === 'battle' || !board3d.still() || performance.now() < wakeUntil, alive = board3d.alive && board3d.alive();
+    if (busy || !alive || ts - lastIdle >= 30) {
+      if (!busy) lastIdle = ts;
+      board3d.draw();
+      boardMarks();
+      meterFrame(ts);
+    }
+    if (board3d && (busy || alive)) raf3d = requestAnimationFrame(frame3d);
   }
   // The speed meter counts frames and sums up each fight for the too-slow rule. When 3D is forced for testing, it
   // shows top right on the 3D board: frames drawn in the last second (0 while the board idles), the slowest frame among

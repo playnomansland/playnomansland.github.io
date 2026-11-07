@@ -1065,7 +1065,12 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (camDown.lengthSq() < 1e-6) camDown.set(0, 0, 1); camDown.normalize();
     const z = cam.zoom();
     viewMode = z < 0.5 ? 'strategic' : z < 1.5 ? 'tilted' : z < 2.5 ? 'angled' : 'ground'; uiOff = viewMode === 'ground';
-    paintFloor(v, dt); useHeights(v); useScenery(v); if (scenery) scenery.tick(dt, renderer.getPixelRatio());
+    paintFloor(v, dt); useHeights(v); useScenery(v);
+    if (scenery) { // Savanna's vultures gather over your tower while your opponent is ready and you still deploy
+      const m = v.m, t = v.foeReady && m && ((m.towers && m.towers[v.me]) || Game.towerSpot(m, v.me));
+      if (t) { const w = Game.tileToWorld(t.col, t.row), f = v.me === 1 ? -1 : 1; scenery.prey({ x: w.x * f, z: -w.y * f }); } else scenery.prey(null);
+      scenery.tick(dt, renderer.getPixelRatio());
+    }
     used.clear(); ns = 0;
     placeBodies(v, dt);
     drawFx(v);
@@ -1120,6 +1125,6 @@ const Render3D = (THREE, el, view, opts = {}) => {
     renderer.forceContextLoss();
   }
   return { size: sizeTo, draw, tileAt, thumb: (match) => floor2d.thumb(match), camera: cam, info: () => renderer.info.render,
-    still: () => !cam.busy(), kinds: () => [...new Set(Object.keys(groups).filter(k => used.has(groups[k])).map(k => k.split('#')[0]))], // the models drawn in the last frame (UI tests)
+    still: () => !cam.busy(), alive: () => !!(scenery && scenery.alive && scenery.alive()), // alive: the scenery moves on its own (Savanna's vultures) kinds: () => [...new Set(Object.keys(groups).filter(k => used.has(groups[k])).map(k => k.split('#')[0]))], // the models drawn in the last frame (UI tests)
     quality, pixelRatio: () => renderer.getPixelRatio(), dispose, drawn, screenAt, pickAt, scenery };
 };
