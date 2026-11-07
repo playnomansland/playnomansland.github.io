@@ -171,7 +171,7 @@ assert.ok(Game.buySkill(mm, 0, cb, 1) && Game.buySkill(mm, 0, cb, 2), 'Twin turr
 assert.ok(!Game.undoSkill(mm, 0, cb, 1) && !Game.undoSkill(mm, 0, cb, 0), 'skills stay while Master engineering is owned');
 assert.ok(Game.undoSkill(mm, 0, cb, 2) && Game.undoSkill(mm, 0, cb, 1) && Game.undoSkill(mm, 0, cb, 0), 'undo in order');
 assert.strictEqual(Game.buildingsOf(mm, 0).length, 0, 'taking back Build factory takes the factory back');
-// Frickolas Cage's +10% health reaches the turret too
+// Friggo's +10% health reaches the turret too
 mm.chars[0] = 'cage';
 near(Game.unitFor(mm, 0, cb).build.unit.hp, 110, 1e-9, 'Cage: tougher turrets');
 // a whole fight runs the same way twice (both phones must agree)

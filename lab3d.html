@@ -4313,7 +4313,7 @@ const Game = (() => {
   // RETIRED_CHARS: out of the game for now. Blixten (2026-11-07): being reworked; his rules stay in the code.
   const RETIRED_CHARS = ['blixten'];
   const ALL_CHARACTERS = [
-    { id: 'cage', name: 'Frickolas Cage', ability: 'Units +10% health.' },
+    { id: 'cage', name: 'Friggo', ability: 'Units +10% health.' },
     { id: 'zoe', name: 'Zoe', ability: '2 buff tiles each round. Their bonus grows each time you use them.' },
     { id: 'emile', name: 'Emile', ability: 'Tier 1 unlocks are free.' },
     { id: 'wilhelm', name: 'Wilhelm', ability: 'Flank and no man’s land squads: +4 armor. Flanks start faster.' },
@@ -5313,13 +5313,13 @@ const Game = (() => {
     const { skills, skillDefs, skillsOn, skillsInnate, skillMods, spawn, ...plain } = E.applySkills(m.units[si], defs, m.units);
     return { ...u, spawn: { ...sp, unit: E.withTraits({ ...plain, level: 0 }) } };
   }
-  // the player's character on one of their units (spawned ones too): Noah cuts health and damage, Cage adds health
+  // the player's character on one of their units (spawned ones too): Noah cuts health and damage, Friggo adds health
   function withCharacter(m, side, u) {
     if (charOf(m, side) === 'noah') { // Noah: 10% less health and damage, spawned ones too
       const k = 1 - CHAR.noahCut / 100, cut = (x) => ({ ...x, hp: x.hp * k, hit: x.hit * k });
       u = withKids(cut(u), cut);
     }
-    if (charOf(m, side) === 'cage') { // Frickolas Cage: +10% health for every unit, spawned ones too
+    if (charOf(m, side) === 'cage') { // Friggo: +10% health for every unit, spawned ones too
       const k = 1 + CHAR.cageHp / 100, tough = (x) => ({ ...x, hp: x.hp * k });
       u = withKids(tough(u), tough);
     }
