@@ -1,8 +1,8 @@
-# Handoff: the Diorama UI, next up the PROFILE screen
+# Handoff: the Diorama UI, the PROFILE screen in progress
 
 A redesign of the game's UI, worked out as a standalone mockup in this folder. Nothing in the game itself (`src/`) has
-changed. Done so far: the main menu, the PLAY screen (with Rooms and New room), the playlist, and battlefields (the
-island takes the look you pick). **Next: the Profile screen** (see the last section). Work happens on the branch
+changed. Done so far: the main menu, the PLAY screen (with Rooms and New room), the playlist, battlefields (the
+island takes the look you pick), and a **first prototype of the Profile screen** (see "Profile", near the end). Work happens on the branch
 `claude/wonderful-carson-fdud2o`, which started from `design/diorama`.
 
 ## What is here
@@ -33,6 +33,9 @@ node design/diorama/shots.js '[["play","#still,play",1440,900]]'
 - Play: `#play`, `#multi` (Multiplayer folded out), `#rooms=standard|ranked` (Rooms, filtered), `#filter` (the filter's
   list open), `#create` (New room, with `#rooms=`), `#private`, `#on=vs-ai|multi|standard|ranked|r0..` (as if pointed at).
 - Battlefields: `#bf=meadow|autumn|snow|frost|desert|ash|moonlit|savanna` (home), `#roombf=<same>` (New room's).
+- Profile: `#profile`, `#acct=google|guest|dev|none` (sample account; google is the default), `#title=<id>` (picked title,
+  empty for None), `#skinoff=N` (skin N taken off), `#out` / `#sure` (Log out / Delete account tapped once), `#history`
+  (Match history), `#all` (its All online tab), `#rounds=N` (match N's rounds open), `#hover=s:N` (skin N pointed at).
 
 ## The design language: "Diorama"
 
@@ -101,9 +104,36 @@ Meadow, Autumn, Snow, Forest Glade, Desert, Ashlands, Moonlit Snow, Savanna.
   battlefield gets a flying piece).
 - Vs computer and Create room → do nothing in the mockup (in the game: start the match / open the room).
 
-## Next: the Profile screen
+## Profile (first prototype, 2026-11-07)
 
-Not started. Ask the owner what they have in mind before building; they usually give a list. Opened from the account
+Opened from the account button top right, which now shows the sample player's name (Wren; Guest with no account).
+(`screens/profile*.jpg`, `history.jpg`)
+- **The field turns ink** (`#1D1A15`): the third screen colour, after ultramarine and saffron. The title colours were
+  made for the game's dark UI and read on it; the logo and cream type stay as they are; the shard stays saffron.
+- **Left column.** A typed kicker with the account state (`Profile · signed in with Google`, `· guest on this phone`,
+  `· no account yet`, plus `· developer mode is on` in DEV pink). Your name huge in Chakra Petch, the picked title under
+  it in its own colour between two small diamonds. Then rows of words (the New room style):
+  - Title: each earned title, and None. The picked one sits on a shard of **its own colour**; the note is why you have it.
+  - Skins: each owned skin by name, pressed = on. One skin per unit (turning Omni-Per on takes Champion off).
+  - Username: an input on a dashed line; Save appears when it changes. "Once a week" / "Developer: any time".
+  - Keep it (guests only): Sign in with Google (a stand-in for Google's own button, which the game must use).
+  - Account: Log out (a guest taps twice, with the warning) and a small typed "Delete account" (tap twice).
+  - No account: "NOBODY YET", and Play as a guest on the saffron shard beside Sign in with Google.
+  - MATCH HISTORY → on the saffron button.
+- **The island.** The battle sinks and your skins stand on cream tiles (`buildLocker`), the name printed on each. A
+  skin that's off stands as the plain unit. Click a unit, its note or its word to switch it; it pops back in. Each has a
+  note (`Skin · on` tag, `Champion Brute.`, "Click to take it off"), labels to the right stepping down from left to
+  right so no line crosses a word. With no skins the battle stays and the golem's note says how to earn its skin.
+  Change battlefield moves under the island's near edge (as on the saffron screens).
+- **Match history** (← Profile). MATCHES with "n played · n won", My matches / All online tabs, typed rows like Rooms:
+  WON (saffron) / LOST (faded) / DRAW, `vs Pebble` with their title in its colour, `Ranked · 2–1 · Desert · 2 h ago ·
+  dealt 72, took 28`, and "3 rounds ⌄", which folds out each round with a REPLAY. The island moves further right.
+- Sample data only (`ACCTS`, `HIST`, `ALL` in `src/menu.html`); nothing talks to the server.
+
+Open questions for the owner: is ink the right field for Profile; should skins you don't own show (locked) on the
+island; where Friends goes (its own screen or part of Profile); the phone layout (not done for Profile).
+
+### What the game's Profile has (for reference) Opened from the account
 button top right (`Guest` in the mockup; the player's name once they have one).
 
 What the game's Profile has today (`openAccountSheet()` / `acctDraw()` in `src/site-template.html`, around line 4827;
@@ -122,6 +152,4 @@ the account code from about line 4630):
 - **Match history** (`openHistorySheet()`, line 4511: "My matches", each online match with the opponent, result, time).
 - **Log out**, and **Delete account** (tap twice; a guest can't log back in).
 
-Thoughts to bring to that conversation (not decided): the island fits a profile well, e.g. your skins standing on it
-in place of the battle, your nameplate set like the STANDINGS header, titles as a row of words with the picked one on a
-shard (the New room style), match history as typed rows like the Rooms list.
+

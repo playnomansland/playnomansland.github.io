@@ -102,6 +102,64 @@ body.units .tiers { opacity: 1; pointer-events: auto; }
 #usheet .sk b { display: block; font: 700 14px var(--sans); opacity: 1; margin-top: 2px; }
 #usheet .x { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; display: grid; place-items: center; opacity: .8; }
 #usheet .x:hover { opacity: 1; }
+
+/* ── Profile: the screen turns ink. Your skins stand on the island; you, your title and your settings on the left ── */
+body.profile { --field: #1D1A15; --field-lo: #0E0C09; }
+body.profile .menu, body.profile .zz, body.profile .acct, body.profile .build, body.profile .standings { display: none; }
+body.profile .back { display: block; }
+.pf, .history { position: fixed; left: 48px; top: 128px; width: min(760px, 54vw); display: none; align-content: start; justify-items: start; }
+body.profile .pf { display: grid; } body.in-history .pf { display: none; } body.in-history .history { display: grid; }
+.pf .k, .history .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+.plate h2 { margin: 2px 0 0; font: 700 104px/.86 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+.ptitle { display: inline-flex; align-items: center; gap: 12px; margin-top: 12px; font: 700 26px/1 var(--stencil); text-transform: uppercase; color: var(--tc); }
+.ptitle i { width: 7px; height: 7px; background: currentColor; transform: rotate(45deg); }
+.ptitle[hidden] { display: none; }
+.pf .k .dev { color: #FF5FC4; }
+.pf-opts { margin: 28px 0 22px; }
+.pf-opts .nr-note { margin-bottom: 13px; }
+.pf-opts .seg .gbtn { display: inline-flex; align-items: center; gap: 10px; align-self: center; height: 40px; padding: 0 18px 0 6px; margin-right: 12px; border-radius: 20px; background: #131314; border: 1px solid #8E918F; font: 500 15px system-ui, sans-serif; text-transform: none; letter-spacing: 0; color: #E3E3E3; opacity: 1; }
+.pf-opts .seg .gbtn:hover { background: #1E1F20; }
+.pf-opts .seg .del { align-self: center; margin-left: 14px; padding: 0; font: 400 13px var(--type); text-transform: none; letter-spacing: 0; opacity: .6; text-decoration: underline; text-underline-offset: 4px; }
+.pf-opts .seg .del:hover { opacity: 1; } .pf-opts .seg .del.sure { opacity: 1; color: var(--saffron); }
+.pf-opts .seg button[aria-pressed="true"] { color: var(--ink); }
+.pf-opts .seg button[aria-pressed="true"]::before { background: var(--pc, var(--saffron)); }
+.pf-opts .seg .act { opacity: .7; }
+.pf-opts .seg .act:hover { opacity: 1; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
+.pf-opts .seg .act.sure { opacity: 1; color: var(--saffron); }
+.pf-opts .seg .act.primary { opacity: 1; color: var(--ink); margin-right: 14px; text-decoration: none; }
+.pf-opts .seg .act.primary::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 10%, 96% 0, 100% 88%, 3% 100%); }
+.pf-user { align-items: baseline; gap: 14px !important; }
+.pf-user input { width: 9.5em; padding: 2px 2px 4px; font: 700 28px var(--sans); color: var(--cream); background: none; border: 0; border-bottom: 2px dashed rgba(244,236,216,.45); outline: 0; }
+.pf-user input:focus { border-bottom-color: var(--saffron); }
+.pf-user input:disabled { opacity: .6; }
+.gbtn i { width: 28px; height: 28px; border-radius: 50%; background: #F4ECD8; color: #131314; display: grid; place-items: center; font: 700 16px system-ui, sans-serif; font-style: normal; }
+.pf .create { background: var(--saffron); color: var(--ink); }
+.note.pnote { max-width: 200px; }
+.note.pnote .tag.off { background: rgba(244,236,216,.22); color: var(--cream); }
+
+/* Match history: typed rows like Rooms, on the ink field */
+.history h2 { margin: 0 0 14px; font: 700 76px/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+.history h2 small { font: 400 15px var(--type); text-transform: none; letter-spacing: 0; opacity: .75; margin-left: 10px; }
+.history { bottom: 96px; grid-template-rows: auto auto auto minmax(0, 1fr); width: min(680px, 48vw); justify-items: stretch; }
+.h-tabs { display: flex; gap: 22px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid rgba(244,236,216,.5); font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; }
+.h-tabs button { opacity: .55; } .h-tabs button:hover { opacity: 1; }
+.h-tabs [aria-pressed="true"] { opacity: 1; color: var(--saffron); }
+.hlist li { grid-template-columns: 76px minmax(0, 1fr) auto; border-bottom-color: rgba(244,236,216,.16); }
+.hlist .res { font: 700 28px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+.hlist .res.won { color: var(--saffron); } .hlist .res.lost { opacity: .5; } .hlist .res.left, .hlist .res.draw { opacity: .8; }
+.hlist .tt { margin-left: 10px; font: 700 13px var(--stencil); text-transform: uppercase; color: var(--tc); letter-spacing: .02em; }
+.hlist .rd { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; display: inline-flex; gap: 6px; align-items: center; }
+.hlist .rd:hover, .hlist li.open .rd { opacity: 1; }
+.hlist .rd svg { width: 11px; height: 11px; transition: transform .2s ease; } .hlist li.open .rd svg { transform: rotate(180deg); }
+.hlist .rounds { grid-column: 2 / -1; display: none; list-style: none; margin: 6px 0 2px; padding: 0; }
+.hlist li.open .rounds { display: grid; }
+.hlist .rounds li { grid-template-columns: minmax(0, 1fr) auto; padding: 6px 0; border-bottom: 1px dashed rgba(244,236,216,.12); font: 400 14px var(--type); }
+.hlist .rounds li:last-child { border-bottom: 0; }
+.hlist .rounds b { font: 700 14px var(--type); margin-right: 6px; }
+.hlist .rounds small { margin-top: 2px; }
+.hlist .go { font-size: 22px; }
+.hlist .go::before { background: var(--saffron); }
+.hlist .go:hover, .hlist li.on .go { color: var(--ink); }
 </style>
 <script type="importmap">{ "imports": { "three": "{{THREE_MOD}}", "three-core": "{{THREE_CORE}}" } }</script>
 </head>
@@ -235,6 +293,22 @@ body.units .tiers { opacity: 1; pointer-events: auto; }
     <span></span><p class="nr-note" id="nr-spec">Anyone can watch once it starts.</p>
   </div>
   <button class="create go" id="nr-go">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+</section>
+
+<!-- Profile: your name and title, then the game's account settings as rows of words. Skins stand on the island -->
+<section class="pf" aria-label="Profile">
+  <span class="k" id="pf-k"></span>
+  <div class="plate"><h2 id="pf-name"></h2><span class="ptitle" id="pf-title" hidden></span></div>
+    <div class="nr-opts pf-opts" id="pf-opts"></div>
+  <button class="create" id="pf-hist">Match history <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+</section>
+
+<!-- Match history: your online matches, newest first; a match folds out its rounds, each with a replay -->
+<section class="history" aria-label="Match history">
+  <span class="k">Profile · match history</span>
+  <h2>Matches <small id="h-count"></small></h2>
+  <div class="h-tabs" role="group" aria-label="Whose matches"><button data-h="mine" aria-pressed="true">My matches</button><button data-h="all" aria-pressed="false">All online</button></div>
+  <ol class="rlist hlist" id="h-list"></ol>
 </section>
 
 <script type="module">
@@ -471,6 +545,48 @@ function buildTier(t) {
 }
 buildTier(1);
 
+// ── Profile: the board clears and your skins stand on tiles. Off, the unit stands there in its own plain look ──
+const SKIN = { // Shapes.SKINS in src/shapes.js
+  'brute-champion': { unit: 'Brute', name: 'Champion', model: 'brute:champion', text: 'A crowned Brute in gold armour with a great hammer and a cape.' },
+  'golem-aquamarine': { unit: 'Ether Golem', name: 'Aquamarine', model: 'golem:aquamarine', text: 'Cut from sea-green crystal, with a white-hot core.', limited: true },
+  'brute-omniper': { unit: 'Brute', name: 'Omni-Per', model: 'brute:omniper', text: 'A chrome war machine with a power fist.' },
+  'firemage-ember': { unit: 'Fire Mage', name: 'Ember Robe', model: 'wizard:fire:ember', text: 'An ember-trimmed robe, a flame in each hand.' },
+};
+const TITLES = { // TITLES and TITLE_WHY in src/site-template.html
+  dev: ['DEV', '#FF5FC4', 'You make this game.'], day1: ['Day 1', '#B67CFF', 'You were here in the very first week.'],
+  legend: ['Legend', '#FFC83D', 'You ended a month in the top 5 of the leaderboard.'], bababa: ['BABABABA', '#FF8A2A', 'You joined the No Mans Land Discord.'],
+  initiate: ['Initiate', '#7FD3FF', 'You solved every puzzle.'], goodsport: ['Good sport', '#C6ECFF', 'Opponents said GG to you 10 times.'],
+};
+// sample accounts (#acct=google, the default; guest; dev; none)
+const ACCTS = {
+  google: { tag: 'Wren', google: true, titles: ['day1', 'initiate', 'goodsport'], title: 'day1', skins: [{ id: 'brute-champion', worn: true }, { id: 'golem-aquamarine', worn: true }] },
+  guest: { tag: 'Guest 4821', google: false, titles: ['day1'], title: '', skins: [] },
+  dev: { tag: 'Wren', google: true, dev: true, titles: ['dev', 'day1', 'legend', 'bababa', 'initiate', 'goodsport'], title: 'dev',
+    skins: [{ id: 'brute-champion', worn: true }, { id: 'golem-aquamarine', worn: true }, { id: 'brute-omniper', worn: false }, { id: 'firemage-ember', worn: true }] },
+};
+const acctQ = (location.hash.match(/acct=(\w+)/) || [])[1] || 'google';
+let A = ACCTS[acctQ] ? structuredClone(ACCTS[acctQ]) : null;
+const locker = new THREE.Group(); island.add(locker); locker.position.y = -4; locker.visible = false;
+let lockerHot = [];
+function buildLocker(pop = -1) {
+  for (const c of [...locker.children]) locker.remove(c);
+  lockerHot = [];
+  const list = A ? A.skins : [], n = list.length, gap = n > 3 ? 2.75 : 3.1;
+  list.forEach((k, i) => {
+    const S = SKIN[k.id], u = ROSTER.units.find(x => x.name === S.unit), kind = k.worn ? S.model : M.kindOf(u);
+    const g = new THREE.Group(); g.position.set((i - (n - 1) / 2) * gap, 0, 0.2); locker.add(g);
+    const b = tile(gap - 0.4, 0.2, 2.6, (c, w, hh) => { c.fillStyle = k.worn ? '#F4ECD8' : '#CFC6B2'; c.fillRect(0, 0, w, hh); c.strokeStyle = 'rgba(23,20,15,.2)'; c.lineWidth = 6; c.setLineDash([18, 14]); c.strokeRect(20, 20, w - 40, hh - 40);
+        c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, S.name.toUpperCase(), 700, 96, '"Chakra Petch"', w - 80); c.fillText(S.name.toUpperCase(), w / 2, hh * 0.79);
+        c.font = '400 38px "Courier Prime"'; c.globalAlpha = .75; c.fillText(`${S.unit} skin · ${k.worn ? 'on' : 'off'}`, w / 2, hh * 0.9); }, null, '#CDBF9F');
+    b.position.set(0, 0.1, 0.35); g.add(b);
+    const ht = M.height(kind) || 2, sc = Math.min(0.66, 2.3 / ht);
+    const fig = unit(kind, u.color, YOU, 0, -0.4, sc, Math.PI + 0.3, g); fig.position.y = 0.2;
+    if (i === pop && !still) { fig.userData.s = sc; fig.userData.pop = performance.now() / 1000; fig.scale.setScalar(0.001); }
+    g.userData = { k, i, ht: ht * sc + 0.35 }; lockerHot.push(g);
+  });
+}
+buildLocker();
+
 // ── light: a warm low sun and a cool sky ──
 scene.add(new THREE.HemisphereLight('#EFE6D2', '#3B3A4E', 1.15));
 const sun = new THREE.DirectionalLight('#FFE3B8', 2.4); sun.position.set(-9, 16, 7); sun.castShadow = true;
@@ -486,6 +602,8 @@ const VIEWS = {
   units:   { az: 0.36, el: 0.62, zoom: 10.4, at: [0, 0.4, 1.0], off: [0.21, 0.08] },
   ranks:   { az: 0.42, el: 0.6, zoom: 10.2, at: [0, 0.2, 0.2], off: [0.2, 0.02] },
   orders:  { az: 0.0, el: 1.25, zoom: 13.6, at: [0, 0, 0.4], off: [0.24, 0] },
+  profile: { az: 0.62, el: 0.6, zoom: 12.2, at: [0, 0.2, 0.4], off: [0.2, -0.06] },
+  history: { az: 0.62, el: 0.6, zoom: 13.2, at: [0, 0.2, 0.4], off: [0.29, -0.03] },
 };
 const phone = () => innerWidth <= 700;
 let want = VIEWS.play, now = { ...VIEWS.play, at: [...VIEWS.play.at], off: [...VIEWS.play.off] };
@@ -516,12 +634,20 @@ const svg = document.getElementById('lines'), body = document.body;
 const proj = (o, h) => { const v = new THREE.Vector3(); o.getWorldPosition(v); v.y += h; v.project(cam); return [(v.x + 1) / 2 * cv.clientWidth, (1 - v.y) / 2 * cv.clientHeight]; };
 const dotSvg = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="currentColor"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>`;
 const showing = (el) => viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
+// a label off the point (x, y): a line out to it and under it, kept on screen. Returns the line's svg
+function pin(el, x, y, dx, dy, keep) {
+  const w = el.offsetWidth, k = phone() ? 0.55 : 1;
+  if (keep) {} else if (dx > 0 && x + dx * k + w > innerWidth - 24) dx = -dx; if (dx < 0 && x + dx * k - w < 24) dx = -dx;
+  const lx = x + dx * k, ly = y + dy * k, left = dx < 0;
+  el.style.left = (left ? lx - w : lx) + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
+  return `<path d="M${x} ${y} L${lx} ${ly} L${left ? lx - w : lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
+}
 function notes() {
   let html = '';
-  const playR = document.getElementById('play').getBoundingClientRect();
-  for (const el of document.querySelectorAll('.note')) {
+  const playR = document.getElementById('play').getBoundingClientRect(), inProf = body.classList.contains('profile');
+  for (const el of document.querySelectorAll('.note:not(.pnote)')) {
     const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
-    const show = !phone() && (bf ? inPlay || (viewName === 'play' && !hovered) : showing(el) && !inPlay && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
+    const show = !phone() && (bf ? inPlay || (inProf ? !body.classList.contains('in-history') : viewName === 'play' && !hovered) : showing(el) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
     el.style.display = show ? '' : 'none'; if (!show) continue;
     const w = el.offsetWidth, h = el.offsetHeight;
     if (el.dataset.anchor === 'btn') {
@@ -539,11 +665,16 @@ function notes() {
       }
       continue;
     }
-    const [o, hh, [dx, dy]] = bf ? (inPlay ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh), k = phone() ? 0.55 : 1;
-    let ddx = dx; if (ddx > 0 && x + ddx * k + w > innerWidth - 24) ddx = -ddx; if (ddx < 0 && x + ddx * k - w < 24) ddx = -ddx; // keep the label on screen
-    const lx = x + ddx * k, ly = y + dy * k, left = ddx < 0;
-    el.style.left = (left ? lx - w : lx) + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
-    html += `<path d="M${x} ${y} L${lx} ${ly} L${left ? lx - w : lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
+    const [o, hh, [dx, dy]] = bf ? (inPlay || inProf ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
+    html += pin(el, x, y, dx, dy);
+  }
+  // Profile: a note on each skin on the island (or, with none, on the golem you can earn)
+  for (const el of document.querySelectorAll('.pnote')) {
+    const g = el.dataset.i === 'g' ? null : lockerHot[+el.dataset.i], show = !phone() && inProf && !body.classList.contains('in-history') && (g || el.dataset.i === 'g');
+    el.style.display = show ? '' : 'none'; if (!show) continue;
+    if (!g) { const [x, y] = proj(golem, 1.35); html += pin(el, x, y, 170, -200); continue; }
+    const n = lockerHot.length, i = g.userData.i, [x, y] = proj(g, g.userData.ht);
+    html += pin(el, x, y, 26, -100 - (n - 1 - i) * 56, true);
   }
   // the unit sheet, attached to the picked unit
   const sh = document.getElementById('usheet');
@@ -577,13 +708,15 @@ const hitOf = (e, groups) => { ptr.set(e.clientX / cv.clientWidth * 2 - 1, -(e.c
 addEventListener('pointermove', (e) => {
   if (pinnedHover) return;
   let key = null;
-  if (e.target === cv && !body.classList.contains('play')) {
+  if (e.target === cv && body.classList.contains('profile')) { if (!body.classList.contains('in-history')) { const i = hitOf(e, lockerHot); if (i >= 0) key = 's:' + i; } }
+  else if (e.target === cv && !body.classList.contains('play')) {
     if (viewName === 'play') { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; }
     else if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
   }
   hovered = key; cv.classList.toggle('world-hot', !!key);
 });
-cv.addEventListener('click', (e) => { if (!body.classList.contains('units')) return; const i = hitOf(e, rosterHot); pickUnit(i >= 0 ? rosterHot[i] : null); });
+cv.addEventListener('click', (e) => { if (body.classList.contains('profile') && !body.classList.contains('in-history')) { const i = hitOf(e, lockerHot); if (i >= 0) toggleSkin(i); return; }
+  if (!body.classList.contains('units')) return; const i = hitOf(e, rosterHot); pickUnit(i >= 0 ? rosterHot[i] : null); });
 function pickUnit(g) {
   picked = g; const sh = document.getElementById('usheet');
   if (!g) return;
@@ -615,7 +748,13 @@ function frame() {
   ent.scale.y = 0.441 * (1 + Math.sin(t * 1.2) * 0.03);
   champ.rotation.y = -0.3 + Math.sin(t * 0.6) * 0.1;
   const rk = body.classList.contains('ranks'), un = body.classList.contains('units');
-  pieces.position.y = lerp(pieces.position.y, rk || un ? -2.6 : 0, kk); pieces.visible = pieces.position.y > -2.4;
+  const pf = body.classList.contains('profile') && lockerHot.length > 0;
+  pieces.position.y = lerp(pieces.position.y, rk || un || pf ? -2.6 : 0, kk); pieces.visible = pieces.position.y > -2.4;
+  locker.position.y = lerp(locker.position.y, pf ? 0 : -4, kk); locker.visible = locker.position.y > -3.6;
+  const tn = performance.now() / 1000;
+  lockerHot.forEach((g, i) => { g.position.y = lerp(g.position.y, hovered === 's:' + i ? 0.22 : 0, still ? 1 : 0.25);
+    const f = g.children[1]; if (f && f.userData.pop) { const p = Math.min(1, (tn - f.userData.pop) / 0.34), e = 1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2);
+      f.scale.setScalar(Math.max(0.001, f.userData.s * (p >= 1 ? 1 : e))); if (p >= 1) f.userData.pop = 0; } });
   podium.position.y = lerp(podium.position.y, rk ? 0 : -4, kk); podium.visible = podium.position.y > -3.6;
   roster.position.y = lerp(roster.position.y, un ? 0 : -4, kk); roster.visible = roster.position.y > -3.6;
   for (const [key, g] of Object.entries(HOT)) g.position.y = lerp(g.position.y, g.userData.y0 + (hovered === key ? 0.18 : 0), still ? 1 : 0.25);
@@ -639,7 +778,8 @@ const unpin = () => { body.classList.remove('pinned'); setMode('play'); picked =
 const openPlay = () => { unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = VIEWS.orders; };
 document.getElementById('play').addEventListener('click', openPlay);
 const backBtn = document.querySelector('.back');
-const goBack = () => { if (body.classList.contains('in-rooms')) return closeRooms(); body.classList.remove('play', 'mp-open'); setMp(false); unpin(); };
+const goBack = () => { if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return closeProfile();
+  if (body.classList.contains('in-rooms')) return closeRooms(); body.classList.remove('play', 'mp-open'); setMp(false); unpin(); };
 backBtn.addEventListener('click', goBack);
 
 // Play: Vs computer starts at once; Multiplayer folds out its kinds, and a kind opens Rooms filtered to it
@@ -711,6 +851,102 @@ const bfSub = () => { const L = LOOKS[lookI]; document.getElementById('bf-sub').
 document.addEventListener('battlefield', bfSub); bfSub();
 document.getElementById('r-create').addEventListener('click', openCreate);
 document.getElementById('nr-go').addEventListener('click', () => {}); // in the game: the room opens and waits for a second player
+// ── Profile (the game's Profile sheet: openAccountSheet / acctDraw in src/site-template.html), on sample accounts ──
+const pf = { outSure: false, sure: false };
+const acctBtn = document.querySelectorAll('.acct button')[1];
+const $ = (id) => document.getElementById(id);
+function drawProfile() {
+  acctBtn.querySelector('span').textContent = A ? A.tag : 'Guest';
+  $('pf-k').innerHTML = (!A ? 'Profile · no account yet' : A.google ? 'Profile · signed in with Google' : 'Profile · guest on this phone') + (A && A.dev ? ' · <span class="dev">developer mode is on</span>' : '');
+  $('pf-name').textContent = A ? A.tag : 'Nobody yet';
+  const T = A && TITLES[A.title], pt = $('pf-title'); pt.hidden = !T;
+  if (T) { pt.style.setProperty('--tc', T[1]); pt.innerHTML = `<i></i>${esc(T[0])}<i></i>`; }
+  const g = '<button class="gbtn" data-google><i aria-hidden="true">G</i>Sign in with Google</button>';
+  const row = (lab, seg, note, cls = '') => `<span class="lab">${lab}</span><span class="seg ${cls}">${seg}</span><span></span><p class="nr-note">${note}</p>`;
+  let h = '';
+  if (A) {
+    if (A.titles.length) h += row('Title', A.titles.map(t => `<button data-title="${t}" style="--pc:${TITLES[t][1]}" aria-pressed="${A.title === t}">${esc(TITLES[t][0])}</button>`).join('') + `<button data-title="" aria-pressed="${!A.title}">None</button>`,
+      T ? T[2] : 'Nothing shows under your name.');
+    if (A.skins.length) h += row('Skins', A.skins.map((k, i) => `<button data-skin="${i}" aria-pressed="${k.worn}">${esc(SKIN[k.id].name)}</button>`).join(''),
+      `Click one here or on the island. Only the look changes, never the stats.${A.skins.some((k, i) => A.skins.findIndex(x => SKIN[x.id].unit === SKIN[k.id].unit) !== i) ? ' One per unit.' : ''}`);
+    h += row('Username', `<input id="pf-tag" maxlength="16" spellcheck="false" autocomplete="nickname" aria-label="Your username" value="${esc(A.tag)}" ${A.tagNext && !A.dev ? 'disabled' : ''}><button class="act" id="pf-save" hidden>Save</button>`,
+      A.dev ? 'Developer: change it any time.' : A.tagNext ? 'Saved. You can change it again on Saturday, 14 November.' : 'You can change it once a week.', 'pf-user');
+    if (!A.google) h += row('Keep it', g, 'Guest on this phone. Sign in with Google to keep it if you change or reset your phone.');
+    h += row('Account', `<button class="act${pf.outSure ? ' sure' : ''}" data-out>${pf.outSure ? 'Tap again to log out' : 'Log out'}</button><button class="del${pf.sure ? ' sure' : ''}" data-del>${pf.sure ? 'Tap again to delete' : 'Delete account'}</button>`,
+      pf.sure ? 'Deleting removes your username and sign-in for good. Past match results stay, without your name.'
+      : A.google ? 'Signed in with Google. Sign in on another phone to play as the same player.'
+      : pf.outSure ? 'A guest can’t log back in: sign up with Google first to keep this username and your results.' : 'Log out of this phone. A guest can’t log back in.');
+  } else h += row('Account', `<button class="act primary" data-guest>Play as a guest</button>${g}`, 'No account needed to play. Make a guest to get a username on this phone, or sign in with Google to keep it on any phone.');
+  $('pf-opts').innerHTML = h;
+  // the island's notes: one per skin, or the golem you can still earn
+  document.querySelectorAll('.pnote').forEach(n => n.remove());
+  const notesEl = document.querySelector('.notes');
+  const add = (i, html) => { const n = document.createElement('div'); n.className = 'note pnote'; n.dataset.i = i; n.innerHTML = html; n.style.display = 'none'; notesEl.after(n);
+    if (i !== 'g') { n.addEventListener('click', () => toggleSkin(+i)); n.addEventListener('mouseenter', () => { if (!pinnedHover) hovered = 's:' + i; }); n.addEventListener('mouseleave', () => { if (!pinnedHover) hovered = null; }); } };
+  if (A && A.skins.length) A.skins.forEach((k, i) => { const S = SKIN[k.id];
+    add(i, `<span class="tag${k.worn ? '' : ' off'}">${k.worn ? 'Skin · on' : 'Skin · off'}${S.limited ? ' · limited' : ''}</span><br>${k.worn ? `${esc(S.name)} ${esc(S.unit)}.` : `${esc(S.unit)}, plain.`}<small>${k.worn ? 'Click to take it off' : `Click to wear ${esc(S.name)}`}</small>`); });
+  else add('g', '<span class="tag">Reward · Limited</span><br>No skins yet. <b>Invite a friend and this golem’s is yours.</b>');
+  if (body.classList.contains('profile') && !body.classList.contains('in-history')) want = A && A.skins.length ? VIEWS.profile : VIEWS.play;
+}
+function toggleSkin(i) {
+  const k = A.skins[i]; k.worn = !k.worn;
+  if (k.worn) A.skins.forEach(x => { if (x !== k && SKIN[x.id].unit === SKIN[k.id].unit) x.worn = false; }); // one skin per unit
+  buildLocker(i); drawProfile();
+}
+$('pf-opts').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.title !== undefined) { A.title = b.dataset.title; drawProfile(); }
+  else if (b.dataset.skin !== undefined) toggleSkin(+b.dataset.skin);
+  else if (b.id === 'pf-save') { const v = $('pf-tag').value.trim(); if (v.length >= 2) { A.tag = v; A.tagNext = 1; drawProfile(); } }
+  else if (b.hasAttribute('data-out')) { if (!A.google && !pf.outSure) { pf.outSure = true; return drawProfile(); } A = null; pf.outSure = false; buildLocker(); drawProfile(); }
+  else if (b.hasAttribute('data-del')) { if (!pf.sure) { pf.sure = true; return drawProfile(); } A = null; pf.sure = false; buildLocker(); drawProfile(); }
+  else if (b.hasAttribute('data-guest')) { A = structuredClone(ACCTS.guest); buildLocker(); drawProfile(); }
+  else if (b.hasAttribute('data-google')) { A = structuredClone(ACCTS.google); if (acctQ === 'guest') A.tag = 'Guest 4821'; pf.outSure = false; buildLocker(); drawProfile(); } // in the game: Google's own button
+});
+$('pf-opts').addEventListener('input', (e) => { if (e.target.id === 'pf-tag') $('pf-save').hidden = e.target.value.trim() === A.tag || e.target.value.trim().length < 2; });
+$('pf-opts').addEventListener('keydown', (e) => { if (e.target.id === 'pf-tag' && e.key === 'Enter' && !$('pf-save').hidden) $('pf-save').click(); if (e.key === 'Escape') e.stopPropagation(); });
+$('pf-opts').addEventListener('mouseover', (e) => { const b = e.target.closest('[data-skin]'); if (!pinnedHover) hovered = b ? 's:' + b.dataset.skin : null; });
+
+function openProfile() { unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; drawProfile(); }
+function closeProfile() { body.classList.remove('profile', 'in-history'); hovered = null; want = VIEWS.play; backBtn.textContent = '← Menu'; }
+acctBtn.addEventListener('click', openProfile);
+// Match history (sample data, shaped like the game's: result, opponent and title, kind, rounds, battlefield, when)
+const HIST = [
+  { res: 'won', foe: 'Pebble', ft: 'initiate', kind: 'Ranked', score: '2–1', map: 'Desert', when: '2 h ago', r: [['lost', 22, 14], ['won', 0, 31], ['won', 6, 27]] },
+  { res: 'lost', foe: 'Captain Tuesday', ft: 'legend', kind: 'Ranked', score: '0–2', map: 'Ashlands', when: 'yesterday', r: [['lost', 30, 4], ['lost', 28, 11]] },
+  { res: 'won', foe: 'Moth', kind: 'Standard', score: '2–0', map: 'Meadow', when: 'yesterday', r: [['won', 3, 30], ['won', 0, 24]] },
+  { res: 'draw', foe: 'Bramble', ft: 'goodsport', kind: 'Standard', score: '1–1', map: 'Autumn', when: '3 days ago', r: [['won', 8, 19], ['lost', 21, 5], ['draw', 0, 0, true]] },
+  { res: 'left', foe: 'Old Gus', kind: 'Standard', score: 'they left', map: 'Snow', when: '5 days ago', r: [['won', 2, 26]] },
+  { res: 'won', foe: 'Hedgewitch', ft: 'day1', kind: 'Ranked', score: '2–0', map: 'Savanna', when: 'last week', r: [['won', 12, 30], ['won', 9, 22]] },
+  { res: 'lost', foe: 'Ironmoss', kind: 'Standard', score: '1–2', map: 'Forest Glade', when: 'last week', r: [['won', 4, 18], ['lost', 25, 3], ['lost', 30, 9]] },
+];
+const ALL = [['Ironmoss', 'Moth', '2–0', 'Ranked', 'Desert', '4 min ago'], ['Captain Tuesday', 'Sleepy Ent', '2–1', 'Ranked', 'Snow', '12 min ago'], ['Pebble', 'Bramble', '2–0', 'Standard', 'Meadow', '20 min ago'], ['Hedgewitch', 'Old Gus', '1–1', 'Standard', 'Autumn', '31 min ago'], ['Moth', 'Wren', '0–2', 'Standard', 'Meadow', 'yesterday']];
+const RES = { won: 'Won', lost: 'Lost', draw: 'Draw', left: 'Won' };
+const car = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+let histTab = 'mine';
+function drawHistory() {
+  document.querySelectorAll('.h-tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.h === histTab));
+  if (histTab === 'all') {
+    $('h-count').textContent = 'everyone’s, newest first';
+    $('h-list').innerHTML = ALL.map(([a, b, sc, kind, map, when]) => `<li><span class="res draw">${sc}</span><span><b>${esc(a)} vs ${esc(b)}</b><small>${kind} · ${map} · ${when}</small></span><button class="go watch">Replay</button></li>`).join('');
+    return;
+  }
+  if (!A) { $('h-count').textContent = ''; $('h-list').innerHTML = '<li class="empty">No account, no record. Your matches show here once you have a username.</li>'; return; }
+  $('h-count').textContent = `${HIST.length} played · ${HIST.filter(x => RES[x.res] === 'Won').length} won`;
+  $('h-list').innerHTML = HIST.map(x => {
+    const T = TITLES[x.ft], dealt = x.r.reduce((t, q) => t + q[2], 0), took = x.r.reduce((t, q) => t + q[1], 0);
+    const rounds = x.r.map((q, i) => `<li><span><b>Round ${i + 1}</b>${q[3] ? 'time ran out' : q[0]}<small>you took ${q[1]}, they took ${q[2]}</small></span><button class="go">Replay</button></li>`).join('');
+    return `<li><span class="res ${x.res}">${RES[x.res]}</span><span><b>vs ${esc(x.foe)}</b>${T ? `<span class="tt" style="--tc:${T[1]}">${esc(T[0])}</span>` : ''}<small>${x.kind} · ${x.score} · ${x.map} · ${x.when} · dealt ${dealt}, took ${took}</small></span>
+      <button class="rd" aria-expanded="false">${x.r.length} round${x.r.length > 1 ? 's' : ''} ${car}</button><ol class="rounds">${rounds}</ol></li>`;
+  }).join('');
+}
+$('h-list').addEventListener('click', (e) => { const b = e.target.closest('.rd'); if (!b) return; const li = b.closest('li'); li.classList.toggle('open'); b.setAttribute('aria-expanded', li.classList.contains('open')); });
+document.querySelectorAll('.h-tabs button').forEach(b => b.addEventListener('click', () => { histTab = b.dataset.h; drawHistory(); }));
+function openHistory() { histTab = A ? 'mine' : 'all'; drawHistory(); body.classList.add('in-history'); hovered = null; want = VIEWS.history; backBtn.textContent = '← Profile'; }
+function closeHistory() { body.classList.remove('in-history'); backBtn.textContent = '← Menu'; drawProfile(); }
+$('pf-hist').addEventListener('click', openHistory);
+drawProfile();
+
 // the playlist
 const openMusic = () => body.classList.toggle('music-open'), closeMusic = () => body.classList.remove('music-open');
 document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', openMusic));
@@ -738,6 +974,13 @@ if (v && VIEWS[v]) { want = VIEWS[v]; now = { ...want, at: [...want.at], off: [.
 const tq = (H.match(/tier=(\d)/) || [])[1]; if (tq) setTier(+tq);
 const uq = (H.match(/unit=(\d)/) || [])[1]; if (uq) pickUnit(rosterHot[+uq]);
 const hv = (H.match(/hover=([\w:]+)/) || [])[1]; if (hv) { hovered = hv; pinnedHover = true; }
+// Profile: #profile, #acct=google|guest|dev|none, #title=<id>, #skinoff=<n> (that skin taken off), #out (log out tapped once),
+// #sure (delete tapped once), #history, #all (All online), #rounds=<n> (that match's rounds open), #hover=s:<n> (a skin pointed at)
+const ttq = (H.match(/title=(\w*)/) || [])[1]; if (ttq !== undefined && A && (ttq === '' || A.titles.includes(ttq))) A.title = ttq;
+const sq = (H.match(/skinoff=(\d)/) || [])[1]; if (sq && A && A.skins[+sq]) { A.skins[+sq].worn = false; buildLocker(); }
+if (H.includes('profile') || H.includes('history')) { openProfile(); if (H.includes('#out') || H.includes(',out')) pf.outSure = true; if (H.includes('sure')) pf.sure = true; drawProfile(); now = { ...want, at: [...want.at], off: [...want.off] }; }
+if (H.includes('history')) { openHistory(); if (H.includes('all')) { histTab = 'all'; drawHistory(); } }
+const rnq = (H.match(/rounds=(\d)/) || [])[1]; if (rnq) document.querySelectorAll('#h-list > li')[+rnq]?.querySelector('.rd')?.click();
 window.__ready = true;
 
 </script>
