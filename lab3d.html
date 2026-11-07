@@ -11484,12 +11484,11 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz); if (k <= 0.0
     const ponds = bi.ponds ? [{ x: hw * 0.2, z: -hd - 25, rx: 24, rz: 12 }, { x: -hw - 17, z: -hd * 0.25, rx: 9, rz: 16 }] : [];
     // the cabin (Moonlit Snow): off the far end, a little right of the middle, turned toward the board; its clearing stays open
     const cab = bi.cabin ? { x: hw * 0.32, z: -hd - 15, ang: -0.22, r: 11, s: 1.4 } : null;
-    // Christmas props (biome .season 'xmas'): lanterns along both sides of the board and by the cabin, snowmen near
-    // them; nothing else is placed on their spots
+    // Christmas props (biome .season 'xmas'): a lantern at each of the board's four corners, snowmen by the cabin and
+    // along the sides; nothing else is placed on their spots
     const props = bi.season === 'xmas' ? [
-      ...[-1, 1].flatMap((sd) => [-0.55, 0, 0.55].map((f) => ({ kind: 'lantern', x: sd * (hw + 3.2), z: f * hd, ang: sd > 0 ? Math.PI : 0, s: 0.9 }))),
-      ...(cab ? [{ kind: 'lantern', x: cab.x - 5.5, z: cab.z + 9, ang: 0.4, s: 0.9 }, { kind: 'lantern', x: cab.x + 6, z: cab.z + 8, ang: -0.4, s: 0.9 },
-        { kind: 'snowman', x: cab.x - 9, z: cab.z + 5, ang: 0.5, s: 1.2 }] : []),
+      ...[-1, 1].flatMap((sx) => [-1, 1].map((sz) => ({ kind: 'lantern', x: sx * (hw + 3), z: sz * (hd + 3), ang: sx > 0 ? Math.PI : 0, s: 0.9 }))),
+      ...(cab ? [{ kind: 'snowman', x: cab.x - 9, z: cab.z + 5, ang: 0.5, s: 1.2 }] : []),
       { kind: 'snowman', x: -(hw + 7), z: -hd * 0.3, ang: 1.2, s: 1.15 }, { kind: 'snowman', x: hw + 6.5, z: hd * 0.25, ang: -1.0, s: 1.1 }] : [];
     const inPond = (x, z, k = 1.12) => ponds.some((p) => ((x - p.x) / p.rx) ** 2 + ((z - p.z) / p.rz) ** 2 < k * k) || (cab && Math.hypot(x - cab.x, z - cab.z) < cab.r)
       || props.some((p) => Math.hypot(x - p.x, z - p.z) < (p.kind === 'lantern' ? 1.6 : 2.6));
