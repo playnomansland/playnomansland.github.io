@@ -1,4 +1,4 @@
-# Handoff: the Diorama UI, the PROFILE screen in progress
+# Handoff: the Diorama UI (mockup finished; next: putting it into the game, see INTEGRATION.md)
 
 A redesign of the game's UI, worked out as a standalone mockup in this folder. Nothing in the game itself (`src/`) has
 changed. Done so far: the main menu, the PLAY screen (with Rooms and New room), the playlist, battlefields (the
