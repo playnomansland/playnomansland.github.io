@@ -22,7 +22,7 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ## 7 November 2026 – A new music player and your own playlists
 
-- **A new look for the music player:** dark glass with low-poly facets, gold trim and corner brackets, a faceted gold Play button, a gem with the song's note and a thin gold progress bar.
+- **A new look for the music player:** dark glass with low-poly facets, gold trim and corner brackets, a glossy gold Play button, a gem with the song's note and a thin gold progress bar.
 - **Playlists roll up out of the player:** tap *Now playing* and the playlists roll up from the player, which stays where it is. Tap it again, the arrow, Escape or anywhere else to roll them back down.
 - **Tabs:** *Menu Playlist* (the menu songs), *All music* (every song in the game) and your own playlists. Pick a tab's *Play* or any song in it, and the player carries on through that playlist.
 - **Make your own:** the **+** tab makes a playlist from All music. Name it and tap songs to add them (they play in the order you tap). Your playlists have *Edit* and *Delete* buttons.

@@ -791,11 +791,14 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .mp-btn:hover { color: var(--mp-gold-hi); border-color: var(--mp-line); background: rgba(230, 184, 74, 0.06); }
 .mp-btn:active { transform: scale(0.93); }
 .mp-btn:focus-visible { outline: 2px solid var(--mp-gold); outline-offset: 2px; }
-/* Play / Pause: a cut gold gem in a thin gold setting */
-.mp-main { width: 54px; height: 54px; color: #1E1606; border: 0; background: var(--mp-gem);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(230, 184, 74, 0.25), 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 22px rgba(111, 211, 222, 0.14); }
-.mp-main svg { width: 18px; height: 18px; filter: drop-shadow(0 1px 0 rgba(255, 240, 200, 0.5)); }
-.mp-main:hover { color: #1E1606; background: var(--mp-gem); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(248, 222, 148, 0.5), 0 6px 20px rgba(0, 0, 0, 0.45), 0 0 26px rgba(230, 184, 74, 0.3); }
+/* Play / Pause: the one glossy orb (the Frutiger player's, in gold): a bright sheen on top, a deeper gold underneath */
+.mp-main { width: 56px; height: 56px; color: #fff; border: 1px solid rgba(255, 240, 200, 0.85);
+  background: radial-gradient(78% 48% at 50% 8%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.18) 62%, rgba(255, 255, 255, 0) 64%), radial-gradient(110% 110% at 50% 100%, #FFE9A8 0%, #E6B84A 46%, #9C7424 100%);
+  box-shadow: 0 0 0 4px rgba(230, 184, 74, 0.14), 0 7px 20px rgba(200, 150, 40, 0.4), inset 0 -7px 12px rgba(90, 60, 10, 0.45), inset 0 2px 2px rgba(255, 255, 255, 0.7); }
+.mp-main svg { width: 19px; height: 19px; filter: drop-shadow(0 1px 2px rgba(90, 60, 10, 0.7)); }
+.mp-main:hover { color: #fff; border-color: rgba(255, 246, 220, 0.95);
+  background: radial-gradient(78% 48% at 50% 8%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.18) 62%, rgba(255, 255, 255, 0) 64%), radial-gradient(110% 110% at 50% 100%, #FFE9A8 0%, #E6B84A 46%, #9C7424 100%);
+  box-shadow: 0 0 0 5px rgba(230, 184, 74, 0.2), 0 8px 26px rgba(230, 184, 74, 0.55), inset 0 -7px 12px rgba(90, 60, 10, 0.45), inset 0 2px 2px rgba(255, 255, 255, 0.7); }
 .mp-mode { width: 30px; height: 30px; color: var(--mp-dim); border-color: transparent; background: none; }
 .mp-mode svg { width: 15px; height: 15px; }
 .mp-mode[aria-pressed="true"] { color: var(--mp-gold); border-color: var(--mp-line); background: rgba(230, 184, 74, 0.08); }
