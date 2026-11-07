@@ -34,7 +34,7 @@ ${lab.slice(cut)
 fs.writeFileSync('lab.html', labDoc);
 // Game
 const game0 = src('site-template.html').replace('/*BASECSS*/', () => src('game.css'))
-  .replace('/*DIORAMA_CSS*/', () => src('diorama.css')).replace('/*DIORAMA*/', () => src('diorama.js')) // the Diorama UI (?ui=diorama)
+  .replace('/*UI_DEFAULT*/', () => process.env.PB_UI_DEFAULT === 'diorama' ? 'diorama' : 'classic').replace('/*DIORAMA_CSS*/', () => src('diorama.css')).replace('/*DIORAMA*/', () => src('diorama.js')) // the Diorama UI (?ui=diorama)
   .replace('/*SHAPES*/', () => shapes).replace('/*ENGINE*/', () => eng)
   .replace('/*GAME*/', () => src('game.js')).replace('/*REFEREE*/', () => src('referee.js')).replace('/*MPB*/', () => src('mpb.js')).replace('/*DUO*/', () => src('duo.js')).replace('/*TOUR*/', () => src('tournament.js'))
   .replace('/*EXPLOITBOT*/', () => src('exploit-bot.js'))

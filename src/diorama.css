@@ -592,3 +592,39 @@ html.diorama .fr-toast { text-align: left; }
 #dio .pl-note { margin: 0; font: 400 13px var(--type); opacity: .75; text-align: right; }
 #dio .pl-modes button[disabled] { opacity: .3; cursor: not-allowed; }
 #dio .pl-modes .sure { opacity: 1; color: var(--saffron); }
+
+/* ── step 9: the game's sheets (#sheet: Puzzles, How to play, Leaderboard, Rewards, Report a bug, Tournaments, Load units,
+   the in-match Settings...) in the Diorama's look until they're designed. They live outside #dio, so this is scoped to
+   html.diorama. The game's colour and type tokens are pointed at the Diorama's inside a sheet; then the shapes: an ink
+   panel with a cut corner, stencil titles, buttons as words, the main one on the saffron shard ── */
+html.diorama .sheet-back { background: rgba(23, 20, 15, .5); }
+html.diorama.pc .sheet-back { align-items: center; }
+html.diorama .sheet {
+  --panel: #17140F; --bg: #17140F; --board: #221E17; --line: rgba(244, 236, 216, .2); --ink: #F4ECD8; --muted: rgba(244, 236, 216, .7);
+  --gold: #F2B23A; --gold-dark: #D99A26;
+  --font-display: "Chakra Petch", "Arial Narrow", sans-serif; --font-body: "Bricolage Grotesque", system-ui, sans-serif; --font-data: "Courier Prime", "Courier New", monospace;
+  background: #17140F; color: #F4ECD8; border: 0; border-radius: 0; font-family: var(--font-body);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 22px 100%, 0 calc(100% - 22px)); filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .38)); }
+html.diorama.pc .sheet { padding: 24px 26px 26px; }
+html.diorama .sheet h3 { font: 700 32px/.95 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; }
+html.diorama .sheet .hint, html.diorama .sheet p { font-family: var(--font-data); }
+html.diorama .sheet .hint { font-size: 13px; }
+html.diorama .sheet .eyebrow { color: #F2B23A; font-weight: 700; }
+html.diorama .sheet .btn { position: relative; isolation: isolate; border: 0; border-radius: 0; background: none; padding: 5px 10px 2px; color: #F4ECD8;
+  font: 700 18px/1 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; opacity: .75; }
+html.diorama .sheet .btn.small { font-size: 15px; padding: 4px 9px 1px; }
+html.diorama .sheet .btn:hover:not(:disabled) { opacity: 1; }
+html.diorama .sheet .btn.primary { opacity: 1; color: #17140F; background: none; }
+html.diorama .sheet .btn.primary::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 10%, 96% 0, 100% 86%, 3% 100%); }
+html.diorama .sheet #close { font-family: var(--font-data); font-size: 13px; text-transform: none; text-decoration: underline; text-underline-offset: 4px; opacity: .7; }
+html.diorama .sheet .seg { border: 0; border-radius: 0; gap: 2px; overflow: visible; }
+html.diorama .sheet .seg button { position: relative; isolation: isolate; padding: 4px 9px 1px; font: 700 15px/1 var(--font-display); text-transform: uppercase; opacity: .6; background: none; }
+html.diorama .sheet .seg button:hover { opacity: 1; }
+html.diorama .sheet .seg button[aria-pressed="true"] { opacity: 1; color: #17140F; background: none; }
+html.diorama .sheet .seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+html.diorama .sheet input:not([type="range"]), html.diorama .sheet textarea, html.diorama .sheet select { border: 0; border-bottom: 1px dashed rgba(244, 236, 216, .5); border-radius: 0; background: none; color: #F4ECD8; font: 500 16px var(--font-body); }
+html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35); padding: 8px; }
+html.diorama .sheet table { font-family: var(--font-data); }
+html.diorama .sheet details > summary { font-family: var(--font-data); }
+html.diorama .sheet .btn small, html.diorama .sheet .btn .hint, html.diorama .sheet .btn em { text-transform: none; letter-spacing: 0; font: 400 13px/1.4 var(--font-data); }
+html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35) !important; border-radius: 0 !important; background: rgba(244, 236, 216, .04) !important; }

@@ -924,7 +924,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 // localStorage pb-ui = 'diorama'. The old home stays the default until the launch. Its two extra fonts load only when on.
 (() => {
   let on = false;
-  try { const q = new URLSearchParams(location.search).get('ui'); if (q === 'diorama' || q === 'classic') localStorage.setItem('pb-ui', q); on = localStorage.getItem('pb-ui') === 'diorama'; } catch (e) { on = /[?&]ui=diorama\b/.test(location.search); }
+  const DEF = '/*UI_DEFAULT*/'; // src/build.js: 'classic' until the launch (PB_UI_DEFAULT=diorama builds it on, for a test run or the launch)
+  try { const q = new URLSearchParams(location.search).get('ui'); if (q === 'diorama' || q === 'classic') localStorage.setItem('pb-ui', q); on = (localStorage.getItem('pb-ui') || DEF) === 'diorama'; } catch (e) { on = /[?&]ui=diorama\b/.test(location.search) || (DEF === 'diorama' && !/[?&]ui=classic\b/.test(location.search)); }
   if (!on) return;
   document.documentElement.classList.add('diorama');
   const l = document.createElement('link'); l.rel = 'stylesheet';
