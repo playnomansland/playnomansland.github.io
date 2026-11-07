@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leader heads – sketches</title>
+<style>
+  :root { --bg: #EFE6DA; --ink: #3A2F2A; --soft: #8A7B70; --card: #F8F2EA; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { padding: 18px 20px 6px; }
+  h1 { font-size: 20px; margin: 0 0 4px; font-weight: 650; }
+  header p { margin: 0; color: var(--soft); font-size: 13px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; padding: 14px 20px 20px; }
+  .card { background: var(--card); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 0 rgba(0,0,0,.05); }
+  .card canvas { display: block; width: 100%; aspect-ratio: 1 / 1; touch-action: none; cursor: grab; }
+  .meta { padding: 10px 14px 14px; }
+  .meta b { font-size: 16px; }
+  .meta .trope { color: var(--soft); font-size: 13px; }
+  .row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 8px; }
+  .tris { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--soft); }
+  .tris.over { color: #B4443A; font-weight: 600; }
+  button { font: inherit; font-size: 12px; border: 1px solid #D6C9BA; background: #fff; border-radius: 999px; padding: 4px 10px; cursor: pointer; color: var(--ink); }
+  button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .bar { display: flex; gap: 8px; padding: 0 20px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Leader heads – first sketches</h1>
+  <p>Drag a head to turn it. Budget 1000 triangles each. Collars use the leader's crest colour.</p>
+</header>
+<div class="bar"><button id="spin" aria-pressed="true">Turntable</button><button id="ui">UI size preview</button><button id="flat">Flat shading</button></div>
+<div class="grid" id="grid"></div>
+<script type="importmap">{ "imports": { "three": "../../vendor/three.module.min.js" } }</script>
+<script src="./leader-heads.js"></script>
+<script type="module">
+import * as THREE from 'three';
+const H = Heads(THREE);
+const LIST = [
+  { key: 'cage', name: 'Frickolas Cage', trope: 'Just a dude with a smirk' },
+  { key: 'zoe', name: 'Zoe', trope: 'A bossy alien' },
+  { key: 'emile', name: 'Emile', trope: 'A warm grandpa walrus, ginger moustache' },
+];
+const qs = new URLSearchParams(location.search);
+let spin = !qs.has('still'), small = false, flat = qs.has('flat');
+const views = [];
+for (const L of LIST) {
+  const card = document.createElement('div'); card.className = 'card';
+  const cv = document.createElement('canvas');
+  card.append(cv);
+  const meta = document.createElement('div'); meta.className = 'meta';
+  meta.innerHTML = `<b>${L.name}</b><div class="trope">${L.trope}</div><div class="row"><span class="tris"></span></div>`;
+  card.append(meta);
+  document.getElementById('grid').append(card);
+  const r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+  r.setPixelRatio(Math.min(2, devicePixelRatio));
+  r.outputColorSpace = THREE.SRGBColorSpace;
+  const scene = new THREE.Scene(); scene.background = new THREE.Color('#F8F2EA');
+  scene.add(new THREE.HemisphereLight('#FFF6EA', '#B9A89A', 1.6));
+  const key = new THREE.DirectionalLight('#FFF1DE', 2.2); key.position.set(-3, 4, 5); scene.add(key);
+  const rim = new THREE.DirectionalLight('#DDE6FF', 1.0); rim.position.set(4, 3, -4); scene.add(rim);
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+  const holder = new THREE.Group(); scene.add(holder);
+  const v = { L, r, scene, cam, holder, cv, meta, yaw: qs.has('yaw') ? +qs.get('yaw') : -0.45, variant: L.variants ? L.variants[+(qs.get(L.key) || 0)] : null, mesh: null };
+  const setMesh = () => {
+    if (v.mesh) { holder.remove(v.mesh); v.mesh.geometry.dispose(); }
+    v.mesh = H.build(L.key, v.variant, flat); holder.add(v.mesh);
+    const t = H.tris(L.key, v.variant), el = meta.querySelector('.tris');
+    el.textContent = `${t} / 1000 triangles`; el.classList.toggle('over', t > 1000);
+  };
+  setMesh(); v.setMesh = setMesh;
+  if (L.variants) {
+    const b = document.createElement('button'); b.textContent = L.vlabel; b.setAttribute('aria-pressed', String(!!v.variant));
+    b.onclick = () => { v.variant = v.variant ? null : L.variants[1]; b.setAttribute('aria-pressed', String(!!v.variant)); setMesh(); };
+    meta.querySelector('.row').append(b);
+  }
+  let drag = null;
+  cv.addEventListener('pointerdown', (e) => { drag = e.clientX; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', (e) => { if (drag != null) { v.yaw += (e.clientX - drag) * 0.012; drag = e.clientX; } });
+  cv.addEventListener('pointerup', () => { drag = null; });
+  v.dragging = () => drag != null;
+  views.push(v);
+}
+document.getElementById('spin').onclick = (e) => { spin = !spin; e.target.setAttribute('aria-pressed', String(spin)); };
+document.getElementById('flat').onclick = (e) => { flat = !flat; e.target.setAttribute('aria-pressed', String(flat)); for (const v of views) v.setMesh(); };
+document.getElementById('ui').onclick = (e) => { small = !small; e.target.setAttribute('aria-pressed', String(small)); resize(); };
+function resize() {
+  for (const v of views) {
+    const w = v.cv.clientWidth; const px = small ? 64 : w;
+    v.r.setSize(px, px, false); v.cv.style.imageRendering = small ? 'pixelated' : '';
+    v.cam.aspect = 1; v.cam.updateProjectionMatrix();
+  }
+}
+addEventListener('resize', resize); resize();
+let last = performance.now();
+function frame(t) {
+  const dt = Math.min(0.05, (t - last) / 1000); last = t;
+  for (const v of views) {
+    if (spin && !v.dragging()) v.yaw += dt * 0.5;
+    v.holder.rotation.y = v.yaw + Math.PI; // models face -z; turn them toward the camera
+    v.cam.position.set(0, 0.35, 8.2); v.cam.lookAt(0, 0.2, 0);
+    v.r.render(v.scene, v.cam);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.__ready = true;
+</script>
+</body>
+</html>

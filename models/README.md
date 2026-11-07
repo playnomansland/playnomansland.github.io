@@ -14,6 +14,7 @@ The Model Forge artifact saves low-poly models here with **Save to repo**, one f
 | `buildings/` | Buildings and lesser buildings | `building:factory` |
 | `towers/` | Tower models | `tower:keep` |
 | `props/` | Weapons, staffs, banners, projectiles, scenery bits | `prop:banner` |
+| `heads/` | Leader heads: 3D symbols for the UI and battle UI (not on the board), 1000 triangles each | `cage`, `zoe` |
 
 Each `*.model.js` file is a fragment, not a module:
 
@@ -26,3 +27,7 @@ To put one in the game: copy its BUILD entry into `src/models3d.js` (and for a s
 ## Other files
 
 `leaf_wizard.blend`, `leaf_wizard.glb`, `leaf_wizard_sheet.png` and `scenery.bin` are earlier assets made outside the Forge.
+
+## Leader heads (sketches, 2026-11-07)
+
+`heads/leader-heads.js` builds the leader heads from primitives, in the same part style as `src/models3d.js`, merged into one smooth-shaded mesh with vertex colours. Each head sits on a short neck with a collar in its leader's crest colour. `heads/preview.html` shows them turning, with triangle counts (open it from a local server at the repo root). Done so far: Frickolas Cage (971 triangles), Zoe (866), Emile (984). Not used by the game yet.

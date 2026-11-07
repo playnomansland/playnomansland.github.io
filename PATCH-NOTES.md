@@ -20,6 +20,13 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 7 November 2026 – Blixten takes a break, leader heads on the way
+
+- **Blixten is out of the game for now.** He's getting a rework, so he no longer shows up in packages, the leader draft or the Leaders menu, in any mode. (He was already left out of Standard and ranked.) He'll be back with new rules.
+- **Leader heads (sketches):** every leader is getting a small 3D head, used as a symbol around the menus and the battle UI. Each one is a clear character: Frickolas Cage is just a dude with a smirk, Zoe a bossy alien, Emile a warm grandpa walrus with a ginger moustache, and so on. The first three are sketched; none are in the game yet.
+
+---
+
 ## 7 November 2026 – Forest Glade: Darkwoods gets its own identity (prototype)
 
 **Darkwoods**, the Standard map's own look, was Frozen Peak without the snow. It's now an ancient forest called **Forest Glade**, and the battlefield is its one clearing:

@@ -2193,7 +2193,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   }
   // characters left out of the package draw (saved on this device; the host's list counts in a match with a friend)
   let offChars = [];
-  try { offChars = JSON.parse(localStorage.getItem('pb-off-chars') || '[]').filter(id => Game.charInfo(id)); } catch (e) {}
+  try { offChars = JSON.parse(localStorage.getItem('pb-off-chars') || '[]').filter(id => Game.CHARACTERS.some(c => c.id === id)); } catch (e) {}
   // units left out of the match, by name (saved on this device; the host's list counts in a match with a friend)
   let offUnits = [];
   try { offUnits = JSON.parse(localStorage.getItem('pb-off-units') || '[]').filter(n => typeof n === 'string'); } catch (e) {}
@@ -2201,11 +2201,11 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const unitsOn = () => units.length - offIdx().length;
   // The unit pack (2026-11-02), saved on this device; the host's counts with a friend:
   //  'learn'    Learn the game: Game.STANDARD_PACK (fewer units, leaders and towers, for new players)
-  //  'standard' Standard: every unit, leader and tower except the leader Blixten
+  //  'standard' Standard: every unit, leader and tower (Blixten is retired from every pool, see Game.RETIRED_CHARS)
   //  'custom'   developers only: every unit, leader and tower, minus what Leaders and Units leave out (the old All units)
   // A Counter Lab roster always plays as 'custom'. Nobody but a developer can change what a pack holds.
   const PACK_STORE = 'pb-unit-pack2';
-  const STD_OFF_CHARS = ['blixten'];
+  const STD_OFF_CHARS = [];
   let unitPack = 'learn';
   try {
     const v = localStorage.getItem(PACK_STORE), old = localStorage.getItem('pb-unit-pack'); // the old values: 'standard' = the small pack, 'all'
