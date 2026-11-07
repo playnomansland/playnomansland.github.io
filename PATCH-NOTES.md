@@ -20,6 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 7 November 2026 – New song: Broski
+
+- **Broski** by Snetänd is in the game as battle music. It isn't given to a look yet, so no match plays it on its own for now; you can find it under All music in the playlist panel.
+
+---
+
 ## 7 November 2026 – A new music player and your own playlists
 
 - **A new look for the music player:** dark glass with low-poly facets, gold trim and corner brackets, glossy gold orbs for the Play button and the note and a thin gold progress bar.
