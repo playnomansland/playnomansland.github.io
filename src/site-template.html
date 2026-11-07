@@ -59,10 +59,6 @@ a { color: var(--you); }
 .dd .row .track { height: 8px; border-radius: 2px; background: color-mix(in srgb, var(--line) 60%, transparent); overflow: hidden; }
 .dd .row .track i { display: block; height: 100%; border-radius: 2px; }
 .sheet { max-height: 80dvh; } /* iPhones: vh counts the space under Safari's toolbars */
-.songs { display: grid; gap: 6px; }
-.songs button { text-align: left; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--ink); padding: 10px 12px; font: 500 14px var(--font-body); display: grid; gap: 2px; }
-.songs button span { font-size: 12px; color: var(--muted); }
-.songs button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
 .hist { display: grid; gap: 6px; max-height: 60vh; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
 .hist li { border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; display: grid; gap: 2px; font: 500 14px var(--font-body); }
 .hist li span { font-size: 12px; color: var(--muted); }
@@ -597,7 +593,6 @@ html.pc .corner button span { display: inline; }
 .tiles button { display: grid; justify-items: center; gap: 4px; min-width: 84px; padding: 10px 10px 8px; border: 1px solid rgba(255, 255, 255, 0.35); background: rgba(13, 19, 21, 0.62); color: #fff; border-radius: 10px; font: 600 12px var(--font-display); letter-spacing: 0.04em; }
 .tiles button svg { width: 22px; height: 22px; }
 .tiles button.hot { border-color: var(--gold); color: var(--gold); }
-.home .mplayer { background: rgba(13, 19, 21, 0.62); border-color: rgba(255, 255, 255, 0.25); }
 /* rewards (2026-11-03): the card on the main menu (a picture of each reward) and the Rewards sheet */
 .rewards { width: min(100%, 520px); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .rewards #rw-puzzles { grid-column: 1 / -1; }
@@ -747,14 +742,146 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .skin-row small { display: block; }
 @media (prefers-reduced-motion: reduce) { .ptitle, .tp-burst, .tp-list { animation: none; } }
 
-/* the music player (2026-11-02): Now playing opens the playlist; shuffle and repeat */
-.mp-now { display: grid; justify-items: center; gap: 2px; border: 1px solid transparent; background: none; color: inherit; border-radius: 8px; padding: 4px 12px; cursor: pointer; transition: border-color 0.15s ease, background-color 0.15s ease; }
-.mp-now:hover:not([disabled]), .mp-now:focus-visible { border-color: var(--gold); background: rgba(230, 184, 74, 0.08); }
-.mp-now[disabled] { cursor: default; }
-.mp-mode { width: 30px; height: 30px; color: var(--muted); }
+/* the music player (2026-11-07): a glossy glass capsule, all bubbles and sheen (Frutiger Aero). Now playing rolls the
+   playlist panel up out of it: tabs like a folder's on top, the songs as glass pills. */
+:root { --aq-hi: #A6F4FF; --aq: #3CC8F5; --aq-deep: #0B67B0; --aq-ink: #E9F8FF; --aq-line: rgba(160, 228, 255, 0.38); --aq-top: #2B5C6E; --aq-mid: rgba(21, 50, 62, 0.97); --aq-bot: rgba(10, 27, 35, 0.97); }
+.mplayer { --r: 26px; position: relative; isolation: isolate; box-sizing: border-box; width: min(440px, 100%); display: grid; gap: 9px; padding: 12px 16px 14px; border-radius: var(--r); color: var(--aq-ink); text-align: left;
+  border: 1px solid var(--aq-line);
+  background: radial-gradient(120% 85% at 50% 140%, rgba(60, 200, 245, 0.34), transparent 62%), linear-gradient(180deg, rgba(43, 92, 110, 0.86), rgba(10, 27, 35, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -12px 28px rgba(40, 170, 230, 0.14), 0 14px 34px rgba(0, 0, 0, 0.42), 0 0 30px rgba(60, 190, 240, 0.14);
+  -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%); transition: border-radius 0.25s ease; }
+.mplayer::before { content: ""; position: absolute; z-index: -1; left: 7px; right: 7px; top: 2px; height: 46%; border-radius: calc(var(--r) - 4px) calc(var(--r) - 4px) 50% 50% / calc(var(--r) - 4px) calc(var(--r) - 4px) 18px 18px; background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.02)); pointer-events: none; transition: border-radius 0.25s ease; }
+.mplayer.joined { border-top-left-radius: 0; border-top-right-radius: 0; border-top-color: rgba(160, 228, 255, 0.2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -12px 28px rgba(40, 170, 230, 0.14), 0 14px 34px rgba(0, 0, 0, 0.42); }
+.mplayer.joined::before { border-top-left-radius: 0; border-top-right-radius: 0; }
+.mp-now { display: grid; grid-template-columns: 44px minmax(0, 1fr) 30px; align-items: center; gap: 12px; width: 100%; margin: 0; text-align: left; border: 1px solid transparent; background: none; color: inherit; border-radius: 20px; padding: 4px 6px 4px 4px; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; }
+.mp-now:hover, .mp-now:focus-visible { background: rgba(140, 225, 255, 0.1); border-color: rgba(160, 228, 255, 0.3); outline: none; }
+.mp-disc { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: #fff;
+  background: radial-gradient(62% 40% at 50% 16%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 72%), radial-gradient(circle at 50% 62%, #84EBFF 0%, #22A6E6 46%, #0A4F8F 100%);
+  box-shadow: inset 0 -5px 9px rgba(0, 40, 90, 0.5), 0 0 0 2px rgba(160, 228, 255, 0.22), 0 4px 14px rgba(20, 140, 220, 0.45); }
+.mp-disc svg { width: 19px; height: 19px; filter: drop-shadow(0 1px 1px rgba(0, 40, 80, 0.55)); }
+.mplayer.is-playing .mp-disc svg { animation: mp-bob 1.8s ease-in-out infinite; }
+@keyframes mp-bob { 50% { transform: translateY(-2px) rotate(-9deg); } }
+.mp-meta { display: grid; gap: 2px; min-width: 0; }
+.mp-label { font: 600 10px/1.25 var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; color: var(--aq-hi); opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mp-title { font: 600 15px/1.25 var(--font-body); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45); }
+.mp-up { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--aq-hi); background: rgba(140, 225, 255, 0.1); border: 1px solid rgba(160, 228, 255, 0.28); transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1); }
+.mp-now[aria-expanded="true"] .mp-up { transform: rotate(180deg); }
+.mp-prog { position: relative; display: block; height: 5px; margin: 0 4px; border-radius: 99px; background: rgba(0, 0, 0, 0.38); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.07); overflow: hidden; }
+.mp-prog i { position: absolute; inset: 0; transform-origin: left center; transform: scaleX(0); background: linear-gradient(90deg, #1FA8EC, #A6F4FF); box-shadow: 0 0 10px rgba(120, 230, 255, 0.8); transition: transform 0.25s linear; }
+.mp-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.mp-btn { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 38px; height: 38px; padding: 0; border-radius: 50%; cursor: pointer; color: var(--aq-ink);
+  border: 1px solid rgba(190, 235, 255, 0.42);
+  background: radial-gradient(85% 55% at 50% 4%, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.06) 62%, rgba(255, 255, 255, 0) 64%), linear-gradient(180deg, rgba(86, 160, 190, 0.42), rgba(14, 46, 60, 0.7));
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 -3px 6px rgba(0, 0, 0, 0.28), 0 3px 9px rgba(0, 0, 0, 0.32); transition: transform 0.12s ease, box-shadow 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+.mp-btn svg { width: 14px; height: 14px; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35)); }
+.mp-btn:hover { border-color: rgba(200, 245, 255, 0.8); box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), inset 0 -3px 6px rgba(0, 0, 0, 0.28), 0 3px 12px rgba(60, 190, 240, 0.35); }
+.mp-btn:active { transform: scale(0.92); }
+.mp-main { width: 58px; height: 58px; color: #fff; border-color: rgba(205, 247, 255, 0.85);
+  background: radial-gradient(78% 48% at 50% 8%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.18) 62%, rgba(255, 255, 255, 0) 64%), radial-gradient(110% 110% at 50% 100%, #78F0FF 0%, #1BA4E8 46%, #0A5AA3 100%);
+  box-shadow: 0 0 0 4px rgba(80, 200, 255, 0.14), 0 7px 20px rgba(20, 150, 230, 0.55), inset 0 -7px 12px rgba(0, 40, 90, 0.45), inset 0 2px 2px rgba(255, 255, 255, 0.7); }
+.mp-main svg { width: 19px; height: 19px; filter: drop-shadow(0 1px 2px rgba(0, 50, 100, 0.65)); }
+.mp-main:hover { box-shadow: 0 0 0 5px rgba(80, 200, 255, 0.2), 0 8px 26px rgba(30, 170, 245, 0.7), inset 0 -7px 12px rgba(0, 40, 90, 0.45), inset 0 2px 2px rgba(255, 255, 255, 0.7); }
+.mp-mode { width: 32px; height: 32px; color: rgba(225, 244, 252, 0.6); }
 .mp-mode svg { width: 15px; height: 15px; }
-.mp-mode[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
-.sheet .mplayer { margin-top: 0; padding-top: 0; border-top: 0; }
+.mp-mode[aria-pressed="true"] { color: #fff; border-color: var(--aq-hi); box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 0 12px rgba(90, 220, 255, 0.65); background: radial-gradient(85% 55% at 50% 4%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.08) 62%, rgba(255, 255, 255, 0) 64%), linear-gradient(180deg, #34B8EE, #0B67B0); }
+
+/* the playlist panel: rolls up out of the player ('anchor': the menu's own player; 'dock': one at the bottom of the screen) */
+.mp-pop[hidden] { display: none; }
+.mp-pop.anchor { position: fixed; z-index: 44; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; }
+.mp-pop.anchor .mp-panel { pointer-events: auto; flex: 1; }
+.mp-pop.dock { position: fixed; inset: 0; z-index: 44; background: rgba(4, 12, 16, 0.45); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); animation: mp-fade 0.25s ease; }
+.mp-dock { position: absolute; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(520px, calc(100vw - 24px)); height: min(620px, calc(100vh - 28px)); height: min(620px, calc(100dvh - 28px)); display: flex; flex-direction: column; }
+.mp-dock .mp-panel { flex: 1; }
+.mp-dock .mplayer { width: 100%; flex: none; animation: mp-rise 0.3s cubic-bezier(0.2, 0.9, 0.25, 1.1); }
+.mp-panel { display: flex; flex-direction: column; min-height: 0; color: var(--aq-ink); animation: mp-roll 0.42s cubic-bezier(0.16, 0.9, 0.24, 1); }
+.mp-pop.closing .mp-panel { animation: mp-unroll 0.26s cubic-bezier(0.5, 0, 0.8, 0.4) forwards; }
+.mp-pop.dock.closing { animation: mp-fade 0.26s ease reverse forwards; }
+.mp-pop.dock.closing .mplayer { animation: mp-sink 0.26s ease-in forwards; }
+@keyframes mp-roll { from { clip-path: inset(100% -40px 0 -40px round 22px 22px 0 0); transform: translateY(18px); opacity: 0.4; } to { clip-path: inset(-40px -40px 0 -40px round 0); transform: none; opacity: 1; } }
+@keyframes mp-unroll { from { clip-path: inset(-40px -40px 0 -40px round 0); transform: none; opacity: 1; } to { clip-path: inset(100% -40px 0 -40px round 22px 22px 0 0); transform: translateY(18px); opacity: 0.4; } }
+@keyframes mp-rise { from { transform: translateY(40px); opacity: 0; } }
+@keyframes mp-sink { to { transform: translateY(40px); opacity: 0; } }
+@keyframes mp-fade { from { opacity: 0; } }
+/* tabs, like a folder's: the picked one stands up and flows into the panel (the curves at its feet); the rest sit behind */
+.mp-tabrow { position: relative; z-index: 1; display: flex; align-items: flex-end; gap: 6px; margin-bottom: -1px; padding: 0 6px 0 10px; }
+.mp-tabs { flex: 1; min-width: 0; display: flex; align-items: flex-end; gap: 3px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding: 10px 14px 0; }
+.mp-tabs::-webkit-scrollbar { display: none; }
+.mp-tabs.more-r { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent); }
+.mp-tabs.more-l { -webkit-mask-image: linear-gradient(90deg, transparent, #000 34px); mask-image: linear-gradient(90deg, transparent, #000 34px); }
+.mp-tabs.more-l.more-r { -webkit-mask-image: linear-gradient(90deg, transparent, #000 34px, #000 calc(100% - 34px), transparent); mask-image: linear-gradient(90deg, transparent, #000 34px, #000 calc(100% - 34px), transparent); }
+.mp-tab { position: relative; flex: none; display: inline-flex; align-items: center; gap: 7px; height: 35px; max-width: 200px; margin: 0; padding: 0 15px; cursor: pointer; white-space: nowrap;
+  border: 1px solid rgba(160, 228, 255, 0.22); border-bottom: 0; border-radius: 15px 15px 0 0; color: rgba(226, 244, 252, 0.66); font: 600 13px var(--font-body);
+  background: linear-gradient(180deg, rgba(50, 96, 114, 0.96), rgba(20, 45, 56, 0.98)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -6px 10px -4px rgba(0, 0, 0, 0.35);
+  transform: translateY(5px); transition: transform 0.18s ease, color 0.18s ease; }
+.mp-tab span { overflow: hidden; text-overflow: ellipsis; }
+.mp-tab:hover { color: #fff; transform: translateY(2px); }
+.mp-tab:focus-visible { outline: 2px solid var(--aq-hi); outline-offset: -3px; }
+.mp-tab.on { color: var(--aq-hi); }
+.mp-tab[aria-selected="true"] { z-index: 2; height: 41px; transform: none; color: #fff; border-color: var(--aq-line); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(180deg, #4A8599 0%, var(--aq-top) 100%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 12px 14px -10px rgba(255, 255, 255, 0.35); }
+.mp-tab[aria-selected="true"]::before, .mp-tab[aria-selected="true"]::after { content: ""; position: absolute; bottom: 0; width: 13px; height: 13px; pointer-events: none; }
+.mp-tab[aria-selected="true"]::before { left: -13px; background: radial-gradient(circle at 0 0, transparent 12px, var(--aq-line) 12.5px, var(--aq-top) 13.5px); }
+.mp-tab[aria-selected="true"]::after { right: -13px; background: radial-gradient(circle at 100% 0, transparent 12px, var(--aq-line) 12.5px, var(--aq-top) 13.5px); }
+.mp-add { padding: 0 14px; font: 500 20px/1 var(--font-body); color: var(--aq-hi); }
+.mp-add[aria-selected="true"] { color: #fff; }
+.mp-x { flex: none; width: 32px; height: 32px; margin: 0 0 7px; padding: 0; display: grid; place-items: center; border-radius: 50%; cursor: pointer; color: var(--aq-ink);
+  border: 1px solid rgba(190, 235, 255, 0.4); background: radial-gradient(85% 55% at 50% 4%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.05) 62%, rgba(255, 255, 255, 0) 64%), linear-gradient(180deg, rgba(70, 130, 155, 0.9), rgba(16, 44, 56, 0.95)); box-shadow: 0 3px 9px rgba(0, 0, 0, 0.35); }
+.mp-x:hover { border-color: var(--aq-hi); }
+.mp-body { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 14px 12px 12px; border: 1px solid var(--aq-line); border-bottom: 0; border-radius: 22px 22px 0 0;
+  background: linear-gradient(180deg, var(--aq-top) 0, var(--aq-mid) 90px, var(--aq-bot) 100%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 -10px 30px rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); }
+.mp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 4px; }
+.mp-hd { display: grid; gap: 2px; min-width: 0; }
+.mp-hd b { font: 700 18px/1.2 var(--font-display); letter-spacing: 0.02em; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); }
+.mp-hd small { font: 500 12px/1.3 var(--font-body); color: rgba(200, 236, 250, 0.7); }
+.mp-acts { display: flex; align-items: center; gap: 6px; flex: none; }
+.mp-pill { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 18px; border-radius: 99px; cursor: pointer; color: #fff; font: 700 13px var(--font-body); letter-spacing: 0.02em; white-space: nowrap;
+  border: 1px solid rgba(205, 247, 255, 0.8); text-shadow: 0 1px 1px rgba(0, 50, 100, 0.6);
+  background: radial-gradient(90% 62% at 50% 0%, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0) 64%), linear-gradient(180deg, #52D8FF, #1690D8 56%, #0C62A8);
+  box-shadow: 0 4px 14px rgba(20, 140, 220, 0.45), inset 0 -3px 6px rgba(0, 40, 90, 0.4); transition: transform 0.12s ease, box-shadow 0.15s ease; }
+.mp-pill svg { width: 11px; height: 11px; }
+.mp-pill:hover:not([disabled]) { box-shadow: 0 5px 20px rgba(30, 170, 245, 0.65), inset 0 -3px 6px rgba(0, 40, 90, 0.4); }
+.mp-pill:active:not([disabled]) { transform: scale(0.96); }
+.mp-pill[disabled] { opacity: 0.45; cursor: default; filter: saturate(0.4); }
+.mp-pill[aria-pressed="true"] { background: radial-gradient(90% 62% at 50% 0%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 64%), linear-gradient(180deg, #7BEFC4, #1FB38A 56%, #0B7A5F); border-color: rgba(205, 255, 235, 0.85); box-shadow: 0 4px 16px rgba(30, 200, 150, 0.45), inset 0 -3px 6px rgba(0, 60, 40, 0.4); }
+.mp-ghost { height: 32px; padding: 0 13px; border-radius: 99px; cursor: pointer; color: var(--aq-ink); font: 600 12px var(--font-body); white-space: nowrap;
+  border: 1px solid rgba(160, 228, 255, 0.3); background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+.mp-ghost:hover { border-color: rgba(190, 240, 255, 0.6); background: rgba(140, 225, 255, 0.16); }
+.mp-ghost.sure { border-color: #FF8C7C; color: #FFC2B8; background: rgba(255, 100, 80, 0.16); }
+.mp-songs { flex: 1; min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 6px; padding: 2px 4px 6px 2px; scrollbar-width: thin; scrollbar-color: rgba(160, 228, 255, 0.35) transparent; }
+.mp-song { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 50px; margin: 0; padding: 6px 14px 6px 10px; border-radius: 17px; cursor: pointer; text-align: left; color: var(--aq-ink);
+  border: 1px solid rgba(160, 228, 255, 0.14); background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
+.mp-song:hover { border-color: rgba(160, 228, 255, 0.42); background: linear-gradient(180deg, rgba(140, 225, 255, 0.17), rgba(140, 225, 255, 0.05)); }
+.mp-song:focus-visible { outline: 2px solid var(--aq-hi); outline-offset: 1px; }
+.mp-song[aria-pressed="true"] { border-color: rgba(166, 244, 255, 0.85); background: linear-gradient(180deg, rgba(110, 220, 255, 0.32), rgba(30, 140, 210, 0.16)); box-shadow: 0 0 16px rgba(70, 200, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.45); }
+.mp-n { min-width: 30px; height: 30px; padding: 0 2px; box-sizing: border-box; border-radius: 99px; display: grid; place-items: center; font: 600 12px var(--font-data); color: rgba(200, 236, 250, 0.75); background: rgba(0, 0, 0, 0.24); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.06); }
+.mp-n em { font: 600 10px var(--font-data); font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 8px; }
+.mp-song[aria-pressed="true"] .mp-n { color: #fff; background: radial-gradient(62% 40% at 50% 16%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 72%), radial-gradient(circle at 50% 62%, #7DE8FF, #1A9AE0 55%, #0A5EA8); box-shadow: 0 0 10px rgba(80, 210, 255, 0.55); }
+.mp-st { display: grid; gap: 1px; min-width: 0; }
+.mp-st b { font: 600 14px/1.25 var(--font-body); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mp-st small { font: 500 11.5px/1.25 var(--font-body); color: rgba(200, 236, 250, 0.62); }
+.mp-song .mp-eq { visibility: hidden; }
+.mp-song[aria-pressed="true"] .mp-eq { visibility: visible; }
+.mp-empty { margin: 10px 6px; color: rgba(200, 236, 250, 0.7); font-size: 13px; }
+.mp-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; flex: none; }
+.mp-eq i { width: 3px; height: 100%; border-radius: 2px; background: linear-gradient(180deg, #D2FCFF, #37C3F3); transform-origin: bottom; transform: scaleY(0.35); animation: mp-eq 0.9s ease-in-out infinite; animation-play-state: paused; }
+.mp-eq i:nth-child(2) { animation-delay: -0.3s; }
+.mp-eq i:nth-child(3) { animation-delay: -0.6s; }
+.mp-pop.playing .mp-eq i { animation-play-state: running; }
+.mp-pill .mp-eq i { background: #fff; }
+@keyframes mp-eq { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+/* making a playlist: a name, then songs ticked from All music (numbered in the order picked) */
+.mp-name { box-sizing: border-box; width: 100%; height: 44px; padding: 0 18px; border-radius: 99px; border: 1px solid var(--aq-line); background: rgba(0, 0, 0, 0.3); color: #fff; font: 600 15px var(--font-body); outline: none; box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4); }
+.mp-name::placeholder { color: rgba(200, 236, 250, 0.45); }
+.mp-name:focus { border-color: var(--aq-hi); box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4), 0 0 0 3px rgba(80, 210, 255, 0.25); }
+.mp-pick .mp-n:empty { background: rgba(0, 0, 0, 0.16); }
+.mp-check { position: relative; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid rgba(160, 228, 255, 0.45); background: rgba(0, 0, 0, 0.22); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4); transition: background 0.15s ease, box-shadow 0.15s ease; }
+.mp-pick[aria-pressed="true"] .mp-check { border-color: #C4F8FF; background: radial-gradient(62% 40% at 50% 16%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 72%), radial-gradient(circle at 50% 62%, #7DE8FF, #1A9AE0 55%, #0A5EA8); box-shadow: 0 0 10px rgba(80, 210, 255, 0.6); }
+.mp-pick[aria-pressed="true"] .mp-check::after { content: ""; position: absolute; left: 7.5px; top: 4px; width: 5px; height: 10px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); filter: drop-shadow(0 1px 1px rgba(0, 40, 90, 0.6)); }
+.mp-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; padding: 2px 2px 0; }
+.mp-where { color: rgba(200, 236, 250, 0.6); font-size: 11.5px; }
+@media (prefers-reduced-motion: reduce) { .mp-panel, .mp-pop.dock, .mp-dock .mplayer, .mp-eq i, .mplayer.is-playing .mp-disc svg { animation: none !important; } }
 
 /* the HUD's names (2026-11-02): username with the title under it */
 #you-name, #foe-name { display: inline-grid; gap: 1px; min-width: 0; }
@@ -1119,10 +1246,22 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   let snd = { vol: DEFAULT_VOL, muted: false, song: '', solo: false };
   try {
     const p = JSON.parse(localStorage.getItem(SOUND_STORE) || 'null');
-    if (p && isFinite(p.vol)) snd = { vol: Math.max(0, Math.min(100, +p.vol)), muted: !!p.muted, song: SONGS[p.song] ? p.song : '', solo: !!p.solo, shuffle: !!p.shuffle, repeat: !!p.repeat, chatOn: p.chatOn !== false, emotesOn: p.emotesOn !== false }; // chatOn, emotesOn: online matches (the lobby)
+    if (p && isFinite(p.vol)) snd = { vol: Math.max(0, Math.min(100, +p.vol)), muted: !!p.muted, song: SONGS[p.song] ? p.song : '', solo: !!p.solo, shuffle: !!p.shuffle, repeat: !!p.repeat, chatOn: p.chatOn !== false, emotesOn: p.emotesOn !== false, src: typeof p.src === 'string' ? p.src : 'menu' }; // chatOn, emotesOn: online matches (the lobby)
     else if (localStorage.getItem('phonebellum.music.v1') === 'off') snd.muted = true; // the old On/Off switch
   } catch (e) {}
-  const saveSound = () => { try { localStorage.setItem(SOUND_STORE, JSON.stringify(snd)); } catch (e) {} };
+  // the player's own playlists (2026-11-07, see "playlists" below): { lists: [{ id, name, songs }], owner: the account
+  // they were last saved to, dirty: changed since, gone: ids deleted since }; with an account, kept there too (musicPush)
+  const MUSIC_STORE = 'phonebellum.playlists.v1';
+  let myMusic = { lists: [], owner: '', dirty: false, gone: [] };
+  try {
+    const v = JSON.parse(localStorage.getItem(MUSIC_STORE) || 'null');
+    if (v && Array.isArray(v.lists)) myMusic = { lists: v.lists.filter(x => x && typeof x.id === 'string' && typeof x.name === 'string' && Array.isArray(x.songs)).map(x => ({ id: x.id, name: x.name, songs: x.songs.filter(k => typeof k === 'string') })),
+      owner: typeof v.owner === 'string' ? v.owner : '', dirty: !!v.dirty, gone: Array.isArray(v.gone) ? v.gone.filter(k => typeof k === 'string') : [] };
+  } catch (e) {}
+  const saveMyMusic = () => { try { localStorage.setItem(MUSIC_STORE, JSON.stringify(myMusic)); } catch (e) {} };
+  let musicPushT = 0, musicRev = 0, musicApplying = false; // musicChanged
+  const mpui = { open: false, mode: '', tab: '', edit: null, sure: '', ctx: null, anchor: null, closeT: 0 }; // the playlist panel
+  const saveSound = () => { try { localStorage.setItem(SOUND_STORE, JSON.stringify(snd)); } catch (e) {} musicChanged(); };
   const musicLevel = () => snd.muted ? 0 : snd.vol / 100;
   let actx = null, musicUnlocked = false;
   // one player per playlist: starts on a random track and, when it ends, goes on to the next one for as long as the
@@ -1168,6 +1307,17 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       if (list.join() === tracks.join()) return;
       tracks = list; past.length = 0; load(Math.floor(Math.random() * tracks.length));
     };
+    // play another list (a playlist picked): from song id, else on with the song playing now if the list has it, else
+    // from a random one. The same list: only a picked song changes anything.
+    pl.use = (list, id) => {
+      if (!list.length) return;
+      if (list.join() === tracks.join()) { if (id) pl.play(id); return; }
+      const keep = tracks[track];
+      tracks = list.slice(); past.length = 0;
+      const t = tracks.indexOf(id || keep);
+      if (!id && t >= 0) { track = t; if (pl.onChange) pl.onChange(); return; }
+      load(t >= 0 ? t : Math.floor(Math.random() * tracks.length));
+    };
     pl.ramp = (v, secs) => {
       if (!gain) { el.volume = v; return; }
       const t = actx.currentTime, g = gain.gain;
@@ -1195,18 +1345,31 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     };
     return pl;
   }
-  const menuSongs = () => PLAYLISTS.menu; // every menu song; a picked one plays now and the list goes on from it
   let menuPaused = false; // the menu player's Pause (this visit only; the sheet's Music Off is the lasting switch)
   // "My music" in a match (2026-11-05, Vilhelm: any song, even in battle; the map's combo stays the default): a song
-  // picked from the player in a match plays (and its list carries on, with Shuffle / Repeat) through deploy, battle and
-  // the results instead of the map's music, until the player picks Map music or the match is left; every new match
-  // starts on the map's music. mine.key: the match it was picked in (matchKey); paused: the player's Pause in a match.
+  // or playlist picked in a match plays (and its list carries on, with Shuffle / Repeat) through deploy, battle and
+  // the results instead of the map's music, until the player picks the map's Adaptive music or the match is left; every
+  // new match starts on the map's music. mine.key: the match it was picked in (matchKey); paused: the player's Pause in
+  // a match; src: the playlist it plays (srcSongs).
+  // ---------- playlists (2026-11-07): the tabs of the playlist panel. Built in: 'menu' (Menu Playlist: the menu
+  // songs) and 'all' (All music: every song once); in a match also 'map' (<look> Adaptive music: the map's deployment
+  // and battle music, which follows the phase). The player's own: 'u:<id>' (myMusic.lists), made with the + tab from
+  // All music. Outside a match the menu's player plays snd.src; in one, my music (mine.src) or the map's.
   const ALL_SONGS = [...PLAYLISTS.menu, ...Object.keys(SONGS).filter(id => !PLAYLISTS.menu.includes(id) && !SONGS[id].start)]; // every song once (not the battle cut of one)
-  const music = { menu: playlist(menuSongs(), !!snd.shuffle), mine: playlist(ALL_SONGS, !!snd.shuffle), deploy: playlist(PLAYLISTS.deploy), battle: playlist(PLAYLISTS.battle) };
+  const userList = (src) => typeof src === 'string' && src.startsWith('u:') ? myMusic.lists.find(x => 'u:' + x.id === src) || null : null;
+  function srcSongs(src) {
+    if (src === 'menu') return PLAYLISTS.menu;
+    if (src === 'all') return ALL_SONGS;
+    const u = userList(src);
+    return u ? u.songs.filter(id => SONGS[id]) : [];
+  }
+  const srcOk = (src) => srcSongs(src).length > 0;
+  const menuSrc = () => srcOk(snd.src) ? snd.src : 'menu';
+  const music = { menu: playlist(srcSongs(menuSrc()), !!snd.shuffle), mine: playlist(ALL_SONGS, !!snd.shuffle), deploy: playlist(PLAYLISTS.deploy), battle: playlist(PLAYLISTS.battle) };
   for (const id in MUSIC_COMBOS) for (const k in MUSIC_COMBOS[id]) music[k + '-' + id] = playlist(MUSIC_COMBOS[id][k]);
   music.menu.setRepeat(!!snd.repeat); music.mine.setRepeat(!!snd.repeat);
-  if (snd.song && PLAYLISTS.menu.includes(snd.song)) music.menu.play(snd.song); // the song picked last time starts the list
-  let mine = { key: '', on: false, paused: false };
+  if (snd.song && srcSongs(menuSrc()).includes(snd.song)) music.menu.play(snd.song); // the song picked last time starts the list
+  let mine = { key: '', on: false, paused: false, src: 'all' };
   const musicInMatch = () => !!m && (phase === 'deploy' || phase === 'battle' || phase === 'result' || phase === 'end');
   const matchKey = () => (m && musicInMatch() ? `${mode}:${m.seed}:${(net && net.code) || ''}` : '');
   // the map's player for this phase (its look's combo, or the standard one), '' when the map has no music now
@@ -1215,15 +1378,33 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     const pick = (k) => own[k] ? k + '-' + combo : k;
     return phase === 'deploy' ? pick('deploy') : (phase === 'battle' || phase === 'result') ? pick('battle') : '';
   }
+  // the map's music for the Adaptive music tab: [phase, song id]
+  function mapSongs() {
+    const combo = m && m.map ? LOOK_MUSIC[Game.lookOf(m)] : null, own = (combo && MUSIC_COMBOS[combo]) || {};
+    return [...(own.deploy || PLAYLISTS.deploy).map(id => ['Deploy', id]), ...(own.battle || PLAYLISTS.battle).map(id => ['Battle', id])];
+  }
+  // "<map> Adaptive music": on a map that can wear a look, the look's name (Darkwoods, Ashlands, Moonlit Snow...: the
+  // music follows the look), else the map's (Mushroom Cavern, Frozen Peak)
+  function adaptiveName() {
+    let name = 'Map';
+    try {
+      const mp = m && m.map ? Game.mapOf(m) : null, skin = mp && Game.SKINS.find(x => x.id === Game.lookOf(m));
+      name = mp && mp.skins && skin ? skin.name : mp ? mp.name : name;
+    } catch (e) {}
+    return name + ' Adaptive music';
+  }
+  const playingSrc = () => musicInMatch() ? (mine.on ? mine.src : 'map') : menuSrc();
+  const srcName = (src) => src === 'map' ? adaptiveName() : src === 'menu' ? 'Menu Playlist' : src === 'all' ? 'All music' : (userList(src) || {}).name || 'Playlist';
   // the playlist the player shows and works: the menu's outside a match; in one, my music or the map's
   const ctlPl = () => !musicInMatch() ? music.menu : mine.on || !comboKey() ? music.mine : music[comboKey()];
   function syncMusic() {
     const on = musicUnlocked && musicLevel() > 0;
-    if (mine.key !== matchKey()) mine = { key: matchKey(), on: false, paused: false }; // a new match (or none): the map's music
+    if (mine.key !== matchKey()) mine = { key: matchKey(), on: false, paused: false, src: 'all' }; // a new match (or none): the map's music
     music.menu.set(on && !menuPaused && (phase === 'start' || phase === 'lobby' || phase === 'draft'));
     music.mine.set(on && musicInMatch() && mine.on && !mine.paused);
     const cur = musicInMatch() && !mine.on && !mine.paused ? comboKey() : '';
     for (const k in music) if (k !== 'menu' && k !== 'mine') music[k].set(on && k === cur);
+    if (mpui.open && mpui.ctx !== musicInMatch()) mpMark();
   }
   // phones only allow sound after the player touches the page
   // (iPhones only count the end of a touch, so every tap retries until the sound is running)
@@ -1271,10 +1452,18 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const NOTE_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M9 3.5v10.6A3.5 3.5 0 1 0 11 17V8.2l8-1.9v5.8A3.5 3.5 0 1 0 21 15V2z"/></svg>';
   const menuPlaying = () => musicOn() && (musicInMatch() ? !mine.paused && (mine.on || !!comboKey()) : !menuPaused);
   const mapMusic = () => musicInMatch() && !mine.on; // the map's music is what the player shows
-  const nowLabel = () => mapMusic() ? 'Map music' : 'Now playing';
-  const playerHtml = () => `<div class="mplayer" role="group" aria-label="Music player">
-      <button class="mp-now" id="mp-now" aria-label="Now playing: open the playlist"><span class="mp-label" id="mp-label">${nowLabel()}</span>
-      <span id="mp-title">${esc(songName(ctlPl().song()))}</span></button>
+  const nowLabel = () => mapMusic() ? srcName('map') : 'Now playing · ' + srcName(playingSrc());
+  const CHEV_UP = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M6 15l6-6 6 6"/></svg>';
+  const CHEV_DOWN = CHEV_UP.replace('M6 15l6-6 6 6', 'M6 9l6 6 6-6');
+  const EQ = '<span class="mp-eq" aria-hidden="true"><i></i><i></i><i></i></span>';
+  // the player (2026-11-07): a glossy glass capsule. Now playing (the top row) rolls the playlist panel up out of it.
+  const playerHtml = () => `<div class="mplayer${menuPlaying() ? ' is-playing' : ''}" role="group" aria-label="Music player">
+      <button class="mp-now" id="mp-now" aria-expanded="${mpui.open}" aria-label="Now playing: open the playlists">
+        <span class="mp-disc" aria-hidden="true">${NOTE_SVG}</span>
+        <span class="mp-meta"><span class="mp-label" id="mp-label">${esc(nowLabel())}</span><span class="mp-title" id="mp-title">${esc(songName(ctlPl().song()))}</span></span>
+        <span class="mp-up" aria-hidden="true">${CHEV_UP}</span>
+      </button>
+      <span class="mp-prog" aria-hidden="true"><i id="mp-bar"></i></span>
       <span class="mp-row">
         <button class="mp-btn mp-mode" id="mp-shuffle" aria-label="Shuffle" aria-pressed="${!!snd.shuffle}" title="Shuffle">${ICONS.shuffle}</button>
         <button class="mp-btn" id="mp-back" aria-label="Back">${ICONS.back}</button>
@@ -1290,16 +1479,19 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (pb) { pb.innerHTML = menuPlaying() ? ICONS.pause : ICONS.play; pb.setAttribute('aria-label', menuPlaying() ? 'Pause' : 'Play'); }
     if ($('mp-shuffle')) $('mp-shuffle').setAttribute('aria-pressed', String(!!snd.shuffle));
     if ($('mp-repeat')) $('mp-repeat').setAttribute('aria-pressed', String(!!snd.repeat));
-    const on = (id) => id === '' ? mapMusic() : musicInMatch() ? mine.on && music.mine.song() === id : music.menu.song() === id;
-    document.querySelectorAll('[data-song]').forEach(x => x.setAttribute('aria-pressed', String(on(x.dataset.song))));
+    if ($('mp-now')) $('mp-now').setAttribute('aria-expanded', String(mpui.open));
+    document.querySelectorAll('.mplayer').forEach(x => x.classList.toggle('is-playing', menuPlaying()));
+    mpMark();
   }
   for (const k in music) music[k].onChange = showPlayer;
-  if (qs.has('test')) window.__music = () => ({ playing: Object.keys(music).filter(k => music[k].playing), song: ctlPl().song(), mine: { ...mine }, combo: comboKey(), menuPaused }); // UI tests
+  if (qs.has('test')) window.__music = () => ({ playing: Object.keys(music).filter(k => music[k].playing), song: ctlPl().song(), mine: { ...mine }, combo: comboKey(), menuPaused, src: playingSrc(), lists: JSON.parse(JSON.stringify(myMusic.lists)), dirty: myMusic.dirty }); // UI tests
   // Play from a tap: music on (iPhones start sound only inside a tap), the player unpaused
   function musicGo(pl) {
     if (!musicOn()) setMusic(true); else { wakeAudio(true); syncMusic(); pl.wake(); }
   }
   function wirePlayer() {
+    // the menu was drawn again under a docked panel: the dock's player gives up its ids (closes) to the menu's
+    if (mpui.open && mpui.mode === 'dock' && document.querySelector('#home .mplayer #mp-play')) mpClose(true);
     if (!$('mp-play')) return;
     $('mp-play').addEventListener('click', () => {
       if (musicInMatch()) {
@@ -1309,52 +1501,283 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       else { menuPaused = false; musicGo(music.menu); }
       syncMusic(); showPlayer();
     });
-    // a picked menu song plays on its own: Next goes back to all the menu songs
     $('mp-next').addEventListener('click', () => { ctlPl().next(); showPlayer(); });
     $('mp-shuffle').addEventListener('click', () => { music.menu.shuffle = music.mine.shuffle = snd.shuffle = !snd.shuffle; saveSound(); showPlayer(); });
     $('mp-repeat').addEventListener('click', () => { snd.repeat = !snd.repeat; music.menu.setRepeat(snd.repeat); music.mine.setRepeat(snd.repeat); saveSound(); showPlayer(); });
     $('mp-now').addEventListener('click', openPlaylist);
     $('mp-back').addEventListener('click', () => { ctlPl().back(); showPlayer(); });
+    // the menu was drawn again under an anchored panel: it grows out of the new player
+    if (mpui.open && mpui.mode === 'anchor') { const a = homePlayer(); if (a) { mpui.anchor = a; a.classList.add('joined'); mpPlace(); } else mpClose(true); }
   }
 
-  // a song picked from a list: it plays now (music on, the player unpaused) and the list goes on from it. In a match:
-  // my music ('' = Map music: back to the map's)
-  function playSong(id) {
-    if (musicInMatch()) {
-      mine.paused = false; mine.on = !!id;
-      if (id) music.mine.play(id);
+  // a playlist (src) picked to play, from song id ('' = from its first song, or a random one on Shuffle; the song
+  // playing now if it is in the list). In a match: my music, or 'map' = back to the map's Adaptive music.
+  function playFrom(src, id) {
+    if (src === 'map') {
+      if (!musicInMatch()) return;
+      mine.paused = false; mine.on = false;
       musicGo(ctlPl()); syncMusic(); showPlayer();
       return;
     }
-    music.menu.play(id); snd.song = id; saveSound();
+    const list = srcSongs(src);
+    if (!list.length) return;
+    if (musicInMatch()) {
+      mine.paused = false; mine.on = true; mine.src = src;
+      music.mine.use(list, id);
+      musicGo(ctlPl()); syncMusic(); showPlayer();
+      return;
+    }
+    snd.src = src; music.menu.use(list, id); snd.song = music.menu.song(); saveSound();
     menuPaused = false;
-    musicGo(music.menu);
+    musicGo(music.menu); syncMusic();
     showPlayer();
   }
-  const songList = () => musicInMatch() ? `<div class="songs" role="group" aria-label="Music">
-      <button data-song="" class="map-song" aria-pressed="${mapMusic()}">Map music (default)</button>
-      ${ALL_SONGS.map(id => `<button data-song="${id}" aria-pressed="${mine.on && music.mine.song() === id}">${esc(songName(id))}</button>`).join('')}
-    </div>` : `<div class="songs" role="group" aria-label="Menu music">
-      ${music.menu.list().map(id => `<button data-song="${id}" aria-pressed="${music.menu.song() === id}">${esc(songName(id))}</button>`).join('')}
-    </div>`;
-  const songHint = () => musicInMatch() ? 'Tap a song to play it through deploy and battle instead of the map’s music, until you tap Map music or leave the match. The list carries on from it.'
-    : `Tap a song to play it. The list carries on from there${snd.shuffle ? ' (in shuffled order while Shuffle is on)' : ''}.`;
-  const wireSongList = () => $('sheet').querySelectorAll('[data-song]').forEach(b => b.addEventListener('click', () => playSong(b.dataset.song)));
-  // Now playing (tap): the playlist, with the player on top
+  // the panel's Play button: that playlist from the top (a random song on Shuffle); the one playing: Play / Pause
+  function playList(src) {
+    if (src === playingSrc()) { if (!menuPlaying() && $('mp-play')) $('mp-play').click(); return; }
+    const list = src === 'map' ? [] : srcSongs(src);
+    playFrom(src, list.length ? (snd.shuffle ? list[Math.floor(Math.random() * list.length)] : list[0]) : '');
+  }
+  // the player's own playlists changed (edited, deleted, or from the account): the lists that play them follow
+  function musicListsChanged() {
+    if (!srcOk(snd.src)) snd.src = 'menu';
+    if (mine.on && !srcOk(mine.src)) mine.on = false;
+    else if (mine.on) music.mine.use(srcSongs(mine.src));
+    music.menu.use(srcSongs(menuSrc()));
+    syncMusic(); showPlayer();
+  }
+
+  // ---------- the playlist panel (2026-11-07): it rolls up out of the player. On the menu it grows from the menu's own
+  // player, which stays where it is ('anchor'); anywhere else (a match, the waiting room, Rooms) a player rises from the
+  // bottom of the screen with the panel on top of it ('dock'). Tabs, like a folder's: <look> Adaptive music (in a
+  // match), Menu Playlist, All music, the player's own playlists, and + to make one from All music.
+  const homePlayer = () => [...document.querySelectorAll('#home .mplayer')].find(x => x.getClientRects().length) || null;
+  const mpTabs = () => [...(musicInMatch() ? ['map'] : []), 'menu', 'all', ...myMusic.lists.map(x => 'u:' + x.id)];
+  const reduceMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+  function mpTabsHtml() {
+    const cur = mpui.edit ? (mpui.edit.id ? 'u:' + mpui.edit.id : '+') : mpui.tab, on = playingSrc();
+    return `<div class="mp-tabrow"><div class="mp-tabs" role="tablist" aria-label="Playlists">
+        ${mpTabs().map(t => `<button class="mp-tab${t === on ? ' on' : ''}" role="tab" data-tab="${esc(t)}" aria-selected="${t === cur}" title="${esc(srcName(t))}">${t === on ? EQ : ''}<span>${esc(srcName(t))}</span></button>`).join('')}
+        <button class="mp-tab mp-add" role="tab" data-tab="+" aria-selected="${cur === '+'}" aria-label="New playlist" title="New playlist">+</button>
+      </div><button class="mp-x" id="mp-close" aria-label="Close the playlists">${CHEV_DOWN}</button></div>`;
+  }
+  const songRow = (src, id, n, pressed) => `<button class="mp-song" data-src="${esc(src)}" data-song="${id}" aria-pressed="${pressed}"><span class="mp-n">${n}</span><span class="mp-st"><b>${esc(SONGS[id].title)}</b><small>${esc(SONGS[id].artist || ARTIST)}</small></span>${EQ}</button>`;
+  function mpListHtml(t) {
+    const on = playingSrc() === t, u = userList(t), cur = ctlPl().song(), map = t === 'map';
+    const songs = map ? mapSongs() : srcSongs(t).map(id => ['', id]);
+    const sub = map ? 'Deploy music, then battle music: it follows the match' : `${songs.length} song${songs.length === 1 ? '' : 's'}${u ? '' : t === 'menu' ? ' · plays on the menu' : ' · every song in the game'}`;
+    return `<div class="mp-head"><div class="mp-hd"><b>${esc(srcName(t))}</b><small>${sub}</small></div>
+        <span class="mp-acts">${u ? `<button class="mp-ghost" id="mp-edit">Edit</button><button class="mp-ghost${mpui.sure === t ? ' sure' : ''}" id="mp-del">${mpui.sure === t ? 'Sure? Delete' : 'Delete'}</button>` : ''}
+        <button class="mp-pill" id="mp-playlist" data-src="${esc(t)}" aria-pressed="${on && menuPlaying()}"${songs.length ? '' : ' disabled'}>${on && menuPlaying() ? EQ + 'Playing' : ICONS.play + 'Play'}</button></span></div>
+      <div class="mp-songs" id="mp-songs">${songs.length ? songs.map(([ph, id], i) => songRow(t, id, ph ? `<em>${ph}</em>` : i + 1, on && cur === id)).join('')
+        : '<p class="mp-empty">No songs in this playlist yet.</p>'}</div>`;
+  }
+  function mpEditHtml() {
+    const e = mpui.edit;
+    return `<div class="mp-head"><div class="mp-hd"><b>${e.id ? 'Edit playlist' : 'New playlist'}</b><small id="mp-picked">${mpPickedText()}</small></div></div>
+      <input class="mp-name" id="mp-name" maxlength="24" placeholder="Name your playlist" value="${esc(e.name)}" aria-label="Playlist name" autocomplete="off" spellcheck="false">
+      <div class="mp-songs" id="mp-songs">${ALL_SONGS.map(id => { const k = e.songs.indexOf(id); return `<button class="mp-song mp-pick" data-pick="${id}" aria-pressed="${k >= 0}"><span class="mp-n">${k >= 0 ? k + 1 : ''}</span><span class="mp-st"><b>${esc(SONGS[id].title)}</b><small>${esc(SONGS[id].artist || ARTIST)}</small></span><span class="mp-check" aria-hidden="true"></span></button>`; }).join('')}</div>
+      <div class="mp-foot"><small class="mp-where">${acct ? 'Saved to your account' : 'Saved on this device. Log in to keep it on your account.'}</small>
+        <span class="mp-acts"><button class="mp-ghost" id="mp-cancel">Cancel</button><button class="mp-pill" id="mp-save"${mpCanSave() ? '' : ' disabled'}>${e.id ? 'Save' : 'Create playlist'}</button></span></div>`;
+  }
+  const mpPickedText = () => { const n = mpui.edit.songs.length; return n ? `${n} song${n === 1 ? '' : 's'} picked from All music, in the order you tap them` : 'Tap songs from All music to add them'; };
+  const mpCanSave = () => !!(mpui.edit && mpui.edit.songs.length && mpui.edit.name.trim());
+  function mpDraw(newTab) {
+    const p = $('mp-panel');
+    if (!p) return;
+    const tabs0 = p.querySelector('.mp-tabs'), x = tabs0 ? tabs0.scrollLeft : 0, y = $('mp-songs') ? $('mp-songs').scrollTop : 0;
+    mpui.ctx = musicInMatch();
+    if (!mpui.edit && !mpTabs().includes(mpui.tab)) mpui.tab = mpTabs().includes(playingSrc()) ? playingSrc() : mpTabs()[0];
+    p.innerHTML = mpTabsHtml() + `<div class="mp-body${mpui.edit ? ' editing' : ''}" role="tabpanel">${mpui.edit ? mpEditHtml() : mpListHtml(mpui.tab)}</div>`;
+    const tabs = p.querySelector('.mp-tabs');
+    tabs.scrollLeft = x;
+    if (!newTab && $('mp-songs')) $('mp-songs').scrollTop = y;
+    const sel = tabs.querySelector('[aria-selected="true"]');
+    if (sel && newTab) { const l = sel.offsetLeft - 16, r = sel.offsetLeft + sel.offsetWidth + 16 - tabs.clientWidth; if (l < tabs.scrollLeft) tabs.scrollLeft = l; else if (r > tabs.scrollLeft) tabs.scrollLeft = r; }
+    $('mp-pop').classList.toggle('playing', menuPlaying());
+    // more tabs than fit: they scroll sideways (a mouse wheel too), faded at the edge that has more
+    const fade = () => { tabs.classList.toggle('more-l', tabs.scrollLeft > 2); tabs.classList.toggle('more-r', tabs.scrollLeft + tabs.clientWidth < tabs.scrollWidth - 2); };
+    tabs.addEventListener('scroll', fade, { passive: true });
+    tabs.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && tabs.scrollWidth > tabs.clientWidth) { tabs.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
+    fade();
+    mpWire(p);
+  }
+  // music changed under an open panel: draw it again (not while a playlist is being made: that has a text field)
+  function mpMark() {
+    if (!mpui.open || !$('mp-panel')) return;
+    if (mpui.edit && mpui.ctx === musicInMatch()) { $('mp-pop').classList.toggle('playing', menuPlaying()); return; }
+    mpDraw();
+  }
+  function mpWire(p) {
+    p.querySelectorAll('.mp-tab').forEach(b => b.addEventListener('click', () => {
+      const t = b.dataset.tab;
+      mpui.sure = '';
+      if (t === '+') mpui.edit = { id: '', name: `My playlist ${myMusic.lists.length + 1}`, songs: [] };
+      else { mpui.edit = null; mpui.tab = t; }
+      mpDraw(true);
+      if (t === '+' && $('mp-name') && matchMedia('(pointer: fine)').matches) { $('mp-name').focus(); $('mp-name').select(); }
+    }));
+    $('mp-close').addEventListener('click', () => mpClose());
+    p.querySelectorAll('.mp-song[data-src]').forEach(b => b.addEventListener('click', () => playFrom(b.dataset.src, b.dataset.src === 'map' ? '' : b.dataset.song)));
+    if ($('mp-playlist')) $('mp-playlist').addEventListener('click', () => playList($('mp-playlist').dataset.src));
+    if ($('mp-edit')) $('mp-edit').addEventListener('click', () => { const u = userList(mpui.tab); if (!u) return; mpui.edit = { id: u.id, name: u.name, songs: u.songs.filter(id => SONGS[id]) }; mpDraw(true); });
+    if ($('mp-del')) $('mp-del').addEventListener('click', () => {
+      if (mpui.sure !== mpui.tab) { mpui.sure = mpui.tab; return mpDraw(); }
+      const u = userList(mpui.tab);
+      mpui.sure = '';
+      if (u) { myMusic.lists = myMusic.lists.filter(x => x !== u); myMusic.gone.push(u.id); musicChanged(); mpui.tab = 'all'; musicListsChanged(); }
+      mpDraw(true);
+    });
+    if (!mpui.edit) return;
+    const e = mpui.edit, save = $('mp-save');
+    const marks = () => {
+      p.querySelectorAll('[data-pick]').forEach(b => { const k = e.songs.indexOf(b.dataset.pick); b.setAttribute('aria-pressed', String(k >= 0)); b.querySelector('.mp-n').textContent = k >= 0 ? k + 1 : ''; });
+      $('mp-picked').textContent = mpPickedText(); save.disabled = !mpCanSave();
+    };
+    p.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
+      const id = b.dataset.pick, k = e.songs.indexOf(id);
+      if (k >= 0) e.songs.splice(k, 1); else e.songs.push(id);
+      marks();
+    }));
+    $('mp-name').addEventListener('input', (ev) => { e.name = ev.target.value; save.disabled = !mpCanSave(); });
+    $('mp-name').addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && mpCanSave()) save.click(); if (ev.key === 'Escape') { ev.stopPropagation(); $('mp-cancel').click(); } });
+    $('mp-cancel').addEventListener('click', () => { mpui.edit = null; mpDraw(true); });
+    save.addEventListener('click', () => {
+      if (!mpCanSave()) return;
+      const name = e.name.replace(/\s+/g, ' ').trim().slice(0, 24);
+      let u = e.id && myMusic.lists.find(x => x.id === e.id);
+      if (u) { u.name = name; u.songs = e.songs.slice(); }
+      else {
+        if (myMusic.lists.length >= 20) { $('mp-picked').textContent = 'You can have up to 20 playlists. Delete one to make another.'; return; }
+        let id; do { id = Math.random().toString(36).slice(2, 10); } while (myMusic.lists.some(x => x.id === id));
+        u = { id, name, songs: e.songs.slice() }; myMusic.lists.push(u);
+      }
+      mpui.edit = null; mpui.tab = 'u:' + u.id;
+      musicChanged(); musicListsChanged();
+      mpDraw(true);
+    });
+  }
+  function mpPop() {
+    let pop = $('mp-pop');
+    if (!pop) {
+      pop = document.createElement('div'); pop.id = 'mp-pop'; pop.className = 'mp-pop'; pop.hidden = true;
+      document.body.appendChild(pop);
+      // a tap on the dim round the docked panel closes it
+      pop.addEventListener('click', (e) => { if (e.target === pop && mpui.mode === 'dock') mpClose(); });
+    }
+    return pop;
+  }
+  // Now playing (tap): the playlists roll up out of the player; tapped again, they roll back down
   function openPlaylist() {
-    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Playlist</h3><button class="btn small" id="close">Close</button></div>
-      ${playerHtml().replace('id="mp-now"', 'id="mp-now" disabled')}
-      <p class="hint" style="margin:0">${songHint()}</p>
-      ${songList()}`;
-    $('sheet-back').hidden = false;
-    $('close').addEventListener('click', closeSheet);
-    const ids = ['mp-now', 'mp-title', 'mp-play', 'mp-back', 'mp-next', 'mp-shuffle', 'mp-repeat'];
-    // the menu's own player is under the sheet: give the sheet's copy the ids while it is open
-    document.querySelectorAll('#home .mplayer [id]').forEach(x => { x.dataset.keepId = x.id; x.removeAttribute('id'); });
-    wirePlayer(); wireSongList();
-    const back = () => { if (!$('sheet-back').hidden && $('sheet').querySelector('.mplayer')) return setTimeout(back, 300); $('sheet').querySelectorAll('.mplayer [id]').forEach(x => x.removeAttribute('id')); document.querySelectorAll('[data-keep-id]').forEach(x => { if (!$(x.dataset.keepId)) x.id = x.dataset.keepId; delete x.dataset.keepId; }); showPlayer(); };
-    setTimeout(back, 300);
-    void ids;
+    if (mpui.open) return mpClose();
+    const pop = mpPop(), a = homePlayer();
+    clearTimeout(mpui.closeT);
+    mpui.open = true; mpui.edit = null; mpui.sure = '';
+    mpui.tab = mpTabs().includes(playingSrc()) ? playingSrc() : mpTabs()[0];
+    // on the menu, with room above its player: from that player; anywhere else, a docked one
+    mpui.mode = a && a.getBoundingClientRect().top > 260 ? 'anchor' : 'dock';
+    pop.className = 'mp-pop ' + mpui.mode; pop.hidden = false;
+    if (mpui.mode === 'anchor') {
+      mpui.anchor = a; a.classList.add('joined');
+      pop.innerHTML = '<div class="mp-panel" id="mp-panel" role="dialog" aria-label="Playlists"></div>';
+      mpPlace();
+    } else {
+      mpui.anchor = null;
+      // the menu's own player (under the dock) gives its ids to the dock's while it is open
+      document.querySelectorAll('.mplayer [id]').forEach(x => { x.dataset.keepId = x.id; x.removeAttribute('id'); });
+      pop.innerHTML = `<div class="mp-dock"><div class="mp-panel" id="mp-panel" role="dialog" aria-label="Playlists"></div>${playerHtml()}</div>`;
+      pop.querySelector('.mplayer').classList.add('joined');
+      wirePlayer();
+    }
+    mpDraw(true); showPlayer();
+  }
+  function mpClose(instant) {
+    if (!mpui.open) return;
+    mpui.open = false; mpui.edit = null; mpui.sure = '';
+    const pop = $('mp-pop');
+    const done = () => {
+      if (mpui.open) return;
+      pop.hidden = true; pop.className = 'mp-pop'; pop.innerHTML = ''; pop.removeAttribute('style');
+      document.querySelectorAll('.mplayer.joined').forEach(x => x.classList.remove('joined'));
+      document.querySelectorAll('[data-keep-id]').forEach(x => { if (!$(x.dataset.keepId)) x.id = x.dataset.keepId; delete x.dataset.keepId; });
+      showPlayer();
+    };
+    if (instant || reduceMotion()) return done();
+    pop.classList.add('closing');
+    mpui.closeT = setTimeout(done, 280);
+  }
+  // keeps an anchored panel sitting on its player (the menu can scroll, resize or draw again)
+  function mpPlace() {
+    const a = mpui.anchor, pop = $('mp-pop');
+    if (!pop || mpui.mode !== 'anchor') return;
+    if (!a || !a.isConnected || !a.getClientRects().length) return mpClose(true);
+    const r = a.getBoundingClientRect(), room = r.top - 10;
+    Object.assign(pop.style, { left: r.left + 'px', width: r.width + 'px', bottom: (innerHeight - r.top - 1) + 'px', height: Math.max(220, Math.min(560, room)) + 'px' });
+  }
+  addEventListener('resize', () => { if (mpui.open) mpPlace(); });
+  document.addEventListener('pointerdown', (e) => { // a tap anywhere else on the menu closes the anchored panel
+    if (!mpui.open || mpui.mode !== 'anchor') return;
+    const pop = $('mp-pop');
+    if ((pop && pop.contains(e.target)) || (mpui.anchor && mpui.anchor.contains(e.target))) return;
+    mpClose();
+  }, true);
+  // the progress bar of the player on screen, and an anchored panel kept in place
+  setInterval(() => {
+    if (mpui.open && mpui.mode === 'anchor') mpPlace();
+    const bar = $('mp-bar');
+    if (!bar) return;
+    const pl = ctlPl(), s = SONGS[pl.song()], el = pl.el, a = (s && s.start) || 0, b = s && s.end != null ? s.end : el.duration;
+    const f = isFinite(b) && b > a ? Math.max(0, Math.min(1, (el.currentTime - a) / (b - a))) : 0;
+    bar.style.transform = `scaleX(${f.toFixed(4)})`;
+  }, 250);
+
+  // ---------- music on the account (2026-11-07): the Sound settings and the player's own playlists go to
+  // /account/music (accounts.js MUSIC) a moment after they change, and come back with the account on any device
+  // (acctTake -> musicFromAcct). Changes made before they reached the account (dirty) are merged into the account's
+  // copy; another account's playlists stay with that account.
+  const musicOut = () => ({ prefs: { vol: snd.vol, muted: !!snd.muted, shuffle: !!snd.shuffle, repeat: !!snd.repeat, sfx: snd.sfx !== false, sfxVol: snd.sfxVol, chatOn: snd.chatOn !== false, emotesOn: snd.emotesOn !== false, src: snd.src || 'menu', song: snd.song || '' },
+    playlists: myMusic.lists.map(x => ({ id: x.id, name: x.name, songs: x.songs.slice() })) });
+  function musicChanged() {
+    if (musicApplying) return;
+    musicRev++; myMusic.dirty = true; saveMyMusic();
+    clearTimeout(musicPushT); musicPushT = setTimeout(musicPush, 1200);
+  }
+  async function musicPush() {
+    if (!acct || !myMusic.dirty) return;
+    const rev = musicRev, id = acct.id, r = await acctCall('music', { music: musicOut() }, true);
+    if (r.status === 200 && rev === musicRev && acct && acct.id === id) { myMusic.dirty = false; myMusic.gone = []; myMusic.owner = id; saveMyMusic(); }
+  }
+  function musicFromAcct(sv, pid) {
+    if (sv === undefined || !pid) return; // a game server from before music was kept on accounts
+    const same = !myMusic.owner || myMusic.owner === pid;
+    if (sv && !(same && myMusic.dirty)) { musicApply(sv); myMusic.owner = pid; myMusic.dirty = false; myMusic.gone = []; saveMyMusic(); return; }
+    if (!same) { myMusic.lists = []; musicListsChanged(); } // another account's playlists stay with it
+    if (sv) { // changes made here that never reached the account: on top of the account's copy
+      const here = new Map(myMusic.lists.map(x => [x.id, x]));
+      myMusic.lists = [...sv.playlists.filter(x => !myMusic.gone.includes(x.id)).map(x => here.get(x.id) || x), ...myMusic.lists.filter(x => !sv.playlists.some(y => y.id === x.id))].slice(0, 20);
+      musicListsChanged();
+    }
+    myMusic.owner = pid; myMusic.dirty = true; saveMyMusic();
+    clearTimeout(musicPushT); musicPush();
+    if (mpui.open) mpDraw();
+  }
+  function musicApply(sv) {
+    const p = sv.prefs || {}, before = JSON.stringify(musicOut()), src0 = snd.src;
+    const pct = (v, d) => typeof v === 'number' && isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : d;
+    musicApplying = true;
+    try {
+      Object.assign(snd, { vol: pct(p.vol, snd.vol), muted: !!p.muted, shuffle: !!p.shuffle, repeat: !!p.repeat, sfx: p.sfx !== false, sfxVol: pct(p.sfxVol, snd.sfxVol), chatOn: p.chatOn !== false, emotesOn: p.emotesOn !== false });
+      if (typeof p.src === 'string') snd.src = p.src;
+      if (typeof p.song === 'string' && SONGS[p.song]) snd.song = p.song;
+      myMusic.lists = (Array.isArray(sv.playlists) ? sv.playlists : []).filter(x => x && typeof x.id === 'string' && typeof x.name === 'string' && Array.isArray(x.songs)).map(x => ({ id: x.id, name: x.name, songs: x.songs.filter(s => typeof s === 'string') }));
+      if (JSON.stringify(musicOut()) === before) return;
+      saveSound(); saveMyMusic();
+      music.menu.shuffle = music.mine.shuffle = !!snd.shuffle; music.menu.setRepeat(!!snd.repeat); music.mine.setRepeat(!!snd.repeat);
+      Object.values(music).forEach(pl => { if (pl.playing) pl.ramp(musicLevel(), 0.2); });
+      if (snd.src !== src0 && !musicInMatch() && srcOk(snd.src)) { const l = srcSongs(snd.src); music.menu.use(l, l.includes(snd.song) ? snd.song : ''); }
+      musicListsChanged();
+      if (mpui.open) mpDraw();
+    } finally { musicApplying = false; }
   }
 
   // ---------- sound effects (audio/sfx/, by Snetänd): played through Web Audio from decoded buffers, so they start at
@@ -1602,8 +2025,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         </div>
       </div>` : ''}
       <div class="bar"><span class="hint">Something broken?</span><button class="btn small" id="bug-open">Report a bug</button></div>
-      <span class="hint">${musicInMatch() ? 'Music: tap a song to play it instead of the map’s, Map music goes back' : 'Menu music: tap a song to play it, the list carries on from there'}</span>
-      ${songList()}
+      <div class="bar"><span class="hint">Playlists</span><button class="btn small" id="mp-open2">Open playlists</button></div>
       `;
     $('sheet-back').hidden = false;
     $('close').addEventListener('click', () => closeSheet(true));
@@ -1635,7 +2057,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       snd.solo = b.dataset.solo === '1'; saveSound(); setAudioSession(); wakeAudio(true);
       $('sheet').querySelectorAll('[data-solo]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     }));
-    wireSongList();
+    $('mp-open2').addEventListener('click', () => { closeSheet(true); openPlaylist(); });
     $('sheet').querySelectorAll('[data-mute]').forEach(b => b.addEventListener('click', () => {
       setMusic(b.dataset.mute === '0'); if (musicOn()) { menuPaused = false; mine.paused = false; syncMusic(); } showPlayer();
       $('vol').value = snd.vol; $('vol-n').textContent = snd.vol; showOn();
@@ -4199,6 +4621,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     acctSave({ id: r.player.id, tag: r.player.tag, google: !!r.player.google, dev: !!r.player.dev, titles: Array.isArray(r.player.titles) ? r.player.titles.filter(t => TITLES[t]) : [], title: TITLES[r.player.title] ? r.player.title : '', tagNext: +r.player.tagNext || 0,
       skins: Array.isArray(r.player.skins) ? r.player.skins.filter(k => k && Shapes.SKINS[k.id]).map(k => ({ id: k.id, worn: !!k.worn })) : [], discord: !!r.player.discord, puzzles: Array.isArray(r.player.puzzles) ? r.player.puzzles.filter(k => Number.isInteger(k)) : [], gg: Math.max(0, r.player.gg | 0), session: r.session || acct.session, ts: now() });
     puzzleSync();
+    musicFromAcct(r.player.music, r.player.id); // the music settings and playlists kept on the account
   }
   function acctFail(r) {
     if (r.status === 503 && r.error === 'accounts off') { acctUi.off = true; return 'Accounts aren’t switched on yet on the game server.'; }
@@ -7410,7 +7833,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   $('stats').addEventListener('click', (e) => { e.stopPropagation(); openStats($('stats-dd').hidden); });
   document.addEventListener('click', (e) => { if (!$('stats-dd').hidden && !$('stats-dd').contains(e.target)) openStats(false); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !typingIn(e.target)) { closeSheet(true); openStats(false); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !typingIn(e.target)) { if (mpui.open) { mpClose(); return; } closeSheet(true); openStats(false); } });
 
   // =====================================================================
   // Live matches: PeerJS (WebRTC). The host runs the match and decides results;

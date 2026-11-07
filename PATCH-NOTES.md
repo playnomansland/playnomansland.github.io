@@ -20,6 +20,17 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 7 November 2026 – A new music player and your own playlists
+
+- **A new look for the music player:** a glossy glass player with bubble buttons, a spinning-note disc and a progress bar.
+- **Playlists roll up out of the player:** tap *Now playing* and the playlists roll up from the player, which stays where it is. Tap it again, the arrow, Escape or anywhere else to roll them back down.
+- **Tabs:** *Menu Playlist* (the menu songs), *All music* (every song in the game) and your own playlists. Pick a tab's *Play* or any song in it, and the player carries on through that playlist.
+- **Make your own:** the **+** tab makes a playlist from All music. Name it and tap songs to add them (they play in the order you tap). Your playlists have *Edit* and *Delete* buttons.
+- **In a match:** the music button opens the same playlists, with the map's own music first as **<map> Adaptive music** (for example *Darkwoods Adaptive music*). It plays deployment music, then battle music. Pick any other playlist and it plays through deploy and battle instead. Adaptive music's *Play* goes back to the map's music.
+- **Saved to your account:** your playlists and sound settings (volume, music and sound effects on or off, shuffle, repeat, the playlist playing on the menu) are kept on your account. Log in on another device and they're there too. Playlists you made before logging in are added to your account's.
+
+---
+
 ## 7 November 2026 – Ashlands battle music
 
 - Fights on the **Ashlands** look now play their own battle song: **Joe biden** by Snetänd. Deployment on Ashlands keeps the standard music.

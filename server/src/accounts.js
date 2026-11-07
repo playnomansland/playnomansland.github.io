@@ -26,6 +26,8 @@
 //   /account/discord { code, redirect } (auth) -> { player }  (Discord check for the BABABABA title; see DISCORD below)
 //   /account/puzzle  { k, army } (auth)  -> { player, won, solved }  (a tutorial puzzle's fight, replayed here; see PUZZLE below)
 //   /account/bug     { text, version, match, info } (auth optional) -> { ok, url }  (a post in #bug-reports; see BUG below)
+//   /account/music   { music: { prefs, playlists } } (auth) -> { music }  (the music player's settings and the player's own
+//                    playlists, kept on the account; see MUSIC below. playerOut carries it as player.music, null = never saved)
 //   /account/friends, /account/friend/{add,accept,decline,cancel,remove,mute}, /account/dm/{list,read,report} (auth, Google
 //                    accounts): friends and private messages; see FRIENDS below and hub.js (the live part)
 // guest, google and me also take { invite: CODE }: a new account made through a friend's invite link (INVITE).
@@ -49,6 +51,7 @@ export const ACCOUNT = {
   GRACE_MS: 5 * 60e3,
   MAX_SESSIONS: 10,        // per player; the oldest go first
   BODY_BYTES: 8 * 1024,    // a Google ID token is about 1.2 KB
+  MUSIC_BYTES: 24 * 1024,  // /account/music: the player's playlists (MUSIC below)
   // per IP: [count, window ms]. A tournament on one wifi shares an IP, so these leave room for a full room of friends.
   RATE: { guest: [20, 3600e3], google: [30, 600e3], other: [120, 60e3], bug: [5, 600e3], report: [5, 600e3] },
 };
@@ -88,7 +91,8 @@ function ensureSchema(db) {
     // players.online (2026-11-03): online matches the player finished (countOnline); players.discord: when the Discord check passed
     // players.initiate (2026-11-03): when the last tutorial puzzle was solved (the Initiate title)
     // players.goodsport (2026-11-04): when the player reached GG.need GGs (the Good sport title)
-    .then(() => Promise.all(['title TEXT', 'tag_changed INTEGER', 'legend INTEGER', 'online INTEGER', 'discord INTEGER', 'initiate INTEGER', 'goodsport INTEGER', ...FRIEND_COLUMNS].map((c) => db.prepare('ALTER TABLE players ADD COLUMN ' + c).run().catch((e) => { if (!/duplicate column/i.test(String(e && e.message))) throw e; }))))
+    // players.music (2026-11-07): the music player's settings and playlists, as JSON (cleanMusic)
+    .then(() => Promise.all(['title TEXT', 'tag_changed INTEGER', 'legend INTEGER', 'online INTEGER', 'discord INTEGER', 'initiate INTEGER', 'goodsport INTEGER', 'music TEXT', ...FRIEND_COLUMNS].map((c) => db.prepare('ALTER TABLE players ADD COLUMN ' + c).run().catch((e) => { if (!/duplicate column/i.test(String(e && e.message))) throw e; }))))
     .catch((e) => { schemaReady = null; throw e; });
   return schemaReady;
 }
@@ -559,10 +563,41 @@ export async function leaderboard(env, cors) {
   }
 }
 
+// ---------- music (2026-11-07): the music player's settings and the player's own playlists ----------
+// The page sends the whole lot each time something changes ({ prefs, playlists }); it is cleaned here and kept as JSON
+// in players.music. Song ids are only checked for shape (the page knows its songs and drops ones it doesn't have).
+// prefs: the Sound settings (volume, Music and Sound effects on / off, shuffle, repeat, chat and emotes) and the
+// playlist playing on the menu (src: 'menu', 'all' or 'u:<playlist id>') with its song.
+export const MUSIC = { lists: 20, songs: 80, name: 24 };
+const songId = (s) => (typeof s === 'string' && /^[A-Za-z0-9_-]{1,32}$/.test(s) ? s : '');
+export function cleanListName(s) {
+  if (typeof s !== 'string') return '';
+  return s.normalize('NFC').replace(/[\u0000-\u001f\u007f-\u009f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, MUSIC.name).trim();
+}
+export function cleanMusic(m) {
+  if (!m || typeof m !== 'object' || Array.isArray(m)) return null;
+  const p = m.prefs && typeof m.prefs === 'object' && !Array.isArray(m.prefs) ? m.prefs : {};
+  const pct = (v, d) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : d);
+  const prefs = { vol: pct(p.vol, 10), muted: !!p.muted, shuffle: !!p.shuffle, repeat: !!p.repeat, sfx: p.sfx !== false, sfxVol: pct(p.sfxVol, 45),
+    chatOn: p.chatOn !== false, emotesOn: p.emotesOn !== false,
+    src: typeof p.src === 'string' && /^(menu|all|u:[a-z0-9]{1,12})$/.test(p.src) ? p.src : 'menu', song: songId(p.song) };
+  const seen = new Set(), playlists = [];
+  for (const x of Array.isArray(m.playlists) ? m.playlists : []) {
+    if (playlists.length >= MUSIC.lists) break;
+    if (!x || typeof x !== 'object') continue;
+    const id = typeof x.id === 'string' && /^[a-z0-9]{1,12}$/.test(x.id) ? x.id : '', name = cleanListName(x.name);
+    if (!id || seen.has(id) || !name) continue;
+    seen.add(id);
+    playlists.push({ id, name, songs: [...new Set((Array.isArray(x.songs) ? x.songs : []).map(songId).filter(Boolean))].slice(0, MUSIC.songs) });
+  }
+  return { prefs, playlists };
+}
+const musicOut = (s) => { try { return s ? cleanMusic(JSON.parse(s)) : null; } catch (e) { return null; } };
+
 async function playerOut(db, id) {
-  const p = await db.prepare('SELECT id, tag, created, dev, title, tag_changed, legend, discord, initiate, goodsport FROM players WHERE id = ?').bind(id).first();
+  const p = await db.prepare('SELECT id, tag, created, dev, title, tag_changed, legend, discord, initiate, goodsport, music FROM players WHERE id = ?').bind(id).first();
   const logins = await db.prepare('SELECT provider FROM logins WHERE player = ?').bind(id).all();
-  return { id: p.id, tag: p.tag, created: p.created, google: logins.results.some((r) => r.provider === 'google'), dev: !!p.dev, titles: titlesOf(p), title: titleShown(p), tagNext: tagNext(p) > Date.now() ? tagNext(p) : 0, skins: await skinsOf(db, id, !!p.dev), discord: !!p.discord, puzzles: (await db.prepare('SELECT k FROM puzzles WHERE player = ? ORDER BY k').bind(id).all()).results.map((r) => r.k), gg: await ggCount(db, id) };
+  return { id: p.id, tag: p.tag, created: p.created, google: logins.results.some((r) => r.provider === 'google'), dev: !!p.dev, titles: titlesOf(p), title: titleShown(p), tagNext: tagNext(p) > Date.now() ? tagNext(p) : 0, skins: await skinsOf(db, id, !!p.dev), discord: !!p.discord, puzzles: (await db.prepare('SELECT k FROM puzzles WHERE player = ? ORDER BY k').bind(id).all()).results.map((r) => r.k), gg: await ggCount(db, id), music: musicOut(p.music) };
 }
 
 // Developer mode: a Google account whose verified email is in the secret DEV_EMAILS (comma separated; a Cloudflare
@@ -889,12 +924,12 @@ export async function handleAccount(request, env, cors) {
   const db = env.ACCOUNTS;
   if (!db) return json({ error: 'accounts off' }, 503, cors);
   const route = new URL(request.url).pathname.replace(/^\/account\/?/, '').replace(/\/$/, '');
-  if (!['guest', 'me', 'google', 'tag', 'signout', 'delete', 'ranked', 'title', 'skin', 'invite', 'discord', 'puzzle', 'bug', 'history', 'lobbyduo', ...FRIEND_ROUTES].includes(route)) return json({ error: 'not found' }, 404, cors);
+  if (!['guest', 'me', 'google', 'tag', 'signout', 'delete', 'ranked', 'title', 'skin', 'invite', 'discord', 'puzzle', 'bug', 'history', 'lobbyduo', 'music', ...FRIEND_ROUTES].includes(route)) return json({ error: 'not found' }, 404, cors);
   if (request.method !== 'POST') return json({ error: 'method' }, 405, cors);
 
   let body = {};
   const text = await request.text();
-  if (text.length > ACCOUNT.BODY_BYTES) return json({ error: 'too big' }, 413, cors);
+  if (text.length > (route === 'music' ? ACCOUNT.MUSIC_BYTES : ACCOUNT.BODY_BYTES)) return json({ error: 'too big' }, 413, cors);
   if (text) { try { body = JSON.parse(text); } catch { return json({ error: 'not json' }, 400, cors); } }
   if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'not an object' }, 400, cors);
 
@@ -1037,6 +1072,12 @@ export async function handleAccount(request, env, cors) {
       await db.prepare('UPDATE players SET seen = ? WHERE id = ?').bind(now, me.player).run();
       return json(out, 200, cors);
     }
+    if (route === 'music') {
+      const music = cleanMusic(body.music);
+      if (!music) return json({ error: 'bad music' }, 400, cors);
+      await db.prepare('UPDATE players SET music = ? WHERE id = ?').bind(JSON.stringify(music), me.player).run();
+      return json({ music }, 200, cors);
+    }
     if (route === 'history') {
       // the player's own online matches, newest first (match history, 2026-11-04): HistoryRoom keeps which account
       // played which side of each round, never shown to anyone else
@@ -1065,7 +1106,7 @@ export async function handleAccount(request, env, cors) {
       await db.batch([
         db.prepare('DELETE FROM logins WHERE player = ?').bind(me.player),
         db.prepare('DELETE FROM sessions WHERE player = ?').bind(me.player),
-        db.prepare('UPDATE players SET tag = NULL, deleted = ? WHERE id = ?').bind(now, me.player),
+        db.prepare('UPDATE players SET tag = NULL, music = NULL, deleted = ? WHERE id = ?').bind(now, me.player),
         ...friendsWipe(db, me.player), // friendships, requests, private messages, mutes
       ]);
       return json({ ok: true }, 200, cors);

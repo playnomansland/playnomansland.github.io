@@ -129,6 +129,26 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 4 * 60 *
     await ok('signout', { all: true }, many[10]);
     for (const t of [s1.session, many[5]]) assert.strictEqual((await call('me', {}, t)).status, 401, 'signed out everywhere');
 
+    // ----- music: the player's settings and own playlists, kept on the account -----
+    const mg = await ok('guest', {});
+    assert.strictEqual(mg.player.music, null, 'no music saved yet');
+    assert.strictEqual((await call('music', { music: {} })).status, 401, 'music needs a session');
+    assert.strictEqual((await call('music', { music: 'x' }, mg.session)).status, 400, 'music must be an object');
+    const mSent = { prefs: { vol: 140, muted: true, shuffle: 1, repeat: false, sfxVol: 30, src: 'u:abc', song: 'jonah', extra: 'dropped' },
+      playlists: [{ id: 'abc', name: '  Road   <b>trip</b> ', songs: ['jonah', 'sisi', 'jonah', 'bad id!', 42] }, { id: 'abc', name: 'duplicate id', songs: [] },
+        { id: 'BAD', name: 'bad id', songs: [] }, { id: 'n1', name: '   ', songs: [] }, { id: 'x2', name: 'x'.repeat(40), songs: [] }] };
+    const mu = await ok('music', { music: mSent }, mg.session);
+    assert.deepStrictEqual(mu.music.prefs, { vol: 100, muted: true, shuffle: true, repeat: false, sfx: true, sfxVol: 30, chatOn: true, emotesOn: true, src: 'u:abc', song: 'jonah' }, 'prefs cleaned');
+    assert.deepStrictEqual(mu.music.playlists, [{ id: 'abc', name: 'Road btrip/b', songs: ['jonah', 'sisi'] }, { id: 'x2', name: 'x'.repeat(24), songs: [] }], 'playlists cleaned');
+    assert.deepStrictEqual((await ok('me', {}, mg.session)).player.music, mu.music, 'the account keeps it');
+    assert.strictEqual((await ok('music', { music: { prefs: { src: 'nope' } } }, mg.session)).music.prefs.src, 'menu', 'an unknown playlist source: the menu');
+    const big = { playlists: Array.from({ length: 30 }, (_, i) => ({ id: 'p' + i, name: 'List ' + i, songs: Array.from({ length: 100 }, (_, k) => 'song' + k) })) };
+    assert.strictEqual((await call('music', { music: big }, mg.session)).status, 413, 'too big');
+    big.playlists.length = 25; big.playlists.forEach((x) => { x.songs.length = 90; });
+    const capped = await call('music', { music: big }, mg.session);
+    if (capped.status === 200) { assert.strictEqual(capped.music.playlists.length, 20, 'at most 20 playlists'); assert.strictEqual(capped.music.playlists[0].songs.length, 80, 'at most 80 songs each'); }
+    else assert.strictEqual(capped.status, 413);
+
     // ----- delete -----
     const d = await ok('google', { credential: idToken({ sub }) });
     await ok('delete', {}, d.session);
@@ -137,8 +157,8 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 4 * 60 *
     assert.strictEqual(again.linked, 'new', 'a deleted account is not found again');
     assert.notStrictEqual(again.player.id, g.player.id);
 
-    // ----- per-IP limit on guests: 20 requests an hour, refused ones included (7 counted above) -----
-    let sent = 7, status = 200;
+    // ----- per-IP limit on guests: 20 requests an hour, refused ones included (8 counted above) -----
+    let sent = 8, status = 200;
     while (status !== 429 && sent < 40) { status = (await call('guest', {})).status; sent++; }
     assert.strictEqual(status, 429, 'guest creation is limited');
     assert.strictEqual(sent, 21, 'the 21st in an hour is refused');
