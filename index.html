@@ -151,6 +151,10 @@ canvas { display: block; width: 100%; height: 100%; }
   --type: "Courier Prime", "Courier New", monospace;
   color-scheme: dark;
 }
+/* the game's own classes that the Diorama reuses (.seg, .hint, .tiers, .ptitle, .fr-list, .fr-inv) carry the old
+   UI's boxes; :where keeps this at #dio's weight, so every #dio .x rule below still wins */
+#dio :where(.seg, .fr-inv, .fr-list, .ptitle, .tiers button) { border: 0; border-radius: 0; box-shadow: none; background: none; overflow: visible; text-shadow: none; }
+#dio :where(.hint, .tiers button) { color: inherit; }
 #dio, #dio * { box-sizing: border-box; }
 #dio { position: fixed; inset: 0; z-index: 4; margin: 0; overflow: hidden; } /* over the board, as #home; the game's sheets (z 5) open over it */
 /* no WebGL, ?board=2d or a lost context: the look's ground as a flat tilted picture where the island stands */
@@ -459,7 +463,6 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .si-opts .gbtn:hover { background: #1E1F20; } #dio .si-opts .gbtn::before { display: none; }
 #dio .si-opts .gbtn i { width: 30px; height: 30px; border-radius: 50%; background: #F4ECD8; color: #131314; display: grid; place-items: center; font: 700 17px system-ui, sans-serif; font-style: normal; }
 #dio .si-opts .act { opacity: .75; } #dio .si-opts .act:hover { opacity: 1; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
-#dio .si-msg { display: none; }
 #dio .si-err { color: var(--saffron); font-weight: 700; }
 #dio .si-other { margin-top: 6px; font: 400 14px var(--type); opacity: .8; text-decoration: underline; text-underline-offset: 4px; } #dio .si-other:hover { opacity: 1; }
 
@@ -632,6 +635,27 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .hlist .go { font-size: 22px; }
 #dio .hlist .go::before { background: var(--saffron); }
 #dio .hlist .go:hover, #dio .hlist li.on .go { color: var(--ink); }
+
+/* ── the game's accounts on Welcome / Sign up / Log in (step 2) ── */
+#dio .si-msg { display: block; margin: 0 0 12px; max-width: 520px; font: 700 14px/1.4 var(--type); color: var(--saffron); }
+#dio .si-msg:empty, #dio .door-msg:empty { display: none; }
+#dio .door-msg { margin: 14px 0 0; font: 700 14px/1.4 var(--type); color: var(--saffron); }
+#dio .si-off { font: 400 14px var(--type); opacity: .8; }
+/* Google's own button (acctGoogleButton renders it into #acct-google): its dark pill, as wide as it wants */
+#dio .si-opts .acct-google { width: 300px; min-height: 44px; display: flex; align-items: center; font: 400 14px var(--type); }
+#dio .si-opts .acct-google:not(.ready) { opacity: .7; }
+/* Stay logged in? A note hanging off the account button: a line down from it, the question, Yes on the shard */
+#dio .stay { position: fixed; top: 92px; right: 48px; z-index: 5; width: 330px; padding: 16px 0 0; text-align: right; color: var(--cream); }
+#dio .stay::before { content: ""; position: absolute; top: -18px; right: 120px; width: 1.5px; height: 30px; background: currentColor; }
+#dio .stay::after { content: ""; position: absolute; top: -24px; right: 116px; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+#dio .stay .k { display: block; font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; }
+#dio .stay p { margin: 6px 0 8px; font: 400 14px/1.45 var(--type); opacity: .9; }
+#dio .stay .seg { display: inline-flex; gap: 6px; }
+#dio .stay .w { position: relative; isolation: isolate; padding: 4px 10px 1px; font: 700 22px/1 var(--stencil); text-transform: uppercase; opacity: .7; }
+#dio .stay .w:hover { opacity: 1; }
+#dio .stay .w.go { opacity: 1; color: var(--ink); }
+#dio .stay .w.go::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+#dio.play .stay, #dio.profile .stay, #dio.welcome .stay { display: none; }
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -1597,6 +1621,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>Guest</span></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg><span>Settings</span></button>
   </nav>
+  <section class="stay" id="dio-stay" hidden role="dialog" aria-labelledby="stay-h"></section>
   <button class="back">← Menu</button>
 
   <!-- the two dropdowns off the account buttons: an ink panel with a cut corner, since they sit over the board -->
@@ -1744,6 +1769,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <button class="item" id="w-signup"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,12 92,0 100,84 7,100"/></svg><span class="n">01</span>Sign up<small>new here</small></button>
       <button class="item" id="w-guest"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,10 95,100 0,90"/></svg><span class="n">02</span>Play as guest<small>no account needed</small></button>
     </div>
+    <p class="door-msg" id="home-msg" aria-live="polite"></p>
   </nav>
   <div class="note" data-anchor="golemW" data-welcome><span class="tag">A friend invited you</span><br>Sign up with Google and finish an online match together. <b>Your friend gets this golem’s skin.</b></div>
 
@@ -1753,7 +1779,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <h2 id="si-h"></h2>
     <p class="si-lead" id="si-lead"></p>
     <div class="nr-opts si-opts" id="si-opts"></div>
-    <p class="si-msg" id="si-msg" aria-live="polite"></p>
+    <p class="si-msg" id="acct-msg" aria-live="polite"></p>
     <button class="si-other" id="si-other"></button>
   </section>
 
@@ -16205,6 +16231,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // the Diorama UI (src/diorama.js): on when the <head> switch put the class on <html>; dio is its state
   let DIO = document.documentElement.classList.contains('diorama');
   const dio = { boot: null, api: null, held3d: false, shown: false };
+  if (!DIO) document.getElementById('dio').remove(); // switched off: no second copy of the game's ids (#w-guest, #home-msg...) in the page
   const TEST = qs.has('test'); // test-only settings show on the menu
 
   // ---------- unit sets: built-in, or loaded from Counter Lab ----------
@@ -16990,7 +17017,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '7 Nov 2026 · dc95a79'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '7 Nov 2026 · e261650'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -26024,7 +26051,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function dioBoot() {
     return dio.boot || (dio.boot = dioStart().catch((e) => {
       console.warn('No Mans Land: the Diorama UI could not start; showing the old home.', e);
-      DIO = false; document.documentElement.classList.remove('diorama'); $('dio').hidden = true; dio.shown = false; drawHome();
+      DIO = false; document.documentElement.classList.remove('diorama'); $('dio').remove(); dio.shown = false; drawHome();
     }));
   }
   async function dioStart() {
@@ -26278,7 +26305,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         skins: [{ id: 'brute-champion', worn: true }, { id: 'golem-aquamarine', worn: true }, { id: 'brute-omniper', worn: false }, { id: 'firemage-ember', worn: true }] },
     };
     const acctQ = (H.match(/acct=(\w+)/) || [])[1] || 'google';
-    let A = ACCTS[acctQ] ? structuredClone(ACCTS[acctQ]) : null;
+    // the player: the game's account (acct: tag, google, dev, titles, title, skins, tagNext), or a sample one under ?test#acct=
+    const sampleAcct = /acct=/.test(H);
+    let A = sampleAcct ? (ACCTS[acctQ] ? structuredClone(ACCTS[acctQ]) : null) : acct;
     const wornOf = (name) => A && A.skins.find(k => k.worn && SKIN[k.id].unit === name);
 
     // ── Units: the board clears and one tier stands in a row, each unit on a tile with its name ──
@@ -26384,7 +26413,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
       for (const el of body.querySelectorAll('.note:not(.pnote)')) {
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
-        const show = !phone() && (bf ? !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
+        const show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
         el.style.display = show ? '' : 'none'; if (!show) continue;
         const w = el.offsetWidth, h = el.offsetHeight;
         if (el.dataset.anchor === 'btn') {
@@ -26552,7 +26581,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = VIEWS.orders; };
     document.getElementById('play').addEventListener('click', openPlay);
     const backBtn = body.querySelector('.back');
-    const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? openDoor('') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
+    const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
       if (body.classList.contains('in-rooms')) return closeRooms(); body.classList.remove('play', 'mp-open'); setMp(false); unpin(); };
     backBtn.addEventListener('click', goBack);
 
@@ -26751,41 +26780,68 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     drawProfile();
 
 
-    // ── Welcome, Sign up, Log in (the game's drawWelcome / drawSignIn), on sample accounts ──
-    const door = { screen: '', invited: false, tag: '', err: '' };
-    const tagOk = (t) => /^[\p{L}\p{N} _.-]{2,16}$/u.test(t.normalize('NFC').replace(/\s+/g, ' ').trim());
+    // ── Welcome, Sign up, Log in on the game's accounts (drawWelcome / drawSignIn): home.screen says which ('welcome',
+    // 'signup', 'login'); the buttons set it and call drawHome, as the old screens do. The username typed in Sign up is
+    // home.tag, the line under the rows is home.msg (#acct-msg; the welcome screen's is #home-msg) ──
+    const door = { screen: null, invited: false, err: '' };
+    const TAG_RULE = 'Letters, digits, spaces, _ . or -. You can change it once a week.', TAG_BAD = 'Usernames are 2–16 letters, digits, spaces, _ . or -.';
     function drawSignin() {
-      const up = door.screen === 'signup', g = `<button class="gbtn" data-google><i aria-hidden="true">G</i>${up ? 'Sign up with Google' : 'Sign in with Google'}</button>`;
+      const up = door.screen === 'signup';
       $('si-k').textContent = up ? 'Welcome · sign up' : 'Welcome · log in';
       $('si-h').textContent = up ? 'Sign up' : 'Log in';
       $('si-lead').textContent = up ? 'Pick your username. Sign up with Google to keep your account on any phone or computer, or just make a guest on this one.'
         : 'Log in with the Google account you signed up with. You get your username, match history and ranked results back on this device.';
       const row = (lab, seg, note) => `<span class="lab">${lab}</span><span class="seg">${seg}</span><span></span><p class="nr-note">${note}</p>`;
-      $('si-opts').innerHTML = (up ? row('Username', `<input id="si-tag" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="2–16 letters" aria-label="Username" value="${esc(door.tag)}"${door.err ? ' class="bad"' : ''}>`, door.err ? `<b class="si-err">${door.err}</b>` : 'Letters, digits, spaces, _ . or -. You can change it once a week.') : '')
-        + row(up ? 'Keep it' : 'Google', g, 'Sign-in is handled by Google. We never see your password or email.')
-        + (up ? row('Or', '<button class="act" data-guest>Sign up as a guest</button>', 'A username on this device only. A guest can’t log back in elsewhere.') : '');
+      const g = GOOGLE_CLIENT_ID && !acctUi.off; // Google's own button goes in #acct-google (acctGoogleButton)
+      $('si-opts').innerHTML = (up ? row('Username', `<input id="su-tag" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="2–16 letters" aria-label="Username" value="${esc(home.tag || '')}"${door.err ? ' class="bad" aria-invalid="true"' : ''}>`, door.err ? `<b class="si-err">${esc(door.err)}</b>` : TAG_RULE) : '')
+        + row(up ? 'Keep it' : 'Google', g ? '<div id="acct-google" class="acct-google"></div>' : '<span class="si-off">Google sign-in is off on this server.</span>', 'Sign-in is handled by Google. We never see your password or email.')
+        + (up ? row('Or', `<button class="act" id="su-guest" data-guest ${home.busy ? 'disabled' : ''}>Sign up as a guest</button>`, 'A username on this device only. A guest can’t log back in elsewhere.') : '');
+      $('acct-msg').textContent = home.msg || '';
       $('si-other').textContent = up ? 'I have an account: log in' : 'New here? Sign up';
+      acctUi.after = async (r) => { // Google said yes (acctGoogle): Sign up keeps the username typed here
+        const tag = up ? (home.tag || '').trim() : '';
+        if (tag && cleanTagOk(tag) && r.linked === 'new') await acctCall('tag', { tag }, true).then(x => { if (x.status === 200) acctTake(x); });
+        if (phase === 'start') homeDone();
+      };
+      if (g) acctGoogleButton(up ? 'signup_with' : 'signin_with');
     }
     function openDoor(screen) { // '' = the welcome screen; 'signup' / 'login'
-      openDrop(''); closeMusic(); unpin(); door.screen = screen; door.err = '';
+      if (door.screen !== screen) { openDrop(''); closeMusic(); unpin(); door.err = ''; }
+      door.screen = screen; door.invited = !!invitePending();
       body.classList.add('welcome'); body.classList.toggle('in-signin', !!screen);
       want = screen ? VIEWS.signin : VIEWS.welcome; backBtn.textContent = '← Back';
+      $('w-guest').disabled = !!home.busy; $('home-msg').textContent = screen ? '' : home.msg || '';
       if (screen) drawSignin();
     }
-    function doorDone(a) { A = a; refreshAccount(); frBadge(); body.classList.remove('welcome', 'in-signin'); door.screen = ''; want = VIEWS.play; backBtn.textContent = '← Menu'; }
-    $('w-login').addEventListener('click', () => openDoor('login'));
-    $('w-signup').addEventListener('click', () => openDoor('signup'));
-    $('w-guest').addEventListener('click', () => doorDone(structuredClone(ACCTS.guest)));
-    $('si-other').addEventListener('click', () => openDoor(door.screen === 'signup' ? 'login' : 'signup'));
-    $('si-opts').addEventListener('input', (e) => { if (e.target.id === 'si-tag') { door.tag = e.target.value; if (door.err) { door.err = ''; e.target.classList.remove('bad'); const n = e.target.closest('.seg').nextElementSibling.nextElementSibling; n.textContent = 'Letters, digits, spaces, _ . or -. You can change it once a week.'; } } });
-    $('si-opts').addEventListener('keydown', (e) => { if (e.key === 'Escape') e.stopPropagation(); });
-    $('si-opts').addEventListener('click', (e) => {
-      const b = e.target.closest('button'); if (!b) return;
-      const up = door.screen === 'signup', t = door.tag.trim();
-      if (up && t && !tagOk(t)) { door.err = 'Usernames are 2–16 letters, digits, spaces, _ . or -.'; return drawSignin(); }
-      if ('google' in b.dataset) { const a = structuredClone(ACCTS.google); if (up) { a.tag = t || 'Guest 4821'; a.titles = ['day1']; a.title = 'day1'; a.skins = []; } doorDone(a); } // in the game: Google's own button
-      else if ('guest' in b.dataset) { const a = structuredClone(ACCTS.guest); if (t) a.tag = t; doorDone(a); }
+    function closeDoor() { door.screen = null; acctUi.after = null; body.classList.remove('welcome', 'in-signin'); want = VIEWS.play; backBtn.textContent = '← Menu'; }
+    const goScreen = (s) => { home.screen = s; home.msg = ''; drawHome(); };
+    $('w-login').addEventListener('click', () => goScreen('login'));
+    $('w-signup').addEventListener('click', () => goScreen('signup'));
+    $('w-guest').addEventListener('click', playAsGuest);
+    $('si-other').addEventListener('click', () => goScreen(door.screen === 'signup' ? 'login' : 'signup'));
+    $('si-opts').addEventListener('input', (e) => { if (e.target.id === 'su-tag') { home.tag = e.target.value; if (door.err) { door.err = ''; e.target.classList.remove('bad'); e.target.removeAttribute('aria-invalid'); const n = e.target.closest('.seg').nextElementSibling.nextElementSibling; n.textContent = TAG_RULE; } } });
+    $('si-opts').addEventListener('keydown', (e) => { if (e.key === 'Escape') e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'su-tag') $('su-guest').click(); });
+    $('si-opts').addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-guest]'); if (!b || home.busy) return;
+      // Sign up as a guest, with the username typed (the game's su-guest)
+      const tag = (home.tag || '').trim();
+      if (tag && !cleanTagOk(tag)) { door.err = TAG_BAD; return drawSignin(); }
+      home.busy = true; signMsg('One moment…'); b.disabled = true;
+      const r = await acctCall('guest', tag ? { tag } : {});
+      home.busy = false; b.disabled = false;
+      if (r.status !== 200) { if (r.error === 'bad tag') { door.err = TAG_BAD; signMsg(''); return drawSignin(); } signMsg(acctFail(r)); return; }
+      acctTake(r); homeDone();
     });
+    // Stay logged in? (the old menu's popup): a note off the account button, asked once after making an account or logging in
+    const stayEl = $('dio-stay');
+    function drawStay() {
+      const ask = !!acct && stayPref() == null && !HOME_AUTO && !door.screen && home.screen === 'menu';
+      stayEl.hidden = !ask; if (!ask) return;
+      stayEl.innerHTML = `<span class="k" id="stay-h">Stay logged in?</span><p>Keep <b>${esc(acct.tag)}</b> logged in on this device, so the game opens on the menu next time. Settings can change it.</p>
+        <span class="seg"><button class="w go" id="stay-yes">Yes</button><button class="w" id="stay-no">No</button></span>`;
+      $('stay-yes').addEventListener('click', () => { setStay(true); drawHome(); });
+      $('stay-no').addEventListener('click', () => { setStay(false); drawHome(); });
+    }
     body.querySelectorAll('.door .item').forEach(b => { b.addEventListener('mouseenter', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x === b)));
       b.addEventListener('focus', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x === b))); });
     body.querySelector('.door').addEventListener('mouseleave', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x.id === 'w-login')));
@@ -26918,10 +26974,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (H.includes('history')) { openHistory(); if (H.includes('all')) { histTab = 'all'; drawHistory(); } }
     const rnq = (H.match(/rounds=(\d)/) || [])[1]; if (rnq) body.querySelectorAll('#h-list > li')[+rnq]?.querySelector('.rd')?.click();
     // Welcome: #welcome, #signup, #login, #invited (came from a friend's link), #tag=<name> (typed), #err (a bad username)
-    if (H.includes('invited')) door.invited = true;
-    if (H.includes('welcome') || H.includes('signup') || H.includes('login')) { openDoor(H.includes('signup') ? 'signup' : H.includes('login') ? 'login' : '');
-      const tg = (H.match(/tag=([^,]*)/) || [])[1]; if (tg !== undefined) { door.tag = decodeURIComponent(tg); drawSignin(); }
-      if (H.includes('err')) { door.err = 'Usernames are 2–16 letters, digits, spaces, _ . or -.'; drawSignin(); }
+    if (H.includes('welcome') || H.includes('signup') || H.includes('login')) {
+      const tg = (H.match(/tag=([^,]*)/) || [])[1]; if (tg !== undefined) home.tag = decodeURIComponent(tg);
+      home.screen = H.includes('signup') ? 'signup' : H.includes('login') ? 'login' : 'welcome'; dioPaint();
+      if (H.includes('invited')) door.invited = true;
+      if (H.includes('err')) { door.err = TAG_BAD; drawSignin(); }
       now = { ...want, at: [...want.at], off: [...want.off] }; }
     // dropdowns: #friends, #friends=requests, #friends=chat, #frinvite=<n> (Invite to... open on friend n), #frmore=<n>, #noinvite, #settings
     frBadge();
@@ -26929,7 +26986,17 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const fq = (H.match(/friends(=\w+)?/) || []); if (fq[0]) { if (fq[1] === '=requests') dd.tab = 'requests'; if (fq[1] === '=chat') dd.thread = 0; dd.inviteOpen = dd.inviteOpen && !fq[1];
       const fi = (H.match(/frinvite=(\d)/) || [])[1]; if (fi) dd.inviting = +fi; const fm = (H.match(/frmore=(\d)/) || [])[1]; if (fm) dd.more = +fm; openDrop('friends'); }
     if (H.includes('settings')) openDrop('settings');
-    dio.api = { pause, resume, draw: () => {} };
+    // drawHome: follow the game's home state (which screen, the account)
+    function dioPaint() {
+      if (!sampleAcct && A !== acct) { A = acct; picked = null; buildTier(tier); }
+      drawProfile();
+      const s = home.screen;
+      if (s === 'welcome' || s === 'signup' || s === 'login') openDoor(s === 'welcome' ? '' : s);
+      else if (door.screen != null) closeDoor();
+      drawStay();
+    }
+    dio.api = { pause, resume, draw: dioPaint };
+    dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true }; if (TEST) window.__dio.sync = dioSync; // the tests: show / hide the home by hand
   }

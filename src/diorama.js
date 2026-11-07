@@ -26,7 +26,7 @@
   function dioBoot() {
     return dio.boot || (dio.boot = dioStart().catch((e) => {
       console.warn('No Mans Land: the Diorama UI could not start; showing the old home.', e);
-      DIO = false; document.documentElement.classList.remove('diorama'); $('dio').hidden = true; dio.shown = false; drawHome();
+      DIO = false; document.documentElement.classList.remove('diorama'); $('dio').remove(); dio.shown = false; drawHome();
     }));
   }
   async function dioStart() {
@@ -280,7 +280,9 @@
         skins: [{ id: 'brute-champion', worn: true }, { id: 'golem-aquamarine', worn: true }, { id: 'brute-omniper', worn: false }, { id: 'firemage-ember', worn: true }] },
     };
     const acctQ = (H.match(/acct=(\w+)/) || [])[1] || 'google';
-    let A = ACCTS[acctQ] ? structuredClone(ACCTS[acctQ]) : null;
+    // the player: the game's account (acct: tag, google, dev, titles, title, skins, tagNext), or a sample one under ?test#acct=
+    const sampleAcct = /acct=/.test(H);
+    let A = sampleAcct ? (ACCTS[acctQ] ? structuredClone(ACCTS[acctQ]) : null) : acct;
     const wornOf = (name) => A && A.skins.find(k => k.worn && SKIN[k.id].unit === name);
 
     // ── Units: the board clears and one tier stands in a row, each unit on a tile with its name ──
@@ -386,7 +388,7 @@
       const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
       for (const el of body.querySelectorAll('.note:not(.pnote)')) {
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
-        const show = !phone() && (bf ? !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
+        const show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
         el.style.display = show ? '' : 'none'; if (!show) continue;
         const w = el.offsetWidth, h = el.offsetHeight;
         if (el.dataset.anchor === 'btn') {
@@ -554,7 +556,7 @@
     const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = VIEWS.orders; };
     document.getElementById('play').addEventListener('click', openPlay);
     const backBtn = body.querySelector('.back');
-    const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? openDoor('') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
+    const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
       if (body.classList.contains('in-rooms')) return closeRooms(); body.classList.remove('play', 'mp-open'); setMp(false); unpin(); };
     backBtn.addEventListener('click', goBack);
 
@@ -753,41 +755,68 @@
     drawProfile();
 
 
-    // ── Welcome, Sign up, Log in (the game's drawWelcome / drawSignIn), on sample accounts ──
-    const door = { screen: '', invited: false, tag: '', err: '' };
-    const tagOk = (t) => /^[\p{L}\p{N} _.-]{2,16}$/u.test(t.normalize('NFC').replace(/\s+/g, ' ').trim());
+    // ── Welcome, Sign up, Log in on the game's accounts (drawWelcome / drawSignIn): home.screen says which ('welcome',
+    // 'signup', 'login'); the buttons set it and call drawHome, as the old screens do. The username typed in Sign up is
+    // home.tag, the line under the rows is home.msg (#acct-msg; the welcome screen's is #home-msg) ──
+    const door = { screen: null, invited: false, err: '' };
+    const TAG_RULE = 'Letters, digits, spaces, _ . or -. You can change it once a week.', TAG_BAD = 'Usernames are 2–16 letters, digits, spaces, _ . or -.';
     function drawSignin() {
-      const up = door.screen === 'signup', g = `<button class="gbtn" data-google><i aria-hidden="true">G</i>${up ? 'Sign up with Google' : 'Sign in with Google'}</button>`;
+      const up = door.screen === 'signup';
       $('si-k').textContent = up ? 'Welcome · sign up' : 'Welcome · log in';
       $('si-h').textContent = up ? 'Sign up' : 'Log in';
       $('si-lead').textContent = up ? 'Pick your username. Sign up with Google to keep your account on any phone or computer, or just make a guest on this one.'
         : 'Log in with the Google account you signed up with. You get your username, match history and ranked results back on this device.';
       const row = (lab, seg, note) => `<span class="lab">${lab}</span><span class="seg">${seg}</span><span></span><p class="nr-note">${note}</p>`;
-      $('si-opts').innerHTML = (up ? row('Username', `<input id="si-tag" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="2–16 letters" aria-label="Username" value="${esc(door.tag)}"${door.err ? ' class="bad"' : ''}>`, door.err ? `<b class="si-err">${door.err}</b>` : 'Letters, digits, spaces, _ . or -. You can change it once a week.') : '')
-        + row(up ? 'Keep it' : 'Google', g, 'Sign-in is handled by Google. We never see your password or email.')
-        + (up ? row('Or', '<button class="act" data-guest>Sign up as a guest</button>', 'A username on this device only. A guest can’t log back in elsewhere.') : '');
+      const g = GOOGLE_CLIENT_ID && !acctUi.off; // Google's own button goes in #acct-google (acctGoogleButton)
+      $('si-opts').innerHTML = (up ? row('Username', `<input id="su-tag" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="2–16 letters" aria-label="Username" value="${esc(home.tag || '')}"${door.err ? ' class="bad" aria-invalid="true"' : ''}>`, door.err ? `<b class="si-err">${esc(door.err)}</b>` : TAG_RULE) : '')
+        + row(up ? 'Keep it' : 'Google', g ? '<div id="acct-google" class="acct-google"></div>' : '<span class="si-off">Google sign-in is off on this server.</span>', 'Sign-in is handled by Google. We never see your password or email.')
+        + (up ? row('Or', `<button class="act" id="su-guest" data-guest ${home.busy ? 'disabled' : ''}>Sign up as a guest</button>`, 'A username on this device only. A guest can’t log back in elsewhere.') : '');
+      $('acct-msg').textContent = home.msg || '';
       $('si-other').textContent = up ? 'I have an account: log in' : 'New here? Sign up';
+      acctUi.after = async (r) => { // Google said yes (acctGoogle): Sign up keeps the username typed here
+        const tag = up ? (home.tag || '').trim() : '';
+        if (tag && cleanTagOk(tag) && r.linked === 'new') await acctCall('tag', { tag }, true).then(x => { if (x.status === 200) acctTake(x); });
+        if (phase === 'start') homeDone();
+      };
+      if (g) acctGoogleButton(up ? 'signup_with' : 'signin_with');
     }
     function openDoor(screen) { // '' = the welcome screen; 'signup' / 'login'
-      openDrop(''); closeMusic(); unpin(); door.screen = screen; door.err = '';
+      if (door.screen !== screen) { openDrop(''); closeMusic(); unpin(); door.err = ''; }
+      door.screen = screen; door.invited = !!invitePending();
       body.classList.add('welcome'); body.classList.toggle('in-signin', !!screen);
       want = screen ? VIEWS.signin : VIEWS.welcome; backBtn.textContent = '← Back';
+      $('w-guest').disabled = !!home.busy; $('home-msg').textContent = screen ? '' : home.msg || '';
       if (screen) drawSignin();
     }
-    function doorDone(a) { A = a; refreshAccount(); frBadge(); body.classList.remove('welcome', 'in-signin'); door.screen = ''; want = VIEWS.play; backBtn.textContent = '← Menu'; }
-    $('w-login').addEventListener('click', () => openDoor('login'));
-    $('w-signup').addEventListener('click', () => openDoor('signup'));
-    $('w-guest').addEventListener('click', () => doorDone(structuredClone(ACCTS.guest)));
-    $('si-other').addEventListener('click', () => openDoor(door.screen === 'signup' ? 'login' : 'signup'));
-    $('si-opts').addEventListener('input', (e) => { if (e.target.id === 'si-tag') { door.tag = e.target.value; if (door.err) { door.err = ''; e.target.classList.remove('bad'); const n = e.target.closest('.seg').nextElementSibling.nextElementSibling; n.textContent = 'Letters, digits, spaces, _ . or -. You can change it once a week.'; } } });
-    $('si-opts').addEventListener('keydown', (e) => { if (e.key === 'Escape') e.stopPropagation(); });
-    $('si-opts').addEventListener('click', (e) => {
-      const b = e.target.closest('button'); if (!b) return;
-      const up = door.screen === 'signup', t = door.tag.trim();
-      if (up && t && !tagOk(t)) { door.err = 'Usernames are 2–16 letters, digits, spaces, _ . or -.'; return drawSignin(); }
-      if ('google' in b.dataset) { const a = structuredClone(ACCTS.google); if (up) { a.tag = t || 'Guest 4821'; a.titles = ['day1']; a.title = 'day1'; a.skins = []; } doorDone(a); } // in the game: Google's own button
-      else if ('guest' in b.dataset) { const a = structuredClone(ACCTS.guest); if (t) a.tag = t; doorDone(a); }
+    function closeDoor() { door.screen = null; acctUi.after = null; body.classList.remove('welcome', 'in-signin'); want = VIEWS.play; backBtn.textContent = '← Menu'; }
+    const goScreen = (s) => { home.screen = s; home.msg = ''; drawHome(); };
+    $('w-login').addEventListener('click', () => goScreen('login'));
+    $('w-signup').addEventListener('click', () => goScreen('signup'));
+    $('w-guest').addEventListener('click', playAsGuest);
+    $('si-other').addEventListener('click', () => goScreen(door.screen === 'signup' ? 'login' : 'signup'));
+    $('si-opts').addEventListener('input', (e) => { if (e.target.id === 'su-tag') { home.tag = e.target.value; if (door.err) { door.err = ''; e.target.classList.remove('bad'); e.target.removeAttribute('aria-invalid'); const n = e.target.closest('.seg').nextElementSibling.nextElementSibling; n.textContent = TAG_RULE; } } });
+    $('si-opts').addEventListener('keydown', (e) => { if (e.key === 'Escape') e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'su-tag') $('su-guest').click(); });
+    $('si-opts').addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-guest]'); if (!b || home.busy) return;
+      // Sign up as a guest, with the username typed (the game's su-guest)
+      const tag = (home.tag || '').trim();
+      if (tag && !cleanTagOk(tag)) { door.err = TAG_BAD; return drawSignin(); }
+      home.busy = true; signMsg('One moment…'); b.disabled = true;
+      const r = await acctCall('guest', tag ? { tag } : {});
+      home.busy = false; b.disabled = false;
+      if (r.status !== 200) { if (r.error === 'bad tag') { door.err = TAG_BAD; signMsg(''); return drawSignin(); } signMsg(acctFail(r)); return; }
+      acctTake(r); homeDone();
     });
+    // Stay logged in? (the old menu's popup): a note off the account button, asked once after making an account or logging in
+    const stayEl = $('dio-stay');
+    function drawStay() {
+      const ask = !!acct && stayPref() == null && !HOME_AUTO && !door.screen && home.screen === 'menu';
+      stayEl.hidden = !ask; if (!ask) return;
+      stayEl.innerHTML = `<span class="k" id="stay-h">Stay logged in?</span><p>Keep <b>${esc(acct.tag)}</b> logged in on this device, so the game opens on the menu next time. Settings can change it.</p>
+        <span class="seg"><button class="w go" id="stay-yes">Yes</button><button class="w" id="stay-no">No</button></span>`;
+      $('stay-yes').addEventListener('click', () => { setStay(true); drawHome(); });
+      $('stay-no').addEventListener('click', () => { setStay(false); drawHome(); });
+    }
     body.querySelectorAll('.door .item').forEach(b => { b.addEventListener('mouseenter', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x === b)));
       b.addEventListener('focus', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x === b))); });
     body.querySelector('.door').addEventListener('mouseleave', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x.id === 'w-login')));
@@ -920,10 +949,11 @@
     if (H.includes('history')) { openHistory(); if (H.includes('all')) { histTab = 'all'; drawHistory(); } }
     const rnq = (H.match(/rounds=(\d)/) || [])[1]; if (rnq) body.querySelectorAll('#h-list > li')[+rnq]?.querySelector('.rd')?.click();
     // Welcome: #welcome, #signup, #login, #invited (came from a friend's link), #tag=<name> (typed), #err (a bad username)
-    if (H.includes('invited')) door.invited = true;
-    if (H.includes('welcome') || H.includes('signup') || H.includes('login')) { openDoor(H.includes('signup') ? 'signup' : H.includes('login') ? 'login' : '');
-      const tg = (H.match(/tag=([^,]*)/) || [])[1]; if (tg !== undefined) { door.tag = decodeURIComponent(tg); drawSignin(); }
-      if (H.includes('err')) { door.err = 'Usernames are 2–16 letters, digits, spaces, _ . or -.'; drawSignin(); }
+    if (H.includes('welcome') || H.includes('signup') || H.includes('login')) {
+      const tg = (H.match(/tag=([^,]*)/) || [])[1]; if (tg !== undefined) home.tag = decodeURIComponent(tg);
+      home.screen = H.includes('signup') ? 'signup' : H.includes('login') ? 'login' : 'welcome'; dioPaint();
+      if (H.includes('invited')) door.invited = true;
+      if (H.includes('err')) { door.err = TAG_BAD; drawSignin(); }
       now = { ...want, at: [...want.at], off: [...want.off] }; }
     // dropdowns: #friends, #friends=requests, #friends=chat, #frinvite=<n> (Invite to... open on friend n), #frmore=<n>, #noinvite, #settings
     frBadge();
@@ -931,7 +961,17 @@
     const fq = (H.match(/friends(=\w+)?/) || []); if (fq[0]) { if (fq[1] === '=requests') dd.tab = 'requests'; if (fq[1] === '=chat') dd.thread = 0; dd.inviteOpen = dd.inviteOpen && !fq[1];
       const fi = (H.match(/frinvite=(\d)/) || [])[1]; if (fi) dd.inviting = +fi; const fm = (H.match(/frmore=(\d)/) || [])[1]; if (fm) dd.more = +fm; openDrop('friends'); }
     if (H.includes('settings')) openDrop('settings');
-    dio.api = { pause, resume, draw: () => {} };
+    // drawHome: follow the game's home state (which screen, the account)
+    function dioPaint() {
+      if (!sampleAcct && A !== acct) { A = acct; picked = null; buildTier(tier); }
+      drawProfile();
+      const s = home.screen;
+      if (s === 'welcome' || s === 'signup' || s === 'login') openDoor(s === 'welcome' ? '' : s);
+      else if (door.screen != null) closeDoor();
+      drawStay();
+    }
+    dio.api = { pause, resume, draw: dioPaint };
+    dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true }; if (TEST) window.__dio.sync = dioSync; // the tests: show / hide the home by hand
   }

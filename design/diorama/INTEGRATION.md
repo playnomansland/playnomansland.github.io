@@ -225,6 +225,31 @@ breakpoints: `html.pc` (hover + fine pointer, width ≥ 900, ST:924), 640, 520, 
   `DTITLES`); steps 2 to 7 replace them. The Units roster already uses the game's `units`. The hash states only work
   under `?test`; `window.__dio.sync(on)` (under `?test`) shows or hides the home by hand.
 
+**Step 2 done (2026-11-07):** Welcome, Sign up and Log in run on the game's accounts (`screens/game-step2.jpg`).
+- `dioPaint()` (the Diorama's `drawHome`) follows `home.screen`: 'welcome' / 'signup' / 'login' open the door screens,
+  anything else closes them. The buttons set `home.screen` and call `drawHome()`, as the old screens did; ← Back from
+  Sign up / Log in goes to 'welcome'.
+- Play as guest is the game's `playAsGuest` (message in `#home-msg` on the welcome screen). Sign up as a guest
+  (`#su-guest`, username `#su-tag` = `home.tag`) calls `acctCall('guest', {tag})`; a bad name (`cleanTagOk`, or the
+  server's 'bad tag') turns the Username row saffron with the rule; other failures (`acctFail`) go in `#acct-msg`.
+- Google's own button renders into `#acct-google` in the Google row (`acctGoogleButton('signup_with' |
+  'signin_with')`); `acctUi.after` keeps the typed username on a new Google account and calls `homeDone`, as the old
+  Sign up does. Off (no client id, or accounts off): a line says so.
+- **Stay logged in?** (the old menu popup) is a note hanging off the account button (`#dio-stay`): Yes / No call
+  `setStay`. Asked once after making an account or logging in (`stayPref() == null`), never under `?test`. The Change
+  battlefield note steps aside while it shows.
+- The invited friend's golem note shows on the welcome screen when `invitePending()`.
+- `A` (the Diorama's player) is now the game's `acct` (same fields: tag, google, dev, titles, title, skins, tagNext);
+  the sample accounts only under `?test#acct=`. The account button shows the real name. Profile's actions still
+  change `A` locally (step 5).
+- **The game's global classes leak in:** `.seg` (a box), `.hint` (colour), `.tiers`, `.ptitle`, `.fr-list`, `.fr-inv`.
+  A `:where(...)` reset at the top of `src/diorama.css` clears them at `#dio`'s weight. Watch for more.
+- With the switch off, `#dio` is removed from the page at startup (its markup reuses `#w-guest`, `#home-msg`...;
+  Playwright's strict locators would see two).
+- Checked against a stubbed account API (the sandbox's local server answers 503 to account routes, on `main` too):
+  welcome → guest → menu with the name → Stay note → Yes; Sign up with a bad, a refused and a good name; Log in,
+  Sign up ↔ Log in, Back. Google's script throws `gis is not defined` headless here, on the old screens too.
+
 **Running the UI tests in this sandbox:** `export NODE_PATH=/opt/node-tools/node_modules` (they require
 `playwright-core`), and some tests launch `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: link it to
 `/opt/pw-browsers/chromium`. These fail on a clean `main` here too (no server `node_modules`, and so on), so compare

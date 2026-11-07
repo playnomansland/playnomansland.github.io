@@ -982,6 +982,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>Guest</span></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg><span>Settings</span></button>
   </nav>
+  <section class="stay" id="dio-stay" hidden role="dialog" aria-labelledby="stay-h"></section>
   <button class="back">← Menu</button>
 
   <!-- the two dropdowns off the account buttons: an ink panel with a cut corner, since they sit over the board -->
@@ -1129,6 +1130,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <button class="item" id="w-signup"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,12 92,0 100,84 7,100"/></svg><span class="n">01</span>Sign up<small>new here</small></button>
       <button class="item" id="w-guest"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,10 95,100 0,90"/></svg><span class="n">02</span>Play as guest<small>no account needed</small></button>
     </div>
+    <p class="door-msg" id="home-msg" aria-live="polite"></p>
   </nav>
   <div class="note" data-anchor="golemW" data-welcome><span class="tag">A friend invited you</span><br>Sign up with Google and finish an online match together. <b>Your friend gets this golem’s skin.</b></div>
 
@@ -1138,7 +1140,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <h2 id="si-h"></h2>
     <p class="si-lead" id="si-lead"></p>
     <div class="nr-opts si-opts" id="si-opts"></div>
-    <p class="si-msg" id="si-msg" aria-live="polite"></p>
+    <p class="si-msg" id="acct-msg" aria-live="polite"></p>
     <button class="si-other" id="si-other"></button>
   </section>
 
@@ -1319,6 +1321,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // the Diorama UI (src/diorama.js): on when the <head> switch put the class on <html>; dio is its state
   let DIO = document.documentElement.classList.contains('diorama');
   const dio = { boot: null, api: null, held3d: false, shown: false };
+  if (!DIO) document.getElementById('dio').remove(); // switched off: no second copy of the game's ids (#w-guest, #home-msg...) in the page
   const TEST = qs.has('test'); // test-only settings show on the menu
 
   // ---------- unit sets: built-in, or loaded from Counter Lab ----------

@@ -16,6 +16,10 @@
   --type: "Courier Prime", "Courier New", monospace;
   color-scheme: dark;
 }
+/* the game's own classes that the Diorama reuses (.seg, .hint, .tiers, .ptitle, .fr-list, .fr-inv) carry the old
+   UI's boxes; :where keeps this at #dio's weight, so every #dio .x rule below still wins */
+#dio :where(.seg, .fr-inv, .fr-list, .ptitle, .tiers button) { border: 0; border-radius: 0; box-shadow: none; background: none; overflow: visible; text-shadow: none; }
+#dio :where(.hint, .tiers button) { color: inherit; }
 #dio, #dio * { box-sizing: border-box; }
 #dio { position: fixed; inset: 0; z-index: 4; margin: 0; overflow: hidden; } /* over the board, as #home; the game's sheets (z 5) open over it */
 /* no WebGL, ?board=2d or a lost context: the look's ground as a flat tilted picture where the island stands */
@@ -324,7 +328,6 @@
 #dio .si-opts .gbtn:hover { background: #1E1F20; } #dio .si-opts .gbtn::before { display: none; }
 #dio .si-opts .gbtn i { width: 30px; height: 30px; border-radius: 50%; background: #F4ECD8; color: #131314; display: grid; place-items: center; font: 700 17px system-ui, sans-serif; font-style: normal; }
 #dio .si-opts .act { opacity: .75; } #dio .si-opts .act:hover { opacity: 1; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
-#dio .si-msg { display: none; }
 #dio .si-err { color: var(--saffron); font-weight: 700; }
 #dio .si-other { margin-top: 6px; font: 400 14px var(--type); opacity: .8; text-decoration: underline; text-underline-offset: 4px; } #dio .si-other:hover { opacity: 1; }
 
@@ -497,3 +500,24 @@
 #dio .hlist .go { font-size: 22px; }
 #dio .hlist .go::before { background: var(--saffron); }
 #dio .hlist .go:hover, #dio .hlist li.on .go { color: var(--ink); }
+
+/* ── the game's accounts on Welcome / Sign up / Log in (step 2) ── */
+#dio .si-msg { display: block; margin: 0 0 12px; max-width: 520px; font: 700 14px/1.4 var(--type); color: var(--saffron); }
+#dio .si-msg:empty, #dio .door-msg:empty { display: none; }
+#dio .door-msg { margin: 14px 0 0; font: 700 14px/1.4 var(--type); color: var(--saffron); }
+#dio .si-off { font: 400 14px var(--type); opacity: .8; }
+/* Google's own button (acctGoogleButton renders it into #acct-google): its dark pill, as wide as it wants */
+#dio .si-opts .acct-google { width: 300px; min-height: 44px; display: flex; align-items: center; font: 400 14px var(--type); }
+#dio .si-opts .acct-google:not(.ready) { opacity: .7; }
+/* Stay logged in? A note hanging off the account button: a line down from it, the question, Yes on the shard */
+#dio .stay { position: fixed; top: 92px; right: 48px; z-index: 5; width: 330px; padding: 16px 0 0; text-align: right; color: var(--cream); }
+#dio .stay::before { content: ""; position: absolute; top: -18px; right: 120px; width: 1.5px; height: 30px; background: currentColor; }
+#dio .stay::after { content: ""; position: absolute; top: -24px; right: 116px; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+#dio .stay .k { display: block; font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; }
+#dio .stay p { margin: 6px 0 8px; font: 400 14px/1.45 var(--type); opacity: .9; }
+#dio .stay .seg { display: inline-flex; gap: 6px; }
+#dio .stay .w { position: relative; isolation: isolate; padding: 4px 10px 1px; font: 700 22px/1 var(--stencil); text-transform: uppercase; opacity: .7; }
+#dio .stay .w:hover { opacity: 1; }
+#dio .stay .w.go { opacity: 1; color: var(--ink); }
+#dio .stay .w.go::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+#dio.play .stay, #dio.profile .stay, #dio.welcome .stay { display: none; }
