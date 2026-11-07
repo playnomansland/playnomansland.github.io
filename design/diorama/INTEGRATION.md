@@ -314,11 +314,31 @@ the new-Title / new-Skin notes.
   Join, New room's hello (`public`, `spectate: false`, `skin`), back to Rooms with your own battlefield, the developer
   rows, Late game starting.
 
+**Step 5 done (2026-11-07):** Profile and Match history on the game's account (`screens/game-step5.jpg`).
+- **Profile** (`#acct-open`, the old id) shows `acct` and refreshes it (`me`) on opening. Each change goes to the
+  server and its answer is `acctTake`n (`pfDo`, message in `#pf-msg`): Title (`acctCall('title')`), Username
+  (`acctCall('tag')`; locked until `tagNext` with "You can change it again on …" via `tagWhen`, developers any time),
+  Keep it (a guest: Google's own button in `#acct-google`, `acctUi.after` redraws), Log out (`#acct-out`; a guest taps
+  twice; Profile closes and `acctLogOut` goes to the welcome screen), Delete account (`#acct-del`, tap twice,
+  `acctDelete`), no account: Play as a guest (`#acct-guest`) and Google.
+- **Skins** on the unit sheet go to the server: a skin `acctCall('skin', { skin, worn: true })`, Plain takes the worn
+  one off (`worn: false`); then `render()` so the board's models follow.
+- **Match history**: My matches (`acctCall('history', { before })`, a row per match: WON / LOST / DRAW / Unfinished,
+  `vs` the opponent, `kind · rounds won–lost (or you left / they left) · map · when · dealt, took`, its rounds fold
+  out with REPLAY → `playReplay`) and All online (`GET /history`, a row per battle; no replay, as before). **Load
+  more** (`#h-more`) follows the server's `next`. After a replay, "Back to match history" comes back to the
+  Diorama's history (`dio.api.history()`); a replay that can't load says so in `#h-msg`. No Add friend on an
+  opponent yet: the game's `histFriendBtn` is still empty.
+- **A game bug fixed on the way:** `acctFail` checked the general 429 before 'too soon', so a refused rename said
+  "Too many tries" instead of when the next change is; the order is swapped (old UI too).
+- Checked against a stubbed account server: refresh, title, a refused and a saved rename, Keep it's button, Plain /
+  Champion on the Brute's sheet, both history tabs, Load more, a replay that fails, a guest's double-tap Log out.
+
 **Running the UI tests in this sandbox:** `export NODE_PATH=/opt/node-tools/node_modules` (they require
 `playwright-core`), and some tests launch `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: link it to
 `/opt/pw-browsers/chromium`. These fail on a clean `main` here too (no server `node_modules`, and so on), so compare
 against `main` before blaming a change: account-ui, board-switch, game3d, tutorial-ui, server-match-ui, rewards-ui,
-skins-ui. `cd server && npm ci` gives the tests their local game server (wrangler); a test killed by a
+skins-ui, server-history-ui. `cd server && npm ci` gives the tests their local game server (wrangler); a test killed by a
 timeout leaves `wrangler dev` / `workerd` running and the next run's accounts fail (`g.player` undefined): `pkill -f
 "wrangler dev"; pkill -f workerd` between runs.
 

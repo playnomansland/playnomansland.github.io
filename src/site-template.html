@@ -1153,6 +1153,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <span class="k" id="pf-k"></span>
     <div class="plate"><h2 id="pf-name"></h2><span class="ptitle" id="pf-title" hidden></span></div>
       <div class="nr-opts pf-opts" id="pf-opts"></div>
+      <p class="r-msg" id="pf-msg" aria-live="polite"></p>
     <button class="create" id="pf-hist">Match history <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
   </section>
 
@@ -1161,7 +1162,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <span class="k">Profile · match history</span>
     <h2>Matches <small id="h-count"></small></h2>
     <div class="h-tabs" role="group" aria-label="Whose matches"><button data-h="mine" aria-pressed="true">My matches</button><button data-h="all" aria-pressed="false">All online</button></div>
+    <p class="r-msg" id="h-msg" aria-live="polite"></p>
     <ol class="rlist hlist" id="h-list"></ol>
+    <button class="lb-all" id="h-more" hidden>Load more</button>
   </section>
 </div>
 
@@ -4797,7 +4800,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   async function playReplay(id, round, side) {
     let data = null;
     try { const res = await fetch(`${SERVER_URL}/history/${encodeURIComponent(id)}?replay=${round}`); data = res.ok ? await res.json() : null; } catch (e) { data = null; }
-    if (!data || !data.pre || !data.summary) { if ($('hist-msg')) $('hist-msg').textContent = 'Couldn’t load that replay. Try again.'; return; }
+    if (!data || !data.pre || !data.summary) { const x = $('hist-msg') || $('h-msg'); if (x) x.textContent = 'Couldn’t load that replay. Try again.'; return; } // (h-msg: the Diorama's history)
     closeSheet(true);
     replayOf = { id, round, side };
     mode = 'replay'; me = side === 1 ? 1 : 0;
@@ -4816,7 +4819,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     </div>`);
     $('panel').innerHTML = '';
     $('rp-again').addEventListener('click', () => { const x = replayOf; playReplay(x.id, x.round, x.side); });
-    $('rp-back').addEventListener('click', () => { replayOf = null; showStart(); openHistorySheet('mine'); });
+    $('rp-back').addEventListener('click', () => { replayOf = null; showStart(); if (DIO && dio.api) dio.api.history(); else openHistorySheet('mine'); }); // the Diorama: its own Match history
   }
   // one of my matches, as a card
   function histMatchItem(x) {
@@ -4965,8 +4968,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   }
   function acctFail(r) {
     if (r.status === 503 && r.error === 'accounts off') { acctUi.off = true; return 'Accounts aren’t switched on yet on the game server.'; }
+    if (r.status === 429 && r.error === 'too soon') return `You can change your username once a week. Next change: ${tagWhen(r.next)}.`; // (before the general 429, which hid it)
     if (r.status === 429) return 'Too many tries from this network. Wait a while and try again.';
-    if (r.status === 429 && r.error === 'too soon') return `You can change your username once a week. Next change: ${tagWhen(r.next)}.`;
     if (r.status === 400 && r.error === 'bad tag') return 'Usernames are 2–16 letters, digits, spaces, _ . or -.';
     if (r.status === 401 && r.error === 'google token') return 'Google sign-in didn’t go through. Try again.';
     if (r.status === 401) { acctSave(null); return 'This phone was signed out. Make a new guest or sign in with Google.'; }

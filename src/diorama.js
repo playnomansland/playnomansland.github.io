@@ -497,10 +497,14 @@
           : `<button disabled title="Invite a friend to get it">${lockSvg}${esc(k.S.name)}</button>`).join('')}</span>
         <p>${S ? esc(S.text) : list.some(k => !k.own) && !list.some(k => k.own) ? 'Invite a friend and the Aquamarine skin is yours.' : 'Its own look.'} Only the look changes, never the stats.</p>`;
     }
-    // wear a skin (or none) on a unit: one per unit. The roster swaps the model and the island stays as it is
-    function wear(name, id) {
-      if (!A) return;
-      A.skins.forEach(k => { if (SKIN[k.id].unit === name) k.worn = k.id === id; });
+    // wear a skin (or none) on a unit: one per unit, on the server (acctCall 'skin', as the old Profile's On / Off), so
+    // opponents see it online. The roster swaps the model and the island stays as it is
+    async function wear(name, id) {
+      if (!A || sampleAcct) return;
+      const now = wornOf(name), r = id ? await acctCall('skin', { skin: id, worn: true }, true) : now ? await acctCall('skin', { skin: now.id, worn: false }, true) : { status: 200 };
+      const sk = body.querySelector('#usheet .skn p');
+      if (r.status !== 200) { if (sk) sk.textContent = r.error === 'not your skin' ? 'That skin isn’t yours.' : acctFail(r); return; }
+      acctTake(r); A = acct; render();
       const i = picked ? picked.userData.i : -1; buildTier(tier, i); if (i >= 0) picked = rosterHot[i];
       drawSkinRow(); if (body.classList.contains('profile')) drawProfile();
     }
@@ -734,38 +738,48 @@
     document.addEventListener('battlefield', bfSub); bfSub();
     $('lob-create').addEventListener('click', openCreate);
     $('nr-go').addEventListener('click', createRoom);
-    // ── Profile (the game's Profile sheet: openAccountSheet / acctDraw in src/site-template.html), on sample accounts ──
-    const pf = { outSure: false, sure: false };
-    const acctBtn = body.querySelectorAll('.acct button')[1];
+    // ── Profile on the game's account (the old Profile sheet: openAccountSheet / acctDraw): title, skins (on the unit
+    // sheet), username, Keep it with Google, log out, delete. Each change goes to the server; the answer is acctTake'n ──
+    const pf = { outSure: false, sure: false, busy: false, msg: '' };
+    const acctBtn = body.querySelectorAll('.acct button')[1]; acctBtn.id = 'acct-open';
+    const pfMsg = (t) => { pf.msg = t || ''; $('pf-msg').textContent = pf.msg; };
     function drawProfile() {
       acctBtn.querySelector('span').textContent = A ? A.tag : 'Guest';
-      if (typeof frBadge === 'function' && $('fr-badge')) try { frBadge(); if (dd.open === 'friends') drawFriends(); } catch (e) {}
       $('pf-k').innerHTML = (!A ? 'Profile · no account yet' : A.google ? 'Profile · signed in with Google' : 'Profile · guest on this phone') + (A && A.dev ? ' · <span class="dev">developer mode is on</span>' : '');
       $('pf-name').textContent = A ? A.tag : 'Nobody yet';
       const T = A && DTITLES[A.title], pt = $('pf-title'); pt.hidden = !T;
       if (T) { pt.style.setProperty('--tc', T[1]); pt.innerHTML = `<i></i>${esc(T[0])}<i></i>`; }
-      const g = '<button class="gbtn" data-google><i aria-hidden="true">G</i>Sign in with Google</button>';
+      const g = GOOGLE_CLIENT_ID && !acctUi.off ? '<div id="acct-google" class="acct-google"></div>' : '';
       const row = (lab, seg, note, cls = '') => `<span class="lab">${lab}</span><span class="seg ${cls}">${seg}</span><span></span><p class="nr-note">${note}</p>`;
+      const dis = pf.busy ? 'disabled' : '';
       let h = '';
       if (A) {
-        if (A.titles.length) h += row('Title', A.titles.map(t => `<button data-title="${t}" style="--pc:${DTITLES[t][1]}" aria-pressed="${A.title === t}">${esc(DTITLES[t][0])}</button>`).join('') + `<button data-title="" aria-pressed="${!A.title}">None</button>`,
+        const titles = (A.titles || []).filter(t => DTITLES[t]);
+        if (titles.length) h += row('Title', titles.map(t => `<button data-title="${t}" style="--pc:${DTITLES[t][1]}" aria-pressed="${A.title === t}" ${dis}>${esc(DTITLES[t][0])}</button>`).join('') + `<button data-title="" aria-pressed="${!A.title}" ${dis}>None</button>`,
           T ? T[2] : 'Nothing shows under your name.');
-        { const on = A.skins.filter(k => k.worn).map(k => `${SKIN[k.id].name} ${SKIN[k.id].unit}`), un = body.classList.contains('units');
+        { const skins = A.skins || [], on = skins.filter(k => k.worn && SKIN[k.id]).map(k => `${SKIN[k.id].name} ${SKIN[k.id].unit}`), un = body.classList.contains('units');
           h += `<span class="lab ur">Skins</span><span class="pf-units ur"><button class="item${un ? ' on' : ''}" data-units aria-pressed="${un}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,6 97,0 100,96 4,100"/></svg>Units</button></span>
-            <span class="ur"></span><p class="nr-note ur">${!A.skins.length ? 'No skins yet. Every unit is in Units, on the island.' : `${on.length > 2 ? `${on.length} skins are on.` : on.length ? `${esc(on.join(' and '))} ${on.length > 1 ? 'are' : 'is'} on.` : 'All plain.'} Pick a unit to change its skin.`}</p>`; }
-        h += row('Username', `<input id="pf-tag" maxlength="16" spellcheck="false" autocomplete="nickname" aria-label="Your username" value="${esc(A.tag)}" ${A.tagNext && !A.dev ? 'disabled' : ''}><button class="act" id="pf-save" hidden>Save</button>`,
-          A.dev ? 'Developer: change it any time.' : A.tagNext ? 'Saved. You can change it again on Saturday, 14 November.' : 'You can change it once a week.', 'pf-user');
-        if (!A.google) h += row('Keep it', g, 'Guest on this phone. Sign in with Google to keep it if you change or reset your phone.');
-        h += row('Account', `<button class="act${pf.outSure ? ' sure' : ''}" data-out>${pf.outSure ? 'Tap again to log out' : 'Log out'}</button><button class="del${pf.sure ? ' sure' : ''}" data-del>${pf.sure ? 'Tap again to delete' : 'Delete account'}</button>`,
+            <span class="ur"></span><p class="nr-note ur">${!skins.length ? 'No skins yet. Every unit is in Units, on the island.' : `${on.length > 2 ? `${on.length} skins are on.` : on.length ? `${esc(on.join(' and '))} ${on.length > 1 ? 'are' : 'is'} on.` : 'All plain.'} Pick a unit to change its skin.`}</p>`; }
+        const wait = !A.dev && A.tagNext > Date.now(); // the server's next allowed change (once a week; developers any time)
+        h += row('Username', `<input id="pf-tag" maxlength="16" spellcheck="false" autocomplete="nickname" aria-label="Your username" value="${esc(A.tag)}" ${wait || pf.busy ? 'disabled' : ''}><button class="act" id="pf-save" hidden>Save</button>`,
+          A.dev ? 'Developer: change it any time.' : wait ? `You can change it again on ${esc(tagWhen(A.tagNext))}.` : 'You can change it once a week.', 'pf-user');
+        if (!A.google && g) h += row('Keep it', g, 'Guest on this phone. Sign in with Google to keep it if you change or reset your phone. Sign-in is handled by Google.');
+        h += row('Account', `<button class="act${pf.outSure ? ' sure' : ''}" id="acct-out" data-out ${dis}>${pf.outSure ? 'Tap again to log out' : 'Log out'}</button><button class="del${pf.sure ? ' sure' : ''}" id="acct-del" data-del ${dis}>${pf.sure ? 'Tap again to delete' : 'Delete account'}</button>`,
           pf.sure ? 'Deleting removes your username and sign-in for good. Past match results stay, without your name.'
           : A.google ? 'Signed in with Google. Sign in on another phone to play as the same player.'
           : pf.outSure ? 'A guest can’t log back in: sign up with Google first to keep this username and your results.' : 'Log out of this phone. A guest can’t log back in.');
-      } else h += row('Account', `<button class="act primary" data-guest>Play as a guest</button>${g}`, 'No account needed to play. Make a guest to get a username on this phone, or sign in with Google to keep it on any phone.');
-      $('pf-opts').innerHTML = h;
+      } else h += row('Account', `<button class="act primary" id="acct-guest" data-guest ${dis}>Play as a guest</button>${g}`, `No account needed to play. Make a guest to get a username on this phone${g ? ', or sign in with Google to keep it on any phone' : ''}.`);
+      const inp = document.activeElement && document.activeElement.id === 'pf-tag' ? $('pf-tag').value : null; // typing stays typed
+      $('pf-opts').innerHTML = h; $('pf-msg').textContent = pf.msg;
+      if (inp != null && $('pf-tag')) { $('pf-tag').value = inp; $('pf-tag').focus(); $('pf-save').hidden = inp.trim() === A.tag || inp.trim().length < 2; }
+      if (g && $('acct-google') && body.classList.contains('profile')) { // Google's own button; afterwards the profile shows the account
+        acctUi.after = async () => { pfMsg('Signed in with Google.'); if (phase === 'start') drawHome(); };
+        acctGoogleButton('signin_with');
+      }
       // the island's note: the golem, while you can still earn its skin
       body.querySelectorAll('.pnote').forEach(n => n.remove());
-      if (!(A && A.skins.some(k => k.id === 'golem-aquamarine'))) { const n = document.createElement('div'); n.className = 'note pnote'; n.style.display = 'none';
-        n.innerHTML = `<span class="tag">Reward · Limited</span><br>${A && A.skins.length ? '' : 'No skins yet. '}<b>Invite a friend and this golem’s skin is yours.</b>`; body.querySelector('.notes').after(n); }
+      if (!(A && (A.skins || []).some(k => k.id === 'golem-aquamarine'))) { const n = document.createElement('div'); n.className = 'note pnote rw-note'; n.style.display = 'none'; n.setAttribute('role', 'button'); n.tabIndex = 0;
+        n.innerHTML = `<span class="tag">Reward · Limited</span><br>${A && (A.skins || []).length ? '' : 'No skins yet. '}<b>Invite a friend and this golem’s skin is yours.</b>`; n.addEventListener('click', () => openRewardsSheet()); body.querySelector('.notes').after(n); }
       if (body.classList.contains('profile') && !body.classList.contains('in-history')) want = body.classList.contains('units') ? VIEWS.units : VIEWS.play;
     }
     // Profile's Units: the roster comes up on the island, as from the menu; a unit's sheet changes its skin. ← Profile goes back
@@ -773,56 +787,93 @@
       body.classList.toggle('units', on); picked = null; hovered = null; if (on) setTier(tier);
       backBtn.textContent = on ? '← Profile' : '← Menu'; drawProfile();
     }
-    const refreshAccount = () => { picked = null; buildTier(tier); drawProfile(); };
+    // one server call from Profile: busy while it runs, its answer kept (acctTake), the message under the rows
+    async function pfDo(f) {
+      if (pf.busy) return; pf.busy = true; pfMsg('One moment…'); drawProfile();
+      let t = ''; try { t = (await f()) || ''; } finally { pf.busy = false; }
+      A = sampleAcct ? A : acct; pfMsg(t); picked = null; buildTier(tier); drawProfile();
+    }
+    const pfSave = () => { const v = $('pf-tag').value.trim(); if (v.length < 2 || v === A.tag) return; if (!cleanTagOk(v)) return pfMsg(TAG_BAD);
+      pfDo(async () => { const r = await acctCall('tag', { tag: v }, true); if (r.status !== 200) return acctFail(r); acctTake(r); return 'Username saved.'; }); };
     $('pf-opts').addEventListener('click', (e) => {
-      const b = e.target.closest('button'); if (!b) return;
-      if (b.dataset.title !== undefined) { A.title = b.dataset.title; drawProfile(); }
+      const b = e.target.closest('button'); if (!b || b.disabled) return;
+      if (b.dataset.title !== undefined) pfDo(async () => { const r = await acctCall('title', { title: b.dataset.title }, true); if (r.status !== 200) return acctFail(r); acctTake(r); return 'Title saved.'; });
       else if (b.hasAttribute('data-units')) profileUnits(!body.classList.contains('units'));
-      else if (b.id === 'pf-save') { const v = $('pf-tag').value.trim(); if (v.length >= 2) { A.tag = v; A.tagNext = 1; drawProfile(); } }
-      else if (b.hasAttribute('data-out')) { if (!A.google && !pf.outSure) { pf.outSure = true; return drawProfile(); } A = null; pf.outSure = false; refreshAccount(); }
-      else if (b.hasAttribute('data-del')) { if (!pf.sure) { pf.sure = true; return drawProfile(); } A = null; pf.sure = false; refreshAccount(); }
-      else if (b.hasAttribute('data-guest')) { A = structuredClone(ACCTS.guest); refreshAccount(); }
-      else if (b.hasAttribute('data-google')) { A = structuredClone(ACCTS.google); if (acctQ === 'guest') A.tag = 'Guest 4821'; pf.outSure = false; refreshAccount(); } // in the game: Google's own button
+      else if (b.id === 'pf-save') pfSave();
+      else if (b.hasAttribute('data-out')) { // a guest taps twice (with the warning); then the welcome screen, as the old Log out
+        if (!A.google && !pf.outSure) { pf.outSure = true; return drawProfile(); }
+        pf.outSure = false; closeProfile(); acctLogOut();
+      }
+      else if (b.hasAttribute('data-del')) { if (!pf.sure) { pf.sure = true; return drawProfile(); } pf.sure = false; pfDo(async () => { await acctDelete(); return acctUi.msg; }); }
+      else if (b.hasAttribute('data-guest')) pfDo(async () => { const r = await acctCall('guest', {}); if (r.status !== 200) return acctFail(r); acctTake(r); welcomed(); return 'You’re playing as a guest on this phone.'; });
     });
     $('pf-opts').addEventListener('input', (e) => { if (e.target.id === 'pf-tag') $('pf-save').hidden = e.target.value.trim() === A.tag || e.target.value.trim().length < 2; });
-    $('pf-opts').addEventListener('keydown', (e) => { if (e.target.id === 'pf-tag' && e.key === 'Enter' && !$('pf-save').hidden) $('pf-save').click(); if (e.key === 'Escape') e.stopPropagation(); });
+    $('pf-opts').addEventListener('keydown', (e) => { if (e.target.id === 'pf-tag' && e.key === 'Enter' && !$('pf-save').hidden) pfSave(); if (e.key === 'Escape') e.stopPropagation(); });
 
-    function openProfile() { openDrop(''); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; drawProfile(); }
-    function closeProfile() { body.classList.remove('profile', 'in-history', 'units'); picked = null; hovered = null; want = VIEWS.play; backBtn.textContent = '← Menu'; }
+    // Profile opens over the menu; the account is refreshed from the server (the session rotates daily, titles and skins may be new)
+    function openProfile() { openDrop(''); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
+      if (acct && !sampleAcct) acctCall('me', {}, true).then(r => { if (r.status === 200) { acctTake(r); A = acct; buildTier(tier); drawProfile(); } else if (r.status === 401) { acctFail(r); A = acct; drawProfile(); } }); }
+    function closeProfile() { body.classList.remove('profile', 'in-history', 'units'); picked = null; hovered = null; want = VIEWS.play; backBtn.textContent = '← Menu'; acctUi.after = null; }
     acctBtn.addEventListener('click', openProfile);
-    // Match history (sample data, shaped like the game's: result, opponent and title, kind, rounds, battlefield, when)
-    const HIST = [
-      { res: 'won', foe: 'Pebble', ft: 'initiate', kind: 'Ranked', score: '2–1', map: 'Desert', when: '2 h ago', r: [['lost', 22, 14], ['won', 0, 31], ['won', 6, 27]] },
-      { res: 'lost', foe: 'Captain Tuesday', ft: 'legend', kind: 'Ranked', score: '0–2', map: 'Ashlands', when: 'yesterday', r: [['lost', 30, 4], ['lost', 28, 11]] },
-      { res: 'won', foe: 'Moth', kind: 'Standard', score: '2–0', map: 'Meadow', when: 'yesterday', r: [['won', 3, 30], ['won', 0, 24]] },
-      { res: 'draw', foe: 'Bramble', ft: 'goodsport', kind: 'Standard', score: '1–1', map: 'Autumn', when: '3 days ago', r: [['won', 8, 19], ['lost', 21, 5], ['draw', 0, 0, true]] },
-      { res: 'left', foe: 'Old Gus', kind: 'Standard', score: 'they left', map: 'Snow', when: '5 days ago', r: [['won', 2, 26]] },
-      { res: 'won', foe: 'Hedgewitch', ft: 'day1', kind: 'Ranked', score: '2–0', map: 'Savanna', when: 'last week', r: [['won', 12, 30], ['won', 9, 22]] },
-      { res: 'lost', foe: 'Ironmoss', kind: 'Standard', score: '1–2', map: 'Forest Glade', when: 'last week', r: [['won', 4, 18], ['lost', 25, 3], ['lost', 30, 9]] },
-    ];
-    const ALL = [['Ironmoss', 'Moth', '2–0', 'Ranked', 'Desert', '4 min ago'], ['Captain Tuesday', 'Sleepy Ent', '2–1', 'Ranked', 'Snow', '12 min ago'], ['Pebble', 'Bramble', '2–0', 'Standard', 'Meadow', '20 min ago'], ['Hedgewitch', 'Old Gus', '1–1', 'Standard', 'Autumn', '31 min ago'], ['Moth', 'Wren', '0–2', 'Standard', 'Meadow', 'yesterday']];
-    const RES = { won: 'Won', lost: 'Lost', draw: 'Draw', left: 'Won' };
+
+    // ── Match history (the old openHistorySheet / histLoad): My matches (acctCall 'history', one card per match, its rounds
+    // with REPLAY) and All online (GET /history: the latest battles). Load more pages with the server's `next` ──
     const car = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+    const ago = (iso) => { const t = new Date(iso).getTime(); if (!t) return ''; const mn = Math.round((Date.now() - t) / 60000); return mn < 1 ? 'just now' : mn < 60 ? `${mn} min ago` : mn < 24 * 60 ? `${Math.round(mn / 60)} h ago` : mn < 48 * 60 ? 'yesterday' : histTime(iso); };
     let histTab = 'mine';
-    function drawHistory() {
-      body.querySelectorAll('.h-tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.h === histTab));
-      if (histTab === 'all') {
-        $('h-count').textContent = 'everyone’s, newest first';
-        $('h-list').innerHTML = ALL.map(([a, b, sc, kind, map, when]) => `<li><span class="res draw">${sc}</span><span><b>${esc(a)} vs ${esc(b)}</b><small>${kind} · ${map} · ${when}</small></span><button class="go watch">Replay</button></li>`).join('');
-        return;
-      }
-      if (!A) { $('h-count').textContent = ''; $('h-list').innerHTML = '<li class="empty">No account, no record. Your matches show here once you have a username.</li>'; return; }
-      $('h-count').textContent = `${HIST.length} played · ${HIST.filter(x => RES[x.res] === 'Won').length} won`;
-      $('h-list').innerHTML = HIST.map(x => {
-        const T = DTITLES[x.ft], dealt = x.r.reduce((t, q) => t + q[2], 0), took = x.r.reduce((t, q) => t + q[1], 0);
-        const rounds = x.r.map((q, i) => `<li><span><b>Round ${i + 1}</b>${q[3] ? 'time ran out' : q[0]}<small>you took ${q[1]}, they took ${q[2]}</small></span><button class="go">Replay</button></li>`).join('');
-        return `<li><span class="res ${x.res}">${RES[x.res]}</span><span><b>vs ${esc(x.foe)}</b>${T ? `<span class="tt" style="--tc:${T[1]}">${esc(T[0])}</span>` : ''}<small>${x.kind} · ${x.score} · ${x.map} · ${x.when} · dealt ${dealt}, took ${took}</small></span>
-          <button class="rd" aria-expanded="false">${x.r.length} round${x.r.length > 1 ? 's' : ''} ${car}</button><ol class="rounds">${rounds}</ol></li>`;
-      }).join('');
+    const hs = { next: null, busy: false, n: 0, won: 0 };
+    function histMine(x) {
+      const rs = x.rounds || [], me0 = x.side === 1 ? 1 : 0, them = 1 - me0, first = rs[0] || {}, last = rs[rs.length - 1] || {};
+      const foeTag = (first.names && first.names[them]) || '', foeLead = (first.leaders && first.leaders[them]) || '';
+      const over = !!last.over, mw = last.matchWinner, forf = rs.find(q => q.forfeit === 0 || q.forfeit === 1);
+      const res = !over ? ['', 'Unfinished'] : mw === me0 ? ['won', 'Won'] : mw === them ? ['lost', 'Lost'] : ['draw', 'Draw'];
+      const fights = rs.filter(q => q.forfeit == null);
+      const dealt = fights.reduce((t, q) => t + ((q.dmg && q.dmg[them]) | 0), 0), took = fights.reduce((t, q) => t + ((q.dmg && q.dmg[me0]) | 0), 0);
+      const wins = fights.filter(q => q.winner === me0).length, losses = fights.filter(q => q.winner === them).length;
+      const kind = first.tour ? 'Tournament' : first.ranked ? 'Ranked' : 'Standard';
+      const score = forf ? (forf.forfeit === me0 ? 'you left' : 'they left') : `${wins}–${losses}`;
+      const facts = [kind, score, first.map || '', ago(last.time || first.time), `dealt ${dealt}, took ${took}`].filter(Boolean).join(' · ');
+      const rounds = fights.map(q => { const w = q.winner === me0 ? 'won' : q.winner === them ? 'lost' : 'draw';
+        return `<li><span><b>Round ${esc(q.round)}</b>${q.timeout ? 'time ran out' : w}<small>you took ${esc(q.dmg[me0])}, they took ${esc(q.dmg[them])}</small></span>${q.replay ? `<button class="go" data-replay="${esc(q.matchId)}|${esc(q.round)}|${me0}">Replay</button>` : ''}</li>`; }).join('');
+      return `<li><span class="res ${res[0]}">${res[1]}</span><span><b>vs ${esc(foeTag || (foeLead ? foeLead + ' (guest)' : 'a guest'))}</b><small>${esc(facts)}</small></span>
+        ${fights.length ? `<button class="rd" aria-expanded="false">${fights.length} round${fights.length > 1 ? 's' : ''} ${car}</button><ol class="rounds">${rounds}</ol>` : ''}</li>`;
     }
-    $('h-list').addEventListener('click', (e) => { const b = e.target.closest('.rd'); if (!b) return; const li = b.closest('li'); li.classList.toggle('open'); b.setAttribute('aria-expanded', li.classList.contains('open')); });
-    body.querySelectorAll('.h-tabs button').forEach(b => b.addEventListener('click', () => { histTab = b.dataset.h; drawHistory(); }));
-    function openHistory() { histTab = A ? 'mine' : 'all'; drawHistory(); body.classList.add('in-history'); hovered = null; want = VIEWS.history; backBtn.textContent = '← Profile'; }
+    function histAll(r) {
+      let who = [0, 1].map(sd => (r.names && r.names[sd]) || (r.leaders && r.leaders[sd]) || (sd ? 'Side 2' : 'Side 1'));
+      if (who[0] === who[1]) who = [who[0] + ' (side 1)', who[1] + ' (side 2)'];
+      const how = r.forfeit === 0 || r.forfeit === 1 ? `${who[r.forfeit]} left` : r.winner === -1 ? 'Draw' : `${who[r.winner]} won${r.timeout ? ' on time' : ''}`;
+      const facts = [`Round ${r.round}`, how, r.map || '', ago(r.time), r.forfeit == null && r.dmg ? `damage ${r.dmg[0]}/${r.dmg[1]}` : ''].filter(Boolean).join(' · ');
+      return `<li><span class="res draw">R${esc(r.round)}</span><span><b>${esc(who[0])} vs ${esc(who[1])}</b><small>${esc(facts)}</small></span></li>`;
+    }
+    async function histLoadD(more) {
+      if (hs.busy) return; hs.busy = true;
+      body.querySelectorAll('.h-tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.h === histTab));
+      const tab = histTab;
+      if (!more) { $('h-list').innerHTML = ''; hs.next = null; hs.n = 0; hs.won = 0; $('h-count').textContent = ''; }
+      $('h-msg').textContent = 'Loading…'; $('h-more').hidden = true;
+      let data = null;
+      try {
+        if (tab === 'mine') { const r = await acctCall('history', more && hs.next ? { before: hs.next } : {}, true); data = r.status === 200 && Array.isArray(r.matches) ? { rows: r.matches, next: r.next } : null; }
+        else { const res = await fetch(`${SERVER_URL}/history?limit=40${more && hs.next ? '&before=' + hs.next : ''}`); const j = res.ok ? await res.json() : null; data = j ? { rows: j.rows || [], next: j.next } : null; }
+      } catch (e) { data = null; }
+      hs.busy = false;
+      if (histTab !== tab || !body.classList.contains('in-history')) return;
+      if (!data) { $('h-msg').textContent = more ? 'Couldn’t load more. Try again.' : tab === 'mine' ? 'Couldn’t load your matches. Check your connection and try again.' : 'Couldn’t load the history. Check your connection and try again.'; $('h-more').hidden = !more; return; }
+      hs.next = data.next || null;
+      $('h-list').insertAdjacentHTML('beforeend', data.rows.map(tab === 'mine' ? histMine : histAll).join(''));
+      if (tab === 'mine') { hs.n += data.rows.length; hs.won += data.rows.filter(x => { const rs = x.rounds || [], l = rs[rs.length - 1] || {}; return l.over && l.matchWinner === (x.side === 1 ? 1 : 0); }).length;
+        $('h-count').textContent = hs.n ? `${hs.n} played · ${hs.won} won` : ''; }
+      else $('h-count').textContent = 'everyone’s, newest first';
+      $('h-msg').textContent = $('h-list').children.length ? '' : tab === 'mine' ? 'No online matches yet. Matches you play in Rooms show up here.' : 'No battles saved yet.';
+      $('h-more').hidden = !hs.next;
+    }
+    $('h-list').addEventListener('click', (e) => {
+      const rp = e.target.closest('[data-replay]'); if (rp) { const [id, r, sd] = rp.dataset.replay.split('|'); dio.histBack = true; playReplay(id, +r, +sd); return; }
+      const b = e.target.closest('.rd'); if (!b) return; const li = b.closest('li'); li.classList.toggle('open'); b.setAttribute('aria-expanded', li.classList.contains('open'));
+    });
+    $('h-more').addEventListener('click', () => histLoadD(true));
+    body.querySelectorAll('.h-tabs button').forEach(b => b.addEventListener('click', () => { if (b.dataset.h === 'mine' && !A) return; histTab = b.dataset.h; histLoadD(false); }));
+    function openHistory() { histTab = A ? 'mine' : 'all'; body.querySelector('.h-tabs [data-h="mine"]').disabled = !A; body.classList.add('in-history'); hovered = null; want = VIEWS.history; backBtn.textContent = '← Profile'; histLoadD(false); }
     function closeHistory() { body.classList.remove('in-history'); backBtn.textContent = '← Menu'; drawProfile(); }
     $('pf-hist').addEventListener('click', openHistory);
     drawProfile();
@@ -861,7 +912,7 @@
       $('w-guest').disabled = !!home.busy; $('home-msg').textContent = screen ? '' : home.msg || '';
       if (screen) drawSignin();
     }
-    function closeDoor() { door.screen = null; acctUi.after = null; body.classList.remove('welcome', 'in-signin'); want = VIEWS.play; backBtn.textContent = '← Menu'; }
+    function closeDoor() { door.screen = null; acctUi.after = null; $('si-opts').innerHTML = ''; /* (no second #acct-google left behind) */ body.classList.remove('welcome', 'in-signin'); want = VIEWS.play; backBtn.textContent = '← Menu'; }
     const goScreen = (s) => { home.screen = s; home.msg = ''; drawHome(); };
     $('w-login').addEventListener('click', () => goScreen('login'));
     $('w-signup').addEventListener('click', () => goScreen('signup'));
@@ -1047,7 +1098,7 @@
     if (H.includes('profile') || H.includes('history')) { openProfile(); if (H.includes('#out') || H.includes(',out')) pf.outSure = true; if (H.includes('sure')) pf.sure = true; drawProfile();
       if (H.includes('units')) { profileUnits(true); if (tq) setTier(+tq); if (uq) pickUnit(rosterHot[+uq]); }
       now = { ...want, at: [...want.at], off: [...want.off] }; }
-    if (H.includes('history')) { openHistory(); if (H.includes('all')) { histTab = 'all'; drawHistory(); } }
+    if (H.includes('history')) { openHistory(); if (H.includes('all')) { histTab = 'all'; histLoadD(false); } }
     const rnq = (H.match(/rounds=(\d)/) || [])[1]; if (rnq) body.querySelectorAll('#h-list > li')[+rnq]?.querySelector('.rd')?.click();
     // Welcome: #welcome, #signup, #login, #invited (came from a friend's link), #tag=<name> (typed), #err (a bad username)
     if (H.includes('welcome') || H.includes('signup') || H.includes('login')) {
@@ -1107,8 +1158,8 @@
       skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
       homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
     }
-    dio.api = { pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
+    dio.api = { history: () => { openProfile(); openHistory(); }, pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
     dioPaint();
     if (dio.shown) resume();
-    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name) }; if (TEST) window.__dio.sync = dioSync; // the tests: the roster standing; show / hide the home by hand
+    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) window.__dio.sync = dioSync; // the tests: the roster standing; show / hide the home by hand
   }
