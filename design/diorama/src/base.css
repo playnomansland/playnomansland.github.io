@@ -93,6 +93,26 @@ body.mp-open .orders .mp { display: grid; animation: mpin .24s cubic-bezier(.16,
 .orders .mp .item[disabled] { opacity: .42; cursor: not-allowed; color: var(--ink); }
 .orders .mp .item[disabled] .lock { width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; }
 
+/* Developer (devMode only): top left on Play, clear of the choices. DEV pink is a tag with ink type (pink type
+   doesn't read on saffron); the words are the Settings dropdown's small words, ink on the field */
+.devs { position: fixed; left: 48px; top: 128px; display: none; max-width: min(720px, 56vw); align-content: start; }
+body.play.dev .devs { display: grid; } body.in-rooms .devs { display: none; }
+.dvt, .devs .dk b { display: inline-block; padding: 3px 8px 2px; font: 700 11px var(--type); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: #FF5FC4; clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
+.devs .dk { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font: 400 13px var(--type); opacity: .85; }
+.devs .dv { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 4px 12px; align-items: baseline; }
+.devs .lab { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+.devs .seg { display: flex; flex-wrap: wrap; margin-left: -9px; }
+.devs .seg button { position: relative; isolation: isolate; padding: 4px 9px 1px; font: 700 20px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .62; white-space: nowrap; }
+/* an action word (starts something) gets the ink shard on hover, as Play's choices do; Exploit bot is a pick:
+   hover only brightens it, the picked one keeps the shard */
+.devs .seg button:hover, .devs .seg button:focus-visible, .devs .seg button.on { opacity: 1; }
+.devs .seg [data-dv]:hover, .devs .seg [data-dv]:focus-visible, .devs .seg [data-dv].on, .devs .seg [aria-pressed="true"] { opacity: 1; color: #F2B23A; }
+.devs .seg [data-dv]:hover::before, .devs .seg [data-dv]:focus-visible::before, .devs .seg [data-dv].on::before, .devs .seg [aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+.devs .seg button[disabled] { opacity: .3; cursor: not-allowed; color: var(--ink); } .devs .seg button[disabled]::before { display: none; }
+.devs .dn { margin: 8px 0 0 130px; max-width: 480px; min-height: 2.8em; font: 400 14px/1.4 var(--type); opacity: .85; }
+.devs .dn b { font-weight: 700; }
+.orders .mp .item .dvt { margin-right: 8px; vertical-align: 2px; }
+
 /* Rooms: the list sits on the field where the choices were; the island stays on the right */
 .rooms { position: fixed; left: 48px; top: 128px; bottom: 96px; width: min(620px, 46vw); display: none; grid-template-rows: auto auto auto auto minmax(0, 1fr); align-content: start; }
 body.in-rooms .rooms { display: grid; } body.in-rooms .orders { display: none; }

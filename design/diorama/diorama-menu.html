@@ -103,6 +103,26 @@ body.mp-open .orders .mp { display: grid; animation: mpin .24s cubic-bezier(.16,
 .orders .mp .item[disabled] { opacity: .42; cursor: not-allowed; color: var(--ink); }
 .orders .mp .item[disabled] .lock { width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; }
 
+/* Developer (devMode only): top left on Play, clear of the choices. DEV pink is a tag with ink type (pink type
+   doesn't read on saffron); the words are the Settings dropdown's small words, ink on the field */
+.devs { position: fixed; left: 48px; top: 128px; display: none; max-width: min(720px, 56vw); align-content: start; }
+body.play.dev .devs { display: grid; } body.in-rooms .devs { display: none; }
+.dvt, .devs .dk b { display: inline-block; padding: 3px 8px 2px; font: 700 11px var(--type); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: #FF5FC4; clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
+.devs .dk { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font: 400 13px var(--type); opacity: .85; }
+.devs .dv { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 4px 12px; align-items: baseline; }
+.devs .lab { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+.devs .seg { display: flex; flex-wrap: wrap; margin-left: -9px; }
+.devs .seg button { position: relative; isolation: isolate; padding: 4px 9px 1px; font: 700 20px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .62; white-space: nowrap; }
+/* an action word (starts something) gets the ink shard on hover, as Play's choices do; Exploit bot is a pick:
+   hover only brightens it, the picked one keeps the shard */
+.devs .seg button:hover, .devs .seg button:focus-visible, .devs .seg button.on { opacity: 1; }
+.devs .seg [data-dv]:hover, .devs .seg [data-dv]:focus-visible, .devs .seg [data-dv].on, .devs .seg [aria-pressed="true"] { opacity: 1; color: #F2B23A; }
+.devs .seg [data-dv]:hover::before, .devs .seg [data-dv]:focus-visible::before, .devs .seg [data-dv].on::before, .devs .seg [aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+.devs .seg button[disabled] { opacity: .3; cursor: not-allowed; color: var(--ink); } .devs .seg button[disabled]::before { display: none; }
+.devs .dn { margin: 8px 0 0 130px; max-width: 480px; min-height: 2.8em; font: 400 14px/1.4 var(--type); opacity: .85; }
+.devs .dn b { font-weight: 700; }
+.orders .mp .item .dvt { margin-right: 8px; vertical-align: 2px; }
+
 /* Rooms: the list sits on the field where the choices were; the island stays on the right */
 .rooms { position: fixed; left: 48px; top: 128px; bottom: 96px; width: min(620px, 46vw); display: none; grid-template-rows: auto auto auto auto minmax(0, 1fr); align-content: start; }
 body.in-rooms .rooms { display: grid; } body.in-rooms .orders { display: none; }
@@ -575,6 +595,22 @@ body.profile #usheet::before { background: #2C2820; } /* lifted off the ink fiel
       <li><button class="item" data-q="2v2" disabled aria-disabled="true">2v2 <small><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg>coming soon</small></button></li>
     </ul>
   </div>
+</section>
+
+<!-- Developer (devMode only): the game's extra modes and tools as rows of small words, top left on Play.
+     The words start things at once; Exploit bot is a pick (on the ink shard). One typed note under the rows
+     follows the pointer and falls back to the exploit bot's state -->
+<section class="devs" aria-label="Developer">
+  <span class="dk"><b>Developer</b>every mode and tool · only developers see this</span>
+  <div class="dv">
+    <span class="lab">Vs computer</span>
+    <span class="seg"><button data-dv="factions">Factions</button><button data-dv="devtest">Devtest</button><button data-dv="late">Late game</button><button data-dv="claude">Vs Claude</button></span>
+    <span class="lab">Exploit bot</span>
+    <span class="seg" role="group" aria-label="Exploit bot"><button data-xb="" aria-pressed="true">Off</button><button data-xb="flank">Flank</button><button data-xb="steel">Steel</button><button data-xb="necro">Necro</button><button data-xb="wizards">Wizards</button><button data-xb="hoard">Hoard</button><button data-xb="arrow">Arrow</button></span>
+    <span class="lab">Tools</span>
+    <span class="seg"><button data-dv="tours">Tournaments</button><button data-dv="load">Load units</button><button data-dv="lab">Counter Lab</button></span>
+  </div>
+  <p class="dn" id="dv-note" aria-live="polite"></p>
 </section>
 
 <!-- Rooms: the open matches of one kind. One button above the list -->
@@ -2441,7 +2477,40 @@ const multi = document.getElementById('multi');
 const setMp = (on) => { body.classList.toggle('mp-open', on); multi.setAttribute('aria-expanded', on); };
 multi.addEventListener('click', () => setMp(!body.classList.contains('mp-open')));
 document.getElementById('vs-ai').addEventListener('click', () => {}); // in the game: straight into a match vs the AI
+// Developer (A.dev; in the game devMode()): 2v2 unlocks in Multiplayer and New room, and the extras show top left
+if (A && A.dev) {
+  body.classList.add('dev');
+  const d2 = document.querySelector('.orders .mp [data-q="2v2"]'); d2.disabled = false; d2.removeAttribute('aria-disabled');
+  d2.querySelector('small').innerHTML = '<i class="dvt">Dev</i>two boards side by side';
+  const k2 = document.querySelector('.newroom [data-kind="2v2"]'); k2.disabled = false; k2.textContent = '2v2';
+}
 document.querySelectorAll('.orders .mp .item:not([disabled])').forEach(b => b.addEventListener('click', () => openRooms(b.dataset.q)));
+// the notes are the game's own lines (playPop's developer block, ExploitBot.TACTICS); sample text here
+const DV = {
+  factions: '<b>Factions vs AI.</b> Draft two factions each.',
+  devtest: '<b>Factions · devtest.</b> Buildings, Powers and spells on the big board, against the AI.',
+  late: '<b>Late game vs AI.</b> Standard with treasuries: 130 health each, at most 5 squads of any one tier 3 or tier 4 unit.',
+  claude: '<b>Vs Claude.</b> Claude plays the other side. Only where Claude can be reached.',
+  tours: '<b>Tournaments.</b> Host one, join one by its code, or practise against bots.',
+  load: '<b>Load units.</b> 28 built-in units now. Load a Counter Lab set instead; matches are saved for Claude to review.',
+  lab: '<b>Counter Lab.</b> Make units and test them against each other. Opens its own page.',
+};
+const XB = {
+  '': 'Off: the normal AI plays as it always does.',
+  flank: '<b>Flank snipers.</b> Beats the normal AI 83% of 30 matches. Shiv and Leaf Wizard on your flank columns from round 3.',
+  steel: '<b>Steel Wizard flank.</b> Beats the normal AI 90% of 30 matches. Steel Wizards on your flanks from round 1, borrowing every round.',
+  necro: '<b>Necromancer home guard.</b> Beats the normal AI 83% of 30 matches. Necromancers round its own keep, Fire Mages from round 4.',
+  wizards: '<b>Back-line wizards.</b> Beats the normal AI 40% of 30 matches. Flame Wizards from its back rows, Slime Wizards from round 6.',
+  hoard: '<b>Hoarder.</b> Beats the normal AI 80% of 30 matches. Spends nothing until round 3, then the Sniper tower and the Bank.',
+  arrow: '<b>Arrow rush.</b> Beats the normal AI 80% of 30 matches. Built on the direction arrows; masses Brute.',
+};
+let xbPick = '';
+const dvNote = (h) => { document.getElementById('dv-note').innerHTML = h || `<i class="dvt">Exploit bot</i> ${XB[xbPick]}${xbPick ? ' Applies to every match against the computer.' : ''}`; };
+const setXb = (id) => { xbPick = id; document.querySelectorAll('.devs [data-xb]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.xb === id))); dvNote(); };
+document.querySelectorAll('.devs [data-dv]').forEach(b => { const on = () => dvNote(DV[b.dataset.dv]); b.addEventListener('mouseenter', on); b.addEventListener('focus', on); b.addEventListener('click', () => {}); }); // in the game: start that mode / open that sheet
+document.querySelectorAll('.devs [data-xb]').forEach(b => { const on = () => dvNote(XB[b.dataset.xb]); b.addEventListener('mouseenter', on); b.addEventListener('focus', on); b.addEventListener('click', () => setXb(b.dataset.xb)); });
+document.querySelector('.devs .dv').addEventListener('mouseleave', () => dvNote());
+dvNote();
 
 // Rooms (sample data, shaped like the game's lobby list: host, battlefield, players, age or round, watchers)
 const ROOMS = [
@@ -2749,6 +2818,9 @@ if (H.includes('private')) document.querySelector('.newroom [data-pub="0"]').cli
 const plh = (H.match(/plh=(\d+)/) || [])[1]; if (plh) document.querySelectorAll('.pl-row')[+plh].classList.add('hov'); // a song as if pointed at
 const onq = (H.match(/on=([\w-]+)/) || [])[1]; // look as if pointed at: a Play choice (vs-ai, multi, standard, ranked) or a room row (r0, r1...)
 if (onq) { const el = /^r\d+$/.test(onq) ? document.querySelectorAll('#r-list li')[+onq.slice(1)] : document.getElementById(onq) || document.querySelector(`.orders .mp [data-q="${onq}"]`); if (el) el.classList.add('on'); }
+// developer: #acct=dev with #play; #xb=<tactic> (Exploit bot picked), #dvon=<word> (a developer word as if pointed at)
+const xq = (H.match(/xb=(\w+)/) || [])[1]; if (xq && XB[xq]) setXb(xq);
+const dq = (H.match(/dvon=(\w+)/) || [])[1]; if (dq) { const el = document.querySelector(`.devs [data-dv="${dq}"], .devs [data-xb="${dq}"]`); if (el) { el.classList.add('on'); dvNote((DV[dq] || XB[dq])); } }
 if (H.includes('music')) openMusic();
 const v = (H.match(/view=(\w+)/) || [])[1];
 if (v && VIEWS[v]) { want = VIEWS[v]; now = { ...want, at: [...want.at], off: [...want.off] }; items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; setMode(v); if (H.includes('pin')) body.classList.add('pinned'); }

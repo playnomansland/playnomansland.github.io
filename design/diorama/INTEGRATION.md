@@ -97,7 +97,7 @@ Line numbers below are for `src/site-template.html` (ST) on 2026-11-07; they dri
 | Skins (on the unit sheet) | `acctCall('skin',{skin,worn})` 4820, `Shapes.SKINS` (shapes.js:233), `useSkins` | Only owned skins + the limited one locked, as in the mockup |
 | Log out / Delete account | `acctLogOut` 4784, `acctDelete` 4796, `acctUi.outSure/sure` | |
 | Keep it (guest → Google) | `acctGoogleButton`, `acctGoogle` | |
-| Rewards: Discord (BABABABA), invite link | `rewardsCard` 5207, `wireRewardsCard` 5286, `openRewardsSheet` 5277, `rw` | **On hold** (owner, 2026-11-07). Note: the menu's golem note says "Invite a friend", and the invite link lives in Rewards; ask the owner whether clicking that note may open the game's Rewards sheet until Rewards is designed |
+| Rewards: Discord (BABABABA), invite link | `rewardsCard` 5207, `wireRewardsCard` 5286, `openRewardsSheet` 5277, `rw` | **On hold** (owner, 2026-11-07). The menu's golem note ("Invite a friend") opens the game's Rewards sheet, restyled, until Rewards is designed (owner, 2026-11-07) |
 | **Match history** | `openHistorySheet` 4561, `histLoad` 4629, `histMatchItem` 4606, `playReplay` 4581 | Tabs My matches / All online / Phone-to-phone (`HISTORY_URL`); **add Load more** (`hist.next`); Add friend on an opponent (`histFriendBtn`) |
 | **Friends** dropdown | `openFriends` 5042, `fr` 4893, `frOk` (Google only), `frBadge`/`frBadgeN` 4896, hub `hubOpen` 4911 / `hubRecv` 4923 / `frTick` 4950, `frWhere` 4905 | Routes `friends`, `friend/add` (several players with a name → pick one), `invite`, `dm/list`, `dm/read`, `dm/report`, mute, remove. Game invites: `fr.invites` and its banner. Id `fr-open` |
 | **Settings** dropdown | `openSoundSheet` 1977, `snd` 1276 (`phonebellum.sound.v1`), `musicOn` 1458, `setMusic` 1461, `pb-stay`, `talk.spectate`, `acctCall('ranked')` | Other apps' sound (`navigator.audioSession`), Report a bug → `openBugSheet` 1930, Playlists → `openPlaylist` 1703. Id `music-open` |
@@ -189,17 +189,30 @@ breakpoints: `html.pc` (hover + fine pointer, width ≥ 900, ST:924), 640, 520, 
    with replays and Load more.
 6. **Friends and Settings** on the hub and `snd`; the in-match Settings items.
 7. **Music:** the real player and playlists in the Diorama style.
-8. **Phones:** every screen at 390×844 and 360×740.
+8. **Phones:** every screen at 390×844 and 360×740. (Its own session, owner 2026-11-07.)
 9. **Restyle the remaining sheets** and run every test with the switch on and off.
 10. **The live trial:** `node src/build.js`, commit `index.html`, merge to `main` and push with the old UI still the
     default. Tell the owner the address (`playnomansland.github.io/?ui=diorama`) and what to try. Fix what they find.
 11. **The launch:** flip the default, remove the old home code, Join by code and Play vs Friend (and their tests,
     rewritten), build, run everything once more, merge to `main` and push. Tell the owner the commit.
 
+## Answered by the owner (2026-11-07, second session)
+
+- **Developer buttons:** proposal built into the mockup (`screens/dev-play.jpg`, state `#still,play,multi,acct=dev,xb=steel`),
+  waiting for the owner's OK before the integration starts. Top left on Play, clear of the choices: a pink DEVELOPER
+  tag (ink type: pink type doesn't read on saffron), then rows of small words: Vs computer (Factions, Devtest, Late
+  game, Vs Claude: each starts at once), Exploit bot (Off and the six tactics: a pick, on the ink shard), Tools
+  (Tournaments, Load units, Counter Lab). One typed note under the rows follows the pointer and falls back to the
+  exploit bot's state. 2v2 unlocks in Multiplayer and New room with a DEV tag. Late game vs Friend goes with Play vs
+  Friend. The Level-up cost row stays a `?test`-only setting.
+- **The "Invite a friend" note** opens the game's Rewards sheet (restyled) while Rewards is on hold.
+- **Designed before the launch:** Puzzles, How to play, and the room you're waiting in. The match keeps the game's
+  look (sheets restyled) for now.
+- **Branch:** the work is on `claude/nice-mendel-scnrpy`.
+- **Own sessions:** the phone layouts (step 8) and the test-suite rewrite (the `#friend` / `#code-in` tests) are
+  done in their own sessions, not in the main integration one.
+- **Working style:** fewer screenshots (show only the final one) and test summaries, not full output.
+
 ## Still to ask the owner
 
-- The developer buttons' design (one screenshot, before starting).
-- May the menu's "Invite a friend" note open the game's Rewards sheet (where the invite link is) while Rewards is on
-  hold?
-- Which "not designed" screens (Puzzles, How to play, the room you're waiting in, the match) must be designed before
-  the launch, and which can keep a restyled sheet for now?
+- Whether the developer buttons' design (`screens/dev-play.jpg`) is OK, or what to change.

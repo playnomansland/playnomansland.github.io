@@ -36,7 +36,8 @@ node design/diorama/shots.js '[["play","#still,play",1440,900]]'
 - `#still`: no idle motion (always use it for shots).
 - Menu: `#view=puzzles|rules|units|ranks` (as if that word were hovered), `#pin`, `#tier=1..4`, `#unit=N`,
   `#hover=keepYou|keepFoe|vaultYou|vaultFoe|mammoth|u:N`, `#music` (playlist open), `#plh=N` (playlist song N pointed at).
-- Play: `#play`, `#multi` (Multiplayer folded out), `#rooms=standard|ranked` (Rooms, filtered), `#filter` (the filter's
+- Play: `#play`, `#multi` (Multiplayer folded out), with `#acct=dev`: `#xb=<tactic>` (Exploit bot picked), `#dvon=<word>`
+  (a developer word pointed at), `#rooms=standard|ranked` (Rooms, filtered), `#filter` (the filter's
   list open), `#create` (New room, with `#rooms=`), `#private`, `#on=vs-ai|multi|standard|ranked|r0..` (as if pointed at).
 - Battlefields: `#bf=meadow|autumn|snow|frost|desert|ash|moonlit|savanna` (home), `#roombf=<same>` (New room's).
 - Profile: `#profile`, `#acct=google|guest|dev|none` (sample account; google is the default), `#title=<id>` (picked title,
@@ -119,8 +120,8 @@ Meadow, Autumn, Snow, Forest Glade, Desert, Ashlands, Moonlit Snow, Savanna.
 - Vs computer and Create room → do nothing in the mockup (in the game: start the match / open the room).
 - No join by code and no Play vs Friend (owner, 2026-11-07): everything goes through Rooms. Rooms' search line finds a
   player or a battlefield; a private room is "Not listed. Invite friends to it from Friends."
-- Developer buttons are not designed yet (the game's developer extras: Factions, Devtest, Late game, 2v2, Exploit bot,
-  Load units, Vs Claude, Tournaments). A quick proposal is in `INTEGRATION.md`; design it before the integration.
+- Developer buttons: designed on Play (`#acct=dev`; `screens/dev-play.jpg`), waiting for the owner's OK. See
+  `INTEGRATION.md`, "Answered by the owner".
 - On hold (owner, 2026-11-07): Rewards, Encyclopedia and the other extra buttons.
 
 ## Profile (first prototype, 2026-11-07)
