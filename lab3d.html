@@ -9551,13 +9551,19 @@ Floors.FLOORS = {
   // and a broken stone road across no man's land
   darkwoods: { base: '#4A5641', patch: ['#536048', '#414C39', '#5A664C', '#3C4635'], mid: ['#4E4A39', '#47432F', '#57513E'], strokes: ['#647452', '#33402D'], ripples: false,
     leaves: ['#6E5C3F', '#7D6A47', '#5C4F38', '#8A7B50', '#4F5A3A'], leafN: 2.5, roots: '#3B3026', road: '#7E8374', dapple: '#F2E8B8' },
+  // Snow (2026-11-07): a glacier pass in hard daylight. No man's land is a turquoise glacier sheet (glacier: [deep,
+  // pale]) with dark crevasses, frozen bubbles and polished shine; the deploy zones are wind-packed snow carved into
+  // sharp sastrugi that all run the wind's way (wind: its direction on the canvas, x right, y down toward your end);
+  // frozen: something huge lies frozen under the ice in the middle (a giant's sword)
+  glacier: { base: '#EEF3F8', patch: ['#F4F8FB', '#DDE7F1', '#F8FAFD', '#D7E3EF'], mid: ['#5FAED6', '#4A9BCB', '#79C2E0'], strokes: ['#FFFFFF', '#9DB3CB'], ripples: false,
+    glacier: ['#3F8FC4', '#8FD3E8'], wind: [1, -0.35], frozen: 'sword' },
   sand: { base: '#B39A6C', patch: ['#BDA478', '#A88F62', '#C2AA7E', '#A38A5F'], mid: ['#9E8457', '#A78D60', '#94794E'], strokes: ['#C9B288', '#8F7650'], ripples: true },
 };
 // Looks: what each draws (its biome round the board, and its floor: one painted here, or a map's painted ground in the
 // 2D renderer, bg). A map with skins (Game.SKINS) takes the match's pick (m.skin); every map has its own look too.
 Floors.LOOKS = {
   meadow: { biome: 'meadow', floor: 'meadow' }, autumn: { biome: 'autumn', floor: 'autumn' }, desert: { biome: 'desert', floor: 'sand' },
-  snow: { biome: 'ice', bg: 'ice' }, frost: { biome: 'frost', floor: 'darkwoods' }, forest: { biome: 'forest', bg: 'forest' }, cavern: { biome: 'cavern', bg: 'cavern' },
+  snow: { biome: 'snow', floor: 'glacier' }, frost: { biome: 'frost', floor: 'darkwoods' }, forest: { biome: 'forest', bg: 'forest' }, cavern: { biome: 'cavern', bg: 'cavern' },
   ash: { biome: 'ash', floor: 'ash' }, moonlit: { biome: 'moonlit', floor: 'moonlit' }, savanna: { biome: 'savanna', floor: 'savanna' },
 };
 Floors.lookOf = (src) => { const k = Game.lookOf(src); return Floors.LOOKS[k] ? k : 'meadow'; };
@@ -9577,6 +9583,7 @@ Floors.floor = (() => {
       for (let k = 0; k < 70; k++) blob(rr() * W, rr() * H, t * (0.8 + rr() * 2.2), t * (0.6 + rr() * 1.6), L.patch[k % 4], 0.55);
       // no man's land: trampled earth, or darker drifts of sand
       const y0 = Game.ZONE * t, y1 = (Game.ROWS - Game.ZONE) * t;
+      if (L.glacier) Floors.glacier(c, W, H, t, y0, y1, L, rr, blob); else { // (the glacier paints its own way, below)
       if (L.scorch) { // faint old blast scorches anywhere on the board: a dark smudge, a paler ring of thrown ash
         for (let k = 0; k < L.scorch; k++) {
           const x = rr() * W, y = rr() * H, r = t * (0.5 + rr() * 0.9), g = c.createRadialGradient(x, y, 0, x, y, r * 1.5);
@@ -9668,6 +9675,7 @@ Floors.floor = (() => {
         c.globalAlpha = 0.5 + rr() * 0.35; c.fillStyle = L.leaves[Math.floor(rr() * L.leaves.length)];
         c.beginPath(); c.ellipse(x, y, r, r * 0.6, rr() * 3, 0, Math.PI * 2); c.fill();
       }
+      }
       c.globalAlpha = 1;
       cache[look] = { key, cv: oc };
     }
@@ -9675,6 +9683,97 @@ Floors.floor = (() => {
     return true;
   };
 })();
+// The Snow look's floor (2026-11-07): wind-packed snow with sastrugi in the deploy zones, a glacier across no man's
+// land (y0 to y1). c: the canvas context (in CSS pixels), t: a tile in pixels, rr: the floor's seeded random numbers,
+// blob(x, y, rx, ry, colour, alpha): a soft round patch.
+Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
+  const [deep, pale] = L.glacier, wl = Math.hypot(L.wind[0], L.wind[1]), wx = L.wind[0] / wl, wy = L.wind[1] / wl, wa = Math.atan2(wy, wx);
+  const inBand = (y, m = 0) => y > y0 - m && y < y1 + m;
+  // the snow: long faint wind streaks, all one way
+  for (let k = 0; k < W * H / (t * t) * 1.2; k++) {
+    const x = rr() * W, y = rr() * H; if (inBand(y, t * 0.2)) continue;
+    c.globalAlpha = 0.07 + rr() * 0.07; c.fillStyle = rr() < 0.5 ? '#FFFFFF' : L.strokes[1];
+    c.beginPath(); c.ellipse(x, y, t * (0.8 + rr() * 1.6), t * (0.05 + rr() * 0.08), wa + (rr() - 0.5) * 0.06, 0, Math.PI * 2); c.fill();
+  }
+  // the glacier: deep turquoise, soft where the snow blows over its edges, mottled pale and deep
+  const e = t * 0.35, g = c.createLinearGradient(0, y0 - e, 0, y1 + e), f = e * 2 / (y1 - y0 + 2 * e);
+  g.addColorStop(0, deep + '00'); g.addColorStop(f, deep); g.addColorStop(1 - f, deep); g.addColorStop(1, deep + '00');
+  c.globalAlpha = 1; c.fillStyle = g; c.fillRect(0, y0 - e, W, y1 - y0 + 2 * e);
+  const by = () => y0 + t * 0.15 + rr() * (y1 - y0 - t * 0.3);
+  for (let k = 0; k < W / t * 9; k++) blob(rr() * W, by(), t * (0.5 + rr() * 1.6), t * (0.3 + rr() * 0.8), rr() < 0.45 ? pale : L.mid[k % 3], 0.35 + rr() * 0.3);
+  for (let k = 0; k < W / t * 2; k++) blob(rr() * W, by(), t * (0.4 + rr() * 1.1), t * (0.25 + rr() * 0.5), '#2A6FA6', 0.3); // deeper ice
+  // something huge frozen in the middle, deep under the ice: a giant's sword, blurred and dark
+  if (L.frozen === 'sword') {
+    const cx = W / 2 + t * 0.4, cy = (y0 + y1) / 2 + t * 0.05, a = -0.22, s = t;
+    c.save(); c.translate(cx, cy); c.rotate(a); c.filter = `blur(${Math.max(1, s * 0.05)}px)`; c.globalAlpha = 0.5; c.fillStyle = '#123050';
+    c.beginPath(); c.moveTo(-s * 2.9, 0); c.lineTo(-s * 2.3, -s * 0.2); c.lineTo(s * 1.4, -s * 0.24); c.lineTo(s * 1.4, s * 0.24); c.lineTo(-s * 2.3, s * 0.2); c.closePath(); c.fill(); // the blade, a broken tip
+    c.fillRect(s * 1.4, -s * 0.75, s * 0.24, s * 1.5); // the crossguard
+    c.fillRect(s * 1.64, -s * 0.1, s * 0.75, s * 0.2); // the grip
+    c.beginPath(); c.arc(s * 2.5, 0, s * 0.17, 0, Math.PI * 2); c.fill(); // the pommel
+    c.globalAlpha = 0.22; c.fillStyle = '#5E8FB4'; c.fillRect(-s * 2.2, -s * 0.03, s * 3.5, s * 0.06); // the fuller, a faint glint
+    c.restore(); c.filter = 'none';
+    for (let k = 0; k < 10; k++) blob(cx + (rr() - 0.5) * s * 5, cy + (rr() - 0.5) * s * 1.2, s * (0.5 + rr()), s * (0.3 + rr() * 0.4), pale, 0.18); // ice over it
+  }
+  // frozen bubbles in clusters
+  for (let k = 0; k < W / t * 3.5; k++) {
+    const cx = rr() * W, cy = by(), n = 4 + Math.floor(rr() * 10);
+    for (let i = 0; i < n; i++) {
+      const x = cx + (rr() - 0.5) * t * 0.6, y = cy + (rr() - 0.5) * t * 0.4, r = t * (0.015 + rr() * 0.04);
+      c.globalAlpha = 0.16; c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+      c.globalAlpha = 0.45; c.strokeStyle = '#E6F7FC'; c.lineWidth = Math.max(0.5, r * 0.3); c.stroke();
+      c.globalAlpha = 0.75; c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(x - r * 0.35, y - r * 0.35, r * 0.25, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // crevasses: dark jagged cracks running across the ice with a pale lip, branching; then fine hairline cracks
+  c.lineCap = 'round'; c.lineJoin = 'miter';
+  const crack = (x, y, a, n, wd) => {
+    const pts = [[x, y]];
+    for (let i = 0; i < n; i++) { a += (rr() - 0.5) * 0.9; a = Math.max(-0.7, Math.min(0.7, a)); x += Math.cos(a) * t * (0.25 + rr() * 0.25); y += Math.sin(a) * t * 0.22; y = Math.min(y1 - t * 0.2, Math.max(y0 + t * 0.2, y)); pts.push([x, y]); }
+    const line = (dx, dy) => { c.beginPath(); pts.forEach(([px, py], i) => i ? c.lineTo(px + dx, py + dy) : c.moveTo(px + dx, py + dy)); c.stroke(); };
+    c.globalAlpha = 0.14; c.strokeStyle = '#1E5A86'; c.lineWidth = wd * 3.2; line(0, 0);
+    c.globalAlpha = 0.6; c.strokeStyle = '#D2F1FA'; c.lineWidth = Math.max(0.8, wd * 0.35); line(-wd * 0.45, -wd * 0.55);
+    c.globalAlpha = 0.85; c.strokeStyle = '#0F2C46'; c.lineWidth = wd; line(0, 0);
+    return pts;
+  };
+  for (let k = 0; k < W / t * 0.55; k++) {
+    const pts = crack(rr() * W, by(), (rr() - 0.5) * 0.6, 6 + Math.floor(rr() * 8), t * (0.04 + rr() * 0.06));
+    for (let b = 0; b < 2; b++) if (rr() < 0.6) { const [px, py] = pts[1 + Math.floor(rr() * (pts.length - 1))]; crack(px, py, (rr() < 0.5 ? 1 : -1) * (0.6 + rr() * 0.5), 2 + Math.floor(rr() * 3), t * 0.025); }
+  }
+  for (let k = 0; k < W / t * 2.5; k++) {
+    let x = rr() * W, y = by(), a = rr() * 6.3;
+    c.globalAlpha = 0.3 + rr() * 0.2; c.strokeStyle = rr() < 0.55 ? '#EAF8FD' : '#2B6390'; c.lineWidth = 0.6 + rr() * 0.5;
+    c.beginPath(); c.moveTo(x, y);
+    for (let s = 0; s < 3 + rr() * 4; s++) { a += (rr() - 0.5) * 1.4; x += Math.cos(a) * t * 0.22; y = Math.min(y1, Math.max(y0, y + Math.sin(a) * t * 0.18)); c.lineTo(x, y); }
+    c.stroke();
+  }
+  // polished shine: long pale streaks, all at the sun's angle, some in bundles
+  c.lineCap = 'round';
+  for (let k = 0; k < W / t * 2.2; k++) {
+    const x = rr() * W, y = by(), l = t * (0.8 + rr() * 2.6), n = rr() < 0.4 ? 2 + Math.floor(rr() * 2) : 1;
+    for (let i = 0; i < n; i++) {
+      c.globalAlpha = 0.16 + rr() * 0.2; c.strokeStyle = '#F4FCFF'; c.lineWidth = t * (0.03 + rr() * 0.09);
+      const ox = i * t * 0.12, oy = i * t * 0.1; c.beginPath(); c.moveTo(x + ox, y + oy); c.lineTo(x + ox + l, y + oy - l * 0.42); c.stroke();
+    }
+  }
+  // spindrift tongues blown over the glacier's edges and a few across it
+  for (let k = 0; k < W / t * 3; k++) {
+    const edge = rr() < 0.8, y = edge ? (rr() < 0.5 ? y0 : y1) + (rr() - 0.5) * t * 0.7 : by();
+    c.globalAlpha = edge ? 0.35 + rr() * 0.25 : 0.18; c.fillStyle = '#F2F7FB';
+    c.beginPath(); c.ellipse(rr() * W, y, t * (0.3 + rr() * 0.8), t * (0.04 + rr() * 0.07), wa + (rr() - 0.5) * 0.08, 0, Math.PI * 2); c.fill();
+  }
+  // sastrugi: sharp wind-carved ridges in the snow, a lit crest and a blue shadow, all pointing the wind's way
+  const px = -wy, py = wx; // across the wind (the shadow side: the sun is up-left)
+  for (let k = 0; k < W * H / (t * t) * 9; k++) {
+    const x = rr() * W, y = rr() * H; if (inBand(y, t * 0.25)) continue;
+    const l = t * (0.18 + rr() * 0.55), w = t * (0.025 + rr() * 0.045), j = (rr() - 0.5) * 0.12, dx = Math.cos(wa + j), dy = Math.sin(wa + j);
+    const ridge = (o, ww) => { c.beginPath(); c.moveTo(x - dx * l * 0.5 + px * o, y - dy * l * 0.5 + py * o);
+      c.quadraticCurveTo(x - dx * l * 0.25 + px * (o + ww), y - dy * l * 0.25 + py * (o + ww), x + dx * l * 0.5 + px * o, y + dy * l * 0.5 + py * o);
+      c.quadraticCurveTo(x - dx * l * 0.2 + px * (o - ww * 0.2), y - dy * l * 0.2 + py * (o - ww * 0.2), x - dx * l * 0.5 + px * o, y - dy * l * 0.5 + py * o); c.fill(); };
+    c.globalAlpha = 0.3 + rr() * 0.15; c.fillStyle = '#86A0C0'; ridge(w * 0.6, w * 1.4);
+    c.globalAlpha = 0.65; c.fillStyle = '#FFFFFF'; ridge(-w * 0.2, -w * 1.1);
+  }
+  c.globalAlpha = 1;
+};
 
 // ===== 3D camera and its controls (used by the 3D test page; meant for the 3D renderer later) =====
 // Camera3D(THREE, camera, el, opts) drives a THREE.PerspectiveCamera over the board from pointer, wheel and key input
@@ -11104,6 +11203,24 @@ const Scenery3D = (THREE, scene, opts = {}) => {
     light: { hemi: ['#FFE7C4', '#5C5683', 1.25], sun: ['#FFD49C', 2.7], pos: [-58, 34, 20] },
     dusk: { sky: '#E39A6A', hemi: ['#FFC9A0', '#4E4278', 1.05], sun: ['#FF9A58', 2.4], pos: [-70, 16, 12], per: 0.09 },
     fall: 'dust', grassSea: 1, ground: ['#9C7F45', '#CFB26C'], kopjes: true, termites: 12, vultures: 3 };
+  // Snow (Frozen Peak's own look; prototype 2026-11-07): a glacier pass above the clouds in hard daylight. A pale high
+  // sky, a low white sun and a cool blue fill, so the snow is white in the sun and cobalt in the shade. The pass is a
+  // plateau of wind-packed snow: cliffs and boulders along its sides (faceted charcoal rock, snow caps, icicles), teal
+  // seracs, a frozen waterfall closing the far end, and past the flanks the land drops away into a sea of clouds with
+  // far peaks poking through. The wind is the hook: spindrift streams sideways over the board in gusts, snow plumes
+  // blow off the ridge tops, tattered flags snap on their poles, and every round the wind gets up (dusk: the light goes
+  // flat and white) until a white haze closes in round the edges. Diamond dust glitters in the sunlit air.
+  // summit: the plateau, its drop-offs and far wall (the land sheet); wind: its direction [x, z] (the floor's sastrugi
+  // match it); cliffs: cliff walls along the sides; seracs: ice clusters; waterfall: the landmark past the far end;
+  // peaks: far peaks in the cloud sea; clouds: the cloud sea's height (m); plumes: snow plumes off ridges; flags: flag
+  // poles; haze: [colour, strength at the last round, from m, to m at round 1, to m at the last round]; glints: sparkles
+  // on the ice; noLand: the page's flat land plane is hidden (render3d), the sheet and the clouds take its place
+  BIOMES.snow = { sky: '#CFE3EE', land: '#E2EBF2', noLand: true, tint: [1, 1, 1], low: 'summit', trees: ['DeadTree_3', 'DeadTree_1'], grow: 0.32, rockShare: 0.8, dress: 0, snow: 0.9,
+    tints: [[/^DeadTree/, [0.55, 0.58, 0.66]], [/^Rock_/, [0.62, 0.66, 0.74]]],
+    light: { hemi: ['#86ADEB', '#4B6290', 1.5], sun: ['#FFFFFF', 3.6], pos: [-58, 40, -10] }, farLight: 1,
+    dusk: { sky: '#E3EBF0', hemi: ['#A9C2E6', '#62769A', 1.8], sun: ['#F2F5FA', 2.6], pos: [-56, 44, -10], per: 0.1 },
+    fall: 'spindrift', fall2: 'diamond', summit: true, wind: [1, -0.35], cliffs: 12, seracs: 7, waterfall: true, peaks: 16, clouds: -24, plumes: 9, flags: 4,
+    haze: ['#EEF3F7', 0.85, 2, 90, 22], glints: 46 };
   // a look (Scenery3D.LOOKS, below) -> its biome
   const biomeOf = (look) => BIOMES[(Scenery3D.LOOKS[look] || Scenery3D.LOOKS.meadow).biome] || BIOMES.meadow;
   const biome = (v) => biomeOf(Scenery3D.lookOf(v && (v.battlePre || v.m)));
@@ -11114,8 +11231,11 @@ const Scenery3D = (THREE, scene, opts = {}) => {
   // sees toward blue-green (the Purkinje shift): colours wash out, reds go dark first, and shadows sink into blue
   // rather than black. So far from the light a colour becomes its night brightness (weighted toward green and blue)
   // times a blue tint, with a faint blue floor. The cabin's warm light (uWarm: x, z, radius) is kept out of it.
-  const shadeU = { uShade: { value: new THREE.Vector3(0, 1, 2) }, uHalf: { value: new THREE.Vector2(40, 50) }, uNight: { value: new THREE.Vector4(0, 0, 0, 0) }, uWarm: { value: new THREE.Vector3(0, 0, 0) }, uDeep: { value: new THREE.Vector3(0, 1, 2) }, uLamps: { value: Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, 1, 0)) }, uFire: { value: new THREE.Vector4(0, 0, 0, 0) } };
-  const SHADE_GLSL = `uniform vec3 uShade; uniform vec2 uHalf; uniform vec4 uNight; uniform vec3 uWarm; uniform vec3 uDeep; uniform vec4 uLamps[8]; uniform vec4 uFire;
+  const shadeU = { uShade: { value: new THREE.Vector3(0, 1, 2) }, uHalf: { value: new THREE.Vector2(40, 50) }, uNight: { value: new THREE.Vector4(0, 0, 0, 0) }, uWarm: { value: new THREE.Vector3(0, 0, 0) }, uDeep: { value: new THREE.Vector3(0, 1, 2) }, uLamps: { value: Array.from({ length: 8 }, () => new THREE.Vector4(0, 0, 1, 0)) }, uFire: { value: new THREE.Vector4(0, 0, 0, 0) },
+    uHaze: { value: new THREE.Vector4(0, 0, 0, 0) }, uHazeD: { value: new THREE.Vector2(1, 2) } };
+  const SHADE_GLSL = `uniform vec3 uShade; uniform vec2 uHalf; uniform vec4 uNight; uniform vec3 uWarm; uniform vec3 uDeep; uniform vec4 uLamps[8]; uniform vec4 uFire; uniform vec4 uHaze; uniform vec2 uHazeD;
+// the white haze round the edges (Snow, late rounds; uHaze: colour, strength; uHazeD: from m, to m outside the board)
+float pbHaze(vec2 xz) { return uHaze.w > 0.0 ? uHaze.w * smoothstep(uHazeD.x, uHazeD.y, length(max(abs(xz) - uHalf, 0.0))) : 0.0; }
 float pbDeep(vec2 xz) { return uDeep.x * smoothstep(uDeep.y, uDeep.z, length(max(abs(xz) - uHalf, 0.0))); }
 float pbK(vec2 xz) { float k = uShade.x * smoothstep(uShade.y, uShade.z, length(max(abs(xz) - uHalf, 0.0)));
   if (uWarm.z > 0.0) k *= smoothstep(uWarm.z * 0.55, uWarm.z, length(xz - uWarm.xy)); return k; }
@@ -11127,7 +11247,8 @@ float pbLamp(vec2 xz) { float w = 0.0; for (int i = 0; i < 8; i++) { vec4 l = uL
 // the fire beyond the far end (uFire: colour, strength): everything past the far edge glows more and more in its
 // colour the further out it stands, as if backlit by a fire front out of sight (always -z: both players' far side)
 float pbFire(vec2 xz) { return uFire.w > 0.0 ? uFire.w * smoothstep(uHalf.y + 4.0, uHalf.y + 40.0, -xz.y) : 0.0; }
-vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(xz); if (k <= 0.0 && lw <= 0.0 && fw <= 0.0) return c;
+vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(c, uHaze.rgb, hz); // (Snow has no night)
+  float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(xz); if (k <= 0.0 && lw <= 0.0 && fw <= 0.0) return c;
   vec3 c0 = c;
   vec3 dark = uNight.w > 0.0 ? dot(c, vec3(0.08, 0.55, 0.37)) * uNight.rgb * uNight.w + uNight.rgb * 0.018 : vec3(0.0);
   c = mix(c, dark, k);
@@ -11271,7 +11392,112 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     addModel('Termite_2', merge([spire(2.6, 1.0, -0.35, 2.2), spire(1.4, 0.6, 0.2, 0.8, -0.8, -0.3)]), earth);
     addModel('Termite_3', merge([spire(1.5, 0.75, 0.2, 3.7), spire(0.8, 0.45, 0, 1.1, 0.6, 0.2)]), earth);
   }
-  const ready = load().then(() => { addSnowPiles(); addSavanna(); if (opts.renderer) setupImpostors(); key = ''; opts.onReady && opts.onReady(); }).catch((e) => console.warn('No Mans Land: no 3D scenery', e));
+  // ---------- Snow's models: faceted low-poly rock, snow and ice made here, coloured per face in the Cenji Winter pack's
+  // palette (charcoal rock, white snow caps, teal ice). Where the pack's own model is packed into src/kaykit3d.js
+  // (tools/scenery/build-kaykit.js, as 'cenji_' + its number, e.g. cenji_ROCK_10) that one is used instead. ----------
+  const ROCK = ['#3A3F48', '#454B55', '#33383F', '#4D535D'], SNOWC = '#F1F5FA', ICE = ['#86DCE4', '#55BCD4', '#3593BE', '#B2EEF2'];
+  const hashf = (a, b, c) => { const v = Math.sin(a * 12.9898 + b * 78.233 + c * 37.719) * 43758.5453; return v - Math.floor(v) - 0.5; };
+  // every corner moved a little, the same way for corners on the same spot (so the surface stays closed)
+  const jag = (geo, amt, ph = 0, yAmt = amt) => { const p = geo.attributes.position;
+    for (let k = 0; k < p.count; k++) { const x = p.getX(k), y = p.getY(k), z = p.getZ(k), kx = Math.round(x * 50) / 50 + ph, ky = Math.round(y * 50) / 50, kz = Math.round(z * 50) / 50;
+      p.setXYZ(k, x + hashf(kx, ky, kz) * amt, y + hashf(ky, kz, kx) * yAmt, z + hashf(kz, kx, ky) * amt); }
+    return geo; };
+  // parts [geometry, colour (hex, or fn(ny, y, i) -> hex: the face's normal's up part, its middle's height, its number), matrix]
+  // -> one geometry coloured per face (flat: every face its own corners)
+  const paint = (parts) => {
+    const pos = [], col = [], c = new THREE.Color(), a = new THREE.Vector3(), b = new THREE.Vector3(), d = new THREE.Vector3(), n = new THREE.Vector3();
+    let fi = 0;
+    for (const [g0, cf, mx] of parts) {
+      const g = g0.index ? g0.toNonIndexed() : g0.clone(); if (mx) g.applyMatrix4(mx); const P = g.attributes.position.array;
+      for (let i = 0; i < P.length; i += 9, fi++) {
+        a.fromArray(P, i); b.fromArray(P, i + 3); d.fromArray(P, i + 6); b.sub(a); d.sub(a); n.crossVectors(b, d).normalize();
+        c.set(typeof cf === 'function' ? cf(n.y, (P[i + 1] + P[i + 4] + P[i + 7]) / 3, fi) : cf);
+        for (let k = 0; k < 3; k++) col.push(c.r, c.g, c.b);
+      }
+      for (let i = 0; i < P.length; i++) pos.push(P[i]);
+      g.dispose(); if (g0 !== g) g0.dispose();
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); return g;
+  };
+  const rockSnow = (cap = 0.55) => (ny, y, i) => ny > cap ? SNOWC : ROCK[(i * 7 + (i >> 2)) % 4];
+  const iceCol = (ny, y, i) => ny > 0.7 ? ICE[3] : ICE[(i * 5 + (i >> 1)) % 3];
+  const M4s = (x, y, z, rx = 0, ry = 0, rz = 0, s = 1) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(s, s, s));
+  // a rock shard: a leaning faceted column with a slanted top
+  const shard = (r, h, sides, slope, ph) => { const g = new THREE.CylinderGeometry(r * 0.62, r, h, sides, 2).translate(0, h / 2, 0), p = g.attributes.position;
+    for (let k = 0; k < p.count; k++) p.setY(k, p.getY(k) + (p.getY(k) > h * 0.9 ? p.getX(k) * slope : 0));
+    return jag(g, r * 0.3, ph, h * 0.06); };
+  // icicles: thin cones hanging down from y along a front edge
+  const icicles = (n, x0, x1, y, z, len, ph) => { const out = [];
+    for (let i = 0; i < n; i++) { const f = (i + 0.5) / n, l = len * (0.45 + 0.55 * Math.abs(hashf(i, ph, 1.7)) * 2), r = 0.07 + 0.06 * Math.abs(hashf(ph, i, 3.1)) * 2;
+      out.push([new THREE.ConeGeometry(r, l, 4).rotateX(Math.PI).translate(0, -l / 2, 0), ICE[(i % 2) ? 3 : 0], M4s(x0 + (x1 - x0) * f + hashf(i, 2, ph) * 0.2, y, z + hashf(1, i, ph) * 0.15)]); }
+    return out; };
+  // a cliff wall w wide, about h tall (its face toward +z), shards side by side with lower ones behind, snow on top,
+  // icicles hanging along the face
+  const cliffGeo = (w, h, ph) => { const parts = [], n = Math.max(2, Math.round(w / 1.7));
+    for (let i = 0; i < n; i++) {
+      const x = -w / 2 + (i + 0.5) * w / n + hashf(i, ph, 0) * 0.5, r = 0.95 + Math.abs(hashf(ph, i, 1)) * 0.9, hh = h * (0.62 + 0.38 * Math.sin(Math.PI * (i + 0.5) / n)) * (0.85 + Math.abs(hashf(i, 3, ph)) * 0.3);
+      parts.push([shard(r, hh, 5, hashf(i, ph, 5) * 0.5, ph + i), rockSnow(0.5), M4s(x, 0, hashf(i, 7, ph) * 0.6, 0, i * 1.3, 0)]);
+      parts.push([shard(r * 1.15, hh * 0.7, 5, 0.3, ph + i + 9), rockSnow(0.5), M4s(x + 0.4, 0, -r * 1.1, 0, i * 0.7, 0)]);
+      parts.push(...icicles(3, x - r * 0.5, x + r * 0.5, hh * 0.8, r * 0.75, h * 0.18, ph + i * 3));
+    }
+    return paint(parts); };
+  const boulderGeo = (sx, sy, sz, ph) => paint([[jag(lumpGeo(1, sx, sy, sz, ph, 0.22), 0.12, ph), rockSnow(0.62)]]);
+  // a serac: a tall block of glacier ice, leaning, broken at the top, snow on its ledges
+  const seracGeo = (ph) => { const parts = [];
+    [[0, 0, 1.3, 4.2, 0.1], [1.3, 0.5, 0.9, 2.8, -0.15], [-1.1, 0.4, 0.8, 2.2, 0.2], [0.4, -1.0, 0.7, 1.6, -0.1]].forEach(([x, z, r, h, lean], i) => {
+      const g = jag(new THREE.BoxGeometry(r * 1.6, h, r * 1.3, 1, 2, 1).translate(0, h / 2, 0), r * 0.35, ph + i, h * 0.08);
+      parts.push([g, (ny, y, k) => ny > 0.75 ? SNOWC : ICE[(k * 3 + i) % 3], M4s(x, 0, z, lean * 0.5, i * 0.9, lean)]); });
+    return paint(parts); };
+  // an ice crystal cluster: six-sided prisms with pointed tips, splayed out from a snowy foot
+  const crystalGeo = (n, sc, ph) => { const parts = [[jag(lumpGeo(0, 1.1 * sc, 0.45 * sc, 1.0 * sc, ph, 0.15), 0.1, ph), SNOWC]];
+    for (let i = 0; i < n; i++) { const h = sc * (1.2 + Math.abs(hashf(i, ph, 2)) * 3.2), r = sc * (0.18 + Math.abs(hashf(ph, i, 4)) * 0.25), a = i * 2.4 + ph, tilt = 0.15 + Math.abs(hashf(i, 9, ph)) * 0.6;
+      const g = new THREE.CylinderGeometry(r, r * 1.1, h * 0.75, 6).translate(0, h * 0.375, 0), tip = new THREE.ConeGeometry(r, h * 0.25, 6).translate(0, h * 0.875, 0);
+      const m = M4s(Math.cos(a) * sc * 0.3, -0.1, Math.sin(a) * sc * 0.3, Math.sin(a) * tilt, 0, -Math.cos(a) * tilt);
+      parts.push([g, iceCol, m], [tip, iceCol, m]); }
+    return paint(parts); };
+  // the frozen waterfall: a cliff wall with a notch, the fall frozen in bulging tiers from the notch down into a frozen
+  // pool, ice chunks round it, icicles along the ledges, and a dark hunched shape frozen in the ice (front toward +z)
+  const waterfallGeo = () => { const parts = [], ph = 4.1;
+    for (let i = 0; i < 9; i++) { const x = -11 + i * 2.75, notch = Math.abs(x) < 3, h = notch ? 9.6 : 11 + Math.abs(hashf(i, ph, 1)) * 3.5 - Math.abs(x) * 0.12, r = 1.7 + Math.abs(hashf(ph, i, 2)) * 0.6;
+      parts.push([shard(r, h, 5, hashf(i, 3, ph) * 0.4, ph + i), rockSnow(0.5), M4s(x, 0, -2.2 + hashf(i, 5, ph) * 0.6, 0, i * 1.1, 0)]);
+      parts.push([shard(r * 1.2, h * 0.8, 5, 0.2, ph + i + 20), rockSnow(0.5), M4s(x + 0.5, 0, -4.4, 0, i * 0.6, 0)]);
+      if (!notch) parts.push(...icicles(4, x - r * 0.6, x + r * 0.6, h * 0.85, -2.2 + r * 0.7, 1.6, ph + i)); }
+    // the fall: tiers of bulging ice, wider lower down, and long columns down its face
+    [[9.0, 1.7, 0.7, -1.3], [6.2, 2.2, 0.8, -0.9], [3.2, 2.8, 0.9, -0.5], [0.6, 3.7, 1.1, 0.0]].forEach(([y, sx, sy, z], i) =>
+      parts.push([jag(lumpGeo(1, sx, sy, 1.1, ph + i, 0.18), 0.15, ph + i), iceCol, M4s(0, y - 0.5, z)]));
+    for (let i = 0; i < 11; i++) { const x = -3.3 + i * 0.66, top = 9.7 - Math.abs(x) * 0.25, h = top * (0.55 + Math.abs(hashf(i, ph, 8)) * 0.9), r = 0.3 + Math.abs(hashf(ph, i, 6)) * 0.25;
+      parts.push([jag(new THREE.CylinderGeometry(r * 0.55, r, h, 6).translate(0, h / 2, 0), 0.07, ph + i), iceCol, M4s(x, top - h, -1.0 + (top - h) * -0.04 + Math.abs(hashf(i, 4, ph)) * 0.8)]); }
+    parts.push([new THREE.CylinderGeometry(4.6, 5, 0.3, 10).translate(0, 0.15, 0), (ny) => ny > 0.5 ? ICE[1] : ICE[2], M4s(0, 0, 2.6)]); // the frozen pool
+    for (let i = 0; i < 8; i++) { const a = i * 0.83 + 0.3, r = 4.2 + Math.abs(hashf(i, 2, ph)) * 1.6;
+      parts.push([jag(lumpGeo(0, 0.6 + Math.abs(hashf(i, ph, 3)) * 0.8, 0.45, 0.7, ph + i, 0.2), 0.1, ph + i), i % 3 ? iceCol : SNOWC, M4s(Math.cos(a) * r, 0, 2.6 + Math.sin(a) * r * 0.7, 0.2, a, 0.15)]); }
+    // something frozen in the fall: a big dark hunched shape seen through the ice (a Snowgre?)
+    parts.push([lumpGeo(1, 1.5, 1.5, 1.0, 2.2, 0.12), '#2A4866', M4s(0.6, 1.2, 0.1)], [lumpGeo(1, 0.7, 0.6, 0.6, 1.1, 0.1), '#2A4866', M4s(0.9, 3.3, 0.2)], [lumpGeo(0, 0.4, 1.3, 0.4, 0.5, 0.1), '#2A4866', M4s(-0.6, 2.8, 0.4, 0, 0, 0.6)]);
+    return paint(parts); };
+  // a flag pole on a cairn of stones (the cloth is its own mesh: it moves in the wind)
+  const flagpoleGeo = () => paint([[new THREE.CylinderGeometry(0.06, 0.08, 4.6, 5).translate(0, 2.3, 0), '#5B4A3C'],
+    [jag(lumpGeo(0, 0.75, 0.5, 0.7, 1.1, 0.2), 0.1, 1), rockSnow(0.6)], [jag(lumpGeo(0, 0.5, 0.4, 0.45, 2.3, 0.2), 0.08, 2), rockSnow(0.6), M4s(0.35, 0.45, 0.1)], [jag(lumpGeo(0, 0.4, 0.35, 0.4, 3.1, 0.2), 0.08, 3), rockSnow(0.6), M4s(-0.3, 0.4, -0.2)]]);
+  // a drift: a long low tongue of wind-packed snow, its steep head upwind (+x)
+  const driftGeo2 = () => paint([[lumpGeo(1, 2.6, 0.55, 1.0, 0.7, 0.12), (ny) => ny > 0.35 ? SNOWC : '#C3D3E6', M4s(0, -0.1, 0)], [lumpGeo(1, 1.4, 0.4, 0.7, 1.9, 0.12), (ny) => ny > 0.35 ? SNOWC : '#C3D3E6', M4s(-2.1, -0.1, 0.3)]]);
+  // a model of the pack if it's packed (stood on the ground, centred), else null
+  const cenji = (n) => { const g = kkGeo('cenji_' + n); if (!g) return null; const c = g.clone(); c.computeBoundingBox(); const b = c.boundingBox; c.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); return c; };
+  // painted geometries joined into one (positions and colours)
+  const joinCol = (geos) => { const pos = [], col = []; for (const g of geos) { for (const v of g.attributes.position.array) pos.push(v); for (const v of g.attributes.color.array) col.push(v); g.dispose(); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); return g; };
+  function addSummit() {
+    // (in here, not above: MADE and kkGeo are set up further down)
+    MADE.__waterfall = () => cenji('HERO_02') || waterfallGeo(); // (the pack's is 8 m tall; this one about 12 m)
+    MADE.__flagpole = flagpoleGeo; MADE.__drift = () => cenji('SNOW_14') || driftGeo2();
+    const add = (name, cj, make) => addModel(name, (cj && cenji(cj)) || make(), propMat);
+    add('Cliff_1', 'ROCK_10', () => cliffGeo(4.5, 3.8, 1)); add('Cliff_2', 'ROCK_11', () => cliffGeo(6, 6.1, 2)); add('Cliff_3', 'ROCK_12', () => cliffGeo(7.5, 8.2, 3));
+    // an icy cliff: veins of teal ice down its face
+    add('CliffIcy', 'ROCK_15', () => joinCol([cliffGeo(6, 6.7, 4), paint([-1.9, -0.4, 1.6].map((x, i) => [jag(new THREE.BoxGeometry(0.7, 5.2 - i * 0.8, 0.5, 1, 3, 1).translate(0, 2.6 - i * 0.4, 0), 0.18, i), iceCol, M4s(x, 0.3, 1.25, -0.08, 0, hashf(i, 1, 2) * 0.3)]))]));
+    add('Boulder_S1', 'ROCK_01', () => boulderGeo(1.0, 0.8, 0.9, 0.4)); add('Boulder_S2', 'ROCK_03', () => boulderGeo(0.8, 1.0, 0.75, 1.9)); add('Boulder_S3', 'ROCK_05', () => boulderGeo(1.1, 0.55, 0.9, 3.3));
+    add('Formation_1', 'ROCK_09', () => paint([[shard(1.3, 3.2, 5, 0.3, 7), rockSnow(0.5)], [shard(1.0, 2.2, 5, -0.4, 8), rockSnow(0.5), M4s(1.3, 0, 0.5, 0, 1, 0)], [shard(0.8, 1.5, 5, 0.2, 9), rockSnow(0.5), M4s(-1.1, 0, 0.6, 0, 2, 0)]]));
+    add('Serac_1', '', () => seracGeo(1.3)); add('Serac_2', '', () => seracGeo(5.7));
+    add('Crystal_1', '', () => crystalGeo(7, 1, 2.2)); add('Crystal_2', '', () => crystalGeo(4, 0.6, 6.1)); // (the pack has no crystal cluster)
+    add('IceChunk_1', 'ICE_12', () => paint([[jag(lumpGeo(0, 1.0, 0.45, 0.8, 0.9, 0.25), 0.15, 2), iceCol], [jag(lumpGeo(0, 0.6, 0.35, 0.5, 2.4, 0.25), 0.1, 3), iceCol, M4s(0.9, 0, 0.4, 0.3, 1, 0.2)]]));
+  }
+  const ready = load().then(() => { addSnowPiles(); addSavanna(); addSummit(); if (opts.renderer) setupImpostors(); key = ''; opts.onReady && opts.onReady(); }).catch((e) => console.warn('No Mans Land: no 3D scenery', e));
 
   // ---------- impostors: pictures of the far trees and bushes, baked into one atlas ----------
   const ELEV = [8, 40, 90], ICELL = 256, IGRID = 8; // views per model, cell size in pixels, cells per atlas row
@@ -11423,6 +11649,13 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     dress: DRESS,
     rocks: [['SnowPile_1', 1], ['SnowPile_2', 1], ['SnowPile_3', 1], ['Rock_Medium_1', 0.25], ['Rock_Medium_3', 0.25]],
   };
+  // Snow's lists: faceted boulders, ice chunks, small crystal clusters, a few snowy rocks
+  const SUMMIT = {
+    low: [['Boulder_S1', 2], ['Boulder_S2', 2], ['Boulder_S3', 2], ['IceChunk_1', 1.2], ['Crystal_2', 0.5], ['Rock_Medium_1', 0.5], ['Rock_Medium_3', 0.5]],
+    tuft: [['Boulder_S3', 1], ['IceChunk_1', 1.2], ['Rock_Medium_2', 0.6], ['Pebble_Round_1', 0.6], ['Pebble_Square_2', 0.6]],
+    dress: DRESS,
+    rocks: [['Boulder_S1', 1], ['Boulder_S2', 1], ['Boulder_S3', 0.6], ['Formation_1', 0.5]],
+  };
   const SAVANNA = {
     low: [['Thorn_1', 2], ['Thorn_2', 1.5], ['Grass_Common_Tall', 1.5], ['Termite_3', 0.25], ['Boulder_3', 0.3]],
     tuft: [['Grass_Common_Tall', 2], ['Grass_Wispy_Short', 2], ['Thorn_2', 0.5], ['Pebble_Round_1', 0.5]],
@@ -11478,15 +11711,41 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     ash: { col: [0.66, 0.63, 0.6], dir: 1, spd: 0.32, keep: 0.5, size: 0.95, flick: 0, sway: 2.4 }, // grey ash drifting down (Ashlands, with the embers)
     dust: { col: [1.0, 0.9, 0.66], dir: 1, spd: 0.07, keep: 0.3, size: 0.75, flick: 0.35, sway: 3.2 }, // dust and grass seed hanging in the low sun (Savanna)
     spores: { col: [0.82, 1.0, 0.6], dir: -1, spd: 0.06, keep: 0.32, size: 0.8, flick: 0.9, sway: 2.6, add: true }, // glowing spores rising slowly (Darkwoods)
+    // Snow (2026-11-07). stream: [speed m/s along the wind, how high (0 to 1 of the box)]: the points race sideways along
+    // the wind (biome .wind) low over the ground, in gusts (bands of thicker drift sweeping downwind), each drawn as a
+    // streak along its way; keep2 / spd2: the share shown and the speed at the last round (the wind gets up)
+    spindrift: { col: [0.97, 0.99, 1.0], dir: 1, spd: 0.15, keep: 0.42, keep2: 0.98, size: 3.2, flick: 0, sway: 0.25, stream: [9, 0.13], spd2: 1.7 },
+    // diamond dust: ice crystals hanging in the sunlit air, each flashing now and then as it catches the sun
+    diamond: { col: [1.0, 1.0, 1.0], dir: 1, spd: 0.02, keep: 0.4, size: 1.1, flick: 0, sway: 1.4, add: true, flash: 1, stream: [0.6, 0.4] },
   };
-  const fallU = { uCol: { value: new THREE.Vector3() }, uDir: { value: 1 }, uSpd: { value: 1 }, uKeep: { value: 1 }, uSize: { value: 1 }, uFlick: { value: 0 }, uSway: { value: 1 } };
+  const fallU = { uCol: { value: new THREE.Vector3() }, uDir: { value: 1 }, uSpd: { value: 1 }, uKeep: { value: 1 }, uSize: { value: 1 }, uFlick: { value: 0 }, uSway: { value: 1 },
+    uStream: { value: new THREE.Vector4(0, 0, 0, 0) }, uFlash: { value: 0 } };
+  // uStream (Snow): x, z the drift's velocity (m/s), w how high it reaches (a share of the 45 m box; 0: it falls as
+  // snow does); uFlash: sparkles instead of soft dots
   const flakeMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { uTime: snowTime, uPx: { value: 1 }, ...fallU, ...shadeU },
-    vertexShader: `attribute float aSeed; uniform float uTime; uniform float uPx; uniform float uDir; uniform float uSpd; uniform float uKeep; uniform float uSize; uniform float uFlick; uniform float uSway; varying float vA;
+    vertexShader: `attribute float aSeed; uniform float uTime; uniform float uPx; uniform float uDir; uniform float uSpd; uniform float uKeep; uniform float uSize; uniform float uFlick; uniform float uSway; uniform vec4 uStream; uniform float uFlash; varying float vA; varying vec2 vDir;
       ${SHADE_GLSL}
       void main() { vec3 p = position; p.y = mod(p.y - uDir * uTime * uSpd * (1.6 + aSeed * 1.6), 45.0); p.x += sin(uTime * 0.7 + aSeed * 40.0) * 1.3 * uSway; p.z += cos(uTime * 0.5 + aSeed * 30.0) * 0.8 * uSway;
-        vec4 mv = viewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = aSeed > uKeep ? 0.0 : uPx * uSize * (0.35 + aSeed * 0.35) * 300.0 / max(1.0, -mv.z);
-        vA = (0.55 + aSeed * 0.35) * (1.0 - uFlick * (0.5 + 0.5 * sin(uTime * (3.0 + aSeed * 4.0) + aSeed * 60.0))) * (uDir < 0.0 ? smoothstep(45.0, 20.0, p.y) : 1.0) * (0.35 + 0.65 * pbShade(p.xz)) * (1.0 - 0.85 * pbDeep(p.xz)); }`,
-    fragmentShader: `uniform vec3 uCol; varying float vA; void main() { float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; gl_FragColor = vec4(uCol, vA * smoothstep(0.5, 0.2, d)); }` });
+        float gust = 1.0; vDir = vec2(0.0);
+        if (uStream.w > 0.0) {
+          vec2 w = uStream.xy * uTime * (0.7 + aSeed * 0.6);
+          p.x = mod(p.x + w.x + 70.0, 140.0) - 70.0; p.z = mod(p.z + w.y + 95.0, 160.0) - 95.0; p.y *= uStream.w;
+          vec2 wd = normalize(uStream.xy); float g = 0.5 + 0.5 * sin(dot(p.xz, wd) * 0.07 - uTime * length(uStream.xy) * 0.07 + sin(dot(p.xz, vec2(-wd.y, wd.x)) * 0.05) * 1.5);
+          gust = mix(0.12, 1.0, g * g) * smoothstep(70.0, 58.0, abs(p.x)) * smoothstep(0.0, 10.0, p.z + 95.0) * smoothstep(0.0, 10.0, 65.0 - p.z);
+          if (uFlash <= 0.0) { // a streak along the wind on the screen
+            vec4 a0 = projectionMatrix * viewMatrix * vec4(p, 1.0), a1 = projectionMatrix * viewMatrix * vec4(p + vec3(wd.x, 0.0, wd.y), 1.0);
+            vec2 sd = (a1.xy / a1.w - a0.xy / a0.w) * vec2(projectionMatrix[1][1] / projectionMatrix[0][0], 1.0);
+            vDir = length(sd) > 1e-6 ? normalize(vec2(sd.x, -sd.y)) * min(1.0, length(sd) * 40.0) : vec2(0.0); }
+        }
+        vec4 mv = viewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = aSeed > uKeep ? 0.0 : uPx * uSize * (0.35 + aSeed * 0.35) * 300.0 / max(1.0, -mv.z) * (uStream.w > 0.0 ? (1.0 + length(vDir) * 1.5) * (0.6 + 0.4 * gust) : 1.0);
+        vA = (0.55 + aSeed * 0.35) * (1.0 - uFlick * (0.5 + 0.5 * sin(uTime * (3.0 + aSeed * 4.0) + aSeed * 60.0))) * (uDir < 0.0 ? smoothstep(45.0, 20.0, p.y) : 1.0) * (0.35 + 0.65 * pbShade(p.xz)) * (1.0 - 0.85 * pbDeep(p.xz)) * gust;
+        if (uFlash > 0.0) vA *= 0.15 + 2.6 * pow(0.5 + 0.5 * sin(uTime * (0.9 + aSeed * 1.7) + aSeed * 91.0), 24.0); }`,
+    fragmentShader: `uniform vec3 uCol; uniform float uFlash; varying float vA; varying vec2 vDir;
+      void main() { vec2 q = gl_PointCoord - 0.5; float d = length(q);
+        if (uFlash > 0.0) { vec2 aq = abs(q); float s = max(exp(-aq.x * 40.0) * exp(-aq.y * 7.0), exp(-aq.y * 40.0) * exp(-aq.x * 7.0)) + smoothstep(0.12, 0.0, d); // a four-point sparkle
+          if (s < 0.02) discard; gl_FragColor = vec4(uCol, vA * min(1.0, s)); return; }
+        float k = length(vDir); if (k > 0.0) { vec2 dir = vDir / k; d = length(vec2(dot(q, dir), dot(q, vec2(-dir.y, dir.x)) * (1.0 + 4.0 * k))); } // squeezed across the wind
+        if (d > 0.5) discard; gl_FragColor = vec4(uCol, vA * smoothstep(0.5, 0.2, d)); }` });
   const flakes = new THREE.Points(flakeGeo, flakeMat); flakes.visible = false; flakes.raycast = () => {}; scene.add(flakes);
   // a second layer of the same points with its own settings (Ashlands' falling ash, while the first carries embers)
   const flake2Mat = flakeMat.clone();
@@ -11495,6 +11754,8 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
   function setFall(pts, mat, kind) {
     const f = FALL[kind], U = mat.uniforms; pts.visible = !!f; if (!f) return;
     U.uCol.value.set(...f.col); U.uDir.value = f.dir; U.uSpd.value = f.spd; U.uKeep.value = f.keep; U.uSize.value = f.size; U.uFlick.value = f.flick; U.uSway.value = f.sway;
+    U.uFlash.value = f.flash || 0;
+    if (f.stream) { const l = Math.hypot(wind[0], wind[1]) || 1; U.uStream.value.set(wind[0] / l * f.stream[0], wind[1] / l * f.stream[0], 0, f.stream[1]); } else U.uStream.value.set(0, 0, 0, 0);
     mat.blending = kind === 'embers' || f.add ? THREE.AdditiveBlending : THREE.NormalBlending; mat.needsUpdate = true;
   }
   const showFall = (kind, kind2) => { setFall(flakes, flakeMat, kind); setFall(flakes2, flake2Mat, kind2); };
@@ -11914,6 +12175,124 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     P.q.visible = pop > 0.01; P.q.position.set(ex.x, 4.5 + 0.1 * Math.sin(lt * 5), z); P.q.scale.setScalar(1.8 * pop);
     P.bang.visible = ex.panic; P.bang.position.set(ex.x, 4.5, z); P.bang.scale.setScalar(1.8);
   }
+  // ---------- Snow: the summit round the board. The land sheet (a plateau of wind-packed snow, dropping away past the
+  // flanks and rising into a mountain wall past the far end), the sea of clouds below with far peaks in it, snow plumes
+  // streaming off the ridges, glints on the ice, flags snapping in the wind. The wind (wind: its direction [x, z])
+  // gets up every round (windK: 0 at round 1, 1 by the last): more spindrift, longer plumes, faster flags, and a white
+  // haze closing in round the edges. Everything here moves only while the page draws (tick), never on its own. ----------
+  let wind = [1, 0], windK = 0;
+  const sumT = { value: 0 }, sumK = { value: 0 }, sumWind = { value: new THREE.Vector2(1, 0) }, sumH = { value: 800 };
+  const summit = new THREE.Group(); summit.visible = false; scene.add(summit);
+  const summitMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  summitMat.onBeforeCompile = shadeLit; summitMat.customProgramCacheKey = () => 'pb-summit';
+  // the cloud sea: one big plane, two layers of the same tiling cloud picture drifting at different speeds, white on the
+  // tops and blue-grey in the hollows, fading into the sky far out
+  const cloudTex = (() => { const S = 256, cv = document.createElement('canvas'); cv.width = cv.height = S; const g = cv.getContext('2d');
+    g.fillStyle = '#000'; g.fillRect(0, 0, S, S); let sd = 913; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+    for (let i = 0; i < 70; i++) { const x = r() * S, y = r() * S, rad = 12 + r() * 38, a = 0.18 + r() * 0.3;
+      for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) { const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, rad); gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x + ox - rad, y + oy - rad, rad * 2, rad * 2); } }
+    const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t; })();
+  const cloudMat = new THREE.ShaderMaterial({ depthWrite: true, uniforms: { uTex: { value: cloudTex }, uT: sumT, uSky: { value: new THREE.Color() }, uLit: { value: new THREE.Color('#FDFEFF') }, uDim: { value: new THREE.Color('#8DA6C6') } },
+    vertexShader: `varying vec2 vW; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform sampler2D uTex; uniform float uT; uniform vec3 uSky; uniform vec3 uLit; uniform vec3 uDim; varying vec2 vW;
+      void main() { float vD = length(vW - cameraPosition.xz); float a = texture2D(uTex, vW / 190.0 + uT * vec2(0.0016, 0.0005)).r, b = texture2D(uTex, vW / 71.0 + vec2(0.37, 0.61) + uT * vec2(0.0042, -0.0008)).r;
+        float c = clamp(a * 0.8 + b * 0.5, 0.0, 1.0); vec3 col = mix(uDim, uLit, smoothstep(0.15, 0.6, c));
+        col = mix(col, uSky, smoothstep(170.0, 560.0, vD)); gl_FragColor = vec4(col, 1.0);
+        #include <colorspace_fragment>
+      }` });
+  const cloudSea = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400).rotateX(-Math.PI / 2), cloudMat); cloudSea.raycast = () => {}; cloudSea.frustumCulled = false; summit.add(cloudSea);
+  // far peaks: big faceted cones, rock with snow on everything that faces up, paler (bluer, hazier) the further away
+  const peakMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, fog: false });
+  peakMat.onBeforeCompile = (sh) => { shadeLit(sh); sh.uniforms.uSkyP = { value: new THREE.Color(peakMat.userData.skyHex || '#CFE3EE') }; peakMat.userData.sky = sh.uniforms.uSkyP;
+    sh.vertexShader = 'attribute float aHaze; varying float vHaze;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vHaze = aHaze;');
+    sh.fragmentShader = 'uniform vec3 uSkyP; varying float vHaze;\n' + sh.fragmentShader.replace('#include <opaque_fragment>', 'outgoingLight = mix(outgoingLight, uSkyP, vHaze);\n#include <opaque_fragment>'); };
+  peakMat.customProgramCacheKey = () => 'pb-peaks';
+  let peaks = null;
+  // snow plumes: soft puffs (points) leaving each ridge top and streaming downwind, growing and fading
+  const plumeMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { uT: sumT, uK: sumK, uWind: sumWind, uH: sumH, uCol: { value: new THREE.Color('#FFFFFF') } },
+    vertexShader: `attribute vec3 aSrc; attribute vec4 aP; uniform float uT; uniform float uK; uniform vec2 uWind; uniform float uH; varying float vA;
+      void main() { float ph = fract(uT * (0.07 + aP.w * 0.05) * (0.8 + 0.6 * uK) + aP.x), L = aP.y * (0.6 + 0.6 * uK);
+        vec3 p = aSrc + vec3(uWind.x, 0.0, uWind.y) * ph * L + vec3(0.0, ph * L * 0.1 - ph * ph * L * 0.06, 0.0) + vec3(sin(aP.w * 40.0), cos(aP.w * 31.0) * 0.5, sin(aP.w * 17.0)) * ph * aP.z * 0.35;
+        vec4 mv = viewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;
+        gl_PointSize = min(256.0, aP.z * (0.3 + ph * 1.5) * projectionMatrix[1][1] * uH * 0.5 / max(1.0, -mv.z));
+        vA = sin(ph * 3.14159) * (0.6 + 0.3 * uK) * (0.65 + 0.35 * sin(uT * 0.6 + aP.w * 12.0)); }`,
+    fragmentShader: `uniform vec3 uCol; varying float vA; void main() { float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; float a = smoothstep(0.5, 0.0, d); gl_FragColor = vec4(uCol, vA * a * a);
+      #include <colorspace_fragment>
+    }` });
+  let plumes = null;
+  // glints on the ice: points lying on no man's land, each flashing now and then as if it caught the sun
+  const glintMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { uT: sumT, uH: sumH },
+    vertexShader: `attribute float aSeed; uniform float uT; uniform float uH; varying float vA;
+      void main() { vec4 mv = viewMatrix * modelMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv;
+        float f = pow(0.5 + 0.5 * sin(uT * (0.5 + aSeed * 0.9) + aSeed * 77.0), 30.0); vA = f;
+        gl_PointSize = f < 0.01 ? 0.0 : min(64.0, (0.6 + 1.4 * f) * projectionMatrix[1][1] * uH * 0.5 / max(1.0, -mv.z)); }`,
+    fragmentShader: `varying float vA; void main() { vec2 q = abs(gl_PointCoord - 0.5); float s = max(exp(-q.x * 30.0) * exp(-q.y * 6.0), exp(-q.y * 30.0) * exp(-q.x * 6.0)) + smoothstep(0.1, 0.0, length(q));
+      gl_FragColor = vec4(vec3(1.0), vA * min(1.0, s)); }` });
+  let glints = null;
+  // flags: tattered cloth on each pole, streaming downwind and rippling (moved in the vertex shader)
+  const flagMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  flagMat.onBeforeCompile = (sh) => { sh.uniforms.uT = sumT; sh.uniforms.uK = sumK; sh.uniforms.uWind = sumWind;
+    sh.vertexShader = 'attribute vec2 aU; uniform float uT; uniform float uK; uniform vec2 uWind;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      float u = aU.x, t = uT * (7.0 + 6.0 * uK) + aU.y, a = (0.22 + 0.2 * uK) * u;
+      vec3 side = vec3(-uWind.y, 0.0, uWind.x);
+      transformed += side * (sin(u * 6.0 - t) * a + sin(u * 13.0 - t * 1.7) * a * 0.3) + vec3(0.0, sin(u * 4.0 - t * 0.8) * 0.08 * u - u * u * 0.25 * (1.0 - uK), 0.0)
+        - vec3(uWind.x, 0.0, uWind.y) * u * u * 0.18 * (1.0 + sin(u * 6.0 - t));`); };
+  flagMat.customProgramCacheKey = () => 'pb-flag';
+  let flagMesh = null;
+  const disposeSummit = () => { for (const o of [peaks, plumes, glints, flagMesh]) if (o) { summit.remove(o); o.geometry.dispose(); } peaks = plumes = glints = flagMesh = null; };
+  // s: { sheet (geometry), peaks [[x, z, r, h, seed]], plumes [[x, y, z, length, size]], glints [[x, y, z]], flags [[x, y, z, colour, seed]], clouds (y), sky }
+  function showSummit(s) {
+    for (const o of [...summit.children]) if (o.name === 'summit ground') { summit.remove(o); o.geometry.dispose(); }
+    disposeSummit(); summit.visible = !!s; if (!s) return;
+    const sheet = new THREE.Mesh(s.sheet, summitMat); sheet.position.y = -0.03; sheet.receiveShadow = true; sheet.raycast = () => {}; sheet.name = 'summit ground'; summit.add(sheet);
+    cloudSea.position.y = s.clouds; cloudMat.uniforms.uSky.value.set(s.sky);
+    // peaks: one geometry for them all
+    const parts = [], hz = [];
+    for (const [x, z, r, h, sd] of s.peaks) {
+      const g = jag(new THREE.ConeGeometry(r, h, 7, 4).translate(0, h / 2 - 70, 0), r * 0.16, sd, h * 0.04), p = g.attributes.position;
+      for (let k = 0; k < p.count; k++) { const y = p.getY(k); if (y > h - 70 - 0.5) continue; const ridge = 1 + 0.35 * Math.sin(Math.atan2(p.getZ(k), p.getX(k)) * 3 + sd); p.setX(k, p.getX(k) * ridge); p.setZ(k, p.getZ(k) * ridge); }
+      const top = h - 70;
+      parts.push([g, (ny, y, i) => (ny > 0.35 && y > s.clouds + 6) || y > top - h * 0.18 ? SNOWC : ROCK[(i * 7) % 4], M4s(x, 0, z, 0, sd, 0)]);
+      const f = smoothstep(150, 460, Math.hypot(x, z)) * 0.6 + 0.12; hz.push([g.index ? g.index.count / 3 : p.count / 3, f]);
+    }
+    const pg = paint(parts), hzA = new Float32Array(pg.attributes.position.count); let o = 0;
+    for (const [nf, f] of hz) { hzA.fill(f, o, o + nf * 3); o += nf * 3; }
+    pg.setAttribute('aHaze', new THREE.BufferAttribute(hzA, 1)); pg.computeBoundingSphere();
+    peaks = new THREE.Mesh(pg, peakMat); peaks.raycast = () => {}; peaks.name = 'peaks'; summit.add(peaks);
+    if (peakMat.userData.sky) peakMat.userData.sky.value.set(s.sky); peakMat.userData.skyHex = s.sky;
+    // plumes: 14 puffs a ridge
+    const N = s.plumes.length * 14, src = new Float32Array(N * 3), pp = new Float32Array(N * 4);
+    s.plumes.forEach(([x, y, z, len, size], i) => { for (let k = 0; k < 14; k++) { const j = i * 14 + k; src.set([x, y, z], j * 3); pp.set([k / 14 + hashf(i, k, 1) * 0.05, len, size, Math.abs(hashf(k, i, 2)) * 2], j * 4); } });
+    const plg = new THREE.BufferGeometry(); plg.setAttribute('position', new THREE.BufferAttribute(src.slice(), 3)); plg.setAttribute('aSrc', new THREE.BufferAttribute(src, 3)); plg.setAttribute('aP', new THREE.BufferAttribute(pp, 4));
+    plg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 2000);
+    plumes = new THREE.Points(plg, plumeMat); plumes.raycast = () => {}; plumes.renderOrder = 3; summit.add(plumes);
+    // glints
+    const gp = new Float32Array(s.glints.length * 3), gs = new Float32Array(s.glints.length); s.glints.forEach((q, i) => { gp.set(q, i * 3); gs[i] = Math.abs(hashf(i, 3, 9)) * 2; });
+    const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.BufferAttribute(gp, 3)); gg.setAttribute('aSeed', new THREE.BufferAttribute(gs, 1)); gg.computeBoundingSphere();
+    glints = new THREE.Points(gg, glintMat); glints.raycast = () => {}; glints.renderOrder = 2; summit.add(glints);
+    // flags: each cloth 2.9 m along the wind, 1.55 m tall, its far edge torn, in its own colour
+    const fp = [], fc = [], fu = [], c = new THREE.Color(), wl = Math.hypot(wind[0], wind[1]), wx = wind[0] / wl, wz = wind[1] / wl, NU = 9, NV = 3;
+    for (const [x, y, z, hex, sd] of s.flags) {
+      c.set(hex); const P = [];
+      for (let j = 0; j <= NV; j++) for (let i = 0; i <= NU; i++) { const v = j / NV, tear = i === NU ? 0.55 + 0.9 * Math.abs(hashf(j, sd, 1)) : i === NU - 1 ? 0.85 + 0.3 * Math.abs(hashf(j, sd, 2)) : 1, u = i / NU * Math.min(1, tear); // the far edge torn ragged
+        P.push([x + wx * u * 2.9, y - v * 1.55, z + wz * u * 2.9, i / NU]); }
+      for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) { const a = j * (NU + 1) + i, quad = [a, a + 1, a + NU + 1, a + 1, a + NU + 2, a + NU + 1];
+        if (i === NU - 1 && Math.abs(hashf(i, j, sd)) > 0.3) continue; // a torn-away corner
+        for (const q of quad) { fp.push(P[q][0], P[q][1], P[q][2]); fu.push(P[q][3], sd); const sh = 0.92 + 0.08 * (j % 2); fc.push(c.r * sh, c.g * sh, c.b * sh); } }
+    }
+    const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3)); fg.setAttribute('color', new THREE.Float32BufferAttribute(fc, 3)); fg.setAttribute('aU', new THREE.Float32BufferAttribute(fu, 2));
+    fg.computeVertexNormals(); fg.computeBoundingSphere(); fg.boundingSphere.radius += 3;
+    flagMesh = new THREE.Mesh(fg, flagMat); flagMesh.castShadow = true; flagMesh.raycast = () => {}; flagMesh.name = 'flags'; summit.add(flagMesh);
+  }
+  // the wind for this round: more and faster spindrift, the haze closing in (bi.haze), plumes and flags livelier
+  function applyWind(bi, k) {
+    windK = k; sumK.value = k;
+    if (bi.haze) { const [col, str, from, to1, to2] = bi.haze; shadeU.uHaze.value.set(...new THREE.Color(col).toArray(), str * (0.12 + 0.88 * Math.pow(k, 1.4))); shadeU.uHazeD.value.set(from, to1 + (to2 - to1) * k); }
+    else shadeU.uHaze.value.set(0, 0, 0, 0);
+    const f = FALL[bi.fall]; if (!f || !f.stream || !flakes.visible) return;
+    const U = flakeMat.uniforms, l = Math.hypot(wind[0], wind[1]) || 1, sp = f.stream[0] * (1 + ((f.spd2 || 1) - 1) * k);
+    U.uKeep.value = f.keep + ((f.keep2 || f.keep) - f.keep) * k; U.uStream.value.set(wind[0] / l * sp, wind[1] / l * sp, 0, f.stream[1]);
+  }
   // the clock for the falling snow, embers and chimney smoke (the page calls it every frame it draws); px: the renderer's pixels per CSS pixel
   let smokeT = 0;
   function tick(dt, px = 1) {
@@ -11922,6 +12301,10 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     lampFlick.forEach(([i, base, fl, ph]) => { if (fl) shadeU.uLamps.value[i].w = base * (1 - fl * 0.35 * (0.5 + 0.5 * Math.sin(lampT * 7.3 + ph) * Math.sin(lampT * 3.1 + ph * 2))); });
     emberGlows.forEach(([sp, base, ph]) => { const f = 0.8 + 0.2 * Math.sin(lampT * 6.1 + ph) * Math.sin(lampT * 2.3 + ph); sp.scale.setScalar(base * f); });
     if (woods.visible) tickWoods(dt);
+    if (summit.visible) { // Snow: the clouds drift, plumes stream, flags snap, glints flash; far things fade into the sky as it is now
+      sumT.value += dt; if (opts.renderer) sumH.value = opts.renderer.domElement.height;
+      if (scene.background && scene.background.isColor) { cloudMat.uniforms.uSky.value.copy(scene.background); if (peakMat.userData.sky) peakMat.userData.sky.value.copy(scene.background); }
+    }
     if (ex.on) tickExplorer(dt);
     if (grassMat.userData.on) windT.value += dt;
     if (vultures.visible) {
@@ -11970,7 +12353,9 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     const src = v.battlePre || v.m, mp = Game.mapOf(src), id = (mp && mp.id) || 'standard', look = Scenery3D.lookOf(src);
     { const b0 = biomeOf(look); eyeN = b0.eyes ? Math.min(16, Math.round(b0.eyes[0] + b0.eyes[1] * Math.max(0, (src.round || 1) - 1))) : 0; } // Darkwoods: more eyes every round
     const k = [id, look, v.me, Game.COLS, Game.ROWS, castShadows].join('|');
-    if (k === key) return;
+    // Snow: the wind gets up every round, on the same steps as the light (biome .dusk, render3d)
+    const b1 = biomeOf(look), wk = b1.dusk && b1.summit ? Math.min(1, Math.max(0, ((src.round || 1) - 1) * b1.dusk.per)) : 0;
+    if (k === key) { if (wk !== windK) applyWind(b1, wk); return; }
     key = k; clear();
     const bi = biomeOf(look), hF = v.me === 1 ? -1 : 1;
     // seeded per map, not per side: both players get the same land, each seeing it from their own end
@@ -12061,20 +12446,70 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     // Savanna: two granite kopjes (piles of big boulders, the far one with the lone giant acacia beside it), the
     // shapes on the horizon; nothing else grows on them
     const kopjes = bi.kopjes ? [{ x: -hw * 0.42, z: -hd - 24, r: 10, s: 1.25, tree: true }, { x: hw + 21, z: -hd * 0.32, r: 7, s: 0.9 }] : [];
+    // Snow: the summit. The frozen waterfall past the far end with its clearing, cliff walls along the far half of
+    // both sides (facing the board; the left ones lower, the low sun throws their shadows over it) and across the far
+    // end either side of the fall, seracs and crystal clusters, flags on cairns, drifts lying along the wind
+    const sum = bi.summit ? { wf: { x: -hw * 0.06, z: -hd - 16, s: 2.0 }, cliffs: [], ice: [], flags: [] } : null;
+    if (sum) {
+      wind = bi.wind;
+      clears.push({ x: sum.wf.x, z: sum.wf.z + 5, r: 16 });
+      props.push({ kind: 'model', model: '__waterfall', x: sum.wf.x, z: sum.wf.z, ang: 0.04, s: sum.wf.s, y: 0, sink: 0 });
+      for (const sd of [-1, 1]) for (let z = -hd - 4; z < hd * 0.15; z += 9 + rr() * 6) {
+        if (rr() < 0.22) continue;
+        const name = ['Cliff_1', 'Cliff_2', 'Cliff_3', 'CliffIcy'][Math.floor(rr() * 4)], s = (sd < 0 ? 1.05 : 1.35) + rr() * 0.55;
+        sum.cliffs.push([name, sd * (hw + 6.5 + rr() * 4.5), z, s, -sd * Math.PI / 2 + (rr() - 0.5) * 0.5]);
+      }
+      for (let x = -hw - 12; x < hw + 14; x += 8 + rr() * 4) {
+        if (Math.abs(x - sum.wf.x) < 16) continue;
+        sum.cliffs.push([rr() < 0.8 ? 'Cliff_3' : 'CliffIcy', x, -hd - 21 - rr() * 5, 1.7 + rr() * 0.7, (rr() - 0.5) * 0.4 + (x > 0 ? -0.15 : 0.15)]);
+      }
+      for (const [, x, z, s] of sum.cliffs) clears.push({ x, z, r: 2.6 * s });
+      for (let n = 0, t = 0; n < (bi.seracs || 0) && t < 300; t++) {
+        const sd = rr() < 0.5 ? -1 : 1, x = sd * (hw + 3.5 + rr() * 10), z = -hd + rr() * BD * 0.8;
+        if (clears.some((q) => Math.hypot(x - q.x, z - q.z) < q.r + 2)) continue;
+        const name = ['Serac_1', 'Serac_2', 'Crystal_1', 'Crystal_1'][Math.floor(rr() * 4)];
+        sum.ice.push([name, x, z, /^Serac/.test(name) ? 1 + rr() * 0.5 : 1.1 + rr() * 0.6]); clears.push({ x, z, r: 4 }); n++;
+      }
+      const FLAGS = ['#B8433A', '#D99A36', '#3E6BA8', '#E6E0CF'];
+      [[-(hw + 5), -hd * 0.42], [hw + 4.5, hd * 0.08], [-hw * 0.62, -hd - 7], [hw * 0.55, -hd - 8.5]].slice(0, bi.flags || 0).forEach(([x, z], i) => {
+        const p = { kind: 'model', model: '__flagpole', x, z, ang: rr() * 6.28, s: 1.35, y: 0, sink: 0.1 }; props.push(p); sum.flags.push([p, FLAGS[i % 4], i * 1.7 + 0.4]); });
+      const wa = Math.atan2(-wind[1], wind[0]);
+      for (let n = 0, t = 0; n < 16 && t < 200; t++) {
+        const x = (rr() * 2 - 1) * (hw + 14), z = -hd - 8 + rr() * (BD + 14), d = Math.max(Math.abs(x) - hw, Math.abs(z) - hd, 0);
+        if (d < 1.5 || d > 13 || (z > hd - 2 && Math.abs(x) < hw + 6) || clears.some((q) => Math.hypot(x - q.x, z - q.z) < q.r)) continue;
+        props.push({ kind: 'model', model: '__drift', x, z, ang: wa + (rr() - 0.5) * 0.15, s: 0.9 + rr() * 0.8, y: 0, sink: 0.3 }); n++;
+      }
+    }
     const inPond = (x, z, k = 1.12) => kopjes.some((q) => Math.hypot(x - q.x, z - q.z) < q.r * k) || ponds.some((p) => ((x - p.x) / p.rx) ** 2 + ((z - p.z) / p.rz) ** 2 < k * k) || (cab && Math.hypot(x - cab.x, z - cab.z) < cab.r)
       || props.some((p) => Math.hypot(x - p.x, z - p.z) < (p.kind === 'lantern' ? 1.6 : p.kind === 'ember' ? 1.5 : 2.6))
-      || (props.ruinsAt && Math.hypot(x - props.ruinsAt.x, z - props.ruinsAt.z) < 13) || clears.some((q) => Math.hypot(x - q.x, z - q.z) < q.r) || (props.beast && Math.hypot(x - props.beast.x, z - props.beast.z) < 9);
+      || (props.ruinsAt && Math.hypot(x - props.ruinsAt.x, z - props.ruinsAt.z) < 13) || clears.some((q) => Math.hypot(x - q.x, z - q.z) < q.r) || (props.beast && Math.hypot(x - props.beast.x, z - props.beast.z) < 9)
+      || (sum && !onPlateau(x, z));
     const tintFor = (name) => { const t = (bi.tints || []).find(([re]) => re.test(name)); return t ? t[1] : [1, 1, 1]; };
     const squashOf = (name) => { const t = (bi.squash || []).find(([re]) => re.test(name)); return t ? t[1] : 1; };
-    const put = (name, x, z, s, y = 0, wet = false, real = false) => {
+    const put = (name, x, z, s, y = 0, wet = false, real = false, ang = null) => { // ang: its turn (else a random one)
       if (!lib[name] || (!wet && inPond(x, z))) return;
       const d = outside(x, z), k = name + (!real && (d > 16 || (d > 6 && /^Bush/.test(name))) ? '~' : ''), sh = 0.85 + rr() * 0.3, t = tintFor(name);
       y += groundH(x, z) * 0.7; // on deep snow (Moonlit Snow) things stand a little sunk in
-      (placed.get(k) || placed.set(k, []).get(k)).push([x, y, z, rr() * Math.PI * 2, s, [bi.tint[0] * t[0] * sh, bi.tint[1] * t[1] * sh, bi.tint[2] * t[2] * sh], squashOf(name)]);
+      (placed.get(k) || placed.set(k, []).get(k)).push([x, y, z, ang == null ? rr() * Math.PI * 2 : ang, s, [bi.tint[0] * t[0] * sh, bi.tint[1] * t[1] * sh, bi.tint[2] * t[2] * sh], squashOf(name)]);
     };
-    const L = { desert: DESERT, autumn: AUTUMN, darkwoods: DARK, ash: ASH, savanna: SAVANNA, moonlit: SNOWY, rocks: { low: ROCKS, tuft: PEBBLES, rocks: ROCKS, dress: DRESS } }[bi.low] || { low: LOW, tuft: TUFT, rocks: ROCKS, dress: DRESS };
+    const L = { desert: DESERT, autumn: AUTUMN, darkwoods: DARK, ash: ASH, savanna: SAVANNA, moonlit: SNOWY, summit: SUMMIT, rocks: { low: ROCKS, tuft: PEBBLES, rocks: ROCKS, dress: DRESS } }[bi.low] || { low: LOW, tuft: TUFT, rocks: ROCKS, dress: DRESS };
     const low = () => pickOf(L.low), tuft = () => pickOf(L.tuft);
     const outside = (x, z) => Math.max(Math.abs(x) - hw, Math.abs(z) - hd, 0) > 0 ? Math.hypot(Math.max(0, Math.abs(x) - hw), Math.max(0, Math.abs(z) - hd)) : 0;
+    // the summit (Snow): wind-packed snow rising gently from the board, a lip of cornice and then the drop past each
+    // flank (edgeX: where it is, wandering in and out), the mountain wall rising past the far end into a ridge, the
+    // plateau ending far behind your end too
+    const edgeX = (sd, z) => hw + 15 + 7 * vnoise(z * 0.035 + (sd > 0 ? 11.3 : 3.7), sd * 2.1);
+    const SZ0 = -hd - 110;
+    const sheetH = (x, z) => {
+      const d = outside(x, z); if (d <= 0) return 0;
+      let h = smoothstep(0.3, 6, d) * (0.1 + 0.6 * vnoise(x * 0.06 + 2.3, z * 0.09 - 1.1) + 0.25 * vnoise(x * 0.21, z * 0.19));
+      const wf = smoothstep(-hd - 22, -hd - 52, z + 8 * (vnoise(x * 0.05, 7.7) - 0.5)) * (1 - smoothstep(hw + 40, hw + 60, Math.abs(x)));
+      h += wf * smoothstep(SZ0 + 2, SZ0 + 30, z) * (16 + 34 * vnoise(x * 0.028 + 5.1, z * 0.03) + 9 * vnoise(x * 0.12, z * 0.11));
+      const ax = Math.abs(x) - edgeX(Math.sign(x) || 1, z), az = z - (hd + 44 + 8 * vnoise(x * 0.04, 3.3));
+      const fall = (a) => (a > 0 ? -(80 * smoothstep(0, 9, a) + a * 0.4) * (0.8 + 0.4 * vnoise(x * 0.3, z * 0.3)) : 0) + 0.8 * Math.exp(-(((a + 1.2) / 1.3) ** 2));
+      return h + (fall(ax) + fall(az)) * (1 - wf);
+    };
+    const onPlateau = (x, z) => { const h = sheetH(x, z); return h > -0.4 && h < 2.4; };
     // deep snow (biome .deepSnow): the height of the snow at a spot, 0 on the board, rising over its first metres
     // outside into long wind-blown drifts, flattened round the cabin so its door and light stay clear
     const groundH = bi.deepSnow ? (x, z) => {
@@ -12083,7 +12518,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       h *= bi.deepSnow * smoothstep(0.3, 7, d);
       if (cab) h *= 0.15 + 0.85 * smoothstep(cab.r * 1.05, cab.r * 1.5, Math.hypot(x - cab.x, z - cab.z));
       return h;
-    } : bi.craters ? (x, z) => { // churned ground: low rolling ash, shell craters with raised rims and pits
+    } : sum ? (x, z) => sheetH(x, z) : bi.craters ? (x, z) => { // churned ground: low rolling ash, shell craters with raised rims and pits
       const d = outside(x, z); if (d <= 0) return 0;
       let h = 0.3 + 0.45 * vnoise(x * 0.06 + 1.7, z * 0.06 - 3.1) + 0.15 * vnoise(x * 0.2, z * 0.2);
       for (const c of craters) { const q = Math.hypot(x - c.x, z - c.z) / c.r; if (q > 1.8) continue; h += (q < 1 ? -c.depth * (1 - q * q) : 0) + c.depth * 0.32 * Math.exp(-(((q - 1) / 0.28) ** 2)); }
@@ -12108,7 +12543,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       if (behindMe) { if (d < 22 && rr() < 0.35 * bi.grow) put(low(), x, z, 0.9 + rr() * 0.8); continue; }
       const p = Math.min(1, (d - 3) / 10) * (nearBoard ? 0.55 : 0.85) * bi.grow;
       if (rr() > p) { if (d < 16 && rr() < 0.6) put(low(), x, z, 0.9 + rr() * 0.9); continue; }
-      if (!bi.trees.length || rr() < 0.12) { put(pickOf(L.rocks), x, z, 1.6 + rr() * 2.2); continue; } // a boulder now and then
+      if (!bi.trees.length || rr() < (bi.rockShare || 0.12)) { put(pickOf(L.rocks), x, z, 1.6 + rr() * 2.2); continue; } // a boulder now and then
       let tree = bi.trees[Math.floor(rr() * bi.trees.length)];
       if (nearBoard && /^Twisted/.test(tree)) tree = bi.trees[0]; // the big twisted trees (9000 triangles) only stand far out, as impostors
       put(tree, x, z, 1.6 + rr() * 0.9);
@@ -12119,6 +12554,11 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     for (const [x, z, name, s] of giants) {
       put(name, x, z, s, 0, true, true);
       for (let n = 0; n < 4; n++) { const a = rr() * Math.PI * 2, r = 2 + rr() * 2.5; put(rr() < 0.45 ? 'Mushroom_Laetiporus' : 'Fern_1', x + Math.cos(a) * r, z + Math.sin(a) * r, 1.2 + rr() * 0.8, 0, true); }
+    }
+    // 2c. Snow: the cliffs (real models, facing the board), seracs and crystals
+    if (sum) {
+      for (const [name, x, z, s, a] of sum.cliffs) put(name, x, z, s, 0, true, true, a);
+      for (const [name, x, z, s] of sum.ice) put(name, x, z, s, 0, true, true);
     }
     if (gate) for (let zz = -hd - 1.2; zz > gate.z + 3.5; zz -= 1.1 + rr() * 0.6) {
       if (rr() < 0.2) continue; // broken: a stone missing here and there
@@ -12151,7 +12591,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       for (let n = 0; n < 6; n++) { const a = rr() * Math.PI * 2, k = 1.15 + rr() * 0.3; put(pickOf(L.rocks), p.x + Math.cos(a) * p.rx * k, p.z + Math.sin(a) * p.rz * k, 0.8 + rr() * 1.4, 0, true); }
     }
     // 6. snow drifts round the board (Frozen Peak; deep snow has its own drifts in the sheet)
-    if (bi.snow && !bi.deepSnow) {
+    if (bi.snow && !bi.deepSnow && !sum) {
       const dr = new THREE.InstancedMesh(driftGeo, driftMat, 120); let n = 0;
       for (let k = 0; k < 600 && n < 120; k++) {
         const x = (rr() * 2 - 1) * (hw + 45), z = -hd - 60 + rr() * (BD + 95), d = outside(x, z);
@@ -12257,9 +12697,35 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     snowU.value = bi.snow || 0; showFall(bi.fall || (bi.snow ? 'snow' : null), bi.fall2); showCabin(cab);
     for (const p of props) p.y = (p.y || 0) + groundH(p.x, p.z) * (p.sink !== undefined ? 1 - p.sink * 0.5 : 0.85) - (p.sink || 0) * (p.s || 1) * 0.3;
     showProps(props);
+    // Snow: the land sheet, the clouds and far peaks, plumes off the ridges, glints on the ice, the flags' cloth
+    if (sum) {
+      const X0 = -(hw + 64), X1 = hw + 64, Z1 = hd + 70, g = new THREE.PlaneGeometry(X1 - X0, Z1 - SZ0, 64, 90).rotateX(-Math.PI / 2).translate(0, 0, (SZ0 + Z1) / 2), pos = g.attributes.position;
+      for (let k = 0; k < pos.count; k++) {
+        let x = pos.getX(k), z = pos.getZ(k); if (outside(x, z) > 1.5) { x += hashf(x, z, 1) * 1.8; z += hashf(z, x, 2) * 1.8; }
+        pos.setXYZ(k, x, outside(x, z) > 0 ? sheetH(x, z) : -0.2, z);
+      }
+      const SN = [SNOWC, '#EAF0F7', '#F6F9FC'];
+      const sheet = paint([[g, (ny, y, i) => ny < 0.7 ? ROCK[(i * 7 + (i >> 3)) % 4] : SN[(i * 5 + (i >> 2)) % 3]]]);
+      // crags rising out of the clouds just past the drop (seen from the board's own views), then far peaks all round
+      const pk = [[-(hw + 52), -hd - 18, 17, 84, 1.3], [hw + 58, -hd - 4, 20, 90, 2.9], [-(hw + 66), hd * 0.35, 15, 78, 4.4], [hw + 48, -hd - 40, 15, 92, 0.6]];
+      for (let i = 0, t = 0; pk.length < (bi.peaks || 0) && t < 400; t++) {
+        const th = (rr() * 2 - 1) * 2.5, dist = 170 + rr() * 290, x = Math.sin(th) * dist, z = -Math.cos(th) * dist - 30;
+        if (pk.some(([px, pz, pr]) => Math.hypot(x - px, z - pz) < pr * 1.1)) continue;
+        pk.push([x, z, 38 + rr() * 50, 105 + rr() * 120, rr() * 6]); i++;
+      }
+      const pl = [];
+      for (const [x, z, , h] of pk.slice(0, 2)) pl.push([x, h - 71, z, 26, 9]);
+      for (const [name, x, z, s] of sum.cliffs) if (s > 1.9 && pl.length < 5) pl.push([x, groundH(x, z) + lib[name].h * s * 0.95, z, 16 + rr() * 8, 5 + rr() * 2]);
+      for (let x = -hw - 30; x < hw + 30 && pl.length < (bi.plumes || 0) - 3; x += 22 + rr() * 14) { let bz = -hd - 60, bh = -1; for (let z = -hd - 40; z > SZ0 + 15; z -= 4) { const h = sheetH(x, z); if (h > bh) { bh = h; bz = z; } } pl.push([x, bh + 1, bz, 30 + rr() * 15, 10 + rr() * 4]); }
+      for (const [x, z, , h] of [...pk.slice(4)].sort((a, b) => b[3] - a[3]).slice(0, 3)) pl.push([x, h - 72, z, 70 + rr() * 30, 26 + rr() * 10]);
+      const band = (Game.ROWS / 2 - Game.ZONE) * T, gl = [];
+      for (let i = 0; i < (bi.glints || 0); i++) { const x = (rr() * 2 - 1) * hw * 0.97, z = (rr() * 2 - 1) * band * 0.95; gl.push([x, groundY(x, z) + 0.08, z]); }
+      showSummit({ sheet, peaks: pk, plumes: pl, glints: gl, flags: sum.flags.map(([p, hex, sd]) => [p.x, p.y + 4.45 * p.s, p.z, hex, sd]), clouds: bi.clouds || -24, sky: bi.sky });
+    } else showSummit(null);
     horizon.visible = !!bi.horizon;
     if (bi.horizon) { horizonMat.color.set(bi.horizon); horizon.position.set(0, 22, -hd - 120); }
     curBi = bi; half = { hw, hd }; if (!bi.dragonShadow) { fly = null; dragonShadow.visible = false; }
+    applyWind(bi, wk);
     showSmokes(craters.slice(0, bi.smokes || 0).map((c) => ({ x: c.x, y: groundH(c.x, c.z) + 0.5, z: c.z, s: c.r * 0.25 })));
     bake([...new Set([...placed.keys()].filter((k) => k.endsWith('~')).map((k) => k.slice(0, -1)).filter(impostorable))].sort());
     const far = [];
@@ -12289,7 +12755,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     }
   }
   function shadows(on) { if (on !== castShadows) { castShadows = on; key = ''; } }
-  function dispose() { clear(); clearWoods(); scene.remove(woods, explorer); explorer.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.isSprite) { o.material.map.dispose(); o.material.dispose(); } }); for (const m of exMats) m.dispose(); eyeMat.dispose(); shaftMat.dispose(); shaftGeo.dispose(); mistTex.dispose(); shaftTex.dispose(); for (const m of Object.values(glowMats)) m.dispose();
+  function dispose() { clear(); clearWoods(); showSummit(null); scene.remove(summit); cloudSea.geometry.dispose(); cloudMat.dispose(); cloudTex.dispose(); peakMat.dispose(); plumeMat.dispose(); glintMat.dispose(); flagMat.dispose(); summitMat.dispose(); scene.remove(woods, explorer); explorer.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.isSprite) { o.material.map.dispose(); o.material.dispose(); } }); for (const m of exMats) m.dispose(); eyeMat.dispose(); shaftMat.dispose(); shaftGeo.dispose(); mistTex.dispose(); shaftTex.dispose(); for (const m of Object.values(glowMats)) m.dispose();
     scene.remove(flakes, flakes2, cabin, cabinLight, veil, xmas, horizon, dragonShadow, smokeCols, vultures); dragonTex.dispose(); dragonShadow.geometry.dispose(); smokeCols.children.forEach((o) => o.material.dispose()); grassGeo.dispose(); grassMat.dispose(); groundMat.dispose(); vultureMat.dispose(); vultures.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); flake2Mat.dispose(); sootMat.dispose(); emberGlowMat.dispose(); horizonMat.dispose(); horizonTex.dispose(); horizon.geometry.dispose(); dragonMat.dispose(); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
   return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, alive, prey, roost, birds, flyover, foeReady, explore, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
 };
@@ -12397,7 +12863,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     biomeKey = bi.sky + t;
     const li = { ...DAY, ...(bi.light || {}) }, cl = (a, b) => new THREE.Color(a).lerp(new THREE.Color(b), t);
     const sky = du ? cl(bi.sky, du.sky) : new THREE.Color(bi.sky);
-    scene.background.copy(sky); scene.fog.color.copy(sky); around.material.color.set(bi.land);
+    scene.background.copy(sky); scene.fog.color.copy(sky); around.material.color.set(bi.land); around.visible = !bi.noLand; // (Snow: its own land sheet over a sea of clouds)
     hemi.color.copy(du ? cl(li.hemi[0], du.hemi[0]) : new THREE.Color(li.hemi[0])); hemi.groundColor.copy(du ? cl(li.hemi[1], du.hemi[1]) : new THREE.Color(li.hemi[1]));
     hemi.intensity = du ? li.hemi[2] + (du.hemi[2] - li.hemi[2]) * t : li.hemi[2];
     sun.color.copy(du ? cl(li.sun[0], du.sun[0]) : new THREE.Color(li.sun[0])); sun.intensity = du ? li.sun[1] + (du.sun[1] - li.sun[1]) * t : li.sun[1];

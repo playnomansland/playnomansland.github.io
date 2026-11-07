@@ -93,7 +93,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     biomeKey = bi.sky + t;
     const li = { ...DAY, ...(bi.light || {}) }, cl = (a, b) => new THREE.Color(a).lerp(new THREE.Color(b), t);
     const sky = du ? cl(bi.sky, du.sky) : new THREE.Color(bi.sky);
-    scene.background.copy(sky); scene.fog.color.copy(sky); around.material.color.set(bi.land);
+    scene.background.copy(sky); scene.fog.color.copy(sky); around.material.color.set(bi.land); around.visible = !bi.noLand; // (Snow: its own land sheet over a sea of clouds)
     hemi.color.copy(du ? cl(li.hemi[0], du.hemi[0]) : new THREE.Color(li.hemi[0])); hemi.groundColor.copy(du ? cl(li.hemi[1], du.hemi[1]) : new THREE.Color(li.hemi[1]));
     hemi.intensity = du ? li.hemi[2] + (du.hemi[2] - li.hemi[2]) * t : li.hemi[2];
     sun.color.copy(du ? cl(li.sun[0], du.sun[0]) : new THREE.Color(li.sun[0])); sun.intensity = du ? li.sun[1] + (du.sun[1] - li.sun[1]) * t : li.sun[1];

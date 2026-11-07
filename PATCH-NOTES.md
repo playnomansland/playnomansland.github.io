@@ -20,6 +20,21 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 7 November 2026 – Snow: a windy glacier pass above the clouds (prototype)
+
+**Snow**, Frozen Peak's own look, used to be a snowy forest at dusk, close to Moonlit Snow. Now it has its own place: a mountain summit in hard daylight, high above the clouds. On the 3D board:
+- **Bright high-altitude light:** a pale sky and a low white sun. Snow in the sun is white, and everything in shade turns cobalt blue.
+- **A glacier across no man's land:** turquoise ice with dark crevasses, frozen bubbles and polished shine. Something huge lies frozen deep under it, right in the middle. The deploy zones are wind-packed snow, carved into sharp ridges that all point the way the wind blows.
+- **The wind:** loose snow streams sideways across the board in gusts, snow blows off the ridges in plumes, and tattered flags snap on their poles. The wind gets stronger every round, and in a long match a white haze closes in around the edges.
+- **Mountains, not forest:** faceted charcoal cliffs and boulders with snow caps and icicles line the sides, with teal ice blocks and crystal clusters between them. Only a few dead trees are left.
+- **Above the clouds:** past the sides of the board the ground drops away into a sea of clouds, with crags and far-off peaks rising out of it.
+- **The frozen waterfall:** past the far end, a waterfall hangs frozen in mid-fall over an icy pool. Look closely and something dark is trapped inside the ice.
+- **Diamond dust:** tiny ice crystals glitter in the sunlit air, and the ice catches the sun in flashes.
+
+The rules don't change, and Frozen Peak's hail and altar stay switched off. Moonlit Snow looks the same as before.
+
+---
+
 ## 7 November 2026 – Blixten takes a break, leader heads on the way
 
 - **Blixten is out of the game for now.** He's getting a rework, so he no longer shows up in packages, the leader draft or the Leaders menu, in any mode. (He was already left out of Standard and ranked.) He'll be back with new rules.
