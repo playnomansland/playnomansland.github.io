@@ -38,7 +38,7 @@ const ZoeHead = (THREE) => {
   const parts = () => {
     const out = [];
     // --- head
-    const head = new THREE.LatheGeometry(PROFILE.map(([r, y]) => new THREE.Vector2(r, y)), 20);
+    const head = new THREE.LatheGeometry(PROFILE.map(([r, y]) => new THREE.Vector2(r, y)).reverse(), 20); // bottom to top, so the faces point outward
     out.push(P(head, SKIN, [0, 0, 0], [0, 0, 0], [1, 1, DEPTH]));
     // spots: flattened discs lying on the surface
     const up = new THREE.Vector3(0, 0, 1);
@@ -48,7 +48,7 @@ const ZoeHead = (THREE) => {
       const n = new THREE.Vector3(x, y > 0.6 ? 0.8 : 0.1, z).normalize();
       const g = sph(r, 8, 4); g.scale(1, 1, 0.25);
       g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(up, n));
-      g.translate(x, y, z * 1.0);
+      g.translate(x, y, z * 1.0 + (z < 0 ? -0.02 : 0.02));
       out.push({ g, col: SPOT });
     }
     // --- ears: big flat triangles pointing straight out, tips slightly up
@@ -68,8 +68,8 @@ const ZoeHead = (THREE) => {
     // --- eyes: big cream eyes under heavy lids with winged lashes, glancing to her right (-x).
     //     Her left eye (+x) is lidded lower; her right brow arches high: unimpressed, superior.
     const eye = (sd, lidH, lidTilt, brow) => {
-      const cx = sd * 0.47, cy = 0.24, cz = surfZ(cx, cy) + 0.13;
-      const R = 0.4, SY = 0.86, SZ = 0.5, front = -R * SZ;
+      const cx = sd * 0.47, cy = 0.24, cz = surfZ(cx, cy) - 0.02;
+      const R = 0.42, SY = 0.88, SZ = 0.55, front = -R * SZ;
       const g = [];
       g.push(P(sph(R, 12, 8), WHITE, [0, 0, 0], [0, 0, 0], [1, SY, SZ]));
       g.push(P(sph(0.18, 9, 6), PUPIL, [-0.14, -0.07, front + 0.08], [0, 0, 0], [1, 1.1, 0.4])); // looking to her right
