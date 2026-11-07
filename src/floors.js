@@ -53,10 +53,10 @@ Floors.floor = (() => {
       for (let k = 0; k < 55; k++) blob(rr() * W, y0 + rr() * (y1 - y0), t * (0.6 + rr() * 1.5), t * (0.4 + rr() * 0.8), L.mid[k % 3], 0.5);
       if (L.char) { // glowing cracks: a soft orange haze under a thin bright line, branching across the charred band
         c.lineCap = 'round'; c.lineJoin = 'round';
-        for (let k = 0; k < W / t * 1.6; k++) {
+        for (let k = 0; k < W / t * 0.9; k++) {
           const pts = []; let x = rr() * W, y = y0 + t * 0.4 + rr() * (y1 - y0 - t * 0.8), a = rr() * 6.3;
           pts.push([x, y]); for (let s2 = 0; s2 < 5 + rr() * 6; s2++) { a += (rr() - 0.5) * 1.3; x += Math.cos(a) * t * 0.3; y = Math.min(y1, Math.max(y0, y + Math.sin(a) * t * 0.2)); pts.push([x, y]); }
-          for (const [col, wd, al] of [['#B4461C', t * 0.14, 0.22], ['#E8702E', t * 0.05, 0.5], ['#FFB060', 1.1, 0.85]]) {
+          for (const [col, wd, al] of [['#8A3A1C', t * 0.1, 0.12], ['#B8582A', t * 0.035, 0.28], ['#D98A50', 0.8, 0.38]]) {
             c.globalAlpha = al; c.strokeStyle = col; c.lineWidth = wd; c.beginPath(); pts.forEach(([px, py], i) => i ? c.lineTo(px, py) : c.moveTo(px, py)); c.stroke();
           }
         }
