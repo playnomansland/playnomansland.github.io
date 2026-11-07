@@ -37,6 +37,8 @@ node design/diorama/shots.js '[["play","#still,play",1440,900]]'
   empty for None), `#skinoff=N` (skin N taken off), `#out` / `#sure` (Log out / Delete account tapped once), `#history`
   (Match history), `#all` (its All online tab), `#rounds=N` (match N's rounds open), `#units` (Profile's Units, with
   `#tier=` and `#unit=`). `#acct=` also sets whose skins the menu's Units shows.
+- Welcome: `#welcome` (the title screen), `#invited` (came from a friend's link), `#signup`, `#login`, `#tag=<name>`
+  (typed in Sign up), `#err` (a bad username).
 - Dropdowns: `#friends` (with a game invite at the top), `#friends=requests`, `#friends=chat` (the thread with Pebble),
   `#frinvite=N` (friend N's "Invite to" open), `#frmore=N` (friend N's ⋯ open), `#noinvite`, `#settings`. With
   `#acct=guest` Friends asks for Google; with `#acct=dev` Settings has the Developer group.
@@ -145,6 +147,21 @@ window's height (`clamp(..vh..)`); Change battlefield sits on the island's right
 that would land on the left column or under an open dropdown hide; Units from Profile hides the other rows, keeps the
 tier tabs clear of your name (under the Units row if they can't fit) and the sheet clear of the tabs and the music
 player (which steps aside only if there's no other room).
+
+## Welcome, Sign up, Log in (2026-11-07)
+
+The first screen before the menu (the game's `drawWelcome` / `drawSignIn`). Ultramarine, like the menu.
+(`screens/welcome*.jpg`, `signup*.jpg`, `login.jpg`)
+- **Welcome.** The logo large top left; the island in a lower, wider shot (`VIEWS.welcome`). Bottom left, like the menu:
+  LOG IN on the big saffron shard ("Your name, your record and your ranked results, back on this device."), then
+  01 SIGN UP "new here" and 02 PLAY AS GUEST "no account needed". No account buttons, no island notes, except: from a
+  friend's invite link, the golem's note ("A friend invited you · Sign up with Google and finish an online match
+  together. You get this golem's skin." Owner's wording, 2026-11-07.)
+- **Sign up / Log in.** A left column like New room (the logo back to its usual size, the island further right,
+  "← Back"): kicker, SIGN UP / LOG IN, the game's lead line, then rows: Username (dashed line; a bad one turns the line
+  saffron and its note into the rule), Keep it / Google (a stand-in for Google's own button, with "Sign-in is handled
+  by Google. We never see your password or email."), Or: SIGN UP AS A GUEST. Under it "I have an account: log in" /
+  "New here? Sign up". Getting in lands on the menu with that sample account (the name typed in Sign up kept).
 
 ## Friends and Settings (dropdowns, 2026-11-07)
 
