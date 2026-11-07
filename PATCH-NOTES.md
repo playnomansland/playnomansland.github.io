@@ -20,6 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 8 November 2026 – Shell-shocked emote touch-up
+
+- The **Shell-shocked** Sniper emote no longer holds the bent, smoking rifle: at emote size it read as a cigarette. He's still singed, wide-eyed and steaming.
+
+---
+
 ## 7 November 2026 – See what your opponent starts with
 
 - **Round 1:** once your opponent has picked their starting package, its squads show at the back of their side of the board as see-through figures, side by side, with a label: *Starting units · placement hidden*. You see which units they start with, but not where they're going to stand. Their leader and anything else they buy stay hidden until the fight, as before.
