@@ -48,7 +48,7 @@ const FriggoHead = (THREE) => {
   };
 
   // palette from the sheet
-  const HAIR = '#F7B238', FACE = '#D97627', SHADES = '#3B2E1F', COLLAR = '#F3E4CF', COLLAR2 = '#D9C7AE', HEART = '#C4414A', BANDAGE = '#E6D3B8', PICK = '#E8A43C';
+  const HAIR = '#F7B238', FACE = '#EA8F37', SHADES = '#3B2E1F', COLLAR = '#F3E4CF', COLLAR2 = '#D9C7AE', HEART = '#C4414A', BANDAGE = '#E6D3B8', PICK = '#E8A43C';
 
   // the face: a long wedge, widest at the cheekbones/glasses, tapering to a square chin; a flat facet at the front
   // measured from the sheet's front view (chin at y -1, hairline at 1): [y, halfWidth, halfDepth, centreZ, centreX, turn]
@@ -69,13 +69,14 @@ const FriggoHead = (THREE) => {
     // hair: a wide, deep block wrapping down the back of the head, a straight hairline across the forehead, and a
     // pitched roof up to a peak a little to one side. About half as tall as the face, a bit wider than it.
     const HAIR_RINGS = [
-      [0.2, 0.7, 0.42, 0.5, 0.0, 0], // low at the back (its front is hidden inside the face)
-      [0.98, 1.0, 0.96, -0.02, 0.0, 0.5], // the hairline, jutting forward over the forehead
-      [1.5, 1.14, 1.02, -0.08, 0.03, 0], // where the roof starts: wider than the glasses
+      [0.2, 0.7, 0.42, 0.5, 0.0, 0.5], // low at the back (its front is hidden inside the face)
+      [0.98, 1.06, 1.0, -0.1, 0.0, 0.5], // the hairline: a hard, straight front edge, overhanging the forehead
+      [1.36, 1.14, 1.0, -0.04, 0.02, 0.5], // near-vertical sides; the front slopes back and up, so it catches the light
+      [1.58, 1.08, 0.92, 0.0, 0.04, 0], // the roof starts: turned, so it breaks into triangular facets
     ];
-    out.push({ g: loft(HAIR_RINGS, [0.24, 2.3, -0.3], [0, 0.2, 0.55], 6), col: HAIR }); // the peak off to his right // six sides: bold facets
+    out.push({ g: loft(HAIR_RINGS, [0.18, 2.14, -0.12], [0, 0.2, 0.55], 6), col: HAIR }); // the peak: off to his right and forward
     // ears: plain flat shapes at glasses height
-    for (const sd of [-1, 1]) out.push(P(new THREE.CylinderGeometry(0.24, 0.21, 0.12, 6), FACE, [sd * 0.8, 0.02, 0.28], [0, 0, PI / 2], [1, 1, 1.35]));
+    for (const sd of [-1, 1]) out.push(P(new THREE.CylinderGeometry(0.27, 0.23, 0.12, 6), FACE, [sd * 0.8, 0.12, 0.28], [0, 0, PI / 2], [1, 1, 1.35]));
     // nose: a wedge pointing down and forward under the glasses
     const fz = frontZ(FACE_RINGS[3]), cz = frontZ(FACE_RINGS[2]);
     { const g = new THREE.ConeGeometry(0.17, 0.72, 3, 1); g.rotateY(PI); g.rotateX(PI - 0.35);
@@ -108,7 +109,9 @@ const FriggoHead = (THREE) => {
     out.push(P(new THREE.CylinderGeometry(0.62, 0.62, ch, 10, 1, true), FACE, [0, cy, 0.04], tilt)); // inside
     out.push(P(new THREE.RingGeometry(0.6, 0.86, 10, 1), COLLAR, [0, cy + ch / 2, 0.04], [-PI / 2 - 0.1, 0, 0])); // top edge
     out.push(P(new THREE.CircleGeometry(0.8, 10), COLLAR2, [0, cy - ch / 2, 0.04], [PI / 2 - 0.1, 0, 0])); // bottom
-    out.push(P(slab(heart(0.16), 0.04), HEART, [-0.38, cy - 0.04, -0.8], [-0.04, 0.42, 0]));
+    const tab = [-0.42, cy - 0.02, -0.84], tabRot = [-0.12, 0.45, 0];
+    out.push(P(new THREE.BoxGeometry(0.5, 0.48, 0.07), COLLAR, tab, tabRot)); // the collar tab
+    { const g = slab(heart(0.15), 0.04); g.translate(0, 0, -0.05); out.push(P(g, HEART, tab, tabRot)); }
     return out;
   };
 

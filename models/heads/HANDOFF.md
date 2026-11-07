@@ -27,11 +27,11 @@ How the token is built (reuse it for the next leaders):
   token sheet (1536 x 1024): front `400,65,200,280` (`--yaw 0`), hero `40,300,310,445` (`--yaw -0.55`).
 
 **Friggo** (the leader formerly called Frickolas Cage; id `cage`, renamed in the game on 2026-11-07): token built
-from `refs/friggo-reference.png` (target 1,200-2,000 triangles; the token is **`friggo.js`, FriggoHead, 560
+from `refs/friggo-reference.png` (target 1,200-2,000 triangles; the token is **`friggo.js`, FriggoHead v2, 584
 triangles**, waiting for Vilhelm's verdict). A long 8-sided face wedge tapering to a square chin and a 6-sided
-pompadour block with a pitched roof up to an off-centre peak (both from `loft()`: stacked rings, alternate rings
+pompadour block (a hard straight front edge overhanging the forehead, near-vertical sides, the front sloping back so it catches the light) with a pitched roof up to an off-centre peak (both from `loft()`: stacked rings, alternate rings
 turned for triangular facets), a wedge nose, plain ears, wide sunglasses (yellow top bar and rims, dark lenses), a
-toothpick, a plaster on the cheek, and a simple ring collar with a red heart. Renders: `renders/friggo-*.png`.
+toothpick, a plaster on the cheek, and a ring collar with a square tab carrying a red heart. Renders: `renders/friggo-*.png`.
 Crops of his sheet: front `345,50,170,265` (`--yaw 0`), hero `0,225,340,495` (`--yaw 0.5`).
 
 Everything below this section was written for the earlier, detailed style. The hand-built Zoe versions
