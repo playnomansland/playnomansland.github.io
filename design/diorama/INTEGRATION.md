@@ -369,6 +369,18 @@ the new-Title / new-Skin notes.
 - **In a match** the HUD's music button keeps the game's own panel (it has the map's Adaptive music tab).
 - Note for test runs: some tests (music-account-ui, ...) start their own web server on 8766; stop yours first.
 
+**Step 9 (2026-11-07):**
+- **The game's sheets** (`#sheet`: Puzzles, How to play, Leaderboard, Rewards, Report a bug, Tournaments, Load units,
+  Sort, the log-in sheet, the in-match Settings...) take the Diorama's look while the switch is on (end of
+  `src/diorama.css`, scoped to `html.diorama .sheet`): the game's tokens (`--panel`, `--ink`, `--gold`, the fonts) point
+  at the Diorama's inside a sheet, then an ink panel with a cut corner, stencil titles, buttons as stencil words (the
+  primary on the saffron shard), segments with the saffron shard on the picked one, dashed inputs, Close as a typed
+  link. Centred on a PC, a bottom sheet on a phone. Rewards' cards keep their rounded edges (Rewards is on hold).
+- **A build-time default:** the `<head>` switch reads `DEF` (`/*UI_DEFAULT*/`): `node src/build.js` builds `'classic'`;
+  `PB_UI_DEFAULT=diorama node src/build.js` builds the Diorama on by default (`?ui=classic` still turns it off). That
+  is how the suite runs with the switch on, and the launch's flip (step 11). Never commit an index.html built with it
+  before the launch.
+
 **Running the UI tests in this sandbox:** `export NODE_PATH=/opt/node-tools/node_modules` (they require
 `playwright-core`), and some tests launch `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: link it to
 `/opt/pw-browsers/chromium`. These fail on a clean `main` here too (no server `node_modules`, and so on), so compare
