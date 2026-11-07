@@ -19,7 +19,7 @@ const PICK = ['chest_gold', 'coin_stack_medium', 'coin_stack_small', 'torch_moun
   'present_A_red', 'present_B_green', 'present_C_blue', 'present_D_white', 'present_E_yellow', 'present_F_red', // Holiday Bits
   'present_sphere_A_green', 'present_B_yellow', 'present_C_red', 'present_E_blue', 'snowman_A', 'lantern',
   'wall_broken', 'wall_archedwindow_open', 'wall_half', 'pillar', 'rubble_large', 'rubble_half', 'stairs', 'sword_shield_broken', 'barrier_half', // Dungeon Pack (Ashlands)
-  'Dragon', // Animated Monster Pack (Ashlands)
+  'Skeleton_Shield_Large_A', 'Skeleton_Blade', 'skull', 'bone_A', 'post', 'Stone_Chunks_Small', // Skeletons, Halloween Bits, Resource Bits (Ashlands' battlefield; fence_broken and Wood_Log_A below too)
   'acacia_A', 'acacia_B', 'acacia_C', // Simple Nature Pack (Quaternius, CC0; Savanna): Tree2, Tree4 and Tree3 renamed, with acacia.mtl's savanna colours
   'arch_gate', 'fence_pillar_broken', 'fence_broken', 'shrine_candles', 'candle_triple', // Halloween Bits (Darkwoods' old gate and shrine)
   'Wood_Log_A', 'Wood_Log_B']; // Resource Bits (Darkwoods' fallen logs)

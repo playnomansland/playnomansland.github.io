@@ -9,7 +9,7 @@ Floors.FLOORS = {
   autumn: { base: '#62633E', patch: ['#6E6C3E', '#585B37', '#78693A', '#545634'], mid: ['#776146', '#6B583E', '#816A4B'], strokes: ['#8C7F4A', '#474A2C'], ripples: false, leaves: ['#B8532F', '#C9782F', '#D3A43A', '#9A3B2A'] },
   // Ashlands (2026-11-07): burnt ground, scorched no man's land, grey ash flecks and a few glowing embers
   ash: { base: '#4B4744', patch: ['#55504C', '#423E3B', '#5B5550', '#3D3937'], mid: ['#36312E', '#3F3935', '#2F2B29'], strokes: ['#625B55', '#2C2826'], ripples: false, leaves: ['#7D766F', '#8A827A', '#6B645E', '#7D766F', '#8A827A', '#7D766F', '#C0652C'],
-    char: '#2A2523' }, // no man's land charred dark, with thin cracks still glowing
+    char: '#2A2523', scorch: 9 }, // no man's land charred dark, with thin cracks still glowing; old blast scorches over the whole board
   // Moonlit Snow: fresh snow under a night sky with wind ripples; no man's land is pale blue ice with cracks and shine
   moonlit: { base: '#8F9BB0', patch: ['#99A5B9', '#8692A8', '#A3AFC2', '#808CA2'], mid: ['#8FB8E0', '#80ADD9', '#9DC2E6'], strokes: ['#AEB9CB', '#6F7B93'], ripples: true, ice: '#76A8DA' },
   // Savanna: pale straw grass with olive patches, red-brown earth trampled across no man's land
@@ -44,6 +44,13 @@ Floors.floor = (() => {
       for (let k = 0; k < 70; k++) blob(rr() * W, rr() * H, t * (0.8 + rr() * 2.2), t * (0.6 + rr() * 1.6), L.patch[k % 4], 0.55);
       // no man's land: trampled earth, or darker drifts of sand
       const y0 = Game.ZONE * t, y1 = (Game.ROWS - Game.ZONE) * t;
+      if (L.scorch) { // faint old blast scorches anywhere on the board: a dark smudge, a paler ring of thrown ash
+        for (let k = 0; k < L.scorch; k++) {
+          const x = rr() * W, y = rr() * H, r = t * (0.5 + rr() * 0.9), g = c.createRadialGradient(x, y, 0, x, y, r * 1.5);
+          g.addColorStop(0, 'rgba(18,14,12,0.42)'); g.addColorStop(0.55, 'rgba(24,20,18,0.22)'); g.addColorStop(0.75, 'rgba(120,112,104,0.12)'); g.addColorStop(1, 'rgba(120,112,104,0)');
+          c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 1.5, 0, Math.PI * 2); c.fill();
+        }
+      }
       if (L.char) { // charred ground over no man's land, soft at its edges, then cracks with a faint glow
         const g = c.createLinearGradient(0, y0 - t * 0.3, 0, y1 + t * 0.3), e = t * 0.6 / (y1 - y0 + t * 0.6);
         g.addColorStop(0, L.char + '00'); g.addColorStop(e, L.char); g.addColorStop(1 - e, L.char); g.addColorStop(1, L.char + '00');

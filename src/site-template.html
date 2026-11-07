@@ -2508,10 +2508,24 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     try { localStorage.setItem(SKINS_SEEN, JSON.stringify(seen)); } catch (e) {}
   }
 
+  // Ashlands: the dragon's shadow sweeps over the field each time the opponent turns ready (against the computer, a
+  // moment into each deploy, since it is ready at once). Scenery3D.flyover does nothing on other looks.
+  const dragonCue = { was: false, round: 0 };
+  function dragonCheck() {
+    if (!board3d || !m || mode === 'spec') return;
+    const on = phase === 'deploy' && (solo() ? true : !!ready[foe()]);
+    if (on && !dragonCue.was && !(solo() && dragonCue.round === m.round)) {
+      dragonCue.round = m.round;
+      const go = () => { const sc = board3d && board3d.scenery, ms = sc && sc.flyover ? sc.flyover() : 0; if (ms) { wakeUntil = Math.max(wakeUntil, performance.now() + ms); if (!raf3d) raf3d = requestAnimationFrame(frame3d); } };
+      if (solo()) setTimeout(() => { if (phase === 'deploy') go(); }, 1800); else go();
+    }
+    dragonCue.was = on;
+  }
   function render() {
     syncSkins();
     syncGrid();
     syncMusic();
+    dragonCheck();
     cv.style.touchAction = phase === 'deploy' ? 'none' : ''; // so a finger can drag squads without scrolling the page
     if (board3d) wake3d(); else { board.draw(); boardMarks(); }
     if (inspect || inspectHtml) inspectCard(); // the tapped unit's card in a fight (gone once the fight is)
