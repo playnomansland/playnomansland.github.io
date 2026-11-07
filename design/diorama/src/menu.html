@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diorama menu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+@font-face { font-family: "Chakra Petch"; src: url("{{CHAKRA_BOLD}}") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
+{{BASECSS}}
+/* ── draft 5: Chakra Petch Bold is the display face ── */
+:root { --stencil: "Chakra Petch", "Arial Narrow", sans-serif; --k: 0.7; --st-wght: 700; --st-ls: -0.01em; }
+
+/* notes: one template for everything on the island and every menu word: a name, then "kind · fact · fact" */
+.note { transition: opacity .14s ease; width: max-content; max-width: 250px; }
+.note .nm { display: block; }
+.world-hot { cursor: pointer; }
+
+/* ── the playlist: the little player, grown upward. Same type, same alignment, no panel ── */
+.music { text-shadow: 0 0 3px var(--field), 0 0 8px var(--field), 0 0 14px var(--field); z-index: 3; }
+.music .t { cursor: pointer; }
+.music .ctl .open { display: inline-flex; width: auto; height: 30px; margin-left: 10px; white-space: nowrap; }
+.music .open { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; align-items: center; gap: 6px; opacity: .85; }
+.music .open:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+.music .open svg { width: 12px; height: 12px; transition: transform .2s ease; }
+body.music-open .music .open svg { transform: rotate(180deg); }
+.pl-scrim { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s ease; background: radial-gradient(42% 75% at 100% 100%, color-mix(in srgb, var(--field) 92%, transparent), transparent 75%); z-index: 2; }
+body.music-open .pl-scrim { opacity: 1; }
+.pl { display: none; justify-items: end; gap: 14px; margin-bottom: 20px; }
+body.music-open .pl { display: grid; animation: plin .26s cubic-bezier(.16,.9,.24,1) both; }
+@keyframes plin { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.pl-tabs, .pl-modes { display: flex; gap: 16px; font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; }
+.pl-tabs button, .pl-modes button { opacity: .55; }
+.pl-tabs button:hover, .pl-modes button:hover { opacity: 1; }
+.pl-tabs [aria-pressed="true"] { opacity: 1; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.pl-tabs .new { color: var(--saffron); opacity: 1; }
+.pl-modes [aria-pressed="true"] { color: var(--saffron); opacity: 1; }
+.pl-list { list-style: none; margin: 0; padding: 0; display: grid; justify-items: end; gap: 1px; }
+.pl-row { display: grid; grid-template-columns: auto auto auto 22px; gap: 14px; align-items: baseline; padding: 3px 0; font: 500 16px var(--sans); opacity: .58; text-align: right; }
+.pl-row b { font-weight: 700; } .pl-row em { font-style: normal; font-weight: 500; opacity: .75; }
+.pl-row .d, .pl-row .n { font: 400 13px var(--type); } .pl-row .n { opacity: .7; }
+.pl-row .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; width: 14px; color: var(--saffron); visibility: hidden; }
+.pl-row .eq i { width: 3px; background: currentColor; animation: eq .9s ease-in-out infinite alternate; }
+.pl-row .eq i:nth-child(2) { animation-delay: -.3s; } .pl-row .eq i:nth-child(3) { animation-delay: -.6s; }
+@keyframes eq { from { height: 3px; } to { height: 12px; } }
+.pl-row:hover { opacity: 1; }
+.pl-row[aria-current="true"] { opacity: 1; } .pl-row[aria-current="true"] .eq { visibility: visible; }
+@media (prefers-reduced-motion: reduce) { .pl-row .eq i { animation: none; height: 8px; } }
+
+.note.btn-note { text-align: left !important; }
+
+/* ── Rankings: the island steps aside and the standings take its place ── */
+#world, .zz { transition: opacity .35s ease, transform .45s cubic-bezier(.16,.9,.24,1); }
+
+body.ranks .zz { opacity: 0; }
+.standings { position: fixed; left: 48px; top: 150px; width: min(440px, 36vw); display: grid; gap: 6px; opacity: 0; transform: translateY(16px); pointer-events: none; transition: opacity .3s ease, transform .35s cubic-bezier(.16,.9,.24,1); }
+body.ranks .standings { opacity: 1; transform: none; pointer-events: auto; }
+.standings .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+.standings h2 { margin: 0 0 10px; font: 700 76px/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+.standings ol { list-style: none; margin: 0; padding: 0; display: grid; }
+.standings li { position: relative; isolation: isolate; display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 12px 16px 12px 8px; border-bottom: 1px dashed rgba(244,236,216,.2); }
+.standings li:last-child { border-bottom: 0; }
+.standings .r { font: 700 38px/1 var(--stencil); opacity: .85; }
+.standings b { display: block; font: 700 21px/1.15 var(--sans); }
+.standings small { display: block; font: 400 13px var(--type); opacity: .7; margin-top: 3px; }
+.standings .s { font: 700 34px/1 var(--stencil); }
+.standings .s small { display: inline; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; margin-left: 4px; }
+.standings li.first { color: var(--ink); border-bottom-color: transparent; }
+.standings li.first::before { content: ""; position: absolute; inset: -2px -6px; z-index: -1; background: var(--saffron); clip-path: polygon(0 8%, 62% 0, 100% 6%, 98% 92%, 34% 100%, 1% 90%); }
+.standings li.first .r { opacity: 1; }
+.standings .leg { margin: 4px 0 0; font: 400 13px var(--type); opacity: .7; }
+body.pinned .back { display: block; } body.pinned .acct { display: none; }
+body.units .zz { opacity: 0; }
+
+/* ── Units: tier tabs above the island; a unit's sheet hangs off the unit ── */
+.tiers { position: fixed; transform: translateX(-50%); display: flex; gap: 6px; align-items: baseline; opacity: 0; pointer-events: none; transition: opacity .25s ease; white-space: nowrap; text-shadow: 0 0 3px var(--field), 0 0 8px var(--field); }
+body.units .tiers { opacity: 1; pointer-events: auto; }
+.tiers .k { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; margin-right: 12px; }
+.tiers button { position: relative; isolation: isolate; padding: 6px 14px 3px; font: 700 30px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .7; }
+.tiers button:hover { opacity: 1; }
+.tiers button[aria-pressed="true"] { opacity: 1; color: var(--ink); text-shadow: none; }
+.tiers button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+.tiers .hint { font: 400 13px var(--type); opacity: .7; margin-left: 14px; }
+#unote { position: fixed; transform: translate(0, -100%); padding-bottom: 8px; width: max-content; max-width: 240px; font: 400 15px/1.3 var(--type); text-shadow: 0 0 3px var(--field), 0 0 6px var(--field), 0 0 10px var(--field); pointer-events: none; }
+#unote small { display: block; margin-top: 4px; font-size: 13px; opacity: .75; }
+#usheet { position: fixed; width: 330px; padding: 18px 20px 18px; color: var(--cream); isolation: isolate; filter: drop-shadow(0 14px 24px rgba(0,0,0,.35)); }
+#usheet::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #17140F; clip-path: polygon(0 4%, 64% 0, 100% 3%, 100% 100%, 0 100%); }
+#usheet[hidden] { display: none; }
+#usheet .tag { display: inline-block; padding: 3px 7px 2px; font: 700 11px var(--type); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: var(--saffron); clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
+#usheet h3 { margin: 10px 0 12px; font: 700 34px/.95 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+#usheet .st { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font: 400 14px/1.3 var(--type); }
+#usheet .st b { font-weight: 700; }
+#usheet .sk { margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(244,236,216,.2); font: 400 13px/1.45 var(--type); opacity: .85; }
+#usheet .sk b { display: block; font: 700 14px var(--sans); opacity: 1; margin-top: 2px; }
+#usheet .x { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; display: grid; place-items: center; opacity: .8; }
+#usheet .x:hover { opacity: 1; }
+</style>
+<script type="importmap">{ "imports": { "three": "{{THREE_MOD}}", "three-core": "{{THREE_CORE}}" } }</script>
+</head>
+<body>
+<div class="field" aria-hidden="true"></div>
+<canvas id="world" aria-label="A small piece of the battlefield. Your keep at the front, theirs at the back, no man's land between."></canvas>
+<div class="scrim" aria-hidden="true"></div>
+<div class="notes"><svg id="lines" aria-hidden="true"></svg></div>
+
+<img class="logo" src="{{TITLE}}" alt="No Mans Land">
+<nav class="acct" aria-label="Account">
+  <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="currentColor"/><path d="M2 20c0-3.9 3.1-6 7-6s7 2.1 7 6" fill="currentColor"/><circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".7"/><path d="M17 13.5c2.9.2 5 1.9 5 5.5h-4.4c0-2-.6-3.7-1.8-5" fill="currentColor" opacity=".7"/></svg><span>Friends</span></button>
+  <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>Guest</span></button>
+  <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg><span>Settings</span></button>
+</nav>
+<button class="back">← Menu</button>
+
+<nav class="menu" aria-label="Main menu">
+  <button class="item play on" data-cam="play" id="play"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,9 61,0 99,6 96,93 38,100 0,86"/></svg>Play<span class="go">Assemble your army.<br>Master your strategy.<br>Defeat your opponent.</span></button>
+  <div class="sub">
+    <button class="item" data-cam="puzzles"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,12 92,0 100,84 7,100"/></svg><span class="n">01</span>Puzzles</button>
+    <button class="item" data-cam="rules"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,10 95,100 0,90"/></svg><span class="n">02</span>How to play</button>
+    <button class="item" data-cam="units"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,6 97,0 100,96 4,100"/></svg><span class="n">03</span>Units</button>
+    <button class="item" data-cam="ranks"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,0 100,8 97,94 0,100"/></svg><span class="n">04</span>Rankings</button>
+  </div>
+</nav>
+
+<!-- notes. data-home: shown on the menu; data-hover: shown while that thing is pointed at; data-btn: shown while that menu word is -->
+<div class="note" data-anchor="golem" data-home><span class="tag">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></div>
+<div class="note" data-anchor="sniper" data-home>Sniper.<small>Unit · Long range · Good against single targets</small></div>
+<div class="note" data-anchor="mage" data-home>Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
+
+<div class="note" data-anchor="keepYou" data-hover="keepYou">Your keep.<small>Tower · If it falls, you lose</small></div>
+<div class="note" data-anchor="keepFoe" data-hover="keepFoe">Their keep.<small>Tower · Bring it down to win</small></div>
+<div class="note" data-anchor="vaultYou" data-hover="vaultYou">Your treasury.<small>Building · 50 gold for every fight it survives</small></div>
+<div class="note" data-anchor="vaultFoe" data-hover="vaultFoe">Their treasury.<small>Building · Destroy it to steal their gold</small></div>
+<div class="note" data-anchor="mammoth" data-hover="mammoth">War Mammoth.<small>Unit · Huge health · Fast for its size</small></div>
+
+<div class="note btn-note" data-anchor="btn" data-side="left" data-btn="puzzles">Puzzles.<small>Small battles to solve · Learn one idea at a time</small></div>
+<div class="note btn-note" data-anchor="btn" data-side="right" data-btn="rules">How to play.<small>The rules, explained simply</small></div>
+<div class="note btn-note" data-anchor="btn" data-side="left" data-btn="units">Units.<small>Every unit · What it does and what it beats</small></div>
+<div class="note btn-note" data-anchor="btn" data-side="right" data-btn="ranks">Rankings.<small>The leaderboard · Ranked matches only</small></div>
+<div id="unote" style="display:none"></div>
+<nav class="tiers" aria-label="Unit tiers"><span class="k">Units by tier</span><button data-t="1" aria-pressed="true">Tier 1</button><button data-t="2" aria-pressed="false">Tier 2</button><button data-t="3" aria-pressed="false">Tier 3</button><button data-t="4" aria-pressed="false">Tier 4</button></nav>
+<section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
+<div class="zz" id="zz">z<span style="font-size:.7em">z</span></div>
+
+<div class="pl-scrim" aria-hidden="true"></div>
+<div class="music" aria-label="Music">
+  <div class="pl" id="pl">
+    <div class="pl-tabs" role="group" aria-label="Playlists"><button aria-pressed="true">Menu playlist</button><button aria-pressed="false">All music</button><button class="new">+ New</button></div>
+    <ol class="pl-list">
+      <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>sisi</b> <em>by Snetänd</em></span><span class="d">2:16</span><span class="n">01</span></button></li>
+      <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Jonah</b> <em>by Snetänd</em></span><span class="d">3:36</span><span class="n">02</span></button></li>
+      <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Long</b> <em>by Snetänd</em></span><span class="d">1:28</span><span class="n">03</span></button></li>
+      <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Super coffee</b> <em>by Snetänd</em></span><span class="d">2:05</span><span class="n">04</span></button></li>
+      <li><button class="pl-row" aria-current="true"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Reveal</b> <em>by Snetänd</em></span><span class="d">3:13</span><span class="n">05</span></button></li>
+      <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Salig</b> <em>by Emil Helleday</em></span><span class="d">1:18</span><span class="n">06</span></button></li>
+      <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Eyes in the front 2</b> <em>by Snetänd</em></span><span class="d">3:29</span><span class="n">07</span></button></li>
+    </ol>
+    <div class="pl-modes"><button aria-pressed="false">Shuffle</button><button aria-pressed="true">Repeat</button></div>
+  </div>
+  <span>Original soundtrack</span>
+  <button class="t" data-open>Reveal <em>by Snetänd</em></button>
+  <span class="line"><i></i></span>
+  <span class="ctl">
+    <button aria-label="Previous"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h2v10H3zM14 3v10L6 8z" fill="currentColor"/></svg></button>
+    <button aria-label="Pause"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor"/></svg></button>
+    <button aria-label="Next"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 3h2v10h-2zM2 3v10l8-5z" fill="currentColor"/></svg></button>
+    <button class="open" data-open aria-label="Show the playlist">Playlist <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 7.5L6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+  </span>
+</div>
+
+<section class="standings" aria-label="Rankings">
+  <span class="k">Rankings · this month · ranked best-of-3</span>
+  <h2>Standings</h2>
+  <p class="leg">The top players when the month ends earn the gold Legend title.</p>
+</section>
+
+<p class="phone-reward" style="display:none;position:relative;margin:22px 16px 0;font:400 14px/1.4 var(--type)"><span class="tag" style="display:inline-block;padding:3px 7px 2px;font:700 11px var(--type);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--saffron)">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></p>
+<div class="build">Music: Snetänd, Emil Helleday · Build 2026.11</div>
+
+<section class="orders" aria-label="New match">
+  <span class="k">Orders · new match</span>
+  <div class="who">
+    <button class="item on"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,10 96,0 100,90 5,100"/></svg>Vs computer <small>it never gets tired</small></button>
+    <button class="item"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,12 96,100 0,88"/></svg>Vs a friend <small>friendships may be tested</small></button>
+    <button class="item"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,4 98,0 100,100 2,94"/></svg>Online rooms <small>make one or join one</small></button>
+  </div>
+  <div class="opts">
+    <span>Mode</span><span><button><b>[Normal]</b></button> <button><i>Ranked</i></button></span>
+    <span>Pack</span><button style="text-align:left"><b>Standard ▾</b></button>
+    <span>Map</span><button style="text-align:left"><b>Standard ▾</b></button>
+    <span>Timer</span><span><button><b>[On]</b></button> <button><i>Off</i></button></span>
+  </div>
+  <button class="deploy">Deploy <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3"/></svg></button>
+</section>
+
+<script type="module">
+import * as THREE from 'three';
+{{MODELS3D}}
+
+const ROSTER = {{ROSTER}};
+const cv = document.getElementById('world');
+const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+const M = Models3D(THREE);
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches || location.hash.includes('still');
+const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1, metalness: 0, flatShading: true });
+const vmat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, flatShading: true });
+const mesh = (g, m, cast = true) => { const o = new THREE.Mesh(g, m); o.castShadow = cast; o.receiveShadow = true; return o; };
+await Promise.all(['700 200px "Chakra Petch"', '700 56px "Bricolage Grotesque"', '400 40px "Courier Prime"', '700 40px "Courier Prime"'].map(f => document.fonts.load(f)));
+
+// ── the island: the Standard map, 14 columns by 18 rows (zones of 7 rows, 4 rows of no man's land), one tile = 1 ──
+// col c, row r -> x = c - 6.5, z = r - 8.5 (row 0 is the back of their zone, row 17 the back of yours)
+const W = 14, D = 18, island = new THREE.Group(); scene.add(island);
+const tx = (c) => c - 6.5, tz = (r) => r - 8.5;
+const top = mesh(new THREE.BoxGeometry(W, 0.5, D), mat('#9DAF73'), false); top.position.y = -0.25; island.add(top);
+const zone = (z0, z1, c, o) => { const p = mesh(new THREE.PlaneGeometry(W, z1 - z0), new THREE.MeshStandardMaterial({ color: c, transparent: true, opacity: o, roughness: 1 }), false); p.rotation.x = -Math.PI / 2; p.position.set(0, 0.006, (z0 + z1) / 2); p.userData.piece = true; island.add(p); };
+zone(-2, 2, '#B79E74', 0.95); zone(2, 9, '#6FB3E0', 0.12); zone(-9, -2, '#E5674B', 0.1);
+const grid = new THREE.GridHelper(D, D, 0xF4ECD8, 0xF4ECD8); grid.material.transparent = true; grid.material.opacity = 0.16; grid.scale.set(W / D, 1, 1); grid.position.y = 0.012; island.add(grid);
+[['#7A5B3E', 0.7], ['#664A33', 0.6], ['#55402E', 0.55]].forEach(([c, h], i) => { const b = mesh(new THREE.BoxGeometry(W - i * 0.3, h, D - i * 0.3), mat(c)); b.position.y = -0.5 - h / 2 - [0, 0.7, 1.3][i]; island.add(b); });
+{ const g = new THREE.ConeGeometry(5.6, 5, 9, 2); const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y < 2.9) { p.setX(i, p.getX(i) * (0.8 + rnd() * 0.4)); p.setZ(i, p.getZ(i) * (0.8 + rnd() * 0.4)); p.setY(i, y + (rnd() - 0.5) * 0.8); } }
+  const r = mesh(g, mat('#5B4634')); r.rotation.x = Math.PI; r.scale.set(1.18, 1.1, 1.52); r.position.y = -4.6; island.add(r); }
+const base = new Set(island.children.filter(c => !c.userData.piece)); // the island itself: grass, grid, soil, rock
+for (const [x, z, s] of [[-3.6, 0.8, 0.6], [4.0, -0.9, 0.5], [0.6, 1.3, 0.35], [-1.2, -1.1, 0.4], [5.6, 0.9, 0.3]]) { const c = mesh(new THREE.CylinderGeometry(s, s * 0.7, 0.05, 7), mat('#8E7756'), false); c.position.set(x, 0.02, z); island.add(c); }
+const tree = (x, z, s = 1, kind = 0) => { const t = new THREE.Group(); t.add(mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.7, 5), mat('#6B4A2E')));
+  if (kind) { const c = mesh(new THREE.IcosahedronGeometry(0.62, 0), mat(['#6F8E4E', '#7E9A54'][kind - 1])); c.position.y = 0.9; c.scale.set(1, 0.9, 1); t.add(c); }
+  else { for (let k = 0; k < 3; k++) { const c = mesh(new THREE.ConeGeometry(0.62 - k * 0.15, 0.9, 7), mat('#4F6B43')); c.position.y = 0.75 + k * 0.42; t.add(c); } }
+  t.children[0].position.y = 0.35; t.position.set(x, 0, z); t.scale.setScalar(s); t.rotation.y = rnd() * 6; island.add(t); };
+tree(-6.3, 8.3, 1.15); tree(-6.4, 6.4, 0.85, 1); tree(6.3, 8.4, 0.95, 2); tree(6.4, 3.2, 0.75); tree(-6.3, 3.6, 0.7, 2);
+tree(6.2, -8.3, 1.05); tree(-6.2, -8.0, 1, 1); tree(6.4, -5.6, 0.8); tree(-6.4, -4.2, 0.7, 2);
+const rock = (x, z, s) => { const r = mesh(new THREE.DodecahedronGeometry(s, 0), mat('#A39C8D')); r.position.set(x, s * 0.45, z); r.rotation.set(rnd(), rnd(), rnd()); island.add(r); return r; };
+rock(4.6, 7.2, 0.3); rock(-4.9, -6.6, 0.3); rock(6.3, 1.6, 0.25); rock(-4.5, 4.5, 0.55);
+
+// ── pieces, from the game's own Models3D (with KayKit's chest for the treasuries and torches) ──
+const YOU = '#5B8FD6', FOE = '#D9573B';
+const unit = (kind, tint, team, x, z, s, ry = 0, into = island) => { const p = M.parts(kind), g = new THREE.Group();
+  if (p.tint) g.add(mesh(p.tint, mat(tint))); if (p.team) g.add(mesh(p.team, mat(team))); if (p.fixed) g.add(mesh(p.fixed, vmat));
+  g.scale.setScalar(s); g.position.set(x, 0, z); g.rotation.y = ry; g.userData.y0 = 0; into.add(g); return g; };
+const s = 0.42, Y = Math.PI; // models face -z; ours face the foe (-z), theirs turn round
+// the Standard map's own spots: your keep at col 8, row 16; theirs mirrored to col 5, row 1; each treasury beside its keep
+const keepYou = unit('tower:keep', '#D8CFBE', YOU, tx(8), tz(16), 0.36);
+const keepFoe = unit('tower:keep', '#C9BFAE', FOE, tx(5), tz(1), 0.36, Y);
+const vaultYou = unit('treasury', '#D9B95B', YOU, tx(6), tz(15), 0.28, Y);
+const vaultFoe = unit('treasury', '#D9B95B', FOE, tx(7), tz(2), 0.28);
+const champ = unit('brute:champion', '#8D99AE', YOU, 2.6, 4.4, s * 1.05, -0.3);
+const mage = unit('wizard:fire', '#C8463A', YOU, -2.4, 3.6, s, 0.3);
+const sniper = unit('sniper', '#6E7B5A', YOU, 5.0, 5.6, s, -0.35);
+const golem = unit('golem', '#4FD1C5', YOU, -4.5, 4.5, s * 0.95, 0.6); golem.position.y = golem.userData.y0 = 0.45;
+const ent = unit('ent', '#6F8E4E', YOU, 4.6, 8.3, s * 1.05, 0); ent.rotation.set(-Math.PI / 2 + 0.08, 0, 0.5); ent.position.y = ent.userData.y0 = 0.42; // asleep, face down
+for (const [x, z] of [[-2.6, -3.6], [-1.9, -4.0], [-3.2, -4.2], [-2.3, -4.6], [-3.0, -3.3]]) unit('goblin', '#7FA35A', FOE, x, z, s * 0.75, Y + (rnd() - 0.5) * 0.6);
+const mammoth = unit('mammoth', '#8E7A68', FOE, 3.4, -4.6, s * 0.8, Y - 0.3);
+unit('skeleton', '#E9E3CF', FOE, -5.0, -5.6, s * 0.9, Y + 0.3);
+const pieces = new THREE.Group(); island.add(pieces);
+for (const c of [...island.children]) if (!base.has(c) && c !== pieces) pieces.add(c);
+
+// ── tiles with print on them: the podium and the unit roster share this ──
+const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return new THREE.MeshStandardMaterial({ map: t, roughness: 1 }); };
+const fitFont = (g, text, weight, size, family, max) => { let fs = size; g.font = `${weight} ${fs}px ${family}`; while (g.measureText(text).width > max && fs > 10) g.font = `${weight} ${--fs}px ${family}`; };
+const tile = (w, h, d, topDraw, frontDraw, side) => { const sm = mat(side);
+  const m = [sm, sm, canvasTex(512, Math.round(512 * d / w), topDraw), sm, frontDraw ? canvasTex(512, Math.max(32, Math.round(512 * h / w)), frontDraw) : sm, sm];
+  const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.castShadow = b.receiveShadow = true; return b; };
+
+// ── Rankings: the board clears and the top five stand on numbered tiles, first in the middle ──
+const T4 = [['golem', '#51005C'], ['sunPriest', '#FFD23F'], ['meteor', '#FF6B35'], ['mammoth', '#A0785A'], ['necro', '#9D4EDD'], ['truespear', '#C9D1D9'], ['assassin', '#3A3550']];
+const pick = T4.map(v => [v, still ? T4.indexOf(v) : Math.random()]).sort((a, b) => a[1] - b[1]).map(v => v[0]).slice(0, 5);
+const podium = new THREE.Group(); island.add(podium);
+const PLAYERS = { 1: ['Captain Tuesday', '96', '14–1–2'], 2: ['Ironmoss', '88', '12–0–3'], 3: ['Pebble', '81', '11–2–4'], 4: ['Hedgewitch', '74', '9–1–3'], 5: ['Sleepy Ent', '63', '8–0–6'] }; // sample data
+const SPOTS = [4, 2, 1, 3, 5], HEIGHT = { 1: 1.0, 2: 0.78, 3: 0.62, 4: 0.48, 5: 0.38 };
+SPOTS.forEach((n, i) => {
+  const h = HEIGHT[n], x = -4.6 + i * 2.3, first = n === 1, paper = first ? '#F2B23A' : '#F4ECD8', side = first ? '#C98E22' : '#CDBF9F';
+  const b = tile(1.9, h, 2.6, (g, w, hh) => { g.fillStyle = paper; g.fillRect(0, 0, w, hh); g.strokeStyle = first ? 'rgba(23,20,15,.35)' : 'rgba(23,20,15,.2)'; g.lineWidth = 6; g.setLineDash([18, 14]); g.strokeRect(22, 22, w - 44, hh - 44);
+      g.fillStyle = '#17140F'; g.textAlign = 'center'; g.font = '700 220px "Chakra Petch"'; g.fillText(String(n), w / 2, hh * 0.72);
+      fitFont(g, PLAYERS[n][0], 700, 60, '"Bricolage Grotesque"', 440); g.fillText(PLAYERS[n][0], w / 2, hh * 0.87); },
+    (g, w, hh) => { g.fillStyle = side; g.fillRect(0, 0, w, hh); g.fillStyle = '#17140F'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 40px "Courier Prime"'; g.fillText(`${PLAYERS[n][1]} SCORE · ${PLAYERS[n][2]}`, w / 2, Math.min(hh / 2, 46)); }, side);
+  b.position.set(x, h / 2, 0.3); podium.add(b);
+  const [kind, tint] = pick[n - 1], k = kind === 'mammoth' ? 0.4 : kind === 'golem' ? 0.46 : 0.52;
+  const u = unit(kind, tint, first ? '#F2B23A' : '#E9E3CF', x, -0.6, k, Math.PI + (i - 2) * 0.12, podium); u.position.y = h;
+});
+podium.position.y = -4; podium.visible = false;
+
+// ── Units: the board clears and one tier stands in a row, each unit on a tile with its name ──
+const costs = [...new Set(ROSTER.units.map(u => u.cost))].sort((a, b) => a - b);
+const tierOf = (u) => costs.indexOf(u.cost) + 1; // the game's rule: tiers by cost
+const roster = new THREE.Group(); island.add(roster); roster.position.y = -4; roster.visible = false;
+let tier = 1, rosterHot = [];
+function buildTier(t) {
+  for (const c of [...roster.children]) roster.remove(c);
+  rosterHot = [];
+  const list = ROSTER.units.filter(u => tierOf(u) === t), n = list.length, gap = Math.min(1.95, 13.4 / n);
+  list.forEach((u, i) => {
+    const x = (i - (n - 1) / 2) * gap, g = new THREE.Group(); g.position.set(x, 0, -0.5); roster.add(g);
+    const b = tile(gap - 0.14, 0.16, 2.3, (c, w, hh) => { c.fillStyle = '#F4ECD8'; c.fillRect(0, 0, w, hh); c.strokeStyle = 'rgba(23,20,15,.2)'; c.lineWidth = 6; c.setLineDash([18, 14]); c.strokeRect(20, 20, w - 40, hh - 40);
+        c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.8);
+        c.font = '400 40px "Courier Prime"'; c.globalAlpha = .75; c.fillText(`${u.cost} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
+    b.position.set(0, 0.08, 0.35); g.add(b);
+    const kind = M.kindOf(u), ht = M.height(kind) || 2, sc = Math.min(0.66, 2.0 / ht), copies = Math.min(u.bodies || 1, 3);
+    const spots = copies === 1 ? [[0, 0]] : copies === 2 ? [[-0.28, 0.05], [0.28, -0.05]] : [[-0.32, 0.12], [0.32, 0.12], [0, -0.25]];
+    for (const [dx, dz] of spots) unit(kind, u.color, YOU, dx, -0.45 + dz, copies > 1 ? sc * 0.72 : sc, Math.PI + 0.25, g).position.y = 0.16;
+    g.userData = { u, t, i }; rosterHot.push(g);
+  });
+}
+buildTier(1);
+
+// ── light: a warm low sun and a cool sky ──
+scene.add(new THREE.HemisphereLight('#EFE6D2', '#3B3A4E', 1.15));
+const sun = new THREE.DirectionalLight('#FFE3B8', 2.4); sun.position.set(-9, 16, 7); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -15, right: 15, top: 15, bottom: -15, near: 1, far: 45 }); sun.shadow.bias = -0.0008; sun.shadow.normalBias = 0.02;
+scene.add(sun);
+
+// ── camera: a miniature seen from above at an angle; each menu word has its own view ──
+const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
+const VIEWS = {
+  play:    { az: 0.72, el: 0.62, zoom: 13.4, at: [0, -0.6, 0], off: [0.2, 0] },
+  puzzles: { az: 0.95, el: 0.5, zoom: 6.6, at: [-2.4, 0.6, 3.6], off: [0.18, 0] },
+  rules:   { az: 0.0, el: 1.45, zoom: 12.8, at: [0, 0, 0], off: [0.2, 0] },
+  units:   { az: 0.36, el: 0.62, zoom: 10.4, at: [0, 0.4, 1.0], off: [0.21, 0.08] },
+  ranks:   { az: 0.42, el: 0.6, zoom: 10.2, at: [0, 0.2, 0.2], off: [0.2, 0.02] },
+  orders:  { az: 0.0, el: 1.25, zoom: 13.6, at: [0, 0, 0.4], off: [0.24, 0] },
+};
+const phone = () => innerWidth <= 700;
+let want = VIEWS.play, now = { ...VIEWS.play, at: [...VIEWS.play.at], off: [...VIEWS.play.off] };
+const lerp = (a, b, t) => a + (b - a) * t;
+function place() {
+  const w = cv.clientWidth, h = cv.clientHeight, asp = w / h, z = phone() ? now.zoom * 0.86 : now.zoom;
+  cam.left = -z * asp; cam.right = z * asp; cam.top = z; cam.bottom = -z; cam.updateProjectionMatrix();
+  const [ax, ay, az] = now.at, r = 50;
+  cam.position.set(ax + r * Math.cos(now.el) * Math.sin(now.az), ay + r * Math.sin(now.el), az + r * Math.cos(now.el) * Math.cos(now.az));
+  cam.up.set(0, 1, 0); if (now.el > 1.4) cam.up.set(-Math.sin(now.az), 0, -Math.cos(now.az));
+  cam.lookAt(ax, ay, az);
+  const ox = phone() ? 0 : now.off[0];
+  cam.setViewOffset(w, h, -ox * w, (phone() ? 0.02 : now.off[1]) * h, w, h);
+}
+function size() { const w = cv.clientWidth, h = cv.clientHeight; renderer.setSize(w, h, false); place(); }
+addEventListener('resize', size);
+
+// ── notes follow their thing: [object, height of the dot, label offset in px (negative x: label to the left)] ──
+const anchors = {
+  golem: [golem, 1.35, [-190, -170]], sniper: [sniper, 1.0, [170, 120]], mage: [mage, 1.05, [-300, 40]],
+  keepYou: [keepYou, 2.3, [-260, -40]], keepFoe: [keepFoe, 2.4, [-200, -120]], vaultYou: [vaultYou, 0.7, [-230, 70]], vaultFoe: [vaultFoe, 0.7, [180, -110]], mammoth: [mammoth, 1.3, [200, -120]],
+};
+let viewName = 'play', hovered = null, pinnedHover = false, picked = null;
+const svg = document.getElementById('lines'), body = document.body;
+const proj = (o, h) => { const v = new THREE.Vector3(); o.getWorldPosition(v); v.y += h; v.project(cam); return [(v.x + 1) / 2 * cv.clientWidth, (1 - v.y) / 2 * cv.clientHeight]; };
+const dotSvg = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="currentColor"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>`;
+const showing = (el) => viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
+function notes() {
+  let html = '';
+  const playR = document.getElementById('play').getBoundingClientRect();
+  for (const el of document.querySelectorAll('.note')) {
+    const show = showing(el) && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper') && !phone(); el.style.display = show ? '' : 'none'; if (!show) continue;
+    const w = el.offsetWidth, h = el.offsetHeight;
+    if (el.dataset.anchor === 'btn') {
+      // a menu word's note: the dot on the word; the label finds open space. Left-hand words run a rail up the left
+      // margin to a label above PLAY; right-hand words run out to the right of PLAY.
+      const r = document.querySelector(`.menu .item[data-cam="${el.dataset.btn}"]`).getBoundingClientRect(), y = r.top + r.height * 0.55;
+      if (el.dataset.side === 'left') {
+        const x = r.left - 20, ly = playR.top - 34, lx = x + 18;
+        el.style.left = lx + 'px'; el.style.top = ly + 'px'; el.style.textAlign = 'left';
+        html += `<path d="M${x} ${y} L${x} ${ly} L${lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
+      } else {
+        const x = r.right + 6, rail = playR.right + 28, ly = playR.top + 36 + (el.dataset.btn === 'ranks' ? 70 : 0), lx = rail + 16;
+        el.style.left = lx + 'px'; el.style.top = ly + 'px'; el.style.textAlign = 'left';
+        html += `<path d="M${x} ${y} L${rail} ${y} L${rail} ${ly} L${lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
+      }
+      continue;
+    }
+    const [o, hh, [dx, dy]] = anchors[el.dataset.anchor], [x, y] = proj(o, hh), k = phone() ? 0.55 : 1;
+    let ddx = dx; if (ddx > 0 && x + ddx * k + w > innerWidth - 24) ddx = -ddx; if (ddx < 0 && x + ddx * k - w < 24) ddx = -ddx; // keep the label on screen
+    const lx = x + ddx * k, ly = y + dy * k, left = ddx < 0;
+    el.style.left = (left ? lx - w : lx) + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
+    html += `<path d="M${x} ${y} L${lx} ${ly} L${left ? lx - w : lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
+  }
+  // the unit sheet, attached to the picked unit
+  const sh = document.getElementById('usheet');
+  if (picked && body.classList.contains('units')) {
+    sh.hidden = false; const [x, y] = proj(picked, 1.4), w = sh.offsetWidth, h = sh.offsetHeight;
+    // the sheet hangs below its unit, over the open grass in front of the row
+    const sx = Math.min(Math.max(x - w * 0.35, 24), innerWidth - w - 24), sy = Math.min(y + 90, innerHeight - h - 150);
+    sh.style.left = sx + 'px'; sh.style.top = sy + 'px';
+    const ex = Math.min(Math.max(x, sx + 30), sx + w - 30), ey = sy;
+    html += `<path d="M${x} ${y} L${ex} ${ey}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
+  } else sh.hidden = true;
+  // a unit pointed at in the roster
+  const hn = document.getElementById('unote');
+  if (hovered && hovered.startsWith('u:') && body.classList.contains('units') && (!picked || picked.userData.i !== +hovered.slice(2))) {
+    const g = rosterHot[+hovered.slice(2)], [x, y] = proj(g, 1.5), w = hn.offsetWidth;
+    hn.style.display = ''; hn.innerHTML = `${g.userData.u.name}.<small>Tier ${g.userData.t} · ${g.userData.u.cost} gold · click for its sheet</small>`;
+    const hy = y + 210; hn.style.left = (x + 16) + 'px'; hn.style.top = hy + 'px';
+    html += `<path d="M${x} ${y} L${x + 16} ${hy} L${x + 16 + w} ${hy}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
+  } else hn.style.display = 'none';
+  svg.innerHTML = `<g style="color:var(--cream)">${html}</g>`;
+  const [zx, zy] = proj(ent, 1.1); const zz = document.getElementById('zz'); zz.style.left = zx + 'px'; zz.style.top = zy + 'px';
+  // the tier tabs sit above the island's far edge
+  const [tx0, ty0] = proj(island, 0); const tabs = document.querySelector('.tiers'); tabs.style.left = tx0 + 'px'; tabs.style.top = Math.max(118, ty0 - 330) + 'px';
+}
+
+// ── pointing: pieces on the menu, units in the roster ──
+const HOT = { keepYou, keepFoe, vaultYou, vaultFoe, mammoth };
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+const hitOf = (e, groups) => { ptr.set(e.clientX / cv.clientWidth * 2 - 1, -(e.clientY / cv.clientHeight) * 2 + 1); ray.setFromCamera(ptr, cam);
+  const hit = ray.intersectObjects(groups, true)[0]; if (!hit) return -1; return groups.findIndex(g => { let o = hit.object; while (o && o !== g) o = o.parent; return !!o; }); };
+addEventListener('pointermove', (e) => {
+  if (pinnedHover) return;
+  let key = null;
+  if (e.target === cv && !body.classList.contains('play')) {
+    if (viewName === 'play') { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; }
+    else if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
+  }
+  hovered = key; cv.classList.toggle('world-hot', !!key);
+});
+cv.addEventListener('click', (e) => { if (!body.classList.contains('units')) return; const i = hitOf(e, rosterHot); pickUnit(i >= 0 ? rosterHot[i] : null); });
+function pickUnit(g) {
+  picked = g; const sh = document.getElementById('usheet');
+  if (!g) return;
+  const u = g.userData.u, dps = Math.round(u.hit * u.aps * (u.bodies || 1)), sk = (u.skills || []).map(id => ROSTER.skills[id] || id);
+  sh.querySelector('.tag').textContent = `Tier ${g.userData.t} · ${u.cost} gold`;
+  sh.querySelector('h3').textContent = u.name;
+  sh.querySelector('.st').innerHTML = [`<b>${u.hp}</b> health`, `<b>${dps}</b> damage a second`, `<b>${u.range} m</b> range`, `<b>${u.speed}</b> speed`,
+    (u.bodies || 1) > 1 ? `<b>${u.bodies}</b> bodies` : '', u.splash ? `<b>${u.splash} m</b> splash` : '', u.defense && u.defense !== 'none' ? `<b>${u.defVal}</b> ${u.defense}` : ''].filter(Boolean).map(t => `<span>${t}</span>`).join('');
+  sh.querySelector('.sk').innerHTML = sk.length ? `Skills <b>${sk.join(' · ')}</b>` : '';
+}
+document.querySelector('#usheet .x').addEventListener('click', () => pickUnit(null));
+document.querySelectorAll('.tiers button').forEach(b => b.addEventListener('click', () => setTier(+b.dataset.t)));
+function setTier(t) { tier = t; picked = null; document.querySelectorAll('.tiers button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.t === t)); roster.position.y = still ? 0 : -1.6; buildTier(t); }
+
+// ── life ──
+const clock = new THREE.Clock();
+function frame() {
+  const t = still ? 1.3 : clock.getElapsedTime(), k = still ? 1 : 0.08, kk = still ? 1 : 0.12;
+  now.az = lerp(now.az, want.az, k); now.el = lerp(now.el, want.el, k); now.zoom = lerp(now.zoom, want.zoom, k);
+  for (let i = 0; i < 3; i++) now.at[i] = lerp(now.at[i], want.at[i], k);
+  for (let i = 0; i < 2; i++) now.off[i] = lerp(now.off[i], want.off[i], k);
+  island.position.y = Math.sin(t * 0.8) * 0.12; island.rotation.y = Math.sin(t * 0.25) * 0.03;
+  mage.rotation.y = 0.3 + Math.sin(t * 0.9) * 0.15; mage.position.y = Math.abs(Math.sin(t * 2.2)) * 0.06;
+  sniper.rotation.y = -0.35 + Math.sin(t * 0.4) * 0.06;
+  ent.scale.y = 0.441 * (1 + Math.sin(t * 1.2) * 0.03);
+  champ.rotation.y = -0.3 + Math.sin(t * 0.6) * 0.1;
+  const rk = body.classList.contains('ranks'), un = body.classList.contains('units');
+  pieces.position.y = lerp(pieces.position.y, rk || un ? -2.6 : 0, kk); pieces.visible = pieces.position.y > -2.4;
+  podium.position.y = lerp(podium.position.y, rk ? 0 : -4, kk); podium.visible = podium.position.y > -3.6;
+  roster.position.y = lerp(roster.position.y, un ? 0 : -4, kk); roster.visible = roster.position.y > -3.6;
+  for (const [key, g] of Object.entries(HOT)) g.position.y = lerp(g.position.y, g.userData.y0 + (hovered === key ? 0.18 : 0), still ? 1 : 0.25);
+  rosterHot.forEach((g, i) => { g.position.y = lerp(g.position.y, (hovered === 'u:' + i || picked === g) ? 0.22 : 0, still ? 1 : 0.25); });
+  place(); renderer.render(scene, cam); notes();
+  requestAnimationFrame(frame);
+}
+size(); frame();
+
+// ── the menu drives the camera; Units and Rankings stay up once clicked ──
+const items = document.querySelectorAll('.menu .item');
+const MODES = { units: 'units', ranks: 'ranks' };
+const setMode = (v) => { for (const m of Object.values(MODES)) body.classList.toggle(m, m === MODES[v]); };
+for (const b of items) {
+  const go = () => { if (body.classList.contains('pinned') && b.dataset.cam !== viewName) return; items.forEach(x => x.classList.toggle('on', x === b)); viewName = b.dataset.cam; want = VIEWS[viewName]; setMode(viewName); };
+  b.addEventListener('mouseenter', go); b.addEventListener('focus', go);
+}
+document.querySelector('.menu').addEventListener('mouseleave', () => { if (body.classList.contains('pinned')) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
+for (const v of Object.keys(MODES)) document.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
+const unpin = () => { body.classList.remove('pinned'); setMode('play'); picked = null; items.forEach(x => x.classList.toggle('on', x.id === 'play')); viewName = 'play'; want = VIEWS.play; };
+const openPlay = () => { unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = VIEWS.orders; };
+document.getElementById('play').addEventListener('click', openPlay);
+document.querySelector('.back').addEventListener('click', () => { body.classList.remove('play'); unpin(); });
+document.querySelectorAll('.orders .who .item').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.classList.toggle('on', x === b))));
+// the playlist
+const openMusic = () => body.classList.toggle('music-open'), closeMusic = () => body.classList.remove('music-open');
+document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', openMusic));
+document.querySelectorAll('.pl-row').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.setAttribute('aria-current', x === b))));
+document.querySelectorAll('.pl-tabs button[aria-pressed]').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.setAttribute('aria-pressed', x === b))));
+document.querySelectorAll('.pl-modes button').forEach(b => b.addEventListener('click', () => b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true')));
+addEventListener('keydown', e => { if (e.key === 'Escape') { if (picked) return pickUnit(null); closeMusic(); body.classList.remove('play'); unpin(); } });
+addEventListener('pointerdown', e => { if (body.classList.contains('music-open') && !e.target.closest('.music')) closeMusic(); });
+// states for screenshots: #play, #music, #view=<word>, #pin, #tier=<n>, #unit=<n>, #hover=<piece>
+const H = location.hash;
+if (H.includes('play')) { openPlay(); now = { ...VIEWS.orders, at: [...VIEWS.orders.at], off: [...VIEWS.orders.off] }; }
+if (H.includes('music')) openMusic();
+const v = (H.match(/view=(\w+)/) || [])[1];
+if (v && VIEWS[v]) { want = VIEWS[v]; now = { ...want, at: [...want.at], off: [...want.off] }; items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; setMode(v); if (H.includes('pin')) body.classList.add('pinned'); }
+const tq = (H.match(/tier=(\d)/) || [])[1]; if (tq) setTier(+tq);
+const uq = (H.match(/unit=(\d)/) || [])[1]; if (uq) pickUnit(rosterHot[+uq]);
+const hv = (H.match(/hover=([\w:]+)/) || [])[1]; if (hv) { hovered = hv; pinnedHover = true; }
+window.__ready = true;
+
+</script>
+</body>
+</html>
