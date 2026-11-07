@@ -20,7 +20,11 @@ const PICK = ['chest_gold', 'coin_stack_medium', 'coin_stack_small', 'torch_moun
   'present_sphere_A_green', 'present_B_yellow', 'present_C_red', 'present_E_blue', 'snowman_A', 'lantern',
   'wall_broken', 'wall_archedwindow_open', 'wall_half', 'pillar', 'rubble_large', 'rubble_half', 'stairs', 'sword_shield_broken', 'barrier_half', // Dungeon Pack (Ashlands)
   'Dragon', // Animated Monster Pack (Ashlands)
-  'acacia_A', 'acacia_B', 'acacia_C']; // Simple Nature Pack (Quaternius, CC0; Savanna): Tree2, Tree4 and Tree3 renamed, with acacia.mtl's savanna colours
+  'acacia_A', 'acacia_B', 'acacia_C', // Simple Nature Pack (Quaternius, CC0; Savanna): Tree2, Tree4 and Tree3 renamed, with acacia.mtl's savanna colours
+  'arch_gate', 'fence_pillar_broken', 'fence_broken', 'shrine_candles', 'candle_triple', // Halloween Bits (Darkwoods' old gate and shrine)
+  'Wood_Log_A', 'Wood_Log_B']; // Resource Bits (Darkwoods' fallen logs)
+// Halloween Bits has its own 'pillar': build Darkwoods without the Dungeon Pack folder, and the Dungeon pillar is only
+// taken from a folder that also has 'wall_broken' (so the Ashlands ruins keep theirs)
 // an OBJ with its MTL: triangles (faces fanned) with their material's diffuse colour (linear in the MTL, stored as sRGB)
 function readObj(file) {
   const dir = path.dirname(file), txt = fs.readFileSync(file, 'utf8'), v = [], pos = [], col = [], kd = {};
@@ -52,7 +56,7 @@ function pack(pos, col) {
   for (const name of PICK) {
     const objSrc = SRCS.find((d) => fs.existsSync(path.join(d, name + '.obj')));
     if (objSrc) { const { pos, col } = readObj(path.join(objSrc, name + '.obj')); out[name] = pack(pos, col); console.log(name, pos.length / 9, 'tris (obj)'); continue; }
-    const src = SRCS.find((d) => fs.existsSync(path.join(d, name + '.gltf')));
+    const src = SRCS.find((d) => fs.existsSync(path.join(d, name + '.gltf')) && (name !== 'pillar' || fs.existsSync(path.join(d, 'wall_broken.gltf'))));
     if (!src) { console.log(name, out[name] ? 'kept' : 'MISSING'); continue; }
     const doc = await io.read(path.join(src, name + '.gltf'));
     // a chest's lid is its own model (name + '_lid', in its own frame: the hinge at its origin), so it can be drawn open

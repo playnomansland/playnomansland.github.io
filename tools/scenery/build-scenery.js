@@ -49,14 +49,19 @@ function readObj(file) {
 const PICK = {
   CommonTree_1: 0.3, CommonTree_2: 0.3, CommonTree_3: 0.35, CommonTree_4: 0.35, CommonTree_5: 0.4,
   Pine_1: 0.35, Pine_2: 0.35, Pine_3: 0.3, Pine_5: 0.5,
-  TwistedTree_1: 0.2,
+  TwistedTree_1: 0.2, TwistedTree_2: 0.2, TwistedTree_3: 0.2, TwistedTree_4: 0.2, TwistedTree_5: 0.2, // Darkwoods' giants (2026-11-07)
+  Pine_4: 0.35,
   DeadTree_1: 0.25, DeadTree_3: 0.25,
   Bush_Common: 0.7, Bush_Common_Flowers: 0.7, Fern_1: 1, Plant_1_Big: 1, Plant_7_Big: 1,
   Grass_Common_Short: 1, Grass_Common_Tall: 1, Grass_Wispy_Short: 1,
   Flower_3_Group: 1, Flower_4_Group: 0.8, Clover_1: 1, Mushroom_Common: 0.8,
+  Mushroom_Laetiporus: 0.3, Grass_Wispy_Tall: 1, // Darkwoods: shelf fungus on trunks, tall wispy grass
   Rock_Medium_1: 1, Rock_Medium_2: 1, Rock_Medium_3: 1,
   Pebble_Round_1: 1, Pebble_Round_2: 1, Pebble_Square_2: 1,
 };
+// texture -> a colour shift (sharp's modulate): the twisted trees' leaves come red in the kit; turned a dusty moss green
+// (Darkwoods' giants, Forest Clearing)
+const RECOLOR = { Leaves_TwistedTree: { hue: 100, saturation: 0.6, brightness: 1 } };
 // texture -> longest side in pixels
 const TEX_SIZE = { Bark_NormalTree: 256, Bark_TwistedTree: 256, Bark_DeadTree: 256, Rocks_Diffuse: 512, Rocks_Desert: 512, Leaves: 512, Flowers: 256, Mushrooms: 256, PalmTree_Leaves: 512, MapleTree_Leaves: 512, BirchTree_Leaves: 512 };
 
@@ -131,7 +136,8 @@ const TEX_SIZE = { Bark_NormalTree: 256, Bark_TwistedTree: 256, Bark_DeadTree: 2
   }
   for (let i = 0; i < tex.length; i++) {
     const t = tex[i], size = TEX_SIZE[t.name] || 256;
-    const img = sharp(Buffer.from(texFiles[i])).resize(size, size, { fit: 'inside' });
+    let img = sharp(Buffer.from(texFiles[i])).resize(size, size, { fit: 'inside' });
+    if (RECOLOR[t.name]) img = img.modulate(RECOLOR[t.name]);
     const buf = await img.webp(t.alpha ? { quality: 82, alphaQuality: 90 } : { quality: 80 }).toBuffer();
     t.off = push(buf); t.len = buf.length;
     console.log('tex', t.name, size, buf.length);

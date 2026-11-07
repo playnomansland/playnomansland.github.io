@@ -20,6 +20,21 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 7 November 2026 – Darkwoods gets its own identity (prototype)
+
+**Darkwoods**, the Standard map's own look, was Frozen Peak without the snow. It's now an ancient forest, and the battlefield is its one clearing:
+- **Giant twisted trees** lean over the sides and far corners of the board, two to three times the height of the old pines, and throw their shadows across it. Further out the woods turn into a green-black dark.
+- **Eyes in the dark:** pairs of pale eyes open between the trunks, blink, close and turn up somewhere else. More of them watch every round.
+- **Ground mist** drifts between the trees, and faint **light shafts** fall through the canopy onto the clearing. Glowing spores rise slowly through the air.
+- **The old gate:** past the far end stands a stone gate with broken fences on either side and a shrine and candles before it, flickering warm in the dark. An old path of stones leads there from the board.
+- **A new forest floor:** moss and leaf litter, dappled light, old roots creeping in from the woods on both sides, and a broken stone road across no man's land (the ice and the mountain rock are gone).
+- **Undergrowth:** ferns, tall wispy grass, orange shelf fungus and mushrooms, fallen logs by the sides.
+- **Forest Clearing:** its twisted trees now have moss-green leaves too (they were dark red).
+
+Trees and fungus from Quaternius' Stylized Nature MegaKit; the gate, shrine and candles from KayKit's Halloween Bits; the logs from KayKit's Resource Bits (all CC0).
+
+---
+
 ## 7 November 2026 – A new music player and your own playlists
 
 - **A new look for the music player:** dark glass with low-poly facets, gold trim and corner brackets, glossy gold orbs for the Play button and the note and a thin gold progress bar.

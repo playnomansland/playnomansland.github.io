@@ -14,13 +14,17 @@ Floors.FLOORS = {
   moonlit: { base: '#8F9BB0', patch: ['#99A5B9', '#8692A8', '#A3AFC2', '#808CA2'], mid: ['#8FB8E0', '#80ADD9', '#9DC2E6'], strokes: ['#AEB9CB', '#6F7B93'], ripples: true, ice: '#76A8DA' },
   // Savanna: pale straw grass with olive patches, red-brown earth trampled across no man's land
   savanna: { base: '#B09A5C', patch: ['#BCA668', '#A08B50', '#C4AE72', '#98884F'], mid: ['#A2724C', '#986A46', '#AC7C54'], strokes: ['#D3BF80', '#7D703F'], ripples: false },
+  // Darkwoods (2026-11-07): a mossy forest floor with leaf litter, dappled light, old roots creeping in from both sides
+  // and a broken stone road across no man's land
+  darkwoods: { base: '#4A5641', patch: ['#536048', '#414C39', '#5A664C', '#3C4635'], mid: ['#4E4A39', '#47432F', '#57513E'], strokes: ['#647452', '#33402D'], ripples: false,
+    leaves: ['#6E5C3F', '#7D6A47', '#5C4F38', '#8A7B50', '#4F5A3A'], leafN: 2.5, roots: '#3B3026', road: '#7E8374', dapple: '#F2E8B8' },
   sand: { base: '#B39A6C', patch: ['#BDA478', '#A88F62', '#C2AA7E', '#A38A5F'], mid: ['#9E8457', '#A78D60', '#94794E'], strokes: ['#C9B288', '#8F7650'], ripples: true },
 };
 // Looks: what each draws (its biome round the board, and its floor: one painted here, or a map's painted ground in the
 // 2D renderer, bg). A map with skins (Game.SKINS) takes the match's pick (m.skin); every map has its own look too.
 Floors.LOOKS = {
   meadow: { biome: 'meadow', floor: 'meadow' }, autumn: { biome: 'autumn', floor: 'autumn' }, desert: { biome: 'desert', floor: 'sand' },
-  snow: { biome: 'ice', bg: 'ice' }, frost: { biome: 'frost', bg: 'darkwoods' }, forest: { biome: 'forest', bg: 'forest' }, cavern: { biome: 'cavern', bg: 'cavern' },
+  snow: { biome: 'ice', bg: 'ice' }, frost: { biome: 'frost', floor: 'darkwoods' }, forest: { biome: 'forest', bg: 'forest' }, cavern: { biome: 'cavern', bg: 'cavern' },
   ash: { biome: 'ash', floor: 'ash' }, moonlit: { biome: 'moonlit', floor: 'moonlit' }, savanna: { biome: 'savanna', floor: 'savanna' },
 };
 Floors.lookOf = (src) => { const k = Game.lookOf(src); return Floors.LOOKS[k] ? k : 'meadow'; };
@@ -95,7 +99,31 @@ Floors.floor = (() => {
           c.beginPath(); c.moveTo(x, y); c.lineTo(x + (rr() - 0.5) * l * 0.6, y - l); c.stroke();
         }
       }
-      if (L.leaves) for (let k = 0; k < W * H / (t * t) * 5; k++) { // fallen leaves: small dabs in red, orange and gold, in drifts
+      if (L.dapple) for (let k = 0; k < W * H / (t * t) * 0.12; k++) blob(rr() * W, rr() * H, t * (0.5 + rr() * 1.1), t * (0.3 + rr() * 0.6), L.dapple, 0.07 + rr() * 0.06); // light through the canopy
+      if (L.road) { // an old road of worn flat stones across the middle of no man's land, half sunk, mossy, many missing
+        const yc = (y0 + y1) / 2;
+        for (let x = -t * 0.2; x < W + t * 0.2; x += t * (0.32 + rr() * 0.12)) {
+          const wave = Math.sin(x / t * 0.7) * t * 0.35;
+          for (let row = -1; row <= 1; row++) {
+            if (rr() < 0.42) continue;
+            const r = t * (0.13 + rr() * 0.07), sx = x + (rr() - 0.5) * t * 0.1, sy = yc + wave + row * t * 0.34 + (rr() - 0.5) * t * 0.08, a = rr() * 3;
+            const stone = () => { c.beginPath(); for (let i = 0; i < 7; i++) { const an = i / 7 * Math.PI * 2, rad = r * (0.82 + rr() * 0.3); const px = sx + Math.cos(an + a) * rad, py = sy + Math.sin(an + a) * rad * 0.8; i ? c.lineTo(px, py) : c.moveTo(px, py); } c.closePath(); };
+            c.globalAlpha = 0.35; c.fillStyle = '#1E2219'; c.save(); c.translate(t * 0.025, t * 0.035); stone(); c.fill(); c.restore();
+            c.globalAlpha = 0.55 + rr() * 0.25; c.fillStyle = L.road; stone(); c.fill();
+            c.globalAlpha = 0.22; c.fillStyle = '#DCDFD0'; c.beginPath(); c.ellipse(sx - r * 0.25, sy - r * 0.25, r * 0.45, r * 0.3, a, 0, Math.PI * 2); c.fill();
+            if (rr() < 0.6) { c.globalAlpha = 0.55; c.fillStyle = L.patch[2]; c.beginPath(); c.ellipse(sx + (rr() - 0.5) * r, sy + r * 0.3, r * 0.5, r * 0.3, rr() * 3, 0, Math.PI * 2); c.fill(); } // moss
+          }
+        }
+      }
+      if (L.roots) for (const left of [true, false]) for (let k = 0; k < H / t * 0.45; k++) { // old roots creeping in from the woods on both sides
+        let x = left ? -t * 0.1 : W + t * 0.1, y = t + rr() * (H - 2 * t), a = (left ? 0 : Math.PI) + (rr() - 0.5) * 0.9, wd = t * (0.12 + rr() * 0.08);
+        const len = t * (1.2 + rr() * 2.4), steps = 14, pts = [];
+        for (let i = 0; i <= steps; i++) { pts.push([x, y, wd * (1 - i / steps * 0.85)]); a += (rr() - 0.5) * 0.35; x += Math.cos(a) * len / steps; y += Math.sin(a) * len / steps; }
+        c.lineCap = 'round';
+        for (const [col, dx, dy, f, al] of [['#161A13', t * 0.03, t * 0.045, 1.15, 0.45], [L.roots, 0, 0, 1, 0.95], ['#7A6A55', -t * 0.015, -t * 0.02, 0.3, 0.5]])
+          for (let i = 1; i < pts.length; i++) { c.globalAlpha = al; c.strokeStyle = col; c.lineWidth = Math.max(0.6, pts[i][2] * f); c.beginPath(); c.moveTo(pts[i - 1][0] + dx, pts[i - 1][1] + dy); c.lineTo(pts[i][0] + dx, pts[i][1] + dy); c.stroke(); }
+      }
+      if (L.leaves) for (let k = 0; k < W * H / (t * t) * 5 * (L.leafN || 1); k++) { // fallen leaves: small dabs in red, orange and gold, in drifts
         const x = rr() * W, y = rr() * H, r = t * (0.035 + rr() * 0.03);
         c.globalAlpha = 0.5 + rr() * 0.35; c.fillStyle = L.leaves[Math.floor(rr() * L.leaves.length)];
         c.beginPath(); c.ellipse(x, y, r, r * 0.6, rr() * 3, 0, Math.PI * 2); c.fill();

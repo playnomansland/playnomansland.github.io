@@ -29,7 +29,18 @@ const Scenery3D = (THREE, scene, opts = {}) => {
   // autumn: maples and birches in red and gold, red bushes, golden grass, fallen leaves on the floor
   BIOMES.autumn = { sky: '#B5AA95', land: '#5C5B39', tint: [1, 0.97, 0.92], low: 'autumn', trees: ['MapleTree_1', 'MapleTree_2', 'MapleTree_4', 'MapleTree_5', 'BirchTree_1', 'BirchTree_4', 'BirchTree_5', 'Pine_1'], grow: 1.2, dress: 1,
     tints: [[/^Grass/, [1.2, 1.02, 0.6]], [/^Fern|^Plant_1/, [1.25, 0.95, 0.5]], [/^Clover/, [1.15, 1, 0.6]]] };
-  BIOMES.frost = { ...BIOMES.ice }; // Darkwoods: Frozen Peak's look without the snow (the Test Grid's own look)
+  // Darkwoods (the Standard map's own look; reworked 2026-11-07): an ancient wood and the battlefield its one clearing.
+  // Giant twisted trees lean over the board's sides, the woods sink into a green-black dark full of mist, pairs of
+  // eyes blink between the trunks (more of them as the match goes on), pale light falls through the canopy onto the
+  // clearing, spores drift in it, and an old stone gate with a candle-lit shrine stands past the far end.
+  // giants: the big twisted trees close round the board (real models); gate: the gate and shrine; mist: how many
+  // banks of ground mist; eyes: [pairs at round 1, more per round]; shafts: light shafts onto the board.
+  BIOMES.frost = { sky: '#1C2621', land: '#17201A', tint: [0.72, 0.82, 0.72], low: 'darkwoods',
+    trees: ['Pine_4', 'TwistedTree_1', 'TwistedTree_2', 'TwistedTree_3', 'TwistedTree_4', 'TwistedTree_5', 'Pine_5', 'Pine_4', 'DeadTree_3'], grow: 1.3, dress: 0.5,
+    tints: [[/^TwistedTree/, [0.86, 0.96, 0.86]], [/^Pine/, [0.6, 0.72, 0.64]], [/^DeadTree/, [0.62, 0.66, 0.6]], [/^Fern|^Plant/, [0.8, 0.92, 0.8]], [/^Mushroom/, [1.15, 1.08, 0.98]]],
+    light: { hemi: ['#B8CBB5', '#1B251F', 1.15], sun: ['#F5E8C2', 1.8], pos: [-28, 62, -24] }, farLight: 0.72,
+    shade: [0.86, 1, 16], night: [0.3, 0.56, 0.42, 0.3], deep: [0.9, 9, 36],
+    fall: 'spores', giants: true, gate: true, mist: 44, eyes: [7, 2], shafts: 3 };
   BIOMES.ice.snow = 0.75; // snow on everything that faces up, drifts round the board and falling snow
   // Looks added 2026-11-07. light: the scene's lights for this look (render3d; default the day sun) as hemi [sky,
   // ground, intensity], sun [colour, intensity], pos (the sun's position); fall: what drifts through the air (FALL
@@ -360,7 +371,13 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     dress: [['Pebble_Round_1', 2], ['Pebble_Round_2', 2], ['Pebble_Square_2', 1.5], ['Grass_Wispy_Short', 0.6]],
     rocks: ROCKS,
   };
-  // Savanna's lists: tall golden grass everywhere, a few bushes and rocks
+  // Darkwoods' lists: ferns, tall wispy grass, shelf fungus and mushrooms, mossy rocks; clover and mushrooms on the board
+  const DARK = {
+    low: [['Fern_1', 3], ['Plant_1_Big', 1.2], ['Grass_Wispy_Tall', 1.5], ['Bush_Common', 0.8], ['Rock_Medium_1', 0.5], ['Rock_Medium_2', 0.5], ['Rock_Medium_3', 0.5], ['Mushroom_Laetiporus', 0.9]],
+    tuft: [['Fern_1', 2], ['Clover_1', 2], ['Mushroom_Common', 1.5], ['Grass_Wispy_Short', 1.5], ['Grass_Common_Short', 2], ['Pebble_Round_1', 0.7]],
+    dress: [['Clover_1', 2], ['Mushroom_Common', 0.8], ['Grass_Common_Short', 3], ['Pebble_Round_1', 1], ['Pebble_Round_2', 1]],
+    rocks: ROCKS,
+  };
   // Moonlit Snow's lists: snow piles in place of most of the rocks
   const SNOWY = {
     low: [['SnowPile_1', 2], ['SnowPile_2', 2], ['SnowPile_3', 2], ['Rock_Medium_1', 0.4], ['Rock_Medium_2', 0.4]],
@@ -422,6 +439,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     embers: { col: [1.0, 0.58, 0.26], dir: -1, spd: 0.75, keep: 0.5, size: 1.2, flick: 0.8, sway: 1.8 },
     ash: { col: [0.66, 0.63, 0.6], dir: 1, spd: 0.32, keep: 0.5, size: 0.95, flick: 0, sway: 2.4 }, // grey ash drifting down (Ashlands, with the embers)
     dust: { col: [1.0, 0.9, 0.66], dir: 1, spd: 0.07, keep: 0.3, size: 0.75, flick: 0.35, sway: 3.2 }, // dust and grass seed hanging in the low sun (Savanna)
+    spores: { col: [0.82, 1.0, 0.6], dir: -1, spd: 0.06, keep: 0.32, size: 0.8, flick: 0.9, sway: 2.6, add: true }, // glowing spores rising slowly (Darkwoods)
   };
   const fallU = { uCol: { value: new THREE.Vector3() }, uDir: { value: 1 }, uSpd: { value: 1 }, uKeep: { value: 1 }, uSize: { value: 1 }, uFlick: { value: 0 }, uSway: { value: 1 } };
   const flakeMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: { uTime: snowTime, uPx: { value: 1 }, ...fallU, ...shadeU },
@@ -439,7 +457,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
   function setFall(pts, mat, kind) {
     const f = FALL[kind], U = mat.uniforms; pts.visible = !!f; if (!f) return;
     U.uCol.value.set(...f.col); U.uDir.value = f.dir; U.uSpd.value = f.spd; U.uKeep.value = f.keep; U.uSize.value = f.size; U.uFlick.value = f.flick; U.uSway.value = f.sway;
-    mat.blending = kind === 'embers' ? THREE.AdditiveBlending : THREE.NormalBlending; mat.needsUpdate = true;
+    mat.blending = kind === 'embers' || f.add ? THREE.AdditiveBlending : THREE.NormalBlending; mat.needsUpdate = true;
   }
   const showFall = (kind, kind2) => { setFall(flakes, flakeMat, kind); setFall(flakes2, flake2Mat, kind2); };
 
@@ -534,8 +552,12 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
   sootMat.onBeforeCompile = shadeLit; sootMat.customProgramCacheKey = () => 'pb-soot';
   const emberGlowMat = new THREE.SpriteMaterial({ map: lampGlowTex, color: '#FF6A28', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const lampFlick = [], emberGlows = []; let lampT = 0;
-  // props: [{ kind: 'lantern' | 'snowman' | 'model' | 'ember', model, mat 'soot', x, z, y, ang, s, tilt }]; an ember is a
-  // smouldering spot: a flickering glow low on the ground and flickering warm light round it
+  // props: [{ kind: 'lantern' | 'snowman' | 'model' | 'ember', model, mat 'soot', x, z, y, ang, s, tilt, glow, light }]; an
+  // ember is a smouldering spot: a flickering glow low on the ground and flickering warm light round it. glow: [height m,
+  // size m, colour] a soft glow sprite on the model (candle flames); light: [reach m, strength, flicker 0 to 1] warm light
+  // round it (uLamps, at most 8 in all)
+  const glowMats = {};
+  const glowMat = (col) => glowMats[col] || (glowMats[col] = new THREE.SpriteMaterial({ map: lampGlowTex, color: col, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   function showProps(props) {
     for (const o of [...xmas.children]) { xmas.remove(o); }
     shadeU.uLamps.value.forEach((v) => v.set(0, 0, 1, 0)); lampFlick.length = 0; emberGlows.length = 0;
@@ -548,6 +570,8 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       }
       const g = kkGeo(p.model || (p.kind === 'lantern' ? 'lantern' : 'snowman_A')); if (!g) continue;
       const m = new THREE.Mesh(g, p.mat === 'soot' ? sootMat : propMat); m.position.set(p.x, p.y, p.z); m.rotation.set(p.tilt || 0, p.ang, 0, 'YXZ'); m.scale.setScalar(p.s); m.castShadow = true; m.raycast = () => {}; xmas.add(m);
+      if (p.glow) { const gl = new THREE.Sprite(glowMat(p.glow[2])); gl.position.set(p.x, p.y + p.glow[0], p.z); gl.scale.setScalar(p.glow[1]); gl.raycast = () => {}; xmas.add(gl); emberGlows.push([gl, p.glow[1], p.x * 1.7 + p.z]); }
+      if (p.light) lamp(p.x, p.z, p.light[0], p.light[1], p.light[2]);
       if (p.kind === 'lantern') {
         const gl = new THREE.Sprite(lampGlowMat); gl.position.set(p.x, p.y + 3.25 * p.s, p.z); gl.scale.setScalar(3.2 * p.s); gl.raycast = () => {}; xmas.add(gl);
         lamp(p.x, p.z, 12, 1.6, 0);
@@ -630,6 +654,65 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
   function prey(at) { preyAt = at; }
   // true while something round the board lives on its own (the vultures): the page keeps drawing frames for it
   const alive = () => vultures.visible;
+  // ---------- Darkwoods: banks of ground mist drifting between the trunks, pairs of eyes blinking in the dark, and pale
+  // light falling through the canopy onto the clearing. All built per layout (update) and moved in tick. ----------
+  const softTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
+  // a cloud: a few soft overlapping puffs, wider than tall
+  const mistTex = softTex(128, 64, (g) => { let sd = 77; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+    for (let i = 0; i < 9; i++) { const x = 30 + r() * 68, y = 26 + r() * 14, rad = 14 + r() * 16, gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, 'rgba(255,255,255,0.42)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 64); } });
+  // a light shaft: brightest in its middle, soft at its sides, fading out near the ground and high up
+  const shaftTex = softTex(32, 128, (g, w, h) => { const img = g.createImageData(w, h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const sx = Math.sin(Math.PI * (x + 0.5) / w) ** 2, v = y / (h - 1), sy = smoothstep(0, 0.35, v) * (1 - smoothstep(0.75, 1, v) * 0.75);
+      const o = (y * w + x) * 4; img.data[o] = img.data[o + 1] = img.data[o + 2] = 255; img.data[o + 3] = Math.round(255 * sx * sy); }
+    g.putImageData(img, 0, 0); });
+  const woods = new THREE.Group(); woods.visible = false; scene.add(woods);
+  const mists = [], eyes = [], shafts = []; let woodsT = 0, eyeSpots = [], eyeN = 0;
+  const eyeMat = new THREE.SpriteMaterial({ map: lampGlowTex, color: '#E6F09A', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const shaftMat = new THREE.MeshBasicMaterial({ map: shaftTex, color: '#FFF0C4', transparent: true, opacity: 0.05, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, fog: false });
+  const shaftGeo = new THREE.PlaneGeometry(1, 1);
+  function clearWoods() {
+    for (const o of [...woods.children]) { woods.remove(o); if (o.isSprite && o.material !== eyeMat) o.material.dispose(); }
+    mists.length = 0; eyes.length = 0; shafts.length = 0; eyeSpots = [];
+  }
+  // w: { mist: [[x, z, size, opacity]], eyes: spots [[x, y, z]], shafts: [[x, z, width]], sun: [x, y, z] }
+  function showWoods(w) {
+    clearWoods(); woods.visible = !!w; if (!w) return;
+    for (const [x, z, sz, op] of w.mist) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: mistTex, color: '#B2C6B8', transparent: true, depthWrite: false, opacity: op }));
+      sp.position.set(x, sz * 0.16, z); sp.scale.set(sz * 1.7, sz * 0.6, 1); sp.raycast = () => {}; sp.renderOrder = 3; woods.add(sp); mists.push([sp, x, Math.random() * 6.3, op]);
+    }
+    eyeSpots = w.eyes;
+    for (let i = 0; i < 16; i++) { // pairs of eyes: each comes and goes, now here, now there, blinking now and then
+      const pair = new THREE.Group(); pair.visible = false;
+      for (const sx of [-1, 1]) { const e = new THREE.Sprite(eyeMat); e.position.x = sx * 0.6; e.scale.set(1.15, 1.15, 1); e.raycast = () => {}; pair.add(e); }
+      woods.add(pair); eyes.push({ g: pair, t: 2 + Math.random() * 3, life: 0, blink: 2 + Math.random() * 4 });
+    }
+    const dir = new THREE.Vector3(...w.sun).normalize(), q = new THREE.Quaternion().setFromUnitVectors(upY, dir);
+    for (const [x, z, wd] of w.shafts) { // two crossed planes, so a shaft shows from any side
+      const g = new THREE.Group(); g.quaternion.copy(q); g.position.set(x, 0, z).addScaledVector(dir, 36);
+      for (const ry of [0, Math.PI / 2]) { const m = new THREE.Mesh(shaftGeo, shaftMat); m.scale.set(wd, 72, 1); m.rotation.y = ry; m.raycast = () => {}; m.renderOrder = 4; g.add(m); }
+      woods.add(g); shafts.push(g);
+    }
+  }
+  function tickWoods(dt) {
+    woodsT += dt;
+    for (const [sp, x0, ph, op] of mists) { sp.position.x = x0 + Math.sin(woodsT * 0.05 + ph) * 3.5; sp.material.opacity = op * (0.8 + 0.2 * Math.sin(woodsT * 0.13 + ph * 2)); }
+    shaftMat.opacity = 0.05 + 0.015 * Math.sin(woodsT * 0.27);
+    eyes.forEach((e, i) => {
+      if (i >= eyeN || !eyeSpots.length) { e.g.visible = false; return; }
+      e.t += dt;
+      if (e.t >= e.life) { // gone: wait a little, then open somewhere else in the dark
+        if (e.t < e.life + 1.5 + (i % 3)) { e.g.visible = false; return; }
+        const [x, y, z] = eyeSpots[Math.floor(Math.random() * eyeSpots.length)];
+        e.g.position.set(x, y, z); e.t = 0; e.life = 6 + Math.random() * 10; e.blink = 1.5 + Math.random() * 3; e.s = 0.8 + Math.random() * 0.5;
+      }
+      e.g.visible = true;
+      const open = Math.min(1, e.t / 0.8, (e.life - e.t) / 0.8); // they open slowly and close slowly
+      let lid = 1; if ((e.t % e.blink) > e.blink - 0.16) lid = 0.12; // a blink
+      for (const c of e.g.children) c.scale.set(1.15 * e.s, 1.15 * e.s * Math.max(0.08, open * lid), 1);
+    });
+  }
   // the clock for the falling snow, embers and chimney smoke (the page calls it every frame it draws); px: the renderer's pixels per CSS pixel
   let smokeT = 0;
   function tick(dt, px = 1) {
@@ -637,6 +720,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     lampT += dt;
     lampFlick.forEach(([i, base, fl, ph]) => { if (fl) shadeU.uLamps.value[i].w = base * (1 - fl * 0.35 * (0.5 + 0.5 * Math.sin(lampT * 7.3 + ph) * Math.sin(lampT * 3.1 + ph * 2))); });
     emberGlows.forEach(([sp, base, ph]) => { const f = 0.8 + 0.2 * Math.sin(lampT * 6.1 + ph) * Math.sin(lampT * 2.3 + ph); sp.scale.setScalar(base * f); });
+    if (woods.visible) tickWoods(dt);
     if (grassMat.userData.on) windT.value += dt;
     if (vultures.visible) {
       vultureT += dt;
@@ -668,6 +752,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
   function update(v, groundY, BW, BD, T) {
     if (!lib || !v || !v.m) return;
     const src = v.battlePre || v.m, mp = Game.mapOf(src), id = (mp && mp.id) || 'standard', look = Scenery3D.lookOf(src);
+    { const b0 = biomeOf(look); eyeN = b0.eyes ? Math.min(16, Math.round(b0.eyes[0] + b0.eyes[1] * Math.max(0, (src.round || 1) - 1))) : 0; } // Darkwoods: more eyes every round
     const k = [id, look, v.me, Game.COLS, Game.ROWS, castShadows].join('|');
     if (k === key) return;
     key = k; clear();
@@ -707,12 +792,32 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       [[-1, -0.3, 5, 0.3], [1, 0.38, 4.6, -0.2], [-1, 0.75, 6.5, 1.3]].forEach(([sd, f, off, a]) => props.push({ kind: 'model', model: 'barrier_half', mat: 'soot', x: sd * (hw + off), z: f * hd, ang: a, s: 1.6 }));
       [[-1, -0.3, 8.5], [1, -0.68, 7.5], [-1, 0.35, 9], [1, 0.5, 8.5]].forEach(([sd, f, off]) => props.push({ kind: 'ember', x: sd * (hw + off), z: f * hd, s: 1.0 }));
     }
+    // Darkwoods: the old stone gate past the far end, a candle-lit shrine and candles before it, broken fences either
+    // side; fallen logs by the board's sides; the giant twisted trees leaning over its sides and far corners. clears:
+    // spots nothing else grows on
+    const clears = [];
+    const gate = bi.gate ? { x: -hw * 0.1, z: -hd - 16, ang: 0.06, s: 2.2 } : null;
+    if (gate) {
+      const G = gate, ca = Math.cos(G.ang), sa = Math.sin(G.ang), at = (lx, lz) => ({ x: G.x + (lx * ca + lz * sa) * G.s, z: G.z + (-lx * sa + lz * ca) * G.s });
+      [['arch_gate', 0, 0, 0, 1, 0], ['fence_broken', -4.6, 0.1, 0.05, 1, 0], ['fence_pillar_broken', -6.8, 0.15, 0, 1, 0], ['fence_broken', 4.4, -0.15, -0.12, 1, 0.22], ['fence_pillar_broken', 6.6, -0.4, 0.3, 0.9, 0]]
+        .forEach(([model, lx, lz, a, sc, tilt]) => props.push({ kind: 'model', model, ...at(lx, lz), ang: G.ang + a, s: G.s * sc, tilt, y: 0 }));
+      props.push({ kind: 'model', model: 'shrine_candles', ...at(2.7, 2.4), ang: G.ang - 0.5, s: G.s * 0.75, y: 0, glow: [2.75, 2.2, '#FFB65C'], light: [10, 1.5, 0.6] });
+      props.push({ kind: 'model', model: 'candle_triple', ...at(1.5, 2.1), ang: 0.4, s: G.s * 0.9, y: 0, glow: [0.8 * G.s * 0.9, 1.4, '#FFB65C'] });
+      props.push({ kind: 'model', model: 'candle_triple', ...at(-1.3, 1.7), ang: 2.1, s: G.s * 0.8, y: 0, glow: [0.8 * G.s * 0.8, 1.3, '#FFB65C'], light: [8, 1.1, 0.7] });
+      clears.push({ x: G.x, z: G.z + 2, r: 13 });
+      [[-1, -0.35, 5.5, 0.25, 'Wood_Log_A'], [1, 0.42, 6, -0.3, 'Wood_Log_B'], [-1, 0.3, 11, 1.25, 'Wood_Log_B'], [1, -0.72, 7, 0.95, 'Wood_Log_A']]
+        .forEach(([sd, f, off, a, model]) => props.push({ kind: 'model', model, x: sd * (hw + off), z: f * hd, ang: a, s: 4, y: 1.1 }));
+    }
+    const giants = bi.giants ? [[-(hw + 8), -hd * 0.72, 'TwistedTree_2', 1.35], [-(hw + 10.5), -hd * 0.05, 'TwistedTree_4', 1.25], [-(hw + 7.5), hd * 0.5, 'TwistedTree_5', 1.15],
+      [hw + 9, -hd * 0.5, 'TwistedTree_3', 1.3], [hw + 7.5, hd * 0.22, 'TwistedTree_1', 1.15], [hw + 11, hd * 0.68, 'TwistedTree_2', 1.1],
+      [-hw * 0.68, -hd - 9, 'TwistedTree_1', 1.4], [hw * 0.55, -hd - 10.5, 'TwistedTree_5', 1.35]] : [];
+    for (const [x, z] of giants) clears.push({ x, z, r: 5 });
     // Savanna: two granite kopjes (piles of big boulders, the far one with the lone giant acacia beside it), the
     // shapes on the horizon; nothing else grows on them
     const kopjes = bi.kopjes ? [{ x: -hw * 0.42, z: -hd - 24, r: 10, s: 1.25, tree: true }, { x: hw + 21, z: -hd * 0.32, r: 7, s: 0.9 }] : [];
     const inPond = (x, z, k = 1.12) => kopjes.some((q) => Math.hypot(x - q.x, z - q.z) < q.r * k) || ponds.some((p) => ((x - p.x) / p.rx) ** 2 + ((z - p.z) / p.rz) ** 2 < k * k) || (cab && Math.hypot(x - cab.x, z - cab.z) < cab.r)
       || props.some((p) => Math.hypot(x - p.x, z - p.z) < (p.kind === 'lantern' ? 1.6 : p.kind === 'ember' ? 1.5 : 2.6))
-      || (props.ruinsAt && Math.hypot(x - props.ruinsAt.x, z - props.ruinsAt.z) < 13);
+      || (props.ruinsAt && Math.hypot(x - props.ruinsAt.x, z - props.ruinsAt.z) < 13) || clears.some((q) => Math.hypot(x - q.x, z - q.z) < q.r);
     const tintFor = (name) => { const t = (bi.tints || []).find(([re]) => re.test(name)); return t ? t[1] : [1, 1, 1]; };
     const squashOf = (name) => { const t = (bi.squash || []).find(([re]) => re.test(name)); return t ? t[1] : 1; };
     const put = (name, x, z, s, y = 0, wet = false, real = false) => {
@@ -721,7 +826,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       y += groundH(x, z) * 0.7; // on deep snow (Moonlit Snow) things stand a little sunk in
       (placed.get(k) || placed.set(k, []).get(k)).push([x, y, z, rr() * Math.PI * 2, s, [bi.tint[0] * t[0] * sh, bi.tint[1] * t[1] * sh, bi.tint[2] * t[2] * sh], squashOf(name)]);
     };
-    const L = { desert: DESERT, autumn: AUTUMN, ash: ASH, savanna: SAVANNA, moonlit: SNOWY, rocks: { low: ROCKS, tuft: PEBBLES, rocks: ROCKS, dress: DRESS } }[bi.low] || { low: LOW, tuft: TUFT, rocks: ROCKS, dress: DRESS };
+    const L = { desert: DESERT, autumn: AUTUMN, darkwoods: DARK, ash: ASH, savanna: SAVANNA, moonlit: SNOWY, rocks: { low: ROCKS, tuft: PEBBLES, rocks: ROCKS, dress: DRESS } }[bi.low] || { low: LOW, tuft: TUFT, rocks: ROCKS, dress: DRESS };
     const low = () => pickOf(L.low), tuft = () => pickOf(L.tuft);
     const outside = (x, z) => Math.max(Math.abs(x) - hw, Math.abs(z) - hd, 0) > 0 ? Math.hypot(Math.max(0, Math.abs(x) - hw), Math.max(0, Math.abs(z) - hd)) : 0;
     // deep snow (biome .deepSnow): the height of the snow at a spot, 0 on the board, rising over its first metres
@@ -757,6 +862,17 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       if (nearBoard && /^Twisted/.test(tree)) tree = bi.trees[0]; // the big twisted trees (9000 triangles) only stand far out, as impostors
       put(tree, x, z, 1.6 + rr() * 0.9);
       if (nearBoard && rr() < 0.5) put(low(), x + (rr() - 0.5) * 4, z + (rr() - 0.5) * 4, 0.9 + rr() * 0.6); // undergrowth
+    }
+    // 2b. Darkwoods' giants (real models, casting their shadows over the board), with ferns and shelf fungus at their feet,
+    // and an old path of stones from the board's far end to the gate
+    for (const [x, z, name, s] of giants) {
+      put(name, x, z, s, 0, true, true);
+      for (let n = 0; n < 4; n++) { const a = rr() * Math.PI * 2, r = 2 + rr() * 2.5; put(rr() < 0.45 ? 'Mushroom_Laetiporus' : 'Fern_1', x + Math.cos(a) * r, z + Math.sin(a) * r, 1.2 + rr() * 0.8, 0, true); }
+    }
+    if (gate) for (let zz = -hd - 1.2; zz > gate.z + 3.5; zz -= 1.1 + rr() * 0.6) {
+      if (rr() < 0.2) continue; // broken: a stone missing here and there
+      const f = (zz + hd) / (gate.z + 3.5 + hd), x = gate.x * f + (rr() - 0.5) * 2.2;
+      put(rr() < 0.5 ? 'Pebble_Square_2' : 'Pebble_Round_2', x, zz, 2 + rr() * 1.2, 0, true, true);
     }
     // 3. grass round the board's edge, out in the open land
     for (let n = 0; n < 220 * bi.grow; n++) {
@@ -849,6 +965,24 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       gm.receiveShadow = true; gm.raycast = () => {}; gm.name = 'grass sea'; scene.add(gm); meshes.push(gm);
     }
     showVultures(bi.vultures || 0, (bi.light && bi.light.pos) || [-30, 60, 25]);
+    // Darkwoods: banks of mist round the board (thinner deep in the dark), the spots the eyes open at (well out in the
+    // dark, never behind your own end), the light shafts onto the clearing
+    if (bi.mist || bi.eyes || bi.shafts) {
+      const deepAt = (d) => bi.deep ? bi.deep[0] * smoothstep(bi.deep[1], bi.deep[2], d) : 0;
+      const mist = [], spots = [], sh = [];
+      for (let k = 0, n = 0; k < 800 && n < (bi.mist || 0); k++) {
+        const sz = 9 + rr() * 11, x = (rr() * 2 - 1) * (hw + 42), z = -hd - 52 + rr() * (BD + 70), d = outside(x, z);
+        if (d < sz * 0.55 || d > 36 || (z > hd && d < 14)) continue;
+        mist.push([x, z, sz, (0.2 + rr() * 0.14) * (1 - 0.75 * deepAt(d))]); n++;
+      }
+      for (let k = 0; k < 500 && spots.length < 60; k++) {
+        const x = (rr() * 2 - 1) * (hw + 40), z = -hd - 48 + rr() * (BD + 50), d = outside(x, z);
+        if (d < 6 || d > 24 || (z > hd - 4 && Math.abs(x) < hw + 16) || inPond(x, z)) continue;
+        spots.push([x, 1 + rr() * 2, z]);
+      }
+      for (let k = 0; k < (bi.shafts || 0); k++) sh.push([(rr() - 0.5) * BW * 0.8, (rr() - 0.5) * BD * 0.7, 4 + rr() * 4]);
+      showWoods({ mist, eyes: spots, shafts: sh, sun: (bi.light && bi.light.pos) || [-30, 60, 25] });
+    } else showWoods(null);
     // far trees and bushes: impostors
     shadeU.uHalf.value.set(hw, hd); shadeU.uShade.value.set(...(bi.shade || [0, 1, 2])); veil.visible = !!bi.shade;
     shadeU.uNight.value.set(...(bi.night || [0, 0, 0, 0])); shadeU.uDeep.value.set(...(bi.deep || [0, 1, 2]));
@@ -887,7 +1021,8 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     }
   }
   function shadows(on) { if (on !== castShadows) { castShadows = on; key = ''; } }
-  function dispose() { clear(); scene.remove(flakes, flakes2, cabin, cabinLight, veil, xmas, horizon, dragon, vultures); grassGeo.dispose(); grassMat.dispose(); groundMat.dispose(); vultureMat.dispose(); vultures.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); flake2Mat.dispose(); sootMat.dispose(); emberGlowMat.dispose(); horizonMat.dispose(); horizonTex.dispose(); horizon.geometry.dispose(); dragonMat.dispose(); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
+  function dispose() { clear(); clearWoods(); scene.remove(woods); eyeMat.dispose(); shaftMat.dispose(); shaftGeo.dispose(); mistTex.dispose(); shaftTex.dispose(); for (const m of Object.values(glowMats)) m.dispose();
+    scene.remove(flakes, flakes2, cabin, cabinLight, veil, xmas, horizon, dragon, vultures); grassGeo.dispose(); grassMat.dispose(); groundMat.dispose(); vultureMat.dispose(); vultures.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); flake2Mat.dispose(); sootMat.dispose(); emberGlowMat.dispose(); horizonMat.dispose(); horizonTex.dispose(); horizon.geometry.dispose(); dragonMat.dispose(); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
   return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, alive, prey, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
 };
 
