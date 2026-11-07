@@ -11898,16 +11898,16 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       const add = (model, n, dmin, dmax, f) => { for (let i = 0; i < n; i++) { const p = spot(dmin, dmax); if (p) { const q = f(p); if (q) props.push({ kind: 'model', model, x: p.x, z: p.z, ang: rr() * 6.28, ...q }); } } };
       for (let v = 0; v < 6; v++) { const c = spot(2, 18); if (!c || near(c.x, c.z)) continue; const lean = rr() * 6.28; // a volley: spears stuck in a rough patch, leaning the same way
         for (let i = 0; i < 4 + Math.floor(rr() * 4); i++) props.push({ kind: 'model', model: '__spear', x: c.x + (rr() - 0.5) * 4, z: c.z + (rr() - 0.5) * 4, ang: lean + (rr() - 0.5) * 0.5, tilt: 0.25 + rr() * 0.35, s: 1.1, sink: 0.5 }); }
-      add('Skeleton_Shield_Large_A', 9, 1.5, 20, () => ({ tilt: 1.35 + rr() * 0.2, s: 1.7, mat: 'soot', sink: 0.15 }));
+      add('Skeleton_Shield_Large_A', 9, 1.5, 20, (p) => near(p.x, p.z) ? null : ({ tilt: 1.35 + rr() * 0.2, s: 1.7, mat: 'soot', sink: 0.15 }));
       add('Skeleton_Blade', 8, 1.5, 20, (p) => near(p.x, p.z) ? null : { tilt: (rr() - 0.5) * 0.6, roll: Math.PI, s: 1.7, mat: 'soot', sink: 0.35 });
-      add('sword_shield_broken', 4, 2, 16, () => ({ tilt: (rr() - 0.5) * 0.5, s: 1.5, mat: 'soot', sink: 0.2 }));
+      add('sword_shield_broken', 4, 2, 16, (p) => near(p.x, p.z) ? null : ({ tilt: (rr() - 0.5) * 0.5, s: 1.5, mat: 'soot', sink: 0.2 }));
       add('skull', 7, 1.5, 22, () => ({ s: 0.75, tilt: (rr() - 0.5) * 0.5, sink: 0.1, mat: 'soot' }));
       add('bone_A', 10, 1.5, 22, () => ({ s: 1.6, sink: 0.05, mat: 'soot' }));
-      add('Wood_Log_A', 7, 2, 24, () => ({ s: 2, mat: 'soot', sink: 0.1 }));
+      add('Wood_Log_A', 7, 2, 24, (p) => near(p.x, p.z) ? null : { s: 2, mat: 'soot', sink: 0.1 });
       add('Stone_Chunks_Small', 6, 2, 24, () => ({ s: 1.6, mat: 'soot' }));
       add('fence_broken', 5, 4, 24, (p) => near(p.x, p.z) ? null : { s: 1.3, mat: 'soot', tilt: (rr() - 0.5) * 0.3, sink: 0.2 });
       add('__stake', 9, 2.5, 22, (p) => near(p.x, p.z) ? null : { s: 1.1 + rr() * 0.5, tilt: (rr() - 0.5) * 0.5, mat: 'soot', sink: 0.3 });
-      add('barrier_half', 3, 3, 18, () => ({ s: 1.6, mat: 'soot' }));
+      add('barrier_half', 3, 3, 18, (p) => near(p.x, p.z) ? null : { s: 1.6, mat: 'soot' });
       [[-1, -0.35], [1, 0.2], [-1, 0.55], [1, -0.7], [-1, -0.85]].forEach(([sd, f], i) => props.push({ kind: 'model', model: i % 2 ? '__banner_blue' : '__banner_red', x: sd * (hw + 4 + rr() * 6), z: f * hd, ang: rr() * 6.28, tilt: (rr() - 0.5) * 0.25, s: 1.2, sink: 0.4 }));
       const beast = { x: hw + 15, z: -hd * 0.12 }; // the fallen giant: a huge skull half sunk in the ash, its great bones strewn round it
       props.push({ kind: 'model', model: 'skull', x: beast.x, z: beast.z, ang: 2.2, s: 4.2, tilt: 0.25, sink: 0.5, mat: 'soot' });
