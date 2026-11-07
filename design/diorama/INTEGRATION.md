@@ -196,6 +196,41 @@ breakpoints: `html.pc` (hover + fine pointer, width ≥ 900, ST:924), 640, 520, 
 11. **The launch:** flip the default, remove the old home code, Join by code and Play vs Friend (and their tests,
     rewritten), build, run everything once more, merge to `main` and push. Tell the owner the commit.
 
+## Progress
+
+**Step 1 done (2026-11-07):** `?ui=diorama` shows the Diorama instead of the old home, with the live island
+(`screens/game-step1.jpg`). What is where:
+- **The switch:** a script in ST's `<head>` puts `diorama` on `<html>` for `?ui=diorama` (kept as localStorage `pb-ui`;
+  `?ui=classic` turns it off) and loads Bricolage Grotesque and Courier Prime only then. In the main script, `DIO` and
+  `dio` (its state) sit right after `const qs`, since `hud()` → `syncHome()` runs early.
+- **`src/diorama.css`:** the mockup's CSS scoped under `#dio` (state classes on `#dio` instead of `body`: `#dio.play`,
+  `#dio.profile`...). `#dio` is fixed, z-index 4 like `#home`, so the game's sheets (z 5) open over it. Watch the
+  game's global `canvas { width: 100%; height: 100% }`.
+- **The markup:** the mockup's body inside `<div id="dio" hidden>` after `#home`.
+- **`src/diorama.js`** (inlined into the main closure at `/*DIORAMA*/`): `dioSync(on)` from `syncHome` (shows or hides
+  `#dio`, pauses or resumes the renderer); `dioDraw()` from `drawHome` (the old `#home-in` stays empty under the
+  switch); `dioBoot()` runs `dioStart()` once: the mockup's module, with `three` from `import(THREE_URL)` and
+  Models3D/KayKit from `load3d`. If three.js can't load at all, the old home comes back for that visit.
+- **Renderer lifecycle:** `pause()` frees the WebGL renderer and swaps in a fresh canvas when the home hides;
+  `resume()` makes a new one (the scene stays in memory). On phones (no `html.pc`) the board's 3D is stopped while the
+  island is up and started again when the home hides (`start3d` waits while `dio.shown`). Pixel ratio 1.5 on phones.
+- **Looks:** `LOOKS` is `Game.SKINS` with the island's art per look (`ART`); the ground is `Floors.floor` with
+  `Floors.LOOKS[id].floor` on the Standard grid (Snow is now the glacier pass, white rim). Home look = `lookShown()`
+  (`skinPick`/`pb-skin`; 'random' picks one); Change battlefield saves `skinPick` as the PLAY popup's Look row does. The
+  menu's music does not follow the look (only a match's does), so nothing else to call.
+- **Fallback:** no WebGL, `?board=2d` or a lost context → `#dio.flat`: the look's floor as a flat tilted picture, island
+  notes hidden, the words as they are. `still` (no idle motion) with reduced motion and under automation (webdriver),
+  so tests can click notes.
+- **Still sample data** in every screen (the mockup's `ACCTS`, `ROOMS`, `HIST`, `FRIENDS`, `SET`...; `TITLES` renamed
+  `DTITLES`); steps 2 to 7 replace them. The Units roster already uses the game's `units`. The hash states only work
+  under `?test`; `window.__dio.sync(on)` (under `?test`) shows or hides the home by hand.
+
+**Running the UI tests in this sandbox:** `export NODE_PATH=/opt/node-tools/node_modules` (they require
+`playwright-core`), and some tests launch `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: link it to
+`/opt/pw-browsers/chromium`. These fail on a clean `main` here too (no server `node_modules`, and so on), so compare
+against `main` before blaming a change: account-ui, board-switch, game3d, tutorial-ui, server-match-ui, rewards-ui,
+skins-ui.
+
 ## Answered by the owner (2026-11-07, second session)
 
 - **Developer buttons:** proposal built into the mockup (`screens/dev-play.jpg`, state `#still,play,multi,acct=dev,xb=steel`),

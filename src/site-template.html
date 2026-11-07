@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /*BASECSS*/
+/*DIORAMA_CSS*/
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -919,6 +920,19 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .series-chip { display: block; margin: 0 auto 2px; width: max-content; padding: 1px 8px; border: 1px solid var(--gold); border-radius: 999px; color: var(--gold); font: 700 11px var(--font-data); letter-spacing: 0.06em; background: rgba(230, 184, 74, 0.1); }
 </style>
 <script>
+// The Diorama UI (2026-11-07, design/diorama/): on with ?ui=diorama (kept on this device; ?ui=classic turns it off) or
+// localStorage pb-ui = 'diorama'. The old home stays the default until the launch. Its two extra fonts load only when on.
+(() => {
+  let on = false;
+  try { const q = new URLSearchParams(location.search).get('ui'); if (q === 'diorama' || q === 'classic') localStorage.setItem('pb-ui', q); on = localStorage.getItem('pb-ui') === 'diorama'; } catch (e) { on = /[?&]ui=diorama\b/.test(location.search); }
+  if (!on) return;
+  document.documentElement.classList.add('diorama');
+  const l = document.createElement('link'); l.rel = 'stylesheet';
+  l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Courier+Prime:wght@400;700&display=swap';
+  document.head.appendChild(l);
+})();
+</script>
+<script>
 // PC or phone: a fine pointer that can hover (a mouse) and room for the board and controls side by side
 (() => {
   const pc = () => document.documentElement.classList.toggle('pc', matchMedia('(hover: hover) and (pointer: fine)').matches && innerWidth >= 900);
@@ -955,6 +969,195 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 </div>
 
 <div class="home" id="home" hidden><canvas class="home-bg" id="home-bg" aria-hidden="true"></canvas><div class="home-wiz" id="home-wiz" hidden aria-hidden="true"><canvas id="home-wiz-cv"></canvas><div class="baba">BABABABABA</div></div><div class="home-in" id="home-in"></div></div>
+<!-- the Diorama UI (?ui=diorama): src/diorama.css and src/diorama.js; shown instead of #home when on -->
+<div id="dio" hidden>
+  <div class="field" aria-hidden="true"></div>
+  <canvas id="world" aria-label="A small piece of the battlefield. Your keep at the front, theirs at the back, no man's land between."></canvas>
+  <div class="scrim" aria-hidden="true"></div>
+  <div class="notes"><svg id="lines" aria-hidden="true"></svg></div>
+
+  <img class="logo" src="img/title.png" alt="No Mans Land">
+  <nav class="acct" aria-label="Account">
+    <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="currentColor"/><path d="M2 20c0-3.9 3.1-6 7-6s7 2.1 7 6" fill="currentColor"/><circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".7"/><path d="M17 13.5c2.9.2 5 1.9 5 5.5h-4.4c0-2-.6-3.7-1.8-5" fill="currentColor" opacity=".7"/></svg><span>Friends</span><b class="badge" id="fr-badge" hidden></b></button>
+    <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>Guest</span></button>
+    <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg><span>Settings</span></button>
+  </nav>
+  <button class="back">← Menu</button>
+
+  <!-- the two dropdowns off the account buttons: an ink panel with a cut corner, since they sit over the board -->
+  <section class="drop" id="dd-friends" hidden aria-label="Friends"></section>
+  <section class="drop" id="dd-settings" hidden aria-label="Settings"></section>
+
+  <nav class="menu" aria-label="Main menu">
+    <button class="item play on" data-cam="play" id="play"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,9 61,0 99,6 96,93 38,100 0,86"/></svg>Play<span class="go">Assemble your army.<br>Master your strategy.<br>Defeat your opponent.</span></button>
+    <div class="sub">
+      <button class="item" data-cam="puzzles"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,12 92,0 100,84 7,100"/></svg><span class="n">01</span>Puzzles</button>
+      <button class="item" data-cam="rules"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,10 95,100 0,90"/></svg><span class="n">02</span>How to play</button>
+      <button class="item" data-cam="units"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,6 97,0 100,96 4,100"/></svg><span class="n">03</span>Units</button>
+      <button class="item" data-cam="ranks"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,0 100,8 97,94 0,100"/></svg><span class="n">04</span>Rankings</button>
+    </div>
+  </nav>
+
+  <!-- notes. data-home: shown on the menu; data-hover: shown while that thing is pointed at; data-btn: shown while that menu word is -->
+  <div class="note" data-anchor="golem" data-home><span class="tag">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></div>
+  <div class="note" data-anchor="sniper" data-home>Sniper.<small>Unit · Long range · Good against single targets</small></div>
+  <div class="note" data-anchor="mage" data-home>Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
+
+  <div class="note" data-anchor="keepYou" data-hover="keepYou">Your keep.<small>Tower · If it falls, you lose</small></div>
+  <div class="note" data-anchor="keepFoe" data-hover="keepFoe">Their keep.<small>Tower · Bring it down to win</small></div>
+  <div class="note" data-anchor="vaultYou" data-hover="vaultYou">Your treasury.<small>Building · 50 gold for every fight it survives</small></div>
+  <div class="note" data-anchor="vaultFoe" data-hover="vaultFoe">Their treasury.<small>Building · Destroy it to steal their gold</small></div>
+  <div class="note" data-anchor="mammoth" data-hover="mammoth">War Mammoth.<small>Unit · Huge health · Fast for its size</small></div>
+
+  <div class="note btn-note" data-anchor="btn" data-side="left" data-btn="puzzles">Puzzles.<small>Small battles to solve · Learn one idea at a time</small></div>
+  <div class="note btn-note" data-anchor="btn" data-side="right" data-btn="rules">How to play.<small>The rules, explained simply</small></div>
+  <div class="note btn-note" data-anchor="btn" data-side="left" data-btn="units">Units.<small>Every unit · What it does and what it beats</small></div>
+  <div class="note btn-note" data-anchor="btn" data-side="right" data-btn="ranks">Rankings.<small>The leaderboard · Ranked matches only</small></div>
+  <div class="note bf-note" data-anchor="bf" role="button" tabindex="0">Change battlefield.<small id="bf-sub"></small></div>
+  <div id="unote" style="display:none"></div>
+  <nav class="tiers" aria-label="Unit tiers"><span class="k">Units by tier</span><button data-t="1" aria-pressed="true">Tier 1</button><button data-t="2" aria-pressed="false">Tier 2</button><button data-t="3" aria-pressed="false">Tier 3</button><button data-t="4" aria-pressed="false">Tier 4</button></nav>
+  <section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><div class="skn" hidden></div><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
+  <div class="zz" id="zz">z<span style="font-size:.7em">z</span></div>
+
+  <div class="pl-scrim" aria-hidden="true"></div>
+  <div class="music" aria-label="Music">
+    <div class="pl" id="pl">
+      <div class="pl-tabs" role="group" aria-label="Playlists"><button aria-pressed="true">Menu playlist</button><button aria-pressed="false">All music</button><button class="new">+ New</button></div>
+      <ol class="pl-list">
+        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>sisi</b> <em>by Snetänd</em></span><span class="d">2:16</span><span class="n">01</span></button></li>
+        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Jonah</b> <em>by Snetänd</em></span><span class="d">3:36</span><span class="n">02</span></button></li>
+        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Long</b> <em>by Snetänd</em></span><span class="d">1:28</span><span class="n">03</span></button></li>
+        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Super coffee</b> <em>by Snetänd</em></span><span class="d">2:05</span><span class="n">04</span></button></li>
+        <li><button class="pl-row" aria-current="true"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Reveal</b> <em>by Snetänd</em></span><span class="d">3:13</span><span class="n">05</span></button></li>
+        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Salig</b> <em>by Emil Helleday</em></span><span class="d">1:18</span><span class="n">06</span></button></li>
+        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Eyes in the front 2</b> <em>by Snetänd</em></span><span class="d">3:29</span><span class="n">07</span></button></li>
+      </ol>
+      <div class="pl-modes"><button aria-pressed="false">Shuffle</button><button aria-pressed="true">Repeat</button></div>
+    </div>
+    <span>Original soundtrack</span>
+    <button class="t" data-open>Reveal <em>by Snetänd</em></button>
+    <span class="line"><i></i></span>
+    <span class="ctl">
+      <button aria-label="Previous"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h2v10H3zM14 3v10L6 8z" fill="currentColor"/></svg></button>
+      <button aria-label="Pause"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor"/></svg></button>
+      <button aria-label="Next"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 3h2v10h-2zM2 3v10l8-5z" fill="currentColor"/></svg></button>
+      <button class="open" data-open aria-label="Show the playlist">Playlist <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 7.5L6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+    </span>
+  </div>
+
+  <section class="standings" aria-label="Rankings">
+    <span class="k">Rankings · this month · ranked best-of-3</span>
+    <h2>Standings</h2>
+    <p class="leg">The top players when the month ends earn the gold Legend title.</p>
+  </section>
+
+  <p class="phone-reward" style="display:none;position:relative;margin:22px 16px 0;font:400 14px/1.4 var(--type)"><span class="tag" style="display:inline-block;padding:3px 7px 2px;font:700 11px var(--type);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--saffron)">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></p>
+  <div class="build">Music: Snetänd, Emil Helleday · Build 2026.11</div>
+
+  <!-- Play: one click on a choice starts it. Multiplayer folds out its kinds; a kind opens Rooms, filtered to it -->
+  <section class="orders" aria-label="New match">
+    <div class="who">
+      <button class="item" id="vs-ai"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,10 96,0 100,90 5,100"/></svg>Vs computer <small>it never gets tired</small></button>
+      <button class="item" id="multi" aria-expanded="false" aria-controls="mp-list"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,12 96,100 0,88"/></svg>Multiplayer<svg class="car" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg> <small>friendships may be tested</small></button>
+      <ul class="mp" id="mp-list">
+        <li><button class="item" data-q="standard"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,8 97,0 100,92 3,100"/></svg>1v1 Standard <small>no stakes</small></button></li>
+        <li><button class="item" data-q="ranked"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,0 100,10 98,100 0,90"/></svg>1v1 Ranked <small>it goes on your record</small></button></li>
+        <li><button class="item" data-q="2v2" disabled aria-disabled="true">2v2 <small><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg>coming soon</small></button></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Developer (devMode only): the game's extra modes and tools as rows of small words, top left on Play.
+       The words start things at once; Exploit bot is a pick (on the ink shard). One typed note under the rows
+       follows the pointer and falls back to the exploit bot's state -->
+  <section class="devs" aria-label="Developer">
+    <span class="dk"><b>Developer</b>every mode and tool · only developers see this</span>
+    <div class="dv">
+      <span class="lab">Vs computer</span>
+      <span class="seg"><button data-dv="factions">Factions</button><button data-dv="devtest">Devtest</button><button data-dv="late">Late game</button><button data-dv="claude">Vs Claude</button></span>
+      <span class="lab">Exploit bot</span>
+      <span class="seg" role="group" aria-label="Exploit bot"><button data-xb="" aria-pressed="true">Off</button><button data-xb="flank">Flank</button><button data-xb="steel">Steel</button><button data-xb="necro">Necro</button><button data-xb="wizards">Wizards</button><button data-xb="hoard">Hoard</button><button data-xb="arrow">Arrow</button></span>
+      <span class="lab">Tools</span>
+      <span class="seg"><button data-dv="tours">Tournaments</button><button data-dv="load">Load units</button><button data-dv="lab">Counter Lab</button></span>
+    </div>
+    <p class="dn" id="dv-note" aria-live="polite"></p>
+  </section>
+
+  <!-- Rooms: the open matches of one kind. One button above the list -->
+  <section class="rooms" aria-label="Rooms">
+    <span class="k">Multiplayer · rooms</span>
+    <h2>Rooms <small id="r-count"></small></h2>
+    <div class="rsearch">
+      <svg class="mag" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.8"/></svg>
+      <button class="tok" id="r-tok" aria-haspopup="true" aria-expanded="false"><span></span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+      <input id="r-q" placeholder="player or battlefield" autocomplete="off" spellcheck="false" aria-label="Search rooms">
+      <ul class="tok-menu" id="r-menu" hidden>
+        <li><button data-q="standard">1v1 Standard</button></li>
+        <li><button data-q="ranked">1v1 Ranked</button></li>
+        <li><button data-q="2v2" disabled>2v2 <small>coming soon</small></button></li>
+      </ul>
+    </div>
+    <button class="create" id="r-create">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+    <ol class="rlist" id="r-list"></ol>
+  </section>
+
+  <!-- Create room: the game's three settings (kind, who can find it, spectators) as rows of words, then one button -->
+  <section class="newroom" aria-label="Create room">
+    <span class="k">Rooms · create</span>
+    <h2>New room</h2>
+    <div class="nr-opts">
+      <span class="lab">Kind</span>
+      <span class="seg" role="group" aria-label="Kind"><button data-kind="standard">1v1 Standard</button><button data-kind="ranked">1v1 Ranked</button><button data-kind="2v2" disabled>2v2 <small><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg>soon</small></button></span>
+      <span></span><p class="nr-note" id="nr-note"></p>
+      <span class="lab">Battlefield</span>
+      <span class="seg bf-step"><button data-bfs="-1" aria-label="Previous battlefield">‹</button><b id="nr-bf"></b><button data-bfs="1" aria-label="Next battlefield">›</button></span>
+      <span></span><p class="nr-note" id="nr-bfn"></p>
+      <span class="lab">Who can find it</span>
+      <span class="seg" role="group" aria-label="Who can find it"><button data-pub="1" aria-pressed="true">Public</button><button data-pub="0" aria-pressed="false">Private</button></span>
+      <span></span><p class="nr-note" id="nr-pub">Listed in Rooms for anyone to join.</p>
+      <span class="lab">Spectators</span>
+      <span class="seg" role="group" aria-label="Spectators"><button data-spec="1" aria-pressed="true">On</button><button data-spec="0" aria-pressed="false">Off</button></span>
+      <span></span><p class="nr-note" id="nr-spec">Anyone can watch once it starts.</p>
+    </div>
+    <button class="create go" id="nr-go">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+  </section>
+
+  <!-- Welcome: the first screen (the game's drawWelcome). Log in on the big shard, Sign up and Play as guest under it -->
+  <nav class="door" aria-label="Welcome">
+    <button class="item play on" id="w-login"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,9 61,0 99,6 96,93 38,100 0,86"/></svg>Log in<span class="go">Your name, your record and your ranked results, back on this device.</span></button>
+    <div class="sub">
+      <button class="item" id="w-signup"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,12 92,0 100,84 7,100"/></svg><span class="n">01</span>Sign up<small>new here</small></button>
+      <button class="item" id="w-guest"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,10 95,100 0,90"/></svg><span class="n">02</span>Play as guest<small>no account needed</small></button>
+    </div>
+  </nav>
+  <div class="note" data-anchor="golemW" data-welcome><span class="tag">A friend invited you</span><br>Sign up with Google and finish an online match together. <b>Your friend gets this golem’s skin.</b></div>
+
+  <!-- Sign up and Log in (the game's drawSignIn): a username, then Google; or a guest with that name -->
+  <section class="signin" aria-label="Sign in">
+    <span class="k" id="si-k"></span>
+    <h2 id="si-h"></h2>
+    <p class="si-lead" id="si-lead"></p>
+    <div class="nr-opts si-opts" id="si-opts"></div>
+    <p class="si-msg" id="si-msg" aria-live="polite"></p>
+    <button class="si-other" id="si-other"></button>
+  </section>
+
+  <!-- Profile: your name and title, then the game's account settings as rows of words. Skins stand on the island -->
+  <section class="pf" aria-label="Profile">
+    <span class="k" id="pf-k"></span>
+    <div class="plate"><h2 id="pf-name"></h2><span class="ptitle" id="pf-title" hidden></span></div>
+      <div class="nr-opts pf-opts" id="pf-opts"></div>
+    <button class="create" id="pf-hist">Match history <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+  </section>
+
+  <!-- Match history: your online matches, newest first; a match folds out its rounds, each with a replay -->
+  <section class="history" aria-label="Match history">
+    <span class="k">Profile · match history</span>
+    <h2>Matches <small id="h-count"></small></h2>
+    <div class="h-tabs" role="group" aria-label="Whose matches"><button data-h="mine" aria-pressed="true">My matches</button><button data-h="all" aria-pressed="false">All online</button></div>
+    <ol class="rlist hlist" id="h-list"></ol>
+  </section>
+</div>
 
 <div class="dd" id="stats-dd" hidden role="dialog" aria-label="Damage last round"></div>
 <button class="music-fab" id="music-fab" hidden aria-label="Music"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M9 3.5v10.6A3.5 3.5 0 1 0 11 17V8.2l8-1.9v5.8A3.5 3.5 0 1 0 21 15V2z"/></svg></button>
@@ -1113,6 +1316,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const LAB_STORE = 'counterlab.v1';
   const LAB_ROSTERS = 'counterlab.rosters.v1'; // all of Counter Lab's rosters (LAB_STORE holds the one open there)
   const qs = new URLSearchParams(location.search);
+  // the Diorama UI (src/diorama.js): on when the <head> switch put the class on <html>; dio is its state
+  let DIO = document.documentElement.classList.contains('diorama');
+  const dio = { boot: null, api: null, held3d: false, shown: false };
   const TEST = qs.has('test'); // test-only settings show on the menu
 
   // ---------- unit sets: built-in, or loaded from Counter Lab ----------
@@ -3569,16 +3775,17 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   function syncHome() {
     const on = phase === 'start' && !m && !!home.screen && !(tour.role && !tour.menu) && !$('home-in').dataset.off;
     document.documentElement.classList.toggle('home', on);
-    $('home').hidden = !on;
-    if (on) paintHomeBg();
-    homeWiz(on && WIZ_PC && home.screen !== 'welcome' && home.screen !== 'signup' && home.screen !== 'login' && home.screen !== 'lobby');
+    $('home').hidden = !on || DIO; // the Diorama shows instead of the old home (src/diorama.js)
+    if (DIO) dioSync(on);
+    else if (on) paintHomeBg();
+    homeWiz(!DIO && on && WIZ_PC && home.screen !== 'welcome' && home.screen !== 'signup' && home.screen !== 'login' && home.screen !== 'lobby');
     syncMusicBtn();
   }
   // the music button: the HUD's beside the cog in a match (hidden in battle), the round one top right on the screens
   // before one (waiting room, draft, tournament); the main menu has the player and the Rooms list its own beside Sort.
   // Each opens the playlist sheet.
   function syncMusicBtn() {
-    const hud = !document.querySelector('.hud').hidden, menu = !$('home').hidden; // the Rooms list has its own, beside Sort
+    const hud = !document.querySelector('.hud').hidden, menu = !$('home').hidden || dio.shown; // the Rooms list has its own, beside Sort
     $('music-btn').hidden = !hud || phase === 'battle';
     $('music-fab').hidden = hud || menu || phase === 'battle';
   }
@@ -3707,6 +3914,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   function drawHome() {
     syncHome();
+    if (DIO) return dioDraw(); // the Diorama draws its own screens; #home-in stays empty
     const el = $('home-in');
     if (home.screen === 'welcome') drawWelcome(el);
     else if (home.screen === 'signup' || home.screen === 'login') drawSignIn(el);
@@ -6969,6 +7177,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   const load3d = (f) => loaded3d[f] || (loaded3d[f] = new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = `src/${f}.js?v=${V3D}`; sc.onload = ok; sc.onerror = () => { delete loaded3d[f]; no(new Error('could not load ' + f)); }; document.head.appendChild(sc); }));
   function start3d() {
     if (board3d || starting3d) return starting3d;
+    if (DIO && dio.shown && !document.documentElement.classList.contains('pc')) { dio.held3d = true; return null; } // a phone: the Diorama's island has the one WebGL context; the board's 3D starts when the home hides
     return (starting3d = (async () => {
       const el = document.createElement('div');
       let b = null, loaded = false;
@@ -10839,6 +11048,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
   window.addEventListener('resize', () => { size(); render(); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { size(); render(); });
+/*DIORAMA*/
   const joinCode = (qs.get('join') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   const playCode = (qs.get('play') || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); // a match on the game server
   { // a tournament: the invite link, or the one this device was in (the organizer's comes back with its key)
