@@ -7,6 +7,7 @@
 //   Play: #multi (Multiplayer open)   #rooms=standard|ranked   #filter (the filter list open)   #on=vs-ai|multi|standard|ranked|r<N>
 //   #bf=<look> (home battlefield)   #roombf=<look> (New room's)
 //   #create (New room) #private   #plh=<N> (playlist song N pointed at)
+//   Dropdowns: #friends   #friends=requests|chat   #frinvite=<N>   #frmore=<N>   #noinvite   #settings
 //   Profile: #profile   #acct=google|guest|dev|none   #title=<id>   #skinoff=<N>   #out   #sure   #history   #all   #rounds=<N>   #units (Profile's Units; with #tier=, #unit=)
 // The 3D board needs WebGL; in a container without a GPU, Chromium's SwiftShader is slow, hence the long timeouts.
 const { chromium } = require('playwright');

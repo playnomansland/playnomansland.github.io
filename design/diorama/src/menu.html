@@ -103,6 +103,80 @@ body.units .tiers { opacity: 1; pointer-events: auto; }
 #usheet .x { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; display: grid; place-items: center; opacity: .8; }
 #usheet .x:hover { opacity: 1; }
 
+/* ── the dropdowns: Friends and Settings hang off their buttons, top right ── */
+.acct button { position: relative; }
+.acct button[aria-expanded="true"] { opacity: 1; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.badge { position: absolute; top: -10px; right: -16px; min-width: 18px; height: 17px; padding: 2px 5px 0; font: 700 11px/15px var(--type); text-align: center; color: var(--ink); background: var(--saffron); clip-path: polygon(0 8%, 94% 0, 100% 90%, 5% 100%); }
+.badge[hidden] { display: none; }
+.drop { position: fixed; top: 80px; right: 36px; z-index: 6; width: 410px; max-height: calc(100vh - 104px); overflow-y: auto; scrollbar-width: thin; padding: 22px 24px 20px; color: #F4ECD8; isolation: isolate; filter: drop-shadow(0 14px 26px rgba(0,0,0,.38)); animation: dropin .2s cubic-bezier(.16,.9,.24,1) both; }
+.drop[hidden] { display: none; }
+.drop::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #17140F; clip-path: polygon(0 0, 100% 0, 100% 100%, 7% 100%, 0 calc(100% - 22px)); }
+body.profile .drop::before { background: #2C2820; }
+@keyframes dropin { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+.drop h3 { margin: 0; font: 700 34px/.95 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+.drop h3 small { margin-left: 10px; font: 400 13px var(--type); text-transform: none; letter-spacing: 0; opacity: .75; }
+.drop .k { display: block; margin: 18px 0 6px; font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .7; }
+.drop .hint { margin: 4px 0 0; font: 400 13px/1.45 var(--type); opacity: .8; }
+.drop .w { position: relative; isolation: isolate; padding: 4px 9px 1px; font: 700 20px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .6; white-space: nowrap; }
+.drop .w:hover { opacity: 1; }
+.drop .w[aria-pressed="true"], .drop .w.go { opacity: 1; color: var(--ink); }
+.drop .w[aria-pressed="true"]::before, .drop .w.go::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+.drop .w.go:hover { transform: rotate(-2deg); }
+.drop .lnk { font: 400 13px var(--type); opacity: .75; text-decoration: underline; text-underline-offset: 4px; }
+.drop .lnk:hover { opacity: 1; } .drop .lnk.sure { opacity: 1; color: #F2B23A; }
+/* Settings: rows of words */
+.set { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 7px 10px; align-items: center; }
+.set .lab { font: 400 14px var(--type); opacity: .85; }
+.set .seg { display: flex; gap: 2px; margin-left: -9px; }
+.set .sn { grid-column: 2; margin: -4px 0 2px; font: 400 12.5px/1.4 var(--type); opacity: .7; }
+.vol { display: flex; align-items: center; gap: 12px; }
+.vol input { flex: 1; min-width: 0; height: 22px; margin: 0; background: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
+.vol input::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(90deg, #F4ECD8 var(--v), rgba(244,236,216,.25) var(--v)); }
+.vol input::-moz-range-track { height: 2px; background: linear-gradient(90deg, #F4ECD8 var(--v), rgba(244,236,216,.25) var(--v)); }
+.vol input::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 20px; margin-top: -9px; border: 0; background: #F2B23A; clip-path: polygon(0 8%, 90% 0, 100% 92%, 10% 100%); }
+.vol input::-moz-range-thumb { width: 14px; height: 20px; border: 0; border-radius: 0; background: #F2B23A; clip-path: polygon(0 8%, 90% 0, 100% 92%, 10% 100%); }
+.vol input:disabled { opacity: .35; cursor: not-allowed; }
+.vol b { width: 28px; text-align: right; font: 700 13px var(--type); }
+.set-foot { display: flex; gap: 22px; margin-top: 18px; padding-top: 12px; border-top: 1px dashed rgba(244,236,216,.2); }
+/* Friends */
+.fr-tabs { display: flex; gap: 20px; margin: 16px 0 0; padding-bottom: 8px; border-bottom: 2px solid rgba(244,236,216,.4); font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; }
+.fr-tabs button { opacity: .55; } .fr-tabs button:hover { opacity: 1; } .fr-tabs [aria-pressed="true"] { opacity: 1; color: #F2B23A; }
+.fr-tabs i { font-style: normal; margin-left: 4px; padding: 0 5px; color: var(--ink); background: #F2B23A; }
+.fr-add { display: flex; align-items: baseline; gap: 10px; margin: 12px 0 4px; padding-bottom: 6px; border-bottom: 1px dashed rgba(244,236,216,.35); }
+.fr-add input { flex: 1; min-width: 0; font: 400 15px var(--type); color: #F4ECD8; background: none; border: 0; outline: 0; padding: 3px 0; }
+.fr-add input::placeholder { color: #F4ECD8; opacity: .5; }
+.fr-list { list-style: none; margin: 0; padding: 0; }
+.fr-list li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 10px 0; border-bottom: 1px dashed rgba(244,236,216,.14); }
+.fr-list li:last-child { border-bottom: 0; }
+.fr-list .dot { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid rgba(244,236,216,.55); align-self: start; margin-top: 7px; }
+.fr-list .dot.on { background: #F2B23A; border-color: #F2B23A; }
+.fr-list b { font: 700 17px/1.15 var(--sans); }
+.fr-list .tt { margin-left: 7px; font: 700 12px var(--stencil); text-transform: uppercase; color: var(--tc); }
+.fr-list small { display: block; margin-top: 2px; font: 400 12.5px var(--type); opacity: .7; }
+.fr-list .acts { display: flex; align-items: center; gap: 4px; }
+.fr-list .msg { position: relative; width: 30px; height: 30px; display: grid; place-items: center; opacity: .75; } .fr-list .msg:hover { opacity: 1; }
+.fr-list .msg svg { width: 18px; height: 18px; }
+.fr-list .msg i { position: absolute; top: 0; right: -2px; font: 700 10px/14px var(--type); font-style: normal; padding: 0 4px; color: var(--ink); background: #F2B23A; }
+.fr-list .more { width: 24px; height: 30px; font: 700 16px var(--type); opacity: .6; } .fr-list .more:hover { opacity: 1; }
+.fr-list .sub { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; margin-top: 4px; }
+.fr-list .sub .w { font-size: 17px; }
+.fr-list .done { font: 400 13px var(--type); opacity: .8; }
+.fr-list .acts .lnk { margin-left: 10px; }
+.fr-inv { position: relative; isolation: isolate; margin: 14px -8px 2px; padding: 12px 14px 12px; color: var(--ink); }
+.fr-inv::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 4%, 97% 0, 100% 94%, 2% 100%); }
+.fr-inv .k { margin: 0 0 4px; color: var(--ink); opacity: .8; }
+.fr-inv p { margin: 0 0 8px; font: 400 15px/1.35 var(--type); } .fr-inv p b { font: 700 17px var(--sans); }
+.fr-inv .row { display: flex; gap: 16px; align-items: baseline; }
+.fr-inv .w { color: #F2B23A; opacity: 1; } .fr-inv .w::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+.fr-inv .lnk { color: var(--ink); opacity: .85; }
+.thread { list-style: none; margin: 14px 0 10px; padding: 0; display: grid; gap: 10px; }
+.thread li { max-width: 82%; font: 400 14px/1.4 var(--type); }
+.thread li small { display: block; font-size: 11px; opacity: .55; margin-top: 2px; }
+.thread li.me { justify-self: end; text-align: right; color: #F2B23A; }
+.fr-back { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; margin-bottom: 8px; } .fr-back:hover { opacity: 1; }
+.drop .gbtn { display: inline-flex; align-items: center; gap: 10px; height: 40px; margin-top: 14px; padding: 0 18px 0 6px; border-radius: 20px; background: #131314; border: 1px solid #8E918F; font: 500 15px system-ui, sans-serif; color: #E3E3E3; }
+.drop .gbtn i { width: 28px; height: 28px; border-radius: 50%; background: #F4ECD8; color: #131314; display: grid; place-items: center; font: 700 16px system-ui, sans-serif; font-style: normal; }
+
 /* ── Profile: the screen turns ink. Your skins stand on the island; you, your title and your settings on the left ── */
 body.profile { --field: #1D1A15; --field-lo: #0E0C09; }
 body.profile .menu, body.profile .zz, body.profile .acct, body.profile .build, body.profile .standings { display: none; }
@@ -115,6 +189,18 @@ body.profile .pf { display: grid; } body.in-history .pf { display: none; } body.
 .ptitle i { width: 7px; height: 7px; background: currentColor; transform: rotate(45deg); }
 .ptitle[hidden] { display: none; }
 .pf .k .dev { color: #FF5FC4; }
+body.profile.units .pf-opts > :not(.ur), body.profile.units #pf-hist { display: none; }
+body.profile.units .pf-opts { margin-top: 18px; }
+.pf, .history { top: clamp(100px, 14.2vh, 128px); }
+.plate h2 { font-size: clamp(60px, 11.6vh, 104px) !important; }
+.ptitle { margin-top: clamp(6px, 1.3vh, 12px); font-size: clamp(20px, 2.9vh, 26px); }
+.pf-opts { margin: clamp(12px, 3.1vh, 28px) 0 clamp(10px, 2.4vh, 22px) !important; row-gap: 0 !important; }
+.pf-opts .seg > button:not(.gbtn):not(.del), .pf-user input { font-size: clamp(21px, 3.3vh, 30px); }
+.pf-opts .seg > button:not(.gbtn):not(.del) { padding-top: clamp(3px, .66vh, 6px); }
+.pf-opts .nr-note { margin-bottom: clamp(4px, 1.45vh, 13px) !important; font-size: clamp(12.5px, 1.56vh, 14px); }
+.pf-opts .gbtn { height: clamp(32px, 4.4vh, 40px) !important; }
+.pf-units .item { font-size: clamp(28px, 4vh, 36.4px) !important; }
+.pf .create { font-size: clamp(28px, 4vh, 36.4px); padding: clamp(6px, 1.1vh, 10px) 22px clamp(5px, .9vh, 8px) 18px; }
 .pf-opts { margin: 28px 0 22px; }
 .pf-opts .nr-note { margin-bottom: 13px; }
 .pf-opts .seg .gbtn { display: inline-flex; align-items: center; gap: 10px; align-self: center; height: 40px; padding: 0 18px 0 6px; margin-right: 12px; border-radius: 20px; background: #131314; border: 1px solid #8E918F; font: 500 15px system-ui, sans-serif; text-transform: none; letter-spacing: 0; color: #E3E3E3; opacity: 1; }
@@ -135,7 +221,8 @@ body.profile .pf { display: grid; } body.in-history .pf { display: none; } body.
 .gbtn i { width: 28px; height: 28px; border-radius: 50%; background: #F4ECD8; color: #131314; display: grid; place-items: center; font: 700 16px system-ui, sans-serif; font-style: normal; }
 .pf .create { background: var(--saffron); color: var(--ink); }
 .note.pnote { max-width: 220px; }
-.pf-units { display: flex; } .pf-units .item { font-size: calc(52px * var(--k, 1)); padding-top: 2px; }
+.pf-units { display: flex; margin-bottom: 6px; }
+body.sheet-over-music .music, body.drop-over-music .music { opacity: 0; pointer-events: none; } .pf-units .item { font-size: calc(52px * var(--k, 1)); padding-top: 2px; }
 .pf-units .item[aria-pressed="true"] { color: var(--ink); } .pf-units .item[aria-pressed="true"] .shard { opacity: 1; transform: none; }
 body.profile.units .zz { display: none; }
 body.profile #usheet::before { background: #2C2820; } /* lifted off the ink field */
@@ -186,11 +273,15 @@ body.profile #usheet::before { background: #2C2820; } /* lifted off the ink fiel
 
 <img class="logo" src="{{TITLE}}" alt="No Mans Land">
 <nav class="acct" aria-label="Account">
-  <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="currentColor"/><path d="M2 20c0-3.9 3.1-6 7-6s7 2.1 7 6" fill="currentColor"/><circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".7"/><path d="M17 13.5c2.9.2 5 1.9 5 5.5h-4.4c0-2-.6-3.7-1.8-5" fill="currentColor" opacity=".7"/></svg><span>Friends</span></button>
+  <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="currentColor"/><path d="M2 20c0-3.9 3.1-6 7-6s7 2.1 7 6" fill="currentColor"/><circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".7"/><path d="M17 13.5c2.9.2 5 1.9 5 5.5h-4.4c0-2-.6-3.7-1.8-5" fill="currentColor" opacity=".7"/></svg><span>Friends</span><b class="badge" id="fr-badge" hidden></b></button>
   <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>Guest</span></button>
   <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg><span>Settings</span></button>
 </nav>
 <button class="back">← Menu</button>
+
+<!-- the two dropdowns off the account buttons: an ink panel with a cut corner, since they sit over the board -->
+<section class="drop" id="dd-friends" hidden aria-label="Friends"></section>
+<section class="drop" id="dd-settings" hidden aria-label="Settings"></section>
 
 <nav class="menu" aria-label="Main menu">
   <button class="item play on" data-cam="play" id="play"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,9 61,0 99,6 96,93 38,100 0,86"/></svg>Play<span class="go">Assemble your army.<br>Master your strategy.<br>Defeat your opponent.</span></button>
@@ -642,6 +733,15 @@ function pin(el, x, y, dx, dy, keep) {
 function notes() {
   let html = '';
   const playR = document.getElementById('play').getBoundingClientRect(), inProf = body.classList.contains('profile');
+  // Profile: where the left column's words end (right and bottom); the island's notes and the Units view keep clear of it
+  let colR = 24, colB = 0, nameR = 24, kR = 0, kB = 0;
+  if (inProf) for (const el of document.querySelectorAll(body.classList.contains('units') ? '#pf-name, .pf .k, .pf-opts .ur' : '#pf-name, .pf .k, .pf-opts > *, #pf-hist')) {
+    const rg = document.createRange(), nm = el.id === 'pf-name', kk = el.matches('.pf .k'); rg.selectNodeContents(el);
+    for (const r of rg.getClientRects()) if (r.width > 1) { colR = Math.max(colR, r.right + 28); colB = Math.max(colB, r.bottom); if (nm) nameR = Math.max(nameR, r.right + 28); if (kk) { kR = Math.max(kR, r.right + 12); kB = Math.max(kB, r.bottom); } } }
+  // an open dropdown: notes it would cover hide while it's open, and the music player steps aside if it's under it
+  const dr = document.querySelector('.drop:not([hidden])')?.getBoundingClientRect(), under = (r) => dr && r.left < dr.right && r.right > dr.left && r.top < dr.bottom && r.bottom > dr.top;
+  body.classList.toggle('drop-over-music', !!under(document.querySelector('.music').getBoundingClientRect()) && !body.classList.contains('music-open'));
+  const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
   for (const el of document.querySelectorAll('.note:not(.pnote)')) {
     const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
     const show = !phone() && (bf ? inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered) : showing(el) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
@@ -662,25 +762,35 @@ function notes() {
       }
       continue;
     }
-    const [o, hh, [dx, dy]] = bf ? (inPlay ? [bfPlan, 0, [-40, 118]] : inProf ? [bfPlan, 0, [-40, 190]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
-    html += pin(el, x, y, dx, dy);
+    const [o, hh, [dx, dy]] = bf ? (inPlay ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
+    const ln = pin(el, x, y, dx, dy); if (clear(el, x, y)) html += ln; else el.style.display = 'none';
   }
   // Profile: the golem's note, while you can still earn its skin
   for (const el of document.querySelectorAll('.pnote')) {
     const show = !phone() && inProf && !body.classList.contains('in-history') && !body.classList.contains('units');
     el.style.display = show ? '' : 'none'; if (!show) continue;
-    const [x, y] = proj(golem, 1.35); html += pin(el, x, y, 170, -200);
+    const [x, y] = proj(golem, 1.35), ln = pin(el, x, y, 170, -200); if (clear(el, x, y)) html += ln; else el.style.display = 'none';
   }
   // the unit sheet, attached to the picked unit
-  const sh = document.getElementById('usheet');
+  const sh = document.getElementById('usheet'), tabs = document.querySelector('.tiers');
+  // the tier tabs sit above the island's far edge; on Profile clear of your name, or under the Units row if they can't be
+  { const [tx0, ty0] = proj(island, 0), tw = tabs.offsetWidth;
+    if (inProf && nameR + tw > innerWidth - 24) { tabs.style.left = (48 + tw / 2) + 'px'; tabs.style.top = (colB + 34) + 'px'; }
+    else { const lx = Math.min(Math.max(tx0, nameR + tw / 2), innerWidth - 24 - tw / 2); tabs.style.left = lx + 'px';
+      tabs.style.top = Math.max(118, ty0 - 330, inProf && lx - tw / 2 < kR ? kB + 14 : 0) + 'px'; } }
+  const tabsLeft = inProf && nameR + tabs.offsetWidth > innerWidth - 24, sheetL = tabsLeft ? Math.min(tabs.getBoundingClientRect().right + 24, innerWidth - 354) : colR;
   if (picked && body.classList.contains('units')) {
-    sh.hidden = false; const [x, y] = proj(picked, 1.4), w = sh.offsetWidth, h = sh.offsetHeight;
-    // the sheet hangs below its unit, over the open grass in front of the row
-    const sx = Math.min(Math.max(x - w * 0.35, 24), innerWidth - w - 24), sy = Math.min(y + 90, innerHeight - h - 150);
+    sh.hidden = false; const [x, y] = proj(picked, 1.4), w = sh.offsetWidth, h = sh.offsetHeight, tr = tabs.getBoundingClientRect();
+    // the sheet hangs below its unit, over the open grass in front of the row; never over the tabs or off the bottom
+    const sx = Math.min(Math.max(x - w * 0.35, sheetL), innerWidth - w - 24), mu = document.querySelector('.music').getBoundingClientRect();
+    const tb = sx < tr.right && sx + w > tr.left ? tr.bottom + 14 : 100; // below the tabs only if it would sit under them
+    // over the music player only when there is no other room; then the player steps aside while the sheet is open
+    const under = sx + w > mu.left - 14 && tb + h > mu.top - 14, floor = sx + w > mu.left - 14 && !under ? mu.top - 14 : innerHeight - 24, sy = Math.max(tb, Math.min(y + 90, floor - h));
+    body.classList.toggle('sheet-over-music', under);
     sh.style.left = sx + 'px'; sh.style.top = sy + 'px';
     const ex = Math.min(Math.max(x, sx + 30), sx + w - 30), ey = sy;
     html += `<path d="M${x} ${y} L${ex} ${ey}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
-  } else sh.hidden = true;
+  } else { sh.hidden = true; body.classList.remove('sheet-over-music'); }
   // a unit pointed at in the roster
   const hn = document.getElementById('unote');
   if (hovered && hovered.startsWith('u:') && body.classList.contains('units') && (!picked || picked.userData.i !== +hovered.slice(2))) {
@@ -692,8 +802,6 @@ function notes() {
   } else hn.style.display = 'none';
   svg.innerHTML = `<g style="color:var(--cream)">${html}</g>`;
   const [zx, zy] = proj(ent, 1.1); const zz = document.getElementById('zz'); zz.style.left = zx + 'px'; zz.style.top = zy + 'px';
-  // the tier tabs sit above the island's far edge
-  const [tx0, ty0] = proj(island, 0); const tabs = document.querySelector('.tiers'); tabs.style.left = tx0 + 'px'; tabs.style.top = Math.max(118, ty0 - 330) + 'px';
 }
 
 // ── pointing: pieces on the menu, units in the roster ──
@@ -788,7 +896,7 @@ for (const b of items) {
 document.querySelector('.menu').addEventListener('mouseleave', () => { if (body.classList.contains('pinned')) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
 for (const v of Object.keys(MODES)) document.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
 const unpin = () => { body.classList.remove('pinned'); setMode('play'); picked = null; items.forEach(x => x.classList.toggle('on', x.id === 'play')); viewName = 'play'; want = VIEWS.play; };
-const openPlay = () => { unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = VIEWS.orders; };
+const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = VIEWS.orders; };
 document.getElementById('play').addEventListener('click', openPlay);
 const backBtn = document.querySelector('.back');
 const goBack = () => { if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
@@ -870,6 +978,7 @@ const acctBtn = document.querySelectorAll('.acct button')[1];
 const $ = (id) => document.getElementById(id);
 function drawProfile() {
   acctBtn.querySelector('span').textContent = A ? A.tag : 'Guest';
+  if (typeof frBadge === 'function' && $('fr-badge')) try { frBadge(); if (dd.open === 'friends') drawFriends(); } catch (e) {}
   $('pf-k').innerHTML = (!A ? 'Profile · no account yet' : A.google ? 'Profile · signed in with Google' : 'Profile · guest on this phone') + (A && A.dev ? ' · <span class="dev">developer mode is on</span>' : '');
   $('pf-name').textContent = A ? A.tag : 'Nobody yet';
   const T = A && TITLES[A.title], pt = $('pf-title'); pt.hidden = !T;
@@ -881,8 +990,8 @@ function drawProfile() {
     if (A.titles.length) h += row('Title', A.titles.map(t => `<button data-title="${t}" style="--pc:${TITLES[t][1]}" aria-pressed="${A.title === t}">${esc(TITLES[t][0])}</button>`).join('') + `<button data-title="" aria-pressed="${!A.title}">None</button>`,
       T ? T[2] : 'Nothing shows under your name.');
     { const on = A.skins.filter(k => k.worn).map(k => `${SKIN[k.id].name} ${SKIN[k.id].unit}`), un = body.classList.contains('units');
-      h += `<span class="lab">Skins</span><span class="pf-units"><button class="item${un ? ' on' : ''}" data-units aria-pressed="${un}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,6 97,0 100,96 4,100"/></svg>Units</button></span>
-        <span></span><p class="nr-note">${!A.skins.length ? 'No skins yet. Every unit is in Units, on the island.' : `${on.length > 2 ? `${on.length} skins are on.` : on.length ? `${esc(on.join(' and '))} ${on.length > 1 ? 'are' : 'is'} on.` : 'All plain.'} Pick a unit to change its skin.`}</p>`; }
+      h += `<span class="lab ur">Skins</span><span class="pf-units ur"><button class="item${un ? ' on' : ''}" data-units aria-pressed="${un}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,6 97,0 100,96 4,100"/></svg>Units</button></span>
+        <span class="ur"></span><p class="nr-note ur">${!A.skins.length ? 'No skins yet. Every unit is in Units, on the island.' : `${on.length > 2 ? `${on.length} skins are on.` : on.length ? `${esc(on.join(' and '))} ${on.length > 1 ? 'are' : 'is'} on.` : 'All plain.'} Pick a unit to change its skin.`}</p>`; }
     h += row('Username', `<input id="pf-tag" maxlength="16" spellcheck="false" autocomplete="nickname" aria-label="Your username" value="${esc(A.tag)}" ${A.tagNext && !A.dev ? 'disabled' : ''}><button class="act" id="pf-save" hidden>Save</button>`,
       A.dev ? 'Developer: change it any time.' : A.tagNext ? 'Saved. You can change it again on Saturday, 14 November.' : 'You can change it once a week.', 'pf-user');
     if (!A.google) h += row('Keep it', g, 'Guest on this phone. Sign in with Google to keep it if you change or reset your phone.');
@@ -917,7 +1026,7 @@ $('pf-opts').addEventListener('click', (e) => {
 $('pf-opts').addEventListener('input', (e) => { if (e.target.id === 'pf-tag') $('pf-save').hidden = e.target.value.trim() === A.tag || e.target.value.trim().length < 2; });
 $('pf-opts').addEventListener('keydown', (e) => { if (e.target.id === 'pf-tag' && e.key === 'Enter' && !$('pf-save').hidden) $('pf-save').click(); if (e.key === 'Escape') e.stopPropagation(); });
 
-function openProfile() { unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; drawProfile(); }
+function openProfile() { openDrop(''); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; drawProfile(); }
 function closeProfile() { body.classList.remove('profile', 'in-history', 'units'); picked = null; hovered = null; want = VIEWS.play; backBtn.textContent = '← Menu'; }
 acctBtn.addEventListener('click', openProfile);
 // Match history (sample data, shaped like the game's: result, opponent and title, kind, rounds, battlefield, when)
@@ -957,13 +1066,103 @@ function closeHistory() { body.classList.remove('in-history'); backBtn.textConte
 $('pf-hist').addEventListener('click', openHistory);
 drawProfile();
 
+
+// ── the dropdowns (the game's Friends sheet, openFriends, and Settings, openSoundSheet), on sample data ──
+const ddBtn = { friends: document.querySelectorAll('.acct button')[0], settings: document.querySelectorAll('.acct button')[2] };
+const dd = { open: '', tab: 'friends', thread: -1, inviteOpen: true, more: -1, inviting: -1, invited: {}, adding: '', reqDone: {} };
+const FRIENDS = [ // status as the game's hub sends it: the menu, a room, or a match with its round
+  { tag: 'Pebble', t: 'initiate', st: 'menu', unread: 2 },
+  { tag: 'Captain Tuesday', t: 'legend', st: 'match', kind: 'Ranked', round: 3 },
+  { tag: 'Moth', st: 'room', kind: 'Standard' },
+  { tag: 'Bramble', t: 'goodsport', st: 'off', seen: '2 days ago' },
+  { tag: 'Old Gus', st: 'off', seen: 'last week', muted: true },
+];
+const REQ_IN = [{ tag: 'Hedgewitch', t: 'day1' }, { tag: 'Ironmoss' }], REQ_OUT = [{ tag: 'Sleepy Ent' }];
+const THREAD = [['them', 'gg. that mammoth was rude', 'yesterday'], ['me', 'it never gets tired', 'yesterday'], ['them', 'rematch tonight?', '20 min ago'], ['them', 'bring the golem', '19 min ago']];
+const SET = { music: true, vol: 60, sfx: true, sfxVol: 80, chat: true, emotes: true, spec: true, stay: true, ranked: true };
+const msgSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v11H9l-5 4v-4H3z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>';
+const frOn = () => !!(A && A.google);
+function frBadge() { const n = frOn() ? REQ_IN.filter((r, i) => !dd.reqDone['in' + i]).length + FRIENDS.reduce((t, f) => t + (f.unread || 0), 0) + (dd.inviteOpen ? 1 : 0) : 0;
+  const b = $('fr-badge'); b.hidden = !n; b.textContent = n; }
+const where = (f) => f.st === 'menu' ? 'In the menu' : f.st === 'room' ? `In a room · ${f.kind}` : f.st === 'match' ? `Playing ${f.kind} · round ${f.round}` : `Offline · ${f.seen}`;
+function drawFriends() {
+  const el = $('dd-friends'); frBadge();
+  if (!frOn()) { el.innerHTML = `<h3>Friends</h3><p class="hint">Friends need a Google sign-in, so they can find you on any phone. ${A ? 'Your guest name and results come with you.' : ''}</p>
+    <button class="gbtn" data-google><i aria-hidden="true">G</i>Sign in with Google</button>`; return; }
+  if (dd.thread >= 0) { const f = FRIENDS[dd.thread];
+    el.innerHTML = `<button class="fr-back" data-back>← Friends</button><h3>${esc(f.tag)} <small>${where(f)}</small></h3>
+      <ol class="thread">${THREAD.map(([who, txt, at]) => `<li class="${who}">${esc(txt)}<small>${who === 'me' ? 'you · ' : ''}${at}</small></li>`).join('')}</ol>
+      <div class="fr-add"><input placeholder="Message ${esc(f.tag)}" aria-label="Message" maxlength="200"><button class="w go">Send</button></div>
+      <p class="hint"><button class="lnk" data-mute="${dd.thread}">${f.muted ? 'Unmute messages' : 'Mute messages'}</button> &nbsp; <button class="lnk">Report</button></p>`; return; }
+  const nIn = REQ_IN.filter((r, i) => !dd.reqDone['in' + i]).length, online = FRIENDS.filter(f => f.st !== 'off').length;
+  let h = `<h3>Friends <small>${online} online · ${FRIENDS.length} friends</small></h3>`;
+  if (dd.inviteOpen) h += `<div class="fr-inv"><span class="k">Game invite</span><p><b>Pebble</b> wants a 1v1 Standard. The room is waiting.</p>
+    <span class="row"><button class="w" data-join>Join</button><button class="lnk" data-decline>Decline</button></span></div>`;
+  h += `<div class="fr-tabs" role="group" aria-label="Friends or requests"><button data-tab="friends" aria-pressed="${dd.tab === 'friends'}">Friends</button><button data-tab="requests" aria-pressed="${dd.tab === 'requests'}">Requests${nIn ? `<i>${nIn}</i>` : ''}</button></div>
+    <div class="fr-add"><input id="fr-add" placeholder="Add by username" aria-label="Add a friend by username" maxlength="16" value="${esc(dd.adding)}"><button class="w" data-add>Add</button></div>`;
+  if (dd.tab === 'friends') h += `<ul class="fr-list">${FRIENDS.map((f, i) => { const T = TITLES[f.t];
+      const act = dd.invited[i] ? `<span class="done">Invited · ${dd.invited[i]}</span>` : f.st === 'menu' ? `<button class="w${dd.inviting === i ? ' go' : ''}" data-invite="${i}">Invite</button>` : f.st === 'match' ? '<button class="w">Watch</button>' : '';
+      const sub = dd.inviting === i && !dd.invited[i] ? `<span class="sub"><span class="lnk" style="text-decoration:none">Invite to</span><button class="w" data-kind="${i}|1v1 Standard">Standard</button><button class="w" data-kind="${i}|1v1 Ranked">Ranked</button></span>`
+        : dd.more === i ? `<span class="sub"><button class="lnk" data-mute="${i}">${f.muted ? 'Unmute messages' : 'Mute messages'}</button><button class="lnk${dd.removeSure === i ? ' sure' : ''}" data-remove="${i}">${dd.removeSure === i ? 'Tap again to remove' : 'Remove friend'}</button></span>` : '';
+      return `<li><span class="dot${f.st !== 'off' ? ' on' : ''}" aria-label="${f.st !== 'off' ? 'online' : 'offline'}"></span><span><b>${esc(f.tag)}</b>${T ? `<span class="tt" style="--tc:${T[1]}">${esc(T[0])}</span>` : ''}<small>${where(f)}${f.muted ? ' · muted' : ''}</small></span>
+        <span class="acts">${act}<button class="msg" data-thread="${i}" aria-label="Messages with ${esc(f.tag)}">${msgSvg}${f.unread ? `<i>${f.unread}</i>` : ''}</button><button class="more" data-more="${i}" aria-label="More">⋯</button></span>${sub}</li>`; }).join('')}</ul>`;
+  else h += `<span class="k">Asking to be your friend</span><ul class="fr-list">${REQ_IN.map((r, i) => { const T = TITLES[r.t], d = dd.reqDone['in' + i];
+      return `<li><span class="dot"></span><span><b>${esc(r.tag)}</b>${T ? `<span class="tt" style="--tc:${T[1]}">${esc(T[0])}</span>` : ''}</span><span class="acts">${d ? `<span class="done">${d}</span>` : `<button class="w go" data-accept="${i}">Accept</button><button class="lnk" data-refuse="${i}">Decline</button>`}</span></li>`; }).join('') || '<li><small>No requests.</small></li>'}</ul>
+    <span class="k">Waiting for them</span><ul class="fr-list">${REQ_OUT.map((r, i) => `<li><span class="dot"></span><span><b>${esc(r.tag)}</b><small>${dd.reqDone['out' + i] || 'Sent yesterday'}</small></span><span class="acts">${dd.reqDone['out' + i] ? '' : `<button class="lnk" data-cancel="${i}">Cancel</button>`}</span></li>`).join('')}</ul>`;
+  el.innerHTML = h; frBadge();
+}
+const onoff = (key, lab, note = '') => `<span class="lab">${lab}</span><span class="seg"><button class="w" data-set="${key}|1" aria-pressed="${SET[key]}">On</button><button class="w" data-set="${key}|0" aria-pressed="${!SET[key]}">Off</button></span>${note ? `<p class="sn">${note}</p>` : ''}`;
+const vol = (key, on, lab) => `<span class="lab">${lab}</span><span class="vol"><input type="range" min="0" max="100" step="5" value="${SET[key]}" data-vol="${key}" style="--v:${SET[key]}%" aria-label="${lab}" ${SET[on] ? '' : 'disabled'}><b>${SET[key]}</b></span>`;
+function drawSettings() {
+  $('dd-settings').innerHTML = `<h3>Settings</h3>
+    <span class="k">Sound</span><div class="set">${onoff('music', 'Music')}${vol('vol', 'music', 'Music volume')}${onoff('sfx', 'Sound effects')}${vol('sfxVol', 'sfx', 'Effects volume')}</div>
+    <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat')}${onoff('emotes', 'Emotes')}${onoff('spec', 'Spectators', SET.spec ? 'Others can watch your matches.' : 'No one can watch your matches.')}</div>
+    <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', SET.stay ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${A && !A.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
+    ${A && A.dev ? `<span class="k" style="color:#FF5FC4">Developer</span><div class="set">${onoff('ranked', 'Ranked play', 'For everyone, not only developers.')}</div>` : ''}
+    <div class="set-foot"><button class="lnk" data-playlists>Playlists</button><button class="lnk" data-bug>Report a bug</button></div>
+    <p class="hint" style="opacity:.55">In a match, Settings also has the 2D or 3D board and its quality.</p>`;
+}
+function openDrop(which) {
+  for (const k of ['friends', 'settings']) { const on = k === which; $('dd-' + k).hidden = !on; ddBtn[k].setAttribute('aria-expanded', on); }
+  dd.open = which || ''; if (which === 'friends') drawFriends(); if (which === 'settings') drawSettings(); if (which) closeMusic();
+}
+for (const k of ['friends', 'settings']) { ddBtn[k].setAttribute('aria-haspopup', 'true'); ddBtn[k].setAttribute('aria-expanded', 'false'); ddBtn[k].addEventListener('click', () => openDrop(dd.open === k ? '' : k)); }
+addEventListener('pointerdown', (e) => { if (dd.open && !e.target.closest('.drop') && !e.target.closest('.acct')) openDrop(''); });
+$('dd-friends').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
+  if ('google' in d) { A = structuredClone(ACCTS.google); refreshAccount(); }
+  else if ('back' in d) dd.thread = -1;
+  else if ('thread' in d) { dd.thread = +d.thread; FRIENDS[dd.thread].unread = 0; }
+  else if ('tab' in d) dd.tab = d.tab;
+  else if ('join' in d || 'decline' in d) dd.inviteOpen = false; // in the game: Join goes straight into the room
+  else if ('invite' in d) { dd.inviting = dd.inviting === +d.invite ? -1 : +d.invite; dd.more = -1; }
+  else if ('kind' in d) { const [i, k] = d.kind.split('|'); dd.invited[i] = k; dd.inviting = -1; }
+  else if ('more' in d) { dd.more = dd.more === +d.more ? -1 : +d.more; dd.inviting = -1; dd.removeSure = -1; }
+  else if ('mute' in d) FRIENDS[+d.mute].muted = !FRIENDS[+d.mute].muted;
+  else if ('remove' in d) { if (dd.removeSure === +d.remove) { FRIENDS.splice(+d.remove, 1); dd.more = dd.removeSure = -1; } else dd.removeSure = +d.remove; }
+  else if ('accept' in d) dd.reqDone['in' + d.accept] = 'Friends now';
+  else if ('refuse' in d) dd.reqDone['in' + d.refuse] = 'Declined';
+  else if ('cancel' in d) dd.reqDone['out' + d.cancel] = 'Request cancelled';
+  else if ('add' in d) { const v = ($('fr-add') || {}).value || ''; dd.adding = ''; if (v.trim().length >= 2) REQ_OUT.push({ tag: v.trim() }), dd.tab = 'requests'; }
+  else return;
+  drawFriends();
+});
+$('dd-friends').addEventListener('input', (e) => { if (e.target.id === 'fr-add') dd.adding = e.target.value; });
+$('dd-settings').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.set) { const [k, v] = b.dataset.set.split('|'); SET[k] = v === '1'; drawSettings(); }
+  else if ('playlists' in b.dataset) { openDrop(''); openMusic(); }
+  else if ('bug' in b.dataset) {} // in the game: the Report a bug sheet
+});
+$('dd-settings').addEventListener('input', (e) => { const k = e.target.dataset.vol; if (!k) return; SET[k] = +e.target.value; e.target.style.setProperty('--v', SET[k] + '%'); e.target.nextElementSibling.textContent = SET[k]; });
+
 // the playlist
 const openMusic = () => body.classList.toggle('music-open'), closeMusic = () => body.classList.remove('music-open');
 document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', openMusic));
 document.querySelectorAll('.pl-row').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.setAttribute('aria-current', x === b))));
 document.querySelectorAll('.pl-tabs button[aria-pressed]').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.setAttribute('aria-pressed', x === b))));
 document.querySelectorAll('.pl-modes button').forEach(b => b.addEventListener('click', () => b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true')));
-addEventListener('keydown', e => { if (e.key === 'Escape') { if (picked) return pickUnit(null); if (!document.getElementById('r-menu').hidden) return tokMenu(false); closeMusic(); goBack(); } });
+addEventListener('keydown', e => { if (e.key === 'Escape') { if (dd.open) return openDrop(''); if (picked) return pickUnit(null); if (!document.getElementById('r-menu').hidden) return tokMenu(false); closeMusic(); goBack(); } });
 addEventListener('pointerdown', e => { if (!e.target.closest('.rsearch')) tokMenu(false); });
 addEventListener('pointerdown', e => { if (body.classList.contains('music-open') && !e.target.closest('.music')) closeMusic(); });
 // states for screenshots: #play, #music, #view=<word>, #pin, #tier=<n>, #unit=<n>, #hover=<piece>
@@ -993,6 +1192,12 @@ if (H.includes('profile') || H.includes('history')) { openProfile(); if (H.inclu
   now = { ...want, at: [...want.at], off: [...want.off] }; }
 if (H.includes('history')) { openHistory(); if (H.includes('all')) { histTab = 'all'; drawHistory(); } }
 const rnq = (H.match(/rounds=(\d)/) || [])[1]; if (rnq) document.querySelectorAll('#h-list > li')[+rnq]?.querySelector('.rd')?.click();
+// dropdowns: #friends, #friends=requests, #friends=chat, #frinvite=<n> (Invite to... open on friend n), #frmore=<n>, #noinvite, #settings
+frBadge();
+if (H.includes('noinvite')) dd.inviteOpen = false;
+const fq = (H.match(/friends(=\w+)?/) || []); if (fq[0]) { if (fq[1] === '=requests') dd.tab = 'requests'; if (fq[1] === '=chat') dd.thread = 0; dd.inviteOpen = dd.inviteOpen && !fq[1];
+  const fi = (H.match(/frinvite=(\d)/) || [])[1]; if (fi) dd.inviting = +fi; const fm = (H.match(/frmore=(\d)/) || [])[1]; if (fm) dd.more = +fm; openDrop('friends'); }
+if (H.includes('settings')) openDrop('settings');
 window.__ready = true;
 
 </script>

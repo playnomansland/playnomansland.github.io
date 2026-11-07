@@ -37,6 +37,9 @@ node design/diorama/shots.js '[["play","#still,play",1440,900]]'
   empty for None), `#skinoff=N` (skin N taken off), `#out` / `#sure` (Log out / Delete account tapped once), `#history`
   (Match history), `#all` (its All online tab), `#rounds=N` (match N's rounds open), `#units` (Profile's Units, with
   `#tier=` and `#unit=`). `#acct=` also sets whose skins the menu's Units shows.
+- Dropdowns: `#friends` (with a game invite at the top), `#friends=requests`, `#friends=chat` (the thread with Pebble),
+  `#frinvite=N` (friend N's "Invite to" open), `#frmore=N` (friend N's ⋯ open), `#noinvite`, `#settings`. With
+  `#acct=guest` Friends asks for Google; with `#acct=dev` Settings has the Developer group.
 - Skins are on the unit sheet: e.g. `#still,view=units,pin,tier=4,unit=0` (Ether Golem), `tier=2,unit=0` (Brute),
   `tier=1,unit=3` (Fire Mage).
 
@@ -135,6 +138,35 @@ Opened from the account button top right, which now shows the sample player's na
   WON (saffron) / LOST (faded) / DRAW, `vs Pebble` with their title in its colour, `Ranked · 2–1 · Desert · 2 h ago ·
   dealt 72, took 28`, and "3 rounds ⌄", which folds out each round with a REPLAY. The island moves further right.
 - Sample data only (`ACCTS`, `HIST`, `ALL` in `src/menu.html`); nothing talks to the server.
+
+**Small screens (2026-11-07).** A collision check went through every Profile and dropdown state at 1024×768 to
+1920×1080 (text boxes overlapping, note lines through words, text off screen). Fixes: Profile's column scales with the
+window's height (`clamp(..vh..)`); Change battlefield sits on the island's right corner on Profile too; island notes
+that would land on the left column or under an open dropdown hide; Units from Profile hides the other rows, keeps the
+tier tabs clear of your name (under the Units row if they can't fit) and the sheet clear of the tabs and the music
+player (which steps aside only if there's no other room).
+
+## Friends and Settings (dropdowns, 2026-11-07)
+
+Both hang off their buttons top right as an ink panel with a cut lower-left corner (`.drop`), one open at a time;
+clicking outside, Esc, or the button again closes them. On the menu only (the buttons hide on Play and Profile).
+(`screens/friends*.jpg`, `settings.jpg`)
+- **Friends** (the game's `openFriends`; Google accounts only). The button carries a saffron badge: requests, unread
+  messages and invites. FRIENDS with "n online · n friends"; a game invite on a saffron shard at the top ("Pebble
+  wants a 1v1 Standard", JOIN / Decline); Friends / Requests tabs; "Add by username" on a dashed line with ADD. Each
+  friend: a saffron dot (online) or a ring (offline), the name with their title in its colour, where they are (In the
+  menu · In a room · Standard · Playing Ranked · round 3 · Offline · 2 days ago), then INVITE (in the menu: folds out
+  "Invite to Standard / Ranked", then "Invited · 1v1 Standard"), WATCH (in a match), the messages button with its
+  unread count, and ⋯ (Mute messages, Remove friend: tap twice). Requests: "Asking to be your friend" (ACCEPT /
+  Decline) and "Waiting for them" (Cancel). A thread: ← Friends, the name and where they are, typed lines (yours
+  right, in saffron), "Message Pebble" and SEND, Mute / Report. A guest or no account: why it needs Google, and the
+  Google button.
+- **Settings** (the game's `openSoundSheet`, as on the menu): Sound (Music On/Off, Music volume, Sound effects On/Off,
+  Effects volume), Online matches (Chat, Emotes, Spectators), This device (Stay logged in, with the guest warning),
+  Developer (Ranked play, developers only); Playlists (opens the player's list) and Report a bug. Rows of words like
+  New room, small; volumes are a thin line with a saffron cut-corner handle and the number. The match-only settings
+  (2D/3D board, phone layout, 3D quality) are not in it; a line says so.
+- Sample data: `FRIENDS`, `REQ_IN`, `REQ_OUT`, `THREAD`, `SET` in `src/menu.html`.
 
 Open questions for the owner: is ink the right field for Profile; should skins you don't own show (locked) on the
 island; where Friends goes (its own screen or part of Profile); the phone layout (not done for Profile).
