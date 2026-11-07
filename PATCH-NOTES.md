@@ -29,6 +29,7 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 - **The old gate:** past the far end stands a stone gate with broken fences on either side and a shrine and candles before it, flickering warm in the dark. An old path of stones leads there from the board.
 - **A new forest floor:** moss and leaf litter, dappled light, old roots creeping in from the woods on both sides, and a broken stone road across no man's land (the ice and the mountain rock are gone).
 - **Undergrowth:** ferns, tall wispy grass, orange shelf fungus and mushrooms, fallen logs by the sides.
+- **The lost explorer:** when your opponent presses Ready (online, while you still deploy), an explorer with a far too big backpack comes running out of the woods along the old road. He stops in the middle, looks left, looks right, squints at his map, scratches his head (a **?** pops up over him), shrugs and hurries on into the woods. If the fight starts before he's off the board, he panics (**!**) and sprints away. On the 3D board.
 - **Forest Clearing:** its twisted trees now have moss-green leaves too (they were dark red).
 
 Trees and fungus from Quaternius' Stylized Nature MegaKit; the gate, shrine and candles from KayKit's Halloween Bits; the logs from KayKit's Resource Bits (all CC0).

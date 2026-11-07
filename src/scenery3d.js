@@ -40,7 +40,7 @@ const Scenery3D = (THREE, scene, opts = {}) => {
     tints: [[/^TwistedTree/, [0.86, 0.96, 0.86]], [/^Pine/, [0.6, 0.72, 0.64]], [/^DeadTree/, [0.62, 0.66, 0.6]], [/^Fern|^Plant/, [0.8, 0.92, 0.8]], [/^Mushroom/, [1.15, 1.08, 0.98]]],
     light: { hemi: ['#B8CBB5', '#1B251F', 1.15], sun: ['#F5E8C2', 1.8], pos: [-28, 62, -24] }, farLight: 0.72,
     shade: [0.86, 1, 16], night: [0.3, 0.56, 0.42, 0.3], deep: [0.9, 9, 36],
-    fall: 'spores', giants: true, gate: true, mist: 44, eyes: [7, 2], shafts: 3 };
+    fall: 'spores', giants: true, gate: true, mist: 44, eyes: [7, 2], shafts: 3, explorer: true };
   BIOMES.ice.snow = 0.75; // snow on everything that faces up, drifts round the board and falling snow
   // Looks added 2026-11-07. light: the scene's lights for this look (render3d; default the day sun) as hemi [sky,
   // ground, intensity], sun [colour, intensity], pos (the sun's position); fall: what drifts through the air (FALL
@@ -715,7 +715,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
   // the vultures circle over { x, z } (scene metres), or go back to their wide circles (null)
   function prey(at) { preyAt = at; }
   // true while something round the board lives on its own (the vultures): the page keeps drawing frames for it
-  const alive = () => vultures.visible;
+  const alive = () => vultures.visible || ex.on;
   // ---------- Darkwoods: banks of ground mist drifting between the trunks, pairs of eyes blinking in the dark, and pale
   // light falling through the canopy onto the clearing. All built per layout (update) and moved in tick. ----------
   const softTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
@@ -775,6 +775,105 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       for (const c of e.g.children) c.scale.set(1.15 * e.s, 1.15 * e.s * Math.max(0.08, open * lid), 1);
     });
   }
+  // ---------- Forest Glade's explorer: when your opponent is ready (foeReady from render3d), a lost explorer with a far
+  // too big backpack comes running out of the woods along the old road across no man's land, stops in the middle to
+  // look around, puzzled, with his map (a "?" over his head), then hurries on into the woods on the other side. If the
+  // fight starts while he's still out there, he panics ("!") and sprints off. Built from simple shapes, once. ----------
+  const explorer = new THREE.Group(); explorer.visible = false; scene.add(explorer);
+  const ex = { on: false, s: 'in', x: 0, dir: 1, t: 0, ph: 0, ry: 0, panic: false, path: null, last: false, P: {} };
+  const exMats = [];
+  function buildExplorer() {
+    const M = (c) => { const m = new THREE.MeshLambertMaterial({ color: c, flatShading: true }); exMats.push(m); return m; };
+    const C = { skin: M('#E9C4A2'), shirt: M('#CDBB8E'), shorts: M('#A5916A'), boot: M('#5C4332'), pack: M('#8C7C54'), packD: M('#6C5F40'), roll: M('#B8654F'),
+      helmet: M('#F4EEDC'), dark: M('#2E2622'), white: M('#FBF8EE'), pan: M('#403C3A'), map: M('#F0E4C2'), cup: M('#7E8C92') };
+    const add = (parent, geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.castShadow = true; m.raycast = () => {}; parent.add(m); return m; };
+    const grp = (parent, x, y, z) => { const g = new THREE.Group(); g.position.set(x, y, z); parent.add(g); return g; };
+    const sph = (r, sx = 1, sy = 1, sz = 1) => new THREE.SphereGeometry(r, 10, 8).scale(sx, sy, sz), box = (w, h, d) => new THREE.BoxGeometry(w, h, d), cyl = (r1, r2, h, n = 8) => new THREE.CylinderGeometry(r1, r2, h, n);
+    const root = grp(explorer, 0, 0, 0), P = ex.P; P.root = root;
+    // skinny legs in baggy shorts, big boots
+    for (const sd of [-1, 1]) {
+      const leg = grp(root, sd * 0.13, 0.78, 0); P[sd < 0 ? 'legL' : 'legR'] = leg;
+      add(leg, box(0.2, 0.26, 0.22), C.shorts, 0, -0.1, 0); add(leg, cyl(0.055, 0.05, 0.6), C.skin, 0, -0.45, 0); add(leg, box(0.16, 0.13, 0.3), C.boot, 0, -0.73, 0.05);
+    }
+    const torso = grp(root, 0, 0.78, 0); P.torso = torso;
+    add(torso, sph(0.27, 1, 1.25, 0.85), C.shirt, 0, 0.3, 0); add(torso, box(0.5, 0.07, 0.4), C.boot, 0, 0.05, 0); // shirt, belt
+    // the head: wide eyes, one brow up, a bushy moustache, a pith helmet on askew
+    const head = grp(torso, 0, 0.76, 0.03); P.head = head;
+    add(head, sph(0.23), C.skin, 0, 0, 0); add(head, sph(0.075), C.skin, 0, -0.03, 0.23);
+    for (const sd of [-1, 1]) { add(head, sph(0.065), C.white, sd * 0.09, 0.06, 0.18); add(head, sph(0.032), C.dark, sd * 0.09, 0.06, 0.24); add(head, box(0.1, 0.025, 0.03), C.dark, sd * 0.09, sd < 0 ? 0.16 : 0.2, 0.2, 0, 0, sd * 0.35); }
+    add(head, box(0.2, 0.05, 0.05), C.dark, 0, -0.1, 0.21, 0, 0, 0.05);
+    const hat = grp(head, 0, 0.07, 0); hat.rotation.set(-0.12, 0, 0.22);
+    add(hat, new THREE.SphereGeometry(0.26, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), C.helmet, 0, 0.02, 0); add(hat, cyl(0.44, 0.44, 0.03, 12), C.helmet, 0, 0.03, 0); add(hat, cyl(0.265, 0.265, 0.06, 12), C.boot, 0, 0.07, 0);
+    // arms; the right hand holds a map (shown while he looks around)
+    for (const sd of [-1, 1]) {
+      const arm = grp(torso, sd * 0.31, 0.52, 0); P[sd < 0 ? 'armL' : 'armR'] = arm;
+      add(arm, cyl(0.05, 0.045, 0.5), C.shirt, 0, -0.25, 0); add(arm, sph(0.07), C.skin, 0, -0.52, 0);
+    }
+    P.map = add(P.armR, box(0.42, 0.3, 0.012), C.map, 0, -0.62, 0.12, 0.3, 0, 0); P.map.visible = false;
+    // the backpack: much too big, taller than he is, a bedroll on top, a frying pan and a tin cup swinging off it
+    const pack = grp(torso, 0, 0.32, -0.3); P.pack = pack;
+    add(pack, box(0.86, 1.3, 0.62), C.pack, 0, 0.45, -0.3); add(pack, box(0.9, 0.3, 0.66), C.packD, 0, 1.0, -0.28); add(pack, box(0.55, 0.42, 0.18), C.packD, 0, 0.25, 0.04);
+    for (const sd of [-1, 1]) { add(pack, box(0.16, 0.5, 0.36), C.packD, sd * 0.5, 0.3, -0.3); add(pack, box(0.07, 0.62, 0.05), C.packD, sd * 0.17, 0.2, 0.33, 0.2); }
+    add(pack, cyl(0.19, 0.19, 1.15, 10), C.roll, 0, 1.33, -0.28, 0, 0, Math.PI / 2);
+    const pan = grp(pack, 0.52, 0.75, -0.2); P.pan = pan;
+    add(pan, cyl(0.19, 0.17, 0.05, 12), C.pan, 0, -0.32, 0, Math.PI / 2, 0, Math.PI / 2); add(pan, box(0.04, 0.3, 0.04), C.pan, 0, -0.08, 0);
+    const cup = grp(pack, -0.52, 0.5, -0.1); P.cup = cup; add(cup, cyl(0.08, 0.07, 0.14), C.cup, 0, -0.14, 0);
+    // "?" and "!" over his head
+    const sign = (ch, col) => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.font = 'bold 54px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.lineWidth = 8; g.strokeStyle = '#2E2622'; g.strokeText(ch, 32, 35); g.fillStyle = col; g.fillText(ch, 32, 35);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false })); s.raycast = () => {}; s.visible = false; explorer.add(s); return s; };
+    P.q = sign('?', '#F6E7A8'); P.bang = sign('!', '#F4B9A0');
+    root.scale.setScalar(1.6);
+  }
+  // path: { hw, T } (the road's wave across no man's land, as the floor paints it: z = sin((x + hw) / T * 0.7) * T * 0.35)
+  const roadZ = (x) => { const p = ex.path; return Math.sin((x + p.hw) / p.T * 0.7) * p.T * 0.35; };
+  function explore(x0) { // x0 (tests): start this far from the middle
+    if (!ex.path || ex.on) return;
+    if (!ex.P.root) buildExplorer();
+    ex.dir = Math.random() < 0.5 ? 1 : -1; ex.x = -ex.dir * (x0 == null ? ex.path.hw + 14 : x0); ex.s = 'in'; ex.t = 0; ex.panic = false; ex.on = true; explorer.visible = true; ex.ry = ex.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+  }
+  // the page tells every frame whether the opponent is ready; the moment they press it, out he comes
+  function foeReady(on) {
+    if (on && !ex.last) explore();
+    if (!on && ex.last && ex.on && ex.s !== 'out') { ex.s = 'out'; ex.panic = true; }
+    ex.last = on;
+  }
+  const lerpA = (a, b, k) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
+  function tickExplorer(dt) {
+    const P = ex.P, hw = ex.path.hw;
+    let run = ex.s !== 'look', speed = ex.panic ? 13 : 5.2;
+    if (ex.s === 'in') { ex.x += ex.dir * speed * dt; if (ex.dir * ex.x >= 0) { ex.x = 0; ex.s = 'look'; ex.t = 0; } }
+    else if (ex.s === 'look') { ex.t += dt; if (ex.t > 3.9) { ex.s = 'out'; } }
+    else { ex.x += ex.dir * speed * dt; if (ex.dir * ex.x > hw + 16) { ex.on = false; explorer.visible = false; P.q.visible = P.bang.visible = false; return; } }
+    const z = roadZ(ex.x), dz = (roadZ(ex.x + 0.5) - roadZ(ex.x - 0.5)) * ex.dir;
+    const head = Math.atan2(ex.dir, dz); // facing along the road
+    const lt = ex.s === 'look' ? ex.t : -1, sm = (a, b) => smoothstep(a, b, lt);
+    ex.ry = lerpA(ex.ry, lt >= 0 && lt < 3.6 ? 0 : head, Math.min(1, dt * (lt >= 0 ? 4 : 10))); // turns to face you while he looks around
+    P.root.position.set(ex.x, 0, z); P.root.rotation.y = ex.ry;
+    if (run) {
+      ex.ph += dt * speed * 1.7;
+      const s = Math.sin(ex.ph), bob = Math.abs(Math.cos(ex.ph));
+      P.legL.rotation.x = s * 0.85; P.legR.rotation.x = -s * 0.85; P.armL.rotation.set(-s * 0.9, 0, -0.15); P.armR.rotation.set(s * 0.9, 0, 0.15);
+      P.root.position.y = bob * 0.13; P.torso.rotation.set(ex.panic ? 0.45 : 0.3, 0, s * 0.05); // bent forward under the pack
+      P.pack.rotation.set(0, 0, -s * 0.09); P.pan.rotation.z = s * 0.5; P.cup.rotation.z = -s * 0.6;
+      P.head.rotation.set(-0.15, 0, 0); P.map.visible = false;
+    } else {
+      // a skid, then a look one way, the other way, the map up close, a scratch of the head, a shrug, and off
+      const skid = 1 - sm(0, 0.45);
+      P.legL.rotation.x = 0.35 * skid; P.legR.rotation.x = -0.25 * skid; P.root.position.y = 0;
+      P.torso.rotation.set(-0.18 * skid + 0.12 * (1 - skid), 0, 0.06 * Math.sin(lt * 2));
+      P.head.rotation.set(0, 0.85 * (sm(0.5, 0.9) - sm(1.3, 1.7)) - 0.85 * (sm(1.7, 2.1) - sm(2.5, 2.8)), 0.28 * sm(2.5, 2.9)); // left, right, then a puzzled tilt
+      const mapUp = sm(0.6, 0.9) - sm(2.5, 2.8);
+      P.armR.rotation.set(-1.25 * mapUp, 0, 0.15); P.map.visible = mapUp > 0.05;
+      const scratch = sm(2.6, 2.9) - sm(3.3, 3.5);
+      P.armL.rotation.set(-2.7 * scratch, 0, -0.15 - 0.5 * scratch + 0.12 * scratch * Math.sin(lt * 22));
+      const shrug = sm(3.4, 3.55) - sm(3.7, 3.9); P.pack.rotation.set(0, 0, 0); P.pack.position.y = 0.32 + 0.08 * shrug; P.head.position.y = 0.76 + 0.03 * shrug;
+      P.pan.rotation.z *= 0.9; P.cup.rotation.z *= 0.9;
+    }
+    const qOn = lt >= 0 && lt > 0.5 && lt < 3.6, pop = qOn ? Math.min(1, (lt - 0.5) / 0.15) * (1 - smoothstep(3.4, 3.6, lt)) : 0;
+    P.q.visible = pop > 0.01; P.q.position.set(ex.x, 4.5 + 0.1 * Math.sin(lt * 5), z); P.q.scale.setScalar(1.8 * pop);
+    P.bang.visible = ex.panic; P.bang.position.set(ex.x, 4.5, z); P.bang.scale.setScalar(1.8);
+  }
   // the clock for the falling snow, embers and chimney smoke (the page calls it every frame it draws); px: the renderer's pixels per CSS pixel
   let smokeT = 0;
   function tick(dt, px = 1) {
@@ -783,6 +882,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     lampFlick.forEach(([i, base, fl, ph]) => { if (fl) shadeU.uLamps.value[i].w = base * (1 - fl * 0.35 * (0.5 + 0.5 * Math.sin(lampT * 7.3 + ph) * Math.sin(lampT * 3.1 + ph * 2))); });
     emberGlows.forEach(([sp, base, ph]) => { const f = 0.8 + 0.2 * Math.sin(lampT * 6.1 + ph) * Math.sin(lampT * 2.3 + ph); sp.scale.setScalar(base * f); });
     if (woods.visible) tickWoods(dt);
+    if (ex.on) tickExplorer(dt);
     if (grassMat.userData.on) windT.value += dt;
     if (vultures.visible) {
       vultureT += dt;
@@ -1084,6 +1184,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
       for (let k = 0; k < (bi.shafts || 0); k++) sh.push([(rr() - 0.5) * BW * 0.8, (rr() - 0.5) * BD * 0.7, 4 + rr() * 4]);
       showWoods({ mist, eyes: spots, shafts: sh, sun: (bi.light && bi.light.pos) || [-30, 60, 25] });
     } else showWoods(null);
+    ex.path = bi.explorer ? { hw, T: BW / Game.COLS } : null; if (!ex.path) { ex.on = false; explorer.visible = false; } // Forest Glade's explorer
     // far trees and bushes: impostors
     shadeU.uHalf.value.set(hw, hd); shadeU.uShade.value.set(...(bi.shade || [0, 1, 2])); veil.visible = !!bi.shade;
     shadeU.uNight.value.set(...(bi.night || [0, 0, 0, 0])); shadeU.uDeep.value.set(...(bi.deep || [0, 1, 2]));
@@ -1123,9 +1224,9 @@ vec3 pbNight(vec3 c, vec2 xz) { float k = pbK(xz), lw = pbLamp(xz), fw = pbFire(
     }
   }
   function shadows(on) { if (on !== castShadows) { castShadows = on; key = ''; } }
-  function dispose() { clear(); clearWoods(); scene.remove(woods); eyeMat.dispose(); shaftMat.dispose(); shaftGeo.dispose(); mistTex.dispose(); shaftTex.dispose(); for (const m of Object.values(glowMats)) m.dispose();
+  function dispose() { clear(); clearWoods(); scene.remove(woods, explorer); explorer.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.isSprite) { o.material.map.dispose(); o.material.dispose(); } }); for (const m of exMats) m.dispose(); eyeMat.dispose(); shaftMat.dispose(); shaftGeo.dispose(); mistTex.dispose(); shaftTex.dispose(); for (const m of Object.values(glowMats)) m.dispose();
     scene.remove(flakes, flakes2, cabin, cabinLight, veil, xmas, horizon, dragonShadow, smokeCols, vultures); dragonTex.dispose(); dragonShadow.geometry.dispose(); smokeCols.children.forEach((o) => o.material.dispose()); grassGeo.dispose(); grassMat.dispose(); groundMat.dispose(); vultureMat.dispose(); vultures.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); flake2Mat.dispose(); sootMat.dispose(); emberGlowMat.dispose(); horizonMat.dispose(); horizonTex.dispose(); horizon.geometry.dispose(); dragonMat.dispose(); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
-  return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, alive, prey, flyover, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
+  return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, alive, prey, flyover, foeReady, explore, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
 };
 
 // The painted floors and the looks live in src/floors.js (loaded with the main page, before this file)

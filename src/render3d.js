@@ -1069,6 +1069,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (scenery) { // Savanna's vultures gather over your tower while your opponent is ready and you still deploy
       const m = v.m, t = v.foeReady && m && ((m.towers && m.towers[v.me]) || Game.towerSpot(m, v.me));
       if (t) { const w = Game.tileToWorld(t.col, t.row), f = v.me === 1 ? -1 : 1; scenery.prey({ x: w.x * f, z: -w.y * f }); } else scenery.prey(null);
+      if (scenery.foeReady) scenery.foeReady(!!v.foeReady); // Forest Glade: the lost explorer crosses no man's land
       scenery.tick(dt, renderer.getPixelRatio());
     }
     used.clear(); ns = 0;
@@ -1125,6 +1126,6 @@ const Render3D = (THREE, el, view, opts = {}) => {
     renderer.forceContextLoss();
   }
   return { size: sizeTo, draw, tileAt, thumb: (match) => floor2d.thumb(match), camera: cam, info: () => renderer.info.render,
-    still: () => !cam.busy(), alive: () => !!(scenery && scenery.alive && scenery.alive()), // alive: the scenery moves on its own (Savanna's vultures) kinds: () => [...new Set(Object.keys(groups).filter(k => used.has(groups[k])).map(k => k.split('#')[0]))], // the models drawn in the last frame (UI tests)
+    still: () => !cam.busy(), alive: () => !!(scenery && scenery.alive && scenery.alive()), explore: (x0) => scenery && scenery.explore && scenery.explore(x0), // (tests: send Forest Glade's explorer out) // alive: the scenery moves on its own (Savanna's vultures) kinds: () => [...new Set(Object.keys(groups).filter(k => used.has(groups[k])).map(k => k.split('#')[0]))], // the models drawn in the last frame (UI tests)
     quality, pixelRatio: () => renderer.getPixelRatio(), dispose, drawn, screenAt, pickAt, scenery };
 };
