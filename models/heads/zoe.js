@@ -34,8 +34,8 @@ const ZoeHead = (THREE) => {
   const wrap = (g, k) => { const a = g.getAttribute('position'); for (let i = 0; i < a.count; i++) a.setZ(i, a.getZ(i) + k * a.getX(i) ** 2); a.needsUpdate = true; return g; };
 
   // reference palette
-  const SKIN = '#C38FCC', SPOT = '#A877B5', LID = '#AE7FBC', BROW = '#5E3C6B', LASH = '#231A27';
-  const WHITE = '#F5E8D0', PUPIL = '#1F1722', LIPS = '#86508A', LIPS2 = '#9A639D';
+  const SKIN = '#C38FCC', SPOT = '#A877B5', LID = '#A26FB1', BROW = '#5A3866', LASH = '#1E1622';
+  const WHITE = '#F3E3C2', PUPIL = '#1A1320', LIPS = '#7E4880', LIPS2 = '#93598F';
   const ROBE = '#76508A', ROBE2 = '#5A3C6A', GOLD = '#EBB84A';
 
   // the head: a gourd. Round dome, widest low at the cheeks, then tucking in under the jaw.
@@ -56,21 +56,21 @@ const ZoeHead = (THREE) => {
   const parts = () => {
     const out = [];
     // --- head
-    const lathe = new THREE.LatheGeometry(PROFILE.map(([r, y]) => new THREE.Vector2(r, y)).reverse(), 20);
+    const lathe = new THREE.LatheGeometry(PROFILE.map(([r, y]) => new THREE.Vector2(r, y)).reverse(), 18);
     lathe.scale(1, 1, DEPTH); lathe.computeVertexNormals();
     { // the lathe's first and last columns sit on the same seam: share their normals so no line shows
-      const n = lathe.getAttribute('normal'), k = PROFILE.length, last = 20 * k;
+      const n = lathe.getAttribute('normal'), k = PROFILE.length, last = 18 * k;
       for (let j = 0; j < k; j++) { const x = (n.getX(j) + n.getX(last + j)) / 2, y = (n.getY(j) + n.getY(last + j)) / 2, z = (n.getZ(j) + n.getZ(last + j)) / 2; n.setXYZ(j, x, y, z); n.setXYZ(last + j, x, y, z); }
     }
     out.push({ g: lathe, col: SKIN, smooth: 'keep' });
     // spots: big soft circles on the cheeks, a few smaller on the dome
     for (const [x, y, r] of [[0.86, -0.42, 0.24], [0.62, -0.8, 0.15], [-0.88, -0.44, 0.22], [-0.66, -0.82, 0.14], [1.08, -0.02, 0.12]]) {
-      const g = sph(r, 11, 3); g.scale(1, 1, 0.22); out.push(S(onFace(g, x, y, -0.01), SPOT));
+      out.push(P(onFace(new THREE.CircleGeometry(r, 18).rotateY(PI), x, y, 0.006), SPOT)); // flat paint: a disc facing out
     }
-    for (const [x, y, z, r] of [[0.35, 1.05, 0.55, 0.14], [-0.4, 0.95, 0.65, 0.12], [0.05, 0.6, 0.95, 0.16], [-0.75, 0.25, 0.85, 0.13]]) { // back of the head
-      const n = new THREE.Vector3(x, y, z).normalize(), g = sph(r, 7, 3); g.scale(1, 1, 0.22);
+    for (const [x, y, z, r] of [[0.35, 1.05, 0.55, 0.14], [0.05, 0.6, 0.95, 0.16], [-0.75, 0.25, 0.85, 0.13]]) { // back of the head
+      const n = new THREE.Vector3(x, y, z).normalize(), g = new THREE.CircleGeometry(r, 14);
       g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n));
-      const rr = Math.sqrt(Math.max(0, radiusAt(y) ** 2)); const k = rr / Math.hypot(n.x, n.z); g.translate(n.x * k * 1.0, y, n.z * k * DEPTH * 1.0); out.push(S(g, SPOT));
+      const rr = radiusAt(y); const k = rr / Math.hypot(n.x, n.z); g.translate(n.x * k * 1.01, y, n.z * k * DEPTH * 1.01); out.push(P(g, SPOT));
     }
     // --- ears: broad flat triangles, tips out and a little up, a darker inner triangle on the front
     for (const sd of [-1, 1]) {
@@ -83,37 +83,62 @@ const ZoeHead = (THREE) => {
     // --- antennae: thick stalks from the top of the dome, curling outward like hooks, a big gold star at each end
     for (const sd of [-1, 1]) {
       const pts = [[0.3, 1.18, 0.12], [0.36, 1.6, 0.1], [0.42, 1.95, 0.05], [0.58, 2.2, 0.0], [0.82, 2.3, -0.02], [1.0, 2.26, -0.04]].map(([x, y, z]) => new THREE.Vector3(sd * x, y, z));
-      out.push(S(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 9, 0.105, 6, false), SKIN));
+      out.push(S(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 8, 0.105, 5, false), SKIN));
       out.push(S(sph(0.18, 8, 5), SKIN, [sd * 0.3, 1.18, 0.12], [0, 0, 0], [1, 0.7, 1])); // root
       out.push(P(slab(starPts(5, 0.44, 0.21), 0.2, 0.09), GOLD, [sd * 1.1, 2.3, -0.06], [0, sd * 0.3, sd * -0.22]));
     }
-    // --- eyes: huge, almost touching, under heavy lids. Pupils big, half under the lid, glancing to her right (-x).
-    const eye = (sd, lidH, tilt) => {
-      const R = 0.47, SY = 0.86, SZ = 0.42;
-      const cx = sd * 0.5, cy = 0.1, cz = surfZ(cx, cy) + 0.02;
+    // --- eyes: wide almonds set into the face, under smooth lids that blend into the head.
+    //     A thick black lash line runs along each lid edge and flicks up into a sharp wing at the outer corner.
+    //     Round pupils, about 40% of the eye wide, sit low with their tops cut off by the lid, glancing to her right (-x).
+    const eye = (sd, lidH, tilt, arc) => {
+      const R = 0.45, SY = 0.8, SZ = 0.36; // the eye: a flattened ellipsoid, wide and shallow
+      const cx = sd * 0.5, cy = 0.12, cz = surfZ(cx, cy) + 0.04;
       const g = [];
-      g.push(S(sph(R, 12, 8), WHITE, [0, 0, 0], [0, 0, 0], [1, SY, SZ]));
-      g.push(S(sph(0.22, 8, 6), PUPIL, [-0.17, lidH * SY - 0.17, -R * SZ + 0.08], [0, 0, 0], [1, 1.05, 0.45]));
-      const th = Math.acos(Math.max(-1, Math.min(1, lidH / (R * 1.05))));
-      g.push(S(new THREE.SphereGeometry(R * 1.05, 12, 4, 0, PI * 2, 0, th), LID, [0, 0, 0], [0, 0, 0], [1, SY, SZ * 1.15]));
-      // the lash line: a thick stroke along the lid edge, curling up into a wing at the outer corner
-      const yL = lidH * SY, zL = -SZ * 1.15 * Math.sqrt(Math.max(0, (R * 1.05) ** 2 - lidH ** 2)) - 0.015;
-      const lash = stroke([[-0.5, 0.0], [-0.2, -0.03], [0.2, -0.02], [0.46, 0.05], [0.6, 0.2]].map(([x, y]) => [x * sd, y]), 0.1, 0.03, 10, 0.4);
-      g.push(P(wrap(slab(lash, 0.04, 0.012), 0.9), LASH, [0, yL, zL]));
-      G(g, [cx, cy, cz], [0, sd * -0.28, tilt]);
+      const t0 = Math.max(0, Math.acos(Math.max(-1, Math.min(1, lidH / R))) - 0.22); // only the part below the lid: no white can show above it
+      g.push(S(new THREE.SphereGeometry(R, 16, 7, 0, PI * 2, t0, PI - t0), WHITE, [0, 0, 0], [0, 0, 0], [1, SY, SZ]));
+      // pupil: a round disc lying on the front of the eye, low and to her right
+      const px = -0.13, pr = 0.18, py = lidH * SY - pr * (arc > 0.4 ? 0.95 : 0.55); // the top tucked under the lash line
+      const pz = -SZ * Math.sqrt(Math.max(0, R * R - px * px - (py / SY) ** 2));
+      g.push(S(sph(pr, 16, 4).rotateX(PI / 2), PUPIL, [px, py, pz + 0.012], [0, 0, 0], [1, 1, 0.14])); // pole toward the viewer: a round outline
+      // the lid: the top of a slightly bigger ellipsoid, cut level at lidH
+      const R1 = R * 1.04, SZ1 = SZ * 1.25, th = Math.acos(Math.max(-1, Math.min(1, lidH / R1)));
+      g.push(S(new THREE.SphereGeometry(R1, 16, 5, 0, PI * 2, 0, th), LID, [0, 0, 0], [0, 0, 0], [1, SY, SZ1]));
+      // the lash line: a thick tube along the front half of the lid's rim, then the wing at the outer corner
+      const rho = Math.sqrt(Math.max(0, R1 * R1 - lidH * lidH)), rim = [];
+      for (let i = 0; i <= 12; i++) { const ph = PI + PI * i / 12; rim.push(new THREE.Vector3(rho * Math.cos(ph), lidH * SY, SZ1 * rho * Math.sin(ph) - 0.01)); }
+      if (sd < 0) rim.reverse(); // run from the inner corner to the outer corner
+      const end = rim[rim.length - 1];
+      g.push(S(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(rim), 12, 0.058, 5, false), LASH));
+      // the wing: a tapered flick out and up from the outer corner
+      const wing = new THREE.ConeGeometry(0.062, 0.26, 6, 1); wing.translate(0, 0.13, 0);
+      g.push(S(wing, LASH, [end.x, end.y, end.z], [0, 0, sd * -0.95]));
+      g.push(S(sph(0.06, 6, 4), LASH, [end.x, end.y, end.z])); // round off the joint
+      G(g.slice(2), [0, 0, 0], [arc, 0, 0]); // tilt the lid, lash and wing back: the lash line arcs over the eye
+      G(g, [cx, cy, cz], [0.05, sd * -0.3, tilt]);
       out.push(...g);
     };
-    eye(1, 0.06, 0.05); // her left: lidded lower
-    eye(-1, 0.13, -0.04); // her right: a little more open, under the arched brow
-    // brows: thick curved strokes. Her right (-x) arched high, her left low and level, pressing toward the middle
-    const brow = (pts, x, y, w) => out.push(P(wrap(slab(stroke(pts, w, 0.025, 10, 0.45), 0.07, 0.02), 0.55), BROW, [x, y, surfZ(x, y) - 0.04], [0.32, x > 0 ? -0.32 : 0.32, 0]));
-    brow([[0.38, -0.02], [0.12, 0.05], [-0.15, 0.06], [-0.38, 0.02]], 0.52, 0.66, 0.11);
-    brow([[0.36, -0.12], [0.18, 0.06], [-0.1, 0.14], [-0.38, 0.05]], -0.52, 0.78, 0.12);
-    // --- the pout: full pursed lips, low on the face, a little to her right
-    const mx = -0.08, my = -0.58;
-    out.push(S(onFace(sph(0.2, 9, 6).scale(1.25, 0.62, 0.6), mx, my - 0.07, 0.07), LIPS)); // lower lip
-    for (const sd of [-1, 1]) out.push(S(onFace(sph(0.14, 7, 5).scale(1.1, 0.66, 0.6), mx + sd * 0.11, my + 0.07, 0.07), LIPS2)); // upper lip
-    out.push(S(onFace(sph(0.05, 6, 4).scale(1.6, 0.5, 0.4), mx, my, 0.15), LASH)); // the pucker
+    eye(1, 0.04, 0.04, 0.2); // her left: lidded low, heavy and bored, a flatter line
+    eye(-1, 0.14, -0.04, 0.65); // her right: more open, the lash line arching over it
+    // brows: tapered strokes sitting on the face. Her left (+x) low and gently curved; her right (-x) a high,
+    // thick arch with a pointed tail.
+    const brow = (pts, x, y, w, w1) => {
+      const g = wrap(slab(stroke(pts, w, w1, 16, 0.4), 0.06, 0.015), 0.5);
+      g.rotateY(x > 0 ? -0.3 : 0.3);
+      out.push(S(onFace(g, x, y, 0.02), BROW));
+    };
+    brow([[-0.36, -0.08], [-0.12, 0.03], [0.18, 0.06], [0.42, 0.0]], 0.54, 0.52, 0.09, 0.02);
+    brow([[0.36, -0.14], [0.2, 0.06], [-0.05, 0.16], [-0.3, 0.12], [-0.44, -0.02]], -0.52, 0.72, 0.12, 0.015);
+    // --- the pout: a heart-shaped upper lip (two lobes dipping to the middle), a fuller lower lip, a thin line
+    //     between them and a small crease at one corner. Low on the face, a little to her right, tilted.
+    const mx = -0.1, my = -0.46, lift = 0.06;
+    const lips = [];
+    for (const sd of [-1, 1]) lips.push(S(sph(0.105, 10, 7), LIPS, [sd * 0.06, 0.05, 0], [0, 0, sd * -0.5], [1.15, 0.7, 0.7])); // upper lip lobes, peaking to a heart
+    lips.push(S(sph(0.14, 10, 7), LIPS2, [0, -0.07, -0.01], [0, 0, 0], [1.05, 0.72, 0.72])); // lower lip
+    lips.push(S(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[-0.12, 0.0], [-0.05, -0.018], [0.05, -0.018], [0.12, 0.0]].map(([x, y]) => new THREE.Vector3(x, y, -0.09))), 6, 0.013, 4, false), LASH)); // the line between
+    lips.push(S(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[0.14, 0.0], [0.18, -0.025], [0.19, -0.06]].map(([x, y]) => new THREE.Vector3(x, y, -0.04))), 4, 0.012, 4, false), '#7A4C7C')); // corner crease
+    const n = normalAt(mx, my);
+    G(lips, [mx + n.x * lift, my + n.y * lift, surfZ(mx, my) + n.z * lift], [0, 0, 0.08], [1.2, 1.2, 1.2]);
+    out.push(...lips);
     // --- collar: hugs under the jaw, flares out; the top edge dips to a V at the front; thick gold trim; a big
     //     gold four-point star at the V
     const dip = (g, amount, onlyTop) => {
@@ -130,7 +155,7 @@ const ZoeHead = (THREE) => {
     out.push(P(dip(new THREE.CylinderGeometry(1.08, 1.56, h, 20, 1, true), V, true), ROBE2, [0, top - h / 2 - 0.01, 0.05])); // inside
     out.push(P(new THREE.CylinderGeometry(1.6, 1.6, 0.04, 20), ROBE2, [0, top - h, 0.05]));
     out.push(P(new THREE.CylinderGeometry(0.95, 1.0, 0.5, 12), SKIN, [0, top - 0.15, 0.05])); // neck, inside the collar
-    const trim = new THREE.TorusGeometry(1.14, 0.1, 4, 28); trim.rotateX(PI / 2); dip(trim, V);
+    const trim = new THREE.TorusGeometry(1.14, 0.1, 4, 24); trim.rotateX(PI / 2); dip(trim, V);
     out.push(S(trim, GOLD, [0, top, 0.05]));
     out.push(P(slab([[0, 0.38], [0.09, 0.09], [0.3, 0], [0.09, -0.09], [0, -0.42], [-0.09, -0.09], [-0.3, 0], [-0.09, 0.09]], 0.14, 0.07), GOLD, [0, top - V - 0.06, -1.24], [0.22, 0, 0]));
     return out;
