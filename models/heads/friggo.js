@@ -51,67 +51,93 @@ const FriggoHead = (THREE) => {
   const HAIR = '#F7B238', FACE = '#EA8F37', SHADES = '#3B2E1F', COLLAR = '#F3E4CF', COLLAR2 = '#D9C7AE', HEART = '#C4414A', BANDAGE = '#E6D3B8', PICK = '#E8A43C';
 
   // the face: a long wedge, widest at the cheekbones/glasses, tapering to a square chin; a flat facet at the front
-  // measured from the sheet's front view (chin at y -1, hairline at 1): [y, halfWidth, halfDepth, centreZ, centreX, turn]
-  const FACE_RINGS = [
-    [-1.0, 0.44, 0.42, 0.0, 0, 0.5], // chin: square and wide
-    [-0.6, 0.64, 0.62, 0.02, 0, 0.5], // jaw, at the mouth
-    [-0.15, 0.74, 0.74, 0.04, 0, 0.5], // cheeks
-    [0.27, 0.77, 0.78, 0.05, 0, 0.5], // glasses
-    [0.9, 0.73, 0.8, 0.08, 0, 0.5], // temples
-    [1.2, 0.6, 0.74, 0.1, 0, 0.5], // under the hair
+  // a solid from stacked polygon rings: each ring { y, pts: [[x, z], ...] }, the same number of points, going round
+  // the same way; quads between rings, the ends closed with a fan
+  const loftPoly = (rings) => {
+    const pos = [];
+    const tri = (A, B, C, inside) => {
+      const n = new THREE.Vector3().crossVectors(B.clone().sub(A), C.clone().sub(A));
+      const out = A.clone().add(B).add(C).multiplyScalar(1 / 3).sub(inside);
+      if (n.dot(out) < 0) [B, C] = [C, B];
+      pos.push(A.x, A.y, A.z, B.x, B.y, B.z, C.x, C.y, C.z);
+    };
+    const V = (r, i) => { const [x, z] = r.pts[(i + r.pts.length) % r.pts.length]; return new THREE.Vector3(x, r.y, z); };
+    const mid = (r) => { const c = r.pts.reduce((a, [x, z]) => [a[0] + x, a[1] + z], [0, 0]); return new THREE.Vector3(c[0] / r.pts.length, r.y, c[1] / r.pts.length); };
+    for (let k = 0; k < rings.length - 1; k++) {
+      const R0 = rings[k], R1 = rings[k + 1], inside = mid(R0).lerp(mid(R1), 0.5);
+      for (let i = 0; i < R0.pts.length; i++) { tri(V(R0, i), V(R0, i + 1), V(R1, i + 1), inside); tri(V(R0, i), V(R1, i + 1), V(R1, i), inside); }
+    }
+    for (const [r, dy] of [[rings[0], 0.3], [rings[rings.length - 1], -0.3]]) {
+      const c = mid(r), inside = c.clone().add(new THREE.Vector3(0, dy, 0));
+      for (let i = 0; i < r.pts.length; i++) tri(c, V(r, i), V(r, i + 1), inside);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); return g;
+  };
+  // the face, measured from the sheet's front view (hairline y 1, chin y -1): a box with chamfered front corners.
+  // A wide flat front plane, cheek planes at the corners, near-vertical sides down past the glasses, then the jaw
+  // tapering to a broad, flat-bottomed chin. Each ring: [y, front half-width, front z, cheek x, cheek z, side x,
+  // side z, back x, back z]
+  const FACE_SEC = [
+    [-1.0, 0.3, -0.56, 0.42, -0.4, 0.44, -0.02, 0.28, 0.24], // chin: square, flat-bottomed
+    [-0.55, 0.36, -0.64, 0.56, -0.36, 0.6, 0.2, 0.36, 0.56], // jaw corner
+    [-0.3, 0.4, -0.66, 0.66, -0.36, 0.67, 0.26, 0.4, 0.72], // cheekbones, under the glasses
+    [0.24, 0.42, -0.66, 0.67, -0.34, 0.67, 0.3, 0.42, 0.8], // top of the glasses
+    [1.1, 0.42, -0.62, 0.66, -0.32, 0.66, 0.3, 0.42, 0.8], // under the hair
   ];
-  const frontZ = (ring) => ring[3] - ring[2] * Math.cos(PI / 8); // the front facet's depth at that ring
+  const ring = ([y, fx, fz, cx, cz, sx, sz, bx, bz]) => ({ y, pts: [[fx, fz], [cx, cz], [sx, sz], [bx, bz], [-bx, bz], [-sx, sz], [-cx, cz], [-fx, fz]] });
+  const frontZ = (y) => { // the front plane's depth at height y
+    for (let i = 0; i < FACE_SEC.length - 1; i++) { const a = FACE_SEC[i], b = FACE_SEC[i + 1]; if (y >= a[0] && y <= b[0]) return a[2] + (b[2] - a[2]) * (y - a[0]) / (b[0] - a[0]); }
+    return -0.62;
+  };
 
   const parts = () => {
     const out = [];
-    out.push({ g: loft(FACE_RINGS, [0, 1.25, 0.1], [0, -1.04, 0.0]), col: FACE });
-    // hair: a big faceted pompadour, wider than the face, jutting forward over the forehead, peaking at the top front
-    // hair: a wide, deep block wrapping down the back of the head, a straight hairline across the forehead, and a
-    // pitched roof up to a peak a little to one side. About half as tall as the face, a bit wider than it.
+    out.push({ g: loftPoly(FACE_SEC.map(ring)), col: FACE });
+    out.push(P(new THREE.CylinderGeometry(0.38, 0.42, 0.8, 8), FACE, [0, -1.25, 0.2])); // neck
+    // hair: 1.6 times the face's width, about as tall as the forehead to the peak; a hard straight front edge
+    // overhanging the forehead, sides dropping past the temples, wrapping round the back of the head; a pitched
+    // roof up to a peak off to his right
     const HAIR_RINGS = [
-      [0.2, 0.7, 0.42, 0.5, 0.0, 0.5], // low at the back (its front is hidden inside the face)
-      [0.98, 1.06, 1.0, -0.1, 0.0, 0.5], // the hairline: a hard, straight front edge, overhanging the forehead
-      [1.36, 1.14, 1.0, -0.04, 0.02, 0.5], // near-vertical sides; the front slopes back and up, so it catches the light
-      [1.58, 1.08, 0.92, 0.0, 0.04, 0], // the roof starts: turned, so it breaks into triangular facets
+      [-0.95, 0.42, 0.36, 0.42, 0.0, 0.5], // down the back of the head to the neck
+      [-0.2, 0.66, 0.52, 0.42, 0.0, 0.5], // low at the back of the head (its front hidden inside the face)
+      [0.5, 1.0, 0.7, 0.26, 0.0, 0.5], // the sides, past the temples (the front still inside the face)
+      [1.0, 1.07, 0.96, 0.0, 0.0, 0.5], // the hairline: the front overhangs the forehead
+      [1.18, 1.08, 0.96, 0.02, 0.0, 0.5], // the shoulders of the quiff, its widest
+      [1.5, 0.66, 0.66, -0.02, 0.1, 0], // the steep roof: turned, triangular facets
     ];
-    out.push({ g: loft(HAIR_RINGS, [0.18, 2.14, -0.12], [0, 0.2, 0.55], 6), col: HAIR }); // the peak: off to his right and forward
-    // ears: plain flat shapes at glasses height
-    for (const sd of [-1, 1]) out.push(P(new THREE.CylinderGeometry(0.27, 0.23, 0.12, 6), FACE, [sd * 0.8, 0.12, 0.28], [0, 0, PI / 2], [1, 1, 1.35]));
-    // nose: a wedge pointing down and forward under the glasses
-    const fz = frontZ(FACE_RINGS[3]), cz = frontZ(FACE_RINGS[2]);
-    { const g = new THREE.ConeGeometry(0.17, 0.72, 3, 1); g.rotateY(PI); g.rotateX(PI - 0.35);
-      out.push(P(g, FACE, [0, -0.08, (fz + cz) / 2 - 0.12])); }
-    // sunglasses: a straight yellow top bar, two dark trapezoid lenses in yellow rims, a bridge, arms to the ears
-    const gy = 0.07, gz = fz - 0.12;
-    out.push(P(new THREE.BoxGeometry(1.76, 0.12, 0.1), HAIR, [0, gy + 0.2, gz]));
+    out.push({ g: loft(HAIR_RINGS, [0.16, 2.0, -0.26], [0, -1.05, 0.42], 6), col: HAIR }); // the peak
+    // ears: at the sides, a little behind the cheek corners
+    for (const sd of [-1, 1]) out.push(P(new THREE.CylinderGeometry(0.22, 0.19, 0.14, 6), FACE, [sd * 0.78, -0.02, 0.06], [0, sd * 0.3, PI / 2], [1.6, 1, 1.0]));
+    // nose: a long wedge from between the lenses, pointing down and out
+    { const g = new THREE.ConeGeometry(0.17, 0.66, 3, 1); g.rotateY(PI); g.rotateX(PI - 0.42);
+      out.push(P(g, FACE, [0, -0.1, frontZ(-0.1) - 0.13])); }
+    // sunglasses: wider than the face; a straight yellow top bar, dark trapezoid lenses in yellow rims, arms to the ears
+    const gy = 0.0, gz = frontZ(0) - 0.09;
+    out.push(P(new THREE.BoxGeometry(1.72, 0.12, 0.1), HAIR, [0, gy + 0.2, gz]));
     for (const sd of [-1, 1]) {
-      const lens = [[-0.38, 0.18], [0.38, 0.18], [0.33, -0.12], [0.18, -0.22], [-0.31, -0.18]].map(([x, y]) => [x * sd, y]);
-      const rim = [[-0.42, 0.22], [0.43, 0.22], [0.38, -0.15], [0.2, -0.27], [-0.35, -0.22]].map(([x, y]) => [x * sd, y]);
+      const lens = [[-0.36, 0.18], [0.38, 0.18], [0.33, -0.12], [0.18, -0.22], [-0.3, -0.18]].map(([x, y]) => [x * sd, y]);
+      const rim = [[-0.4, 0.22], [0.43, 0.22], [0.38, -0.15], [0.2, -0.27], [-0.34, -0.22]].map(([x, y]) => [x * sd, y]);
       out.push(P(slab(rim, 0.08), HAIR, [sd * 0.44, gy, gz + 0.03]));
       out.push(P(slab(lens, 0.08), SHADES, [sd * 0.44, gy, gz - 0.02]));
-      out.push(P(new THREE.BoxGeometry(0.07, 0.07, 1.0), HAIR, [sd * 0.84, gy + 0.18, gz + 0.5])); // arm
+      out.push(P(new THREE.BoxGeometry(0.07, 0.07, 0.8), HAIR, [sd * 0.84, gy + 0.18, gz + 0.42])); // arm
     }
-    // mouth: a short line, a touch higher on the toothpick side
-    const my = -0.6, mz = frontZ([my, 0, 0.6, 0.02]) - 0.02;
-    out.push(P(new THREE.BoxGeometry(0.26, 0.04, 0.05), SHADES, [-0.02, my, mz], [0, 0, 0.12]));
-    // toothpick: out of the mouth's corner (his left, -x), angled out and a little down
+    // mouth: a short line; the toothpick out of the corner on his left (-x)
+    const my = -0.66, mz = frontZ(my) - 0.02;
+    out.push(P(new THREE.BoxGeometry(0.26, 0.04, 0.05), SHADES, [-0.02, my, mz], [0, 0, 0.1]));
     { const g = new THREE.CylinderGeometry(0.025, 0.025, 0.72, 4); g.rotateZ(PI / 2 + 0.25); g.rotateY(-0.35);
-      out.push(P(g, PICK, [-0.4, my - 0.06, mz - 0.1])); }
-    // plaster: a rounded cream strip on his right cheek (+x), tilted
-    { const g = slab(rounded(0.62, 0.22, 0.09), 0.04);
-      out.push(P(g, BANDAGE, [0.48, -0.36, frontZ([-0.36, 0, 0.7, 0.03]) + 0.12], [0, 0.55, 0.42])); }
-    // collar: a cream shirt collar standing round the neck, open at the front, two flaps folded out; a red heart on
-    // the flap on his left (-x)
-    out.push(P(new THREE.CylinderGeometry(0.42, 0.46, 0.5, 10), FACE, [0, -1.1, 0.06])); // neck
-    // a simple ring collar, wider at the top, tipped down at the front; a cream heart patch on the front-left
-    const cy = -1.24, ch = 0.5, tilt = [-0.1, 0, 0];
-    out.push(P(new THREE.CylinderGeometry(0.86, 0.8, ch, 10, 1, true), COLLAR, [0, cy, 0.04], tilt));
-    out.push(P(new THREE.CylinderGeometry(0.62, 0.62, ch, 10, 1, true), FACE, [0, cy, 0.04], tilt)); // inside
-    out.push(P(new THREE.RingGeometry(0.6, 0.86, 10, 1), COLLAR, [0, cy + ch / 2, 0.04], [-PI / 2 - 0.1, 0, 0])); // top edge
-    out.push(P(new THREE.CircleGeometry(0.8, 10), COLLAR2, [0, cy - ch / 2, 0.04], [PI / 2 - 0.1, 0, 0])); // bottom
-    const tab = [-0.42, cy - 0.02, -0.84], tabRot = [-0.12, 0.45, 0];
-    out.push(P(new THREE.BoxGeometry(0.5, 0.48, 0.07), COLLAR, tab, tabRot)); // the collar tab
-    { const g = slab(heart(0.15), 0.04); g.translate(0, 0, -0.05); out.push(P(g, HEART, tab, tabRot)); }
+      out.push(P(g, PICK, [-0.4, my - 0.05, mz - 0.1])); }
+    // plaster: on his right cheek plane (+x), tilted
+    { const g = slab(rounded(0.5, 0.18, 0.08), 0.04);
+      out.push(P(g, BANDAGE, [0.55, -0.44, -0.52], [0, -0.88, -0.4])); }
+    // collar: a ring round the neck, tipped down at the front; a square tab with the heart on the front-left
+    const cy = -1.46, ch = 0.42, tilt = [-0.1, 0, 0];
+    out.push(P(new THREE.CylinderGeometry(0.92, 0.8, ch, 10, 1, true), COLLAR, [0, cy, 0.2], tilt));
+    out.push(P(new THREE.CylinderGeometry(0.5, 0.5, ch, 10, 1, true), FACE, [0, cy, 0.2], tilt));
+    out.push(P(new THREE.RingGeometry(0.48, 0.92, 10, 1), COLLAR, [0, cy + ch / 2, 0.2], [-PI / 2 - 0.1, 0, 0]));
+    out.push(P(new THREE.CircleGeometry(0.76, 10), COLLAR2, [0, cy - ch / 2, 0.2], [PI / 2 - 0.1, 0, 0]));
+    const tab = [-0.42, cy - 0.02, -0.68], tabRot = [-0.12, 0.45, 0];
+    out.push(P(new THREE.BoxGeometry(0.46, 0.44, 0.07), COLLAR, tab, tabRot));
+    { const g = slab(heart(0.14), 0.04); g.translate(0, 0, -0.05); out.push(P(g, HEART, tab, tabRot)); }
     return out;
   };
 
