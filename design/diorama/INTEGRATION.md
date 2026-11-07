@@ -1,7 +1,7 @@
 # Handoff: putting the Diorama UI into the game
 
 Written 2026-11-07 at the end of the session that finished the mockup. Read `design/diorama/HANDOFF.md` first (the
-design language and every screen), then this file. Work on a branch (`claude/clever-tesla-l0aw0q` has the mockup and
+design language and every screen), then this file. Work on a branch (`claude/nice-mendel-scnrpy` has the mockup and
 is level with `main` as of 2026-11-07; merge `main` in again before starting, the game moves fast).
 
 ## The owner's decisions (2026-11-07)

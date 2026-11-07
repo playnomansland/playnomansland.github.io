@@ -6,8 +6,8 @@ main menu (Units with skins, Rankings), Play (Rooms, New room), the playlist, ba
 and the Friends and Settings dropdowns. Every screen is on one page: `screens/contact-sheet.jpg`.
 
 **Next: putting it into the game. That plan, and the owner's decisions for it, are in `INTEGRATION.md`.** This file is
-the design reference. The work is on the branch `claude/clever-tesla-l0aw0q` (from `claude/wonderful-carson-fdud2o`,
-which started from `design/diorama`; `main` merged in on 2026-11-07).
+the design reference. The work is on the branch `claude/nice-mendel-scnrpy` (from `claude/clever-tesla-l0aw0q`, from
+`claude/wonderful-carson-fdud2o`, which started from `design/diorama`; `main` merged in on 2026-11-07).
 
 ## What is here
 
