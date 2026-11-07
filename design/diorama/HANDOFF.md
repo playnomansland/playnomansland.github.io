@@ -35,7 +35,10 @@ node design/diorama/shots.js '[["play","#still,play",1440,900]]'
 - Battlefields: `#bf=meadow|autumn|snow|frost|desert|ash|moonlit|savanna` (home), `#roombf=<same>` (New room's).
 - Profile: `#profile`, `#acct=google|guest|dev|none` (sample account; google is the default), `#title=<id>` (picked title,
   empty for None), `#skinoff=N` (skin N taken off), `#out` / `#sure` (Log out / Delete account tapped once), `#history`
-  (Match history), `#all` (its All online tab), `#rounds=N` (match N's rounds open), `#hover=s:N` (skin N pointed at).
+  (Match history), `#all` (its All online tab), `#rounds=N` (match N's rounds open), `#units` (Profile's Units, with
+  `#tier=` and `#unit=`). `#acct=` also sets whose skins the menu's Units shows.
+- Skins are on the unit sheet: e.g. `#still,view=units,pin,tier=4,unit=0` (Ether Golem), `tier=2,unit=0` (Brute),
+  `tier=1,unit=3` (Fire Mage).
 
 ## The design language: "Diorama"
 
@@ -107,24 +110,27 @@ Meadow, Autumn, Snow, Forest Glade, Desert, Ashlands, Moonlit Snow, Savanna.
 ## Profile (first prototype, 2026-11-07)
 
 Opened from the account button top right, which now shows the sample player's name (Wren; Guest with no account).
-(`screens/profile*.jpg`, `history.jpg`)
+(`screens/profile*.jpg`, `history.jpg`, `units-golem-*.jpg`)
 - **The field turns ink** (`#1D1A15`): the third screen colour, after ultramarine and saffron. The title colours were
   made for the game's dark UI and read on it; the logo and cream type stay as they are; the shard stays saffron.
 - **Left column.** A typed kicker with the account state (`Profile · signed in with Google`, `· guest on this phone`,
   `· no account yet`, plus `· developer mode is on` in DEV pink). Your name huge in Chakra Petch, the picked title under
   it in its own colour between two small diamonds. Then rows of words (the New room style):
   - Title: each earned title, and None. The picked one sits on a shard of **its own colour**; the note is why you have it.
-  - Skins: each owned skin by name, pressed = on. One skin per unit (turning Omni-Per on takes Champion off).
+  - Skins: the menu's UNITS word (owner's call, 2026-11-07: no separate skins list). It brings up the Units roster on
+    the island, tier tabs and all, with "← Profile"; the note says which skins are on.
   - Username: an input on a dashed line; Save appears when it changes. "Once a week" / "Developer: any time".
   - Keep it (guests only): Sign in with Google (a stand-in for Google's own button, which the game must use).
   - Account: Log out (a guest taps twice, with the warning) and a small typed "Delete account" (tap twice).
   - No account: "NOBODY YET", and Play as a guest on the saffron shard beside Sign in with Google.
   - MATCH HISTORY → on the saffron button.
-- **The island.** The battle sinks and your skins stand on cream tiles (`buildLocker`), the name printed on each. A
-  skin that's off stands as the plain unit. Click a unit, its note or its word to switch it; it pops back in. Each has a
-  note (`Skin · on` tag, `Champion Brute.`, "Click to take it off"), labels to the right stepping down from left to
-  right so no line crosses a word. With no skins the battle stays and the golem's note says how to earn its skin.
-  Change battlefield moves under the island's near edge (as on the saffron screens).
+- **Skins live on the unit sheet**, from the menu's Units and from Profile's alike. A unit with skins gets a SKIN row:
+  Plain and each skin you own as words, the worn one on the saffron shard, the skin's line and "Only the look changes,
+  never the stats." under it. One skin per unit. The limited Aquamarine shows locked ("Invite a friend...") until you
+  have it; other skins you don't own stay hidden. The roster shows the skin you wear, and a changed one pops back in.
+  The unit's pointed-at note counts its skins. On Profile the sheet's panel is lifted (`#2C2820`) off the ink field.
+- **The island** on Profile is the battle as on the menu; while you don't have the golem skin, the golem's note says
+  how to earn it. Change battlefield sits below the island's near edge.
 - **Match history** (← Profile). MATCHES with "n played · n won", My matches / All online tabs, typed rows like Rooms:
   WON (saffron) / LOST (faded) / DRAW, `vs Pebble` with their title in its colour, `Ranked · 2–1 · Desert · 2 h ago ·
   dealt 72, took 28`, and "3 rounds ⌄", which folds out each round with a REPLAY. The island moves further right.
