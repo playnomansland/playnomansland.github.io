@@ -72,7 +72,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 /* ── Play: the screen turns saffron, the camera goes up to the plan view, the menu becomes the orders ── */
 /* two choices, one click each. The block's top stays put so Multiplayer's list folds out downward */
 .orders { position: fixed; left: 48px; top: min(52vh, calc(100vh - 400px)); display: none; }
-body.play .orders { display: grid; } body.play .menu, body.play .note, body.play .zz, body.play #lines { display: none; }
+body.play .orders { display: grid; } body.play .menu, body.play .zz { display: none; } /* notes: only the battlefield's shows on Play (JS) */
 .orders .who { display: grid; justify-items: start; }
 .orders .who .item { font-size: calc(76px * var(--k, 1)); }
 .orders .item .shard { fill: var(--ink); }
@@ -144,6 +144,10 @@ body.in-create .newroom { display: grid; } body.in-create .rooms { display: none
 .nr-opts .lock { width: 11px; height: 11px; margin-right: 4px; vertical-align: -1px; }
 .nr-note { margin: 0 0 18px 14px; font: 400 14px/1.4 var(--type); opacity: .8; max-width: 440px; }
 .create.go { margin-bottom: 0; }
+.nr-opts .bf-step { align-items: baseline; gap: 2px; }
+.nr-opts .bf-step b { position: relative; isolation: isolate; min-width: 8.6em; padding: 6px 14px 3px; text-align: center; font: 700 30px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: #F2B23A; }
+.nr-opts .bf-step b::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 97% 0, 100% 86%, 2% 100%); }
+.nr-opts .bf-step button { opacity: .7; padding: 6px 10px 3px; } .nr-opts .bf-step button:hover { opacity: 1; }
 
 .back { position: fixed; top: 38px; right: 48px; display: none; font: 700 15px var(--sans); }
 body.play .back { display: block; } body.play .acct { display: none; }

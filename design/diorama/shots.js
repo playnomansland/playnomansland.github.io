@@ -5,6 +5,7 @@
 //   #view=puzzles|rules|units|ranks (as if that menu word were hovered)   #pin (keep that view up)
 //   #tier=1..4 and #unit=N (Units view: the tier, and the unit whose sheet is open)   #hover=<piece> (keepYou, vaultFoe, mammoth, u:N...)
 //   Play: #multi (Multiplayer open)   #rooms=standard|ranked   #filter (the filter list open)   #on=vs-ai|multi|standard|ranked|r<N>
+//   #bf=<look> (home battlefield)   #roombf=<look> (New room's)
 //   #create (New room) #private   #plh=<N> (playlist song N pointed at)
 // The 3D board needs WebGL; in a container without a GPU, Chromium's SwiftShader is slow, hence the long timeouts.
 const { chromium } = require('playwright');

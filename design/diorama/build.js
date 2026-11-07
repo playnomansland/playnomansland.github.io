@@ -19,6 +19,10 @@ const fill = {
   MODELS3D: fromRoot('src/kaykit3d.js').toString() + '\n' + fromRoot('src/models3d.js').toString(),
   ROSTER: JSON.stringify({ units: roster.units.map(u => Object.fromEntries(keep.map(k => [k, u[k]]))), skills: Object.fromEntries(roster.skills.map(s => [s.id, s.name])) }),
   FLOORS: 'var Game = { ROWS: 18, ZONE: 7 };\n' + fromRoot('src/floors.js').toString(),
+  // the game's Frozen Peak ground painter, lifted out of src/render2d.js as is, for the Snow battlefield
+  ICEFLOOR: (() => { const r = fromRoot('src/render2d.js').toString(), a = r.indexOf('  function paintIce('), b = r.indexOf('  const BACKGROUNDS');
+    if (a < 0 || b < a) throw new Error('paintIce not found in src/render2d.js');
+    return 'const iceFloor = (c, W, H, t) => { let sd = 4242421; const rr = () => { sd = (sd * 1103515245 + 12345) % 2147483648; return sd / 2147483648; };\n' + r.slice(a, b) + '  paintIce(c, rr, t); };'; })(),
   BASECSS: fromHere('src/base.css').toString(),
   CHAKRA_BOLD: dataUrl(fromHere('fonts/ChakraPetch-Bold.ttf'), 'font/ttf'),
   TITLE: dataUrl(fromRoot('img/title.png'), 'image/png'),

@@ -82,7 +82,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 /* ── Play: the screen turns saffron, the camera goes up to the plan view, the menu becomes the orders ── */
 /* two choices, one click each. The block's top stays put so Multiplayer's list folds out downward */
 .orders { position: fixed; left: 48px; top: min(52vh, calc(100vh - 400px)); display: none; }
-body.play .orders { display: grid; } body.play .menu, body.play .note, body.play .zz, body.play #lines { display: none; }
+body.play .orders { display: grid; } body.play .menu, body.play .zz { display: none; } /* notes: only the battlefield's shows on Play (JS) */
 .orders .who { display: grid; justify-items: start; }
 .orders .who .item { font-size: calc(76px * var(--k, 1)); }
 .orders .item .shard { fill: var(--ink); }
@@ -154,6 +154,10 @@ body.in-create .newroom { display: grid; } body.in-create .rooms { display: none
 .nr-opts .lock { width: 11px; height: 11px; margin-right: 4px; vertical-align: -1px; }
 .nr-note { margin: 0 0 18px 14px; font: 400 14px/1.4 var(--type); opacity: .8; max-width: 440px; }
 .create.go { margin-bottom: 0; }
+.nr-opts .bf-step { align-items: baseline; gap: 2px; }
+.nr-opts .bf-step b { position: relative; isolation: isolate; min-width: 8.6em; padding: 6px 14px 3px; text-align: center; font: 700 30px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: #F2B23A; }
+.nr-opts .bf-step b::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 97% 0, 100% 86%, 2% 100%); }
+.nr-opts .bf-step button { opacity: .7; padding: 6px 10px 3px; } .nr-opts .bf-step button:hover { opacity: 1; }
 
 .back { position: fixed; top: 38px; right: 48px; display: none; font: 700 15px var(--sans); }
 body.play .back { display: block; } body.play .acct { display: none; }
@@ -225,6 +229,7 @@ body.music-open .pl { display: grid; animation: plin .26s cubic-bezier(.16,.9,.2
 @media (prefers-reduced-motion: reduce) { .pl-row .eq i { animation: none; height: 8px; } }
 
 .note.btn-note { text-align: left !important; }
+.note.bf-note { max-width: none; white-space: nowrap; }
 
 /* ── Rankings: the island steps aside and the standings take its place ── */
 #world, .zz { transition: opacity .35s ease, transform .45s cubic-bezier(.16,.9,.24,1); }
@@ -313,6 +318,7 @@ body.units .tiers { opacity: 1; pointer-events: auto; }
 <div class="note btn-note" data-anchor="btn" data-side="right" data-btn="rules">How to play.<small>The rules, explained simply</small></div>
 <div class="note btn-note" data-anchor="btn" data-side="left" data-btn="units">Units.<small>Every unit · What it does and what it beats</small></div>
 <div class="note btn-note" data-anchor="btn" data-side="right" data-btn="ranks">Rankings.<small>The leaderboard · Ranked matches only</small></div>
+<div class="note bf-note" data-anchor="bf" role="button" tabindex="0">Change battlefield.<small id="bf-sub"></small></div>
 <div id="unote" style="display:none"></div>
 <nav class="tiers" aria-label="Unit tiers"><span class="k">Units by tier</span><button data-t="1" aria-pressed="true">Tier 1</button><button data-t="2" aria-pressed="false">Tier 2</button><button data-t="3" aria-pressed="false">Tier 3</button><button data-t="4" aria-pressed="false">Tier 4</button></nav>
 <section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
@@ -392,6 +398,9 @@ body.units .tiers { opacity: 1; pointer-events: auto; }
     <span class="lab">Kind</span>
     <span class="seg" role="group" aria-label="Kind"><button data-kind="standard">1v1 Standard</button><button data-kind="ranked">1v1 Ranked</button><button data-kind="2v2" disabled>2v2 <small><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg>soon</small></button></span>
     <span></span><p class="nr-note" id="nr-note"></p>
+    <span class="lab">Battlefield</span>
+    <span class="seg bf-step"><button data-bfs="-1" aria-label="Previous battlefield">‹</button><b id="nr-bf"></b><button data-bfs="1" aria-label="Next battlefield">›</button></span>
+    <span></span><p class="nr-note" id="nr-bfn"></p>
     <span class="lab">Who can find it</span>
     <span class="seg" role="group" aria-label="Who can find it"><button data-pub="1" aria-pressed="true">Public</button><button data-pub="0" aria-pressed="false">Private</button></span>
     <span></span><p class="nr-note" id="nr-pub">Listed in Rooms for anyone to join.</p>
@@ -1448,14 +1457,14 @@ await Promise.all(['700 200px "Chakra Petch"', '700 56px "Bricolage Grotesque"',
 const W = 14, D = 18, island = new THREE.Group(); scene.add(island);
 const tx = (c) => c - 6.5, tz = (r) => r - 8.5;
 const top = mesh(new THREE.BoxGeometry(W, 0.5, D), mat('#9DAF73'), false); top.position.y = -0.25; island.add(top);
-const zone = (z0, z1, c, o) => { const p = mesh(new THREE.PlaneGeometry(W, z1 - z0), new THREE.MeshStandardMaterial({ color: c, transparent: true, opacity: o, roughness: 1 }), false); p.rotation.x = -Math.PI / 2; p.position.set(0, 0.006, (z0 + z1) / 2); p.userData.piece = true; island.add(p); };
-zone(-2, 2, '#B79E74', 0.95); zone(2, 9, '#6FB3E0', 0.12); zone(-9, -2, '#E5674B', 0.1);
-const grid = new THREE.GridHelper(D, D, 0xF4ECD8, 0xF4ECD8); grid.material.transparent = true; grid.material.opacity = 0.16; grid.scale.set(W / D, 1, 1); grid.position.y = 0.012; island.add(grid);
-[['#7A5B3E', 0.7], ['#664A33', 0.6], ['#55402E', 0.55]].forEach(([c, h], i) => { const b = mesh(new THREE.BoxGeometry(W - i * 0.3, h, D - i * 0.3), mat(c)); b.position.y = -0.5 - h / 2 - [0, 0.7, 1.3][i]; island.add(b); });
-{ const g = new THREE.ConeGeometry(5.6, 5, 9, 2); const p = g.attributes.position;
+const soil = [0.7, 0.6, 0.55].map((h, i) => { const b = mesh(new THREE.BoxGeometry(W - i * 0.3, h, D - i * 0.3), mat('#7A5B3E')); b.position.y = -0.5 - h / 2 - [0, 0.7, 1.3][i]; island.add(b); return b; });
+let root; { const g = new THREE.ConeGeometry(5.6, 5, 9, 2); const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y < 2.9) { p.setX(i, p.getX(i) * (0.8 + rnd() * 0.4)); p.setZ(i, p.getZ(i) * (0.8 + rnd() * 0.4)); p.setY(i, y + (rnd() - 0.5) * 0.8); } }
-  const r = mesh(g, mat('#5B4634')); r.rotation.x = Math.PI; r.scale.set(1.18, 1.1, 1.52); r.position.y = -4.6; island.add(r); }
-// EXPERIMENT (#look=<floor>): the game's own painted floor (src/floors.js) on the island's top instead of the flat grass and zone bands
+  root = mesh(g, mat('#5B4634')); root.rotation.x = Math.PI; root.scale.set(1.18, 1.1, 1.52); root.position.y = -4.6; island.add(root); }
+
+// ── the battlefield: the game's looks (Game.SKINS) on the Standard map. The ground is the look's own painted floor
+// (src/floors.js; Snow: the ice ground from src/render2d.js), with no tile grid. Round it stand 10 toy miniatures of the
+// look's signature things, in the same slots for every look: 1 centrepiece, 6 trees, 3 accents ──
 var Game = { ROWS: 18, ZONE: 7 };
 // ===== Painted floors and looks, shared by the 2D page (menu background, look previews) and the 3D board =====
 // Moved out of scenery3d.js (2026-11-02) so the main page can paint a look without loading the 3D code.
@@ -1595,23 +1604,181 @@ Floors.floor = (() => {
   };
 })();
 
-const lookQ = (location.hash.match(/look=(\w+)/) || [])[1];
-if (lookQ && Floors.FLOORS[lookQ]) {
-  const T = 64, cvf = document.createElement('canvas'); cvf.width = W * T; cvf.height = D * T; Floors.floor(cvf.getContext('2d'), W * T, D * T, T, lookQ);
-  const tex = new THREE.CanvasTexture(cvf); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
-  const f = mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: tex, roughness: 1 }), false); f.rotation.x = -Math.PI / 2; f.position.y = 0.008; island.add(f);
-  for (const c of island.children) if (c.userData.piece && c.geometry && c.geometry.type === 'PlaneGeometry' && c !== f) c.visible = false;
+const iceFloor = (c, W, H, t) => { let sd = 4242421; const rr = () => { sd = (sd * 1103515245 + 12345) % 2147483648; return sd / 2147483648; };
+  function paintIce(c, rr, t, snow = true) {
+    c.fillStyle = '#131B22'; c.fillRect(0, 0, W, H);
+    const gl = c.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.6);
+    gl.addColorStop(0, '#1D2833'); gl.addColorStop(0.6, '#18212A'); gl.addColorStop(1, '#121920');
+    c.fillStyle = gl; c.fillRect(0, 0, W, H);
+    // snow drifts: soft pale patches
+    if (snow) for (let k = 0; k < 30; k++) {
+      c.globalAlpha = 0.12 + rr() * 0.08; c.fillStyle = k % 3 ? '#3A4B5A' : '#4B5E6E';
+      c.beginPath(); c.ellipse(rr() * W, rr() * H, t * (0.6 + rr() * 1.5), t * (0.25 + rr() * 0.5), (rr() - 0.5) * 0.6, 0, Math.PI * 2); c.fill();
+    }
+    // cracks in the ice
+    c.strokeStyle = '#9FC3D9'; c.lineWidth = 0.8;
+    for (let k = 0; k < 14; k++) {
+      let x = t + rr() * (W - 2 * t), y = rr() * H;
+      c.globalAlpha = 0.1 + rr() * 0.08; c.beginPath(); c.moveTo(x, y);
+      for (let j = 0; j < 4; j++) { x += (rr() - 0.5) * t * 0.9; y += (rr() - 0.5) * t * 0.9; c.lineTo(x, y); }
+      c.stroke();
+    }
+    // the flanks: mountain rock rising on both sides, with snow on top
+    for (const left of [true, false]) {
+      const x0 = left ? 0 : W, x1 = left ? t * 1.5 : W - t * 1.5;
+      const sh = c.createLinearGradient(x0, 0, x1, 0);
+      sh.addColorStop(0, 'rgba(6,9,12,0.9)'); sh.addColorStop(0.5, 'rgba(8,12,16,0.5)'); sh.addColorStop(1, 'rgba(8,12,16,0)');
+      c.globalAlpha = 1; c.fillStyle = sh; c.fillRect(Math.min(x0, x1), 0, Math.abs(x1 - x0), H);
+      const rocks = [];
+      for (let k = 0; k < Math.round(H / t * 2.6); k++) {
+        const depth = rr() * rr(), r = t * (0.3 + rr() * 0.35) * (1 - depth * 0.4), dx = -t * 0.2 + depth * t * 1.05;
+        rocks.push({ x: left ? dx : W - dx, y: rr() * (H + t) - t / 2, r, depth });
+      }
+      rocks.sort((a, b) => a.y - b.y);
+      for (const q of rocks) {
+        const a = 0.9 - q.depth * 0.5;
+        c.globalAlpha = a; c.fillStyle = ['#0D1318', '#111920', '#151E26'][Math.floor(rr() * 3)];
+        c.beginPath(); // a jagged rock
+        for (let j = 0; j < 6; j++) { const ang = j / 6 * Math.PI * 2 + rr() * 0.4, rad = q.r * (0.75 + rr() * 0.35); const px = q.x + Math.cos(ang) * rad, py = q.y + Math.sin(ang) * rad * 0.8; j ? c.lineTo(px, py) : c.moveTo(px, py); }
+        c.closePath(); c.fill();
+        if (!snow) continue;
+        c.globalAlpha = a * 0.45; c.fillStyle = '#C8D7E2'; // snow cap
+        c.beginPath(); c.ellipse(q.x - q.r * 0.1, q.y - q.r * 0.45, q.r * 0.55, q.r * 0.2, 0, 0, Math.PI * 2); c.fill();
+      }
+    }
+    // a few snowflakes
+    c.fillStyle = '#DCE8F0';
+    if (snow) for (let k = 0; k < 120; k++) { c.globalAlpha = 0.08 + rr() * 0.14; c.beginPath(); c.arc(rr() * W, rr() * H, 0.6 + rr() * 0.9, 0, Math.PI * 2); c.fill(); }
+  }
+  paintIce(c, rr, t); };
+const FT = 64, floorCv = document.createElement('canvas'); floorCv.width = W * FT; floorCv.height = D * FT;
+const floorTex = new THREE.CanvasTexture(floorCv); floorTex.colorSpace = THREE.SRGBColorSpace; floorTex.anisotropy = 8;
+const floor = mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 1 }), false);
+floor.rotation.x = -Math.PI / 2; floor.position.y = 0.008; island.add(floor);
+const LOOKS = [
+  { id: 'meadow', name: 'Meadow', floor: 'meadow', side: '#5F714C', soil: ['#7A5B3E', '#664A33', '#55402E'], kit: 'meadow' },
+  { id: 'autumn', name: 'Autumn', floor: 'autumn', side: '#62633E', soil: ['#7A5B3E', '#664A33', '#55402E'], kit: 'autumn' },
+  { id: 'snow', name: 'Snow', floor: 'ice', side: '#DCE6EE', soil: ['#5A636B', '#4B535A', '#3E454B'], kit: 'snow' },
+  { id: 'frost', name: 'Forest Glade', floor: 'darkwoods', side: '#4A5641', soil: ['#4A3D2E', '#3C3226', '#30281F'], kit: 'glade' },
+  { id: 'desert', name: 'Desert', floor: 'sand', side: '#B39A6C', soil: ['#A07A4E', '#8C6943', '#77593A'], kit: 'desert' },
+  { id: 'ash', name: 'Ashlands', floor: 'ash', side: '#4B4744', soil: ['#3A3431', '#2F2A27', '#262220'], kit: 'ash' },
+  { id: 'moonlit', name: 'Moonlit Snow', floor: 'moonlit', side: '#8F9BB0', soil: ['#5C6680', '#4D566E', '#3F475C'], kit: 'moonlit' },
+  { id: 'savanna', name: 'Savanna', floor: 'savanna', side: '#B09A5C', soil: ['#9C6A44', '#875A39', '#724B30'], kit: 'savanna' },
+];
+// a KayKit model (src/kaykit3d.js, the game's own) fitted to a height, standing on y = 0, centred
+const kkCache = {};
+function kk(name, h) {
+  if (!kkCache[name]) { const d = KAYKIT[name]; const dec = (b) => Uint8Array.from(atob(b), (ch) => ch.charCodeAt(0));
+    const q = new Int16Array(dec(d[0]).buffer), rgb = dec(d[1]), [lo, hi] = [d[2], d[3]], pos = new Float32Array(q.length), col = new Float32Array(q.length), c = new THREE.Color();
+    for (let i = 0; i < q.length; i++) { const k = i % 3; pos[i] = lo[k] + (q[i] + 32767) / 65534 * (hi[k] - lo[k]); }
+    for (let t = 0; t < q.length / 9; t++) { c.setRGB(rgb[t * 3] / 255, rgb[t * 3 + 1] / 255, rgb[t * 3 + 2] / 255, THREE.SRGBColorSpace); for (let k = 0; k < 3; k++) col.set([c.r, c.g, c.b], t * 9 + k * 3); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals(); g.computeBoundingBox();
+    const b = g.boundingBox; g.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); g.computeBoundingBox(); kkCache[name] = g; }
+  const g = kkCache[name], o = mesh(g, vmat); o.scale.setScalar(h / (g.boundingBox.max.y || 1)); return o;
 }
-const base = new Set(island.children.filter(c => !c.userData.piece)); // the island itself: grass, grid, soil, rock
-for (const [x, z, s] of [[-3.6, 0.8, 0.6], [4.0, -0.9, 0.5], [0.6, 1.3, 0.35], [-1.2, -1.1, 0.4], [5.6, 0.9, 0.3]]) { const c = mesh(new THREE.CylinderGeometry(s, s * 0.7, 0.05, 7), mat('#8E7756'), false); c.position.set(x, 0.02, z); island.add(c); }
-const tree = (x, z, s = 1, kind = 0) => { const t = new THREE.Group(); t.add(mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.7, 5), mat('#6B4A2E')));
-  if (kind) { const c = mesh(new THREE.IcosahedronGeometry(0.62, 0), mat(['#6F8E4E', '#7E9A54'][kind - 1])); c.position.y = 0.9; c.scale.set(1, 0.9, 1); t.add(c); }
-  else { for (let k = 0; k < 3; k++) { const c = mesh(new THREE.ConeGeometry(0.62 - k * 0.15, 0.9, 7), mat('#4F6B43')); c.position.y = 0.75 + k * 0.42; t.add(c); } }
-  t.children[0].position.y = 0.35; t.position.set(x, 0, z); t.scale.setScalar(s); t.rotation.y = rnd() * 6; island.add(t); };
-tree(-6.3, 8.3, 1.15); tree(-6.4, 6.4, 0.85, 1); tree(6.3, 8.4, 0.95, 2); tree(6.4, 3.2, 0.75); tree(-6.3, 3.6, 0.7, 2);
-tree(6.2, -8.3, 1.05); tree(-6.2, -8.0, 1, 1); tree(6.4, -5.6, 0.8); tree(-6.4, -4.2, 0.7, 2);
+const G = () => new THREE.Group();
+const put = (g, o, x = 0, y = 0, z = 0, s = 1) => { o.position.set(x, y, z); if (s !== 1) o.scale.multiplyScalar(s); g.add(o); return o; };
+const blob = (r, c, detail = 0) => mesh(new THREE.IcosahedronGeometry(r, detail), mat(c));
+const cyl = (r0, r1, h, c, n = 6) => mesh(new THREE.CylinderGeometry(r0, r1, h, n), mat(c));
+const cone = (r, h, c, n = 7) => mesh(new THREE.ConeGeometry(r, h, n), mat(c));
+const stone = (r, c) => mesh(new THREE.DodecahedronGeometry(r, 0), mat(c));
+const glow = (r, c) => new THREE.Mesh(new THREE.SphereGeometry(r, 8, 6), new THREE.MeshBasicMaterial({ color: c }));
+// a trunk standing on the ground
+const trunk = (g, r, h, c, lean = 0) => { const t = cyl(r * 0.7, r, h, c); t.position.y = h / 2; t.rotation.z = lean; g.add(t); return t; };
+// a pine: tiers of cones, with snow caps if asked
+const pine = (green, snow, h = 1) => { const g = G(); trunk(g, 0.1, 0.4, '#5A4030');
+  for (let k = 0; k < 3; k++) { const r = (0.62 - k * 0.15) * h, y = (0.75 + k * 0.42) * h; put(g, cone(r, 0.9 * h, green), 0, y);
+    if (snow) put(g, cone(r * 0.62, 0.42 * h, snow), 0, y + 0.26 * h); } return g; };
+const KITS = {
+  meadow: {
+    hero: () => { const g = G(); trunk(g, 0.26, 1.3, '#6B4A2E'); for (const [x, y, z, r, c] of [[0, 2.0, 0, 0.95, '#6F8E4E'], [0.6, 1.7, 0.3, 0.7, '#7E9A54'], [-0.55, 1.75, -0.2, 0.75, '#5F7E44'], [0.1, 2.5, -0.3, 0.6, '#7E9A54']]) put(g, blob(r, c), x, y, z); return g; },
+    tree: (i) => { const g = G(); trunk(g, 0.13, 0.7, '#6B4A2E'); put(g, blob(0.62, ['#6F8E4E', '#7E9A54'][i % 2]), 0, 0.95).scale.set(1, 0.9, 1); return g; },
+    accent: () => { const g = G(); put(g, blob(0.36, '#5F7E44'), 0, 0.26).scale.set(1.2, 0.75, 1.2);
+      for (let k = 0; k < 9; k++) { const a = k * 2.4, r = 0.3 + (k % 2) * 0.08; put(g, glow(0.06, ['#F4ECD8', '#F2D35B', '#E9A1B4'][k % 3]), Math.cos(a) * r, 0.3 + (k % 3) * 0.06, Math.sin(a) * r); } return g; },
+  },
+  autumn: {
+    hero: () => { const g = G(); trunk(g, 0.24, 1.3, '#5C3F28'); for (const [x, y, z, r, c] of [[0, 2.0, 0, 0.95, '#B8532F'], [0.6, 1.7, 0.3, 0.7, '#C9782F'], [-0.55, 1.75, -0.2, 0.75, '#9A3B2A'], [0.1, 2.5, -0.3, 0.6, '#D3A43A']]) put(g, blob(r, c), x, y, z);
+      for (let k = 0; k < 7; k++) { const a = k * 0.9, r = 1.0 + (k % 3) * 0.3; const l = mesh(new THREE.CircleGeometry(0.09, 5), mat(['#B8532F', '#C9782F', '#D3A43A'][k % 3]), false); l.rotation.x = -Math.PI / 2; put(g, l, Math.cos(a) * r, 0.02, Math.sin(a) * r); } return g; },
+    tree: (i) => { const g = G(); trunk(g, 0.09, 1.1, '#E8E2D4'); for (const y of [0.3, 0.6, 0.85]) put(g, cyl(0.075, 0.075, 0.05, '#2E2A26'), 0, y);
+      put(g, blob(0.5, ['#D3A43A', '#C9902F'][i % 2]), 0, 1.3).scale.set(0.9, 1.15, 0.9); put(g, blob(0.32, '#E0B649'), 0.2, 1.65, 0.1); return g; },
+    accent: () => { const g = G(); for (const [x, z, r, c] of [[0, 0, 0.34, '#C9782F'], [0.3, 0.15, 0.24, '#B8532F'], [-0.22, 0.2, 0.22, '#D3A43A']]) put(g, blob(r, c), x, r * 0.35, z).scale.set(1, 0.45, 1); return g; },
+  },
+  snow: {
+    hero: () => { const g = G(); for (const [x, z, r, y] of [[0, 0, 0.95, 0.6], [0.75, 0.35, 0.6, 0.35], [-0.6, 0.45, 0.55, 0.3], [0.1, -0.2, 0.55, 1.4]]) { put(g, stone(r, '#6E7880'), x, y, z).rotation.set(rnd(), rnd(), rnd());
+      put(g, blob(r * 0.62, '#E6EDF2'), x, y + r * 0.62, z).scale.set(1, 0.38, 1); } return g; },
+    tree: () => pine('#38554A', '#E6EDF2'),
+    accent: () => { const g = G(); for (const [x, z, r] of [[0, 0, 0.36], [0.32, 0.12, 0.24], [-0.24, 0.18, 0.2]]) put(g, blob(r, '#E8EEF2', 1), x, r * 0.3, z).scale.set(1, 0.5, 1); return g; },
+  },
+  glade: {
+    hero: () => { const g = G(); put(g, kk('arch_gate', 3.0), 0, 0, 0).rotation.y = -0.5; const sh = put(g, kk('shrine_candles', 0.95), 0.85, 0, 0.85); sh.rotation.y = -0.5;
+      for (const [x, z] of [[0.72, 0.96], [0.98, 0.72], [0.85, 0.88]]) put(g, glow(0.06, '#FFC26A'), x, 0.98, z); return g; },
+    tree: (i) => { const g = G(); const lean = (i % 2 ? 1 : -1) * 0.22; const t = trunk(g, 0.17, 1.3, '#3B3026', lean);
+      const b = cyl(0.05, 0.08, 0.7, '#3B3026'); b.position.set(-lean * 2, 0.95, 0); b.rotation.z = -lean * 3.2; g.add(b);
+      for (const [x, y, z, r] of [[-lean * 2.6, 1.55, 0, 0.52], [lean * 1.2, 1.35, 0.25, 0.4], [0, 1.85, -0.15, 0.36]]) put(g, blob(r, ['#2F4A36', '#3A5940', '#26402E'][(i + Math.round(y * 3)) % 3]), x, y, z);
+      return g; },
+    accent: () => { const g = G(); for (const [x, z, h, r] of [[0, 0, 0.26, 0.17], [0.2, 0.12, 0.17, 0.12], [-0.16, 0.14, 0.13, 0.1]]) { put(g, cyl(0.04, 0.05, h, '#EDE3CC'), x, h / 2, z);
+      const cap = mesh(new THREE.SphereGeometry(r, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#E8913A', emissive: '#7A3A10', roughness: 1, flatShading: true })); put(g, cap, x, h, z); } return g; },
+  },
+  desert: {
+    hero: () => { const g = G(); put(g, cyl(1.25, 1.35, 0.06, '#CDB585', 10), 0, 0.03); const w = mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.07, 12), new THREE.MeshStandardMaterial({ color: '#4FA3B5', roughness: 0.35 }), false); put(g, w, 0, 0.05);
+      for (let k = 0; k < 6; k++) { const a = k * 1.05 + 0.3; put(g, cone(0.05, 0.6 + (k % 3) * 0.15, '#7C8F45', 4), Math.cos(a) * 1.1, 0.35, Math.sin(a) * 1.1); }
+      put(g, stone(0.25, '#C08A5A'), 0.9, 0.12, -0.75); return g; },
+    tree: (i) => { const g = G(); let x = 0; const bend = (i % 2 ? 1 : -1) * 0.07;
+      for (let k = 0; k < 5; k++) { put(g, cyl(0.08 - k * 0.008, 0.1 - k * 0.008, 0.32, '#8C6B45'), x, 0.16 + k * 0.3).rotation.z = -bend * 1.5; x += bend; }
+      for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2, f = mesh(new THREE.ConeGeometry(0.12, 0.95, 4), mat(k % 2 ? '#6E8B3D' : '#5E7A34')); f.position.set(x + Math.cos(a) * 0.38, 1.55, Math.sin(a) * 0.38); f.rotation.set(0, 0, 0); f.lookAt(x + Math.cos(a) * 2, 1.15, Math.sin(a) * 2); f.rotateX(Math.PI / 2); g.add(f); }
+      return g; },
+    accent: () => { const g = G(); put(g, stone(0.38, '#C08A5A'), 0, 0.22, 0).scale.set(1.2, 0.6, 1); put(g, stone(0.26, '#A8744A'), 0.1, 0.5, 0.05).scale.set(1, 0.65, 1); put(g, stone(0.18, '#C9965F'), -0.35, 0.1, 0.25); return g; },
+  },
+  ash: {
+    hero: () => { const g = G(); put(g, kk('wall_broken', 1.3), 0, 0, 0).rotation.y = 0.4; put(g, kk('wall_archedwindow_open', 1.5), 0.85, 0, -0.75).rotation.y = 0.4 + Math.PI / 2; put(g, kk('rubble_large', 0.45), 0.6, 0, 0.5);
+      for (const [x, z] of [[0.4, 0.4], [0.75, 0.62], [0.2, 0.75]]) put(g, glow(0.06, '#FF8A4A'), x, 0.12, z); return g; },
+    tree: (i) => { const g = G(); trunk(g, 0.11, 1.4, '#2A2420', (i % 2 ? 1 : -1) * 0.06);
+      for (const [y, a, l] of [[0.8, 0.9, 0.55], [1.05, -0.8, 0.45], [1.25, 0.5, 0.35]]) { const b = cyl(0.025, 0.05, l, '#2A2420', 5); b.position.set(Math.sin(a) * l * 0.45, y + l * 0.35, Math.cos(a) * 0.05); b.rotation.z = -a; g.add(b); }
+      return g; },
+    accent: () => { const g = G(); put(g, kk('sword_shield_broken', 0.42), 0, 0, 0).rotation.y = rnd() * 6; put(g, glow(0.05, '#FF8A4A'), 0.25, 0.05, 0.2); return g; },
+  },
+  moonlit: {
+    hero: () => { const g = G(); const ry = -0.6; const h = G(); h.rotation.y = ry; g.add(h);
+      put(h, mesh(new THREE.BoxGeometry(1.6, 0.85, 1.1), mat('#6B4A2E')), 0, 0.425);
+      for (const sd of [-1, 1]) { const r = mesh(new THREE.BoxGeometry(1.8, 0.08, 0.75), mat('#E6EDF5')); r.position.set(0, 1.08, sd * 0.3); r.rotation.x = sd * 0.62; h.add(r); }
+      put(h, mesh(new THREE.BoxGeometry(0.22, 0.6, 0.22), mat('#7D8590')), 0.5, 1.25, -0.2);
+      for (const x of [-0.45, 0.35]) put(h, new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.22, 0.02), new THREE.MeshBasicMaterial({ color: '#FFB65C' })), x, 0.5, 0.56);
+      put(h, mesh(new THREE.BoxGeometry(0.3, 0.5, 0.02), mat('#3E2A1C')), -0.05, 0.25, 0.56); return g; },
+    tree: () => pine('#2E4A4E', '#E3EAF5'),
+    accent: () => { const g = G(); put(g, kk('snowman_A', 0.85), 0, 0, 0).rotation.y = 0.4 + rnd(); return g; },
+  },
+  savanna: {
+    hero: () => { const g = G(); for (const [x, z, r, y] of [[0, 0, 0.75, 0.45], [0.8, 0.3, 0.55, 0.3], [-0.6, 0.45, 0.5, 0.28], [0.2, -0.35, 0.5, 1.05], [0.65, -0.5, 0.35, 0.2]]) put(g, stone(r, ['#B4A493', '#A89786', '#C1B2A0'][Math.round(r * 10) % 3]), x, y, z).rotation.set(rnd(), rnd(), rnd()); return g; },
+    tree: (i) => { const g = G(); put(g, kk(['acacia_A', 'acacia_B', 'acacia_C'][i % 3], 1.9), 0, 0, 0); return g; },
+    accent: () => { const g = G(); const m = mesh(new THREE.ConeGeometry(0.24, 1.0, 7), mat('#A9603C')); m.position.y = 0.5; m.rotation.z = 0.12; g.add(m); put(g, cone(0.14, 0.45, '#9A5634'), 0.25, 0.22, 0.1); put(g, cone(0.1, 0.3, '#B0683F'), -0.2, 0.15, 0.12); return g; },
+  },
+};
+// the slots, the same on every battlefield: round the edges, clear of the keeps, treasuries and units
+const SLOTS = { hero: [[4.7, -7.3, 1, -0.4]], tree: [[-6.25, 8.2, 1.1], [6.35, 8.35, 0.95], [6.35, 3.1, 0.8], [-6.3, 3.3, 0.75], [-6.2, -8.0, 1.0], [6.35, -4.4, 0.85]], accent: [[-6.35, 6.0, 1], [6.3, 0.7, 1], [-6.3, -4.0, 1]] };
+const kit = G();
+let lookI = 0, kitGrow = [];
+function setLook(i, animate) {
+  lookI = (i + LOOKS.length) % LOOKS.length; const L = LOOKS[lookI], c = floorCv.getContext('2d');
+  c.clearRect(0, 0, floorCv.width, floorCv.height);
+  if (L.floor === 'ice') iceFloor(c, floorCv.width, floorCv.height, FT); else Floors.floor(c, floorCv.width, floorCv.height, FT, L.floor);
+  floorTex.needsUpdate = true; top.material.color.set(L.side); soil.forEach((b, k) => b.material.color.set(L.soil[k])); root.material.color.set(L.soil[2]);
+  for (const o of [...kit.children]) { kit.remove(o); o.traverse(m => { if (m.geometry && !Object.values(kkCache).includes(m.geometry)) m.geometry.dispose(); }); }
+  seed = 11 + lookI; const K = KITS[L.kit]; kitGrow = [];
+  for (const [kind, list] of Object.entries(SLOTS)) list.forEach(([x, z, s, ry], k) => { const o = K[kind](k); o.position.set(x, 0, z); o.rotation.y = ry ?? rnd() * 6; o.userData.s = s; o.scale.setScalar(animate ? 0.001 : s); kit.add(o); kitGrow.push(o); });
+  kitGrow.forEach((o, k) => { o.userData.t0 = animate ? k * 0.045 : -1; });
+  changedAt = animate ? performance.now() / 1000 : -9;
+  document.dispatchEvent(new CustomEvent('battlefield'));
+}
+let changedAt = -9;
+// the golem's rock (it stands on it), the same on every battlefield
 const rock = (x, z, s) => { const r = mesh(new THREE.DodecahedronGeometry(s, 0), mat('#A39C8D')); r.position.set(x, s * 0.45, z); r.rotation.set(rnd(), rnd(), rnd()); island.add(r); return r; };
-rock(4.6, 7.2, 0.3); rock(-4.9, -6.6, 0.3); rock(6.3, 1.6, 0.25); rock(-4.5, 4.5, 0.55);
+const base = new Set(island.children.filter(c => !c.userData.piece)); // the island itself: ground, soil, rock
+island.add(kit); rock(-4.5, 4.5, 0.55);
+// your battlefield at home: purely how your island looks, kept on this device. A room's battlefield is the host's (New room)
+const BF_KEY = 'nml-diorama-battlefield';
+let homeLook = 0; try { const i = LOOKS.findIndex(l => l.id === localStorage.getItem(BF_KEY)); if (i >= 0) homeLook = i; } catch (e) {}
+{ const i = LOOKS.findIndex(l => l.id === (location.hash.match(/bf=(\w+)/) || [])[1]); if (i >= 0) homeLook = i; }
+setLook(homeLook, false);
 
 // ── pieces, from the game's own Models3D (with KayKit's chest for the treasuries and torches) ──
 const YOU = '#5B8FD6', FOE = '#D9573B';
@@ -1721,6 +1888,9 @@ const anchors = {
   golem: [golem, 1.35, [-190, -170]], sniper: [sniper, 1.0, [170, 120]], mage: [mage, 1.05, [-300, 40]],
   keepYou: [keepYou, 2.3, [-260, -40]], keepFoe: [keepFoe, 2.4, [-200, -120]], vaultYou: [vaultYou, 0.7, [-230, 70]], vaultFoe: [vaultFoe, 0.7, [180, -110]], mammoth: [mammoth, 1.3, [200, -120]],
 };
+// the battlefield note's dot: the island's right corner in the menu's view, the middle of its near edge in the plan view
+const bfMenu = new THREE.Object3D(); bfMenu.position.set(7, 0, -9); island.add(bfMenu);
+const bfPlan = new THREE.Object3D(); bfPlan.position.set(0, 0, 9); island.add(bfPlan);
 let viewName = 'play', hovered = null, pinnedHover = false, picked = null;
 const svg = document.getElementById('lines'), body = document.body;
 const proj = (o, h) => { const v = new THREE.Vector3(); o.getWorldPosition(v); v.y += h; v.project(cam); return [(v.x + 1) / 2 * cv.clientWidth, (1 - v.y) / 2 * cv.clientHeight]; };
@@ -1730,7 +1900,9 @@ function notes() {
   let html = '';
   const playR = document.getElementById('play').getBoundingClientRect();
   for (const el of document.querySelectorAll('.note')) {
-    const show = showing(el) && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper') && !phone(); el.style.display = show ? '' : 'none'; if (!show) continue;
+    const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
+    const show = !phone() && (bf ? inPlay || (viewName === 'play' && !hovered) : showing(el) && !inPlay && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
+    el.style.display = show ? '' : 'none'; if (!show) continue;
     const w = el.offsetWidth, h = el.offsetHeight;
     if (el.dataset.anchor === 'btn') {
       // a menu word's note: the dot on the word; the label finds open space. Left-hand words run a rail up the left
@@ -1747,7 +1919,7 @@ function notes() {
       }
       continue;
     }
-    const [o, hh, [dx, dy]] = anchors[el.dataset.anchor], [x, y] = proj(o, hh), k = phone() ? 0.55 : 1;
+    const [o, hh, [dx, dy]] = bf ? (inPlay ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh), k = phone() ? 0.55 : 1;
     let ddx = dx; if (ddx > 0 && x + ddx * k + w > innerWidth - 24) ddx = -ddx; if (ddx < 0 && x + ddx * k - w < 24) ddx = -ddx; // keep the label on screen
     const lx = x + ddx * k, ly = y + dy * k, left = ddx < 0;
     el.style.left = (left ? lx - w : lx) + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
@@ -1813,7 +1985,11 @@ function frame() {
   now.az = lerp(now.az, want.az, k); now.el = lerp(now.el, want.el, k); now.zoom = lerp(now.zoom, want.zoom, k);
   for (let i = 0; i < 3; i++) now.at[i] = lerp(now.at[i], want.at[i], k);
   for (let i = 0; i < 2; i++) now.off[i] = lerp(now.off[i], want.off[i], k);
-  island.position.y = Math.sin(t * 0.8) * 0.12; island.rotation.y = Math.sin(t * 0.25) * 0.03;
+  // a battlefield change: the island dips and the new miniatures pop up one after another
+  const sw = performance.now() / 1000 - changedAt, dip = sw < 0.6 ? Math.sin(sw / 0.6 * Math.PI) * 0.3 : 0;
+  for (const o of kitGrow) if (o.userData.t0 >= 0) { const p = Math.min(1, Math.max(0, (sw - 0.12 - o.userData.t0) / 0.32)), e = 1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2);
+    o.scale.setScalar(Math.max(0.001, o.userData.s * (p >= 1 ? 1 : e))); if (p >= 1) o.userData.t0 = -1; }
+  island.position.y = Math.sin(t * 0.8) * 0.12 - dip; island.rotation.y = Math.sin(t * 0.25) * 0.03;
   mage.rotation.y = 0.3 + Math.sin(t * 0.9) * 0.15; mage.position.y = Math.abs(Math.sin(t * 2.2)) * 0.06;
   sniper.rotation.y = -0.35 + Math.sin(t * 0.4) * 0.06;
   ent.scale.y = 0.441 * (1 + Math.sin(t * 1.2) * 0.03);
@@ -1853,18 +2029,18 @@ multi.addEventListener('click', () => setMp(!body.classList.contains('mp-open'))
 document.getElementById('vs-ai').addEventListener('click', () => {}); // in the game: straight into a match vs the AI
 document.querySelectorAll('.orders .mp .item:not([disabled])').forEach(b => b.addEventListener('click', () => openRooms(b.dataset.q)));
 
-// Rooms (sample data, shaped like the game's lobby list: host, map, players, age or round, watchers)
+// Rooms (sample data, shaped like the game's lobby list: host, battlefield, players, age or round, watchers)
 const ROOMS = [
-  { q: 'standard', host: 'Pebble', map: 'Standard', p: 1, at: 0 },
-  { q: 'ranked', host: 'Ironmoss', score: 88, map: 'Standard', p: 1, at: 1 },
-  { q: 'standard', host: 'Sleepy Ent', map: 'Frozen Peak', p: 1, at: 4 },
-  { q: 'ranked', host: 'Captain Tuesday', score: 96, map: 'Standard', p: 2, round: 2, watch: 5 },
-  { q: 'standard', host: 'Captain Tuesday', map: 'Standard', p: 2, round: 3, watch: 2 },
-  { q: 'ranked', host: 'Pebble', score: 81, map: 'Standard', p: 1, at: 3 },
-  { q: 'standard', host: 'Bramble', map: 'Mushroom Cavern', p: 1, at: 7, noWatch: true },
-  { q: 'ranked', host: 'Hedgewitch', score: 74, map: 'Standard', p: 2, round: 4, watch: 1 },
-  { q: 'standard', host: 'Old Gus', map: 'Random', p: 2, round: 6, noWatch: true },
-  { q: 'standard', host: 'Moth', map: 'Ashlands', p: 1, at: 12 },
+  { q: 'standard', host: 'Pebble', map: 'Meadow', p: 1, at: 0 },
+  { q: 'ranked', host: 'Ironmoss', score: 88, map: 'Desert', p: 1, at: 1 },
+  { q: 'standard', host: 'Sleepy Ent', map: 'Snow', p: 1, at: 4 },
+  { q: 'ranked', host: 'Captain Tuesday', score: 96, map: 'Ashlands', p: 2, round: 2, watch: 5 },
+  { q: 'standard', host: 'Captain Tuesday', map: 'Forest Glade', p: 2, round: 3, watch: 2 },
+  { q: 'ranked', host: 'Pebble', score: 81, map: 'Moonlit Snow', p: 1, at: 3 },
+  { q: 'standard', host: 'Bramble', map: 'Autumn', p: 1, at: 7, noWatch: true },
+  { q: 'ranked', host: 'Hedgewitch', score: 74, map: 'Savanna', p: 2, round: 4, watch: 1 },
+  { q: 'standard', host: 'Old Gus', map: 'Meadow', p: 2, round: 6, noWatch: true },
+  { q: 'standard', host: 'Moth', map: 'Snow', p: 1, at: 12 },
 ];
 const KIND = { standard: '1v1 Standard', ranked: '1v1 Ranked', '2v2': '2v2' };
 let roomQ = 'standard';
@@ -1875,7 +2051,7 @@ function drawRooms() {
   const open = rows.filter(r => !r.round).length;
   document.getElementById('r-count').textContent = `${open} open · ${rows.length - open} playing`;
   document.getElementById('r-list').innerHTML = rows.length ? rows.map(r => {
-    const facts = [r.map === 'Random' ? 'Random map' : r.map, `${r.p}/2 players`, r.round ? `round ${r.round}` : r.at < 1 ? 'just now' : `${r.at} min ago`, r.watch ? `${r.watch} watching` : ''].filter(Boolean).join(' · ');
+    const facts = [r.map, `${r.p}/2 players`, r.round ? `round ${r.round}` : r.at < 1 ? 'just now' : `${r.at} min ago`, r.watch ? `${r.watch} watching` : ''].filter(Boolean).join(' · ');
     const act = !r.round ? '<button class="go">Join</button>' : !r.noWatch ? '<button class="go watch">Watch</button>' : '<span class="full">full</span>';
     return `<li><span><b>${esc(r.host)}’s room</b>${r.score ? `<span class="sc">★ ${r.score}</span>` : ''}${r.noWatch ? '<span class="tg">No watchers</span>' : ''}<small>${esc(facts)}</small></span>${act}</li>`;
   }).join('') : `<li class="empty">No ${KIND[roomQ]} rooms right now. Make one, and others can join you.</li>`;
@@ -1893,14 +2069,26 @@ function openRooms(q) { setRoomQ(q); tokMenu(false); body.classList.add('in-room
 function closeRooms() { if (body.classList.contains('in-create')) return closeCreate(); body.classList.remove('in-rooms'); tokMenu(false); backBtn.textContent = '← Menu'; }
 
 // Create room: starts on the kind the list was filtered to (the game's create sheet: kind, public or private, spectators)
-const NOTE = { standard: 'Pick the map, look and leaders in the room before you start.', ranked: 'A best of 3 on the Standard map and pack. You and whoever joins both need to be logged in with Google. Only ranked series count on the leaderboard.' };
+const NOTE = { standard: 'On the Standard map. No stakes.', ranked: 'A best of 3 on the Standard map and pack. You and whoever joins both need to be logged in with Google. Only ranked series count on the leaderboard.' };
 const press = (sel, on) => document.querySelectorAll(sel).forEach(b => b.setAttribute('aria-pressed', on(b)));
 function setKind(k) { press('.newroom [data-kind]', b => b.dataset.kind === k); document.getElementById('nr-note').textContent = NOTE[k]; }
 document.querySelectorAll('.newroom [data-kind]:not([disabled])').forEach(b => b.addEventListener('click', () => setKind(b.dataset.kind)));
 document.querySelectorAll('.newroom [data-pub]').forEach(b => b.addEventListener('click', () => { press('.newroom [data-pub]', x => x === b); document.getElementById('nr-pub').textContent = b.dataset.pub === '1' ? 'Listed in Rooms for anyone to join.' : 'Not listed. Friends join with the room’s code.'; }));
 document.querySelectorAll('.newroom [data-spec]').forEach(b => b.addEventListener('click', () => { press('.newroom [data-spec]', x => x === b); document.getElementById('nr-spec').textContent = b.dataset.spec === '1' ? 'Anyone can watch once it starts.' : 'No one can watch.'; }));
-function openCreate() { setKind(roomQ); tokMenu(false); body.classList.add('in-create'); backBtn.textContent = '← Rooms'; }
-function closeCreate() { body.classList.remove('in-create'); backBtn.textContent = '← Play'; }
+// the room's battlefield: the host picks it here and the match is played on it; the island shows it while you pick
+let roomLook = 0;
+function setRoomLook(i) { roomLook = (i + LOOKS.length) % LOOKS.length; document.getElementById('nr-bf').textContent = LOOKS[roomLook].name;
+  document.getElementById('nr-bfn').textContent = `${roomLook + 1} of ${LOOKS.length}. The match is played here. Everyone else keeps their own at home.`; if (lookI !== roomLook) setLook(roomLook, !still); }
+document.querySelectorAll('.newroom [data-bfs]').forEach(b => b.addEventListener('click', () => setRoomLook(roomLook + +b.dataset.bfs)));
+function openCreate() { setKind(roomQ); tokMenu(false); body.classList.add('in-create'); backBtn.textContent = '← Rooms'; setRoomLook(homeLook); }
+function closeCreate() { body.classList.remove('in-create'); backBtn.textContent = '← Play'; if (lookI !== homeLook) setLook(homeLook, !still); }
+// Change battlefield: steps through the looks one at a time. At home it is only how your island looks; on New room it steps the room's
+const bfNote = document.querySelector('.bf-note');
+const stepBattlefield = () => { if (body.classList.contains('in-create')) return setRoomLook(roomLook + 1);
+  homeLook = (homeLook + 1) % LOOKS.length; try { localStorage.setItem(BF_KEY, LOOKS[homeLook].id); } catch (e) {} setLook(homeLook, !still); };
+bfNote.addEventListener('click', stepBattlefield); bfNote.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); stepBattlefield(); } });
+const bfSub = () => { const L = LOOKS[lookI]; document.getElementById('bf-sub').textContent = `${L.name} · ${lookI + 1} of ${LOOKS.length}`; };
+document.addEventListener('battlefield', bfSub); bfSub();
 document.getElementById('r-create').addEventListener('click', openCreate);
 document.getElementById('nr-go').addEventListener('click', () => {}); // in the game: the room opens and waits for a second player
 // the playlist
@@ -1919,6 +2107,7 @@ if (H.includes('multi')) setMp(true);
 const rq = (H.match(/rooms=(\w+)/) || [])[1]; if (rq) { if (!H.includes('play')) { openPlay(); now = { ...VIEWS.orders, at: [...VIEWS.orders.at], off: [...VIEWS.orders.off] }; } openRooms(rq); }
 if (H.includes('filter')) tokMenu(true);
 if (H.includes('create')) openCreate();
+const bq = (H.match(/roombf=(\w+)/) || [])[1]; if (bq) setRoomLook(LOOKS.findIndex(l => l.id === bq));
 if (H.includes('private')) document.querySelector('.newroom [data-pub="0"]').click();
 const plh = (H.match(/plh=(\d+)/) || [])[1]; if (plh) document.querySelectorAll('.pl-row')[+plh].classList.add('hov'); // a song as if pointed at
 const onq = (H.match(/on=([\w-]+)/) || [])[1]; // look as if pointed at: a Play choice (vs-ai, multi, standard, ranked) or a room row (r0, r1...)

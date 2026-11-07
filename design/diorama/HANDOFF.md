@@ -90,6 +90,30 @@ What the real game's Play popup has (`playPop()` in `src/site-template.html`, ar
 2. Open: with the playlist up on PLAY / Rooms, the list sits over the board (plan view) and only the hovered song has a
    box; options raised were moving the island aside while it's open, and an ink shard on the playing track (the
    saffron accent turns to ink on saffron screens).
-3. Under discussion: a "Change battlefield" note on the island that steps through the maps. Experiment so far:
-   `#look=meadow|autumn|darkwoods|ash|moonlit|savanna|sand` paints the island's top with the game's own floor
-   (`src/floors.js`, inlined by the build); the toy trees, mud patches and soil are still the meadow ones.
+3. Done: battlefields (see below and `screens/battlefields.jpg`). Waiting on the owner's feedback.
+
+## Battlefields (the island's look)
+
+- The only map is Standard (1v1). A battlefield is one of the game's live looks (`Game.SKINS`): Meadow, Autumn, Snow,
+  Forest Glade, Desert, Ashlands, Moonlit Snow, Savanna.
+- The island's top is that look's own painted ground: `Floors.floor` from `src/floors.js`, or for Snow the Frozen Peak
+  ground `paintIce` lifted out of `src/render2d.js` by the build (`{{FLOORS}}`, `{{ICEFLOOR}}`). No tile grid, no zone
+  bands, no mud patches. The slab edge and the soil layers take the look's colours.
+- Round the edges stand 10 toy miniatures of the look's signature things, in the same slots on every battlefield
+  (`SLOTS`): 1 centrepiece, 6 trees, 3 accents (`KITS` in `src/menu.html`). The game's own KayKit models where they
+  exist (arch gate and shrine, ruined walls and rubble, broken sword and shield, snowman, acacias), simple shapes for
+  the rest:
+  Meadow: big oak, leafy trees, flowering bushes · Autumn: red maple with fallen leaves, gold birches, leaf piles ·
+  Snow: snow-capped rocks, snowy pines, snow piles · Forest Glade: stone gate and candle shrine, twisted trees, orange
+  mushrooms · Desert: oasis, palms, sandstone rocks · Ashlands: burnt ruin with embers, charred trees, broken swords ·
+  Moonlit Snow: cabin with lit windows, blue snowy pines, snowmen · Savanna: granite kopje, acacias, termite mounds.
+- **Change battlefield.** A note on the island (its right corner on the menu, the middle of its near edge on Play,
+  Rooms and New room) steps through the eight: the island dips and the new miniatures pop up. At home it is purely how
+  your island looks, kept on this device (localStorage). On New room it steps the room's battlefield instead.
+- **New room** has a Battlefield row (‹ name ›): it starts on your home battlefield, the island shows the room's while
+  you pick, and your own comes back when you leave. The host's pick is what the match is played on. Room rows show the
+  battlefield where the map used to be.
+- States: `#bf=<look id>` (home battlefield: meadow, autumn, snow, frost, desert, ash, moonlit, savanna),
+  `#roombf=<look id>` (with `#create`).
+- Note: Snow's real ground is dark ice (the white on the real board is snow on the scenery round it), so the island is
+  dark with a white rim and snowy miniatures.
