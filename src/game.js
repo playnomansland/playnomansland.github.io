@@ -61,7 +61,7 @@ const Game = (() => {
       skill2: { name: 'Defensive walls', cost: 0, noFree: true, text: 'Place 3 walls on your side that block enemies. Bastion +4 armor.' }, // free since 2026-11-06, still once a match (noFree: Blixten's discount isn't spent on it)
       fortify: { name: 'Fortify', cost: 50, text: 'Once a round: one extra wall on your side for this round’s fight only.' }, // see FORTIFY
       vault: { name: 'Vault', text: 'Your treasury has +6 armor, and a raid on it steals half as much.' },
-      freeMove: { name: 'March order', text: '1 free move every round.' } }, // see freeMoves
+      freeMove: { name: 'March order', text: '1 free move of up to 2 tiles every round.' } }, // see freeMoves, MARCH
     { id: 'mage', name: 'Mage tower', text: 'A beam that ramps up on one target. Melts giants.', unit: { ...TOWER, name: 'Mage Tower', kind: 'mage', hp: 600, hit: 14, aps: 1.5, range: 12, spinUp: 50, spinHit: 50, color: '#A493DE' },
       generals: true, muster: { name: 'Muster', text: '1 extra deployment every round, for free.' } }, // no once-per-match skill: a mage general can be called every round instead (MAGE_GENERALS)
     { id: 'bank', name: 'Bank tower', text: 'Sturdy, medium range. Credit line: your loans are 200 (pay back 300).', unit: { ...TOWER, name: 'Bank Tower', kind: 'bank', hp: 700, hit: 45, aps: 0.6, range: 18, color: '#D9B95B' },
@@ -193,7 +193,8 @@ const Game = (() => {
   const bwallsFighting = (m, side) => bwallsOf(m, side).filter(w => w.temp ? w.round === m.round : towerSkill2On(m, side, 'bastion'));
   // what a viewer may see of a player's walls: their own, and the opponent's from earlier rounds while deploying
   const bwallShown = (m, viewer, deploying, side, w) => side === viewer || !deploying || w.round < m.round || watchedLive(m, side); // (2v2: watched live, the Shadow Den)
-  const ownHalf = (side, row) => side === 0 ? row >= ROWS / 2 && row < ROWS : row >= 0 && row < ROWS / 2;
+  // (the middle row of an odd board, the 2v2 board's row 9, is nobody's half: no walls there for either team, 2026-11-07)
+  const ownHalf = (side, row) => !midRow(row) && (side === 0 ? row >= ROWS / 2 && row < ROWS : row >= 0 && row < ROWS / 2);
   // the other player's wall on that edge, as this player sees it: in 2v2 the server judges a deploy action as the acting
   // team sees the board (src/mpb.js asSeen), so a wall the other team put up this round (hidden, bwallShown) doesn't
   // count and a refusal shows nothing; the fight's start moves the newer of two walls on one edge (Duo.settleBoard)
@@ -576,11 +577,13 @@ const Game = (() => {
       flank: Array(18).fill('F............F').map((r, i) => i === 0 || i === 17 ? 'FF..........FF' : r),
       buildings: [{ kind: 'tower', side: 0, col: 9, row: 16 }, { kind: 'tower', side: 1, col: 4, row: 1 }, { kind: 'treasury', side: 0, col: 4, row: 15 }, { kind: 'treasury', side: 1, col: 9, row: 2 }] },
     // 2v2 (src/duo.js): one wide board both players of a team deploy on, one shared tower per team in the back rows
-    // (right of centre, point-mirrored for the other team), and two columns of flank tiles on each edge
-    duo: { format: 'nml-map', version: 1, name: '2v2', base: 'testgrid', cols: 24, rows: 18, zone: 7, symmetry: 'point',
-      tiles: Array(18).fill('.'.repeat(24)), shape: Array(18).fill('.'.repeat(24)), height: Array(18).fill('.'.repeat(24)),
-      flank: Array(18).fill('FF' + '.'.repeat(20) + 'FF'),
-      buildings: [{ kind: 'tower', side: 0, col: 17, row: 16 }, { kind: 'tower', side: 1, col: 6, row: 1 }] }, // no treasury since 2026-11-05 (a 2v2 building system is coming)
+    // (right of centre, point-mirrored for the other team), and two columns of flank tiles on each edge. 19 rows since
+    // 2026-11-07: 5 rows of no man's land (7-11) with a true middle row (9, midRow) that is nobody's: no flank tiles,
+    // no walls, nobody's zone; the artifacts stand on it (src/mpb.js rollArtifacts)
+    duo: { format: 'nml-map', version: 1, name: '2v2', base: 'testgrid', cols: 24, rows: 19, zone: 7, symmetry: 'point',
+      tiles: Array(19).fill('.'.repeat(24)), shape: Array(19).fill('.'.repeat(24)), height: Array(19).fill('.'.repeat(24)),
+      flank: Array(19).fill('FF' + '.'.repeat(20) + 'FF').map((r, i) => i === 9 ? '.'.repeat(24) : r),
+      buildings: [{ kind: 'tower', side: 0, col: 17, row: 17 }, { kind: 'tower', side: 1, col: 6, row: 1 }] }, // no treasury since 2026-11-05 (a 2v2 building system is coming)
   };
   // A map entry for MAPS from an editor map: its grid, its towers' and treasuries' tiles (spots), its flank tiles (when
   // they differ from the game's: flankSet) and its terrain (when it has any). Rules on top come in `extra`. Maps made on
@@ -1010,9 +1013,10 @@ const Game = (() => {
   // plus their whole zone). From round 3 you may deploy there; the matching columns on your half are the
   // enemy's and never yours, so you have to guard your own edges.
   const FLANK = { round: 3, cols: [0, COLS - 1], delay: 3 }; // delay: seconds a squad stands still in the first fight after it was placed on a flank
-  // the rows of the enemy's half: their zone from its front row to its back row, then their half of no man's land
+  // the rows of the enemy's half: their zone from its front row to its back row, then their half of no man's land (an
+  // odd board's middle row is nobody's half: never a flank row, 2026-11-07)
   const flankRows = (side) => {
-    const half = ROWS / 2, zone = Array.from({ length: ZONE }, (_, i) => side === 0 ? ZONE - 1 - i : ROWS - ZONE + i);
+    const half = Math.floor(ROWS / 2), zone = Array.from({ length: ZONE }, (_, i) => side === 0 ? ZONE - 1 - i : ROWS - ZONE + i);
     const nml = Array.from({ length: half - ZONE }, (_, i) => side === 0 ? ZONE + i : ROWS - ZONE - 1 - i);
     return zone.concat(nml);
   };
@@ -1060,6 +1064,9 @@ const Game = (() => {
   const reserved = (side, col, row) => isFlank(1 - side, col, row);
   // no man's land: the rows between the two zones. A unit with the Forward planting skill may be placed there.
   const inNoMans = (row) => row >= ZONE && row < ROWS - ZONE;
+  // the middle row of no man's land on a board with an odd number of rows (the 2v2 board's row 9, 2026-11-07): the same
+  // distance from both zones and nobody's (no flank tiles, no walls, no team's prio); even boards have none
+  const midRow = (row) => ROWS % 2 === 1 && row === (ROWS - 1) / 2;
   // whether a player's unit has a skill of this type: bought or built in, or Enzo's free skill while it works (as in
   // unitFor). adding: squads of the unit about to be placed, which count toward Enzo's CHAR.enzoMin (his 2nd Ent can
   // be planted forward straight away)
@@ -1401,11 +1408,23 @@ const Game = (() => {
     // Mubarak: a slime unit also gets the skills bought for the other slime units
     if (charOf(m, side) === 'mubarak' && base && SLIME_UNITS.includes(base.name)) defs.push(...slimeSkillDefs(m, side, ui));
     let u = defs.length ? E.applySkills(base, defs, m.units) : base;
+    u = withSpawnSkills(m, side, ui, u);
     if (sq && u.glut && glutOf(sq) > 0) u = E.glutUnit(u, glutOf(sq)); // the Obelisk's Glut, kept between rounds
     u = withFactionTrait(u, base && base.faction);
     u = withPowers(m, side, u, base);
     if (base && SLIME_UNITS.includes(base.name)) u = { ...u, slime: true }; // poison heals slime units
     return withCharacter(m, side, u);
+  }
+  // Raise dead (2026-11-07): the Necromancer's skeletons get the Skeleton Archer skills its side owns (bought for a
+  // squad of them, or built in). Made with applySkills, not unitFor, so the character (withCharacter, through withKids)
+  // still reaches them only once, from the Necromancer's own unitFor. The engine levels them like the Necromancer.
+  function withSpawnSkills(m, side, ui, u) {
+    const sp = u && u.spawn, si = sp && sp.unit ? m.units.findIndex(x => x.name === sp.unit.name) : -1;
+    if (si < 0 || si === ui) return u;
+    const defs = E.SLOTS.filter(k => hasSkill(m, side, si, k)).map(k => skillDef(m, si, k)).filter(Boolean);
+    if (!defs.length) return u;
+    const { skills, skillDefs, skillsOn, skillsInnate, skillMods, spawn, ...plain } = E.applySkills(m.units[si], defs, m.units);
+    return { ...u, spawn: { ...sp, unit: E.withTraits({ ...plain, level: 0 }) } };
   }
   // the player's character on one of their units (spawned ones too): Noah cuts health and damage, Cage adds health
   function withCharacter(m, side, u) {
@@ -1486,6 +1505,9 @@ const Game = (() => {
   // 2v2 lane has m.mpb); the other skill of an either-or pair can't be bought meanwhile
   const schoolLearning = (m, side, ui) => !m.mpb ? [] : (m.mpb[side] || []).map(r => r.kind === 'school' && r.data && r.data.pupil)
     .filter(p => p && p.learn && p.ui === ui && p.lane === (m.duoLane === 1 ? 1 : 0)).map(p => p.learn.k);
+  // 2v2 School's respec (src/mpb.js, 2026-11-07): this round's swap of an either-or skill of unit ui, kept in the
+  // player's own lane (m.respec[side] = [{ key, round, ui, from, fromRound, to }]); respecNow: k is the skill it gave
+  const respecNow = (m, side, ui, k) => !!(m && m.respec && m.respec[side] || []).some(x => x.round === m.round && x.ui === ui && (k == null || x.to === k));
   function canBuySkill(m, side, ui, k) {
     const d = skillDef(m, ui, k);
     if (!d || hasSkill(m, side, ui, k)) return false;
@@ -1512,6 +1534,7 @@ const Game = (() => {
   function undoSkill(m, side, ui, k) {
     const t = m.tech && m.tech[side][ui];
     if (!t || t[k] !== m.round) return false;
+    if (respecNow(m, side, ui, k)) return false; // a School respec, not a buy: no gold to give back (its Undo respec, 2026-11-07)
     // Forward planting can't be taken back while a squad of that unit stands in no man's land
     const d = skillDef(m, ui, k);
     if (d && d.type === 'forward' && m.armies[side].some(s => s.unit === ui && inNoMans(s.row))) return false;
@@ -1644,7 +1667,8 @@ const Game = (() => {
   // Both stay all match. Until built, a building stands in every fight as a site (with its full health): the nearest
   // builder without a job walks over and builds it (buildSecs seconds of work; Master engineering is faster); a site
   // nobody builds builds itself at selfBuild times that speed (0 = not at all). The work carries over between fights.
-  // A site is built once the work is done, or (survive) if it is still standing at the end of a fight it was worked on.
+  // A site is built once the work is done, or (survive) if it is still standing at the end of a fight it was worked on
+  // and its side didn't lose (2026-11-07: a lost fight keeps the progress only, see Engine's builders at a site).
   // A built building destroyed in a fight starts the next round at `rebuild` % and has to be built again.
   // Once built, each round its owner may buy one of its skills (like a mage general: m.bskill[side][key] = { round,
   // skill }, swapped for a refund, hidden from the opponent until the fight). A skill makes units (`unit`, or `make`:
@@ -1663,6 +1687,11 @@ const Game = (() => {
   const buildingAt = (m, side, col, row) => buildingsOf(m, side).find(b => b.col === col && b.row === row) || null;
   // what a screen may show of a player's building: an opponent's new one only from the fight on
   const buildingShown = (v, viewer, deploying, side, b) => side === viewer || !deploying || b.round < v.round;
+  // 2v2: the other lane's buildings (m.team.buildings, the teammate's and the other opponent's) as bldgSeen counts
+  // them: the team's always, the other team's from the round after it was placed, or live when watched (2026-11-07)
+  const teamBuildingShown = (v, viewer, deploying, side, b) => buildingShown(v, viewer, deploying, side, b) || watchedLive(v, side);
+  // a building from a skill destroyed in a fight and not rebuilt yet (not a new site): the boards' out-of-action look
+  const buildingFell = (b) => !!b && !b.built && b.fell > 0;
   const buildingSpotOk = (m, side, col, row) => col >= 0 && col < COLS && inZone(side, row) && !reserved(side, col, row) && !occupied(m, side, col, row) && !terrainBlocks(m, col, row);
   const canBuyBuilding = (m, side, ui, k) => isBuildingSkill(m, ui, k) && !!buildingInfo(buildingIdOf(m, ui, k)) && !buildingOf(m, side, buildingIdOf(m, ui, k)) && canBuySkill(m, side, ui, k);
   // buy unit ui's building skill k and put the building on (col, row)
@@ -1815,10 +1844,10 @@ const Game = (() => {
       const q = res.squads && res.squads[side + ':' + r.squad];
       if (b.built) {
         if (q && !r.sq) b.xp += q.xp;
-        if (!x.alive) { b.built = false; b.progress = Math.max(0, Math.min(1, (info.rebuild == null ? 50 : info.rebuild) / 100)); news[side].push({ id: r.id, lost: true }); }
+        if (!x.alive) { b.built = false; b.progress = Math.max(0, Math.min(1, (info.rebuild == null ? 50 : info.rebuild) / 100)); if (!r.sq) b.fell = m.round; news[side].push({ id: r.id, lost: true }); } // (fell: the round it was destroyed in, so a rebuild looks unlike a new site; 2026-11-07)
       } else if (x.work != null) {
         b.progress = Math.max(0, Math.min(1, x.work / info.buildSecs));
-        if (x.work >= info.buildSecs - 1e-9 || (info.survive && x.alive && x.worked)) { b.built = true; b.progress = 1; news[side].push({ id: r.id, built: true }); }
+        if (x.work >= info.buildSecs - 1e-9 || (info.survive && x.alive && x.worked && res.winner !== 1 - side)) { b.built = true; b.progress = 1; news[side].push({ id: r.id, built: true }); }
         else if (x.worked) news[side].push({ id: r.id, progress: b.progress });
       }
     });
@@ -1909,15 +1938,21 @@ const Game = (() => {
     if (old && outOf != null && !horseOk(m, side, outOf, 'out', sq.id)) return false; // this carrier has let one out already
     if (old && into && !horseOk(m, side, into.id, 'in', sq.id)) return false;          // or taken one in
     const free = freeMover(m, side, sq) || freeOut(m, side, sq);
-    if (sq.round !== m.round && !free && movedId(m, side) !== sq.id && sq.luckMove !== m.round && freeMovesLeft(m, side) > 0) { // a free move (used before the paid one)
-      sq.from = { col: sq.col, row: sq.row, ...(isRider(sq) ? { in: sq.in } : {}) };
-      sq.movedRound = m.round; sq.luckMove = m.round;
-    } else if (sq.round !== m.round && !free && sq.luckMove !== m.round && movedId(m, side) == null) {
+    // an older squad's move: a free one (used before the paid one) if it may be one to this tile, else the paid one; a
+    // squad already moved this round is weighed again on every drop (March order reaches MARCH.tiles: back within
+    // reach, a paid move is refunded and becomes the free one) (2026-11-07)
+    const paid = movedId(m, side) === sq.id, luck = sq.luckMove === m.round;
+    const kind = sq.round === m.round || free ? null : moveKind(m, side, sq, col, row) || 'no';
+    if (kind === 'no') return false;
+    if (kind && !(sq.from && sq.movedRound === m.round)) { sq.from = { col: sq.col, row: sq.row, ...(isRider(sq) ? { in: sq.in } : {}) }; sq.movedRound = m.round; }
+    if (kind === 'free' && !luck) {
+      if (paid) { m.gold[side] += CONFIG.moveCost; m.moved[side] = null; }
+      sq.luckMove = m.round;
+    } else if (kind === 'paid' && !paid) {
       if (!m.moved) m.moved = [null, null];
       m.gold[side] -= CONFIG.moveCost;
       m.moved[side] = sq.id;
-      sq.from = { col: sq.col, row: sq.row, ...(isRider(sq) ? { in: sq.in } : {}) };
-      sq.movedRound = m.round;
+      delete sq.luckMove;
     }
     if (sq.round !== m.round && free && !(sq.from && sq.movedRound === m.round)) { // free, but the opponent still sees it where it was until the fight
       sq.from = { col: sq.col, row: sq.row, ...(isRider(sq) ? { in: sq.in } : {}) };
@@ -2063,9 +2098,9 @@ const Game = (() => {
       if (dis) { const mask = { name: dis.name, shape: dis.shape, color: dis.color, bodies: dis.bodies, range: dis.range }; for (const x of b) x.mask = mask; }
       if (isDev(m) && sq.guide && sq.guide.length && !isRider(sq)) for (const x of b) x.guide = sq.guide.map(p => tileToWorld(p.col, p.row)); // devtest: the squad's arrow
       else if (sq.aim && canAim(m, side, sq)) { // a melee squad's direction arrow (AIM): every body walks it, keeping its place in the formation
-        const dx = sq.aim.dc * TILE, dy = -sq.aim.dr * TILE, secs = Math.max(AIM.minSecs, AIM.slack * Math.sqrt(dx * dx + dy * dy) / Math.max(0.1, u.speed));
+        const a = aimUse(m, sq, sq.aim, side), dx = a.dc * TILE, dy = -a.dr * TILE;
         const cl = (v, lo, hi) => Math.max(lo + 1, Math.min(hi - 1, v));
-        for (const x of b) { x.guide = [{ x: cl(x.x + dx, BOUNDS.x0 + XOFF, BOUNDS.x1 + XOFF), y: cl(x.y + dy, BOUNDS.y0, BOUNDS.y1) }]; x.guideT = secs; }
+        for (const x of b) { x.guide = [{ x: cl(x.x + dx, BOUNDS.x0 + XOFF, BOUNDS.x1 + XOFF), y: cl(x.y + dy, BOUNDS.y0, BOUNDS.y1) }]; x.guideT = AIM.stall; }
       }
       if (markOn(m, side)) for (const x of b) x.sniperMark = MARK.hit; // Mark Bounty: all its units hunt the mark (since 2026-11-03; Snipers only before)
       if (markOn(m, 1 - side) && markOf(m, 1 - side).squad === sq.id) for (const x of b) x.marked = true;
@@ -2360,6 +2395,8 @@ const Game = (() => {
       return q;
     }));
     if (m.tech) v.tech = two(m.tech, Object.fromEntries(Object.entries(m.tech[fo] || {}).map(([ui, t]) => [ui, t.map(r => r >= now ? 0 : r)])));
+    if (v.tech) for (const x of (m.respec && m.respec[fo]) || []) if (x.round === now && v.tech[fo][x.ui]) v.tech[fo][x.ui][x.from] = x.fromRound; // a School respec: the skill it had (2026-11-07)
+    if (m.respec) v.respec = two(m.respec, []);
     if (!charShown(m, viewer, true, fo)) { v.chars = two(m.chars, null); v.buff = two(m.buff, []); }
     if (m.towers && m.towers[fo] && !towerTypeShown(m, viewer, true, fo)) { const t = { ...m.towers[fo] }; delete t.type; v.towers = two(m.towers, t); }
     if (m.towerSkill && m.towerSkill[fo] >= now) v.towerSkill = two(m.towerSkill, 0);
@@ -2654,7 +2691,30 @@ const Game = (() => {
   const slotWins = (m, side, sym) => slotSpins(m, side).filter(x => x.win === sym).length;
   // Free moves every round: Bastion's March order and Otto's horseshoe move (each 1). A free move is used before the
   // paid one, on its own: dragging an older squad just moves it. q.luckMove = the round it used one.
-  const freeMoves = (m, side) => (towerPicked(m, side) && towerType(m, side).freeMove ? 1 : 0) + (shoePerk(m, side, 'move') ? 1 : 0);
+  // March order's move reaches at most MARCH.tiles tiles (as a square) from the squad's tile at the round's start; the
+  // horseshoe's goes anywhere. Which free move a squad used is never stored: freeMoveOk works it out from how far each
+  // one went (so nothing new can show the opponent a move). A longer move is the horseshoe's or the paid one. (2026-11-07)
+  const MARCH = { tiles: 2 };
+  const marchMoves = (m, side) => towerPicked(m, side) && towerType(m, side).freeMove ? 1 : 0;
+  const shoeMoves = (m, side) => shoePerk(m, side, 'move') ? 1 : 0;
+  const freeMoves = (m, side) => marchMoves(m, side) + shoeMoves(m, side);
+  // within March order's reach: (col, row) from sq's tile at the round's start
+  const marchNear = (m, sq, col, row) => { const o = sq.from && sq.movedRound === m.round ? sq.from : sq; return Math.max(Math.abs(col - o.col), Math.abs(row - o.row)) <= MARCH.tiles; };
+  // may sq's move to (col, row) be a free one, next to the free moves the side's other squads made this round? The
+  // ones that went further than MARCH.tiles need the horseshoe.
+  function freeMoveOk(m, side, sq, col, row) {
+    const others = m.armies[side].filter(q => q !== sq && q.luckMove === m.round);
+    const far = others.filter(q => !marchNear(m, q, q.col, q.row)).length + (marchNear(m, sq, col, row) ? 0 : 1);
+    return others.length + 1 <= freeMoves(m, side) && far <= shoeMoves(m, side);
+  }
+  // what a move of sq to (col, row) would be: 'free' (this round's squad, Spirit walk, stepping out of a carrier, or a
+  // free move that reaches there), 'paid' (the round's paid move: unused and affordable, or this squad's already), or
+  // null (refused). The page's move highlights and moveSquad use it alike. (2026-11-07)
+  function moveKind(m, side, sq, col, row) {
+    if (!sq) return null;
+    if (sq.round === m.round || freeMover(m, side, sq) || freeOut(m, side, sq) || freeMoveOk(m, side, sq, col, row)) return 'free';
+    return movedId(m, side) === sq.id || (movedId(m, side) == null && m.gold[side] >= CONFIG.moveCost) ? 'paid' : null;
+  }
   const freeMovesLeft = (m, side) => freeMoves(m, side) - m.armies[side].filter(q => q.luckMove === m.round).length;
   const slotMovesLeft = freeMovesLeft; // older name
   // Otto's horseshoe (2026-11-03): three of a kind gives, at random, +1 deployment or +1 free move every round for the
@@ -2783,23 +2843,23 @@ const Game = (() => {
     return true;
   }
 
-  // Level all: every squad of unit ui that is ready to level up, until the gold runs out. A pass levels each ready
-  // squad once, the one with the most XP first (then the oldest); a squad with XP for another level gets it on the
-  // next pass. levelAllPlan: the squad ids in that order (an id twice for two levels), without changing anything;
-  // levelAll does them, one levelUp each (so a guest's side reaches the host like single level-ups), and returns how many.
+  // Level all: every squad of unit ui that is ready to level up, until the gold runs out. It spreads the levels
+  // (2026-11-07): in passes, one level at a time; in each pass every ready squad gets one level (the lowest level
+  // first, then the most XP, then the oldest) before any squad gets another one. levelAllPlan: the squad ids in that
+  // order (an id twice for two levels), without changing anything; levelAll does them, one levelUp each (so a guest's
+  // side reaches the host like single level-ups), and returns how many.
   function levelAllPlan(m, side, ui) {
     const u = m.units[ui], out = [];
     if (!u) return out;
-    const cost = levelCost(u), sim = m.armies[side].filter(s => s.unit === ui).map(s => ({ s, level: s.level }));
+    const cost = levelCost(u), sim = m.armies[side].filter(s => s.unit === ui).map(s => ({ s, level: s.level, n: 0 }));
     let gold = m.gold[side];
-    for (;;) {
-      const ready = sim.filter(x => isReady(m, { ...x.s, level: x.level })).sort((a, b) => b.s.xp - a.s.xp || a.s.id - b.s.id);
-      if (!ready.length) return out;
-      for (const x of ready) {
-        if (gold < cost) return out;
-        gold -= cost; x.level++; out.push(x.s.id);
-      }
+    while (gold >= cost) {
+      const x = sim.filter(y => isReady(m, { ...y.s, level: y.level }))
+        .sort((a, b) => a.n - b.n || a.level - b.level || b.s.xp - a.s.xp || a.s.id - b.s.id)[0];
+      if (!x) break;
+      gold -= cost; x.level++; x.n++; out.push(x.s.id);
     }
+    return out;
   }
   function levelAll(m, side, ui) {
     let n = 0;
@@ -3159,12 +3219,17 @@ const Game = (() => {
   // A melee squad (base range up to AIM.melee m) may get an arrow from its tile, at most AIM.maxTiles tiles long, in
   // any gamemode, for free. In the fight its bodies walk the arrow first, each keeping its place in the formation: sight
   // and awareness are off until they reach its end, so they walk past enemies they would have turned to, and only stand
-  // to fight one already in their reach (it walks on once that one is gone). From the end on they fight as usual. A walk
-  // that can't get there (a wall, a crowd) gives up after AIM.slack times the time it should take (at least AIM.minSecs
-  // s, time spent fighting not counted).
+  // to fight one already in their reach that blocks the way ahead (it walks on once that one is gone; one beside or
+  // behind is hit in passing). From the end on they fight as usual. A walk that can't get there (a wall, a crowd) gives
+  // up after AIM.stall s without getting closer (time spent fighting not counted; slows and knockback don't use it up)
+  // (2026-11-07: before, any enemy in reach stopped it and it gave up after a fixed time).
   // sq.aim = { dc, dr }: the end in tiles from the squad's tile (so it moves with the squad). Kept from round to round
   // until cleared; the opponent doesn't see it before the fight (Referee.hide, seenBy).
-  const AIM = { maxTiles: 5, melee: 5, slack: 2.5, minSecs: 4 };
+  // A squad standing on a flank tile of its side (isFlank) when the fight starts reaches at most AIM.flank tiles (2v2:
+  // AIM.duoFlank), counted as a square (diagonals too). Its stored arrow is kept as set and only cut along its line where
+  // it is used (aimUse: aimTo, aimEnd, the fight), so the page, the P2P host, the server and the fight agree, and a squad
+  // moved off the flank gets its long arrow back. A squad coming out of a Coal mine exit follows its own tile. (2026-11-07)
+  const AIM = { maxTiles: 5, melee: 5, stall: 3, flank: 1, duoFlank: 2 };
   const canAim = (m, side, sq) => {
     if (!sq || isRider(sq) || !m.armies[side].includes(sq)) return false;
     const u = m.units[sq.unit];
@@ -3194,10 +3259,23 @@ const Game = (() => {
     delete sq.aim;
     return true;
   }
-  // the tile an arrow drawn from sq to (col, row) would end on (cut down as setAim does), or null
-  const aimTo = (m, sq, col, row) => { const a = sq && aimFit(sq, col - sq.col, row - sq.row); return a ? { col: sq.col + a.dc, row: sq.row + a.dr } : null; };
+  // the most tiles (as a square) the arrow of sq may reach where it stands: AIM.flank on a flank tile of its side
+  // (2v2: AIM.duoFlank), else 0 (no cap, AIM.maxTiles as a circle). side: found from m.armies when not given
+  const aimCap = (m, sq, side) => {
+    if (!sq) return 0;
+    if (side == null) side = m.armies.findIndex(a => a.includes(sq));
+    return side >= 0 && isFlank(side, sq.col, sq.row) ? (m.duoTowers ? AIM.duoFlank : AIM.flank) : 0;
+  };
+  // the arrow a = { dc, dr } as sq really walks it from where it stands: cut along its line to aimCap
+  function aimUse(m, sq, a, side) {
+    const n = a && aimCap(m, sq, side), k = n ? Math.max(Math.abs(a.dc), Math.abs(a.dr)) : 0;
+    const cut = (d) => Math.sign(d) * Math.round(Math.abs(d) * n / k) || 0; // (halves away from 0, the same for both sides; || 0: never -0)
+    return k > n ? { dc: cut(a.dc), dr: cut(a.dr) } : a;
+  }
+  // the tile an arrow drawn from sq to (col, row) would end on (cut down as setAim does, and to aimCap), or null
+  const aimTo = (m, sq, col, row) => { const a = sq && aimUse(m, sq, aimFit(sq, col - sq.col, row - sq.row)); return a ? { col: sq.col + a.dc, row: sq.row + a.dr } : null; };
   // the tile its arrow ends on (for the page), or null
-  const aimEnd = (m, sq) => sq && sq.aim ? { col: Math.max(0, Math.min(COLS - 1, sq.col + sq.aim.dc)), row: Math.max(0, Math.min(ROWS - 1, sq.row + sq.aim.dr)) } : null; // (on the board: a squad moved since keeps its arrow)
+  const aimEnd = (m, sq) => { const a = sq && sq.aim && aimUse(m, sq, sq.aim); return a ? { col: Math.max(0, Math.min(COLS - 1, sq.col + a.dc)), row: Math.max(0, Math.min(ROWS - 1, sq.row + a.dr)) } : null; }; // (on the board: a squad moved since keeps its arrow)
 
   // ---- disguise ----
   // a unit with "disguise": "Unit name" looks like that unit to its opponent: on the board, in its sheet, and in the
@@ -3460,22 +3538,22 @@ const Game = (() => {
     deploysAllowed, deploysLeft, deployedThisRound, canBuyDeploy, buyDeploy, refundDeploy, musterOn, deployBuyable,
     PACKAGE, allPackages, packOf, needsPack, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
     unlockCost, tierOf, startLevel, shopCost, mapFreeOf, mapFreeLeft, isUnlocked, unlockVisible, unlock, undoUnlock,
-    isHunter, preyOf, canHunt, huntMark, undoHunt, preyShown, preyOn, aiHunt, skillDef, skillCost, SKILL_STEP, skillsBought, isInnate, hasSkill, skillVisible, skillNeeds, skillNeedsAny, skillNeedsMissing, skillHeldUp, isFlat, isMaster, isAwaken, awakenSlot, awakenCost, wokeUnit, awakenBlock, canAwaken, awaken, undoAwaken, seenAwake, isEvolve, evolveSlot, evolveReady, isEvolved, shownAwake, glutOf, glutMax, glutFull, skillOr, skillOrTaken, unitFor, withCharacter,
+    isHunter, preyOf, canHunt, huntMark, undoHunt, preyShown, preyOn, aiHunt, skillDef, skillCost, SKILL_STEP, skillsBought, isInnate, hasSkill, skillVisible, skillNeeds, skillNeedsAny, skillNeedsMissing, skillHeldUp, isFlat, isMaster, isAwaken, awakenSlot, awakenCost, wokeUnit, awakenBlock, canAwaken, awaken, undoAwaken, seenAwake, isEvolve, evolveSlot, evolveReady, isEvolved, shownAwake, glutOf, glutMax, glutFull, skillOr, skillOrTaken, respecNow, unitFor, withCharacter,
     footprint, blockOf, spotFree, buildingRecords, recordOf, recordWorld, buildingEffects,
-    setBuildings, BUILDINGS: () => BUILDINGS, buildingInfo, BUILDING_SQUAD, isBuildingSkill, buildingIdOf, buildingsOf, buildingOf, buildingAt, buildingShown, buildingSpotOk,
+    setBuildings, BUILDINGS: () => BUILDINGS, buildingInfo, BUILDING_SQUAD, isBuildingSkill, buildingIdOf, buildingsOf, buildingOf, buildingAt, buildingShown, teamBuildingShown, buildingFell, buildingSpotOk,
     canBuyBuilding, buyBuilding, buildingSkills, buildingSkillInfo, bskillOf, bskillCost, canBuyBuildingSkill, buyBuildingSkill, undoBuildingSkill,
     buildingXpNeeded, buildingLevelCost, buildingReady, levelBuilding, undoLevelBuilding, constructBuff, buildingBodies, canBuySkill, buySkill, undoSkill, sellValue, sell,
     isRider, mpbHeld, schoolLock, TEAM_ID, mateRide, mateAt, syncRiders, freeOut, horseUse, horseOk, horseLeft, hiddenFromFoe, soldNow, noteSold, foeSeen, isCarrier, riderOf, carrierOf, squadAt, boardable, unplaceSquad,
     TOWER, TOWER_TYPES, OUTPOST, TOWER_PICK_ROUND, towerType, towerChoices, needsTowerPick, setTowerType, settleTowerPicks, TOWER_SKILL, towerSkillOf, towerSkillVisible, towerPicked, canBuyTowerSkill, buyTowerSkill, undoTowerSkill, towerSkillCost, towerSkill2Of, towerSkill2Visible, towerSkill2Cost, canBuyTowerSkill2, buyTowerSkill2, undoTowerSkill2, towerSkill2On, PARA, paraDropOf, MOAT, BWALL, BWALL_SQ, EDGES, bwallsOf, bwallOn, edgeOf, bwallWorld, bwallsLeft, bwallShown, bwallSpotOk, bwallTile, placeBwall, unplaceBwall, ensureBwalls, bwallUnit, INVEST, MAGE_GENERALS, mageGenPrice, MAGE, mageGenInfo, mageGenOf, mageTpOf, mageTpRound, mageTpNew, isExtraGen, mageGenCost, canBuyMageGen, buyMageGen, undoMageGen, mageTowerUnit, generalUnit, LOAN, loanNow, investNow, bankBusy, investNow, bankBusy, canTakeLoan, takeLoan, undoLoan, towerRounds, troundInfo, troundOn, troundCost, canBuyTround, buyTround, undoTround, SLIME_UNITS, slimeTowerUnit, slimeSkillDefs, TOWER_MID, towerColOk, towerAt, needsTower, placeTower, ensureTower,
-    FLANK, flankRows, flankOpen, isFlank, flankTiles, reserved, canPlaceAt, anywhere, mpbAt, bldgSeen, nearBldg, isOff, enemyHolds, inNoMans, hasSkillType, garrisonAt, garrisonFree, inBuilding, WATCH_SQ, watchUnit, freeMover,
+    FLANK, flankRows, flankOpen, isFlank, flankTiles, reserved, canPlaceAt, anywhere, mpbAt, bldgSeen, nearBldg, isOff, enemyHolds, inNoMans, midRow, hasSkillType, garrisonAt, garrisonFree, inBuilding, WATCH_SQ, watchUnit, freeMover,
     STANDARD_PACK, ICE, ALTAR, GOLEM, isIce, hailRound, altarRound, stormShift, stormRows, hailTiles, altarCost, altarRefund, altarCount, pushRoom, altarBought, addAltar, buyAltar, undoAltar, snowgres, snowgreUnit,
     MAPS, SKINS, MAP_LOOK, lookOf, EDITOR_MAPS, TERRAIN, objectiveOf, objectiveTiles, SHAPE_PATH, terrainTile, terrainBlocks, terrainOf, groundHeight, ELF_TOWER, SHROOM, SHROOM_SPLIT, shroomAt, shroomTileAt, shroomRemoval, SHROOM_REMOVE, shroomCost, removeShroom, undoRemoveShroom, mapOf, elfSpot, rollMap, BRIBE_COST, bribeList, bribeGold, bribeCount, bribeNow, bribeCost, bribeRefund, ELF_POWER, elfPowered, elfUnit, ELF_OWN, elfOwnCost, elfOwnOf, elfOwnAt, elfOwnUnlocked, elfOwnOffered, canBuyElfOwn, elfOwnSpotOk, buyElfOwn, undoElfOwn, bribeLeader, canBribe, bribe, undoBribe,
-    CHARACTERS, CHAR, charOf, SLOT, slotSpins, slotDry, slotWins, slotMovesLeft, freeMoves, freeMovesLeft, shoePerks, shoePerk, canSpin, slotOutcome, slotReels, spin, takeSpins, aiSlots, charInfo, enzoSkill, enzoActive, charmOf, isGentleman, canGiveCharm, giveCharm, undoCharm, ensureCharm, felixGold, isTier1, rollBuffTiles, onBuffTile, zoeBuff, yotImps, yotLevel, TOWER_SPOT, towerSpot,
+    CHARACTERS, CHAR, charOf, SLOT, MARCH, marchMoves, shoeMoves, marchNear, freeMoveOk, moveKind, slotSpins, slotDry, slotWins, slotMovesLeft, freeMoves, freeMovesLeft, shoePerks, shoePerk, canSpin, slotOutcome, slotReels, spin, takeSpins, aiSlots, charInfo, enzoSkill, enzoActive, charmOf, isGentleman, canGiveCharm, giveCharm, undoCharm, ensureCharm, felixGold, isTier1, rollBuffTiles, onBuffTile, zoeBuff, yotImps, yotLevel, TOWER_SPOT, towerSpot,
     TREASURY, TREASURY_SQ, treasuryOn, treasuryUp, treasurySpot, treasuryAt, treasuryUnit, deployCost, FORTIFY, fortifyOf, canFortify, fortify, bwallsFighting, VAULT, vaultOn, MARK, markOf, markLost, markOn, markCost, markTarget, canMark, placeMark, markShown,
     FACTION_MODE, FACTIONS: () => FACTIONS, setFactions, factionInfo, factionsOf, factionTowers, towerTypeById, ownsUnit, withFactionTrait, factionSet,
     createDraft, draftTurn, draftOpen, draftAct, draftDone, draftPossible, aiDraftChoice,
     mpbLocked, buildingMakes,
-    zoneRows, inZone, tileToWorld, withXOff, VIEW_MAPS, TEAM_MAPS, findMap, teamArmy, teamSeen, teamBuildings, squadRange, squadReach, towerReach, fightTowerUnit, createMatch, place, unplace, bodiesFor, startBattle, battleSetup, seenBy, intentPreview, INTENT, AWARENESS, AIM, canAim, setAim, clearAim, aimEnd, aimTo, resolve, aiDeploy, occupied, setMpb, mpbApi,
+    zoneRows, inZone, tileToWorld, withXOff, VIEW_MAPS, TEAM_MAPS, findMap, teamArmy, teamSeen, teamBuildings, squadRange, squadReach, towerReach, fightTowerUnit, createMatch, place, unplace, bodiesFor, startBattle, battleSetup, seenBy, intentPreview, INTENT, AWARENESS, AIM, canAim, setAim, clearAim, aimEnd, aimTo, aimCap, aimUse, resolve, aiDeploy, occupied, setMpb, mpbApi,
     GRID, useGrid,
     DEV, CAT_NAMES, LESSER_SQ, WALL_SQ, setDevData, devBuilding, devPower, devSpell, isDev, towerUp, pickCat, devOffer, pickNow, needsDevPick, devPick, undoDevPick, devShown,
     lessersOf, placedLessers, unplacedLesser, lesserAt, lesserSpotOk, placeLesser, lesserUnit, auraFor, modUnit, powersOf, devGold, devDeploys,
