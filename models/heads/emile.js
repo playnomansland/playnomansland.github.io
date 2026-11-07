@@ -39,31 +39,30 @@ const EmileHead = (THREE) => {
   const parts = () => {
     const out = [];
     // --- head: a wide bell, fuller at the jowls
-    out.push(P(sph(1, 14, 11), HIDE, [0, 0.08, 0], [0, 0, 0], [1.24, 0.94, 1.04]));
-    out.push(P(sph(0.95, 12, 8), HIDE, [0, -0.46, -0.15], [0, 0, 0], [1.4, 0.88, 1.02])); // jowls and chin
-    for (const sd of [-1, 1]) out.push(P(sph(0.5, 8, 6), HIDE, [sd * 0.82, -0.62, -0.42], [0, 0, 0], [1.05, 0.85, 0.95])); // heavy lower cheeks
-    out.push(P(sph(0.7, 10, 7), HIDE, [0, -0.42, -0.55], [0, 0, 0], [1.45, 0.9, 0.85])); // muzzle, under the moustache
+    out.push(P(sph(1, 16, 12), HIDE, [0, 0.05, 0], [0, 0, 0], [1.25, 1.0, 1.05]));
+    out.push(P(sph(0.95, 14, 9), HIDE, [0, -0.4, -0.15], [0, 0, 0], [1.32, 0.85, 1.0])); // jowls and chin
+    out.push(P(sph(0.7, 12, 8), HIDE, [0, -0.42, -0.55], [0, 0, 0], [1.45, 0.9, 0.85])); // muzzle, under the moustache
     // ears: small round bumps at the top sides, half under the cap
     for (const sd of [-1, 1]) {
-      out.push(P(sph(0.24, 6, 5), HIDE, [sd * 1.16, 0.66, 0.1], [0, 0, 0], [0.6, 1, 0.9]));
+      out.push(P(sph(0.24, 8, 6), HIDE, [sd * 1.16, 0.66, 0.1], [0, 0, 0], [0.6, 1, 0.9]));
       out.push(P(sph(0.14, 6, 5), HIDE2, [sd * 1.27, 0.66, 0.05], [0, 0, 0], [0.4, 0.8, 0.7]));
     }
     // cream side tufts: chunky clumps fanning out between the cap and the cheeks
     for (const sd of [-1, 1]) {
       // fluffy clumps: rounded, longer than wide, pointing out and down, layered
       [[1.3, 0.42, 0.0, 0.25, 0.26], [1.36, 0.16, -0.05, 0.55, 0.25], [1.28, -0.08, -0.05, 0.85, 0.22], [1.18, 0.5, 0.3, 0.1, 0.22], [1.22, 0.22, 0.32, 0.5, 0.2]].forEach(([x, y, z, a, r]) =>
-        out.push(P(sph(r, 5, 4), CREAM, [sd * x, y, z], [0, 0, sd * -a], [1.7, 0.85, 0.85])));
+        out.push(P(sph(r, 6, 4), CREAM, [sd * x, y, z], [0, 0, sd * -a], [1.7, 0.85, 0.85])));
     }
     // --- cap: a big beret tilted to one side, with a band and the gold key on the front
     const capRot = [0.1, 0, 0.22];
-    out.push(P(sph(1.05, 14, 8), CAP, [0.2, 1.02, 0.08], capRot, [1.36, 0.52, 1.22]));
+    out.push(P(sph(1.05, 16, 8), CAP, [0.2, 1.02, 0.08], capRot, [1.36, 0.52, 1.22]));
     out.push(P(cyl(0.98, 1.02, 0.2, 20), CAP2, [0.1, 0.76, 0.05], capRot, [1.24, 1, 1.08]));
     out.push(P(sph(0.09, 6, 4), CAP2, [0.42, 1.55, 0.12])); // the nub on top
     // the key: a ring (bow), a shaft and two teeth, lying on the front of the cap
     {
       const kRot = [0.42, 0, 0.18], kp = [0.12, 1.02, -1.22], kS = [1.5, 1.5, 0.8];
       const key = [
-        P(ring(0.15, 0.055, 10, 4), GOLD, [0.28, 0, 0]),
+        P(ring(0.15, 0.055, 12, 5), GOLD, [0.28, 0, 0]),
         P(new THREE.BoxGeometry(0.42, 0.09, 0.08), GOLD, [-0.07, 0, 0]),
         P(new THREE.BoxGeometry(0.08, 0.14, 0.08), GOLD, [-0.24, -0.1, 0]),
         P(new THREE.BoxGeometry(0.08, 0.1, 0.08), GOLD, [-0.12, -0.08, 0]),
@@ -73,15 +72,13 @@ const EmileHead = (THREE) => {
     // --- face
     for (const sd of [-1, 1]) {
       // brows: thick orange slabs, raised kindly (inner ends a little lower)
-      out.push(P(slab([[-0.31, -0.05], [-0.1, 0.06], [0.12, 0.06], [0.31, -0.06], [0.29, 0.07], [0.1, 0.18], [-0.12, 0.18], [-0.31, 0.07]], 0.16, 0.05), ORANGE, [sd * 0.46, 0.74, -0.97], [0.22, sd * -0.35, sd * -0.08])); // arched, raised: warm and proud
+      out.push(P(slab([[-0.3, -0.09], [0.28, -0.02], [0.3, 0.11], [-0.26, 0.08]], 0.16, 0.05), ORANGE, [sd * 0.46, 0.68, -0.98], [0.2, sd * -0.35, sd * 0.14]));
       // glasses: thick gold rings over closed happy eyes (arcs bowing upward)
-      out.push(P(ring(0.29, 0.055, 12, 4), GOLD, [sd * 0.43, 0.24, -1.12], [0, sd * -0.2, 0]));
-      out.push(P(ring(0.15, 0.05, 6, 4, PI), DARK, [sd * 0.43, 0.16, -1.06], [0, sd * -0.2, 0], [1, 0.62, 1])); // eye squeezed shut in a smile
-      out.push(P(sph(0.16, 6, 4), '#9A706A', [sd * 0.43, 0.07, -1.0], [0, sd * -0.2, 0], [1.1, 0.42, 0.5])); // cheek pushing up under the eye
-      for (const [dy, a] of [[0.05, 0.35], [-0.04, -0.2]]) out.push(P(new THREE.BoxGeometry(0.13, 0.035, 0.04), HIDE2, [sd * 0.79, 0.2 + dy, -0.93], [0, sd * -0.8, sd * a])); // crow's feet
+      out.push(P(ring(0.29, 0.055, 14, 4), GOLD, [sd * 0.43, 0.24, -1.12], [0, sd * -0.2, 0]));
+      out.push(P(ring(0.14, 0.04, 8, 4, PI), DARK, [sd * 0.43, 0.18, -1.06], [0, sd * -0.2, 0]));
       out.push(P(new THREE.BoxGeometry(0.3, 0.06, 0.06), GOLD, [sd * 0.84, 0.3, -0.95], [0, sd * 0.9, 0])); // arm
       // rosy cheeks
-      out.push(P(sph(0.3, 9, 6), PINK, [sd * 0.84, 0.0, -0.86], [0, sd * -0.62, 0], [1, 0.78, 0.42]));
+      out.push(P(sph(0.26, 8, 6), PINK, [sd * 0.86, -0.04, -0.86], [0, sd * -0.65, 0], [1, 0.75, 0.4]));
     }
     out.push(P(new THREE.BoxGeometry(0.2, 0.06, 0.06), GOLD, [0, 0.3, -1.15])); // glasses bridge
     out.push(P(sph(0.27, 10, 7), '#9A706A', [0, 0.02, -1.18], [0, 0, 0], [1.4, 0.8, 0.85])); // broad nose
@@ -94,20 +91,11 @@ const EmileHead = (THREE) => {
     }
     // --- tusks: long cream cones under the moustache, curving slightly forward then down
     for (const sd of [-1, 1]) {
-      const g = new THREE.ConeGeometry(0.27, 1.02, 7, 4);
+      const g = new THREE.ConeGeometry(0.21, 1.3, 6, 4);
       g.rotateX(PI); // point down
-      bendY(g, 0.16, 0.51); // tips curve gently back
-      out.push(P(g, CREAM, [sd * 0.36, -1.18, -1.0], [0.05, 0, sd * 0.06], [1, 1, 0.85]));
-      out.push(P(sph(0.27, 7, 3), CREAM, [sd * 0.36, -0.69, -1.0], [0, 0, 0], [1, 0.5, 0.85])); // rounded root
+      bendY(g, -0.1, 0.65);
+      out.push(P(g, CREAM, [sd * 0.34, -1.3, -1.0], [0.1, 0, sd * -0.04]));
     }
-    // a subtle smile under the moustache, between the tusks
-    out.push(P(ring(0.15, 0.035, 6, 4, PI), DARK, [0, -0.8, -1.02], [0.15, 0, PI], [1, 0.7, 1]));
-    out.push(P(sph(0.12, 6, 4), '#C77A74', [0, -0.92, -0.98], [0, 0, 0], [1.2, 0.55, 0.6])); // lower lip
-    // --- neck and a simple green collar (a rolled band with a lighter stripe)
-    out.push(P(cyl(0.6, 0.66, 0.5, 14), HIDE, [0, -1.2, 0.12]));
-    out.push(P(cyl(0.72, 0.84, 0.46, 16), CAP, [0, -1.56, 0.12])); // the band, a little wider at the bottom
-    out.push(P(cyl(0.78, 0.8, 0.07, 16), '#8CA06E', [0, -1.6, 0.12])); // lighter stripe
-    out.push(P(ring(0.7, 0.11, 14, 3), CAP2, [0, -1.33, 0.12], [PI / 2, 0, 0])); // rolled top edge
     return out;
   };
 
