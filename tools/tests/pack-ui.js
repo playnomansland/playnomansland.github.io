@@ -25,7 +25,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   for (const i of fi) { await p.click(`.ucard >> nth=${i}`); for (let k = 0; k < 2; k++) { await tap(p, col++, 13); await sleep(100); } }
   console.log('4:', await hint(p), '| gold', await p.locator('.gold').first().textContent(), '|', await p.locator('.deploys').textContent());
   await p.screenshot({ path: 'pack-placed.png' });
-  await p.click('#fight'); await sleep(500); await p.click('#skip').then(() => p.click('#skip')); await sleep(300);
+  await p.click('#ready'); await sleep(500); await p.click('#skip').then(() => p.click('#skip')); await sleep(300);
   console.log('result:', (await p.locator('#overlay').innerText()).replace(/\s+/g, ' ').slice(0, 80));
   // multiplayer: both pick packages, guest leaves its squads for auto placement
   const host = await mk('host'), guest = await mk('guest');

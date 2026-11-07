@@ -13,14 +13,14 @@ const EXE = ['/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', '/opt/pw-br
   await p.dblclick('[data-pack="0"]'); await sleep(500);
   // under the cap: Fight goes straight to the battle; set a streak first so the badge shows
   await p.evaluate(() => { const { m, me } = window.__pb(); m.gold[me] = 900; m.streak = [0, 0]; m.streak[1 - me] = 4; });
-  await p.click('#fight'); await sleep(400);
+  await p.click('#ready'); await sleep(400);
   assert.ok(await p.locator('#cap-go').isVisible(), 'warning shows with 900 gold');
   const text = await p.locator('#sheet').innerText();
   console.log('warning:', text.replace(/\s+/g, ' '));
   assert.ok(/900 gold.*500.*400 will be lost/.test(text.replace(/\s+/g, ' ')));
   await p.click('#close'); await sleep(200);
   assert.ok(!(await p.locator('#cap-go').count()) || !(await p.locator('#cap-go').isVisible()), 'Keep shopping closes it');
-  await p.click('#fight'); await sleep(300); await p.click('#cap-go'); await sleep(600);
+  await p.click('#ready'); await sleep(300); await p.click('#cap-go'); await sleep(600);
   const ph = await p.evaluate(() => document.getElementById('phase').textContent);
   assert.ok(ph === 'Battle' || ph === 'Result', 'fight anyway starts the fight: ' + ph);
   const badge = await p.locator('#streak-foe').innerText();

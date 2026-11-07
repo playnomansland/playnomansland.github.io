@@ -20,6 +20,43 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 7 November 2026 – See what your opponent starts with
+
+- **Round 1:** once your opponent has picked their starting package, its squads show at the back of their side of the board as see-through figures, side by side, with a label: *Starting units · placement hidden*. You see which units they start with, but not where they're going to stand. Their leader and anything else they buy stay hidden until the fight, as before.
+- Works against the AI and online (rooms, ranked and invite links), on the 2D and 3D boards. From round 2 on the board shows their real squads as usual.
+
+---
+
+## 7 November 2026 – The AI presses Ready
+
+- **No more Fight now against the AI:** you get the same **Ready** / **Not ready** button as online. The AI presses Ready 5 seconds into each deploy (counting from when you can place: not while you pick a package, tower or leader). The fight starts as soon as you're both ready, or when the clock runs out. Press Ready first and the fight starts the moment the AI is ready.
+- So the maps' "opponent is ready" moments now happen against the AI too: the Forest Glade explorer, the Savanna vultures over your tower, the Ashlands dragon's shadow and the Snow yeti.
+- Tutorial puzzles, Replay a round and matches against Claude keep their Fight button.
+
+---
+
+## 7 November 2026 – Snow: a windy mountain pass above the clouds (prototype)
+
+**Snow**, Frozen Peak's own look, used to be a snowy forest at dusk, close to Moonlit Snow. Now it has its own place: a high mountain pass in hard daylight, above the clouds. On the 3D board:
+- **A mountain pass:** the battlefield lies in the saddle of the pass. Steep mountain shoulders rise on both sides behind the cliffs, rock below and snowfields above. Past the enemy's end the pass drops away over a lip of snow into a sea of clouds, with crags and far-off peaks rising out of it.
+- **Bright high-altitude light:** a pale sky and a low white sun. Snow in the sun is white, and everything in shade turns cobalt blue.
+- **A glacier across no man's land:** smooth turquoise ice with frozen bubbles and polished shine. Deep under the ice, right in the middle, lies the faint shadow of a mammoth frozen long ago. The deploy zones are wind-packed snow, carved into sharp ridges that all point the way the wind blows.
+- **The wind:** loose snow streams sideways across the board in gusts, snow blows off the ridges in plumes, and tattered flags snap on their poles at the top of the pass. The wind gets stronger every round, and in a long match a white haze closes in around the edges.
+- **Rock and ice, not forest:** faceted charcoal cliffs and boulders with snow caps and icicles line the sides, with teal ice blocks and crystal clusters between them. Only a few dead trees are left.
+- **The yeti:** when your opponent presses Ready while you're still deploying, a yeti pops up from behind a big rock, grins and waves at you, then ducks back down. If the fight starts while he's up, he ducks at once.
+- **Diamond dust:** tiny ice crystals glitter in the sunlit air, and the ice catches the sun in flashes.
+
+The rules don't change, and Frozen Peak's hail and altar stay switched off. Moonlit Snow looks the same as before.
+
+---
+
+## 7 November 2026 – Blixten takes a break, leader heads on the way
+
+- **Blixten is out of the game for now.** He's getting a rework, so he no longer shows up in packages, the leader draft or the Leaders menu, in any mode. (He was already left out of Standard and ranked.) He'll be back with new rules.
+- **Leader heads (in the works):** every leader is getting a small 3D head, used as a symbol around the menus and the battle UI. Each one is a clear character built from its own reference sheet: Emile, the warm grandpa walrus with a ginger moustache and a key on his cap, is finished; Zoe, the bossy alien, is next. None are in the game yet.
+
+---
+
 ## 7 November 2026 – Forest Glade: Darkwoods gets its own identity (prototype)
 
 **Darkwoods**, the Standard map's own look, was Frozen Peak without the snow. It's now an ancient forest called **Forest Glade**, and the battlefield is its one clearing:
@@ -29,6 +66,7 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 - **The old gate:** past the far end stands a stone gate with broken fences on either side and a shrine and candles before it, flickering warm in the dark. An old path of stones leads there from the board.
 - **A new forest floor:** moss and leaf litter, dappled light, old roots creeping in from the woods on both sides, and a broken stone road across no man's land (the ice and the mountain rock are gone).
 - **Undergrowth:** ferns, tall wispy grass, orange shelf fungus and mushrooms, fallen logs by the sides.
+- **The lost explorer:** when your opponent presses Ready (online or the AI, while you still deploy), an explorer with a far too big backpack comes running out of the woods along the old road. He stops in the middle, looks left, looks right, squints at his map, scratches his head (a **?** pops up over him), shrugs and hurries on into the woods. If the fight starts before he's off the board, he panics (**!**) and sprints away. On the 3D board.
 - **Forest Clearing:** its twisted trees now have moss-green leaves too (they were dark red).
 
 Trees and fungus from Quaternius' Stylized Nature MegaKit; the gate, shrine and candles from KayKit's Halloween Bits; the logs from KayKit's Resource Bits (all CC0).
@@ -105,9 +143,9 @@ Trees and fungus from Quaternius' Stylized Nature MegaKit; the gate, shrine and 
 
 Looks change only how the board and the land around it look, never the rules. Pick them in the look picker on any map that has looks (Standard, Old standard, 2v2), or get them from Random.
 
-- **Ashlands (prototype of its new identity):** a forest burned by a dragon, and the fire isn't out. The woods past the far end glow orange as if a fire front burns just out of sight, and a low, warm sun comes from that side. A burnt village stands in ruins there: sooty broken walls, an empty arched window, pillars, stairs to nowhere, embers glowing in the rubble. Broken swords and shields from the battle stick out of the ash by the board, with broken barricades and flickering, smouldering hot spots. No man's land is charred dark with thin cracks still glowing, so the zones are easy to tell apart. Grey ash drifts down while embers rise, and the dragon that burned it all circles over the far woods (ruins from KayKit's Dungeon Pack, the dragon from Quaternius' Animated Monster Pack, both CC0).
+- **Ashlands (prototype: a battlefield):** no more forest. The land round the board is churned ash and char, pitted with shell craters, with only a few charred snags left standing. The battle's debris lies everywhere: volleys of spears stuck in the ground, shields, swords and skulls, broken palisades and stakes, charred logs, torn banners of both armies, and the great skull and bones of a fallen giant beast. A ruined fort stands past the far end with embers in its rubble, and beyond it the fire still burns, lighting the far side orange. Smoke rises from the craters, embers smoulder in them, grey ash drifts down while embers rise. No man's land is charred dark with faint glowing cracks, and old blast scorches mark the board. The dragon is never seen, only its shadow racing over the field and the land beside it each time your opponent clicks Ready (against the computer, a moment into each deploy). Debris from KayKit's Dungeon Pack, Skeletons, Halloween Bits and Resource Bits (CC0).
 - **Moonlit Snow:** a snowy night. Blue moonlight, a fresh pale snow floor with no man's land as blue cracked ice (so the zones are easy to tell apart), thick wind-blown snow drifts rolling over the land round the board, snow piles where other looks have boulders (a few rocks still poke through), snow-capped pines and drifts, falling snow, and a log cabin past the enemy's end of the board: warm lit windows, light spilling onto the snow, firewood by the wall and smoke from the chimney. It's Christmas here: each treasury is a pile of wrapped presents on a mound of snow, a lantern stands at each corner of the board, casting a warm pool of light on the snow, and snowmen stand by the cabin and along the edges (presents, snowmen and lanterns from KayKit's Holiday Bits, CC0). Plays the snow music. Everything round the board fades into the night the further out it stands, the way snow looks in the dark: colours wash out and shadows turn blue rather than black. Further out the woods sink into near-total darkness under a black sky, as if the moonlight only spreads from the battlefield. The battlefield stays lit (a little softer than before, so it doesn't glare against the night), and the cabin's warm light is left out of the blue, so its windows glow.
-- **Savanna (prototype of its new identity):** golden hour on the open plain. A sea of tall dry grass surrounds the board, and the wind combs it in long waves you can see rolling past, even from straight above. Wide-spaced, flat-topped acacias stand in it, with grey-olive thorn scrub and red termite mounds. Past the far end, granite outcrops of piled boulders rise from the grass, with a lone giant acacia beside the biggest. Vultures circle high overhead, and their shadows glide across the board. They always fly smoothly, even while nothing else on the board moves. In an online match, when your opponent is ready and you're still deploying, the vultures gather and circle low over your tower. Dust hangs in the low sun, shadows are cool violet, and no man's land is red trampled earth. The sun sinks a little every round, so a long match ends at dusk (acacias from Quaternius' Simple Nature Pack, CC0).
+- **Savanna (prototype of its new identity):** golden hour on the open plain. A sea of tall dry grass surrounds the board, and the wind combs it in long waves you can see rolling past, even from straight above. Wide-spaced, flat-topped acacias stand in it, with grey-olive thorn scrub and red termite mounds. Past the far end, granite outcrops of piled boulders rise from the grass, with a lone giant acacia beside the biggest. Vultures circle high overhead, and their shadows glide across the board. They always fly smoothly, even while nothing else on the board moves. In an online match, when your opponent is ready and you're still deploying, the vultures gather and circle low over your tower. If they bother you, tap one: they all fly off and sit in a tree by the board. Tap one again to bring them back. They still come to circle your tower when your opponent is ready, then go back to their tree. Dust hangs in the low sun, shadows are cool violet, and no man's land is red trampled earth. The sun sinks a little every round, so a long match ends at dusk (acacias from Quaternius' Simple Nature Pack, CC0).
 
 ---
 

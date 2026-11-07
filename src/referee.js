@@ -87,6 +87,8 @@
     if (s.moved) s.moved[h] = null;
     for (const ui in (s.tech && s.tech[h]) || {}) s.tech[h][ui] = s.tech[h][ui].map(r => r === round ? 0 : r); // skills bought this round
     if (round === 1) { // the leader, buff tiles, slot spins and package stay hidden until the first fight
+      const pk = s.packages && s.pack && s.pack[h] != null && s.packages[h] && s.packages[h][s.pack[h]];
+      if (pk) s.packSeen = { ...(s.packSeen || {}), [h]: pk.squads.slice() }; // but not which units its squads are (G.startSeen)
       if (s.chars) s.chars[h] = null;
       if (s.slots) s.slots[h] = {};
       if (s.buff) s.buff[h] = [];
@@ -131,7 +133,7 @@
 
   // ----- Undo all: one side's part of the match, to put back -----
   // Every per-side field ([side 0, side 1] arrays, also in m.dev) plus this side's entries in the shared lists.
-  const UNDO_SKIP = new Set(['units', 'matrix', 'history', 'round', 'over', 'winner', 'seed', 'off', 'offTowers', 'rules', 'factions', 'map', 'dev', 'altar', 'hp', 'packages']);
+  const UNDO_SKIP = new Set(['units', 'matrix', 'history', 'round', 'over', 'winner', 'seed', 'off', 'offTowers', 'rules', 'factions', 'map', 'dev', 'altar', 'hp', 'packages', 'packSeen']);
   const UNDO_NULL = new Set(['chars', 'elfOwn', 'loanT', 'mageGen', 'mark', 'moved', 'pack', 'towers', 'vote', 'woke']); // per-side fields that start as null (see game.js)
   const perSide = (v) => Array.isArray(v) && v.length === 2;
   function sideState(m, side) {

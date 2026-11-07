@@ -71,7 +71,7 @@ const dock = require('./dock'); // the phone layout's deploy drawer
   const q0 = await q(); await p.click('.meter3d'); const q1 = await q(); await p.click('.meter3d'); const q2 = await q(); await p.click('.meter3d');
   check(/^high/.test(q0) && /^medium/.test(q1) && /^low ×1$/.test(q2) && /^high/.test(await q()), `quality: ${q0} -> ${q1} -> ${q2} -> ${await q()}`);
   // a fight draws every frame, and the meter sums it up afterwards
-  await p.click('#fight'); await p.waitForTimeout(2200);
+  await p.click('#ready'); await p.waitForTimeout(2200);
   check(await fps() > 0, `fight: ${await fps()} frames in the last second`);
   if (await p.locator('#skip').count()) await p.click('#skip').then(() => p.click('#skip'));
   await p.waitForFunction(() => /last fight/.test(document.querySelector('.meter3d').textContent), null, { timeout: 15000 }).catch(() => {});

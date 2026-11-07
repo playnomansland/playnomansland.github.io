@@ -15,7 +15,7 @@ const R = require('../../src/default-roster.json'), F = require('../../src/facti
     p.on('pageerror', e => { console.log('PAGE ERROR', e.message); fails++; });
     const pb = (fn, arg) => p.evaluate(fn, arg);
     const fight = async (shot, mid) => {
-      await p.click('#fight');
+      await p.click('#ready');
       await p.waitForFunction(() => document.getElementById('phase').textContent === 'Battle', null, { timeout: 20000 });
       await p.waitForTimeout(board === '3d' ? 7000 : 5000);
       if (mid) await mid();

@@ -27,7 +27,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   await p.screenshot({ path: 'chars-zoe.png' });
   await tap(p, 8, 14); await sleep(200); console.log('own tower sheet:', await sheet(p));
   await tap(p, 8, 1); await sleep(200); console.log('enemy tower sheet r1:', await sheet(p));
-  await p.click('#fight'); await sleep(500); await p.click('#skip').then(() => p.click('#skip')); await sleep(300);
+  await p.click('#ready'); await sleep(500); await p.click('#skip').then(() => p.click('#skip')); await sleep(300);
   await p.click('#next').catch(() => {}); await sleep(400);
   const r2 = await p.evaluate(() => { const { m } = window.__pb(); return { round: m.round, buff: m.buff[0] }; });
   console.log('round 2:', JSON.stringify(r2));

@@ -75,19 +75,19 @@ const pin = () => document.addEventListener('DOMContentLoaded', () => {
       await tap(p, 5, 13); await p.waitForTimeout(150);
       await p.keyboard.press('Escape'); await p.waitForTimeout(100);
       await snap(p, map + '-3placed');
-      await p.click('#fight', { timeout: 5000 }); await p.waitForTimeout(200);
+      await p.click('#ready', { timeout: 5000 }); await p.waitForTimeout(200);
       for (const n of [5, 40, 150, 400]) { await frames(p, n); await snap(p, `${map}-4battle${n}`); }
       await frames(p, 3000); await p.waitForTimeout(100);
       await snap(p, map + '-5after');
       const next = async () => { await p.click('#next', { timeout: 5000 }); await p.waitForTimeout(200); };
       await next(); await snap(p, map + '-6round2');
-      await p.click('#fight', { timeout: 5000 }); await p.waitForTimeout(100); await frames(p, 3500); await p.waitForTimeout(100);
+      await p.click('#ready', { timeout: 5000 }); await p.waitForTimeout(100); await frames(p, 3500); await p.waitForTimeout(100);
       await next(); await snap(p, map + '-7round3');
       const icons = await p.evaluate(() => [...document.querySelectorAll('[data-ticon]')].map(c => c.toDataURL()).join('|'));
       hashes.push(`${map}-7towericons ${md5(icons)}`);
       await p.click('[data-opt] >> nth=1', { timeout: 5000 }); await p.click('#pick-go', { timeout: 5000 }); await p.waitForTimeout(150);
       await snap(p, map + '-8picked');
-      await p.click('#fight', { timeout: 5000 }); await p.waitForTimeout(100);
+      await p.click('#ready', { timeout: 5000 }); await p.waitForTimeout(100);
       for (const n of [60, 200]) { await frames(p, n); await snap(p, `${map}-9battle${n}`); }
       await p.close();
     }

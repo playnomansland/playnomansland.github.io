@@ -14,6 +14,7 @@ The Model Forge artifact saves low-poly models here with **Save to repo**, one f
 | `buildings/` | Buildings and lesser buildings | `building:factory` |
 | `towers/` | Tower models | `tower:keep` |
 | `props/` | Weapons, staffs, banners, projectiles, scenery bits | `prop:banner` |
+| `heads/` | Leader heads: 3D symbols for the UI and battle UI (not on the board), 1000 triangles each | `cage`, `zoe` |
 
 Each `*.model.js` file is a fragment, not a module:
 
@@ -26,3 +27,9 @@ To put one in the game: copy its BUILD entry into `src/models3d.js` (and for a s
 ## Other files
 
 `leaf_wizard.blend`, `leaf_wizard.glb`, `leaf_wizard_sheet.png` and `scenery.bin` are earlier assets made outside the Forge.
+
+## Leader heads (2026-11-07)
+
+UI heads for the leaders. Start with `heads/HANDOFF.md`: status, decisions, the model format, the reference sheets
+(`heads/refs/`), renders (`heads/renders/`) and the render/compare tool (`node tools/heads-render.js`).
+Done: Emile (`heads/emile.js`). Next: Zoe, redone from her reference with the image-to-three.js skill in Claude Code.

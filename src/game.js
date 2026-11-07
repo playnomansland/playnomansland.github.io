@@ -430,7 +430,11 @@ const Game = (() => {
 
   // ---------- characters ----------
   // Each starting package comes with a character, who gives that player a passive ability for the whole match.
-  const CHARACTERS = [
+  // ALL_CHARACTERS keeps every leader ever made (so old matches, replays and history still find their names);
+  // CHARACTERS is the live pool: every leader that can be dealt, drafted or picked in a menu.
+  // RETIRED_CHARS: out of the game for now. Blixten (2026-11-07): being reworked; his rules stay in the code.
+  const RETIRED_CHARS = ['blixten'];
+  const ALL_CHARACTERS = [
     { id: 'cage', name: 'Frickolas Cage', ability: 'Units +10% health.' },
     { id: 'zoe', name: 'Zoe', ability: '2 buff tiles each round. Their bonus grows each time you use them.' },
     { id: 'emile', name: 'Emile', ability: 'Tier 1 unlocks are free.' },
@@ -445,6 +449,7 @@ const Game = (() => {
     { id: 'matteo', name: 'Matteo - the Gentleman', ability: 'Charisma spreads with kills. At 5, a squad converts its first kill each fight.' },
     { id: 'otto', name: 'Otto - The Gambler', ability: 'Slot machine: 50 gold a spin, 3 spins a round. Three of a kind pays out, or hurts. After 5 losing spins in a row, the next one always wins.' },
   ];
+  const CHARACTERS = ALL_CHARACTERS.filter(c => !RETIRED_CHARS.includes(c.id));
   // ---------- the Standard pack ----------
   // A smaller match for new players, picked on the menu: fewer units with clear jobs (one or two of each kind per tier),
   // the leaders with simple abilities, and no mage or slime tower. Units by name, so a Counter Lab roster just keeps
@@ -485,7 +490,7 @@ const Game = (() => {
   }
   const charmMap = (m, side) => charOf(m, side) === 'matteo' ? Object.fromEntries(m.armies[side].map(q => [q.id, charmOf(q)])) : null;
   const charOf = (m, side) => (m && m.chars && m.chars[side]) || null;
-  const charInfo = (id) => CHARACTERS.find(c => c.id === id) || null;
+  const charInfo = (id) => ALL_CHARACTERS.find(c => c.id === id) || null;
   // ---------- the leader draft (2026-11-05) ----------
   // Packages no longer come with a leader. Before round DRAFT.round both players pick one from the same pool of
   // DRAFT.pool leaders: the winner of round 1 first (a draw: a seeded coin flip), then the other player from what is
@@ -1248,6 +1253,10 @@ const Game = (() => {
   }
   const packOf = (m, side) => m.packages && m.pack && m.pack[side] != null ? m.packages[side][m.pack[side]] : null;
   const needsPack = (m, side) => !!(m.packages && m.packages[side] && m.packages[side].length && m.pack[side] == null);
+  // round 1 (2026-11-07): the unit of each of a player's package squads, which their opponent may see (not where they
+  // stand, nor the leader). From the package where this screen has it (the AI's, the PeerJS host's guest), else from the
+  // view the opponent was sent (Referee.hide, syncState: m.packSeen { side: [unit indexes] }); null before they pick
+  const startSeen = (m, side) => { if (!m || m.round !== 1) return null; const p = packOf(m, side); return p ? p.squads.slice() : (m.packSeen && m.packSeen[side]) || null; };
   // package squads still waiting to be placed
   function freeLeft(m, side) {
     const p = packOf(m, side);
@@ -3536,7 +3545,7 @@ const Game = (() => {
     COLS, ROWS, TILE, ZONE, START_HP, LATE, startHp, capped, capCount, capFull, START_GOLD, INCOME, incomeFor, LOSER_BONUS, LOSER_BONUS_ROUND, TOWER_FALL_HP, CARRY_CAP, SHUTDOWN, shutdownGold, CREDIT_LINE, loanTerms, loanTaken, treasurySteal, SQUAD_COST, SETTINGS, XP_STEPS, xpNeeded, unitCostOf,
     levelCost, isReady, levelUp, undoLevel, levelAllPlan, levelAll, upgradeOffer, seenLevel, aiLevel, AI, CONFIG,
     deploysAllowed, deploysLeft, deployedThisRound, canBuyDeploy, buyDeploy, refundDeploy, musterOn, deployBuyable,
-    PACKAGE, allPackages, packOf, needsPack, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
+    PACKAGE, allPackages, packOf, needsPack, startSeen, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
     unlockCost, tierOf, startLevel, shopCost, mapFreeOf, mapFreeLeft, isUnlocked, unlockVisible, unlock, undoUnlock,
     isHunter, preyOf, canHunt, huntMark, undoHunt, preyShown, preyOn, aiHunt, skillDef, skillCost, SKILL_STEP, skillsBought, isInnate, hasSkill, skillVisible, skillNeeds, skillNeedsAny, skillNeedsMissing, skillHeldUp, isFlat, isMaster, isAwaken, awakenSlot, awakenCost, wokeUnit, awakenBlock, canAwaken, awaken, undoAwaken, seenAwake, isEvolve, evolveSlot, evolveReady, isEvolved, shownAwake, glutOf, glutMax, glutFull, skillOr, skillOrTaken, respecNow, unitFor, withCharacter,
     footprint, blockOf, spotFree, buildingRecords, recordOf, recordWorld, buildingEffects,
@@ -3548,7 +3557,7 @@ const Game = (() => {
     FLANK, flankRows, flankOpen, isFlank, flankTiles, reserved, canPlaceAt, anywhere, mpbAt, bldgSeen, nearBldg, isOff, enemyHolds, inNoMans, midRow, hasSkillType, garrisonAt, garrisonFree, inBuilding, WATCH_SQ, watchUnit, freeMover,
     STANDARD_PACK, ICE, ALTAR, GOLEM, isIce, hailRound, altarRound, stormShift, stormRows, hailTiles, altarCost, altarRefund, altarCount, pushRoom, altarBought, addAltar, buyAltar, undoAltar, snowgres, snowgreUnit,
     MAPS, SKINS, MAP_LOOK, lookOf, EDITOR_MAPS, TERRAIN, objectiveOf, objectiveTiles, SHAPE_PATH, terrainTile, terrainBlocks, terrainOf, groundHeight, ELF_TOWER, SHROOM, SHROOM_SPLIT, shroomAt, shroomTileAt, shroomRemoval, SHROOM_REMOVE, shroomCost, removeShroom, undoRemoveShroom, mapOf, elfSpot, rollMap, BRIBE_COST, bribeList, bribeGold, bribeCount, bribeNow, bribeCost, bribeRefund, ELF_POWER, elfPowered, elfUnit, ELF_OWN, elfOwnCost, elfOwnOf, elfOwnAt, elfOwnUnlocked, elfOwnOffered, canBuyElfOwn, elfOwnSpotOk, buyElfOwn, undoElfOwn, bribeLeader, canBribe, bribe, undoBribe,
-    CHARACTERS, CHAR, charOf, SLOT, MARCH, marchMoves, shoeMoves, marchNear, freeMoveOk, moveKind, slotSpins, slotDry, slotWins, slotMovesLeft, freeMoves, freeMovesLeft, shoePerks, shoePerk, canSpin, slotOutcome, slotReels, spin, takeSpins, aiSlots, charInfo, enzoSkill, enzoActive, charmOf, isGentleman, canGiveCharm, giveCharm, undoCharm, ensureCharm, felixGold, isTier1, rollBuffTiles, onBuffTile, zoeBuff, yotImps, yotLevel, TOWER_SPOT, towerSpot,
+    CHARACTERS, ALL_CHARACTERS, RETIRED_CHARS, CHAR, charOf, SLOT, MARCH, marchMoves, shoeMoves, marchNear, freeMoveOk, moveKind, slotSpins, slotDry, slotWins, slotMovesLeft, freeMoves, freeMovesLeft, shoePerks, shoePerk, canSpin, slotOutcome, slotReels, spin, takeSpins, aiSlots, charInfo, enzoSkill, enzoActive, charmOf, isGentleman, canGiveCharm, giveCharm, undoCharm, ensureCharm, felixGold, isTier1, rollBuffTiles, onBuffTile, zoeBuff, yotImps, yotLevel, TOWER_SPOT, towerSpot,
     TREASURY, TREASURY_SQ, treasuryOn, treasuryUp, treasurySpot, treasuryAt, treasuryUnit, deployCost, FORTIFY, fortifyOf, canFortify, fortify, bwallsFighting, VAULT, vaultOn, MARK, markOf, markLost, markOn, markCost, markTarget, canMark, placeMark, markShown,
     FACTION_MODE, FACTIONS: () => FACTIONS, setFactions, factionInfo, factionsOf, factionTowers, towerTypeById, ownsUnit, withFactionTrait, factionSet,
     createDraft, draftTurn, draftOpen, draftAct, draftDone, draftPossible, aiDraftChoice,

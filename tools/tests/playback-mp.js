@@ -26,7 +26,7 @@ const PORT = process.env.PB_PORT || 8766, PEER = process.env.PB_PEER_PORT || 900
     const p = await mk('ai');
     await p.goto(`http://127.0.0.1:${PORT}/?test`); await p.click('#go'); await sleep(600);
     await p.dblclick('[data-pack="0"]'); await sleep(300);
-    await p.click('#fight'); await sleep(300);
+    await p.click('#ready'); await sleep(300);
     await p.waitForFunction(() => window.__pb().phase === 'battle', null, { timeout: 5000 });
     await sleep(1200);
     let s = await st(p);

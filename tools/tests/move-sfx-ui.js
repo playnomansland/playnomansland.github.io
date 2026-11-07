@@ -29,7 +29,7 @@ let bad = 0; const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + msg)
   await p.locator('.uc2:not([aria-disabled="true"])').first().click(); await sleep(200);
   await ctx2d.tap(p, 5, 13); await sleep(300);
   await p.evaluate(() => { const { m } = window.__pb(); });
-  await p.click('#fight'); await sleep(500);
+  await p.click('#ready'); await sleep(500);
   for (let i = 0; i < 120; i++) { const ph = await p.evaluate(() => document.querySelector('#next, #continue') ? 1 : 0); if (ph) break; await sleep(500); }
   const nx = p.locator('#next, #continue').first(); if (await nx.count()) await nx.click(); await sleep(1500);
   const r = await p.evaluate(() => { const { m, me } = window.__pb(); const s = m.armies[me].find(q => q.round < m.round); return s && { round: m.round, col: s.col, row: s.row, flip: me === 1 }; });

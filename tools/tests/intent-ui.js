@@ -73,7 +73,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     await p.keyboard.press('Escape'); await sleep(100);
     // the fight: a tap on the goblins shows where they walk now
     await p.evaluate(() => { const s = document.querySelector('#task'); if (s && !s.hidden) s.click(); });
-    await p.click('#fight'); await sleep(board === '3d' ? 2500 : 1800);
+    await p.click('#ready'); await sleep(board === '3d' ? 2500 : 1800);
     const pos = await p.evaluate((ids) => { const { bt, me } = window.__pb(), bs = bt.bodies.filter(b => b.alive && b.side === me && b.squad === ids.gob); if (!bs.length) return null; const b0 = bs[0]; return { x: b0.x, y: b0.y, intent: bs.filter(b => b.intent).length, lock: bs.filter(b => b.lock).length, n: bs.length }; }, ids);
     assert.ok(pos, 'goblins in the fight');
     console.log(board, 'fight goblins:', JSON.stringify(pos));

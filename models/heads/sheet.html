@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>sheet</title>
+<style>
+ body { margin: 0; background: #EFE6DA; font: 15px system-ui, sans-serif; color: #3A2F2A; }
+ h1 { font-size: 20px; margin: 18px 22px 2px; } .sub { margin: 0 22px 10px; color: #8A7B70; font-size: 13px; }
+ .row { display: flex; align-items: center; gap: 10px; padding: 8px 22px; }
+ .lab { width: 120px; } .lab b { font-size: 16px; display: block; } .lab span { color: #8A7B70; font-size: 12px; }
+ .cell { text-align: center; font-size: 11px; color: #8A7B70; } canvas { display: block; border-radius: 12px; background: #F8F2EA; }
+ canvas.px { image-rendering: pixelated; }
+</style></head><body>
+<h1 id="t"></h1><p class="sub" id="s"></p><div id="rows"></div>
+<script type="importmap">{ "imports": { "three": "../../vendor/three.module.min.js" } }</script>
+<script type="module">
+import * as THREE from 'three';
+const qs = new URLSearchParams(location.search);
+await new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = './' + (qs.get('src') || 'emile-blockout.js'); sc.onload = ok; sc.onerror = no; document.head.append(sc); });
+const M = new Function('return ' + (qs.get('fn') || 'EmileBlockouts'))()(THREE);
+document.getElementById('t').textContent = qs.get('title') || '';
+document.getElementById('s').textContent = qs.get('sub') || '';
+const names = JSON.parse(qs.get('names') || '{}');
+const SIZE = +(qs.get('size') || 210);
+const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
+r.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight('#FFF6EA', '#B9A89A', 1.6));
+const key = new THREE.DirectionalLight('#FFF1DE', 2.2); key.position.set(-3, 4, 5); scene.add(key);
+const rim = new THREE.DirectionalLight('#DDE6FF', 1.0); rim.position.set(4, 3, -4); scene.add(rim);
+const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+const views = [['3/4', -0.55, false, SIZE], ['Front', 0, false, SIZE], ['Side', -PI2(), false, SIZE], ['Back', Math.PI, false, SIZE], ['Silhouette', -0.55, true, SIZE], ['64 px', -0.55, false, 64]].filter(v => v[0] !== 'Back' || qs.has('back')).filter(v => !qs.has('only') || v[0] === qs.get('only'));
+if (qs.has('yaw')) views.forEach(v => v[1] = +qs.get('yaw'));
+const DIST = +(qs.get('dist') || 8.6), LOOK = +(qs.get('look') || 0.05);
+function PI2() { return Math.PI / 2; }
+for (const k of M.KEYS) {
+  const row = document.createElement('div'); row.className = 'row';
+  row.innerHTML = `<div class="lab"><b>${names[k] || k}</b><span>${M.tris(k)} triangles</span></div>`;
+  const geo = M.geometry(k);
+  const lit = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, flatShading: qs.has('flat') }));
+  const blk = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: '#1E1A18' }));
+  for (const [lab, yaw, sil, px] of views) {
+    const g = new THREE.Group(); g.add(sil ? blk : lit); g.rotation.y = yaw + Math.PI; scene.add(g);
+    r.setSize(px, px, false); cam.position.set(0, LOOK + 0.3, DIST); cam.lookAt(0, LOOK, 0);
+    r.render(scene, cam); scene.remove(g);
+    const c = document.createElement('canvas'); c.width = px; c.height = px; c.getContext('2d').drawImage(r.domElement, 0, 0);
+    c.style.width = c.style.height = SIZE + 'px'; if (px < SIZE) c.className = 'px';
+    const cell = document.createElement('div'); cell.className = 'cell'; cell.append(c); cell.append(lab);
+    row.append(cell);
+  }
+  document.getElementById('rows').append(row);
+}
+window.__ready = true;
+</script></body></html>

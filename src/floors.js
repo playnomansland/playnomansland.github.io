@@ -9,7 +9,7 @@ Floors.FLOORS = {
   autumn: { base: '#62633E', patch: ['#6E6C3E', '#585B37', '#78693A', '#545634'], mid: ['#776146', '#6B583E', '#816A4B'], strokes: ['#8C7F4A', '#474A2C'], ripples: false, leaves: ['#B8532F', '#C9782F', '#D3A43A', '#9A3B2A'] },
   // Ashlands (2026-11-07): burnt ground, scorched no man's land, grey ash flecks and a few glowing embers
   ash: { base: '#4B4744', patch: ['#55504C', '#423E3B', '#5B5550', '#3D3937'], mid: ['#36312E', '#3F3935', '#2F2B29'], strokes: ['#625B55', '#2C2826'], ripples: false, leaves: ['#7D766F', '#8A827A', '#6B645E', '#7D766F', '#8A827A', '#7D766F', '#C0652C'],
-    char: '#2A2523' }, // no man's land charred dark, with thin cracks still glowing
+    char: '#2A2523', scorch: 9 }, // no man's land charred dark, with thin cracks still glowing; old blast scorches over the whole board
   // Moonlit Snow: fresh snow under a night sky with wind ripples; no man's land is pale blue ice with cracks and shine
   moonlit: { base: '#8F9BB0', patch: ['#99A5B9', '#8692A8', '#A3AFC2', '#808CA2'], mid: ['#8FB8E0', '#80ADD9', '#9DC2E6'], strokes: ['#AEB9CB', '#6F7B93'], ripples: true, ice: '#76A8DA' },
   // Savanna: pale straw grass with olive patches, red-brown earth trampled across no man's land
@@ -18,13 +18,19 @@ Floors.FLOORS = {
   // and a broken stone road across no man's land
   darkwoods: { base: '#4A5641', patch: ['#536048', '#414C39', '#5A664C', '#3C4635'], mid: ['#4E4A39', '#47432F', '#57513E'], strokes: ['#647452', '#33402D'], ripples: false,
     leaves: ['#6E5C3F', '#7D6A47', '#5C4F38', '#8A7B50', '#4F5A3A'], leafN: 2.5, roots: '#3B3026', road: '#7E8374', dapple: '#F2E8B8' },
+  // Snow (2026-11-07): a glacier pass in hard daylight. No man's land is a turquoise glacier sheet (glacier: [deep,
+  // pale]) with frozen bubbles and polished shine; the deploy zones are wind-packed snow carved into
+  // sharp sastrugi that all run the wind's way (wind: its direction on the canvas, x right, y down toward your end);
+  // frozen: something huge lies frozen under the ice in the middle (a woolly mammoth)
+  glacier: { base: '#EEF3F8', patch: ['#F4F8FB', '#DDE7F1', '#F8FAFD', '#D7E3EF'], mid: ['#5FAED6', '#4A9BCB', '#79C2E0'], strokes: ['#FFFFFF', '#9DB3CB'], ripples: false,
+    glacier: ['#3F8FC4', '#8FD3E8'], wind: [1, -0.35], frozen: 'mammoth' },
   sand: { base: '#B39A6C', patch: ['#BDA478', '#A88F62', '#C2AA7E', '#A38A5F'], mid: ['#9E8457', '#A78D60', '#94794E'], strokes: ['#C9B288', '#8F7650'], ripples: true },
 };
 // Looks: what each draws (its biome round the board, and its floor: one painted here, or a map's painted ground in the
 // 2D renderer, bg). A map with skins (Game.SKINS) takes the match's pick (m.skin); every map has its own look too.
 Floors.LOOKS = {
   meadow: { biome: 'meadow', floor: 'meadow' }, autumn: { biome: 'autumn', floor: 'autumn' }, desert: { biome: 'desert', floor: 'sand' },
-  snow: { biome: 'ice', bg: 'ice' }, frost: { biome: 'frost', floor: 'darkwoods' }, forest: { biome: 'forest', bg: 'forest' }, cavern: { biome: 'cavern', bg: 'cavern' },
+  snow: { biome: 'snow', floor: 'glacier' }, frost: { biome: 'frost', floor: 'darkwoods' }, forest: { biome: 'forest', bg: 'forest' }, cavern: { biome: 'cavern', bg: 'cavern' },
   ash: { biome: 'ash', floor: 'ash' }, moonlit: { biome: 'moonlit', floor: 'moonlit' }, savanna: { biome: 'savanna', floor: 'savanna' },
 };
 Floors.lookOf = (src) => { const k = Game.lookOf(src); return Floors.LOOKS[k] ? k : 'meadow'; };
@@ -32,7 +38,7 @@ Floors.floor = (() => {
   const cache = {};
   return (ctx, W, H, t, look) => {
     const L = Floors.FLOORS[look]; if (!L) return false;
-    const key = W + 'x' + H + ':' + Game.ROWS + ':' + Game.ZONE;
+    const key = W + 'x' + H + ':' + Game.ROWS + ':' + Game.ZONE + (L.frozen && Floors.frozen ? ':f' : ''); // (repainted once the frozen mammoth's picture is there)
     if (!cache[look] || cache[look].key !== key) {
       const oc = document.createElement('canvas'), dpr = Math.min(2, window.devicePixelRatio || 1);
       oc.width = Math.round(W * dpr); oc.height = Math.round(H * dpr);
@@ -44,6 +50,14 @@ Floors.floor = (() => {
       for (let k = 0; k < 70; k++) blob(rr() * W, rr() * H, t * (0.8 + rr() * 2.2), t * (0.6 + rr() * 1.6), L.patch[k % 4], 0.55);
       // no man's land: trampled earth, or darker drifts of sand
       const y0 = Game.ZONE * t, y1 = (Game.ROWS - Game.ZONE) * t;
+      if (L.glacier) Floors.glacier(c, W, H, t, y0, y1, L, rr, blob); else { // (the glacier paints its own way, below)
+      if (L.scorch) { // faint old blast scorches anywhere on the board: a dark smudge, a paler ring of thrown ash
+        for (let k = 0; k < L.scorch; k++) {
+          const x = rr() * W, y = rr() * H, r = t * (0.5 + rr() * 0.9), g = c.createRadialGradient(x, y, 0, x, y, r * 1.5);
+          g.addColorStop(0, 'rgba(18,14,12,0.42)'); g.addColorStop(0.55, 'rgba(24,20,18,0.22)'); g.addColorStop(0.75, 'rgba(120,112,104,0.12)'); g.addColorStop(1, 'rgba(120,112,104,0)');
+          c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 1.5, 0, Math.PI * 2); c.fill();
+        }
+      }
       if (L.char) { // charred ground over no man's land, soft at its edges, then cracks with a faint glow
         const g = c.createLinearGradient(0, y0 - t * 0.3, 0, y1 + t * 0.3), e = t * 0.6 / (y1 - y0 + t * 0.6);
         g.addColorStop(0, L.char + '00'); g.addColorStop(e, L.char); g.addColorStop(1 - e, L.char); g.addColorStop(1, L.char + '00');
@@ -128,6 +142,7 @@ Floors.floor = (() => {
         c.globalAlpha = 0.5 + rr() * 0.35; c.fillStyle = L.leaves[Math.floor(rr() * L.leaves.length)];
         c.beginPath(); c.ellipse(x, y, r, r * 0.6, rr() * 3, 0, Math.PI * 2); c.fill();
       }
+      }
       c.globalAlpha = 1;
       cache[look] = { key, cv: oc };
     }
@@ -135,3 +150,71 @@ Floors.floor = (() => {
     return true;
   };
 })();
+// The Snow look's floor (2026-11-07): wind-packed snow with sastrugi in the deploy zones, a glacier across no man's
+// land (y0 to y1). c: the canvas context (in CSS pixels), t: a tile in pixels, rr: the floor's seeded random numbers,
+// blob(x, y, rx, ry, colour, alpha): a soft round patch.
+Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
+  const [deep, pale] = L.glacier, wl = Math.hypot(L.wind[0], L.wind[1]), wx = L.wind[0] / wl, wy = L.wind[1] / wl, wa = Math.atan2(wy, wx);
+  const inBand = (y, m = 0) => y > y0 - m && y < y1 + m;
+  // the snow: long faint wind streaks, all one way
+  for (let k = 0; k < W * H / (t * t) * 1.2; k++) {
+    const x = rr() * W, y = rr() * H; if (inBand(y, t * 0.2)) continue;
+    c.globalAlpha = 0.07 + rr() * 0.07; c.fillStyle = rr() < 0.5 ? '#FFFFFF' : L.strokes[1];
+    c.beginPath(); c.ellipse(x, y, t * (0.8 + rr() * 1.6), t * (0.05 + rr() * 0.08), wa + (rr() - 0.5) * 0.06, 0, Math.PI * 2); c.fill();
+  }
+  // the glacier: deep turquoise, soft where the snow blows over its edges, mottled pale and deep
+  const e = t * 0.35, g = c.createLinearGradient(0, y0 - e, 0, y1 + e), f = e * 2 / (y1 - y0 + 2 * e);
+  g.addColorStop(0, deep + '00'); g.addColorStop(f, deep); g.addColorStop(1 - f, deep); g.addColorStop(1, deep + '00');
+  c.globalAlpha = 1; c.fillStyle = g; c.fillRect(0, y0 - e, W, y1 - y0 + 2 * e);
+  const by = () => y0 + t * 0.15 + rr() * (y1 - y0 - t * 0.3);
+  for (let k = 0; k < W / t * 9; k++) blob(rr() * W, by(), t * (0.5 + rr() * 1.6), t * (0.3 + rr() * 0.8), rr() < 0.45 ? pale : L.mid[k % 3], 0.35 + rr() * 0.3);
+  for (let k = 0; k < W / t * 2; k++) blob(rr() * W, by(), t * (0.4 + rr() * 1.1), t * (0.25 + rr() * 0.5), '#2A6FA6', 0.3); // deeper ice
+  // something huge frozen in the middle, deep under the ice: a mammoth, only a faint blurred shadow far down
+  // (Floors.frozen: the game's War Mammoth model drawn as a side-on silhouette, made by the 3D board; without it, as
+  // in the 2D look previews, nothing)
+  if (L.frozen === 'mammoth' && Floors.frozen) {
+    const im = Floors.frozen, w = t * 4.6, h = w * im.height / im.width, cx = W / 2 + t * 0.3, cy = (y0 + y1) / 2 + t * 0.1;
+    c.save(); c.translate(cx, cy); c.rotate(-0.09);
+    c.filter = `blur(${Math.max(1.5, t * 0.25)}px)`; c.globalAlpha = 0.16; c.drawImage(im, -w * 0.53, -h * 0.53, w * 1.06, h * 1.06); // the murk round it
+    c.filter = `blur(${Math.max(1, t * 0.045)}px)`; c.globalAlpha = 0.3; c.drawImage(im, -w / 2, -h / 2, w, h); // its shape
+    c.restore(); c.filter = 'none';
+    for (let k = 0; k < 12; k++) blob(cx + (rr() - 0.5) * t * 5, cy + (rr() - 0.5) * t * 2, t * (0.5 + rr()), t * (0.3 + rr() * 0.4), pale, 0.14); // ice over it
+  }
+  // frozen bubbles in clusters
+  for (let k = 0; k < W / t * 3.5; k++) {
+    const cx = rr() * W, cy = by(), n = 4 + Math.floor(rr() * 10);
+    for (let i = 0; i < n; i++) {
+      const x = cx + (rr() - 0.5) * t * 0.6, y = cy + (rr() - 0.5) * t * 0.4, r = t * (0.015 + rr() * 0.04);
+      c.globalAlpha = 0.16; c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+      c.globalAlpha = 0.45; c.strokeStyle = '#E6F7FC'; c.lineWidth = Math.max(0.5, r * 0.3); c.stroke();
+      c.globalAlpha = 0.75; c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(x - r * 0.35, y - r * 0.35, r * 0.25, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // polished shine: long pale streaks, all at the sun's angle, some in bundles
+  c.lineCap = 'round';
+  for (let k = 0; k < W / t * 2.2; k++) {
+    const x = rr() * W, y = by(), l = t * (0.8 + rr() * 2.6), n = rr() < 0.4 ? 2 + Math.floor(rr() * 2) : 1;
+    for (let i = 0; i < n; i++) {
+      c.globalAlpha = 0.16 + rr() * 0.2; c.strokeStyle = '#F4FCFF'; c.lineWidth = t * (0.03 + rr() * 0.09);
+      const ox = i * t * 0.12, oy = i * t * 0.1; c.beginPath(); c.moveTo(x + ox, y + oy); c.lineTo(x + ox + l, y + oy - l * 0.42); c.stroke();
+    }
+  }
+  // spindrift tongues blown over the glacier's edges and a few across it
+  for (let k = 0; k < W / t * 3; k++) {
+    const edge = rr() < 0.8, y = edge ? (rr() < 0.5 ? y0 : y1) + (rr() - 0.5) * t * 0.7 : by();
+    c.globalAlpha = edge ? 0.35 + rr() * 0.25 : 0.18; c.fillStyle = '#F2F7FB';
+    c.beginPath(); c.ellipse(rr() * W, y, t * (0.3 + rr() * 0.8), t * (0.04 + rr() * 0.07), wa + (rr() - 0.5) * 0.08, 0, Math.PI * 2); c.fill();
+  }
+  // sastrugi: sharp wind-carved ridges in the snow, a lit crest and a blue shadow, all pointing the wind's way
+  const px = -wy, py = wx; // across the wind (the shadow side: the sun is up-left)
+  for (let k = 0; k < W * H / (t * t) * 9; k++) {
+    const x = rr() * W, y = rr() * H; if (inBand(y, t * 0.25)) continue;
+    const l = t * (0.18 + rr() * 0.55), w = t * (0.025 + rr() * 0.045), j = (rr() - 0.5) * 0.12, dx = Math.cos(wa + j), dy = Math.sin(wa + j);
+    const ridge = (o, ww) => { c.beginPath(); c.moveTo(x - dx * l * 0.5 + px * o, y - dy * l * 0.5 + py * o);
+      c.quadraticCurveTo(x - dx * l * 0.25 + px * (o + ww), y - dy * l * 0.25 + py * (o + ww), x + dx * l * 0.5 + px * o, y + dy * l * 0.5 + py * o);
+      c.quadraticCurveTo(x - dx * l * 0.2 + px * (o - ww * 0.2), y - dy * l * 0.2 + py * (o - ww * 0.2), x - dx * l * 0.5 + px * o, y - dy * l * 0.5 + py * o); c.fill(); };
+    c.globalAlpha = 0.3 + rr() * 0.15; c.fillStyle = '#86A0C0'; ridge(w * 0.6, w * 1.4);
+    c.globalAlpha = 0.65; c.fillStyle = '#FFFFFF'; ridge(-w * 0.2, -w * 1.1);
+  }
+  c.globalAlpha = 1;
+};

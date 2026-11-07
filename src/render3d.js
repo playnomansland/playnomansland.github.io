@@ -80,7 +80,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
   around.rotation.x = -Math.PI / 2; around.position.y = -0.05; around.receiveShadow = true;
   scene.add(around);
   // the land around the board and small plants on it (src/scenery3d.js; missing in builds without it)
-  const scenery = typeof Scenery3D === 'function' ? Scenery3D(THREE, scene, { renderer, onReady: () => { biomeKey = null; if (opts.onInput) opts.onInput(); } }) : null;
+  const scenery = typeof Scenery3D === 'function' ? Scenery3D(THREE, scene, { renderer, models, camera, onReady: () => { biomeKey = null; if (opts.onInput) opts.onInput(); } }) : null;
   let biomeKey = null;
   function useScenery(v) {
     if (!scenery) return;
@@ -93,7 +93,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     biomeKey = bi.sky + t;
     const li = { ...DAY, ...(bi.light || {}) }, cl = (a, b) => new THREE.Color(a).lerp(new THREE.Color(b), t);
     const sky = du ? cl(bi.sky, du.sky) : new THREE.Color(bi.sky);
-    scene.background.copy(sky); scene.fog.color.copy(sky); around.material.color.set(bi.land);
+    scene.background.copy(sky); scene.fog.color.copy(sky); around.material.color.set(bi.land); around.visible = !bi.noLand; // (Snow: its own land sheet over a sea of clouds)
     hemi.color.copy(du ? cl(li.hemi[0], du.hemi[0]) : new THREE.Color(li.hemi[0])); hemi.groundColor.copy(du ? cl(li.hemi[1], du.hemi[1]) : new THREE.Color(li.hemi[1]));
     hemi.intensity = du ? li.hemi[2] + (du.hemi[2] - li.hemi[2]) * t : li.hemi[2];
     sun.color.copy(du ? cl(li.sun[0], du.sun[0]) : new THREE.Color(li.sun[0])); sun.intensity = du ? li.sun[1] + (du.sun[1] - li.sun[1]) * t : li.sun[1];
@@ -337,6 +337,9 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (kind === 'tag') { // a unit's 3-letter tag (two cells wide)
       g.font = '600 34px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.lineWidth = 7; g.strokeStyle = 'rgba(8,12,14,0.9)'; g.strokeText(a, 64, 34); g.fillStyle = '#E5ECE9'; g.fillText(a, 64, 34);
+    } else if (kind === 'label') { // a short line of text (four cells wide)
+      g.font = '600 26px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.lineWidth = 6; g.strokeStyle = 'rgba(8,12,14,0.9)'; g.strokeText(a, 128, 33); g.fillStyle = '#E5ECE9'; g.fillText(a, 128, 33);
     } else if (kind === 'arms') Art.armsFlag(g, a, 6, 12, 52, b); // a coat of arms on a flag edged in a side's colour
     else if (kind === 'rider') { // what rides inside a carrier: its shape on a disc
       g.fillStyle = css('--bg'); g.strokeStyle = c; g.lineWidth = 4; g.beginPath(); g.arc(32, 32, 27, 0, Math.PI * 2); g.fill(); g.stroke();
@@ -345,7 +348,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
   }
   function cell(key) {
     if (cells[key]) return cells[key];
-    const wide = key.startsWith('tag|') ? 2 : 1;
+    const wide = key.startsWith('tag|') ? 2 : key.startsWith('label|') ? 4 : 1;
     if (nextCell % PER + wide > PER) nextCell += PER - nextCell % PER;
     if (nextCell + wide > PER * PER) { cells = {}; nextCell = 0; actx.clearRect(0, 0, 1024, 1024); } // full: start over
     const cx = nextCell % PER, cy = Math.floor(nextCell / PER);
@@ -663,6 +666,18 @@ const Render3D = (THREE, el, view, opts = {}) => {
       const p = deploying ? Game.seenAt(m, sq) : sq;
       const look = Game.shownUnit(m, me, foe, sq.unit); // a disguised unit shows as what it pretends to be
       squad(deploying ? { ...sq, unit: look, col: p.col, row: p.row, level: Game.seenLevel(m, sq) } : { ...sq, unit: look }, foe, false); // a level-up bought this round stays hidden
+    }
+    // round 1: the opponent's starting squads, see-through side by side along the back of their zone, with a label (the
+    // page's foeStart, as on the 2D board): which units, not where they stand
+    if (deploying && v.foeStart && v.foeStart.length) {
+      let sx = 0, sz = 0;
+      v.foeStart.forEach((e, k) => {
+        const u = units[e.unit]; if (!u) return;
+        for (const b of Engine.buildSquad(u, foe, e.x, e.y, -100 - k, T)) bodies.push({ u, side: foe, x: b.x, y: b.y, look: 'ghost', tag: 'start|' + k }); // (its tag goes under it, as a squad's)
+        const [wx, wz] = world(f, e.x, e.y); sx += wx; sz += wz;
+      });
+      const n = v.foeStart.length, ls = viewMode === 'strategic' ? 4.2 : viewMode === 'tilted' ? 3.4 : 2.6, d = 6.5 + ls * 0.3; // (under their tags)
+      icon('label|STARTING UNITS', sx / n + camDown.x * d, 0.3, sz / n + camDown.z * d, ls, teamColor(foe, me), 0.95);
     }
     // what rides inside a carrier: an icon beside it (only its team sees it), in its player's colour in 2v2
     const riderIcon = (wx, wz, rider) => {
@@ -1032,7 +1047,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
   let lastMe = 0;
   const cam = Camera3D(THREE, camera, renderer.domElement, {
     width: BW, depth: BD,
-    onTap: (p, cx, cy) => { if (opts.onTap) opts.onTap(pick(groundHit(cx, cy) || p, cx, cy)); },
+    onTap: (p, cx, cy) => { if (birdTap(cx, cy)) return; if (opts.onTap) opts.onTap(pick(groundHit(cx, cy) || p, cx, cy)); },
     // a press on a squad never moves the camera: one the page doesn't drag is held still, as on the 2D board
     onPress: (p, cx, cy) => { const t = pick(groundHit(cx, cy) || p, cx, cy); return !!(opts.onPress && opts.onPress(t)) || !!(t && squadTiles.has(t.col + ',' + t.row)); },
     onDrag: (p) => { if (opts.onDrag) opts.onDrag(tileOfGround(p, lastMe)); },
@@ -1069,6 +1084,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (scenery) { // Savanna's vultures gather over your tower while your opponent is ready and you still deploy
       const m = v.m, t = v.foeReady && m && ((m.towers && m.towers[v.me]) || Game.towerSpot(m, v.me));
       if (t) { const w = Game.tileToWorld(t.col, t.row), f = v.me === 1 ? -1 : 1; scenery.prey({ x: w.x * f, z: -w.y * f }); } else scenery.prey(null);
+      if (scenery.foeReady) scenery.foeReady(!!v.foeReady); // Forest Glade: the lost explorer crosses no man's land
       scenery.tick(dt, renderer.getPixelRatio());
     }
     used.clear(); ns = 0;
@@ -1085,6 +1101,20 @@ const Render3D = (THREE, el, view, opts = {}) => {
     renderer.render(scene, camera);
   }
   // where a touch meets the ground, raised or lowered (a couple of steps toward the ground's height there)
+  // a tap on one of Savanna's vultures (within its wingspan on screen, at least a fingertip): they fly off to sit in a
+  // tree, or come back (scenery.roost); the tap goes no further
+  const tmpB = new THREE.Vector3(), camW = new THREE.Vector3();
+  function birdTap(cx, cy) {
+    const list = scenery && scenery.birds ? scenery.birds() : []; if (!list.length) return false;
+    const r = renderer.domElement.getBoundingClientRect(), fpx = r.height / (2 * Math.tan(camera.fov * Math.PI / 360));
+    camera.getWorldPosition(camW);
+    for (const p of list) {
+      tmpB.copy(p).project(camera); if (tmpB.z > 1) continue;
+      const sx = r.left + (tmpB.x + 1) / 2 * r.width, sy = r.top + (1 - tmpB.y) / 2 * r.height;
+      if (Math.hypot(cx - sx, cy - sy) < Math.max(26, 3 / camW.distanceTo(p) * fpx)) { scenery.roost(); if (opts.onInput) opts.onInput(); return true; }
+    }
+    return false;
+  }
   function groundHit(clientX, clientY) {
     let p = cam.groundAt(clientX, clientY);
     for (let k = 0; k < 3 && p && hGrid; k++) p = cam.groundAt(clientX, clientY, groundY(p.x, p.z)) || p;
@@ -1125,6 +1155,6 @@ const Render3D = (THREE, el, view, opts = {}) => {
     renderer.forceContextLoss();
   }
   return { size: sizeTo, draw, tileAt, thumb: (match) => floor2d.thumb(match), camera: cam, info: () => renderer.info.render,
-    still: () => !cam.busy(), alive: () => !!(scenery && scenery.alive && scenery.alive()), // alive: the scenery moves on its own (Savanna's vultures) kinds: () => [...new Set(Object.keys(groups).filter(k => used.has(groups[k])).map(k => k.split('#')[0]))], // the models drawn in the last frame (UI tests)
+    still: () => !cam.busy(), alive: () => !!(scenery && scenery.alive && scenery.alive()), explore: (x0) => scenery && scenery.explore && scenery.explore(x0), // (tests: send Forest Glade's explorer out) // alive: the scenery moves on its own (Savanna's vultures) kinds: () => [...new Set(Object.keys(groups).filter(k => used.has(groups[k])).map(k => k.split('#')[0]))], // the models drawn in the last frame (UI tests)
     quality, pixelRatio: () => renderer.getPixelRatio(), dispose, drawn, screenAt, pickAt, scenery };
 };

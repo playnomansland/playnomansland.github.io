@@ -59,7 +59,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   walls = await p.evaluate(() => { const { m, me } = window.__pb(); return Game.bwallsOf(m, me).length; });
   assert.strictEqual(walls, 3);
   // the fight has them
-  await p.click('#fight'); await sleep(600);
+  await p.click('#ready'); await sleep(600);
   const inFight = await p.evaluate(() => { const { bt } = window.__pb(); return bt ? bt.bodies.filter(x => x.u.barrier).length : -1; });
   console.log('walls in the fight:', inFight);
   assert.strictEqual(inFight, 3);

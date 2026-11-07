@@ -5217,7 +5217,11 @@ const Game = (() => {
 
   // ---------- characters ----------
   // Each starting package comes with a character, who gives that player a passive ability for the whole match.
-  const CHARACTERS = [
+  // ALL_CHARACTERS keeps every leader ever made (so old matches, replays and history still find their names);
+  // CHARACTERS is the live pool: every leader that can be dealt, drafted or picked in a menu.
+  // RETIRED_CHARS: out of the game for now. Blixten (2026-11-07): being reworked; his rules stay in the code.
+  const RETIRED_CHARS = ['blixten'];
+  const ALL_CHARACTERS = [
     { id: 'cage', name: 'Frickolas Cage', ability: 'Units +10% health.' },
     { id: 'zoe', name: 'Zoe', ability: '2 buff tiles each round. Their bonus grows each time you use them.' },
     { id: 'emile', name: 'Emile', ability: 'Tier 1 unlocks are free.' },
@@ -5232,6 +5236,7 @@ const Game = (() => {
     { id: 'matteo', name: 'Matteo - the Gentleman', ability: 'Charisma spreads with kills. At 5, a squad converts its first kill each fight.' },
     { id: 'otto', name: 'Otto - The Gambler', ability: 'Slot machine: 50 gold a spin, 3 spins a round. Three of a kind pays out, or hurts. After 5 losing spins in a row, the next one always wins.' },
   ];
+  const CHARACTERS = ALL_CHARACTERS.filter(c => !RETIRED_CHARS.includes(c.id));
   // ---------- the Standard pack ----------
   // A smaller match for new players, picked on the menu: fewer units with clear jobs (one or two of each kind per tier),
   // the leaders with simple abilities, and no mage or slime tower. Units by name, so a Counter Lab roster just keeps
@@ -5272,7 +5277,7 @@ const Game = (() => {
   }
   const charmMap = (m, side) => charOf(m, side) === 'matteo' ? Object.fromEntries(m.armies[side].map(q => [q.id, charmOf(q)])) : null;
   const charOf = (m, side) => (m && m.chars && m.chars[side]) || null;
-  const charInfo = (id) => CHARACTERS.find(c => c.id === id) || null;
+  const charInfo = (id) => ALL_CHARACTERS.find(c => c.id === id) || null;
   // ---------- the leader draft (2026-11-05) ----------
   // Packages no longer come with a leader. Before round DRAFT.round both players pick one from the same pool of
   // DRAFT.pool leaders: the winner of round 1 first (a draw: a seeded coin flip), then the other player from what is
@@ -6035,6 +6040,10 @@ const Game = (() => {
   }
   const packOf = (m, side) => m.packages && m.pack && m.pack[side] != null ? m.packages[side][m.pack[side]] : null;
   const needsPack = (m, side) => !!(m.packages && m.packages[side] && m.packages[side].length && m.pack[side] == null);
+  // round 1 (2026-11-07): the unit of each of a player's package squads, which their opponent may see (not where they
+  // stand, nor the leader). From the package where this screen has it (the AI's, the PeerJS host's guest), else from the
+  // view the opponent was sent (Referee.hide, syncState: m.packSeen { side: [unit indexes] }); null before they pick
+  const startSeen = (m, side) => { if (!m || m.round !== 1) return null; const p = packOf(m, side); return p ? p.squads.slice() : (m.packSeen && m.packSeen[side]) || null; };
   // package squads still waiting to be placed
   function freeLeft(m, side) {
     const p = packOf(m, side);
@@ -8323,7 +8332,7 @@ const Game = (() => {
     COLS, ROWS, TILE, ZONE, START_HP, LATE, startHp, capped, capCount, capFull, START_GOLD, INCOME, incomeFor, LOSER_BONUS, LOSER_BONUS_ROUND, TOWER_FALL_HP, CARRY_CAP, SHUTDOWN, shutdownGold, CREDIT_LINE, loanTerms, loanTaken, treasurySteal, SQUAD_COST, SETTINGS, XP_STEPS, xpNeeded, unitCostOf,
     levelCost, isReady, levelUp, undoLevel, levelAllPlan, levelAll, upgradeOffer, seenLevel, aiLevel, AI, CONFIG,
     deploysAllowed, deploysLeft, deployedThisRound, canBuyDeploy, buyDeploy, refundDeploy, musterOn, deployBuyable,
-    PACKAGE, allPackages, packOf, needsPack, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
+    PACKAGE, allPackages, packOf, needsPack, startSeen, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
     unlockCost, tierOf, startLevel, shopCost, mapFreeOf, mapFreeLeft, isUnlocked, unlockVisible, unlock, undoUnlock,
     isHunter, preyOf, canHunt, huntMark, undoHunt, preyShown, preyOn, aiHunt, skillDef, skillCost, SKILL_STEP, skillsBought, isInnate, hasSkill, skillVisible, skillNeeds, skillNeedsAny, skillNeedsMissing, skillHeldUp, isFlat, isMaster, isAwaken, awakenSlot, awakenCost, wokeUnit, awakenBlock, canAwaken, awaken, undoAwaken, seenAwake, isEvolve, evolveSlot, evolveReady, isEvolved, shownAwake, glutOf, glutMax, glutFull, skillOr, skillOrTaken, respecNow, unitFor, withCharacter,
     footprint, blockOf, spotFree, buildingRecords, recordOf, recordWorld, buildingEffects,
@@ -8335,7 +8344,7 @@ const Game = (() => {
     FLANK, flankRows, flankOpen, isFlank, flankTiles, reserved, canPlaceAt, anywhere, mpbAt, bldgSeen, nearBldg, isOff, enemyHolds, inNoMans, midRow, hasSkillType, garrisonAt, garrisonFree, inBuilding, WATCH_SQ, watchUnit, freeMover,
     STANDARD_PACK, ICE, ALTAR, GOLEM, isIce, hailRound, altarRound, stormShift, stormRows, hailTiles, altarCost, altarRefund, altarCount, pushRoom, altarBought, addAltar, buyAltar, undoAltar, snowgres, snowgreUnit,
     MAPS, SKINS, MAP_LOOK, lookOf, EDITOR_MAPS, TERRAIN, objectiveOf, objectiveTiles, SHAPE_PATH, terrainTile, terrainBlocks, terrainOf, groundHeight, ELF_TOWER, SHROOM, SHROOM_SPLIT, shroomAt, shroomTileAt, shroomRemoval, SHROOM_REMOVE, shroomCost, removeShroom, undoRemoveShroom, mapOf, elfSpot, rollMap, BRIBE_COST, bribeList, bribeGold, bribeCount, bribeNow, bribeCost, bribeRefund, ELF_POWER, elfPowered, elfUnit, ELF_OWN, elfOwnCost, elfOwnOf, elfOwnAt, elfOwnUnlocked, elfOwnOffered, canBuyElfOwn, elfOwnSpotOk, buyElfOwn, undoElfOwn, bribeLeader, canBribe, bribe, undoBribe,
-    CHARACTERS, CHAR, charOf, SLOT, MARCH, marchMoves, shoeMoves, marchNear, freeMoveOk, moveKind, slotSpins, slotDry, slotWins, slotMovesLeft, freeMoves, freeMovesLeft, shoePerks, shoePerk, canSpin, slotOutcome, slotReels, spin, takeSpins, aiSlots, charInfo, enzoSkill, enzoActive, charmOf, isGentleman, canGiveCharm, giveCharm, undoCharm, ensureCharm, felixGold, isTier1, rollBuffTiles, onBuffTile, zoeBuff, yotImps, yotLevel, TOWER_SPOT, towerSpot,
+    CHARACTERS, ALL_CHARACTERS, RETIRED_CHARS, CHAR, charOf, SLOT, MARCH, marchMoves, shoeMoves, marchNear, freeMoveOk, moveKind, slotSpins, slotDry, slotWins, slotMovesLeft, freeMoves, freeMovesLeft, shoePerks, shoePerk, canSpin, slotOutcome, slotReels, spin, takeSpins, aiSlots, charInfo, enzoSkill, enzoActive, charmOf, isGentleman, canGiveCharm, giveCharm, undoCharm, ensureCharm, felixGold, isTier1, rollBuffTiles, onBuffTile, zoeBuff, yotImps, yotLevel, TOWER_SPOT, towerSpot,
     TREASURY, TREASURY_SQ, treasuryOn, treasuryUp, treasurySpot, treasuryAt, treasuryUnit, deployCost, FORTIFY, fortifyOf, canFortify, fortify, bwallsFighting, VAULT, vaultOn, MARK, markOf, markLost, markOn, markCost, markTarget, canMark, placeMark, markShown,
     FACTION_MODE, FACTIONS: () => FACTIONS, setFactions, factionInfo, factionsOf, factionTowers, towerTypeById, ownsUnit, withFactionTrait, factionSet,
     createDraft, draftTurn, draftOpen, draftAct, draftDone, draftPossible, aiDraftChoice,
@@ -8446,6 +8455,8 @@ if (typeof module !== 'undefined') module.exports = Game;
     if (s.moved) s.moved[h] = null;
     for (const ui in (s.tech && s.tech[h]) || {}) s.tech[h][ui] = s.tech[h][ui].map(r => r === round ? 0 : r); // skills bought this round
     if (round === 1) { // the leader, buff tiles, slot spins and package stay hidden until the first fight
+      const pk = s.packages && s.pack && s.pack[h] != null && s.packages[h] && s.packages[h][s.pack[h]];
+      if (pk) s.packSeen = { ...(s.packSeen || {}), [h]: pk.squads.slice() }; // but not which units its squads are (G.startSeen)
       if (s.chars) s.chars[h] = null;
       if (s.slots) s.slots[h] = {};
       if (s.buff) s.buff[h] = [];
@@ -8490,7 +8501,7 @@ if (typeof module !== 'undefined') module.exports = Game;
 
   // ----- Undo all: one side's part of the match, to put back -----
   // Every per-side field ([side 0, side 1] arrays, also in m.dev) plus this side's entries in the shared lists.
-  const UNDO_SKIP = new Set(['units', 'matrix', 'history', 'round', 'over', 'winner', 'seed', 'off', 'offTowers', 'rules', 'factions', 'map', 'dev', 'altar', 'hp', 'packages']);
+  const UNDO_SKIP = new Set(['units', 'matrix', 'history', 'round', 'over', 'winner', 'seed', 'off', 'offTowers', 'rules', 'factions', 'map', 'dev', 'altar', 'hp', 'packages', 'packSeen']);
   const UNDO_NULL = new Set(['chars', 'elfOwn', 'loanT', 'mageGen', 'mark', 'moved', 'pack', 'towers', 'vote', 'woke']); // per-side fields that start as null (see game.js)
   const perSide = (v) => Array.isArray(v) && v.length === 2;
   function sideState(m, side) {
@@ -13211,8 +13222,8 @@ const Art = (() => {
 const Render2D = (cv, view, opts = {}) => {
   let ctx = cv.getContext('2d'); // swapped for a moment while drawing map thumbnails (thumb)
   let m = null, me = 0, phase = 'start', units = [], mode = 'ai', bt = null, battlePre = null, fx = [], battleCam = null, win = null;
-  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null;
-  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null } = view()); };
+  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null, foeStart = null;
+  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null, foeStart = null } = view()); };
   // win (a 2v2 fight on a phone): { aspect, cols, x } the canvas is shaped for `aspect` columns, shows `cols` of them
   // (zoomed out up to the whole wide board) and starts at screen column x; the board sits in the middle top to bottom
   const foe = () => 1 - me;
@@ -13947,6 +13958,33 @@ const Render2D = (cv, view, opts = {}) => {
     }
   }
 
+  // round 1: the opponent's starting squads (view.foeStart from the page: [{ unit, x, y }] in board metres), see-through
+  // side by side along the back of their zone, with a label: which units, not where they stand
+  function drawFoeStart() {
+    const side = foe(), col = teamCol(side), t = tilePx();
+    let sx = 0, sy = 0;
+    foeStart.forEach((e, k) => {
+      const u = units[e.unit]; if (!u) return;
+      const r = radius(u) * 0.85;
+      for (const b of Engine.buildSquad(u, side, e.x, e.y, -100 - k, Game.TILE)) {
+        ctx.globalAlpha = 0.5; Shapes.body(ctx, u.shape, PX(b.x), PY(b.y), r, upOf(side), u.color, col, 0.6);
+      }
+      if (t >= 26) { // its tag under it, as a squad's
+        ctx.font = `500 ${Math.max(8, Math.round(t * 0.26))}px "IBM Plex Mono", monospace`; ctx.fillStyle = css('--ink'); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.globalAlpha = 0.7; ctx.fillText(tag(u), PX(e.x), PY(e.y) + t / 2 - 1);
+      }
+      sx += PX(e.x); sy += PY(e.y);
+    });
+    ctx.globalAlpha = 1;
+    const n = foeStart.length, cy = sy / n + t * 0.85; let cx = sx / n; // under them on the screen: toward no man's land
+    const fs = Math.max(8, Math.round(t * 0.24));
+    ctx.font = `600 ${fs}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const text = 'STARTING UNITS · PLACEMENT HIDDEN', w = ctx.measureText(text).width + fs;
+    cx = Math.max(w / 2, Math.min(Game.COLS * t - w / 2, cx));
+    ctx.fillStyle = css('--bg'); ctx.globalAlpha = 0.7; ctx.fillRect(cx - w / 2, cy - fs * 0.75, w, fs * 1.5);
+    ctx.globalAlpha = 0.95; ctx.fillStyle = col; ctx.fillText(text, cx, cy); ctx.globalAlpha = 1;
+  }
+
   // the Leafblade suit: two long leaf blades held out from the body, turned by a (radians)
   function bladeMark(x, y, r, a) {
     ctx.globalAlpha = 1; ctx.fillStyle = '#7BE05A'; ctx.strokeStyle = '#1F5E1A'; ctx.lineWidth = 1;
@@ -14669,6 +14707,7 @@ const Render2D = (cv, view, opts = {}) => {
       const look = Game.shownUnit(m, me, foe(), sq.unit); // a disguised unit shows as what it pretends to be
       drawSquad(phase === 'deploy' ? { ...sq, unit: look, col: p.col, row: p.row, level: Game.seenLevel(m, sq) } : { ...sq, unit: look }, foe(), false); // a level-up bought this round stays hidden
     }
+    if (phase === 'deploy' && foeStart) drawFoeStart();
     // what rides inside a carrier: a small disc with its shape, bottom left of the tile (only its team sees it), ringed in
     // its player's colour in 2v2 (yours in your teammate's horse, theirs in yours)
     const riderBadge = (at, rider) => {
@@ -15115,7 +15154,7 @@ Floors.FLOORS = {
   autumn: { base: '#62633E', patch: ['#6E6C3E', '#585B37', '#78693A', '#545634'], mid: ['#776146', '#6B583E', '#816A4B'], strokes: ['#8C7F4A', '#474A2C'], ripples: false, leaves: ['#B8532F', '#C9782F', '#D3A43A', '#9A3B2A'] },
   // Ashlands (2026-11-07): burnt ground, scorched no man's land, grey ash flecks and a few glowing embers
   ash: { base: '#4B4744', patch: ['#55504C', '#423E3B', '#5B5550', '#3D3937'], mid: ['#36312E', '#3F3935', '#2F2B29'], strokes: ['#625B55', '#2C2826'], ripples: false, leaves: ['#7D766F', '#8A827A', '#6B645E', '#7D766F', '#8A827A', '#7D766F', '#C0652C'],
-    char: '#2A2523' }, // no man's land charred dark, with thin cracks still glowing
+    char: '#2A2523', scorch: 9 }, // no man's land charred dark, with thin cracks still glowing; old blast scorches over the whole board
   // Moonlit Snow: fresh snow under a night sky with wind ripples; no man's land is pale blue ice with cracks and shine
   moonlit: { base: '#8F9BB0', patch: ['#99A5B9', '#8692A8', '#A3AFC2', '#808CA2'], mid: ['#8FB8E0', '#80ADD9', '#9DC2E6'], strokes: ['#AEB9CB', '#6F7B93'], ripples: true, ice: '#76A8DA' },
   // Savanna: pale straw grass with olive patches, red-brown earth trampled across no man's land
@@ -15124,13 +15163,19 @@ Floors.FLOORS = {
   // and a broken stone road across no man's land
   darkwoods: { base: '#4A5641', patch: ['#536048', '#414C39', '#5A664C', '#3C4635'], mid: ['#4E4A39', '#47432F', '#57513E'], strokes: ['#647452', '#33402D'], ripples: false,
     leaves: ['#6E5C3F', '#7D6A47', '#5C4F38', '#8A7B50', '#4F5A3A'], leafN: 2.5, roots: '#3B3026', road: '#7E8374', dapple: '#F2E8B8' },
+  // Snow (2026-11-07): a glacier pass in hard daylight. No man's land is a turquoise glacier sheet (glacier: [deep,
+  // pale]) with frozen bubbles and polished shine; the deploy zones are wind-packed snow carved into
+  // sharp sastrugi that all run the wind's way (wind: its direction on the canvas, x right, y down toward your end);
+  // frozen: something huge lies frozen under the ice in the middle (a woolly mammoth)
+  glacier: { base: '#EEF3F8', patch: ['#F4F8FB', '#DDE7F1', '#F8FAFD', '#D7E3EF'], mid: ['#5FAED6', '#4A9BCB', '#79C2E0'], strokes: ['#FFFFFF', '#9DB3CB'], ripples: false,
+    glacier: ['#3F8FC4', '#8FD3E8'], wind: [1, -0.35], frozen: 'mammoth' },
   sand: { base: '#B39A6C', patch: ['#BDA478', '#A88F62', '#C2AA7E', '#A38A5F'], mid: ['#9E8457', '#A78D60', '#94794E'], strokes: ['#C9B288', '#8F7650'], ripples: true },
 };
 // Looks: what each draws (its biome round the board, and its floor: one painted here, or a map's painted ground in the
 // 2D renderer, bg). A map with skins (Game.SKINS) takes the match's pick (m.skin); every map has its own look too.
 Floors.LOOKS = {
   meadow: { biome: 'meadow', floor: 'meadow' }, autumn: { biome: 'autumn', floor: 'autumn' }, desert: { biome: 'desert', floor: 'sand' },
-  snow: { biome: 'ice', bg: 'ice' }, frost: { biome: 'frost', floor: 'darkwoods' }, forest: { biome: 'forest', bg: 'forest' }, cavern: { biome: 'cavern', bg: 'cavern' },
+  snow: { biome: 'snow', floor: 'glacier' }, frost: { biome: 'frost', floor: 'darkwoods' }, forest: { biome: 'forest', bg: 'forest' }, cavern: { biome: 'cavern', bg: 'cavern' },
   ash: { biome: 'ash', floor: 'ash' }, moonlit: { biome: 'moonlit', floor: 'moonlit' }, savanna: { biome: 'savanna', floor: 'savanna' },
 };
 Floors.lookOf = (src) => { const k = Game.lookOf(src); return Floors.LOOKS[k] ? k : 'meadow'; };
@@ -15138,7 +15183,7 @@ Floors.floor = (() => {
   const cache = {};
   return (ctx, W, H, t, look) => {
     const L = Floors.FLOORS[look]; if (!L) return false;
-    const key = W + 'x' + H + ':' + Game.ROWS + ':' + Game.ZONE;
+    const key = W + 'x' + H + ':' + Game.ROWS + ':' + Game.ZONE + (L.frozen && Floors.frozen ? ':f' : ''); // (repainted once the frozen mammoth's picture is there)
     if (!cache[look] || cache[look].key !== key) {
       const oc = document.createElement('canvas'), dpr = Math.min(2, window.devicePixelRatio || 1);
       oc.width = Math.round(W * dpr); oc.height = Math.round(H * dpr);
@@ -15150,6 +15195,14 @@ Floors.floor = (() => {
       for (let k = 0; k < 70; k++) blob(rr() * W, rr() * H, t * (0.8 + rr() * 2.2), t * (0.6 + rr() * 1.6), L.patch[k % 4], 0.55);
       // no man's land: trampled earth, or darker drifts of sand
       const y0 = Game.ZONE * t, y1 = (Game.ROWS - Game.ZONE) * t;
+      if (L.glacier) Floors.glacier(c, W, H, t, y0, y1, L, rr, blob); else { // (the glacier paints its own way, below)
+      if (L.scorch) { // faint old blast scorches anywhere on the board: a dark smudge, a paler ring of thrown ash
+        for (let k = 0; k < L.scorch; k++) {
+          const x = rr() * W, y = rr() * H, r = t * (0.5 + rr() * 0.9), g = c.createRadialGradient(x, y, 0, x, y, r * 1.5);
+          g.addColorStop(0, 'rgba(18,14,12,0.42)'); g.addColorStop(0.55, 'rgba(24,20,18,0.22)'); g.addColorStop(0.75, 'rgba(120,112,104,0.12)'); g.addColorStop(1, 'rgba(120,112,104,0)');
+          c.fillStyle = g; c.beginPath(); c.arc(x, y, r * 1.5, 0, Math.PI * 2); c.fill();
+        }
+      }
       if (L.char) { // charred ground over no man's land, soft at its edges, then cracks with a faint glow
         const g = c.createLinearGradient(0, y0 - t * 0.3, 0, y1 + t * 0.3), e = t * 0.6 / (y1 - y0 + t * 0.6);
         g.addColorStop(0, L.char + '00'); g.addColorStop(e, L.char); g.addColorStop(1 - e, L.char); g.addColorStop(1, L.char + '00');
@@ -15234,6 +15287,7 @@ Floors.floor = (() => {
         c.globalAlpha = 0.5 + rr() * 0.35; c.fillStyle = L.leaves[Math.floor(rr() * L.leaves.length)];
         c.beginPath(); c.ellipse(x, y, r, r * 0.6, rr() * 3, 0, Math.PI * 2); c.fill();
       }
+      }
       c.globalAlpha = 1;
       cache[look] = { key, cv: oc };
     }
@@ -15241,6 +15295,74 @@ Floors.floor = (() => {
     return true;
   };
 })();
+// The Snow look's floor (2026-11-07): wind-packed snow with sastrugi in the deploy zones, a glacier across no man's
+// land (y0 to y1). c: the canvas context (in CSS pixels), t: a tile in pixels, rr: the floor's seeded random numbers,
+// blob(x, y, rx, ry, colour, alpha): a soft round patch.
+Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
+  const [deep, pale] = L.glacier, wl = Math.hypot(L.wind[0], L.wind[1]), wx = L.wind[0] / wl, wy = L.wind[1] / wl, wa = Math.atan2(wy, wx);
+  const inBand = (y, m = 0) => y > y0 - m && y < y1 + m;
+  // the snow: long faint wind streaks, all one way
+  for (let k = 0; k < W * H / (t * t) * 1.2; k++) {
+    const x = rr() * W, y = rr() * H; if (inBand(y, t * 0.2)) continue;
+    c.globalAlpha = 0.07 + rr() * 0.07; c.fillStyle = rr() < 0.5 ? '#FFFFFF' : L.strokes[1];
+    c.beginPath(); c.ellipse(x, y, t * (0.8 + rr() * 1.6), t * (0.05 + rr() * 0.08), wa + (rr() - 0.5) * 0.06, 0, Math.PI * 2); c.fill();
+  }
+  // the glacier: deep turquoise, soft where the snow blows over its edges, mottled pale and deep
+  const e = t * 0.35, g = c.createLinearGradient(0, y0 - e, 0, y1 + e), f = e * 2 / (y1 - y0 + 2 * e);
+  g.addColorStop(0, deep + '00'); g.addColorStop(f, deep); g.addColorStop(1 - f, deep); g.addColorStop(1, deep + '00');
+  c.globalAlpha = 1; c.fillStyle = g; c.fillRect(0, y0 - e, W, y1 - y0 + 2 * e);
+  const by = () => y0 + t * 0.15 + rr() * (y1 - y0 - t * 0.3);
+  for (let k = 0; k < W / t * 9; k++) blob(rr() * W, by(), t * (0.5 + rr() * 1.6), t * (0.3 + rr() * 0.8), rr() < 0.45 ? pale : L.mid[k % 3], 0.35 + rr() * 0.3);
+  for (let k = 0; k < W / t * 2; k++) blob(rr() * W, by(), t * (0.4 + rr() * 1.1), t * (0.25 + rr() * 0.5), '#2A6FA6', 0.3); // deeper ice
+  // something huge frozen in the middle, deep under the ice: a mammoth, only a faint blurred shadow far down
+  // (Floors.frozen: the game's War Mammoth model drawn as a side-on silhouette, made by the 3D board; without it, as
+  // in the 2D look previews, nothing)
+  if (L.frozen === 'mammoth' && Floors.frozen) {
+    const im = Floors.frozen, w = t * 4.6, h = w * im.height / im.width, cx = W / 2 + t * 0.3, cy = (y0 + y1) / 2 + t * 0.1;
+    c.save(); c.translate(cx, cy); c.rotate(-0.09);
+    c.filter = `blur(${Math.max(1.5, t * 0.25)}px)`; c.globalAlpha = 0.16; c.drawImage(im, -w * 0.53, -h * 0.53, w * 1.06, h * 1.06); // the murk round it
+    c.filter = `blur(${Math.max(1, t * 0.045)}px)`; c.globalAlpha = 0.3; c.drawImage(im, -w / 2, -h / 2, w, h); // its shape
+    c.restore(); c.filter = 'none';
+    for (let k = 0; k < 12; k++) blob(cx + (rr() - 0.5) * t * 5, cy + (rr() - 0.5) * t * 2, t * (0.5 + rr()), t * (0.3 + rr() * 0.4), pale, 0.14); // ice over it
+  }
+  // frozen bubbles in clusters
+  for (let k = 0; k < W / t * 3.5; k++) {
+    const cx = rr() * W, cy = by(), n = 4 + Math.floor(rr() * 10);
+    for (let i = 0; i < n; i++) {
+      const x = cx + (rr() - 0.5) * t * 0.6, y = cy + (rr() - 0.5) * t * 0.4, r = t * (0.015 + rr() * 0.04);
+      c.globalAlpha = 0.16; c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+      c.globalAlpha = 0.45; c.strokeStyle = '#E6F7FC'; c.lineWidth = Math.max(0.5, r * 0.3); c.stroke();
+      c.globalAlpha = 0.75; c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(x - r * 0.35, y - r * 0.35, r * 0.25, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // polished shine: long pale streaks, all at the sun's angle, some in bundles
+  c.lineCap = 'round';
+  for (let k = 0; k < W / t * 2.2; k++) {
+    const x = rr() * W, y = by(), l = t * (0.8 + rr() * 2.6), n = rr() < 0.4 ? 2 + Math.floor(rr() * 2) : 1;
+    for (let i = 0; i < n; i++) {
+      c.globalAlpha = 0.16 + rr() * 0.2; c.strokeStyle = '#F4FCFF'; c.lineWidth = t * (0.03 + rr() * 0.09);
+      const ox = i * t * 0.12, oy = i * t * 0.1; c.beginPath(); c.moveTo(x + ox, y + oy); c.lineTo(x + ox + l, y + oy - l * 0.42); c.stroke();
+    }
+  }
+  // spindrift tongues blown over the glacier's edges and a few across it
+  for (let k = 0; k < W / t * 3; k++) {
+    const edge = rr() < 0.8, y = edge ? (rr() < 0.5 ? y0 : y1) + (rr() - 0.5) * t * 0.7 : by();
+    c.globalAlpha = edge ? 0.35 + rr() * 0.25 : 0.18; c.fillStyle = '#F2F7FB';
+    c.beginPath(); c.ellipse(rr() * W, y, t * (0.3 + rr() * 0.8), t * (0.04 + rr() * 0.07), wa + (rr() - 0.5) * 0.08, 0, Math.PI * 2); c.fill();
+  }
+  // sastrugi: sharp wind-carved ridges in the snow, a lit crest and a blue shadow, all pointing the wind's way
+  const px = -wy, py = wx; // across the wind (the shadow side: the sun is up-left)
+  for (let k = 0; k < W * H / (t * t) * 9; k++) {
+    const x = rr() * W, y = rr() * H; if (inBand(y, t * 0.25)) continue;
+    const l = t * (0.18 + rr() * 0.55), w = t * (0.025 + rr() * 0.045), j = (rr() - 0.5) * 0.12, dx = Math.cos(wa + j), dy = Math.sin(wa + j);
+    const ridge = (o, ww) => { c.beginPath(); c.moveTo(x - dx * l * 0.5 + px * o, y - dy * l * 0.5 + py * o);
+      c.quadraticCurveTo(x - dx * l * 0.25 + px * (o + ww), y - dy * l * 0.25 + py * (o + ww), x + dx * l * 0.5 + px * o, y + dy * l * 0.5 + py * o);
+      c.quadraticCurveTo(x - dx * l * 0.2 + px * (o - ww * 0.2), y - dy * l * 0.2 + py * (o - ww * 0.2), x - dx * l * 0.5 + px * o, y - dy * l * 0.5 + py * o); c.fill(); };
+    c.globalAlpha = 0.3 + rr() * 0.15; c.fillStyle = '#86A0C0'; ridge(w * 0.6, w * 1.4);
+    c.globalAlpha = 0.65; c.fillStyle = '#FFFFFF'; ridge(-w * 0.2, -w * 1.1);
+  }
+  c.globalAlpha = 1;
+};
 
 </script>
 <script>
@@ -15423,6 +15545,10 @@ Floors.floor = (() => {
   // ---------- state ----------
   let mode = 'ai';          // ai | claude | tutorial | host | guest
   const solo = () => mode === 'ai' || mode === 'claude' || mode === 'tutorial' || mode === 'sandbox'; // playing against the computer on this screen (sandbox: Replay a round)
+  // the solo modes with a Fight button. Against the AI (mode 'ai') both sides press Ready as online: the AI presses it
+  // AI_READY_MS into each deploy (aiReadyTick), so the looks' "opponent is ready" moments show against it too
+  const fightBtn = () => solo() && mode !== 'ai';
+  const AI_READY_MS = (() => { try { if (/[?&]test\b/.test(location.search)) { const v = /[?&]aiready=(\d+)/.exec(location.search); return v ? +v[1] : 0; } } catch (e) {} return 5000; })(); // UI tests: at once, unless ?aiready=ms
   // the opponent's account on a server match ({ tag, title }), if their phone has one
   const foePlayer = () => mode === 'net' && net.players && net.players[foe()] || null;
   const foeName = () => (mode === 'sandbox' && sbx.foe) || (mode === 'spec' && tour.spec ? tour.spec.foe : '') || tourFoe() || (foePlayer() ? foePlayer().tag : '') || (mode === 'ai' || mode === 'tutorial' ? 'Enemy' : mode === 'claude' ? 'Claude' : 'Opponent'); // a tournament opponent by username
@@ -15432,6 +15558,7 @@ Floors.floor = (() => {
   let phase = 'start';      // start | lobby | draft | deploy | battle | result | end
   try { if (/[?&]test\b/.test(location.search)) window.__tour = () => tour.t && JSON.parse(JSON.stringify(tour.t)); if (/[?&]test\b/.test(location.search)) window.__pb = () => ({ m, me, board3d, board, bt, phase, fx, summary: lastSummary, liveSpeed: liveSpeed.slice(), playSpeed: playSpeed(), away, timeUp, ready: ready.slice(), team: m && m.team ? JSON.parse(JSON.stringify(m.team)) : null, pings: duoPings.slice(), rings: duoOn() ? [0, 1, 2, 3].map(k => duoRing(k).col) : null, expireDeploy: () => { deadline = now() - 400; tick(); } }); } catch (e) {} // read-only peek and countdown trigger for UI tests
   try { if (/[?&]test\b/.test(location.search)) window.__pbRedraw = () => { if (phase === 'deploy') panelDeploy(); render(); }; } catch (e) {} // UI tests that set up a board state: draw it
+  try { if (/[?&]test\b/.test(location.search)) window.__pbView = () => JSON.parse(JSON.stringify({ foeStart: boardView().foeStart, foeReady: boardView().foeReady })); } catch (e) {} // UI tests: what the boards are told
   try { if (/[?&]test\b/.test(location.search)) window.__pbSheet = (side, key) => openMpbSheet(side, key); } catch (e) {} // UI tests: open a 2v2 building's sheet (every kind, either team's)
   try { if (/[?&]test\b/.test(location.search)) window.__pbTeamBSheet = (side, b) => openTeamBuildingSheet(side, b); } catch (e) {} // UI tests: the other lane's building's read-only sheet (2026-11-07)
   let selected = null;      // unit index chosen in the shop
@@ -16158,7 +16285,7 @@ Floors.floor = (() => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '7 Nov 2026 · 8998f2f'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '7 Nov 2026 · c8a39e4'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -16458,7 +16585,7 @@ Floors.floor = (() => {
   }
   // characters left out of the package draw (saved on this device; the host's list counts in a match with a friend)
   let offChars = [];
-  try { offChars = JSON.parse(localStorage.getItem('pb-off-chars') || '[]').filter(id => Game.charInfo(id)); } catch (e) {}
+  try { offChars = JSON.parse(localStorage.getItem('pb-off-chars') || '[]').filter(id => Game.CHARACTERS.some(c => c.id === id)); } catch (e) {}
   // units left out of the match, by name (saved on this device; the host's list counts in a match with a friend)
   let offUnits = [];
   try { offUnits = JSON.parse(localStorage.getItem('pb-off-units') || '[]').filter(n => typeof n === 'string'); } catch (e) {}
@@ -16466,11 +16593,11 @@ Floors.floor = (() => {
   const unitsOn = () => units.length - offIdx().length;
   // The unit pack (2026-11-02), saved on this device; the host's counts with a friend:
   //  'learn'    Learn the game: Game.STANDARD_PACK (fewer units, leaders and towers, for new players)
-  //  'standard' Standard: every unit, leader and tower except the leader Blixten
+  //  'standard' Standard: every unit, leader and tower (Blixten is retired from every pool, see Game.RETIRED_CHARS)
   //  'custom'   developers only: every unit, leader and tower, minus what Leaders and Units leave out (the old All units)
   // A Counter Lab roster always plays as 'custom'. Nobody but a developer can change what a pack holds.
   const PACK_STORE = 'pb-unit-pack2';
-  const STD_OFF_CHARS = ['blixten'];
+  const STD_OFF_CHARS = [];
   let unitPack = 'learn';
   try {
     const v = localStorage.getItem(PACK_STORE), old = localStorage.getItem('pb-unit-pack'); // the old values: 'standard' = the small pack, 'all'
@@ -16598,7 +16725,20 @@ Floors.floor = (() => {
     battleCam: cam && cam.k > 0 ? { zoom: 1 + (CAM.zoom - 1) * cam.k, x: cam.x, y: cam.y, k: cam.k } : null,
     aim: phase === 'deploy' && (aimMode != null || aimDrag) ? { id: aimDrag ? aimDrag.id : aimMode, end: aimDrag ? aimDrag.end : hoverTile } : null, // (aimDrag without aimMode: a head dragged)
     placingBuilding: placingBuilding(), win: null, duo: duoBoard(),
-    foeReady: phase === 'deploy' && !solo() && !!ready[foe()] && !ready[me] }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
+    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me], foeStart: foeStart() }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
+  // round 1 (2026-11-07): the opponent's package squads, as see-through figures side by side along the back row of their
+  // zone, on the side away from their tower: which units they start with, not where they stand (Game.startSeen). Both
+  // boards draw it (render2d drawFoeStart, render3d collectDeploy): [{ unit, x, y }] in board metres, or null
+  function foeStart() {
+    if (phase !== 'deploy' || !m || m.round !== 1 || mode === 'spec' || mode === 'tutorial' || mode === 'sandbox' || duoOn()) return null;
+    const list = Game.startSeen(m, foe());
+    if (!list || !list.length) return null;
+    const n = list.length, back = Game.zoneRows(foe()).slice(-1)[0], tw = (m.towers && m.towers[foe()]) || Game.towerSpot(m, foe());
+    const gap = Math.min(1.4, (Game.COLS - 1) / Math.max(1, n - 1)), wide = (n - 1) * gap;
+    const mid = (Game.COLS - 1) * (tw && tw.col >= Game.COLS / 2 ? 0.3 : 0.7);
+    const c0 = Math.max(0, Math.min(Game.COLS - 1 - wide, mid - wide / 2));
+    return list.map((ui, k) => ({ unit: Game.shownUnit(m, me, foe(), ui), ...Game.tileToWorld(c0 + k * gap, back) }));
+  }
   const board = Render2D(cv, boardView);
   let board3d = null; // the 3D board when it's on (see "the 3D board" below)
   const size = () => (board3d || board).size();
@@ -16773,10 +16913,24 @@ Floors.floor = (() => {
     try { localStorage.setItem(SKINS_SEEN, JSON.stringify(seen)); } catch (e) {}
   }
 
+  // Ashlands: the dragon's shadow sweeps over the field each time the opponent turns ready (in the solo modes with a
+  // Fight button, a moment into each deploy). Scenery3D.flyover does nothing on other looks.
+  const dragonCue = { was: false, round: 0 };
+  function dragonCheck() {
+    if (!board3d || !m || mode === 'spec') return;
+    const on = phase === 'deploy' && (fightBtn() ? true : !!ready[foe()]);
+    if (on && !dragonCue.was && !(fightBtn() && dragonCue.round === m.round)) {
+      dragonCue.round = m.round;
+      const go = () => { const sc = board3d && board3d.scenery, ms = sc && sc.flyover ? sc.flyover() : 0; if (ms) { wakeUntil = Math.max(wakeUntil, performance.now() + ms); if (!raf3d) raf3d = requestAnimationFrame(frame3d); } };
+      if (fightBtn()) setTimeout(() => { if (phase === 'deploy') go(); }, 1800); else go();
+    }
+    dragonCue.was = on;
+  }
   function render() {
     syncSkins();
     syncGrid();
     syncMusic();
+    dragonCheck();
     cv.style.touchAction = phase === 'deploy' ? 'none' : ''; // so a finger can drag squads without scrolling the page
     if (board3d) wake3d(); else { board.draw(); boardMarks(); }
     if (inspect || inspectHtml) inspectCard(); // the tapped unit's card in a fight (gone once the fight is)
@@ -16902,8 +17056,24 @@ Floors.floor = (() => {
   const fmtClock = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   const editable = () => phase === 'deploy' && mode !== 'spec' && !ready[me] && !timeUp && !(mode === 'claude' && claude.fightWaiting);
 
+  // against the AI: it presses Ready AI_READY_MS after the player can deploy (its count waits while they pick a package,
+  // tower or leader, or the AI waits on their leader pick to deploy: aiWaits, unless they press Ready without picking:
+  // runFight settles it); the fight starts at once if the player is ready already
+  let aiReadyAt = 0;
+  function aiReadyTick(t) {
+    if (mode !== 'ai' || phase !== 'deploy' || !m || ready[foe()]) return false;
+    if (!ready[me] && (aiWaits || picksPending() || choosingPack())) { aiReadyAt = 0; return false; }
+    if (!aiReadyAt) { aiReadyAt = t + AI_READY_MS; if (AI_READY_MS > 0) return false; }
+    if (t < aiReadyAt) return false;
+    ready[foe()] = true;
+    if (ready[me]) { runFight(); return true; }
+    panelDeploy(); render();
+    return false;
+  }
+
   function tick() {
     const t = now();
+    if (aiReadyTick(t)) return;
     if (phase === 'deploy') {
       // host: the countdown waits while the opponent is away
       if (mode === 'host' && !net.connected && deadline) { pausedLeft = Math.max(5000, deadline - t); deadline = 0; panelDeploy(); }
@@ -17000,6 +17170,7 @@ Floors.floor = (() => {
     if (o.kind === 'pack') {
       if (!Game.choosePack(m, me, +key)) return;
       const f = Game.freeLeft(m, me); if (f.length) shopTier = tierOf(f[0]); // show the tier of the first free squad
+      if (mode === 'host') sendStatus(); // the guest sees which units it starts with (Game.startSeen)
       changed();
     } else if (o.kind === 'dev') {
       if (!Game.devPick(m, me, key)) return;
@@ -17266,7 +17437,7 @@ Floors.floor = (() => {
     if (mode === 'tutorial' || lost <= 0) { go(); return; }
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Unspent gold</h3><button class="btn small" id="close">Keep shopping</button></div>
       <p style="margin:0">You have ${g} gold. Only ${Game.CARRY_CAP} carries over to the next round, so ${lost} will be lost.</p>
-      <div class="btnrow"><button class="btn primary" id="cap-go">${solo() ? 'Fight anyway' : 'Ready anyway'}</button></div>`;
+      <div class="btnrow"><button class="btn primary" id="cap-go">${fightBtn() ? 'Fight anyway' : 'Ready anyway'}</button></div>`;
     $('sheet-back').hidden = false;
     $('close').addEventListener('click', closeSheet);
     $('cap-go').addEventListener('click', () => { closeSheet(); if (phase === 'deploy' && !timeUp) go(); });
@@ -17482,7 +17653,7 @@ Floors.floor = (() => {
         ${Game.movedId(m, me) != null ? `<button class="btn small" id="undo-move" ${can ? '' : 'disabled'}>Undo move · +${Game.CONFIG.moveCost}</button>` : ''}
       </span>`;
     let action, status;
-    if (solo()) {
+    if (fightBtn()) {
       status = `${m.armies[me].length} squad${m.armies[me].length === 1 ? '' : 's'} on the board`;
       if (mode === 'claude') status = claudeStatus();
       action = `<button class="btn primary" id="fight" ${m.armies[me].length && !choosingTower() ? '' : 'disabled'}>${deadline ? 'Fight now' : 'Fight'}</button>`;
@@ -17492,7 +17663,7 @@ Floors.floor = (() => {
       action = `<button class="btn ${ready[me] ? '' : 'primary'}" id="ready" ${timeUp || choosingTower() ? 'disabled' : ''}>${ready[me] ? 'Not ready' : 'Ready'}</button>`;
     }
     const showShop = !((choosingPack() || choosingTower() || devPicking()) && can);
-    const tip = inline || (selected !== null ? hint : !solo() ? status : !can ? hint
+    const tip = inline || (selected !== null ? hint : !solo() || (mode === 'ai' && ready[foe()]) ? status : !can ? hint
       : left <= 0 ? 'No deployments left · tap a squad to level it up or buy skills'
       : fresh ? `Drag a squad to move it · drag it ${pcLayout() ? 'onto the shop' : 'down here'} to take it back` : `Drag a card ${pcLayout() ? 'onto' : 'up onto'} your zone · hold a card for details`);
     const pips = Array.from({ length: Math.max(allowed, 0) }, (_, k) => `<i class="${k < left ? 'on' : ''}"></i>`).join('');
@@ -17616,6 +17787,7 @@ Floors.floor = (() => {
     if (mode === 'guest') sendSide();
     if (mode === 'net') send({ t: 'ready', v: ready[me], round: m.round });
     if (mode === 'host') { sendStatus(); if (ready[0] && ready[1] && net.connected) { runFight(); return; } }
+    if (mode === 'ai' && ready[0] && ready[1]) { runFight(); return; }
     panelDeploy(); render();
   }
 
@@ -20302,7 +20474,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
   function enterDeploy(ms) {
     phase = 'deploy'; bt = null; watchSq = null; battlePre = null; lastPre = null; fx = []; selected = null; rangeOf = null; timeUp = false; resultShownAt = 0; elfPlacing = false; wallPlacing = false; buildPlacing = null;
-    ready = [false, false];
+    ready = [false, false]; aiReadyAt = 0;
     heldMs = ms > 0 && mode !== 'guest' && mode !== 'net' && picksPending() ? ms : 0;
     deadline = ms > 0 && !heldMs ? now() + ms : 0;
     $('clock').textContent = '';
@@ -21223,7 +21395,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
-  const V3D = '8c628c5e9a'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '6d7c2cb3e0'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
@@ -22558,7 +22730,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (s.map && s.map.removed) s.map.removed = s.map.removed.filter(x => !(x.side === 0 && x.round === m.round)); // and mushroom tiles removed this round
       if (s.altar) s.altar = s.altar.filter(x => !(x.side === 0 && x.round === m.round)); // and altar purchases
       if (s.unlocks && s.unlocks[0]) for (const ui in s.unlocks[0]) if (s.unlocks[0][ui] === m.round) delete s.unlocks[0][ui]; // so do this round's unlocks
-      if (m.round === 1 && s.packages) { s.packages = [[], s.packages[1]]; s.pack = [null, s.pack ? s.pack[1] : null]; } // and the host's package
+      if (m.round === 1 && s.packages) { const pk = Game.packOf(s, 0); if (pk) s.packSeen = { 0: pk.squads.slice() }; s.packages = [[], s.packages[1]]; s.pack = [null, s.pack ? s.pack[1] : null]; } // and the host's package (not which units its squads are: Game.startSeen)
     }
     return s;
   }
@@ -22571,7 +22743,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const ph = phase === 'battle' ? 'result' : phase;
     send({ ...base, phase: ph, m: syncState(), remaining: phase === 'deploy' && deadline ? deadline - now() : 0, ready, nextReady, rematch, summary: lastSummary });
   }
-  const sendStatus = () => send({ t: 'status', ready, nextReady, rematch });
+  const sendStatus = () => send({ t: 'status', ready, nextReady, rematch, start: m && m.round === 1 && phase === 'deploy' ? Game.startSeen(m, 0) : null }); // start: round 1, the host's starting units (Game.startSeen)
 
   function hostRecv(d) {
     if (sbxHold(hostRecv, d)) return;
@@ -22965,6 +23137,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (d.ready) ready[0] = !!d.ready[0];
       if (d.nextReady) nextReady[0] = !!d.nextReady[0];
       if (d.rematch) rematch[0] = !!d.rematch[0];
+      if (phase === 'deploy' && m && m.round === 1 && Array.isArray(d.start) && d.start.every(Number.isInteger)) { m.packSeen = { 0: d.start.slice() }; render(); } // the host's starting units
       if (phase === 'deploy') panelDeploy();
       else if (phase === 'end') showResult(lastSummary);
     } else if (d.t === 'speed') { if (SPEEDS.includes(d.s)) { liveSpeed[0] = d.s; showSpeed(); } }
