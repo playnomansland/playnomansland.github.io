@@ -397,6 +397,15 @@ body.profile .pf { display: grid; } body.in-history .pf { display: none; } body.
 body.profile.units .pf-opts > :not(.ur), body.profile.units #pf-hist { display: none; }
 body.profile.units .pf-opts { margin-top: 18px; }
 .pf, .history { top: clamp(100px, 14.2vh, 128px); }
+.rooms, .newroom { top: clamp(100px, 14.2vh, 128px) !important; }
+.newroom h2, .rooms h2 { font-size: clamp(52px, 8.4vh, 76px) !important; margin-bottom: clamp(10px, 2.9vh, 26px) !important; }
+.newroom .nr-opts { margin-bottom: clamp(10px, 3.3vh, 30px); }
+.newroom .nr-opts .seg button, .newroom .nr-opts .bf-step b { font-size: clamp(22px, 3.3vh, 30px); }
+.newroom .nr-note { margin-bottom: clamp(5px, 2vh, 18px); }
+.newroom .create { font-size: clamp(30px, 4.4vh, 36.4px); }
+.signin h2 { margin-top: 8px !important; }
+.drop .k { margin-top: clamp(10px, 2vh, 18px); }
+.set { row-gap: clamp(3px, .8vh, 7px); }
 .plate h2 { font-size: clamp(60px, 11.6vh, 104px) !important; }
 .ptitle { margin-top: clamp(6px, 1.3vh, 12px); font-size: clamp(20px, 2.9vh, 26px); }
 .pf-opts { margin: clamp(12px, 3.1vh, 28px) 0 clamp(10px, 2.4vh, 22px) !important; row-gap: 0 !important; }
@@ -2174,6 +2183,12 @@ function notes() {
   // an open dropdown: notes it would cover hide while it's open, and the music player steps aside if it's under it
   const dr = document.querySelector('.drop:not([hidden])')?.getBoundingClientRect(), under = (r) => dr && r.left < dr.right && r.right > dr.left && r.top < dr.bottom && r.bottom > dr.top;
   body.classList.toggle('drop-over-music', !!under(document.querySelector('.music').getBoundingClientRect()) && !body.classList.contains('music-open'));
+  // the main menu's words (PLAY and the four under it): an island note whose label or line would run into them hides
+  const menuR = !inProf && !body.classList.contains('play') && !body.classList.contains('welcome') ? document.querySelector('.menu').getBoundingClientRect() : null;
+  const crosses = (d, R) => { const n = (d.match(/-?[\d.]+/g) || []).map(Number); for (let k = 0; k + 3 < n.length; k += 2) for (let t = 0; t <= 1; t += 0.05) {
+    const px = n[k] + (n[k + 2] - n[k]) * t, py = n[k + 1] + (n[k + 3] - n[k + 1]) * t; if (px > R.left - 8 && px < R.right + 8 && py > R.top - 8 && py < R.bottom + 8) return true; } return false; };
+  const offMenu = (el, ln) => { if (!menuR || el.dataset.anchor === 'btn') return true; const r = el.getBoundingClientRect();
+    return !(r.left < menuR.right + 8 && r.right > menuR.left - 8 && r.top < menuR.bottom + 8 && r.bottom > menuR.top - 8) && !crosses((ln.match(/d="([^"]*)"/) || [])[1] || '', menuR); };
   const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
   for (const el of document.querySelectorAll('.note:not(.pnote)')) {
     const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
@@ -2196,7 +2211,8 @@ function notes() {
       continue;
     }
     const [o, hh, [dx, dy]] = bf ? (inPlay ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
-    const ln = pin(el, x, y, dx, dy); if (clear(el, x, y)) html += ln; else el.style.display = 'none';
+    let ddy = dy; if (el.dataset.anchor === 'golemW') { const lb = document.querySelector('.logo').getBoundingClientRect().bottom; ddy = Math.max(dy, lb + 16 + el.offsetHeight - y); } // clear of the big logo
+    const ln = pin(el, x, y, dx, ddy); if (clear(el, x, y) && offMenu(el, ln)) html += ln; else el.style.display = 'none';
   }
   // Profile: the golem's note, while you can still earn its skin
   for (const el of document.querySelectorAll('.pnote')) {
@@ -2211,7 +2227,7 @@ function notes() {
     if (inProf && nameR + tw > innerWidth - 24) { tabs.style.left = (48 + tw / 2) + 'px'; tabs.style.top = (colB + 34) + 'px'; }
     else { const lx = Math.min(Math.max(tx0, nameR + tw / 2), innerWidth - 24 - tw / 2); tabs.style.left = lx + 'px';
       tabs.style.top = Math.max(118, ty0 - 330, inProf && lx - tw / 2 < kR ? kB + 14 : 0) + 'px'; } }
-  const tabsLeft = inProf && nameR + tabs.offsetWidth > innerWidth - 24, sheetL = tabsLeft ? Math.min(tabs.getBoundingClientRect().right + 24, innerWidth - 354) : colR;
+  const tabsLeft = inProf && nameR + tabs.offsetWidth > innerWidth - 24, sheetL = tabsLeft ? Math.min(tabs.getBoundingClientRect().right + 24, innerWidth - 354) : menuR ? Math.min(menuR.right + 24, innerWidth - 354) : colR;
   if (picked && body.classList.contains('units')) {
     sh.hidden = false; const [x, y] = proj(picked, 1.4), w = sh.offsetWidth, h = sh.offsetHeight, tr = tabs.getBoundingClientRect();
     // the sheet hangs below its unit, over the open grass in front of the row; never over the tabs or off the bottom
