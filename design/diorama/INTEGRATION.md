@@ -334,6 +334,28 @@ the new-Title / new-Skin notes.
 - Checked against a stubbed account server: refresh, title, a refused and a saved rename, Keep it's button, Plain /
   Champion on the Brute's sheet, both history tabs, Load more, a replay that fails, a guest's double-tap Log out.
 
+**Step 6 done (2026-11-07):** Friends and Settings on the game (`screens/game-step6.jpg`).
+- **Friends** (`#fr-open`, the dropdown `#dd-friends`) draws from the game's `fr` (the hub keeps it live; `frRedraw`
+  now also redraws the dropdown, `dio.api.friends()`). The badge is the game's `frBadge` (`.fr-badge`). Rows: the dot,
+  the name and title, where they are (from `f.status`), INVITE (online in the menu; folds out Standard / Ranked when
+  ranked can be played, then the game's `frInvite`: a private room and the hub's invite), WATCH (a friend in a match
+  with a code: `lobbyWatch`), messages with the unread count, ⋯ (Mute, Remove twice: `frAct`). Requests: Accept /
+  Decline / Cancel (`frAct`). Add by username (`#fr-tag`, `#fr-add`; several players with a name → pick one), messages
+  in `#fr-msg` (the game's `frNote`). Game invites at the top: JOIN (`frJoin`) / Decline. A guest or no account: why it
+  needs Google, and Google's button.
+- **A thread** (`openThread`): `dm/list`, the game's `frThreadDraw` into `#fr-thread`, SEND over the hub, a live message
+  lands in it (`frDm` knows the dropdown's thread is open: `dio.frOpen`), Mute, Report (twice, `dm/report`).
+- **Settings** (`#music-open`, `#dd-settings`): Music (`setMusic`), Music volume, Sound effects, Effects volume (with a
+  sample), Other apps' sound where the browser has it, Chat, Emotes (`snd`, `saveSound`), Stay logged in (`setStay`),
+  Developer: Ranked play (`acctCall('ranked')`), Playlists (`openPlaylist`, the game's sheet until step 7) and Report a
+  bug (`openBugSheet`). The mockup's general Spectators switch is gone: the game sets spectators per room (New room).
+- **In a match** the HUD keeps opening the old Settings sheet (it has the 2D / 3D board, the phone layout and the 3D
+  quality); it gets the Diorama's look in step 9.
+- The game's invite banner and friend toasts (`.fr-banner`, `.fr-toast`, outside `#dio`) take the Diorama's look while
+  the switch is on.
+- Checked with a stubbed account server and hub socket: badge, rows, Invite → private room, a thread both ways, a live
+  invite, Requests, Accept, Add with several matches, Esc, Settings to the game's storage, Report a bug.
+
 **Running the UI tests in this sandbox:** `export NODE_PATH=/opt/node-tools/node_modules` (they require
 `playwright-core`), and some tests launch `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: link it to
 `/opt/pw-browsers/chromium`. These fail on a clean `main` here too (no server `node_modules`, and so on), so compare

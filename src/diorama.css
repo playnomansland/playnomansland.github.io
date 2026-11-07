@@ -557,3 +557,22 @@
 #dio .history .lb-all { margin-top: 10px; justify-self: start; }
 #dio .history .lb-all[hidden] { display: none; }
 #dio .h-tabs button[disabled] { opacity: .35; cursor: not-allowed; }
+
+/* ── step 6: the game's thread lines (frThreadDraw) and messages in the Friends dropdown ── */
+#dio .drop .thread { display: grid; gap: 10px; max-height: 320px; overflow-y: auto; margin: 14px 0 10px; }
+#dio .drop .fr-line { justify-self: start; max-width: 80%; font: 400 14px/1.4 var(--type); }
+#dio .drop .fr-line.me { justify-self: end; text-align: right; color: var(--saffron); }
+#dio .drop .fr-line small { display: block; font-size: 11px; opacity: .55; margin-top: 2px; }
+#dio .drop .thread .btn { justify-self: center; font: 400 12px var(--type); text-decoration: underline; opacity: .75; }
+#dio .drop .fr-msg:empty, #dio .drop #fr-tmsg:empty { display: none; }
+#dio .drop .fr-msg { color: var(--saffron); opacity: 1; }
+#dio .drop .acct-google { margin-top: 14px; width: 280px; }
+#dio .drop .w[disabled] { opacity: .3; }
+/* the game's invite banner and friend toasts (they live outside #dio, over everything): in the Diorama's look while
+   the switch is on. Ink panel with a cut corner, typed words, Join on the saffron shard */
+html.diorama .fr-banner, html.diorama .fr-toast { border: 0; border-radius: 0; box-shadow: none; background: #17140F; color: #F4ECD8; font: 400 14px/1.4 "Courier Prime", "Courier New", monospace;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 5% 100%, 0 calc(100% - 16px)); filter: drop-shadow(0 12px 24px rgba(0,0,0,.35)); }
+html.diorama .fr-banner b, html.diorama .fr-toast b { font: 700 16px "Bricolage Grotesque", system-ui, sans-serif; }
+html.diorama .fr-banner .btn { border: 0; border-radius: 0; background: none; color: #F4ECD8; padding: 4px 10px 1px; font: 700 18px/1 "Chakra Petch", sans-serif; text-transform: uppercase; opacity: .7; }
+html.diorama .fr-banner .btn.primary { opacity: 1; color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+html.diorama .fr-toast { text-align: left; }

@@ -693,6 +693,25 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .history .lb-all[hidden] { display: none; }
 #dio .h-tabs button[disabled] { opacity: .35; cursor: not-allowed; }
 
+/* ── step 6: the game's thread lines (frThreadDraw) and messages in the Friends dropdown ── */
+#dio .drop .thread { display: grid; gap: 10px; max-height: 320px; overflow-y: auto; margin: 14px 0 10px; }
+#dio .drop .fr-line { justify-self: start; max-width: 80%; font: 400 14px/1.4 var(--type); }
+#dio .drop .fr-line.me { justify-self: end; text-align: right; color: var(--saffron); }
+#dio .drop .fr-line small { display: block; font-size: 11px; opacity: .55; margin-top: 2px; }
+#dio .drop .thread .btn { justify-self: center; font: 400 12px var(--type); text-decoration: underline; opacity: .75; }
+#dio .drop .fr-msg:empty, #dio .drop #fr-tmsg:empty { display: none; }
+#dio .drop .fr-msg { color: var(--saffron); opacity: 1; }
+#dio .drop .acct-google { margin-top: 14px; width: 280px; }
+#dio .drop .w[disabled] { opacity: .3; }
+/* the game's invite banner and friend toasts (they live outside #dio, over everything): in the Diorama's look while
+   the switch is on. Ink panel with a cut corner, typed words, Join on the saffron shard */
+html.diorama .fr-banner, html.diorama .fr-toast { border: 0; border-radius: 0; box-shadow: none; background: #17140F; color: #F4ECD8; font: 400 14px/1.4 "Courier Prime", "Courier New", monospace;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 5% 100%, 0 calc(100% - 16px)); filter: drop-shadow(0 12px 24px rgba(0,0,0,.35)); }
+html.diorama .fr-banner b, html.diorama .fr-toast b { font: 700 16px "Bricolage Grotesque", system-ui, sans-serif; }
+html.diorama .fr-banner .btn { border: 0; border-radius: 0; background: none; color: #F4ECD8; padding: 4px 10px 1px; font: 700 18px/1 "Chakra Petch", sans-serif; text-transform: uppercase; opacity: .7; }
+html.diorama .fr-banner .btn.primary { opacity: 1; color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+html.diorama .fr-toast { text-align: left; }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -17060,7 +17079,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '7 Nov 2026 · 80c0eb7'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '7 Nov 2026 · f604355'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -20140,7 +20159,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   function frDm(d) {
     const own = d.from && acct && d.from.id === acct.id, other = own ? d.to : d.from && d.from.id;
     const t = fr.thread;
-    if (t && t.id === other && !$('sheet-back').hidden && $('fr-thread')) {
+    if (t && t.id === other && (!$('sheet-back').hidden || (DIO && dio.frOpen)) && $('fr-thread')) { // (the Diorama: its Friends dropdown's thread)
       if (!t.lines.some(x => x.k === d.k)) t.lines.push({ k: d.k, from: own ? acct.id : other, text: d.text, at: d.at });
       frThreadDraw(true);
       if (!own) frReadSoon(other);
@@ -20213,7 +20232,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     frDraw();
     if (frOk()) frLoad();
   }
-  const frRedraw = () => { if (!$('sheet-back').hidden && $('fr-sheet')) frDraw(); };
+  const frRedraw = () => { if (DIO && dio.api) dio.api.friends(); if (!$('sheet-back').hidden && $('fr-sheet')) frDraw(); }; // (the Diorama's Friends dropdown too)
   function frDraw() {
     const el = $('fr-sheet'); if (!el) return;
     if (!frOk()) {
@@ -26840,7 +26859,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
           : pf.outSure ? 'A guest can’t log back in: sign up with Google first to keep this username and your results.' : 'Log out of this phone. A guest can’t log back in.');
       } else h += row('Account', `<button class="act primary" id="acct-guest" data-guest ${dis}>Play as a guest</button>${g}`, `No account needed to play. Make a guest to get a username on this phone${g ? ', or sign in with Google to keep it on any phone' : ''}.`);
       const inp = document.activeElement && document.activeElement.id === 'pf-tag' ? $('pf-tag').value : null; // typing stays typed
-      $('pf-opts').innerHTML = h; $('pf-msg').textContent = pf.msg;
+      $('pf-opts').innerHTML = body.classList.contains('profile') ? h : ''; $('pf-msg').textContent = pf.msg; // (only while it's open: no stray #acct-google)
       if (inp != null && $('pf-tag')) { $('pf-tag').value = inp; $('pf-tag').focus(); $('pf-save').hidden = inp.trim() === A.tag || inp.trim().length < 2; }
       if (g && $('acct-google') && body.classList.contains('profile')) { // Google's own button; afterwards the profile shows the account
         acctUi.after = async () => { pfMsg('Signed in with Google.'); if (phase === 'start') drawHome(); };
@@ -26883,7 +26902,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     // Profile opens over the menu; the account is refreshed from the server (the session rotates daily, titles and skins may be new)
     function openProfile() { openDrop(''); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
       if (acct && !sampleAcct) acctCall('me', {}, true).then(r => { if (r.status === 200) { acctTake(r); A = acct; buildTier(tier); drawProfile(); } else if (r.status === 401) { acctFail(r); A = acct; drawProfile(); } }); }
-    function closeProfile() { body.classList.remove('profile', 'in-history', 'units'); picked = null; hovered = null; want = VIEWS.play; backBtn.textContent = '← Menu'; acctUi.after = null; }
+    function closeProfile() { body.classList.remove('profile', 'in-history', 'units'); picked = null; hovered = null; want = VIEWS.play; backBtn.textContent = '← Menu'; acctUi.after = null; drawProfile(); }
     acctBtn.addEventListener('click', openProfile);
 
     // ── Match history (the old openHistorySheet / histLoad): My matches (acctCall 'history', one card per match, its rounds
@@ -27043,94 +27062,152 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       b.addEventListener('focus', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x === b))); });
     body.querySelector('.door').addEventListener('mouseleave', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x.id === 'w-login')));
 
-    // ── the dropdowns (the game's Friends sheet, openFriends, and Settings, openSoundSheet), on sample data ──
+    // ── the dropdowns: Friends (the game's friends: fr, its hub and the account routes) and Settings (snd, as the old
+    // Settings sheet on the menu). One open at a time; outside, Esc or the button again closes them. In a match the
+    // HUD keeps the old Settings sheet (it has the board, layout and quality there) ──
     const ddBtn = { friends: body.querySelectorAll('.acct button')[0], settings: body.querySelectorAll('.acct button')[2] };
-    const dd = { open: '', tab: 'friends', thread: -1, inviteOpen: true, more: -1, inviting: -1, invited: {}, adding: '', reqDone: {} };
-    const FRIENDS = [ // status as the game's hub sends it: the menu, a room, or a match with its round
-      { tag: 'Pebble', t: 'initiate', st: 'menu', unread: 2 },
-      { tag: 'Captain Tuesday', t: 'legend', st: 'match', kind: 'Ranked', round: 3 },
-      { tag: 'Moth', st: 'room', kind: 'Standard' },
-      { tag: 'Bramble', t: 'goodsport', st: 'off', seen: '2 days ago' },
-      { tag: 'Old Gus', st: 'off', seen: 'last week', muted: true },
-    ];
-    const REQ_IN = [{ tag: 'Hedgewitch', t: 'day1' }, { tag: 'Ironmoss' }], REQ_OUT = [{ tag: 'Sleepy Ent' }];
-    const THREAD = [['them', 'gg. that mammoth was rude', 'yesterday'], ['me', 'it never gets tired', 'yesterday'], ['them', 'rematch tonight?', '20 min ago'], ['them', 'bring the golem', '19 min ago']];
-    const SET = { music: true, vol: 60, sfx: true, sfxVol: 80, chat: true, emotes: true, spec: true, stay: true, ranked: true };
+    ddBtn.friends.id = 'fr-open'; ddBtn.settings.id = 'music-open'; // the old menu's ids
+    { const bd = $('fr-badge'); bd.classList.add('fr-badge'); bd.removeAttribute('id'); } // frBadge() fills every .fr-badge
+    const dd = { open: '', several: null };
     const msgSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v11H9l-5 4v-4H3z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></svg>';
-    const frOn = () => !!(A && A.google);
-    function frBadge() { const n = frOn() ? REQ_IN.filter((r, i) => !dd.reqDone['in' + i]).length + FRIENDS.reduce((t, f) => t + (f.unread || 0), 0) + (dd.inviteOpen ? 1 : 0) : 0;
-      const b = $('fr-badge'); b.hidden = !n; b.textContent = n; }
-    const where = (f) => f.st === 'menu' ? 'In the menu' : f.st === 'room' ? `In a room · ${f.kind}` : f.st === 'match' ? `Playing ${f.kind} · round ${f.round}` : `Offline · ${f.seen}`;
+    const frT = (t) => DTITLES[t] ? `<span class="tt" style="--tc:${DTITLES[t][1]}">${esc(DTITLES[t][0])}</span>` : '';
+    // where a friend is, as the game says it (frStatus), in the Diorama's words
+    const frWhereD = (f) => !f.online ? (f.seen ? `Offline · ${frAgo(f.seen)}` : 'Offline') : !f.status || f.status.where === 'menu' ? 'In the menu' : f.status.where === 'room' ? 'In a room' : `Playing${f.status.round ? ' · round ' + f.status.round : ''}`;
     function drawFriends() {
-      const el = $('dd-friends'); frBadge();
-      if (!frOn()) { el.innerHTML = `<h3>Friends</h3><p class="hint">Friends need a Google sign-in, so they can find you on any phone. ${A ? 'Your guest name and results come with you.' : ''}</p>
-        <button class="gbtn" data-google><i aria-hidden="true">G</i>Sign in with Google</button>`; return; }
-      if (dd.thread >= 0) { const f = FRIENDS[dd.thread];
-        el.innerHTML = `<button class="fr-back" data-back>← Friends</button><h3>${esc(f.tag)} <small>${where(f)}</small></h3>
-          <ol class="thread">${THREAD.map(([who, txt, at]) => `<li class="${who}">${esc(txt)}<small>${who === 'me' ? 'you · ' : ''}${at}</small></li>`).join('')}</ol>
-          <div class="fr-add"><input placeholder="Message ${esc(f.tag)}" aria-label="Message" maxlength="200"><button class="w go">Send</button></div>
-          <p class="hint"><button class="lnk" data-mute="${dd.thread}">${f.muted ? 'Unmute messages' : 'Mute messages'}</button> &nbsp; <button class="lnk">Report</button></p>`; return; }
-      const nIn = REQ_IN.filter((r, i) => !dd.reqDone['in' + i]).length, online = FRIENDS.filter(f => f.st !== 'off').length;
-      let h = `<h3>Friends <small>${online} online · ${FRIENDS.length} friends</small></h3>`;
-      if (dd.inviteOpen) h += `<div class="fr-inv"><span class="k">Game invite</span><p><b>Pebble</b> wants a 1v1 Standard. The room is waiting.</p>
-        <span class="row"><button class="w" data-join>Join</button><button class="lnk" data-decline>Decline</button></span></div>`;
-      h += `<div class="fr-tabs" role="group" aria-label="Friends or requests"><button data-tab="friends" aria-pressed="${dd.tab === 'friends'}">Friends</button><button data-tab="requests" aria-pressed="${dd.tab === 'requests'}">Requests${nIn ? `<i>${nIn}</i>` : ''}</button></div>
-        <div class="fr-add"><input id="fr-add" placeholder="Add by username" aria-label="Add a friend by username" maxlength="16" value="${esc(dd.adding)}"><button class="w" data-add>Add</button></div>`;
-      if (dd.tab === 'friends') h += `<ul class="fr-list">${FRIENDS.map((f, i) => { const T = DTITLES[f.t];
-          const act = dd.invited[i] ? `<span class="done">Invited · ${dd.invited[i]}</span>` : f.st === 'menu' ? `<button class="w${dd.inviting === i ? ' go' : ''}" data-invite="${i}">Invite</button>` : f.st === 'match' ? '<button class="w">Watch</button>' : '';
-          const sub = dd.inviting === i && !dd.invited[i] ? `<span class="sub"><span class="lnk" style="text-decoration:none">Invite to</span><button class="w" data-kind="${i}|1v1 Standard">Standard</button><button class="w" data-kind="${i}|1v1 Ranked">Ranked</button></span>`
-            : dd.more === i ? `<span class="sub"><button class="lnk" data-mute="${i}">${f.muted ? 'Unmute messages' : 'Mute messages'}</button><button class="lnk${dd.removeSure === i ? ' sure' : ''}" data-remove="${i}">${dd.removeSure === i ? 'Tap again to remove' : 'Remove friend'}</button></span>` : '';
-          return `<li><span class="dot${f.st !== 'off' ? ' on' : ''}" aria-label="${f.st !== 'off' ? 'online' : 'offline'}"></span><span><b>${esc(f.tag)}</b>${T ? `<span class="tt" style="--tc:${T[1]}">${esc(T[0])}</span>` : ''}<small>${where(f)}${f.muted ? ' · muted' : ''}</small></span>
-            <span class="acts">${act}<button class="msg" data-thread="${i}" aria-label="Messages with ${esc(f.tag)}">${msgSvg}${f.unread ? `<i>${f.unread}</i>` : ''}</button><button class="more" data-more="${i}" aria-label="More">⋯</button></span>${sub}</li>`; }).join('')}</ul>`;
-      else h += `<span class="k">Asking to be your friend</span><ul class="fr-list">${REQ_IN.map((r, i) => { const T = DTITLES[r.t], d = dd.reqDone['in' + i];
-          return `<li><span class="dot"></span><span><b>${esc(r.tag)}</b>${T ? `<span class="tt" style="--tc:${T[1]}">${esc(T[0])}</span>` : ''}</span><span class="acts">${d ? `<span class="done">${d}</span>` : `<button class="w go" data-accept="${i}">Accept</button><button class="lnk" data-refuse="${i}">Decline</button>`}</span></li>`; }).join('') || '<li><small>No requests.</small></li>'}</ul>
-        <span class="k">Waiting for them</span><ul class="fr-list">${REQ_OUT.map((r, i) => `<li><span class="dot"></span><span><b>${esc(r.tag)}</b><small>${dd.reqDone['out' + i] || 'Sent yesterday'}</small></span><span class="acts">${dd.reqDone['out' + i] ? '' : `<button class="lnk" data-cancel="${i}">Cancel</button>`}</span></li>`).join('')}</ul>`;
-      el.innerHTML = h; frBadge();
+      const el = $('dd-friends'); if (dd.open !== 'friends') return;
+      frBadge();
+      if (!frOk()) { // guests and no account: friends need Google
+        el.innerHTML = `<h3>Friends</h3><p class="hint">Friends, invites and messages are for players signed in with Google, so they can find you on any phone.${acct ? ' Your username and results come with you.' : ''}</p>
+          ${GOOGLE_CLIENT_ID && !acctUi.off ? '<div id="acct-google" class="acct-google"></div>' : ''}<p class="hint" id="fr-msg" aria-live="polite"></p>`;
+        if ($('acct-google')) { acctUi.after = async () => { if (phase === 'start') drawHome(); drawFriends(); frLoad(); }; acctGoogleButton('signin_with'); }
+        return;
+      }
+      if (fr.thread) return drawThread();
+      const d = fr.data, online = d ? d.friends.filter(f => f.online).length : 0, nIn = d ? d.incoming.length : 0;
+      const typed = $('fr-tag') ? $('fr-tag').value : '', focused = document.activeElement && document.activeElement.id === 'fr-tag';
+      let h = `<h3>Friends <small>${d ? `${online} online · ${d.friends.length} friend${d.friends.length === 1 ? '' : 's'}` : ''}</small></h3>`;
+      h += fr.invites.map(x => `<div class="fr-inv"><span class="k">Game invite</span><p><b>${esc(x.from.tag || 'A friend')}</b> wants a 1v1 ${x.mode === 'ranked' ? 'Ranked' : 'Standard'}. The room is waiting.</p>
+        <span class="row">${frInMatch() ? '<span class="lnk" style="text-decoration:none">After this match</span>' : `<button class="w go" data-join="${esc(x.code)}">Join</button>`}<button class="lnk" data-decline="${esc(x.code)}">Decline</button></span></div>`).join('');
+      h += `<div class="fr-tabs" role="group" aria-label="Friends or requests"><button data-tab="friends" aria-pressed="${fr.tab !== 'requests'}">Friends</button><button data-tab="requests" aria-pressed="${fr.tab === 'requests'}">Requests${nIn ? `<i>${nIn}</i>` : ''}</button></div>
+        <div class="fr-add"><input id="fr-tag" placeholder="Add by username" aria-label="Add a friend by username" maxlength="16" autocomplete="off" spellcheck="false"><button class="w" id="fr-add">Add</button></div>
+        <p class="hint fr-msg" id="fr-msg" aria-live="polite">${esc(fr.msg || '')}</p>`;
+      if (dd.several) h += `<ul class="fr-list">${dd.several.map(p => `<li><span class="dot"></span><span><b>${esc(p.tag)}</b>${frT(p.title)}</span><span class="acts"><button class="w go" data-addid="${esc(p.id)}">Add</button></span></li>`).join('')}</ul>`;
+      if (!d) h += '<p class="hint">Loading…</p>';
+      else if (fr.tab !== 'requests') h += d.friends.length ? `<ul class="fr-list">${d.friends.map(f => {
+          const inv = fr.invited[f.id] && fr.invited[f.id].expires > now(), watch = f.online && f.status && f.status.where === 'match' && f.status.code;
+          const act = inv ? '<span class="done">Invited</span>' : f.online && (!f.status || f.status.where === 'menu') ? `<button class="w${fr.pick === f.id ? ' go' : ''}" data-act="invite" data-id="${f.id}">Invite</button>` : watch ? `<button class="w" data-watch="${f.id}">Watch</button>` : '';
+          const sub = fr.pick === f.id ? `<span class="sub"><span class="lnk" style="text-decoration:none">Invite to</span><button class="w" data-act="inv-std" data-id="${f.id}">Standard</button><button class="w" data-act="inv-rk" data-id="${f.id}">Ranked</button></span>`
+            : fr.more === f.id ? `<span class="sub"><button class="lnk" data-act="mute" data-id="${f.id}">${f.muted ? 'Unmute messages' : 'Mute messages'}</button><button class="lnk${fr.sure === f.id ? ' sure' : ''}" data-act="remove" data-id="${f.id}">${fr.sure === f.id ? 'Tap again to remove' : 'Remove friend'}</button></span>` : '';
+          return `<li><span class="dot${f.online ? ' on' : ''}" role="img" aria-label="${f.online ? 'online' : 'offline'}"></span><span><b>${esc(f.tag)}</b>${frT(f.title)}<small>${esc(frWhereD(f))}${f.muted ? ' · muted' : ''}</small></span>
+            <span class="acts">${act}<button class="msg" data-act="message" data-id="${f.id}" aria-label="Messages with ${esc(f.tag)}">${msgSvg}${f.unread ? `<i>${f.unread}</i>` : ''}</button><button class="more" data-act="more" data-id="${f.id}" aria-label="More" aria-expanded="${fr.more === f.id}">⋯</button></span>${sub}</li>`; }).join('')}</ul>`
+        : '<p class="hint">No friends yet. Add one by username above, or from a name on the leaderboard.</p>';
+      else h += `<span class="k">Asking to be your friend</span><ul class="fr-list">${d.incoming.map(p => `<li><span class="dot"></span><span><b>${esc(p.tag)}</b>${frT(p.title)}<small>${esc(frAgo(p.created))}</small></span><span class="acts"><button class="w go" data-act="accept" data-id="${p.id}">Accept</button><button class="lnk" data-act="decline" data-id="${p.id}">Decline</button></span></li>`).join('') || '<li><small>No requests.</small></li>'}</ul>
+        <span class="k">Waiting for them</span><ul class="fr-list">${d.outgoing.map(p => `<li><span class="dot"></span><span><b>${esc(p.tag)}</b><small>Sent ${esc(frAgo(p.created))}</small></span><span class="acts"><button class="lnk" data-act="cancel" data-id="${p.id}">Cancel</button></span></li>`).join('') || '<li><small>Nobody.</small></li>'}</ul>`;
+      el.innerHTML = h;
+      if (typed) $('fr-tag').value = typed; if (focused) $('fr-tag').focus();
     }
-    const onoff = (key, lab, note = '') => `<span class="lab">${lab}</span><span class="seg"><button class="w" data-set="${key}|1" aria-pressed="${SET[key]}">On</button><button class="w" data-set="${key}|0" aria-pressed="${!SET[key]}">Off</button></span>${note ? `<p class="sn">${note}</p>` : ''}`;
-    const vol = (key, on, lab) => `<span class="lab">${lab}</span><span class="vol"><input type="range" min="0" max="100" step="5" value="${SET[key]}" data-vol="${key}" style="--v:${SET[key]}%" aria-label="${lab}" ${SET[on] ? '' : 'disabled'}><b>${SET[key]}</b></span>`;
+    // a thread: ← Friends, the name and where they are, the lines (the game's frThreadDraw into #fr-thread), Message and SEND
+    function drawThread() {
+      const t = fr.thread, f = fr.data && fr.data.friends.find(x => x.id === t.id);
+      const typed = $('fr-text') ? $('fr-text').value : '';
+      $('dd-friends').innerHTML = `<button class="fr-back" data-back>← Friends</button><h3>${esc(t.tag)} <small>${f ? esc(frWhereD(f)) : ''}</small></h3>
+        <div class="thread" id="fr-thread"><p class="hint">Loading…</p></div>
+        <div class="fr-add"><input id="fr-text" placeholder="Message ${esc(t.tag)}" aria-label="Message" maxlength="300" autocomplete="off"><button class="w go" id="fr-go">Send</button></div>
+        <p class="hint" id="fr-tmsg" aria-live="polite"></p>
+        <p class="hint"><button class="lnk" data-act="mute" data-id="${t.id}">${f && f.muted ? 'Unmute messages' : 'Mute messages'}</button> &nbsp; <button class="lnk${t.sure ? ' sure' : ''}" data-report>${t.sure ? 'Tap again to report' : 'Report'}</button></p>`;
+      if (typed) $('fr-text').value = typed;
+      if (t.loaded) frThreadDraw(true);
+    }
+    async function openThread(id) {
+      const f = fr.data && fr.data.friends.find(x => x.id === id);
+      fr.thread = { id, tag: f ? f.tag : 'Friend', title: f ? f.title : '', lines: [], more: false, msg: '', sure: false, loaded: false };
+      drawThread();
+      const r = await acctCall('dm/list', { id }, true);
+      if (!fr.thread || fr.thread.id !== id) return;
+      if (r.status !== 200) { if ($('fr-thread')) $('fr-thread').innerHTML = `<p class="hint">${esc(frFail(r))}</p>`; return; }
+      fr.thread.lines = r.lines; fr.thread.more = r.more; fr.thread.loaded = true;
+      frThreadDraw(true);
+      acctCall('dm/read', { id }, true);
+      if (f && f.unread) { f.unread = 0; frBadge(); }
+    }
+    const sendDm = () => { const t = fr.thread, x = $('fr-text'); if (!t || !x) return; const v = x.value.trim(); if (!v) return;
+      if (!hubSend({ t: 'dm', to: t.id, text: v })) { frThreadMsg('Not connected. Try again in a moment.'); return; } x.value = ''; };
+    async function addFriend(body) {
+      frNote('One moment…'); dd.several = null;
+      const r = await acctCall('friend/add', body, true);
+      if (r.status === 200 && r.several) { dd.several = r.several; fr.msg = 'Several players have that username. Pick one:'; drawFriends(); return; }
+      frAddDone(r); drawFriends();
+    }
+    $('dd-friends').addEventListener('click', async (e) => {
+      const b = e.target.closest('button'); if (!b || b.disabled) return; const d = b.dataset;
+      if ('back' in d) { fr.thread = null; drawFriends(); return; }
+      if ('tab' in d) { fr.tab = d.tab; dd.several = null; drawFriends(); return; }
+      if ('join' in d) { const x = fr.invites.find(i => i.code === d.join); if (x) { openDrop(''); frJoin(x); } return; }
+      if ('decline' in d) { hubSend({ t: 'decline', code: d.decline }); fr.invites = fr.invites.filter(i => i.code !== d.decline); frBadge(); frBanner(); drawFriends(); return; }
+      if ('watch' in d) { const f = fr.data && fr.data.friends.find(x => x.id === d.watch); if (f && f.status && f.status.code) { openDrop(''); home.back = ''; lobbyWatch({ code: f.status.code, host: { tag: f.tag } }); } return; }
+      if ('addid' in d) { addFriend({ id: d.addid }); return; }
+      if (b.id === 'fr-add') { const v = ($('fr-tag').value || '').trim(); if (v) addFriend({ tag: v }); return; }
+      if (b.id === 'fr-go') { sendDm(); return; }
+      if ('report' in d) { const t = fr.thread; if (!t) return; if (!t.sure) { t.sure = true; drawThread(); frThreadMsg('Report sends the last 20 messages and both usernames to the moderators.'); return; }
+        const r = await acctCall('dm/report', { id: t.id }, true); t.sure = false; drawThread(); frThreadMsg(r.status === 200 ? 'Reported. Thanks.' : frFail(r)); return; }
+      if (d.act === 'message') { openThread(d.id); return; }
+      if (d.act === 'invite') { const f = fr.data && fr.data.friends.find(x => x.id === d.id); if (!f || !f.online) return; // Ranked as well when it can be played: pick, else Standard at once
+        if (rankedAllowed()) { fr.pick = fr.pick === d.id ? '' : d.id; fr.more = ''; drawFriends(); } else { openDrop(''); frInvite(f, false); } return; }
+      if (d.act === 'inv-std' || d.act === 'inv-rk') { const f = fr.data && fr.data.friends.find(x => x.id === d.id); fr.pick = ''; if (f) { openDrop(''); frInvite(f, d.act === 'inv-rk'); } return; }
+      if (d.act) { await frAct(d.act, d.id); if (fr.thread) drawThread(); else drawFriends(); } // more, remove (twice), mute, accept, decline, cancel: the game's frAct
+    });
+    $('dd-friends').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.id === 'fr-tag') { const v = e.target.value.trim(); if (v) addFriend({ tag: v }); }
+      if (e.key === 'Enter' && e.target.id === 'fr-text') sendDm();
+    });
+
+    // Settings: the game's sound and match settings (snd, saveSound), rows of words
+    const onoff = (key, lab, on, note = '') => `<span class="lab">${lab}</span><span class="seg"><button class="w" data-set="${key}|1" aria-pressed="${!!on}">On</button><button class="w" data-set="${key}|0" aria-pressed="${!on}">Off</button></span>${note ? `<p class="sn">${note}</p>` : ''}`;
+    const vol = (key, v, enabled, lab) => `<span class="lab">${lab}</span><span class="vol"><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}" style="--v:${v}%" aria-label="${lab}" ${enabled ? '' : 'disabled'}><b>${v}</b></span>`;
     function drawSettings() {
+      if (dd.open !== 'settings') return;
       $('dd-settings').innerHTML = `<h3>Settings</h3>
-        <span class="k">Sound</span><div class="set">${onoff('music', 'Music')}${vol('vol', 'music', 'Music volume')}${onoff('sfx', 'Sound effects')}${vol('sfxVol', 'sfx', 'Effects volume')}</div>
-        <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat')}${onoff('emotes', 'Emotes')}${onoff('spec', 'Spectators', SET.spec ? 'Others can watch your matches.' : 'No one can watch your matches.')}</div>
-        <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', SET.stay ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${A && !A.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
-        ${A && A.dev ? `<span class="k" style="color:#FF5FC4">Developer</span><div class="set">${onoff('ranked', 'Ranked play', 'For everyone, not only developers.')}</div>` : ''}
-        <div class="set-foot"><button class="lnk" data-playlists>Playlists</button><button class="lnk" data-bug>Report a bug</button></div>
+        <span class="k">Sound</span><div class="set">${onoff('music', 'Music', musicOn())}${vol('vol', snd.vol, true, 'Music volume')}${onoff('sfx', 'Sound effects', snd.sfx)}${vol('sfxVol', snd.sfxVol, true, 'Effects volume')}
+          ${navigator.audioSession ? `<span class="lab">Other apps</span><span class="seg"><button class="w" data-set="solo|0" aria-pressed="${!snd.solo}">Keep playing</button><button class="w" data-set="solo|1" aria-pressed="${!!snd.solo}">Pause them</button></span><p class="sn">Pause them: plays even on silent.</p>` : ''}</div>
+        <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
+        <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', staying(), staying() ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${acct && !acct.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
+        ${devMode() ? `<span class="k" style="color:#FF5FC4">Developer</span><div class="set">${onoff('rk', 'Ranked play', home.rankedOn === true, '<span id="rk-msg">For everyone, not only developers.</span>')}</div>` : ''}
+        <div class="set-foot"><button class="lnk" id="mp-open2" data-playlists>Playlists</button><button class="lnk" id="bug-open" data-bug>Report a bug</button></div>
         <p class="hint" style="opacity:.55">In a match, Settings also has the 2D or 3D board and its quality.</p>`;
     }
+    $('dd-settings').addEventListener('click', async (e) => {
+      const b = e.target.closest('button'); if (!b) return;
+      if ('playlists' in b.dataset) { openDrop(''); openPlaylist(); return; }
+      if ('bug' in b.dataset) { openDrop(''); openBugSheet(); return; }
+      if (!b.dataset.set) return;
+      const [k, v] = b.dataset.set.split('|'), on = v === '1';
+      if (k === 'music') { setMusic(on); if (musicOn()) { menuPaused = false; mine.paused = false; syncMusic(); } showPlayer(); }
+      else if (k === 'sfx') { snd.sfx = on; if (on && !snd.sfxVol) snd.sfxVol = DEFAULT_SFX_VOL; saveSound(); wakeAudio(true); }
+      else if (k === 'solo') { snd.solo = on; saveSound(); setAudioSession(); wakeAudio(true); }
+      else if (k === 'chat') { snd.chatOn = on; saveSound(); if (!on) { talk.tick = []; tickDraw(); } }
+      else if (k === 'emo') { snd.emotesOn = on; saveSound(); }
+      else if (k === 'stay') setStay(on);
+      else if (k === 'rk') { const r = await acctCall('ranked', { on }, true); if (r.status === 200) home.rankedOn = !!r.on; drawSettings();
+        if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }
+      drawSettings();
+    });
+    $('dd-settings').addEventListener('input', (e) => {
+      const k = e.target.dataset.vol; if (!k) return;
+      const v = +e.target.value; e.target.style.setProperty('--v', v + '%'); e.target.nextElementSibling.textContent = v;
+      if (k === 'vol') { snd.vol = v; if (v && snd.muted) { snd.muted = false; wakeAudio(true); } saveSound(); Object.values(music).forEach(pl => { if (pl.playing) pl.ramp(musicLevel(), 0.05); }); syncMusic(); }
+      else { snd.sfxVol = v; if (v && !snd.sfx) snd.sfx = true; saveSound(); }
+    });
+    $('dd-settings').addEventListener('change', (e) => { if (e.target.dataset.vol === 'sfxVol') sfx('button'); else if (e.target.dataset.vol === 'vol') drawSettings(); }); // a sample at the new volume
     function openDrop(which) {
       for (const k of ['friends', 'settings']) { const on = k === which; $('dd-' + k).hidden = !on; ddBtn[k].setAttribute('aria-expanded', on); }
-      dd.open = which || ''; if (which === 'friends') drawFriends(); if (which === 'settings') drawSettings(); if (which) closeMusic();
+      dd.open = which || ''; dio.frOpen = which === 'friends';
+      if (which !== 'friends') { $('dd-friends').innerHTML = ''; fr.thread = null; dd.several = null; } // (no stray #fr-msg, #acct-google)
+      if (which === 'friends') { fr.msg = ''; fr.more = ''; fr.pick = ''; drawFriends(); if (frOk()) frLoad(); }
+      if (which === 'settings') drawSettings(); else $('dd-settings').innerHTML = '';
+      if (which) closeMusic();
     }
     for (const k of ['friends', 'settings']) { ddBtn[k].setAttribute('aria-haspopup', 'true'); ddBtn[k].setAttribute('aria-expanded', 'false'); ddBtn[k].addEventListener('click', () => openDrop(dd.open === k ? '' : k)); }
-    addEventListener('pointerdown', (e) => { if (dio.shown && dd.open && !e.target.closest('.drop') && !e.target.closest('.acct')) openDrop(''); });
-    $('dd-friends').addEventListener('click', (e) => {
-      const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
-      if ('google' in d) { A = structuredClone(ACCTS.google); refreshAccount(); }
-      else if ('back' in d) dd.thread = -1;
-      else if ('thread' in d) { dd.thread = +d.thread; FRIENDS[dd.thread].unread = 0; }
-      else if ('tab' in d) dd.tab = d.tab;
-      else if ('join' in d || 'decline' in d) dd.inviteOpen = false; // in the game: Join goes straight into the room
-      else if ('invite' in d) { dd.inviting = dd.inviting === +d.invite ? -1 : +d.invite; dd.more = -1; }
-      else if ('kind' in d) { const [i, k] = d.kind.split('|'); dd.invited[i] = k; dd.inviting = -1; }
-      else if ('more' in d) { dd.more = dd.more === +d.more ? -1 : +d.more; dd.inviting = -1; dd.removeSure = -1; }
-      else if ('mute' in d) FRIENDS[+d.mute].muted = !FRIENDS[+d.mute].muted;
-      else if ('remove' in d) { if (dd.removeSure === +d.remove) { FRIENDS.splice(+d.remove, 1); dd.more = dd.removeSure = -1; } else dd.removeSure = +d.remove; }
-      else if ('accept' in d) dd.reqDone['in' + d.accept] = 'Friends now';
-      else if ('refuse' in d) dd.reqDone['in' + d.refuse] = 'Declined';
-      else if ('cancel' in d) dd.reqDone['out' + d.cancel] = 'Request cancelled';
-      else if ('add' in d) { const v = ($('fr-add') || {}).value || ''; dd.adding = ''; if (v.trim().length >= 2) REQ_OUT.push({ tag: v.trim() }), dd.tab = 'requests'; }
-      else return;
-      drawFriends();
-    });
-    $('dd-friends').addEventListener('input', (e) => { if (e.target.id === 'fr-add') dd.adding = e.target.value; });
-    $('dd-settings').addEventListener('click', (e) => {
-      const b = e.target.closest('button'); if (!b) return;
-      if (b.dataset.set) { const [k, v] = b.dataset.set.split('|'); SET[k] = v === '1'; drawSettings(); }
-      else if ('playlists' in b.dataset) { openDrop(''); openMusic(); }
-      else if ('bug' in b.dataset) {} // in the game: the Report a bug sheet
-    });
-    $('dd-settings').addEventListener('input', (e) => { const k = e.target.dataset.vol; if (!k) return; SET[k] = +e.target.value; e.target.style.setProperty('--v', SET[k] + '%'); e.target.nextElementSibling.textContent = SET[k]; });
+    addEventListener('pointerdown', (e) => { if (dio.shown && dd.open && !e.target.closest('.drop') && !e.target.closest('.acct') && !e.target.closest('#sheet-back')) openDrop(''); });
 
     // the playlist
     const openMusic = () => body.classList.toggle('music-open'), closeMusic = () => body.classList.remove('music-open');
@@ -27177,11 +27254,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (H.includes('invited')) door.invited = true;
       if (H.includes('err')) { door.err = TAG_BAD; drawSignin(); }
       now = { ...want, at: [...want.at], off: [...want.off] }; }
-    // dropdowns: #friends, #friends=requests, #friends=chat, #frinvite=<n> (Invite to... open on friend n), #frmore=<n>, #noinvite, #settings
+    // dropdowns: #friends (#friends=requests), #settings
     frBadge();
-    if (H.includes('noinvite')) dd.inviteOpen = false;
-    const fq = (H.match(/friends(=\w+)?/) || []); if (fq[0]) { if (fq[1] === '=requests') dd.tab = 'requests'; if (fq[1] === '=chat') dd.thread = 0; dd.inviteOpen = dd.inviteOpen && !fq[1];
-      const fi = (H.match(/frinvite=(\d)/) || [])[1]; if (fi) dd.inviting = +fi; const fm = (H.match(/frmore=(\d)/) || [])[1]; if (fm) dd.more = +fm; openDrop('friends'); }
+    { const fq = (H.match(/friends(=\w+)?/) || []); if (fq[0]) { if (fq[1] === '=requests') fr.tab = 'requests'; openDrop('friends'); } }
     if (H.includes('settings')) openDrop('settings');
     // drawHome: follow the game's home state (which screen, the account)
     function dioPaint() {
@@ -27228,7 +27303,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
       homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
     }
-    dio.api = { history: () => { openProfile(); openHistory(); }, pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
+    dio.api = { friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
     dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) window.__dio.sync = dioSync; // the tests: the roster standing; show / hide the home by hand

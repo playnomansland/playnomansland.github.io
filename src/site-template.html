@@ -5194,7 +5194,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   function frDm(d) {
     const own = d.from && acct && d.from.id === acct.id, other = own ? d.to : d.from && d.from.id;
     const t = fr.thread;
-    if (t && t.id === other && !$('sheet-back').hidden && $('fr-thread')) {
+    if (t && t.id === other && (!$('sheet-back').hidden || (DIO && dio.frOpen)) && $('fr-thread')) { // (the Diorama: its Friends dropdown's thread)
       if (!t.lines.some(x => x.k === d.k)) t.lines.push({ k: d.k, from: own ? acct.id : other, text: d.text, at: d.at });
       frThreadDraw(true);
       if (!own) frReadSoon(other);
@@ -5267,7 +5267,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     frDraw();
     if (frOk()) frLoad();
   }
-  const frRedraw = () => { if (!$('sheet-back').hidden && $('fr-sheet')) frDraw(); };
+  const frRedraw = () => { if (DIO && dio.api) dio.api.friends(); if (!$('sheet-back').hidden && $('fr-sheet')) frDraw(); }; // (the Diorama's Friends dropdown too)
   function frDraw() {
     const el = $('fr-sheet'); if (!el) return;
     if (!frOk()) {
