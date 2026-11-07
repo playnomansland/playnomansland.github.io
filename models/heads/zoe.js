@@ -35,7 +35,7 @@ const ZoeHead = (THREE) => {
 
   // reference palette
   const SKIN = '#B08DCC', SPOT = '#977AB8', LID = '#8E66AA', BROW = '#4A2C5A', LASH = '#1E1622';
-  const EYELINE = '#4A2D52', WHITE = '#F3E3C2', PUPIL = '#1A1320', LIPS = '#7E4880', LIPS2 = '#93598F';
+  const EYELINE = '#4A2D52', CREASE = '#6E4A86', WHITE = '#F3E3C2', PUPIL = '#1A1320', LIPS = '#7E4880', LIPS2 = '#93598F';
   const ROBE = '#76508A', ROBE2 = '#5A3C6A', GOLD = '#EBB84A';
 
   // the head: a gourd. Round dome, widest low at the cheeks, then tucking in under the jaw.
@@ -97,12 +97,19 @@ const ZoeHead = (THREE) => {
       const t0 = Math.max(0, Math.acos(Math.max(-1, Math.min(1, lidH / R))) - 0.22); // only the part below the lid: no white can show above it
       g.push(S(new THREE.SphereGeometry(R, 16, 7, 0, PI * 2, t0, PI - t0), WHITE, [0, 0, 0], [0, 0, 0], [1, SY, SZ]));
       // pupil: a round disc lying on the front of the eye, low and to her right
-      const pr = 0.27, px = -sd * (arc > 0.4 ? 0.19 : 0.15), py = lidH * SY - pr * (arc > 0.4 ? 0.42 : 0.5); // toward the nose, the top just under the lash line
+      const pr = 0.27, px = -sd * (arc > 0.4 ? 0.19 : 0.15), py = lidH * SY - pr * 0.3; // toward the nose, high: the top hidden under the lash line (half-lidded side-eye)
       const pz = -SZ * Math.sqrt(Math.max(0, R * R - px * px - (py / SY) ** 2));
       g.push(S(sph(pr, 16, 4).rotateX(PI / 2), PUPIL, [px, py, pz + 0.012], [0, 0, 0], [1, 1, 0.14])); // pole toward the viewer: a round outline
       // the lid: the top of a slightly bigger ellipsoid, cut level at lidH
       const R1 = R * 1.07, SZ1 = SZ * 1.3, th = Math.acos(Math.max(-1, Math.min(1, lidH / R1)));
       g.push(S(new THREE.SphereGeometry(R1, 16, 5, 0, PI * 2, 0, th), LID, [0, 0, 0], [0, 0, 0], [1, SY, SZ1]));
+      // the lid crease: a darker line arcing over the lid, so the lid reads as a heavy hood
+      const crease = [];
+      for (let i = 0; i <= 10; i++) {
+        const x = (-0.62 + 1.24 * i / 10) * R1, y = lidH * SY + (0.2 + 0.12 * Math.sin(PI * i / 10)) * R1 / 0.75;
+        crease.push(new THREE.Vector3(x, y, -SZ1 * Math.sqrt(Math.max(0.0001, R1 * R1 - x * x - (y / SY) ** 2)) - 0.012));
+      }
+      g.push(S(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(crease), 10, 0.022, 4, false), CREASE));
       // the lash line: a thick tube along the front half of the lid's rim, then the wing at the outer corner
       const rho = Math.sqrt(Math.max(0, R1 * R1 - lidH * lidH)), rim = [];
       for (let i = 0; i <= 12; i++) { const ph = PI + PI * i / 12; rim.push(new THREE.Vector3(rho * Math.cos(ph), lidH * SY, SZ1 * rho * Math.sin(ph) - 0.01)); }
@@ -121,8 +128,8 @@ const ZoeHead = (THREE) => {
       G(g, [cx, cy, cz], [0.05, sd * -0.3, tilt]);
       out.push(...g);
     };
-    eye(1, 0.1, 0.04, 0.2); // her left: lidded low, heavy and bored, a flatter line
-    eye(-1, 0.14, -0.04, 0.65); // her right: more open, the lash line arching over it
+    eye(1, 0.03, 0.2, 0.2); // her left: lidded low and heavy, the line slanting down toward the nose
+    eye(-1, 0.14, -0.12, 0.65); // her right: more open under the arched brow, the line arching over it and dropping toward the nose
     // brows: tapered strokes sitting on the face. Her left (+x) low and gently curved; her right (-x) a high,
     // thick arch with a pointed tail.
     const brow = (pts, x, y, w, w1) => {
@@ -130,19 +137,21 @@ const ZoeHead = (THREE) => {
       g.rotateY(x > 0 ? -0.3 : 0.3);
       out.push(S(onFace(g, x, y, 0.02), BROW));
     };
-    brow([[-0.56, -0.08], [-0.18, 0.03], [0.26, 0.09], [0.62, 0.0]], 0.88, 0.62, 0.15, 0.03);
-    brow([[0.52, -0.18], [0.3, 0.09], [-0.07, 0.22], [-0.44, 0.17], [-0.64, -0.02]], -0.86, 0.86, 0.18, 0.02);
+    brow([[-0.58, -0.24], [-0.22, -0.04], [0.22, 0.07], [0.62, 0.03]], 0.88, 0.62, 0.17, 0.04); // her left: low, the inner end pressed down into a frown
+    brow([[0.5, -0.1], [0.22, 0.12], [-0.08, 0.32], [-0.3, 0.26], [-0.62, -0.02]], -0.86, 0.9, 0.18, 0.02); // her right: a sharp sceptical peak
     // --- the pout: a heart-shaped upper lip (two lobes dipping to the middle), a fuller lower lip, a thin line
     //     between them and a small crease at one corner. Low on the face, a little to her right, tilted.
-    const mx = -0.1, my = -0.62, lift = 0.08;
+    const mx = -0.24, my = -0.6, lift = 0.08; // pushed to her right: a 'hmph'
     const lips = [];
     for (const sd of [-1, 1]) lips.push(S(sph(0.105, 10, 7), LIPS, [sd * 0.064, 0.075, 0], [0, 0, sd * -0.9], [1.2, 0.8, 0.72])); // upper lip lobes: two peaks pointing up, dipping in the middle
     lips.push(S(sph(0.14, 10, 7), LIPS2, [0, -0.06, -0.01], [0, 0, 0], [1.12, 0.7, 0.76])); // lower lip, full
     lips.push(S(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[-0.12, 0.0], [-0.05, -0.018], [0.05, -0.018], [0.12, 0.0]].map(([x, y]) => new THREE.Vector3(x, y, -0.09))), 6, 0.013, 4, false), LASH)); // the line between
     lips.push(S(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[0.14, 0.0], [0.18, -0.025], [0.19, -0.06]].map(([x, y]) => new THREE.Vector3(x, y, -0.04))), 4, 0.012, 4, false), '#7A4C7C')); // corner crease
     const n = normalAt(mx, my);
-    G(lips, [mx + n.x * lift, my + n.y * lift, surfZ(mx, my) + n.z * lift], [0.38, 0, 0.1], [1.5, 1.5, 1.5]); // tilted to point up
+    G(lips, [mx + n.x * lift, my + n.y * lift, surfZ(mx, my) + n.z * lift], [0.38, -0.25, 0.24], [1.5, 1.5, 1.5]); // tilted to point up and off to one side
     out.push(...lips);
+    // --- pose: chin up and a slight tilt of the head, so she looks down her nose at you (the collar stays level)
+    G(out, [0, 1.2, 0]); G(out, [0, 0, 0], [0.13, -0.08, -0.07]); G(out, [0, -1.2, 0]);
     // --- collar: hugs under the jaw, flares out; the top edge dips to a V at the front; thick gold trim; a big
     //     gold four-point star at the V
     const dip = (g, amount, onlyTop) => {
