@@ -4,7 +4,7 @@
 // its dragon (Quaternius' Animated Monster Pack, CC0: an OBJ, coloured from its MTL materials); Savanna's acacias (Quaternius'
 // Simple Nature Pack, CC0: OBJs). KayKit colours its models from a palette texture, so each triangle takes the
 // colour under the middle of its texture coordinates.
-// Snow's rocks, cliffs, ice and frozen waterfall can come from Cenji's LowPoly Winter Nature Pack (GLB, coloured by its
+// Snow's rocks, cliffs and ice can come from Cenji's LowPoly Winter Nature Pack (GLB, coloured by its
 // materials' base colours, no texture): picked by the number that starts the file's name (CENJI below) and stored as
 // 'cenji_' + that number, e.g. ROCK_10_CliffWall.glb -> cenji_ROCK_10. scenery3d.js uses them in place of its own
 // faceted stand-ins when they're there. (The pack's licence: use in a project, but don't hand out the raw models.)
@@ -27,9 +27,9 @@ const PICK = ['chest_gold', 'coin_stack_medium', 'coin_stack_small', 'torch_moun
   'acacia_A', 'acacia_B', 'acacia_C', // Simple Nature Pack (Quaternius, CC0; Savanna): Tree2, Tree4 and Tree3 renamed, with acacia.mtl's savanna colours
   'arch_gate', 'fence_pillar_broken', 'fence_broken', 'shrine_candles', 'candle_triple', // Halloween Bits (Darkwoods' old gate and shrine)
   'Wood_Log_A', 'Wood_Log_B']; // Resource Bits (Darkwoods' fallen logs)
-// Cenji's LowPoly Winter Nature Pack (Snow): the frozen waterfall, cliffs, boulders, a rock formation, a wind-swept
+// Cenji's LowPoly Winter Nature Pack (Snow): cliffs, boulders, a rock formation, a wind-swept
 // drift and broken ice (only what scenery3d.js asks for: see its cenji() calls)
-const CENJI = ['HERO_02', 'ROCK_10', 'ROCK_11', 'ROCK_12', 'ROCK_15', 'ROCK_01', 'ROCK_03', 'ROCK_05', 'ROCK_09', 'SNOW_14', 'ICE_12'];
+const CENJI = ['ROCK_10', 'ROCK_11', 'ROCK_12', 'ROCK_15', 'ROCK_01', 'ROCK_03', 'ROCK_05', 'ROCK_09', 'SNOW_14', 'ICE_12'];
 // Halloween Bits has its own 'pillar': build Darkwoods without the Dungeon Pack folder, and the Dungeon pillar is only
 // taken from a folder that also has 'wall_broken' (so the Ashlands ruins keep theirs)
 // an OBJ with its MTL: triangles (faces fanned) with their material's diffuse colour (linear in the MTL, stored as sRGB)

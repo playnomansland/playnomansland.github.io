@@ -30,20 +30,20 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 ## 7 November 2026 – The AI presses Ready
 
 - **No more Fight now against the AI:** you get the same **Ready** / **Not ready** button as online. The AI presses Ready 5 seconds into each deploy (counting from when you can place: not while you pick a package, tower or leader). The fight starts as soon as you're both ready, or when the clock runs out. Press Ready first and the fight starts the moment the AI is ready.
-- So the maps' "opponent is ready" moments now happen against the AI too: the Forest Glade explorer, the Savanna vultures over your tower and the Ashlands dragon's shadow.
+- So the maps' "opponent is ready" moments now happen against the AI too: the Forest Glade explorer, the Savanna vultures over your tower, the Ashlands dragon's shadow and the Snow yeti.
 - Tutorial puzzles, Replay a round and matches against Claude keep their Fight button.
 
 ---
 
-## 7 November 2026 – Snow: a windy glacier pass above the clouds (prototype)
+## 7 November 2026 – Snow: a windy mountain pass above the clouds (prototype)
 
-**Snow**, Frozen Peak's own look, used to be a snowy forest at dusk, close to Moonlit Snow. Now it has its own place: a mountain summit in hard daylight, high above the clouds. On the 3D board:
+**Snow**, Frozen Peak's own look, used to be a snowy forest at dusk, close to Moonlit Snow. Now it has its own place: a high mountain pass in hard daylight, above the clouds. On the 3D board:
+- **A mountain pass:** the battlefield lies in the saddle of the pass. Steep mountain shoulders rise on both sides behind the cliffs, rock below and snowfields above. Past the enemy's end the pass drops away over a lip of snow into a sea of clouds, with crags and far-off peaks rising out of it.
 - **Bright high-altitude light:** a pale sky and a low white sun. Snow in the sun is white, and everything in shade turns cobalt blue.
-- **A glacier across no man's land:** turquoise ice with dark crevasses, frozen bubbles and polished shine. Something huge lies frozen deep under it, right in the middle. The deploy zones are wind-packed snow, carved into sharp ridges that all point the way the wind blows.
-- **The wind:** loose snow streams sideways across the board in gusts, snow blows off the ridges in plumes, and tattered flags snap on their poles. The wind gets stronger every round, and in a long match a white haze closes in around the edges.
-- **Mountains, not forest:** faceted charcoal cliffs and boulders with snow caps and icicles line the sides, with teal ice blocks and crystal clusters between them. Only a few dead trees are left.
-- **Above the clouds:** past the sides of the board the ground drops away into a sea of clouds, with crags and far-off peaks rising out of it.
-- **The frozen waterfall:** past the far end, a waterfall hangs frozen in mid-fall over an icy pool. Look closely and something dark is trapped inside the ice.
+- **A glacier across no man's land:** smooth turquoise ice with frozen bubbles and polished shine. Deep under the ice, right in the middle, lies the faint shadow of a mammoth frozen long ago. The deploy zones are wind-packed snow, carved into sharp ridges that all point the way the wind blows.
+- **The wind:** loose snow streams sideways across the board in gusts, snow blows off the ridges in plumes, and tattered flags snap on their poles at the top of the pass. The wind gets stronger every round, and in a long match a white haze closes in around the edges.
+- **Rock and ice, not forest:** faceted charcoal cliffs and boulders with snow caps and icicles line the sides, with teal ice blocks and crystal clusters between them. Only a few dead trees are left.
+- **The yeti:** when your opponent presses Ready while you're still deploying, a yeti pops up from behind a big rock, grins and waves at you, then ducks back down. If the fight starts while he's up, he ducks at once.
 - **Diamond dust:** tiny ice crystals glitter in the sunlit air, and the ice catches the sun in flashes.
 
 The rules don't change, and Frozen Peak's hail and altar stay switched off. Moonlit Snow looks the same as before.

@@ -9584,11 +9584,11 @@ Floors.FLOORS = {
   darkwoods: { base: '#4A5641', patch: ['#536048', '#414C39', '#5A664C', '#3C4635'], mid: ['#4E4A39', '#47432F', '#57513E'], strokes: ['#647452', '#33402D'], ripples: false,
     leaves: ['#6E5C3F', '#7D6A47', '#5C4F38', '#8A7B50', '#4F5A3A'], leafN: 2.5, roots: '#3B3026', road: '#7E8374', dapple: '#F2E8B8' },
   // Snow (2026-11-07): a glacier pass in hard daylight. No man's land is a turquoise glacier sheet (glacier: [deep,
-  // pale]) with dark crevasses, frozen bubbles and polished shine; the deploy zones are wind-packed snow carved into
+  // pale]) with frozen bubbles and polished shine; the deploy zones are wind-packed snow carved into
   // sharp sastrugi that all run the wind's way (wind: its direction on the canvas, x right, y down toward your end);
-  // frozen: something huge lies frozen under the ice in the middle (a giant's sword)
+  // frozen: something huge lies frozen under the ice in the middle (a woolly mammoth)
   glacier: { base: '#EEF3F8', patch: ['#F4F8FB', '#DDE7F1', '#F8FAFD', '#D7E3EF'], mid: ['#5FAED6', '#4A9BCB', '#79C2E0'], strokes: ['#FFFFFF', '#9DB3CB'], ripples: false,
-    glacier: ['#3F8FC4', '#8FD3E8'], wind: [1, -0.35], frozen: 'sword' },
+    glacier: ['#3F8FC4', '#8FD3E8'], wind: [1, -0.35], frozen: 'mammoth' },
   sand: { base: '#B39A6C', patch: ['#BDA478', '#A88F62', '#C2AA7E', '#A38A5F'], mid: ['#9E8457', '#A78D60', '#94794E'], strokes: ['#C9B288', '#8F7650'], ripples: true },
 };
 // Looks: what each draws (its biome round the board, and its floor: one painted here, or a map's painted ground in the
@@ -9603,7 +9603,7 @@ Floors.floor = (() => {
   const cache = {};
   return (ctx, W, H, t, look) => {
     const L = Floors.FLOORS[look]; if (!L) return false;
-    const key = W + 'x' + H + ':' + Game.ROWS + ':' + Game.ZONE;
+    const key = W + 'x' + H + ':' + Game.ROWS + ':' + Game.ZONE + (L.frozen && Floors.frozen ? ':f' : ''); // (repainted once the frozen mammoth's picture is there)
     if (!cache[look] || cache[look].key !== key) {
       const oc = document.createElement('canvas'), dpr = Math.min(2, window.devicePixelRatio || 1);
       oc.width = Math.round(W * dpr); oc.height = Math.round(H * dpr);
@@ -9734,17 +9734,16 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const by = () => y0 + t * 0.15 + rr() * (y1 - y0 - t * 0.3);
   for (let k = 0; k < W / t * 9; k++) blob(rr() * W, by(), t * (0.5 + rr() * 1.6), t * (0.3 + rr() * 0.8), rr() < 0.45 ? pale : L.mid[k % 3], 0.35 + rr() * 0.3);
   for (let k = 0; k < W / t * 2; k++) blob(rr() * W, by(), t * (0.4 + rr() * 1.1), t * (0.25 + rr() * 0.5), '#2A6FA6', 0.3); // deeper ice
-  // something huge frozen in the middle, deep under the ice: a giant's sword, blurred and dark
-  if (L.frozen === 'sword') {
-    const cx = W / 2 + t * 0.4, cy = (y0 + y1) / 2 + t * 0.05, a = -0.22, s = t;
-    c.save(); c.translate(cx, cy); c.rotate(a); c.filter = `blur(${Math.max(1, s * 0.05)}px)`; c.globalAlpha = 0.5; c.fillStyle = '#123050';
-    c.beginPath(); c.moveTo(-s * 2.9, 0); c.lineTo(-s * 2.3, -s * 0.2); c.lineTo(s * 1.4, -s * 0.24); c.lineTo(s * 1.4, s * 0.24); c.lineTo(-s * 2.3, s * 0.2); c.closePath(); c.fill(); // the blade, a broken tip
-    c.fillRect(s * 1.4, -s * 0.75, s * 0.24, s * 1.5); // the crossguard
-    c.fillRect(s * 1.64, -s * 0.1, s * 0.75, s * 0.2); // the grip
-    c.beginPath(); c.arc(s * 2.5, 0, s * 0.17, 0, Math.PI * 2); c.fill(); // the pommel
-    c.globalAlpha = 0.22; c.fillStyle = '#5E8FB4'; c.fillRect(-s * 2.2, -s * 0.03, s * 3.5, s * 0.06); // the fuller, a faint glint
+  // something huge frozen in the middle, deep under the ice: a mammoth, only a faint blurred shadow far down
+  // (Floors.frozen: the game's War Mammoth model drawn as a side-on silhouette, made by the 3D board; without it, as
+  // in the 2D look previews, nothing)
+  if (L.frozen === 'mammoth' && Floors.frozen) {
+    const im = Floors.frozen, w = t * 4.6, h = w * im.height / im.width, cx = W / 2 + t * 0.3, cy = (y0 + y1) / 2 + t * 0.1;
+    c.save(); c.translate(cx, cy); c.rotate(-0.09);
+    c.filter = `blur(${Math.max(1.5, t * 0.25)}px)`; c.globalAlpha = 0.16; c.drawImage(im, -w * 0.53, -h * 0.53, w * 1.06, h * 1.06); // the murk round it
+    c.filter = `blur(${Math.max(1, t * 0.045)}px)`; c.globalAlpha = 0.3; c.drawImage(im, -w / 2, -h / 2, w, h); // its shape
     c.restore(); c.filter = 'none';
-    for (let k = 0; k < 10; k++) blob(cx + (rr() - 0.5) * s * 5, cy + (rr() - 0.5) * s * 1.2, s * (0.5 + rr()), s * (0.3 + rr() * 0.4), pale, 0.18); // ice over it
+    for (let k = 0; k < 12; k++) blob(cx + (rr() - 0.5) * t * 5, cy + (rr() - 0.5) * t * 2, t * (0.5 + rr()), t * (0.3 + rr() * 0.4), pale, 0.14); // ice over it
   }
   // frozen bubbles in clusters
   for (let k = 0; k < W / t * 3.5; k++) {
@@ -9755,28 +9754,6 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       c.globalAlpha = 0.45; c.strokeStyle = '#E6F7FC'; c.lineWidth = Math.max(0.5, r * 0.3); c.stroke();
       c.globalAlpha = 0.75; c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(x - r * 0.35, y - r * 0.35, r * 0.25, 0, Math.PI * 2); c.fill();
     }
-  }
-  // crevasses: dark jagged cracks running across the ice with a pale lip, branching; then fine hairline cracks
-  c.lineCap = 'round'; c.lineJoin = 'miter';
-  const crack = (x, y, a, n, wd) => {
-    const pts = [[x, y]];
-    for (let i = 0; i < n; i++) { a += (rr() - 0.5) * 0.9; a = Math.max(-0.7, Math.min(0.7, a)); x += Math.cos(a) * t * (0.25 + rr() * 0.25); y += Math.sin(a) * t * 0.22; y = Math.min(y1 - t * 0.2, Math.max(y0 + t * 0.2, y)); pts.push([x, y]); }
-    const line = (dx, dy) => { c.beginPath(); pts.forEach(([px, py], i) => i ? c.lineTo(px + dx, py + dy) : c.moveTo(px + dx, py + dy)); c.stroke(); };
-    c.globalAlpha = 0.14; c.strokeStyle = '#1E5A86'; c.lineWidth = wd * 3.2; line(0, 0);
-    c.globalAlpha = 0.6; c.strokeStyle = '#D2F1FA'; c.lineWidth = Math.max(0.8, wd * 0.35); line(-wd * 0.45, -wd * 0.55);
-    c.globalAlpha = 0.85; c.strokeStyle = '#0F2C46'; c.lineWidth = wd; line(0, 0);
-    return pts;
-  };
-  for (let k = 0; k < W / t * 0.55; k++) {
-    const pts = crack(rr() * W, by(), (rr() - 0.5) * 0.6, 6 + Math.floor(rr() * 8), t * (0.04 + rr() * 0.06));
-    for (let b = 0; b < 2; b++) if (rr() < 0.6) { const [px, py] = pts[1 + Math.floor(rr() * (pts.length - 1))]; crack(px, py, (rr() < 0.5 ? 1 : -1) * (0.6 + rr() * 0.5), 2 + Math.floor(rr() * 3), t * 0.025); }
-  }
-  for (let k = 0; k < W / t * 2.5; k++) {
-    let x = rr() * W, y = by(), a = rr() * 6.3;
-    c.globalAlpha = 0.3 + rr() * 0.2; c.strokeStyle = rr() < 0.55 ? '#EAF8FD' : '#2B6390'; c.lineWidth = 0.6 + rr() * 0.5;
-    c.beginPath(); c.moveTo(x, y);
-    for (let s = 0; s < 3 + rr() * 4; s++) { a += (rr() - 0.5) * 1.4; x += Math.cos(a) * t * 0.22; y = Math.min(y1, Math.max(y0, y + Math.sin(a) * t * 0.18)); c.lineTo(x, y); }
-    c.stroke();
   }
   // polished shine: long pale streaks, all at the sun's angle, some in bundles
   c.lineCap = 'round';
@@ -11235,23 +11212,25 @@ const Scenery3D = (THREE, scene, opts = {}) => {
     light: { hemi: ['#FFE7C4', '#5C5683', 1.25], sun: ['#FFD49C', 2.7], pos: [-58, 34, 20] },
     dusk: { sky: '#E39A6A', hemi: ['#FFC9A0', '#4E4278', 1.05], sun: ['#FF9A58', 2.4], pos: [-70, 16, 12], per: 0.09 },
     fall: 'dust', grassSea: 1, ground: ['#9C7F45', '#CFB26C'], kopjes: true, termites: 12, vultures: 3 };
-  // Snow (Frozen Peak's own look; prototype 2026-11-07): a glacier pass above the clouds in hard daylight. A pale high
-  // sky, a low white sun and a cool blue fill, so the snow is white in the sun and cobalt in the shade. The pass is a
-  // plateau of wind-packed snow: cliffs and boulders along its sides (faceted charcoal rock, snow caps, icicles), teal
-  // seracs, a frozen waterfall closing the far end, and past the flanks the land drops away into a sea of clouds with
-  // far peaks poking through. The wind is the hook: spindrift streams sideways over the board in gusts, snow plumes
-  // blow off the ridge tops, tattered flags snap on their poles, and every round the wind gets up (dusk: the light goes
-  // flat and white) until a white haze closes in round the edges. Diamond dust glitters in the sunlit air.
-  // summit: the plateau, its drop-offs and far wall (the land sheet); wind: its direction [x, z] (the floor's sastrugi
-  // match it); cliffs: cliff walls along the sides; seracs: ice clusters; waterfall: the landmark past the far end;
-  // peaks: far peaks in the cloud sea; clouds: the cloud sea's height (m); plumes: snow plumes off ridges; flags: flag
-  // poles; haze: [colour, strength at the last round, from m, to m at round 1, to m at the last round]; glints: sparkles
-  // on the ice; noLand: the page's flat land plane is hidden (render3d), the sheet and the clouds take its place
+  // Snow (Frozen Peak's own look; prototype 2026-11-07, reworked the same day): a mountain pass above the clouds in
+  // hard daylight. A pale high sky, a low white sun and a cool blue fill, so the snow is white in the sun and cobalt in
+  // the shade. The board lies in the saddle of the pass: mountain shoulders rise either side behind cliffs and
+  // boulders (faceted charcoal rock, snow caps, icicles) and teal seracs, and ahead past the far end (and far behind
+  // your end) the pass falls away over a cornice into a sea of clouds with crags and far peaks in it. The wind is the
+  // hook: spindrift streams sideways over the board in gusts, snow plumes blow off the ridges, tattered flags snap on
+  // their poles, and every round the wind gets up (dusk: the light goes flat and white) until a white haze closes in
+  // round the edges. Diamond dust glitters in the sunlit air. When the opponent is ready a yeti pops out from behind a
+  // rock and waves at you.
+  // summit: the pass (its land sheet); wind: its direction [x, z] (the floor's sastrugi match it); cliffs: cliff walls
+  // along the sides; seracs: ice clusters; yeti: the yeti; peaks: far peaks in the cloud sea; clouds: the cloud sea's
+  // height (m); plumes: snow plumes off ridges; flags: flag poles; haze: [colour, strength at the last round, from m,
+  // to m at round 1, to m at the last round]; glints: sparkles on the ice; noLand: the page's flat land plane is
+  // hidden (render3d), the sheet and the clouds take its place
   BIOMES.snow = { sky: '#CFE3EE', land: '#E2EBF2', noLand: true, tint: [1, 1, 1], low: 'summit', trees: ['DeadTree_3', 'DeadTree_1'], grow: 0.32, rockShare: 0.8, dress: 0, snow: 0.9,
     tints: [[/^DeadTree/, [0.55, 0.58, 0.66]], [/^Rock_/, [0.62, 0.66, 0.74]]],
     light: { hemi: ['#86ADEB', '#4B6290', 1.5], sun: ['#FFFFFF', 3.6], pos: [-58, 40, -10] }, farLight: 1,
     dusk: { sky: '#E3EBF0', hemi: ['#A9C2E6', '#62769A', 1.8], sun: ['#F2F5FA', 2.6], pos: [-56, 44, -10], per: 0.1 },
-    fall: 'spindrift', fall2: 'diamond', summit: true, wind: [1, -0.35], cliffs: 12, seracs: 7, waterfall: true, peaks: 16, clouds: -24, plumes: 9, flags: 4,
+    fall: 'spindrift', fall2: 'diamond', summit: true, wind: [1, -0.35], cliffs: 12, seracs: 7, yeti: true, peaks: 16, clouds: -24, plumes: 13, flags: 4,
     haze: ['#EEF3F7', 0.85, 2, 90, 22], glints: 46 };
   // a look (Scenery3D.LOOKS, below) -> its biome
   const biomeOf = (look) => BIOMES[(Scenery3D.LOOKS[look] || Scenery3D.LOOKS.meadow).biome] || BIOMES.meadow;
@@ -11487,24 +11466,6 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
       const m = M4s(Math.cos(a) * sc * 0.3, -0.1, Math.sin(a) * sc * 0.3, Math.sin(a) * tilt, 0, -Math.cos(a) * tilt);
       parts.push([g, iceCol, m], [tip, iceCol, m]); }
     return paint(parts); };
-  // the frozen waterfall: a cliff wall with a notch, the fall frozen in bulging tiers from the notch down into a frozen
-  // pool, ice chunks round it, icicles along the ledges, and a dark hunched shape frozen in the ice (front toward +z)
-  const waterfallGeo = () => { const parts = [], ph = 4.1;
-    for (let i = 0; i < 9; i++) { const x = -11 + i * 2.75, notch = Math.abs(x) < 3, h = notch ? 9.6 : 11 + Math.abs(hashf(i, ph, 1)) * 3.5 - Math.abs(x) * 0.12, r = 1.7 + Math.abs(hashf(ph, i, 2)) * 0.6;
-      parts.push([shard(r, h, 5, hashf(i, 3, ph) * 0.4, ph + i), rockSnow(0.5), M4s(x, 0, -2.2 + hashf(i, 5, ph) * 0.6, 0, i * 1.1, 0)]);
-      parts.push([shard(r * 1.2, h * 0.8, 5, 0.2, ph + i + 20), rockSnow(0.5), M4s(x + 0.5, 0, -4.4, 0, i * 0.6, 0)]);
-      if (!notch) parts.push(...icicles(4, x - r * 0.6, x + r * 0.6, h * 0.85, -2.2 + r * 0.7, 1.6, ph + i)); }
-    // the fall: tiers of bulging ice, wider lower down, and long columns down its face
-    [[9.0, 1.7, 0.7, -1.3], [6.2, 2.2, 0.8, -0.9], [3.2, 2.8, 0.9, -0.5], [0.6, 3.7, 1.1, 0.0]].forEach(([y, sx, sy, z], i) =>
-      parts.push([jag(lumpGeo(1, sx, sy, 1.1, ph + i, 0.18), 0.15, ph + i), iceCol, M4s(0, y - 0.5, z)]));
-    for (let i = 0; i < 11; i++) { const x = -3.3 + i * 0.66, top = 9.7 - Math.abs(x) * 0.25, h = top * (0.55 + Math.abs(hashf(i, ph, 8)) * 0.9), r = 0.3 + Math.abs(hashf(ph, i, 6)) * 0.25;
-      parts.push([jag(new THREE.CylinderGeometry(r * 0.55, r, h, 6).translate(0, h / 2, 0), 0.07, ph + i), iceCol, M4s(x, top - h, -1.0 + (top - h) * -0.04 + Math.abs(hashf(i, 4, ph)) * 0.8)]); }
-    parts.push([new THREE.CylinderGeometry(4.6, 5, 0.3, 10).translate(0, 0.15, 0), (ny) => ny > 0.5 ? ICE[1] : ICE[2], M4s(0, 0, 2.6)]); // the frozen pool
-    for (let i = 0; i < 8; i++) { const a = i * 0.83 + 0.3, r = 4.2 + Math.abs(hashf(i, 2, ph)) * 1.6;
-      parts.push([jag(lumpGeo(0, 0.6 + Math.abs(hashf(i, ph, 3)) * 0.8, 0.45, 0.7, ph + i, 0.2), 0.1, ph + i), i % 3 ? iceCol : SNOWC, M4s(Math.cos(a) * r, 0, 2.6 + Math.sin(a) * r * 0.7, 0.2, a, 0.15)]); }
-    // something frozen in the fall: a big dark hunched shape seen through the ice (a Snowgre?)
-    parts.push([lumpGeo(1, 1.5, 1.5, 1.0, 2.2, 0.12), '#2A4866', M4s(0.6, 1.2, 0.1)], [lumpGeo(1, 0.7, 0.6, 0.6, 1.1, 0.1), '#2A4866', M4s(0.9, 3.3, 0.2)], [lumpGeo(0, 0.4, 1.3, 0.4, 0.5, 0.1), '#2A4866', M4s(-0.6, 2.8, 0.4, 0, 0, 0.6)]);
-    return paint(parts); };
   // a flag pole on a cairn of stones (the cloth is its own mesh: it moves in the wind)
   const flagpoleGeo = () => paint([[new THREE.CylinderGeometry(0.06, 0.08, 4.6, 5).translate(0, 2.3, 0), '#5B4A3C'],
     [jag(lumpGeo(0, 0.75, 0.5, 0.7, 1.1, 0.2), 0.1, 1), rockSnow(0.6)], [jag(lumpGeo(0, 0.5, 0.4, 0.45, 2.3, 0.2), 0.08, 2), rockSnow(0.6), M4s(0.35, 0.45, 0.1)], [jag(lumpGeo(0, 0.4, 0.35, 0.4, 3.1, 0.2), 0.08, 3), rockSnow(0.6), M4s(-0.3, 0.4, -0.2)]]);
@@ -11517,7 +11478,6 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); return g; };
   function addSummit() {
     // (in here, not above: MADE and kkGeo are set up further down)
-    MADE.__waterfall = () => cenji('HERO_02') || waterfallGeo(); // (the pack's is 8 m tall; this one about 12 m)
     MADE.__flagpole = flagpoleGeo; MADE.__drift = () => cenji('SNOW_14') || driftGeo2();
     const add = (name, cj, make) => addModel(name, (cj && cenji(cj)) || make(), propMat);
     add('Cliff_1', 'ROCK_10', () => cliffGeo(4.5, 3.8, 1)); add('Cliff_2', 'ROCK_11', () => cliffGeo(6, 6.1, 2)); add('Cliff_3', 'ROCK_12', () => cliffGeo(7.5, 8.2, 3));
@@ -12048,7 +12008,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
   // where the visible vultures are now (scene metres), for taps on them (render3d)
   const birds = () => vultures.visible ? vultures.children.filter((b) => b.visible).map((b) => b.position) : [];
   // true while something round the board lives on its own (the vultures): the page keeps drawing frames for it
-  const alive = () => vultures.visible || ex.on;
+  const alive = () => vultures.visible || ex.on || yt.on;
   // ---------- Darkwoods: banks of ground mist drifting between the trunks, pairs of eyes blinking in the dark, and pale
   // light falling through the canopy onto the clearing. All built per layout (update) and moved in tick. ----------
   const softTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
@@ -12160,7 +12120,8 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
   }
   // path: { hw, T } (the road's wave across no man's land, as the floor paints it: z = sin((x + hw) / T * 0.7) * T * 0.35)
   const roadZ = (x) => { const p = ex.path; return Math.sin((x + p.hw) / p.T * 0.7) * p.T * 0.35; };
-  function explore(x0) { // x0 (tests): start this far from the middle
+  function explore(x0) { // x0 (tests): start this far from the middle (Snow: pop the yeti up behind rock x0)
+    if (!ex.path && yt.spots.length) { yetiPop(x0); return; }
     if (!ex.path || ex.on) return;
     if (!ex.P.root) buildExplorer();
     ex.dir = Math.random() < 0.5 ? 1 : -1; ex.x = -ex.dir * (x0 == null ? ex.path.hw + 14 : x0); ex.s = 'in'; ex.t = 0; ex.panic = false; ex.on = true; explorer.visible = true; ex.ry = ex.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
@@ -12169,6 +12130,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
   function foeReady(on) {
     if (on && !ex.last) explore();
     if (!on && ex.last && ex.on && ex.s !== 'out') { ex.s = 'out'; ex.panic = true; }
+    if (!on && ex.last && yt.on && yt.s !== 'down') { yt.s = 'down'; yt.t = 0; yt.fast = true; } // the fight: the yeti ducks
     ex.last = on;
   }
   const lerpA = (a, b, k) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
@@ -12207,6 +12169,83 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     P.q.visible = pop > 0.01; P.q.position.set(ex.x, 4.5 + 0.1 * Math.sin(lt * 5), z); P.q.scale.setScalar(1.8 * pop);
     P.bang.visible = ex.panic; P.bang.position.set(ex.x, 4.5, z); P.bang.scale.setScalar(1.8);
   }
+  // ---------- Snow's frozen mammoth: the game's War Mammoth model (opts.models: Models3D) drawn once, side on, as a
+  // white-on-clear silhouette without its howdah, for the glacier floor to paint as a faint shadow deep in the ice
+  // (Floors.frozen). ----------
+  if (opts.renderer && opts.models && typeof Floors !== 'undefined' && !Floors.frozen) {
+    try {
+      const R = opts.renderer, pr = opts.models.parts('mammoth'), W = 384, H = 256, rt = new THREE.WebGLRenderTarget(W, H);
+      const white = new THREE.MeshBasicMaterial({ color: '#ffffff' }), cut = new THREE.MeshBasicMaterial({ color: '#ffffff', clippingPlanes: [new THREE.Plane(new THREE.Vector3(0, -1, 0), 2.62)] }); // (the howdah's wood stands above 2.62 m)
+      const sc = new THREE.Scene(); if (pr.tint) sc.add(new THREE.Mesh(pr.tint, white)); if (pr.fixed) sc.add(new THREE.Mesh(pr.fixed, cut)); // (not the team parts: the howdah)
+      const cam = new THREE.OrthographicCamera(-2.2, 3.0, 3.0, -0.2, 0.1, 50); cam.position.set(20 * Math.cos(0.62), 1.5, -20 * Math.sin(0.62)); cam.lookAt(0, 0, 0); cam.updateProjectionMatrix(); // side on, a little from the front, so all four legs show
+      const prev = R.getRenderTarget(), prevClip = R.localClippingEnabled, prevCol = R.getClearColor(new THREE.Color()), prevA = R.getClearAlpha();
+      R.localClippingEnabled = true; R.setClearColor(0x000000, 0); R.setRenderTarget(rt); R.clear(); R.render(sc, cam);
+      const px = new Uint8Array(W * H * 4); R.readRenderTargetPixels(rt, 0, 0, W, H, px);
+      R.setRenderTarget(prev); R.localClippingEnabled = prevClip; R.setClearColor(prevCol, prevA);
+      const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'), img = g.createImageData(W, H);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = ((H - 1 - y) * W + x) * 4, o = (y * W + x) * 4; img.data[o] = 0x10; img.data[o + 1] = 0x30; img.data[o + 2] = 0x50; img.data[o + 3] = px[i + 3]; }
+      g.putImageData(img, 0, 0); Floors.frozen = cv;
+      rt.dispose(); white.dispose(); cut.dispose();
+    } catch (e) { console.warn('No Mans Land: no frozen mammoth', e); }
+  }
+  // ---------- Snow's yeti: when your opponent is ready (foeReady from render3d), a yeti pops up from behind one of his
+  // rocks (big boulders by the board), leans out, grins and waves at you, then ducks back down. If the fight starts
+  // while he's up, he ducks at once. He waits under the ground behind the rock, so he's hidden from every view.
+  // Built from simple shapes the first time he's needed. ----------
+  const yetiG = new THREE.Group(); yetiG.visible = false; scene.add(yetiG);
+  const yt = { on: false, s: 'up', t: 0, spots: [], at: null, P: {}, fast: false };
+  const ytMats = [];
+  function buildYeti() {
+    // one mesh per moving part (root: legs and feet, torso, head, the two arms), coloured per face: 5 draws
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }); ytMats.push(mat);
+    const C = { fur: '#F2F6FA', furD: '#DCE5EF', skin: '#6F87A6', dark: '#1E2633', white: '#FFFFFF', mouth: '#3A2430' };
+    const parts = new Map(), add = (g, geo, col, x, y, z, rx = 0, ry = 0, rz = 0) => { (parts.get(g) || parts.set(g, []).get(g)).push([geo, col, M4s(x, y, z, rx, ry, rz)]); };
+    const grp = (parent, x, y, z) => { const g = new THREE.Group(); g.position.set(x, y, z); parent.add(g); return g; };
+    const shag = (r, sx, sy, sz, ph) => jag(new THREE.IcosahedronGeometry(r, 1), r * 0.22, ph).scale(sx, sy, sz); // shaggy fur: a lumpy ball
+    const ball = (r, sx = 1, sy = 1, sz = 1) => new THREE.SphereGeometry(r, 8, 6).scale(sx, sy, sz);
+    const root = grp(yetiG, 0, 0, 0), P = yt.P; P.root = root;
+    for (const sd of [-1, 1]) { add(root, shag(0.4, 1, 1.3, 1, sd + 3), C.fur, sd * 0.36, 0.5, 0); add(root, ball(0.26, 1.2, 0.5, 1.5), C.skin, sd * 0.4, 0.08, 0.16); } // legs, big feet
+    const torso = grp(root, 0, 1.05, 0); P.torso = torso;
+    add(torso, shag(0.78, 1.0, 1.15, 0.85, 1.7), C.fur, 0, 0.75, 0); add(torso, shag(0.5, 1, 1.1, 0.5, 2.9), C.furD, 0, 0.6, 0.45); // body, a shaggy chest
+    const head = grp(torso, 0, 1.75, 0.05); P.head = head;
+    add(head, shag(0.56, 1, 0.95, 0.92, 4.2), C.fur, 0, 0, 0); add(head, new THREE.ConeGeometry(0.22, 0.45, 5), C.fur, 0.05, 0.6, -0.05, 0, 0, -0.25); // the head, a tuft
+    add(head, ball(0.42, 1, 0.85, 0.5), C.skin, 0, -0.06, 0.38); // the face
+    for (const sd of [-1, 1]) { add(head, ball(0.1), C.white, sd * 0.15, 0.08, 0.55); add(head, ball(0.05), C.dark, sd * 0.15, 0.08, 0.64); add(head, new THREE.BoxGeometry(0.2, 0.06, 0.06), C.furD, sd * 0.16, 0.22, 0.56, 0, 0, sd * -0.25); } // eyes, bushy brows
+    add(head, ball(0.2, 1.2, 0.5, 0.4), C.mouth, 0, -0.2, 0.55); // a big open grin
+    for (const sd of [-1, 1]) add(head, new THREE.ConeGeometry(0.035, 0.11, 4), C.white, sd * 0.11, -0.13, 0.62, Math.PI, 0, 0); // two fangs
+    for (const sd of [-1, 1]) { // long arms (the waving one swings up from the shoulder)
+      const arm = grp(torso, sd * 0.78, 1.3, 0); P[sd < 0 ? 'armL' : 'armR'] = arm;
+      add(arm, shag(0.3, 1, 2.5, 1, sd + 7).translate(0, -0.72, 0), C.fur, 0, 0, 0); add(arm, ball(0.24, 1, 1.15, 0.9), C.skin, 0, -1.5, 0.05);
+    }
+    for (const [g, list] of parts) { const m = new THREE.Mesh(paint(list), mat); m.castShadow = true; m.raycast = () => {}; g.add(m); }
+    root.scale.setScalar(1.9);
+  }
+  // pops him up behind one of his rocks (spot: which, for tests; else one the camera sees, so you see him wave)
+  const seen = (q) => { if (!opts.camera) return true; const v = new THREE.Vector3(q.x + q.lean * 2.4, q.y + 4.5, q.z - 2.2).project(opts.camera); return v.z < 1 && Math.abs(v.x) < 0.85 && Math.abs(v.y) < 0.85; };
+  function yetiPop(spot) {
+    if (!yt.spots.length || yt.on) return;
+    if (!yt.P.root) buildYeti();
+    const vis = yt.spots.filter(seen), pool = vis.length ? vis : yt.spots;
+    yt.at = spot != null ? yt.spots[spot % yt.spots.length] : pool[Math.floor(Math.random() * pool.length)];
+    yt.on = true; yt.s = 'up'; yt.t = 0; yt.fast = false; yetiG.visible = true;
+  }
+  function tickYeti(dt) {
+    const P = yt.P, q = yt.at, L = q.lean; yt.t += dt;
+    if (yt.s === 'up' && yt.t > 0.6) { yt.s = 'wave'; yt.t = 0; }
+    else if (yt.s === 'wave' && yt.t > 3.2) { yt.s = 'down'; yt.t = 0; }
+    else if (yt.s === 'down' && yt.t > (yt.fast ? 0.3 : 0.6)) { yt.on = false; yetiG.visible = false; return; }
+    const t = yt.t, k = yt.s === 'up' ? smoothstep(0, 0.6, t) : yt.s === 'wave' ? 1 : 1 - smoothstep(0, yt.fast ? 0.3 : 0.6, t);
+    const hop = yt.s === 'wave' && t < 0.5 ? Math.sin(t / 0.5 * Math.PI) * 0.4 : 0;
+    // behind the rock (away from you), under the ground; up, he leans out toward the board
+    P.root.position.set(q.x - L * 0.6 + L * 3.0 * k, q.y - 6.8 * (1 - k) + hop, q.z - 2.2);
+    P.root.rotation.y = Math.atan2(-P.root.position.x * 0.6, hd0 + 70 - q.z); // facing your end
+    P.torso.rotation.set(0.1 * k, 0, -L * 0.28 * k);
+    const w = yt.s === 'wave' ? smoothstep(0, 0.3, t) * (1 - smoothstep(2.9, 3.2, t)) : 0, wave = (L > 0 ? P.armR : P.armL), rest = (L > 0 ? P.armL : P.armR);
+    wave.rotation.set(0, 0, L * (0.2 + (2.5 + 0.45 * Math.sin(t * 11)) * w));
+    rest.rotation.set(-0.7 * k, 0, -L * 0.25);
+    P.head.rotation.set(-0.08, 0, L * 0.18 * Math.sin(t * 4) * w + L * 0.15 * k);
+  }
+  let hd0 = 48; // half the board's depth (set per layout), for where he looks
   // ---------- Snow: the summit round the board. The land sheet (a plateau of wind-packed snow, dropping away past the
   // flanks and rising into a mountain wall past the far end), the sea of clouds below with far peaks in it, snow plumes
   // streaming off the ridges, glints on the ice, flags snapping in the wind. The wind (wind: its direction [x, z])
@@ -12338,6 +12377,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
       if (scene.background && scene.background.isColor) { cloudMat.uniforms.uSky.value.copy(scene.background); if (peakMat.userData.sky) peakMat.userData.sky.value.copy(scene.background); }
     }
     if (ex.on) tickExplorer(dt);
+    if (yt.on) tickYeti(dt);
     if (grassMat.userData.on) windT.value += dt;
     if (vultures.visible) {
       vultureT += dt;
@@ -12478,37 +12518,53 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     // Savanna: two granite kopjes (piles of big boulders, the far one with the lone giant acacia beside it), the
     // shapes on the horizon; nothing else grows on them
     const kopjes = bi.kopjes ? [{ x: -hw * 0.42, z: -hd - 24, r: 10, s: 1.25, tree: true }, { x: hw + 21, z: -hd * 0.32, r: 7, s: 0.9 }] : [];
-    // Snow: the summit. The frozen waterfall past the far end with its clearing, cliff walls along the far half of
-    // both sides (facing the board; the left ones lower, the low sun throws their shadows over it) and across the far
-    // end either side of the fall, seracs and crystal clusters, flags on cairns, drifts lying along the wind
-    const sum = bi.summit ? { wf: { x: -hw * 0.06, z: -hd - 16, s: 2.0 }, cliffs: [], ice: [], flags: [] } : null;
+    // Snow: the terrain of the pass. The board lies in a saddle: either side the mountain shoulders rise past the cliffs
+    // (steep rock, then gentler snowfields up to a ridge); ahead, past the far end, and far behind your end the pass
+    // falls away over a lip of cornice into the clouds, the shoulders sinking with it as spurs
+    const outD = (x, z) => Math.hypot(Math.max(0, Math.abs(x) - hw), Math.max(0, Math.abs(z) - hd));
+    const SZ0 = -hd - 110;
+    const sheetH = (x, z) => {
+      const d = outD(x, z); if (d <= 0) return 0;
+      const sd = x < 0 ? -1 : 1, X = Math.abs(x);
+      let h = smoothstep(0.3, 6, d) * (0.1 + 0.6 * vnoise(x * 0.06 + 2.3, z * 0.09 - 1.1) + 0.25 * vnoise(x * 0.21, z * 0.19));
+      const ax = X - (hw + 13 + 6 * vnoise(z * 0.04 + (sd > 0 ? 11.3 : 3.7), sd * 2.1));
+      const az = -z - (hd + 13 + 5 * vnoise(x * 0.05, 1.7)), bz = z - (hd + 42 + 8 * vnoise(x * 0.04, 3.3)), out = Math.max(az, bz);
+      if (ax > 0) h += (smoothstep(0, 26, ax) * (30 + 26 * vnoise(x * 0.025 + 5.1, z * 0.03 + sd * 5)) + 3 * vnoise(x * 0.17, z * 0.17) * smoothstep(0, 8, ax))
+        * (1 - smoothstep(-5, 70, out)) * (1 - smoothstep(hw + 50, hw + 64, X));
+      const fall = (a) => (a > 0 ? -(80 * smoothstep(0, 9, a) + a * 0.4) * (0.8 + 0.4 * vnoise(x * 0.3, z * 0.3)) : 0) + 0.8 * Math.exp(-(((a + 1.2) / 1.3) ** 2));
+      const open = Math.max(1 - smoothstep(2, 24, ax), smoothstep(25, 70, out)); // the drop: full in the pass, none up a shoulder (until far out)
+      return h + fall(out) * open + (X > hw + 56 ? fall(X - (hw + 58)) : 0);
+    };
+    const onPlateau = (x, z) => { const h = sheetH(x, z); return h > -0.4 && h < 2.4; };
+    // Snow: the summit's layout. The yeti's rocks (big boulders he hides behind), cliff walls along the far half of
+    // both sides (facing the board; the left ones lower, the low sun throws their shadows over it) and at the far
+    // corners, seracs and crystal clusters, flags on cairns (two at the crest of the pass), drifts along the wind
+    const sum = bi.summit ? { cliffs: [], ice: [], flags: [], yeti: [] } : null;
     if (sum) {
       wind = bi.wind;
-      clears.push({ x: sum.wf.x, z: sum.wf.z + 5, r: 16 });
-      props.push({ kind: 'model', model: '__waterfall', x: sum.wf.x, z: sum.wf.z, ang: 0.04, s: sum.wf.s, y: 0, sink: 0 });
+      // (two at the far corners, seen from the angled views; two on the flanks, seen from above)
+      for (const [x, z, lean] of [[-hw * 0.5, -hd - 5.5, 1], [hw * 0.6, -hd - 6, -1], [-(hw + 4.5), -hd * 0.3, 1], [hw + 4.5, hd * 0.05, -1]]) { sum.yeti.push({ x, z, lean, y: sheetH(x, z) * 0.7 }); clears.push({ x, z, r: 5 }); }
+      const nearYeti = (x, z) => sum.yeti.some((q) => Math.hypot(x - q.x, z - q.z) < 7);
       for (const sd of [-1, 1]) for (let z = -hd - 4; z < hd * 0.15; z += 9 + rr() * 6) {
         if (rr() < 0.22) continue;
-        const name = ['Cliff_1', 'Cliff_2', 'Cliff_3', 'CliffIcy'][Math.floor(rr() * 4)], s = (sd < 0 ? 1.05 : 1.35) + rr() * 0.55;
-        sum.cliffs.push([name, sd * (hw + 6.5 + rr() * 4.5), z, s, -sd * Math.PI / 2 + (rr() - 0.5) * 0.5]);
+        const name = ['Cliff_1', 'Cliff_2', 'Cliff_3', 'CliffIcy'][Math.floor(rr() * 4)], s = (sd < 0 ? 1.05 : 1.35) + rr() * 0.55, x = sd * (hw + 6.5 + rr() * 4.5);
+        if (!nearYeti(x, z)) sum.cliffs.push([name, x, z, s, -sd * Math.PI / 2 + (rr() - 0.5) * 0.5]);
       }
-      for (let x = -hw - 12; x < hw + 14; x += 8 + rr() * 4) {
-        if (Math.abs(x - sum.wf.x) < 16) continue;
-        sum.cliffs.push([rr() < 0.8 ? 'Cliff_3' : 'CliffIcy', x, -hd - 21 - rr() * 5, 1.7 + rr() * 0.7, (rr() - 0.5) * 0.4 + (x > 0 ? -0.15 : 0.15)]);
-      }
+      for (const x of [-hw - 7, -hw * 0.78, hw * 0.74, hw + 7]) sum.cliffs.push([rr() < 0.6 ? 'Cliff_3' : 'Cliff_2', x, -hd - 5 - rr() * 3, 1.5 + rr() * 0.5, (x > 0 ? -0.35 : 0.35) + (rr() - 0.5) * 0.3]);
       for (const [, x, z, s] of sum.cliffs) clears.push({ x, z, r: 2.6 * s });
       for (let n = 0, t = 0; n < (bi.seracs || 0) && t < 300; t++) {
-        const sd = rr() < 0.5 ? -1 : 1, x = sd * (hw + 3.5 + rr() * 10), z = -hd + rr() * BD * 0.8;
+        const sd = rr() < 0.5 ? -1 : 1, x = sd * (hw + 3.5 + rr() * 8), z = -hd + rr() * BD * 0.8;
         if (clears.some((q) => Math.hypot(x - q.x, z - q.z) < q.r + 2)) continue;
         const name = ['Serac_1', 'Serac_2', 'Crystal_1', 'Crystal_1'][Math.floor(rr() * 4)];
         sum.ice.push([name, x, z, /^Serac/.test(name) ? 1 + rr() * 0.5 : 1.1 + rr() * 0.6]); clears.push({ x, z, r: 4 }); n++;
       }
       const FLAGS = ['#B8433A', '#D99A36', '#3E6BA8', '#E6E0CF'];
-      [[-(hw + 5), -hd * 0.42], [hw + 4.5, hd * 0.08], [-hw * 0.62, -hd - 7], [hw * 0.55, -hd - 8.5]].slice(0, bi.flags || 0).forEach(([x, z], i) => {
+      [[-(hw + 5), hd * 0.12], [hw + 4.5, hd * 0.4], [-hw * 0.12, -hd - 9], [hw * 0.3, -hd - 9.5]].slice(0, bi.flags || 0).forEach(([x, z], i) => {
         const p = { kind: 'model', model: '__flagpole', x, z, ang: rr() * 6.28, s: 1.35, y: 0, sink: 0.1 }; props.push(p); sum.flags.push([p, FLAGS[i % 4], i * 1.7 + 0.4]); });
       const wa = Math.atan2(-wind[1], wind[0]);
       for (let n = 0, t = 0; n < 16 && t < 200; t++) {
         const x = (rr() * 2 - 1) * (hw + 14), z = -hd - 8 + rr() * (BD + 14), d = Math.max(Math.abs(x) - hw, Math.abs(z) - hd, 0);
-        if (d < 1.5 || d > 13 || (z > hd - 2 && Math.abs(x) < hw + 6) || clears.some((q) => Math.hypot(x - q.x, z - q.z) < q.r)) continue;
+        if (d < 1.5 || d > 13 || (z > hd - 2 && Math.abs(x) < hw + 6) || clears.some((q) => Math.hypot(x - q.x, z - q.z) < q.r) || !onPlateau(x, z)) continue;
         props.push({ kind: 'model', model: '__drift', x, z, ang: wa + (rr() - 0.5) * 0.15, s: 0.9 + rr() * 0.8, y: 0, sink: 0.3 }); n++;
       }
     }
@@ -12527,21 +12583,6 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     const L = { desert: DESERT, autumn: AUTUMN, darkwoods: DARK, ash: ASH, savanna: SAVANNA, moonlit: SNOWY, summit: SUMMIT, rocks: { low: ROCKS, tuft: PEBBLES, rocks: ROCKS, dress: DRESS } }[bi.low] || { low: LOW, tuft: TUFT, rocks: ROCKS, dress: DRESS };
     const low = () => pickOf(L.low), tuft = () => pickOf(L.tuft);
     const outside = (x, z) => Math.max(Math.abs(x) - hw, Math.abs(z) - hd, 0) > 0 ? Math.hypot(Math.max(0, Math.abs(x) - hw), Math.max(0, Math.abs(z) - hd)) : 0;
-    // the summit (Snow): wind-packed snow rising gently from the board, a lip of cornice and then the drop past each
-    // flank (edgeX: where it is, wandering in and out), the mountain wall rising past the far end into a ridge, the
-    // plateau ending far behind your end too
-    const edgeX = (sd, z) => hw + 15 + 7 * vnoise(z * 0.035 + (sd > 0 ? 11.3 : 3.7), sd * 2.1);
-    const SZ0 = -hd - 110;
-    const sheetH = (x, z) => {
-      const d = outside(x, z); if (d <= 0) return 0;
-      let h = smoothstep(0.3, 6, d) * (0.1 + 0.6 * vnoise(x * 0.06 + 2.3, z * 0.09 - 1.1) + 0.25 * vnoise(x * 0.21, z * 0.19));
-      const wf = smoothstep(-hd - 22, -hd - 52, z + 8 * (vnoise(x * 0.05, 7.7) - 0.5)) * (1 - smoothstep(hw + 40, hw + 60, Math.abs(x)));
-      h += wf * smoothstep(SZ0 + 2, SZ0 + 30, z) * (16 + 34 * vnoise(x * 0.028 + 5.1, z * 0.03) + 9 * vnoise(x * 0.12, z * 0.11));
-      const ax = Math.abs(x) - edgeX(Math.sign(x) || 1, z), az = z - (hd + 44 + 8 * vnoise(x * 0.04, 3.3));
-      const fall = (a) => (a > 0 ? -(80 * smoothstep(0, 9, a) + a * 0.4) * (0.8 + 0.4 * vnoise(x * 0.3, z * 0.3)) : 0) + 0.8 * Math.exp(-(((a + 1.2) / 1.3) ** 2));
-      return h + (fall(ax) + fall(az)) * (1 - wf);
-    };
-    const onPlateau = (x, z) => { const h = sheetH(x, z); return h > -0.4 && h < 2.4; };
     // deep snow (biome .deepSnow): the height of the snow at a spot, 0 on the board, rising over its first metres
     // outside into long wind-blown drifts, flattened round the cabin so its door and light stay clear
     const groundH = bi.deepSnow ? (x, z) => {
@@ -12590,6 +12631,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     // 2c. Snow: the cliffs (real models, facing the board), seracs and crystals
     if (sum) {
       for (const [name, x, z, s, a] of sum.cliffs) put(name, x, z, s, 0, true, true, a);
+      for (const q of sum.yeti) put('Boulder_S2', q.x, q.z, 2.2, 0, true, true, q.lean > 0 ? 0.4 : 2.6);
       for (const [name, x, z, s] of sum.ice) put(name, x, z, s, 0, true, true);
     }
     if (gate) for (let zz = -hd - 1.2; zz > gate.z + 3.5; zz -= 1.1 + rr() * 0.6) {
@@ -12721,6 +12763,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
       for (let k = 0; k < (bi.shafts || 0); k++) sh.push([(rr() - 0.5) * BW * 0.8, (rr() - 0.5) * BD * 0.7, 4 + rr() * 4]);
       showWoods({ mist, eyes: spots, shafts: sh, sun: (bi.light && bi.light.pos) || [-30, 60, 25] });
     } else showWoods(null);
+    yt.spots = sum ? sum.yeti : []; hd0 = hd; if (!sum) { yt.on = false; yetiG.visible = false; } // Snow's yeti
     ex.path = bi.explorer ? { hw, T: BW / Game.COLS } : null; if (!ex.path) { ex.on = false; explorer.visible = false; } // Forest Glade's explorer
     // far trees and bushes: impostors
     shadeU.uHalf.value.set(hw, hd); shadeU.uShade.value.set(...(bi.shade || [0, 1, 2])); veil.visible = !!bi.shade;
@@ -12739,7 +12782,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
       const SN = [SNOWC, '#EAF0F7', '#F6F9FC'];
       const sheet = paint([[g, (ny, y, i) => ny < 0.7 ? ROCK[(i * 7 + (i >> 3)) % 4] : SN[(i * 5 + (i >> 2)) % 3]]]);
       // crags rising out of the clouds just past the drop (seen from the board's own views), then far peaks all round
-      const pk = [[-(hw + 52), -hd - 18, 17, 84, 1.3], [hw + 58, -hd - 4, 20, 90, 2.9], [-(hw + 66), hd * 0.35, 15, 78, 4.4], [hw + 48, -hd - 40, 15, 92, 0.6]];
+      const pk = [[-hw * 0.55, -hd - 60, 16, 92, 1.3], [hw * 0.3, -hd - 85, 20, 102, 2.9], [hw * 1.0, -hd - 52, 14, 84, 4.4], [-hw * 1.25, -hd - 95, 18, 98, 0.6]];
       for (let i = 0, t = 0; pk.length < (bi.peaks || 0) && t < 400; t++) {
         const th = (rr() * 2 - 1) * 2.5, dist = 170 + rr() * 290, x = Math.sin(th) * dist, z = -Math.cos(th) * dist - 30;
         if (pk.some(([px, pz, pr]) => Math.hypot(x - px, z - pz) < pr * 1.1)) continue;
@@ -12748,7 +12791,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
       const pl = [];
       for (const [x, z, , h] of pk.slice(0, 2)) pl.push([x, h - 71, z, 26, 9]);
       for (const [name, x, z, s] of sum.cliffs) if (s > 1.9 && pl.length < 5) pl.push([x, groundH(x, z) + lib[name].h * s * 0.95, z, 16 + rr() * 8, 5 + rr() * 2]);
-      for (let x = -hw - 30; x < hw + 30 && pl.length < (bi.plumes || 0) - 3; x += 22 + rr() * 14) { let bz = -hd - 60, bh = -1; for (let z = -hd - 40; z > SZ0 + 15; z -= 4) { const h = sheetH(x, z); if (h > bh) { bh = h; bz = z; } } pl.push([x, bh + 1, bz, 30 + rr() * 15, 10 + rr() * 4]); }
+      for (const sd of [-1, 1]) for (const z of [-hd * 0.8, -hd * 0.1, hd * 0.6]) { let bx = hw + 30, bh = -1; for (let X = hw + 14; X < hw + 64; X += 2) { const h = sheetH(sd * X, z); if (h > bh) { bh = h; bx = X; } } pl.push([sd * bx, bh + 1, z, 30 + rr() * 15, 10 + rr() * 4]); } // the shoulders' ridges
       for (const [x, z, , h] of [...pk.slice(4)].sort((a, b) => b[3] - a[3]).slice(0, 3)) pl.push([x, h - 72, z, 70 + rr() * 30, 26 + rr() * 10]);
       const band = (Game.ROWS / 2 - Game.ZONE) * T, gl = [];
       for (let i = 0; i < (bi.glints || 0); i++) { const x = (rr() * 2 - 1) * hw * 0.97, z = (rr() * 2 - 1) * band * 0.95; gl.push([x, groundY(x, z) + 0.08, z]); }
@@ -12787,9 +12830,9 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     }
   }
   function shadows(on) { if (on !== castShadows) { castShadows = on; key = ''; } }
-  function dispose() { clear(); clearWoods(); showSummit(null); scene.remove(summit); cloudSea.geometry.dispose(); cloudMat.dispose(); cloudTex.dispose(); peakMat.dispose(); plumeMat.dispose(); glintMat.dispose(); flagMat.dispose(); summitMat.dispose(); scene.remove(woods, explorer); explorer.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.isSprite) { o.material.map.dispose(); o.material.dispose(); } }); for (const m of exMats) m.dispose(); eyeMat.dispose(); shaftMat.dispose(); shaftGeo.dispose(); mistTex.dispose(); shaftTex.dispose(); for (const m of Object.values(glowMats)) m.dispose();
+  function dispose() { clear(); clearWoods(); showSummit(null); scene.remove(summit, yetiG); yetiG.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); for (const m of ytMats) m.dispose(); cloudSea.geometry.dispose(); cloudMat.dispose(); cloudTex.dispose(); peakMat.dispose(); plumeMat.dispose(); glintMat.dispose(); flagMat.dispose(); summitMat.dispose(); scene.remove(woods, explorer); explorer.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.isSprite) { o.material.map.dispose(); o.material.dispose(); } }); for (const m of exMats) m.dispose(); eyeMat.dispose(); shaftMat.dispose(); shaftGeo.dispose(); mistTex.dispose(); shaftTex.dispose(); for (const m of Object.values(glowMats)) m.dispose();
     scene.remove(flakes, flakes2, cabin, cabinLight, veil, xmas, horizon, dragonShadow, smokeCols, vultures); dragonTex.dispose(); dragonShadow.geometry.dispose(); smokeCols.children.forEach((o) => o.material.dispose()); grassGeo.dispose(); grassMat.dispose(); groundMat.dispose(); vultureMat.dispose(); vultures.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); flake2Mat.dispose(); sootMat.dispose(); emberGlowMat.dispose(); horizonMat.dispose(); horizonTex.dispose(); horizon.geometry.dispose(); dragonMat.dispose(); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
-  return { _lib: () => lib, _meshes: () => meshes, update, biome, shadows, dispose, ready, tick, alive, prey, roost, birds, flyover, foeReady, explore, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
+  return { _lib: () => lib, _meshes: () => meshes, _yeti: () => yt.P.root && { on: yt.on, s: yt.s, vis: yetiG.visible, at: yt.at, pos: yt.P.root.position.toArray() }, /* (tests) */ update, biome, shadows, dispose, ready, tick, alive, prey, roost, birds, flyover, foeReady, explore, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
 };
 
 // The painted floors and the looks live in src/floors.js (loaded with the main page, before this file)
@@ -12882,7 +12925,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
   around.rotation.x = -Math.PI / 2; around.position.y = -0.05; around.receiveShadow = true;
   scene.add(around);
   // the land around the board and small plants on it (src/scenery3d.js; missing in builds without it)
-  const scenery = typeof Scenery3D === 'function' ? Scenery3D(THREE, scene, { renderer, onReady: () => { biomeKey = null; if (opts.onInput) opts.onInput(); } }) : null;
+  const scenery = typeof Scenery3D === 'function' ? Scenery3D(THREE, scene, { renderer, models, camera, onReady: () => { biomeKey = null; if (opts.onInput) opts.onInput(); } }) : null;
   let biomeKey = null;
   function useScenery(v) {
     if (!scenery) return;
