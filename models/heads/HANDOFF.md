@@ -11,7 +11,7 @@ artifact. The design language can be much more minimal and needs little detail.*
 (`refs/zoe-token-reference.png`) shows it: bold faceted shapes, a clean iconic silhouette, **about 300–600
 triangles**, flat shading, a 4-colour palette, no pupils, no soft sculpting.
 
-The first token is built: **`zoe-token.js` (ZoeToken v2, 308 triangles)**, from that sheet, in the claude.ai session (v2: a six-sided gem with triangular facets and eyes/brows carved flush; budget allowed up to 2,000).
+The first token is built: **`zoe-token.js` (ZoeToken v3, 308 triangles)**, from that sheet, in the claude.ai session (v2: a six-sided gem with triangular facets and eyes/brows carved flush; v3: narrower almond eyes, about a quarter of the head wide each, closer to the middle; budget allowed up to 2,000).
 Renders: `renders/zoe-token-sheet.png`, `renders/zoe-token-vs-reference.png`. It's waiting for Vilhelm's verdict.
 
 How the token is built (reuse it for the next leaders):

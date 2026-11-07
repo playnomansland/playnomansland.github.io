@@ -86,11 +86,11 @@ const ZoeToken = (THREE) => {
     // a dark brow wedge, thick at the outside and thin at the middle, sitting right on the eye; under it the
     // blank cream eye, its top edge the brow's line (low at the middle, high outside), its bottom a curve
     for (const sd of [-1, 1]) {
-      const f = facet(sd > 0 ? 2 : 3, sd > 0 ? 0.42 : 0.58, 0.5); // segments 2 and 3 meet at the front ridge
+      const f = facet(sd > 0 ? 2 : 3, sd > 0 ? 0.5 : 0.5, 0.46); // segments 2 and 3 meet at the front ridge
       const outward = new THREE.Vector3(sd, 0, 0);
-      const K = 1.3;
-      const eye = [[-0.34, -0.02], [0.36, 0.17], [0.37, 0.07], [0.3, -0.08], [0.15, -0.19], [-0.04, -0.23], [-0.2, -0.19], [-0.31, -0.1]].map(([x, y]) => [x * K, y * K]);
-      const brow = [[-0.4, -0.04], [0.37, 0.17], [0.35, 0.38], [-0.4, 0.06]].map(([x, y]) => [x * K, y * K]);
+      const K = 1.3, KX = 0.84; // narrower than tall-scaled: the eyes are about a quarter of the head wide
+      const eye = [[-0.34, -0.02], [0.36, 0.17], [0.37, 0.07], [0.3, -0.08], [0.15, -0.19], [-0.04, -0.23], [-0.2, -0.19], [-0.31, -0.1]].map(([x, y]) => [x * K * KX, y * K * 0.86]); // an almond, wider than tall
+      const brow = [[-0.4, -0.04], [0.4, 0.17], [0.38, 0.38], [-0.4, 0.06]].map(([x, y]) => [x * K * KX, y * K]);
       out.push({ g: onFacet(flat(brow), f, outward, 0.012), col: DARK });
       out.push({ g: onFacet(flat(eye), f, outward, 0.018), col: CREAM });
     }
