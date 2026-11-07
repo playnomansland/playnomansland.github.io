@@ -1,0 +1,5 @@
+["#still","#still,view=puzzles","#still,view=rules","#still,view=ranks,pin","#still,view=units,pin,tier=4,unit=0","#still,hover=keepYou","#still,music","#still,music,plh=2",
+ "#still,play","#still,play,multi","#still,rooms=standard","#still,rooms=ranked,filter","#still,rooms=standard,create","#still,rooms=ranked,create,private","#still,play,bf=snow",
+ "#still,welcome","#still,welcome,invited","#still,signup,tag=Wren","#still,signup,tag=W,err","#still,login",
+ "#still,profile","#still,profile,acct=dev","#still,profile,acct=guest,out","#still,profile,acct=none","#still,profile,sure","#still,profile,units,acct=dev,tier=2,unit=0","#still,profile,units,acct=guest,tier=4,unit=0","#still,history,rounds=0","#still,history,all",
+ "#still,friends","#still,friends,noinvite,frinvite=0","#still,friends,frmore=3","#still,friends=requests","#still,friends=chat","#still,friends,acct=guest","#still,settings,acct=dev"]
