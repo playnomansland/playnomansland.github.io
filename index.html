@@ -678,6 +678,14 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .stay .nts .ptitle { margin: 0; font-size: 22px; }
 #dio .stay { text-shadow: 0 0 3px var(--field), 0 0 8px var(--field), 0 0 14px var(--field); } /* it can hang over the island, as the island's notes do */
 
+/* ── step 4: Rooms on the live lobby, New room making real rooms ── */
+#dio .rooms { grid-template-rows: auto auto auto auto auto minmax(0, 1fr); }
+#dio .r-msg, #dio .nr-msg { margin: 0; font: 700 14px/1.4 var(--type); }
+#dio .r-msg:not(:empty) { margin: 0 0 10px; } #dio .nr-msg:not(:empty) { margin-top: 12px; }
+#dio .newroom.duo .spec-row { display: none; }
+#dio .rlist .dvt { margin-left: 10px; }
+#dio .orders .mp .item[disabled] small { opacity: 1; }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -1760,8 +1768,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         <li><button data-q="2v2" disabled>2v2 <small>coming soon</small></button></li>
       </ul>
     </div>
-    <button class="create" id="r-create">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
-    <ol class="rlist" id="r-list"></ol>
+    <button class="create" id="lob-create">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+    <p class="r-msg" id="lob-msg" aria-live="polite"></p>
+    <ol class="rlist" id="lob-list"></ol>
   </section>
 
   <!-- Create room: the game's three settings (kind, who can find it, spectators) as rows of words, then one button -->
@@ -1778,11 +1787,12 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <span class="lab">Who can find it</span>
       <span class="seg" role="group" aria-label="Who can find it"><button data-pub="1" aria-pressed="true">Public</button><button data-pub="0" aria-pressed="false">Private</button></span>
       <span></span><p class="nr-note" id="nr-pub">Listed in Rooms for anyone to join.</p>
-      <span class="lab">Spectators</span>
-      <span class="seg" role="group" aria-label="Spectators"><button data-spec="1" aria-pressed="true">On</button><button data-spec="0" aria-pressed="false">Off</button></span>
-      <span></span><p class="nr-note" id="nr-spec">Anyone can watch once it starts.</p>
+      <span class="lab spec-row">Spectators</span>
+      <span class="seg spec-row" role="group" aria-label="Spectators"><button data-spec="1" aria-pressed="true">On</button><button data-spec="0" aria-pressed="false">Off</button></span>
+      <span class="spec-row"></span><p class="nr-note spec-row" id="nr-spec">Anyone can watch once it starts.</p>
     </div>
     <button class="create go" id="nr-go">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+    <p class="nr-msg" id="nr-msg" aria-live="polite"></p>
   </section>
 
   <!-- Welcome: the first screen (the game's drawWelcome). Log in on the big shard, Sign up and Play as guest under it -->
@@ -17040,7 +17050,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '7 Nov 2026 · 8c25bbd'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '7 Nov 2026 · 279c354'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -24266,6 +24276,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   function lobMsg(t) { lob.msg = t || ''; const x = $('lob-msg'); if (x) x.textContent = lob.msg; }
   function lobbyDraw() {
+    if (DIO) { if (dio.api) dio.api.rooms(); return; } // the Diorama's Rooms list
     const ul = $('lob-list');
     if (!ul || home.screen !== 'lobby') return;
     const rows = lobbySorted();
@@ -26630,102 +26641,159 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     multi.addEventListener('click', () => setMp(!body.classList.contains('mp-open')));
     // Vs computer: straight into a match against the AI (the old popup's #go), a normal Standard match
     $('go').addEventListener('click', () => { home.mode = 'normal'; matchKind = 'standard'; lateGame = false; startAiMatch(); });
-    // Developer (A.dev; in the game devMode()): 2v2 unlocks in Multiplayer and New room, and the extras show top left
-    if (A && A.dev) {
-      body.classList.add('dev');
-      const d2 = body.querySelector('.orders .mp [data-q="2v2"]'); d2.disabled = false; d2.removeAttribute('aria-disabled');
-      d2.querySelector('small').innerHTML = '<i class="dvt">Dev</i>two boards side by side';
-      const k2 = body.querySelector('.newroom [data-kind="2v2"]'); k2.disabled = false; k2.textContent = '2v2';
+    // ── Multiplayer: a kind opens Rooms (the game's lobby, home.screen 'lobby'), filtered to it. Ranked shows the game's
+    // reasons when it can't be played; 2v2 is for developers (and when the lobby says this phone may, lob.dev) ──
+    const duoOk = () => !!(lob.dev || devMode());
+    function drawKinds() {
+      const rk = body.querySelector('.orders .mp [data-q="ranked"]'), d2 = body.querySelector('.orders .mp [data-q="2v2"]');
+      const rkWhy = !rankedAllowed() ? (home.rankedOn === false ? 'switched off right now' : 'needs the game server') : !rankedReady() ? 'needs a Google login' : 'it goes on your record';
+      rk.querySelector('small').textContent = rkWhy; rk.disabled = !rankedAllowed(); rk.toggleAttribute('aria-disabled', rk.disabled);
+      d2.disabled = !duoOk(); d2.toggleAttribute('aria-disabled', d2.disabled);
+      d2.querySelector('small').innerHTML = duoOk() ? '<i class="dvt">Dev</i>two boards side by side' : `${lockSvg}coming soon`;
+      body.querySelectorAll('#r-menu [data-q], .newroom [data-kind]').forEach(x => { const q = x.dataset.q || x.dataset.kind; x.disabled = q === '2v2' ? !duoOk() : q === 'ranked' ? !rankedAllowed() : false; });
+      const k2 = body.querySelector('.newroom [data-kind="2v2"]'); if (duoOk()) k2.textContent = '2v2';
+      const m2 = body.querySelector('#r-menu [data-q="2v2"]'); if (duoOk()) m2.textContent = '2v2';
+      body.classList.toggle('dev', devMode());
     }
-    body.querySelectorAll('.orders .mp .item:not([disabled])').forEach(b => b.addEventListener('click', () => openRooms(b.dataset.q)));
-    // the notes are the game's own lines (playPop's developer block, ExploitBot.TACTICS); sample text here
-    const DV = {
-      factions: '<b>Factions vs AI.</b> Draft two factions each.',
-      devtest: '<b>Factions · devtest.</b> Buildings, Powers and spells on the big board, against the AI.',
-      late: '<b>Late game vs AI.</b> Standard with treasuries: 130 health each, at most 5 squads of any one tier 3 or tier 4 unit.',
-      claude: '<b>Vs Claude.</b> Claude plays the other side. Only where Claude can be reached.',
-      tours: '<b>Tournaments.</b> Host one, join one by its code, or practise against bots.',
-      load: '<b>Load units.</b> 28 built-in units now. Load a Counter Lab set instead; matches are saved for Claude to review.',
-      lab: '<b>Counter Lab.</b> Make units and test them against each other. Opens its own page.',
-    };
-    const XB = {
-      '': 'Off: the normal AI plays as it always does.',
-      flank: '<b>Flank snipers.</b> Beats the normal AI 83% of 30 matches. Shiv and Leaf Wizard on your flank columns from round 3.',
-      steel: '<b>Steel Wizard flank.</b> Beats the normal AI 90% of 30 matches. Steel Wizards on your flanks from round 1, borrowing every round.',
-      necro: '<b>Necromancer home guard.</b> Beats the normal AI 83% of 30 matches. Necromancers round its own keep, Fire Mages from round 4.',
-      wizards: '<b>Back-line wizards.</b> Beats the normal AI 40% of 30 matches. Flame Wizards from its back rows, Slime Wizards from round 6.',
-      hoard: '<b>Hoarder.</b> Beats the normal AI 80% of 30 matches. Spends nothing until round 3, then the Sniper tower and the Bank.',
-      arrow: '<b>Arrow rush.</b> Beats the normal AI 80% of 30 matches. Built on the direction arrows; masses Brute.',
-    };
-    let xbPick = '';
-    const dvNote = (h) => { document.getElementById('dv-note').innerHTML = h || `<i class="dvt">Exploit bot</i> ${XB[xbPick]}${xbPick ? ' Applies to every match against the computer.' : ''}`; };
-    const setXb = (id) => { xbPick = id; body.querySelectorAll('.devs [data-xb]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.xb === id))); dvNote(); };
-    body.querySelectorAll('.devs [data-dv]').forEach(b => { const on = () => dvNote(DV[b.dataset.dv]); b.addEventListener('mouseenter', on); b.addEventListener('focus', on); b.addEventListener('click', () => {}); }); // in the game: start that mode / open that sheet
-    body.querySelectorAll('.devs [data-xb]').forEach(b => { const on = () => dvNote(XB[b.dataset.xb]); b.addEventListener('mouseenter', on); b.addEventListener('focus', on); b.addEventListener('click', () => setXb(b.dataset.xb)); });
-    body.querySelector('.devs .dv').addEventListener('mouseleave', () => dvNote());
-    dvNote();
+    body.querySelectorAll('.orders .mp .item').forEach(b => b.addEventListener('click', () => { if (!b.disabled) openRooms(b.dataset.q); }));
 
-    // Rooms (sample data, shaped like the game's lobby list: host, battlefield, players, age or round, watchers)
-    const ROOMS = [
-      { q: 'standard', host: 'Pebble', map: 'Meadow', p: 1, at: 0 },
-      { q: 'ranked', host: 'Ironmoss', score: 88, map: 'Desert', p: 1, at: 1 },
-      { q: 'standard', host: 'Sleepy Ent', map: 'Snow', p: 1, at: 4 },
-      { q: 'ranked', host: 'Captain Tuesday', score: 96, map: 'Ashlands', p: 2, round: 2, watch: 5 },
-      { q: 'standard', host: 'Captain Tuesday', map: 'Forest Glade', p: 2, round: 3, watch: 2 },
-      { q: 'ranked', host: 'Pebble', score: 81, map: 'Moonlit Snow', p: 1, at: 3 },
-      { q: 'standard', host: 'Bramble', map: 'Autumn', p: 1, at: 7, noWatch: true },
-      { q: 'ranked', host: 'Hedgewitch', score: 74, map: 'Savanna', p: 2, round: 4, watch: 1 },
-      { q: 'standard', host: 'Old Gus', map: 'Meadow', p: 2, round: 6, noWatch: true },
-      { q: 'standard', host: 'Moth', map: 'Snow', p: 1, at: 12 },
-    ];
+    // ── Developer (devMode): the old PLAY popup's developer block, as rows of small words (designed 2026-11-07) ──
+    { const seg = body.querySelector('.devs [aria-label="Exploit bot"]');
+      seg.innerHTML = [{ id: '', short: 'Off' }].concat(ExploitBot.TACTICS.map(t => ({ id: t.id, short: t.short || t.name.split(' ')[0] })))
+        .map(o => `<button data-xb="${o.id}" aria-pressed="${exploitTactic === (o.id || null)}">${esc(o.short)}</button>`).join('');
+      if (/^https?:/.test(THREE_URL)) body.querySelector('.devs [data-dv="lab"]').remove(); } // the artifact build has no Counter Lab page
+    const DV = {
+      factions: () => factionsReady() ? '<b>Factions vs AI.</b> Draft two factions each.' : '<b>Factions.</b> Coming soon: not enough factions yet.',
+      devtest: () => devReady() ? '<b>Factions · devtest.</b> Buildings, Powers and spells on the big board, against the AI.' : '<b>Devtest.</b> No factions yet.',
+      late: () => `<b>Late game vs AI.</b> DEVTESTLATEGAME on Standard with treasuries: ${Game.START_HP + Game.LATE.hp} health each, at most ${Game.LATE.cap} squads of any one tier ${Game.LATE.tier} or tier 4 unit.`,
+      claude: () => sampleFn ? '<b>Vs Claude.</b> Claude plays the other side.' : '<b>Vs Claude.</b> Only where Claude can be reached (the game as a Claude artifact).',
+      tours: () => '<b>Tournaments.</b> Host one, or practise against bots. Joining is by a link.',
+      load: () => `<b>Load units.</b> ${customSet ? `Your ${units.length} Counter Lab units now.` : `${units.length} built-in units now.`} Load a Counter Lab set instead${reportDb ? '; matches are saved for Claude to review' : ''}.`,
+      lab: () => '<b>Counter Lab.</b> Make units and test them against each other. Opens its own page.',
+    };
+    // a tactic in one or two lines (the game's exploitBotNote is the whole write-up): its name, how it does, its first sentence
+    const xbShort = (id) => { const t = id && ExploitBot.tacticById(id); if (!t) return 'Off: the normal AI plays as it always does.';
+      return `<b>${esc(t.name)}.</b> ${t.winRateNow != null ? `Beats the normal AI ${t.winRateNow}% of 30 matches.` : 'Not measured.'} ${esc((t.blurb || '').split(/(?<=\.)\s/)[0])}`; };
+    const dvNote = (h) => { $('dv-note').innerHTML = h || `<i class="dvt">Exploit bot</i> ${xbShort(exploitTactic)}${exploitTactic ? ' Applies to every match against the computer.' : ''}`; };
+    function drawDevs() {
+      body.querySelectorAll('.devs [data-xb]').forEach(x => x.setAttribute('aria-pressed', String(exploitTactic === (x.dataset.xb || null))));
+      const off = { factions: !factionsReady(), devtest: !devReady(), claude: !sampleFn };
+      body.querySelectorAll('.devs [data-dv]').forEach(x => { x.disabled = !!off[x.dataset.dv]; });
+      dvNote();
+    }
+    const DV_GO = {
+      factions: () => { matchKind = 'factions'; lateGame = false; startAiMatch(); },
+      devtest: () => { matchKind = 'devtest'; lateGame = false; startAiMatch(); },
+      late: () => { matchKind = 'standard'; lateGame = true; startAiMatch(); },
+      claude: () => startClaudeMatch(),
+      tours: () => openToursSheet(),
+      load: () => openLoader(),
+      lab: () => { location.href = 'lab.html'; },
+    };
+    body.querySelectorAll('.devs [data-dv]').forEach(b => { const on = () => dvNote(DV[b.dataset.dv]()); b.addEventListener('mouseenter', on); b.addEventListener('focus', on); b.addEventListener('click', () => { if (!b.disabled && devMode()) DV_GO[b.dataset.dv](); }); });
+    body.querySelector('.devs .dv').addEventListener('click', (e) => { const b = e.target.closest('[data-xb]'); if (!b) return; exploitTactic = b.dataset.xb || null; drawDevs(); });
+    body.querySelector('.devs .dv').addEventListener('mouseover', (e) => { const b = e.target.closest('[data-xb]'); if (!b) return; const t = b.dataset.xb && ExploitBot.tacticById(b.dataset.xb);
+      dvNote(xbShort(t && t.id)); });
+    body.querySelector('.devs .dv').addEventListener('mouseleave', () => dvNote());
+
+    // ── Rooms: the game's live lobby (lob.list from the /lobby socket, lobbyOpen / lobbyClose), filtered to a kind and
+    // the search line (a player or a battlefield). Join and Watch are the game's srvJoin / duoJoin / lobbyWatch ──
     const KIND = { standard: '1v1 Standard', ranked: '1v1 Ranked', '2v2': '2v2' };
+    const lookName = (id) => { const k = Game.SKINS.find(x => x.id === id); return k ? k.name : id === 'random' ? 'a random look' : ''; };
     let roomQ = 'standard';
     function drawRooms() {
-      const text = document.getElementById('r-q').value.trim().toLowerCase();
-      const rows = ROOMS.filter(r => r.q === roomQ && (!text || r.host.toLowerCase().includes(text) || r.map.toLowerCase().includes(text)));
-      const open = rows.filter(r => !r.round).length;
-      document.getElementById('r-count').textContent = `${open} open · ${rows.length - open} playing`;
-      document.getElementById('r-list').innerHTML = rows.length ? rows.map(r => {
-        const facts = [r.map, `${r.p}/2 players`, r.round ? `round ${r.round}` : r.at < 1 ? 'just now' : `${r.at} min ago`, r.watch ? `${r.watch} watching` : ''].filter(Boolean).join(' · ');
-        const act = !r.round ? '<button class="go">Join</button>' : !r.noWatch ? '<button class="go watch">Watch</button>' : '<span class="full">full</span>';
-        return `<li><span><b>${esc(r.host)}’s room</b>${r.score ? `<span class="sc">★ ${r.score}</span>` : ''}${r.noWatch ? '<span class="tg">No watchers</span>' : ''}<small>${esc(facts)}</small></span>${act}</li>`;
-      }).join('') : `<li class="empty">No ${KIND[roomQ]} rooms right now. Make one, and others can join you.</li>`;
+      if (!body.classList.contains('in-rooms')) return;
+      const text = $('r-q').value.trim().toLowerCase();
+      const all = lobbySorted().filter(l => l.mode === roomQ);
+      const rows = all.filter(l => !text || l.host.tag.toLowerCase().includes(text) || lookName(l.look).toLowerCase().includes(text) || (l.map || '').toLowerCase().includes(text));
+      const open = all.filter(l => l.phase === 'waiting').length;
+      $('r-count').textContent = lob.ok ? `${open} open · ${all.length - open} playing` : '';
+      $('lob-list').innerHTML = rows.length ? rows.map(l => {
+        const canJoin = l.phase === 'waiting' && l.players < l.seats, canWatch = l.phase === 'playing' && l.spectate && l.kind === 'match';
+        const age = Math.max(0, Math.round((Date.now() - l.at) / 60000)), sc = l.mode === 'ranked' ? boardScore(l.host.tag) : null;
+        const facts = [lookName(l.look) || l.map || 'Standard', `${l.players}/${l.seats} players`, l.phase === 'playing' ? `round ${l.round}` : age < 1 ? 'just now' : `${age} min ago`, l.spectate && l.kind === 'match' && l.watchers ? `${l.watchers} watching` : ''].filter(Boolean).join(' · ');
+        const act = canJoin ? `<button class="go" data-join="${esc(l.code)}">Join</button>` : canWatch ? `<button class="go watch" data-watch="${esc(l.code)}">Watch</button>` : '<span class="full">full</span>';
+        return `<li data-code="${esc(l.code)}"><span><b>${esc(l.host.tag)}’s room</b>${sc != null ? `<span class="sc">★ ${esc(Math.round(sc))}</span>` : ''}${l.kind === 'duo' && l.dev ? '<i class="dvt">Dev</i>' : ''}${!l.spectate ? '<span class="tg">No watchers</span>' : ''}<small>${esc(facts)}</small></span>${act}</li>`;
+      }).join('') : `<li class="empty">${lob.ok === false ? 'Can’t reach the game server. Retrying…' : lob.ok == null ? 'Loading rooms…' : text ? `No ${KIND[roomQ]} rooms match “${esc(text)}”.` : `No ${KIND[roomQ]} rooms right now. Make one, and others can join you.`}</li>`;
+      $('lob-msg').textContent = lob.msg || '';
     }
+    $('lob-list').addEventListener('click', (e) => {
+      const j = e.target.closest('[data-join]'), w = e.target.closest('[data-watch]'), l = lob.list.get(j ? j.dataset.join : w ? w.dataset.watch : '');
+      if (!l) return;
+      home.back = 'lobby'; // after the match: back to Rooms
+      if (j) { if (l.kind === 'duo') duoJoin(l.code); else srvJoin(l.code); } else lobbyWatch(l);
+    });
     function setRoomQ(q) {
       roomQ = q; body.querySelector('#r-tok span').textContent = KIND[q];
       body.querySelectorAll('#r-menu button').forEach(b => b.setAttribute('aria-pressed', b.dataset.q === q));
       drawRooms();
     }
-    const tokMenu = (on) => { document.getElementById('r-menu').hidden = !on; document.getElementById('r-tok').setAttribute('aria-expanded', on); };
-    document.getElementById('r-tok').addEventListener('click', () => tokMenu(document.getElementById('r-menu').hidden));
-    body.querySelectorAll('#r-menu button:not([disabled])').forEach(b => b.addEventListener('click', () => { setRoomQ(b.dataset.q); tokMenu(false); }));
-    document.getElementById('r-q').addEventListener('input', drawRooms);
-    function openRooms(q) { setRoomQ(q); tokMenu(false); body.classList.add('in-rooms'); backBtn.textContent = '← Play'; }
-    function closeRooms() { if (body.classList.contains('in-create')) return closeCreate(); body.classList.remove('in-rooms'); tokMenu(false); backBtn.textContent = '← Menu'; }
+    const tokMenu = (on) => { $('r-menu').hidden = !on; $('r-tok').setAttribute('aria-expanded', on); };
+    $('r-tok').addEventListener('click', () => tokMenu($('r-menu').hidden));
+    body.querySelectorAll('#r-menu button').forEach(b => b.addEventListener('click', () => { if (b.disabled) return; setRoomQ(b.dataset.q); tokMenu(false); }));
+    $('r-q').addEventListener('input', drawRooms);
+    $('r-q').addEventListener('keydown', (e) => { if (e.key === 'Escape' && e.target.value) { e.stopPropagation(); e.target.value = ''; drawRooms(); } });
+    // the game's state: home.screen 'lobby' is Rooms (openLobby); this only shows it
+    function openRooms(q) { roomQ = q; home.pop = false; home.screen = 'lobby'; lob.msg = ''; drawHome(); }
+    function showRooms() {
+      if (!body.classList.contains('play')) { if (typeof openDrop === 'function') openDrop(''); unpin(); body.classList.add('play'); want = VIEWS.orders; }
+      if (!body.classList.contains('in-rooms')) { body.classList.add('in-rooms'); tokMenu(false); }
+      backBtn.textContent = body.classList.contains('in-create') ? '← Rooms' : '← Play';
+      setRoomQ(roomQ); lobbyOpen();
+    }
+    function hideRooms() { body.classList.remove('in-rooms', 'in-create'); tokMenu(false); lobbyClose(); backBtn.textContent = body.classList.contains('play') ? '← Menu' : backBtn.textContent; }
+    function closeRooms() { if (body.classList.contains('in-create')) return closeCreate(); home.screen = 'menu'; home.pop = true; drawHome(); }
 
-    // Create room: starts on the kind the list was filtered to (the game's create sheet: kind, public or private, spectators)
-    const NOTE = { standard: 'On the Standard map. No stakes.', ranked: 'A best of 3 on the Standard map and pack. You and whoever joins both need to be logged in with Google. Only ranked series count on the leaderboard.' };
+    // ── New room: the game's create sheet (openCreateSheet) as rows of words: kind, battlefield, who can find it,
+    // spectators. It shares the game's `create` choices. The battlefield is the room's: skinPick while you're hosting
+    // (not saved; your own comes back on the way home) ──
+    const NOTE = {
+      standard: 'On the Standard map. No stakes. Pick the leaders in the room before you start.',
+      ranked: 'A best of 3 on the Standard map and pack. You and whoever joins both need to be logged in with Google. Only ranked series count on the leaderboard.',
+      '2v2': '2v2 (developers only for now): two boards side by side. Seats left empty when you start are played by the AI.',
+    };
     const press = (sel, on) => body.querySelectorAll(sel).forEach(b => b.setAttribute('aria-pressed', on(b)));
-    function setKind(k) { press('.newroom [data-kind]', b => b.dataset.kind === k); document.getElementById('nr-note').textContent = NOTE[k]; }
-    body.querySelectorAll('.newroom [data-kind]:not([disabled])').forEach(b => b.addEventListener('click', () => setKind(b.dataset.kind)));
-    body.querySelectorAll('.newroom [data-pub]').forEach(b => b.addEventListener('click', () => { press('.newroom [data-pub]', x => x === b); document.getElementById('nr-pub').textContent = b.dataset.pub === '1' ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.'; }));
-    body.querySelectorAll('.newroom [data-spec]').forEach(b => b.addEventListener('click', () => { press('.newroom [data-spec]', x => x === b); document.getElementById('nr-spec').textContent = b.dataset.spec === '1' ? 'Anyone can watch once it starts.' : 'No one can watch.'; }));
+    function setKind(k) {
+      if (k === 'ranked' && !rankedAllowed()) k = 'standard'; if (k === '2v2' && !duoOk()) k = 'standard';
+      create.mode = k; press('.newroom [data-kind]', b => b.dataset.kind === k); $('nr-note').textContent = NOTE[k];
+      body.querySelector('.newroom').classList.toggle('duo', k === '2v2'); // 2v2 has no Spectators row
+    }
+    body.querySelectorAll('.newroom [data-kind]').forEach(b => b.addEventListener('click', () => { if (!b.disabled) setKind(b.dataset.kind); }));
+    const drawPub = () => { press('.newroom [data-pub]', x => (x.dataset.pub === '1') === create.pub); $('nr-pub').textContent = create.pub ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.'; };
+    const drawSpec = () => { press('.newroom [data-spec]', x => (x.dataset.spec === '1') === create.spectate); $('nr-spec').textContent = create.spectate ? 'Anyone can watch once it starts.' : 'No one can watch.'; };
+    body.querySelectorAll('.newroom [data-pub]').forEach(b => b.addEventListener('click', () => { create.pub = b.dataset.pub === '1'; drawPub(); }));
+    body.querySelectorAll('.newroom [data-spec]').forEach(b => b.addEventListener('click', () => { create.spectate = b.dataset.spec === '1'; drawSpec(); }));
     // the room's battlefield: the host picks it here and the match is played on it; the island shows it while you pick
     let roomLook = 0;
-    function setRoomLook(i) { roomLook = (i + LOOKS.length) % LOOKS.length; document.getElementById('nr-bf').textContent = LOOKS[roomLook].name;
-      document.getElementById('nr-bfn').textContent = `${roomLook + 1} of ${LOOKS.length}. The match is played here. Everyone else keeps their own at home.`; if (lookI !== roomLook) setLook(roomLook, !still); }
+    function setRoomLook(i) { roomLook = (i + LOOKS.length) % LOOKS.length; $('nr-bf').textContent = LOOKS[roomLook].name;
+      $('nr-bfn').textContent = `${roomLook + 1} of ${LOOKS.length}. The match is played here. Everyone else keeps their own at home.`; if (lookI !== roomLook) setLook(roomLook, !still); }
     body.querySelectorAll('.newroom [data-bfs]').forEach(b => b.addEventListener('click', () => setRoomLook(roomLook + +b.dataset.bfs)));
-    function openCreate() { setKind(roomQ); tokMenu(false); body.classList.add('in-create'); backBtn.textContent = '← Rooms'; setRoomLook(homeLook); }
+    function openCreate() { setKind(roomQ); drawPub(); drawSpec(); tokMenu(false); body.classList.add('in-create'); backBtn.textContent = '← Rooms'; setRoomLook(homeLook); $('nr-msg').textContent = ''; }
     function closeCreate() { body.classList.remove('in-create'); backBtn.textContent = '← Play'; if (lookI !== homeLook) setLook(homeLook, !still); }
+    // CREATE ROOM: the room opens and waits for a second player (srvHost, or duoHost for 2v2), as the game's create sheet
+    function createRoom() {
+      const o = { pub: create.pub, spectate: create.spectate };
+      home.back = 'lobby'; dio.roomLook = true; skinPick = LOOKS[roomLook].id; // the room's battlefield (put back at home: restoreLook)
+      body.classList.remove('in-create'); backBtn.textContent = '← Play'; // after the room: the Rooms list, as the game's create sheet
+      if (create.mode === '2v2') { duoHost(o); return; }
+      matchKind = 'standard'; lateGame = false;
+      if (create.mode === 'ranked') {
+        if (!rankedReady()) { rankedLogin(() => srvHost({ ...o, ranked: true }));
+          const std = $('rl-std'); if (std) std.replaceWith(Object.assign(document.createElement('button'), { className: 'btn', id: 'rl-std', textContent: 'Make a Standard room instead', onclick: () => { acctUi.after = null; closeSheet(true); srvHost(o); } })); // (the old one hosted a phone-to-phone match)
+          return; }
+        srvHost({ ...o, ranked: true }); return;
+      }
+      srvHost(o);
+    }
     // Change battlefield: steps through the looks one at a time. At home it is only how your island looks; on New room it steps the room's
     const bfNote = body.querySelector('.bf-note');
     const stepBattlefield = () => { if (body.classList.contains('in-create')) return setRoomLook(roomLook + 1);
       homeLook = (homeLook + 1) % LOOKS.length; saveLook(homeLook); setLook(homeLook, !still); };
     bfNote.addEventListener('click', stepBattlefield); bfNote.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); stepBattlefield(); } });
-    const bfSub = () => { const L = LOOKS[lookI]; document.getElementById('bf-sub').textContent = `${L.name} · ${lookI + 1} of ${LOOKS.length}`; };
+    const bfSub = () => { const L = LOOKS[lookI]; $('bf-sub').textContent = `${L.name} · ${lookI + 1} of ${LOOKS.length}`; };
     document.addEventListener('battlefield', bfSub); bfSub();
-    document.getElementById('r-create').addEventListener('click', openCreate);
-    document.getElementById('nr-go').addEventListener('click', () => {}); // in the game: the room opens and waits for a second player
+    $('lob-create').addEventListener('click', openCreate);
+    $('nr-go').addEventListener('click', createRoom);
     // ── Profile (the game's Profile sheet: openAccountSheet / acctDraw in src/site-template.html), on sample accounts ──
     const pf = { outSure: false, sure: false };
     const acctBtn = body.querySelectorAll('.acct button')[1];
@@ -27064,6 +27132,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (s === 'welcome' || s === 'signup' || s === 'login') openDoor(s === 'welcome' ? '' : s);
       else if (door.screen != null) closeDoor();
       drawStay();
+      // Rooms is home.screen 'lobby' (the game's openLobby; after a match from Rooms, home.back brings it back)
+      if (s === 'lobby') showRooms(); else if (body.classList.contains('in-rooms')) hideRooms();
+      drawKinds(); drawDevs();
       // the Play screen follows home.pop (the old popup's flag), on the menu only
       const onMenu = s === 'menu' || !s;
       if (onMenu && home.pop && !body.classList.contains('play')) openPlay();
@@ -27090,7 +27161,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       let sm = pz.querySelector('small'); if (newcomer && !sm) { sm = document.createElement('small'); sm.textContent = 'start here'; pz.appendChild(sm); } else if (!newcomer && sm) sm.remove();
     }
     let rosterOf = units;
-    dio.api = { pause, resume, draw: dioPaint, board: drawStandings };
+    // after hosting: the room's battlefield was skinPick for the match; your own (pb-skin) comes back at home
+    function restoreLook() {
+      if (!dio.roomLook) return; dio.roomLook = false;
+      skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
+      homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
+    }
+    dio.api = { pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
     dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name) }; if (TEST) window.__dio.sync = dioSync; // the tests: the roster standing; show / hide the home by hand

@@ -1100,8 +1100,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         <li><button data-q="2v2" disabled>2v2 <small>coming soon</small></button></li>
       </ul>
     </div>
-    <button class="create" id="r-create">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
-    <ol class="rlist" id="r-list"></ol>
+    <button class="create" id="lob-create">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+    <p class="r-msg" id="lob-msg" aria-live="polite"></p>
+    <ol class="rlist" id="lob-list"></ol>
   </section>
 
   <!-- Create room: the game's three settings (kind, who can find it, spectators) as rows of words, then one button -->
@@ -1118,11 +1119,12 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <span class="lab">Who can find it</span>
       <span class="seg" role="group" aria-label="Who can find it"><button data-pub="1" aria-pressed="true">Public</button><button data-pub="0" aria-pressed="false">Private</button></span>
       <span></span><p class="nr-note" id="nr-pub">Listed in Rooms for anyone to join.</p>
-      <span class="lab">Spectators</span>
-      <span class="seg" role="group" aria-label="Spectators"><button data-spec="1" aria-pressed="true">On</button><button data-spec="0" aria-pressed="false">Off</button></span>
-      <span></span><p class="nr-note" id="nr-spec">Anyone can watch once it starts.</p>
+      <span class="lab spec-row">Spectators</span>
+      <span class="seg spec-row" role="group" aria-label="Spectators"><button data-spec="1" aria-pressed="true">On</button><button data-spec="0" aria-pressed="false">Off</button></span>
+      <span class="spec-row"></span><p class="nr-note spec-row" id="nr-spec">Anyone can watch once it starts.</p>
     </div>
     <button class="create go" id="nr-go">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+    <p class="nr-msg" id="nr-msg" aria-live="polite"></p>
   </section>
 
   <!-- Welcome: the first screen (the game's drawWelcome). Log in on the big shard, Sign up and Play as guest under it -->
@@ -9273,6 +9275,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   function lobMsg(t) { lob.msg = t || ''; const x = $('lob-msg'); if (x) x.textContent = lob.msg; }
   function lobbyDraw() {
+    if (DIO) { if (dio.api) dio.api.rooms(); return; } // the Diorama's Rooms list
     const ul = $('lob-list');
     if (!ul || home.screen !== 'lobby') return;
     const rows = lobbySorted();

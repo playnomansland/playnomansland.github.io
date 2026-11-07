@@ -286,11 +286,41 @@ the new-Title / new-Skin notes.
 - Checked with a stubbed server (leaderboard, account): the titles then the skin announced once per phone, the
   Legend line, Full leaderboard, four tier tabs, tier 2 on the island.
 
+**Step 4 done (2026-11-07):** Multiplayer on the live lobby (`screens/game-step4.jpg`).
+- **Rooms is `home.screen === 'lobby'`** (the game's state; a kind calls the same thing `openLobby` does). `dioPaint`
+  shows it (`showRooms`: `lobbyOpen()`) or hides it (`lobbyClose()`); ← Play goes back to the Play screen. The game's
+  `lobbyDraw` hands over to the Diorama (`dio.api.rooms()`) under the switch.
+- **The list** is `lobbySorted()` filtered to the kind token and the search line (host, battlefield = the listing's
+  `look`, map): `host's room`, ★ leaderboard score on ranked (`boardScore`), No watchers, `battlefield · players · age
+  or round · watching`, JOIN (`srvJoin` / `duoJoin`) or WATCH (`lobbyWatch`), with `home.back = 'lobby'` so the end of
+  the match comes back to Rooms. Ids: `#lob-list`, `#lob-create`, `#lob-msg` (the game's `lobMsg`). No Quick play and
+  no join by code (owner's decision for the code; Quick play wasn't in the design: tests that use `#lob-quick` or
+  `#lob-code` need another way under the switch).
+- **New room** shares the game's `create` choices (mode, pub, spectate). CREATE ROOM is the old create sheet's button:
+  `srvHost(o)` / `srvHost({ ranked })` / `duoHost(o)`. Ranked without Google opens `rankedLogin`, whose "instead"
+  button now makes a Standard room (the old one hosted phone-to-phone). The battlefield row sets `skinPick` for the
+  room only (it goes out in the room's hello as `skin`); `restoreLook` puts your own back from `pb-skin` when the home
+  shows again. 2v2 has no Spectators row.
+- **Ranked gating** on Multiplayer's 1v1 Ranked: "switched off right now" / "needs the game server" (disabled), or
+  "needs a Google login" (`rankedReady`), else "it goes on your record".
+- **Developer** (`devMode()`): the designed rows call the old popup's functions: Factions / Devtest (`matchKind`,
+  disabled without `factionsReady` / `devReady`), Late game (`lateGame = true`, vs AI; vs Friend went with Play vs
+  Friend), Vs Claude (`startClaudeMatch`, only with `sampleFn`), Exploit bot (`exploitTactic`, the tactics from
+  `ExploitBot.TACTICS`; the note is the name, the win rate and the first sentence), Tournaments (`openToursSheet`),
+  Load units (`openLoader`), Counter Lab (a link to lab.html; left out of the artifact build). 2v2 opens for
+  developers (`devMode() || lob.dev`).
+- Not yet: Friends' Invite into your room (step 6, with the Friends dropdown).
+- Checked with stubbed `/lobby` and `/room` sockets (`page.routeWebSocket`): the list, count, search, kinds, ★ score,
+  Join, New room's hello (`public`, `spectate: false`, `skin`), back to Rooms with your own battlefield, the developer
+  rows, Late game starting.
+
 **Running the UI tests in this sandbox:** `export NODE_PATH=/opt/node-tools/node_modules` (they require
 `playwright-core`), and some tests launch `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: link it to
 `/opt/pw-browsers/chromium`. These fail on a clean `main` here too (no server `node_modules`, and so on), so compare
 against `main` before blaming a change: account-ui, board-switch, game3d, tutorial-ui, server-match-ui, rewards-ui,
-skins-ui.
+skins-ui. `cd server && npm ci` gives the tests their local game server (wrangler); a test killed by a
+timeout leaves `wrangler dev` / `workerd` running and the next run's accounts fail (`g.player` undefined): `pkill -f
+"wrangler dev"; pkill -f workerd` between runs.
 
 ## Answered by the owner (2026-11-07, second session)
 

@@ -542,3 +542,11 @@
 #dio .stay .nts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin: 10px 0 4px; }
 #dio .stay .nts .ptitle { margin: 0; font-size: 22px; }
 #dio .stay { text-shadow: 0 0 3px var(--field), 0 0 8px var(--field), 0 0 14px var(--field); } /* it can hang over the island, as the island's notes do */
+
+/* ── step 4: Rooms on the live lobby, New room making real rooms ── */
+#dio .rooms { grid-template-rows: auto auto auto auto auto minmax(0, 1fr); }
+#dio .r-msg, #dio .nr-msg { margin: 0; font: 700 14px/1.4 var(--type); }
+#dio .r-msg:not(:empty) { margin: 0 0 10px; } #dio .nr-msg:not(:empty) { margin-top: 12px; }
+#dio .newroom.duo .spec-row { display: none; }
+#dio .rlist .dvt { margin-left: 10px; }
+#dio .orders .mp .item[disabled] small { opacity: 1; }
