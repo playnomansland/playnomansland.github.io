@@ -11,14 +11,15 @@ artifact. The design language can be much more minimal and needs little detail.*
 (`refs/zoe-token-reference.png`) shows it: bold faceted shapes, a clean iconic silhouette, **about 300–600
 triangles**, flat shading, a 4-colour palette, no pupils, no soft sculpting.
 
-The first token is built: **`zoe-token.js` (ZoeToken, 344 triangles)**, from that sheet, in the claude.ai session.
+The first token is built: **`zoe-token.js` (ZoeToken v2, 308 triangles)**, from that sheet, in the claude.ai session (v2: a six-sided gem with triangular facets and eyes/brows carved flush; budget allowed up to 2,000).
 Renders: `renders/zoe-token-sheet.png`, `renders/zoe-token-vs-reference.png`. It's waiting for Vilhelm's verdict.
 
 How the token is built (reuse it for the next leaders):
-- The head is an 8-sided LatheGeometry (profile bottom-to-top, a vertex facing -z so a ridge runs down the front),
-  scaled wider than deep, flat-shaded: a faceted gem. The profile sets the character's silhouette.
-- Face features are thin extruded slabs laid flat on a facet (`facet()` + `onFacet()`): Zoe's blank cream eye
-  wedges and heavy dark brows slanting into a V.
+- The head is a gem built from rings of 6 vertices (`RINGS`: radius, height, turn). A ring turned half a step
+  against its neighbour gives triangular facets (top, chin); two rings at the same turn give one band of flat quads
+  (the eye band). A vertex faces -z, so a ridge runs down the front and the front outline is a hexagon. Flat-shaded.
+- Face features are flat, double-sided shapes laid flush on the eye band's two front quads (`facet()` + `onFacet()`):
+  Zoe's dark brow wedges (thick outside, thin at the middle, a V) with the blank cream eyes right under them.
 - Props are simple solids: four-sided prisms for the antennae (each piece runs a little past the kink so the joint
   has no gap), a faceted star (a star outline with its middle raised to a point on both sides), an 8-sided collar
   band, an octahedron as the diamond.
