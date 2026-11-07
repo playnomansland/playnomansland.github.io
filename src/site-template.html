@@ -1050,7 +1050,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <section class="standings" aria-label="Rankings">
     <span class="k">Rankings · this month · ranked best-of-3</span>
     <h2>Standings</h2>
-    <p class="leg">The top players when the month ends earn the gold Legend title.</p>
+    <p class="leg"></p>
+    <button class="lb-all" id="lb-open">Full leaderboard →</button>
   </section>
 
   <p class="phone-reward" style="display:none;position:relative;margin:22px 16px 0;font:400 14px/1.4 var(--type)"><span class="tag" style="display:inline-block;padding:3px 7px 2px;font:700 11px var(--type);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--saffron)">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></p>
@@ -4075,6 +4076,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     home.asked = true;
     try { const r = await fetch(`${SERVER_URL}/leaderboard`); const j = r.ok ? await r.json() : null; home.rankedOn = j ? !!j.on : null; if (j) home.board = j; }
     catch (e) { home.rankedOn = null; }
+    if (DIO && dio.api) dio.api.board(); // the Diorama's Rankings: the podium and the line under STANDINGS
     if (phase === 'start' && home.pop && $('pop-back') && home.rankedOn != null) drawHome();
   }
   const rankedAllowed = () => home.rankedOn === true || devMode();

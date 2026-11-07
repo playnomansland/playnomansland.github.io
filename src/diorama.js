@@ -246,32 +246,34 @@
     const T4 = [['golem', '#51005C'], ['sunPriest', '#FFD23F'], ['meteor', '#FF6B35'], ['mammoth', '#A0785A'], ['necro', '#9D4EDD'], ['truespear', '#C9D1D9'], ['assassin', '#3A3550']];
     const pick = T4.map(v => [v, still ? T4.indexOf(v) : Math.random()]).sort((a, b) => a[1] - b[1]).map(v => v[0]).slice(0, 5);
     const podium = new THREE.Group(); island.add(podium);
-    const PLAYERS = { 1: ['Captain Tuesday', '96', '14–1–2'], 2: ['Ironmoss', '88', '12–0–3'], 3: ['Pebble', '81', '11–2–4'], 4: ['Hedgewitch', '74', '9–1–3'], 5: ['Sleepy Ent', '63', '8–0–6'] }; // sample data
     const SPOTS = [4, 2, 1, 3, 5], HEIGHT = { 1: 1.0, 2: 0.78, 3: 0.62, 4: 0.48, 5: 0.38 };
+    // the top five of the game's leaderboard (GET /leaderboard: rows of { id, tag, title, w, t, l, score }; home.board),
+    // drawn again when it comes in or changes. A spot nobody holds yet is a blank tile, without a unit
+    let PLAYERS = {}, podiumKey = '';
+    function buildPodium(rows) {
+      const key = JSON.stringify((rows || []).slice(0, 5).map(r => [r.id, r.tag, r.score, r.w, r.t, r.l]));
+      if (key === podiumKey) return; podiumKey = key;
+      for (const c of [...podium.children]) { podium.remove(c); c.traverse(o => { [].concat(o.material || []).forEach(mm => { if (mm.map) mm.map.dispose(); }); }); }
+      PLAYERS = {}; (rows || []).slice(0, 5).forEach((r, i) => { PLAYERS[i + 1] = [r.tag, r.score != null ? String(Math.round(r.score)) : '', `${r.w}–${r.t}–${r.l}`]; });
     SPOTS.forEach((n, i) => {
+      const P = PLAYERS[n] || ['nobody yet', '', ''];
       const h = HEIGHT[n], x = -4.6 + i * 2.3, first = n === 1, paper = first ? '#F2B23A' : '#F4ECD8', side = first ? '#C98E22' : '#CDBF9F';
       const b = tile(1.9, h, 2.6, (g, w, hh) => { g.fillStyle = paper; g.fillRect(0, 0, w, hh); g.strokeStyle = first ? 'rgba(23,20,15,.35)' : 'rgba(23,20,15,.2)'; g.lineWidth = 6; g.setLineDash([18, 14]); g.strokeRect(22, 22, w - 44, hh - 44);
           g.fillStyle = '#17140F'; g.textAlign = 'center'; g.font = '700 220px "Chakra Petch"'; g.fillText(String(n), w / 2, hh * 0.72);
-          fitFont(g, PLAYERS[n][0], 700, 60, '"Bricolage Grotesque"', 440); g.fillText(PLAYERS[n][0], w / 2, hh * 0.87); },
-        (g, w, hh) => { g.fillStyle = side; g.fillRect(0, 0, w, hh); g.fillStyle = '#17140F'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 40px "Courier Prime"'; g.fillText(`${PLAYERS[n][1]} SCORE · ${PLAYERS[n][2]}`, w / 2, Math.min(hh / 2, 46)); }, side);
+          fitFont(g, P[0], 700, 60, '"Bricolage Grotesque"', 440); if (!PLAYERS[n]) g.globalAlpha = .45; g.fillText(P[0], w / 2, hh * 0.87); g.globalAlpha = 1; },
+        (g, w, hh) => { g.fillStyle = side; g.fillRect(0, 0, w, hh); g.fillStyle = '#17140F'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 40px "Courier Prime"'; g.fillText((PLAYERS[n] ? `${P[1]} SCORE · ${P[2]}` : ''), w / 2, Math.min(hh / 2, 46)); }, side);
       b.position.set(x, h / 2, 0.3); podium.add(b);
       const [kind, tint] = pick[n - 1], k = kind === 'mammoth' ? 0.4 : kind === 'golem' ? 0.46 : 0.52;
-      const u = unit(kind, tint, first ? '#F2B23A' : '#E9E3CF', x, -0.6, k, Math.PI + (i - 2) * 0.12, podium); u.position.y = h;
+      if (PLAYERS[n]) { const u = unit(kind, tint, first ? '#F2B23A' : '#E9E3CF', x, -0.6, k, Math.PI + (i - 2) * 0.12, podium); u.position.y = h; }
     });
+    }
+    buildPodium(home.board && home.board.rows);
     podium.position.y = -4; podium.visible = false;
 
     // ── the player: skins, titles and sample accounts. A skin you wear shows on that unit in the Units roster ──
-    const SKIN = { // Shapes.SKINS in src/shapes.js
-      'brute-champion': { unit: 'Brute', name: 'Champion', model: 'brute:champion', text: 'A crowned Brute in gold armour with a great hammer and a cape.' },
-      'golem-aquamarine': { unit: 'Ether Golem', name: 'Aquamarine', model: 'golem:aquamarine', text: 'Cut from sea-green crystal, with a white-hot core.', limited: true },
-      'brute-omniper': { unit: 'Brute', name: 'Omni-Per', model: 'brute:omniper', text: 'A chrome war machine with a power fist.' },
-      'firemage-ember': { unit: 'Fire Mage', name: 'Ember Robe', model: 'wizard:fire:ember', text: 'An ember-trimmed robe, a flame in each hand.' },
-    };
-    const DTITLES = { // DTITLES and TITLE_WHY in src/site-template.html
-      dev: ['DEV', '#FF5FC4', 'You make this game.'], day1: ['Day 1', '#B67CFF', 'You were here in the very first week.'],
-      legend: ['Legend', '#FFC83D', 'You ended a month in the top 5 of the leaderboard.'], bababa: ['BABABABA', '#FF8A2A', 'You joined the No Mans Land Discord.'],
-      initiate: ['Initiate', '#7FD3FF', 'You solved every puzzle.'], goodsport: ['Good sport', '#C6ECFF', 'Opponents said GG to you 10 times.'],
-    };
+    // the game's skins (Shapes.SKINS: unit, name, text, model, limited) and titles (TITLES, TITLE_WHY) as the screens use them
+    const SKIN = Shapes.SKINS;
+    const DTITLES = Object.fromEntries(Object.entries(TITLES).map(([k, t]) => { const why = (TITLE_WHY[k] || '').replace(/^[^:]*:\s*/, ''); return [k, [t.name, t.col, why.charAt(0).toUpperCase() + why.slice(1)]]; }));
     // sample accounts (#acct=google, the default; guest; dev; none)
     const ACCTS = {
       google: { tag: 'Wren', google: true, titles: ['day1', 'initiate', 'goodsport'], title: 'day1', skins: [{ id: 'brute-champion', worn: true }, { id: 'golem-aquamarine', worn: true }] },
@@ -288,8 +290,14 @@
     // ── Units: the board clears and one tier stands in a row, each unit on a tile with its name ──
     // the roster: the units the game plays now (demo-units.json, a Counter Lab set, or Factions), tiers by cost
     const ROSTER = { get units() { return units; }, skills: Object.fromEntries(((DATA && DATA.skills) || []).map(k => [k.id, k.name])) };
-    const costs = [...new Set(ROSTER.units.map(u => u.cost))].sort((a, b) => a - b);
-    const tierOf = (u) => costs.indexOf(u.cost) + 1; // the game's rule: tiers by cost
+    const tierOf = (u) => Game.tierOf(ROSTER.units, ROSTER.units.indexOf(u)); // the game's rule (tiers by cost)
+    // the tier tabs: one per tier the roster has (a Counter Lab set can have more or fewer than 4)
+    function drawTierTabs() {
+      const n = Math.max(1, ...ROSTER.units.map(tierOf)), nav = body.querySelector('.tiers'), have = nav.querySelectorAll('[data-t]').length;
+      if (have === n) return;
+      nav.querySelectorAll('[data-t]').forEach(x => x.remove());
+      for (let t = 1; t <= n; t++) { const bt = document.createElement('button'); bt.dataset.t = t; bt.textContent = 'Tier ' + t; bt.setAttribute('aria-pressed', String(t === tier)); bt.addEventListener('click', () => setTier(t)); nav.appendChild(bt); }
+    }
     const roster = new THREE.Group(); island.add(roster); roster.position.y = -4; roster.visible = false;
     let tier = 1, rosterHot = [];
     function buildTier(t, pop = -1) {
@@ -815,16 +823,44 @@
       if (r.status !== 200) { if (r.error === 'bad tag') { door.err = TAG_BAD; signMsg(''); return drawSignin(); } signMsg(acctFail(r)); return; }
       acctTake(r); homeDone();
     });
-    // Stay logged in? (the old menu's popup): a note off the account button, asked once after making an account or logging in
+    // the account's notes, off the account button, one at a time as the old menu's popups came: Stay logged in? (asked
+    // once after making an account or logging in), then a new Title, then a new skin (each announced once per phone)
     const stayEl = $('dio-stay');
     function drawStay() {
-      const ask = !!acct && stayPref() == null && !HOME_AUTO && !door.screen && home.screen === 'menu';
-      stayEl.hidden = !ask; if (!ask) return;
-      stayEl.innerHTML = `<span class="k" id="stay-h">Stay logged in?</span><p>Keep <b>${esc(acct.tag)}</b> logged in on this device, so the game opens on the menu next time. Settings can change it.</p>
-        <span class="seg"><button class="w go" id="stay-yes">Yes</button><button class="w" id="stay-no">No</button></span>`;
-      $('stay-yes').addEventListener('click', () => { setStay(true); drawHome(); });
-      $('stay-no').addEventListener('click', () => { setStay(false); drawHome(); });
+      const on = !!acct && !HOME_AUTO && !door.screen && home.screen === 'menu';
+      const ask = on && stayPref() == null, nt = on && !ask ? titlesUnseen() : [], ns = on && !ask && !nt.length ? skinsUnseen() : [];
+      stayEl.hidden = !(ask || nt.length || ns.length); stayEl.classList.toggle('news', !ask);
+      if (ask) {
+        stayEl.innerHTML = `<span class="k" id="stay-h">Stay logged in?</span><p>Keep <b>${esc(acct.tag)}</b> logged in on this device, so the game opens on the menu next time. Settings can change it.</p>
+          <span class="seg"><button class="w go" id="stay-yes">Yes</button><button class="w" id="stay-no">No</button></span>`;
+        $('stay-yes').addEventListener('click', () => { setStay(true); drawHome(); });
+        $('stay-no').addEventListener('click', () => { setStay(false); drawHome(); });
+      } else if (nt.length) {
+        stayEl.innerHTML = `<span class="k" id="stay-h"><i class="tagnew">${nt.length > 1 ? 'New titles' : 'New title'}</i></span>
+          <p class="nts">${nt.map(t => DTITLES[t] ? `<span class="ptitle" style="--tc:${DTITLES[t][1]}"><i></i>${esc(DTITLES[t][0])}<i></i></span>` : '').join('')}</p>
+          <p>${nt.map(t => DTITLES[t] ? esc(DTITLES[t][2]) : '').join(' ')} It shows under your name. Change it any time in Profile.</p>
+          <span class="seg"><button class="w go" id="title-ok">Nice</button></span>`;
+        $('title-ok').addEventListener('click', () => { titlesSeen(); drawHome(); });
+      } else if (ns.length) {
+        const S = SKIN[ns[0]];
+        stayEl.innerHTML = `<span class="k" id="stay-h"><i class="tagnew">${ns.length > 1 ? 'New skins' : 'New skin'}</i></span>
+          <p>${ns.map(id => `<b>${esc(SKIN[id].name)} ${esc(SKIN[id].unit)}.</b> ${esc(SKIN[id].text)}`).join(' ')}</p>
+          <p>Your ${esc(S.unit)}s wear it, and your opponents see it online. Change it on the unit's sheet in Units.</p>
+          <span class="seg"><button class="w go" id="skin-ok">Nice</button></span>`;
+        $('skin-ok').addEventListener('click', () => { skinsSeen(); drawHome(); });
+      }
     }
+    // Rankings: the line under STANDINGS (the Legend title and how long the month has left) and the full leaderboard
+    function drawStandings() {
+      const j = home.board, lg = j && j.legend && j.legend.top ? j.legend : null, el = body.querySelector('.standings .leg');
+      let when = '';
+      if (lg) { const left = Math.max(0, (lg.ends - Date.now()) / 864e5); when = left >= 1 ? `${Math.floor(left)} day${Math.floor(left) === 1 ? '' : 's'} left this month.` : left * 24 >= 1 ? `${Math.floor(left * 24)} hours left this month.` : 'The month ends within the hour.'; }
+      el.textContent = !j ? 'The standings come from the game server, which can’t be reached right now.'
+        : !j.rows.length ? 'No ranked results yet. Play a ranked match against a friend to get on the board.'
+        : lg ? `The top ${lg.top} when the month ends earn the gold Legend title. ${when}` : 'Ranked best-of-3 series.';
+      buildPodium(j && j.rows);
+    }
+    $('lb-open').addEventListener('click', openLeaderboard);
     body.querySelectorAll('.door .item').forEach(b => { b.addEventListener('mouseenter', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x === b)));
       b.addEventListener('focus', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x === b))); });
     body.querySelector('.door').addEventListener('mouseleave', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x.id === 'w-login')));
@@ -924,7 +960,7 @@
     body.querySelectorAll('.pl-row').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.setAttribute('aria-current', x === b))));
     body.querySelectorAll('.pl-tabs button[aria-pressed]').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.setAttribute('aria-pressed', x === b))));
     body.querySelectorAll('.pl-modes button').forEach(b => b.addEventListener('click', () => b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true')));
-    addEventListener('keydown', e => { if (e.key === 'Escape' && dio.shown && $('sheet-back').hidden && !typingIn(e.target)) { if (dd.open) return openDrop(''); if (picked) return pickUnit(null); if (!document.getElementById('r-menu').hidden) return tokMenu(false); closeMusic(); goBack(); } });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && dio.shown && $('sheet-back').hidden && !typingIn(e.target)) { if (dd.open) return openDrop(''); if (picked) return pickUnit(null); if (!document.getElementById('r-menu').hidden) return tokMenu(false); closeMusic(); goBack(); } }, true); // capture: runs before the game's own Escape, so an open sheet takes the key alone
     addEventListener('pointerdown', e => { if (dio.shown && !e.target.closest('.rsearch')) tokMenu(false); });
     addEventListener('pointerdown', e => { if (dio.shown && body.classList.contains('music-open') && !e.target.closest('.music')) closeMusic(); });
     // states for screenshots: #play, #music, #view=<word>, #pin, #tier=<n>, #unit=<n>, #hover=<piece>
@@ -972,6 +1008,8 @@
     // drawHome: follow the game's home state (which screen, the account)
     function dioPaint() {
       if (!sampleAcct && A !== acct) { A = acct; picked = null; buildTier(tier); }
+      if (rosterOf !== units) { rosterOf = units; drawTierTabs(); if (!body.querySelector(`.tiers [data-t="${tier}"]`)) tier = 1; picked = null; buildTier(tier); } // the roster changed (a Counter Lab set, Factions)
+      drawStandings();
       drawProfile();
       const s = home.screen;
       if (s === 'welcome' || s === 'signup' || s === 'login') openDoor(s === 'welcome' ? '' : s);
@@ -1002,8 +1040,9 @@
       const pz = $('puzzles-open'); pz.classList.toggle('hot', !!newcomer);
       let sm = pz.querySelector('small'); if (newcomer && !sm) { sm = document.createElement('small'); sm.textContent = 'start here'; pz.appendChild(sm); } else if (!newcomer && sm) sm.remove();
     }
-    dio.api = { pause, resume, draw: dioPaint };
+    let rosterOf = units;
+    dio.api = { pause, resume, draw: dioPaint, board: drawStandings };
     dioPaint();
     if (dio.shown) resume();
-    window.__dio = { ready: true }; if (TEST) window.__dio.sync = dioSync; // the tests: show / hide the home by hand
+    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name) }; if (TEST) window.__dio.sync = dioSync; // the tests: the roster standing; show / hide the home by hand
   }

@@ -270,6 +270,22 @@ the new-Title / new-Skin notes.
 - The Diorama menu does what the old `drawMenu` did quietly: `rankedCheck()` (also fills `home.board` for Rankings),
   the `me` refresh, `discordFinish()`.
 
+**Step 3.5 done (2026-11-07):**
+- **Units** stand on the game's roster (`units`: demo-units.json, a Counter Lab set or Factions), tiers by
+  `Game.tierOf`; the tier tabs are made for the tiers there are, and the roster is built again when `units` changes.
+  Skins and titles are the game's (`Shapes.SKINS` with its `limited`, `TITLES` / `TITLE_WHY` as `DTITLES`). Wearing a
+  skin on the unit sheet still only changes it locally (step 5 sends it).
+- **Rankings:** the podium is the top five of `GET /leaderboard` (`home.board`, from `rankedCheck` or the leaderboard
+  sheet; `dio.api.board()` redraws it); an empty spot is a blank tile with "nobody yet" and no unit. The line under
+  STANDINGS says the Legend rule and how long the month has left (or that there are no results yet, or no server).
+  **Full leaderboard →** (`#lb-open`, the old menu's id) opens the game's leaderboard sheet.
+- **New Title / new skin** (the old menu's popups): the account note off the account button (`#dio-stay`), after
+  Stay logged in?: the new titles in their colours with why, or the new skin with its line; **Nice** (`#title-ok`,
+  `#skin-ok`) calls `titlesSeen()` / `skinsSeen()`. Not under `?test`, as before.
+- The Diorama's Escape runs in the capture phase, so with a game sheet open one Escape only closes the sheet.
+- Checked with a stubbed server (leaderboard, account): the titles then the skin announced once per phone, the
+  Legend line, Full leaderboard, four tier tabs, tier 2 on the island.
+
 **Running the UI tests in this sandbox:** `export NODE_PATH=/opt/node-tools/node_modules` (they require
 `playwright-core`), and some tests launch `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: link it to
 `/opt/pw-browsers/chromium`. These fail on a clean `main` here too (no server `node_modules`, and so on), so compare
