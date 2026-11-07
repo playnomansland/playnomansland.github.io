@@ -1261,7 +1261,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     autumn: { deploy: ['berlin'] },                         // Autumn
     ash: { battle: ['joeBiden'] },                          // Ashlands
   };
-  const LOOK_MUSIC = { frost: 'cavern', autumn: 'autumn', cavern: 'cavern', snow: 'icy', moonlit: 'icy', ash: 'ash' }; // frost = Darkwoods
+  const LOOK_MUSIC = { frost: 'cavern', autumn: 'autumn', cavern: 'cavern', snow: 'icy', moonlit: 'icy', ash: 'ash' }; // frost = Forest Glade (was Darkwoods)
   // the menu playlist: every song that isn't deployment or battle music (a new song shows up in it by itself)
   const phaseSongs = new Set([...UNASSIGNED, ...PLAYLISTS.deploy, ...PLAYLISTS.battle, ...Object.values(MUSIC_COMBOS).flatMap(o => Object.values(o).flat())]);
   PLAYLISTS.menu = Object.keys(SONGS).filter(id => !phaseSongs.has(id));
@@ -1408,7 +1408,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     const combo = m && m.map ? LOOK_MUSIC[Game.lookOf(m)] : null, own = (combo && MUSIC_COMBOS[combo]) || {};
     return [...(own.deploy || PLAYLISTS.deploy).map(id => ['Deploy', id]), ...(own.battle || PLAYLISTS.battle).map(id => ['Battle', id])];
   }
-  // "<map> Adaptive music": on a map that can wear a look, the look's name (Darkwoods, Ashlands, Moonlit Snow...: the
+  // "<map> Adaptive music": on a map that can wear a look, the look's name (Forest Glade, Ashlands, Moonlit Snow...: the
   // music follows the look), else the map's (Mushroom Cavern, Frozen Peak)
   function adaptiveName() {
     let name = 'Map';

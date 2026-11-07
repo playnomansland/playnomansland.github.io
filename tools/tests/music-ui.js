@@ -100,7 +100,7 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
     await p.click('#music-btn');
     await p.waitForSelector('#mp-pop.dock .mplayer', { timeout: 5000 }); await sleep(500);
     const mtabs = await p.$$eval('#mp-pop .mp-tab', x => x.map(e => e.textContent.trim()));
-    ok(/^(Darkwoods|Meadow|Autumn|Snow|Desert|Ashlands|Moonlit Snow|Savanna|Mushroom Cavern|Frozen Peak|Bridge) Adaptive music$/.test(mtabs[0]) && mtabs.slice(1).join('|') === 'Menu Playlist|All music|Road trip|+', 'match tabs: ' + mtabs.join(', '));
+    ok(/^(Forest Glade|Meadow|Autumn|Snow|Desert|Ashlands|Moonlit Snow|Savanna|Mushroom Cavern|Frozen Peak|Bridge) Adaptive music$/.test(mtabs[0]) && mtabs.slice(1).join('|') === 'Menu Playlist|All music|Road trip|+', 'match tabs: ' + mtabs.join(', '));
     ok(await p.getAttribute('[data-tab="map"]', 'aria-selected') === 'true', 'Adaptive music first, open');
     ok(/Adaptive music/.test(await p.textContent('#mp-label')), 'the player says Adaptive music');
     for (const id of ['mp-play', 'mp-back', 'mp-next', 'mp-shuffle', 'mp-repeat']) ok(await vis('#mp-pop #' + id), 'the player has ' + id);

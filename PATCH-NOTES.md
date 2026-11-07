@@ -20,9 +20,9 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
-## 7 November 2026 – Darkwoods gets its own identity (prototype)
+## 7 November 2026 – Forest Glade: Darkwoods gets its own identity (prototype)
 
-**Darkwoods**, the Standard map's own look, was Frozen Peak without the snow. It's now an ancient forest, and the battlefield is its one clearing:
+**Darkwoods**, the Standard map's own look, was Frozen Peak without the snow. It's now an ancient forest called **Forest Glade**, and the battlefield is its one clearing:
 - **Giant twisted trees** lean over the sides and far corners of the board, two to three times the height of the old pines, and throw their shadows across it. Further out the woods turn into a green-black dark.
 - **Eyes in the dark:** pairs of pale eyes open between the trunks, blink, close and turn up somewhere else. More of them watch every round.
 - **Ground mist** drifts between the trees, and faint **light shafts** fall through the canopy onto the clearing. Glowing spores rise slowly through the air.
@@ -41,7 +41,7 @@ Trees and fungus from Quaternius' Stylized Nature MegaKit; the gate, shrine and 
 - **Playlists roll up out of the player:** tap *Now playing* and the playlists roll up from the player, which stays where it is. Tap it again, the arrow, Escape or anywhere else to roll them back down.
 - **Tabs:** *Menu Playlist* (the menu songs), *All music* (every song in the game) and your own playlists. Pick a tab's *Play* or any song in it, and the player carries on through that playlist.
 - **Make your own:** the **+** tab makes a playlist from All music. Name it and tap songs to add them (they play in the order you tap). Your playlists have *Edit* and *Delete* buttons.
-- **In a match:** the music button opens the same playlists, with the map's own music first as **<map> Adaptive music** (for example *Darkwoods Adaptive music*). It plays deployment music, then battle music. Pick any other playlist and it plays through deploy and battle instead. Adaptive music's *Play* goes back to the map's music.
+- **In a match:** the music button opens the same playlists, with the map's own music first as **<map> Adaptive music** (for example *Forest Glade Adaptive music*). It plays deployment music, then battle music. Pick any other playlist and it plays through deploy and battle instead. Adaptive music's *Play* goes back to the map's music.
 - **Saved to your account:** your playlists and sound settings (volume, music and sound effects on or off, shuffle, repeat, the playlist playing on the menu) are kept on your account. Log in on another device and they're there too. Playlists you made before logging in are added to your account's.
 
 ---
