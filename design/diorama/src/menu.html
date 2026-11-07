@@ -44,7 +44,13 @@ body.music-open .pl { display: grid; animation: plin .26s cubic-bezier(.16,.9,.2
 .pl-row .eq i { width: 3px; background: currentColor; animation: eq .9s ease-in-out infinite alternate; }
 .pl-row .eq i:nth-child(2) { animation-delay: -.3s; } .pl-row .eq i:nth-child(3) { animation-delay: -.6s; }
 @keyframes eq { from { height: 3px; } to { height: 12px; } }
-.pl-row:hover { opacity: 1; }
+.pl-row:hover, .pl-row.hov { opacity: 1; }
+/* a pointed-at song gets a soft dark cut-corner box, so its name reads over any board or field */
+.pl-row { position: relative; isolation: isolate; }
+.pl-row::before { content: ""; position: absolute; inset: 0 -10px 0 -14px; z-index: -1; background: rgba(23, 20, 15, .5); clip-path: polygon(0 8%, 98% 0, 100% 90%, 2% 100%); opacity: 0; transition: opacity .12s ease; }
+.pl-row:hover::before, .pl-row.hov::before { opacity: 1; }
+.pl-row:hover, .pl-row.hov { color: #F4ECD8; text-shadow: none; }
+.pl-row:hover .eq, .pl-row.hov .eq { color: #F2B23A; }
 .pl-row[aria-current="true"] { opacity: 1; } .pl-row[aria-current="true"] .eq { visibility: visible; }
 @media (prefers-reduced-motion: reduce) { .pl-row .eq i { animation: none; height: 8px; } }
 
@@ -204,8 +210,26 @@ body.units .tiers { opacity: 1; pointer-events: auto; }
       <li><button data-q="2v2" disabled>2v2 <small>coming soon</small></button></li>
     </ul>
   </div>
-  <button class="create">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+  <button class="create" id="r-create">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
   <ol class="rlist" id="r-list"></ol>
+</section>
+
+<!-- Create room: the game's three settings (kind, who can find it, spectators) as rows of words, then one button -->
+<section class="newroom" aria-label="Create room">
+  <span class="k">Rooms · create</span>
+  <h2>New room</h2>
+  <div class="nr-opts">
+    <span class="lab">Kind</span>
+    <span class="seg" role="group" aria-label="Kind"><button data-kind="standard">1v1 Standard</button><button data-kind="ranked">1v1 Ranked</button><button data-kind="2v2" disabled>2v2 <small><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg>soon</small></button></span>
+    <span></span><p class="nr-note" id="nr-note"></p>
+    <span class="lab">Who can find it</span>
+    <span class="seg" role="group" aria-label="Who can find it"><button data-pub="1" aria-pressed="true">Public</button><button data-pub="0" aria-pressed="false">Private</button></span>
+    <span></span><p class="nr-note" id="nr-pub">Listed in Rooms for anyone to join.</p>
+    <span class="lab">Spectators</span>
+    <span class="seg" role="group" aria-label="Spectators"><button data-spec="1" aria-pressed="true">On</button><button data-spec="0" aria-pressed="false">Off</button></span>
+    <span></span><p class="nr-note" id="nr-spec">Anyone can watch once it starts.</p>
+  </div>
+  <button class="create go" id="nr-go">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
 </section>
 
 <script type="module">
@@ -527,7 +551,19 @@ document.getElementById('r-tok').addEventListener('click', () => tokMenu(documen
 document.querySelectorAll('#r-menu button:not([disabled])').forEach(b => b.addEventListener('click', () => { setRoomQ(b.dataset.q); tokMenu(false); }));
 document.getElementById('r-q').addEventListener('input', drawRooms);
 function openRooms(q) { setRoomQ(q); tokMenu(false); body.classList.add('in-rooms'); backBtn.textContent = '← Play'; }
-function closeRooms() { body.classList.remove('in-rooms'); tokMenu(false); backBtn.textContent = '← Menu'; }
+function closeRooms() { if (body.classList.contains('in-create')) return closeCreate(); body.classList.remove('in-rooms'); tokMenu(false); backBtn.textContent = '← Menu'; }
+
+// Create room: starts on the kind the list was filtered to (the game's create sheet: kind, public or private, spectators)
+const NOTE = { standard: 'Pick the map, look and leaders in the room before you start.', ranked: 'A best of 3 on the Standard map and pack. You and whoever joins both need to be logged in with Google. Only ranked series count on the leaderboard.' };
+const press = (sel, on) => document.querySelectorAll(sel).forEach(b => b.setAttribute('aria-pressed', on(b)));
+function setKind(k) { press('.newroom [data-kind]', b => b.dataset.kind === k); document.getElementById('nr-note').textContent = NOTE[k]; }
+document.querySelectorAll('.newroom [data-kind]:not([disabled])').forEach(b => b.addEventListener('click', () => setKind(b.dataset.kind)));
+document.querySelectorAll('.newroom [data-pub]').forEach(b => b.addEventListener('click', () => { press('.newroom [data-pub]', x => x === b); document.getElementById('nr-pub').textContent = b.dataset.pub === '1' ? 'Listed in Rooms for anyone to join.' : 'Not listed. Friends join with the room’s code.'; }));
+document.querySelectorAll('.newroom [data-spec]').forEach(b => b.addEventListener('click', () => { press('.newroom [data-spec]', x => x === b); document.getElementById('nr-spec').textContent = b.dataset.spec === '1' ? 'Anyone can watch once it starts.' : 'No one can watch.'; }));
+function openCreate() { setKind(roomQ); tokMenu(false); body.classList.add('in-create'); backBtn.textContent = '← Rooms'; }
+function closeCreate() { body.classList.remove('in-create'); backBtn.textContent = '← Play'; }
+document.getElementById('r-create').addEventListener('click', openCreate);
+document.getElementById('nr-go').addEventListener('click', () => {}); // in the game: the room opens and waits for a second player
 // the playlist
 const openMusic = () => body.classList.toggle('music-open'), closeMusic = () => body.classList.remove('music-open');
 document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', openMusic));
@@ -543,6 +579,9 @@ if (H.includes('play')) { openPlay(); now = { ...VIEWS.orders, at: [...VIEWS.ord
 if (H.includes('multi')) setMp(true);
 const rq = (H.match(/rooms=(\w+)/) || [])[1]; if (rq) { if (!H.includes('play')) { openPlay(); now = { ...VIEWS.orders, at: [...VIEWS.orders.at], off: [...VIEWS.orders.off] }; } openRooms(rq); }
 if (H.includes('filter')) tokMenu(true);
+if (H.includes('create')) openCreate();
+if (H.includes('private')) document.querySelector('.newroom [data-pub="0"]').click();
+const plh = (H.match(/plh=(\d+)/) || [])[1]; if (plh) document.querySelectorAll('.pl-row')[+plh].classList.add('hov'); // a song as if pointed at
 const onq = (H.match(/on=([\w-]+)/) || [])[1]; // look as if pointed at: a Play choice (vs-ai, multi, standard, ranked) or a room row (r0, r1...)
 if (onq) { const el = /^r\d+$/.test(onq) ? document.querySelectorAll('#r-list li')[+onq.slice(1)] : document.getElementById(onq) || document.querySelector(`.orders .mp [data-q="${onq}"]`); if (el) el.classList.add('on'); }
 if (H.includes('music')) openMusic();

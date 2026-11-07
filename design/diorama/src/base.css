@@ -127,6 +127,24 @@ body.in-rooms .rooms { display: grid; } body.in-rooms .orders { display: none; }
 .rlist .go.watch { opacity: .7; } .rlist .go.watch:hover { opacity: 1; }
 .rlist .full { font: 400 13px var(--type); opacity: .55; padding-right: 14px; }
 .rlist .empty { display: block; padding: 18px 0; font: 400 15px var(--type); opacity: .8; border: 0; }
+/* Create room: settings as rows of words; the picked word has the ink shard */
+.newroom { position: fixed; left: 48px; top: 128px; width: min(740px, 54vw); display: none; align-content: start; }
+body.in-create .newroom { display: grid; } body.in-create .rooms { display: none; }
+.newroom .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+.newroom h2 { margin: 0 0 26px; font: 700 76px/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+.nr-opts { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 4px 14px; align-items: baseline; margin-bottom: 30px; }
+.nr-opts .lab { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+.nr-opts .seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.nr-opts .seg button { position: relative; isolation: isolate; padding: 6px 14px 3px; font: 700 30px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .55; }
+.nr-opts .seg button:hover { opacity: 1; }
+.nr-opts .seg button[aria-pressed="true"] { opacity: 1; color: #F2B23A; }
+.nr-opts .seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+.nr-opts .seg button[disabled] { opacity: .35; cursor: not-allowed; }
+.nr-opts .seg small { font: 400 13px var(--type); text-transform: none; letter-spacing: 0; margin-left: 4px; }
+.nr-opts .lock { width: 11px; height: 11px; margin-right: 4px; vertical-align: -1px; }
+.nr-note { margin: 0 0 18px 14px; font: 400 14px/1.4 var(--type); opacity: .8; max-width: 440px; }
+.create.go { margin-bottom: 0; }
+
 .back { position: fixed; top: 38px; right: 48px; display: none; font: 700 15px var(--sans); }
 body.play .back { display: block; } body.play .acct { display: none; }
 

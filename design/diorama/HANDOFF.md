@@ -20,7 +20,8 @@ get by clicking PLAY.
 Screenshot states (address hash): `#still` (no idle motion), `#play`, `#music`, `#view=puzzles|rules|units|ranks`,
 `#pin`, `#tier=1..4`, `#unit=N`, `#hover=keepYou|keepFoe|vaultYou|vaultFoe|mammoth|u:N`; on Play, `#multi` (Multiplayer
 folded out), `#rooms=standard|ranked` (Rooms, filtered), `#filter` (the filter's list open) and
-`#on=vs-ai|multi|standard|ranked|r0..` (look as if pointed at, a room row by index). For example:
+`#on=vs-ai|multi|standard|ranked|r0..` (look as if pointed at, a room row by index), `#create` (New room, with
+`#rooms=`), `#private`; `#plh=N` (playlist song N as if pointed at, with `#music`). For example:
 
 ```bash
 node design/diorama/build.js
@@ -72,7 +73,12 @@ scores printed on the tiles (sample data), the STANDINGS header top left.
   or room code), one CREATE ROOM + button, then the list: "Host's room", ★ score for ranked, a NO WATCHERS tag,
   `map · players · age or round · watching`, and JOIN / WATCH / full on the right (the ink shard on hover). Sample data,
   shaped like the game's lobby (`roomCard()` in `src/site-template.html`). "← Menu" becomes "← Play" here; Escape too.
-- The music player bottom right, as before.
+- CREATE ROOM + opens **New room** in the same place ("← Rooms"): the game's create sheet as rows of words, the
+  picked word on an ink shard, a typed note under each: Kind (1v1 Standard / 1v1 Ranked / 2v2 locked, starting on the
+  kind the list was filtered to; the ranked note about best of 3 and Google login), Who can find it (Public / Private),
+  Spectators (On / Off); then one CREATE ROOM → button (a no-op in the mockup).
+- The music player bottom right, as before. A pointed-at song in the playlist gets a soft dark cut-corner box with cream
+  type, so it reads over the board on saffron screens too (`screens/music-*-hover.jpg`).
 
 What the real game's Play popup has (`playPop()` in `src/site-template.html`, around line 3821): vs Friend; vs AI
 (disabled in ranked); Online · Rooms (when the server is up); Normal / Ranked; the pack, map and leader pickers
@@ -80,4 +86,7 @@ What the real game's Play popup has (`playPop()` in `src/site-template.html`, ar
 
 ## Next tasks
 
-1. Done: the PLAY screen reworked as above (owner's list of 2026-11-07). Waiting on the owner's feedback.
+1. Done: the PLAY screen reworked as above (owner's list of 2026-11-07), plus New room and the playlist hover box.
+2. Open: with the playlist up on PLAY / Rooms, the list sits over the board (plan view) and only the hovered song has a
+   box; options raised were moving the island aside while it's open, and an ink shard on the playing track (the
+   saffron accent turns to ink on saffron screens).
