@@ -1088,7 +1088,7 @@
     }
     $('dd-settings').addEventListener('click', async (e) => {
       const b = e.target.closest('button'); if (!b) return;
-      if ('playlists' in b.dataset) { openDrop(''); openPlaylist(); return; }
+      if ('playlists' in b.dataset) { openDrop(''); if (!body.classList.contains('music-open')) openMusic(); return; }
       if ('bug' in b.dataset) { openDrop(''); openBugSheet(); return; }
       if (!b.dataset.set) return;
       const [k, v] = b.dataset.set.split('|'), on = v === '1';
@@ -1120,12 +1120,73 @@
     for (const k of ['friends', 'settings']) { ddBtn[k].setAttribute('aria-haspopup', 'true'); ddBtn[k].setAttribute('aria-expanded', 'false'); ddBtn[k].addEventListener('click', () => openDrop(dd.open === k ? '' : k)); }
     addEventListener('pointerdown', (e) => { if (dio.shown && dd.open && !e.target.closest('.drop') && !e.target.closest('.acct') && !e.target.closest('#sheet-back')) openDrop(''); });
 
-    // the playlist
-    const openMusic = () => body.classList.toggle('music-open'), closeMusic = () => body.classList.remove('music-open');
+    // ── the music player and its playlists, on the game's music engine (the old menu player: wirePlayer, the panel: mpDraw).
+    // The player: the song playing, Back / Play-Pause / Next, the progress line (#mp-bar, the game's timer moves it).
+    // PLAYLIST (#mp-now) grows the list up out of it: tabs Menu playlist, All music, your own (myMusic) and + New;
+    // the songs of a tab (a click plays from there: playFrom); Shuffle, Repeat; your own: Edit, Delete (twice) ──
+    const pl = { tab: '', edit: null, sure: '' };
+    const songOf = (id) => SONGS[id] ? `${esc(SONGS[id].title)} <em>by ${esc(SONGS[id].artist || ARTIST)}</em>` : '';
+    const eqH = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>';
+    function drawPlayer() {
+      $('dmp-label').textContent = nowLabel().replace('Menu Playlist', 'Menu playlist');
+      $('dmp-title').innerHTML = songOf(ctlPl().song()) || 'Music';
+      $('mp-now').setAttribute('aria-expanded', String(body.classList.contains('music-open')));
+      body.classList.toggle('mp-playing', menuPlaying());
+    }
+    function drawList() {
+      if (!body.classList.contains('music-open')) { $('pl').innerHTML = ''; return; }
+      const tabs = mpTabs().filter(t => t !== 'map'), on = playingSrc(), cur = ctlPl().song();
+      if (!pl.edit && !tabs.includes(pl.tab)) pl.tab = tabs.includes(on) ? on : tabs[0];
+      let h = `<div class="pl-tabs" role="group" aria-label="Playlists">${tabs.map(t => `<button data-tab="${esc(t)}" aria-pressed="${!pl.edit && pl.tab === t}">${t === on ? eqH : ''}${esc(srcName(t).replace('Menu Playlist', 'Menu playlist'))}</button>`).join('')}<button class="new" data-tab="+" aria-pressed="${!!pl.edit}">${pl.edit && pl.edit.id ? 'Edit' : '+ New'}</button></div>`;
+      if (pl.edit) { // a playlist of your own: a name, songs from All music in the order you tap them
+        const e = pl.edit, n = e.songs.length;
+        h += `<input class="pl-name" id="pl-name" maxlength="24" placeholder="Name your playlist" value="${esc(e.name)}" aria-label="Playlist name" autocomplete="off" spellcheck="false">
+          <p class="pl-note" id="pl-note">${n ? `${n} song${n === 1 ? '' : 's'}, in the order you tap them.` : 'Tap songs to add them.'} ${acct ? 'Kept on your account.' : 'Kept on this device.'}</p>
+          <ol class="pl-list">${ALL_SONGS.map(id => { const k = e.songs.indexOf(id); return `<li><button class="pl-row" data-pick="${id}" aria-pressed="${k >= 0}"><span class="eq"></span><span>${songOf(id)}</span><span class="n">${k >= 0 ? String(k + 1).padStart(2, '0') : ''}</span></button></li>`; }).join('')}</ol>
+          <div class="pl-modes"><button data-cancel>Cancel</button><button data-save ${n && e.name.trim() ? '' : 'disabled'}>${e.id ? 'Save' : 'Create'}</button></div>`;
+      } else {
+        const songs = srcSongs(pl.tab), u = userList(pl.tab);
+        h += `<ol class="pl-list">${songs.length ? songs.map((id, i) => `<li><button class="pl-row" data-song="${id}" aria-current="${pl.tab === on && cur === id}">${eqH}<span>${songOf(id)}</span><span class="n">${String(i + 1).padStart(2, '0')}</span></button></li>`).join('') : '<li class="pl-note">No songs in this playlist yet.</li>'}</ol>
+          <div class="pl-modes">${u ? `<button data-edit>Edit</button><button data-del class="${pl.sure === pl.tab ? 'sure' : ''}">${pl.sure === pl.tab ? 'Sure? Delete' : 'Delete'}</button>` : ''}<button id="mp-shuffle" aria-pressed="${!!snd.shuffle}">Shuffle</button><button id="mp-repeat" aria-pressed="${!!snd.repeat}">Repeat</button></div>`;
+      }
+      const typed = $('pl-name') && document.activeElement === $('pl-name');
+      const y = body.querySelector('.pl-list') ? body.querySelector('.pl-list').scrollTop : 0;
+      $('pl').innerHTML = h;
+      if (body.querySelector('.pl-list')) body.querySelector('.pl-list').scrollTop = y;
+      if (typed) { $('pl-name').focus(); const v = $('pl-name').value; $('pl-name').setSelectionRange(v.length, v.length); }
+    }
+    const openMusic = () => { body.classList.toggle('music-open'); pl.edit = null; pl.sure = ''; drawList(); drawPlayer(); };
+    const closeMusic = () => { if (!body.classList.contains('music-open')) return; body.classList.remove('music-open'); pl.edit = null; drawList(); drawPlayer(); };
     body.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', openMusic));
-    body.querySelectorAll('.pl-row').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.setAttribute('aria-current', x === b))));
-    body.querySelectorAll('.pl-tabs button[aria-pressed]').forEach((b, i, all) => b.addEventListener('click', () => all.forEach(x => x.setAttribute('aria-pressed', x === b))));
-    body.querySelectorAll('.pl-modes button').forEach(b => b.addEventListener('click', () => b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true')));
+    // the controls: what the old menu player's did (wirePlayer)
+    $('mp-play').addEventListener('click', () => { if (menuPlaying()) menuPaused = true; else { menuPaused = false; musicGo(music.menu); } syncMusic(); showPlayer(); });
+    $('mp-next').addEventListener('click', () => { ctlPl().next(); showPlayer(); });
+    $('mp-back').addEventListener('click', () => { ctlPl().back(); showPlayer(); });
+    $('pl').addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b || b.disabled) return; const d = b.dataset;
+      if (b.id === 'mp-shuffle') { music.menu.shuffle = music.mine.shuffle = snd.shuffle = !snd.shuffle; saveSound(); showPlayer(); return; }
+      if (b.id === 'mp-repeat') { snd.repeat = !snd.repeat; music.menu.setRepeat(snd.repeat); music.mine.setRepeat(snd.repeat); saveSound(); showPlayer(); return; }
+      if (d.tab === '+') { if (!pl.edit) pl.edit = { id: '', name: `My playlist ${myMusic.lists.length + 1}`, songs: [] }; pl.sure = ''; drawList(); return; }
+      if (d.tab) { pl.tab = d.tab; pl.edit = null; pl.sure = ''; drawList(); return; }
+      if (d.song) { playFrom(pl.tab, d.song); return; }
+      if ('edit' in d) { const u = userList(pl.tab); if (u) { pl.edit = { id: u.id, name: u.name, songs: u.songs.filter(id => SONGS[id]) }; drawList(); } return; }
+      if ('del' in d) { if (pl.sure !== pl.tab) { pl.sure = pl.tab; return drawList(); } const u = userList(pl.tab); pl.sure = '';
+        if (u) { myMusic.lists = myMusic.lists.filter(x => x !== u); myMusic.gone.push(u.id); musicChanged(); pl.tab = 'all'; musicListsChanged(); } drawList(); return; }
+      if (d.pick) { const k = pl.edit.songs.indexOf(d.pick); if (k >= 0) pl.edit.songs.splice(k, 1); else pl.edit.songs.push(d.pick); drawList(); return; }
+      if ('cancel' in d) { pl.edit = null; drawList(); return; }
+      if ('save' in d) { // as the old panel's Save: up to 20 playlists, saved on the device and the account (musicChanged)
+        const e = pl.edit, name = e.name.replace(/\s+/g, ' ').trim().slice(0, 24); if (!name || !e.songs.length) return;
+        let u = e.id && myMusic.lists.find(x => x.id === e.id);
+        if (u) { u.name = name; u.songs = e.songs.slice(); }
+        else { if (myMusic.lists.length >= 20) { $('pl-note').textContent = 'You can have up to 20 playlists. Delete one to make another.'; return; }
+          let id; do { id = Math.random().toString(36).slice(2, 10); } while (myMusic.lists.some(x => x.id === id));
+          u = { id, name, songs: e.songs.slice() }; myMusic.lists.push(u); }
+        pl.edit = null; pl.tab = 'u:' + u.id; musicChanged(); musicListsChanged(); drawList();
+      }
+    });
+    $('pl').addEventListener('input', (e) => { if (e.target.id === 'pl-name' && pl.edit) { pl.edit.name = e.target.value; const sv = body.querySelector('[data-save]'); if (sv) sv.disabled = !(pl.edit.name.trim() && pl.edit.songs.length); } });
+    $('pl').addEventListener('keydown', (e) => { if (e.target.id === 'pl-name') { if (e.key === 'Escape') { e.stopPropagation(); pl.edit = null; drawList(); } if (e.key === 'Enter') { const sv = body.querySelector('[data-save]'); if (sv && !sv.disabled) sv.click(); } } });
+    drawPlayer();
     addEventListener('keydown', e => { if (e.key === 'Escape' && dio.shown && $('sheet-back').hidden && !typingIn(e.target)) { if (dd.open) return openDrop(''); if (picked) return pickUnit(null); if (!document.getElementById('r-menu').hidden) return tokMenu(false); closeMusic(); goBack(); } }, true); // capture: runs before the game's own Escape, so an open sheet takes the key alone
     addEventListener('pointerdown', e => { if (dio.shown && !e.target.closest('.rsearch')) tokMenu(false); });
     addEventListener('pointerdown', e => { if (dio.shown && body.classList.contains('music-open') && !e.target.closest('.music')) closeMusic(); });
@@ -1137,7 +1198,7 @@
     if (H.includes('create')) openCreate();
     const bq = (H.match(/roombf=(\w+)/) || [])[1]; if (bq) setRoomLook(LOOKS.findIndex(l => l.id === bq));
     if (H.includes('private')) body.querySelector('.newroom [data-pub="0"]').click();
-    const plh = (H.match(/plh=(\d+)/) || [])[1]; if (plh) body.querySelectorAll('.pl-row')[+plh].classList.add('hov'); // a song as if pointed at
+    const plh = (H.match(/plh=(\d+)/) || [])[1]; if (plh) { const r = body.querySelectorAll('.pl-row')[+plh]; if (r) r.classList.add('hov'); } // a song as if pointed at
     const onq = ((H.match(/on=([\w-]+)/) || [])[1] || '').replace(/^vs-ai$/, 'go'); // look as if pointed at: a Play choice (vs-ai, multi, standard, ranked) or a room row (r0, r1...)
     if (onq) { const el = /^r\d+$/.test(onq) ? body.querySelectorAll('#r-list li')[+onq.slice(1)] : document.getElementById(onq) || body.querySelector(`.orders .mp [data-q="${onq}"]`); if (el) el.classList.add('on'); }
     // developer: #acct=dev with #play; #xb=<tactic> (Exploit bot picked), #dvon=<word> (a developer word as if pointed at)
@@ -1214,7 +1275,7 @@
       skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
       homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
     }
-    dio.api = { friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
+    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
     dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) window.__dio.sync = dioSync; // the tests: the roster standing; show / hide the home by hand

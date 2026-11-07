@@ -356,6 +356,19 @@ the new-Title / new-Skin notes.
 - Checked with a stubbed account server and hub socket: badge, rows, Invite → private room, a thread both ways, a live
   invite, Requests, Accept, Add with several matches, Esc, Settings to the game's storage, Report a bug.
 
+**Step 7 done (2026-11-07):** the music player and playlists on the game's music engine (`screens/game-step7.jpg`).
+- **The player** (bottom right): the song playing (`ctlPl().song()`, title by artist), what plays (`nowLabel`), the
+  progress line (`#mp-bar`: the game's timer sets its `scaleX`), Back / Play-Pause / Next (`#mp-back`, `#mp-play`,
+  `#mp-next`, what the old `wirePlayer` did: `menuPaused`, `musicGo`, `.next()`, `.back()`). The game's `showPlayer` now
+  also redraws the Diorama's (`dio.api.music()`).
+- **PLAYLIST** (`#mp-now`) grows the list up out of the player (`#pl`, `#dio.music-open`): tabs Menu playlist, All
+  music, your own (`myMusic.lists`) and + New; the songs of a tab, the playing one marked (a click: `playFrom`); Shuffle
+  (`#mp-shuffle`) and Repeat (`#mp-repeat`) on `snd`; your own: Edit and Delete (twice). + New / Edit: a name and songs
+  from All music in the order tapped, Create / Save as the old panel (up to 20; `musicChanged` keeps them on the
+  account). Settings' Playlists opens this list. No song lengths (the game doesn't know them before a song loads).
+- **In a match** the HUD's music button keeps the game's own panel (it has the map's Adaptive music tab).
+- Note for test runs: some tests (music-account-ui, ...) start their own web server on 8766; stop yours first.
+
 **Running the UI tests in this sandbox:** `export NODE_PATH=/opt/node-tools/node_modules` (they require
 `playwright-core`), and some tests launch `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`: link it to
 `/opt/pw-browsers/chromium`. These fail on a clean `main` here too (no server `node_modules`, and so on), so compare

@@ -1022,28 +1022,17 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <div class="zz" id="zz">z<span style="font-size:.7em">z</span></div>
 
   <div class="pl-scrim" aria-hidden="true"></div>
+  <!-- the music player (the game's music engine: music, ctlPl, playFrom, snd, myMusic); its playlists grow up out of it -->
   <div class="music" aria-label="Music">
-    <div class="pl" id="pl">
-      <div class="pl-tabs" role="group" aria-label="Playlists"><button aria-pressed="true">Menu playlist</button><button aria-pressed="false">All music</button><button class="new">+ New</button></div>
-      <ol class="pl-list">
-        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>sisi</b> <em>by Snetänd</em></span><span class="d">2:16</span><span class="n">01</span></button></li>
-        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Jonah</b> <em>by Snetänd</em></span><span class="d">3:36</span><span class="n">02</span></button></li>
-        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Long</b> <em>by Snetänd</em></span><span class="d">1:28</span><span class="n">03</span></button></li>
-        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Super coffee</b> <em>by Snetänd</em></span><span class="d">2:05</span><span class="n">04</span></button></li>
-        <li><button class="pl-row" aria-current="true"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Reveal</b> <em>by Snetänd</em></span><span class="d">3:13</span><span class="n">05</span></button></li>
-        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Salig</b> <em>by Emil Helleday</em></span><span class="d">1:18</span><span class="n">06</span></button></li>
-        <li><button class="pl-row"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span><b>Eyes in the front 2</b> <em>by Snetänd</em></span><span class="d">3:29</span><span class="n">07</span></button></li>
-      </ol>
-      <div class="pl-modes"><button aria-pressed="false">Shuffle</button><button aria-pressed="true">Repeat</button></div>
-    </div>
-    <span>Original soundtrack</span>
-    <button class="t" data-open>Reveal <em>by Snetänd</em></button>
-    <span class="line"><i></i></span>
+    <div class="pl" id="pl" role="dialog" aria-label="Playlists"></div>
+    <span id="dmp-label">Original soundtrack</span>
+    <button class="t" data-open id="dmp-title" aria-label="Show the playlists"></button>
+    <span class="line"><i id="mp-bar"></i></span>
     <span class="ctl">
-      <button aria-label="Previous"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h2v10H3zM14 3v10L6 8z" fill="currentColor"/></svg></button>
-      <button aria-label="Pause"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor"/></svg></button>
-      <button aria-label="Next"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 3h2v10h-2zM2 3v10l8-5z" fill="currentColor"/></svg></button>
-      <button class="open" data-open aria-label="Show the playlist">Playlist <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 7.5L6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+      <button id="mp-back" aria-label="Back"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h2v10H3zM14 3v10L6 8z" fill="currentColor"/></svg></button>
+      <button id="mp-play" aria-label="Pause"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor"/></svg></button>
+      <button id="mp-next" aria-label="Next"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 3h2v10h-2zM2 3v10l8-5z" fill="currentColor"/></svg></button>
+      <button class="open" data-open id="mp-now" aria-expanded="false" aria-label="Show the playlists">Playlist <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 7.5L6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
     </span>
   </div>
 
@@ -1730,6 +1719,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if ($('mp-now')) $('mp-now').setAttribute('aria-expanded', String(mpui.open));
     document.querySelectorAll('.mplayer').forEach(x => x.classList.toggle('is-playing', menuPlaying()));
     mpMark();
+    if (DIO && dio.api) dio.api.music(); // the Diorama's player and playlists
   }
   for (const k in music) music[k].onChange = showPlayer;
   if (qs.has('test')) window.__music = () => ({ playing: Object.keys(music).filter(k => music[k].playing), song: ctlPl().song(), mine: { ...mine }, combo: comboKey(), menuPaused, src: playingSrc(), lists: JSON.parse(JSON.stringify(myMusic.lists)), dirty: myMusic.dirty }); // UI tests

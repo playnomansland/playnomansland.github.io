@@ -576,3 +576,19 @@ html.diorama .fr-banner b, html.diorama .fr-toast b { font: 700 16px "Bricolage 
 html.diorama .fr-banner .btn { border: 0; border-radius: 0; background: none; color: #F4ECD8; padding: 4px 10px 1px; font: 700 18px/1 "Chakra Petch", sans-serif; text-transform: uppercase; opacity: .7; }
 html.diorama .fr-banner .btn.primary { opacity: 1; color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 html.diorama .fr-toast { text-align: left; }
+/* ── step 7: the player and playlists on the game's music ── */
+#dio .music .line i { width: 100%; transform-origin: left center; transform: scaleX(0); } /* the game's timer sets scaleX */
+#dio .music .ctl svg { width: 15px; height: 15px; }
+#dio .pl-row { grid-template-columns: auto auto 22px; }
+#dio .pl-list { max-height: min(46vh, 420px); overflow-y: auto; scrollbar-width: thin; padding-right: 2px; }
+#dio .pl-row[aria-pressed="true"] { opacity: 1; } #dio .pl-row[aria-pressed="true"] .n { color: var(--saffron); opacity: 1; font-weight: 700; }
+#dio .pl-tabs { flex-wrap: wrap; justify-content: flex-end; max-width: min(520px, 60vw); }
+#dio .pl-tabs button { display: inline-flex; align-items: flex-end; gap: 6px; }
+#dio .pl-tabs .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 10px; width: 12px; color: var(--saffron); }
+#dio .pl-tabs .eq i { width: 2px; background: currentColor; animation: eq .9s ease-in-out infinite alternate; }
+#dio .pl-tabs .eq i:nth-child(2) { animation-delay: -.3s; } #dio .pl-tabs .eq i:nth-child(3) { animation-delay: -.6s; }
+#dio:not(.mp-playing) .eq i { animation: none; height: 3px; }
+#dio .pl-name { justify-self: end; width: 260px; padding: 4px 0; border: 0; border-bottom: 1px dashed currentColor; background: none; color: inherit; font: 700 20px var(--sans); text-align: right; outline: none; }
+#dio .pl-note { margin: 0; font: 400 13px var(--type); opacity: .75; text-align: right; }
+#dio .pl-modes button[disabled] { opacity: .3; cursor: not-allowed; }
+#dio .pl-modes .sure { opacity: 1; color: var(--saffron); }
