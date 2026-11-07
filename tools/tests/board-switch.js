@@ -25,7 +25,7 @@ const URL = 'http://127.0.0.1:8766/?test';
   const solo = async (p) => { await p.click('#settings summary'); await p.click('[data-tm="0"]'); await p.click('#go'); await p.waitForTimeout(400); await p.dblclick('[data-pack="0"]'); await p.waitForTimeout(800); };
   const settings = async (p) => { await p.click('#cog'); await p.waitForTimeout(150); };
   // a whole fight: Fight, then wait for the round's result
-  const fight = async (p) => { await p.click('#fight'); await p.waitForSelector('#next', { timeout: 120000 }); await p.waitForTimeout(300); };
+  const fight = async (p) => { await p.click('#ready'); await p.waitForSelector('#next', { timeout: 120000 }); await p.waitForTimeout(300); };
 
   // 3D by default, without the meter; ?board=2d starts on 2D and saves nothing
   let p = await open();

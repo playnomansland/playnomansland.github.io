@@ -54,7 +54,7 @@ let bad = 0; const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + msg)
   });
   ok(wm, 'Water Mage with Summon water elemental');
   await p.click('#sheet #close').catch(() => {});
-  await p.click('#fight'); await sleep(300);
+  await p.click('#ready'); await sleep(300);
   if (await p.locator('#cap-go').count()) await p.click('#cap-go').catch(() => {});
   await sleep(6000);
   await p.screenshot({ path: (process.argv[2] || 'hunter-ui.png').replace('.png', '-fight.png') });

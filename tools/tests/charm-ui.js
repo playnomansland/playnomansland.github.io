@@ -23,7 +23,7 @@ const OUT = process.env.OUT || '.';
   await tap(sq[0].col, sq[0].row); await sleep(200);
   console.log('charm:', JSON.stringify(await p.evaluate(() => { const { m, me } = window.__pb(); return m.armies[me].map(q => q.charm || 0); })), '| take back button:', await p.locator('#charm-undo').count(), '| give button:', await p.locator('#charm-btn').count());
   await p.screenshot({ path: OUT + '/charm-board.png' });
-  await p.click('#fight'); await sleep(2500);
+  await p.click('#ready'); await sleep(2500);
   await p.screenshot({ path: OUT + '/charm-battle.png' });
   await p.click('#skip').then(() => p.click('#skip')); await sleep(400);
   console.log('result:', (await p.locator('.card').first().innerText()).replace(/\s+/g, ' ').slice(0, 300));

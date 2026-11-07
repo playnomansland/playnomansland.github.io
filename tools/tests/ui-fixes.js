@@ -18,7 +18,7 @@ const OUT = process.env.SHOTS || '/tmp';
   // fight rounds until round 3 by pressing Fight and skipping
   for (let r = 0; r < 2; r++) {
     await p.evaluate(() => { const t = document.querySelector('#tpick button, [data-tower]'); if (t) t.click(); });
-    await p.click('#fight'); await p.waitForFunction(() => window.__pb().phase === 'result' || window.__pb().phase === 'end', null, { timeout: 120000 });
+    await p.click('#ready'); await p.waitForFunction(() => window.__pb().phase === 'result' || window.__pb().phase === 'end', null, { timeout: 120000 });
     await sleep(300);
     const nx = p.locator('#next'); if (await nx.count()) await nx.click();
     await p.waitForFunction(() => window.__pb().phase === 'deploy', null, { timeout: 20000 }).catch(() => {});
@@ -52,7 +52,7 @@ const OUT = process.env.SHOTS || '/tmp';
   console.log('unit with 2+ squads:', lv);
   // end the match: set foe hp low and fight
   await p.evaluate(() => { const { m, me } = window.__pb(); m.hp[1 - me] = 1; m.hp[me] = 1; window.__pbRedraw(); });
-  await p.click('#fight'); await p.waitForFunction(() => window.__pb().phase === 'end', null, { timeout: 120000 }).catch(() => {});
+  await p.click('#ready'); await p.waitForFunction(() => window.__pb().phase === 'end', null, { timeout: 120000 }).catch(() => {});
   await sleep(500);
   console.log('phase', (await st()).phase);
   if (await p.isVisible('#look')) { // (since 2026-11-04 the match-over card has Replay a round instead, except in 2v2 and when watching)

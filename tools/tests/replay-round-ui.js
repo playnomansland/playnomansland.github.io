@@ -31,8 +31,8 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
         await p.locator('[data-opt]:visible').first().click(); await sleep(250);
         await p.getByRole('button', { name: 'Choose', exact: true }).click(); await sleep(400);
       }
-      if (await p.locator('#fight[disabled]').count()) { console.log('fight disabled', JSON.stringify(await pb(() => { const { m, me } = window.__pb(); return { round: m.round, army: m.armies[me].length, pack: Game.needsPack(m, me), tower: Game.needsTowerPick(m, me) }; }))); await p.screenshot({ path: 'replay-stuck.png' }); }
-      await p.click('#fight'); await sleep(500);
+      if (await p.locator('#ready[disabled]').count()) { console.log('fight disabled', JSON.stringify(await pb(() => { const { m, me } = window.__pb(); return { round: m.round, army: m.armies[me].length, pack: Game.needsPack(m, me), tower: Game.needsTowerPick(m, me) }; }))); await p.screenshot({ path: 'replay-stuck.png' }); }
+      await p.click('#ready'); await sleep(500);
       const cap = p.locator('#cap-go, #cap-fight'); if (await cap.count()) { await cap.first().click(); await sleep(400); }
     }
     s = await state();

@@ -29,7 +29,7 @@ async function toBattle(b, board) {
   if (await p.locator('[data-pack="0"]').count()) { await p.dblclick('[data-pack="0"]'); await sleep(400); }
   await p.waitForFunction(() => window.__pb().phase === 'deploy', null, { timeout: 20000 });
   if (board === '3d') await p.waitForFunction(() => !!window.__pb().board3d, null, { timeout: 30000 });
-  await p.click('#fight');
+  await p.click('#ready');
   await p.waitForFunction(() => window.__pb().phase === 'battle', null, { timeout: 20000 });
   return p;
 }

@@ -26,7 +26,7 @@ const ctxFor = require('./board2d');
   const pickFirst = async () => { const o = p.locator('#pick [data-opt]').first(); await o.click(); await p.waitForTimeout(150); await o.click(); await p.waitForTimeout(300); };
   const phase = () => p.evaluate(() => document.querySelector('#phase').textContent);
   const fight = async () => {
-    await p.locator('#fight').click();
+    await p.locator('#ready').click();
     await p.waitForTimeout(200); if (await p.locator('#cap-go').count()) await p.locator('#cap-go').click(); // over the carry cap
     for (let k = 0; k < 400 && (await phase()) === 'Battle'; k++) await p.waitForTimeout(250);
   };
@@ -73,14 +73,14 @@ const ctxFor = require('./board2d');
   check((await p.locator('#pick [data-opt]').count()) >= 1, 'round 3: the tower pick');
   await pickFirst();
   await p.evaluate(() => { const { m, me } = window.__pb(); m.dev.picks[me].push({ round: 1, cat: 'power', id: 'fire-pots' }); m.gold[me] += 200; });
-  await p.locator('#fight').hover(); await p.evaluate(() => document.querySelector('#dev-guide').click()); await p.evaluate(() => document.querySelector('#dev-guide').click()); // repaint the panel
+  await p.locator('#ready').hover(); await p.evaluate(() => document.querySelector('#dev-guide').click()); await p.evaluate(() => document.querySelector('#dev-guide').click()); // repaint the panel
   check(await p.locator('#dev-spells').count() === 1, 'Spells button once a Power gives one');
   await p.locator('#dev-spells').click();
   await p.locator('[data-cast]').first().click();
   await tap(6, 8);
   check(await p.evaluate(() => window.__pb().m.dev.casts.length === 1), 'spell cast');
   await p.screenshot({ path: 'devtest-3.png' });
-  await p.locator('#fight').click();
+  await p.locator('#ready').click();
   await p.waitForTimeout(200); if (await p.locator('#cap-go').count()) await p.locator('#cap-go').click();
   await p.waitForTimeout(3300);
   await p.screenshot({ path: 'devtest-4.png' });

@@ -32,7 +32,7 @@ const dock = require('./dock'); // the phone layout's deploy drawer
     const pb = (f, a) => p.evaluate(f, a);
     // a whole fight, then the next round
     const nextRound = async () => {
-      await p.click('#fight'); await p.waitForTimeout(1000);
+      await p.click('#ready'); await p.waitForTimeout(1000);
       if (await p.locator('#skip').count()) await p.click('#skip').then(() => p.click('#skip'));
       await p.waitForSelector('#next', { timeout: 60000 }); await p.click('#next'); await p.waitForTimeout(800);
     };

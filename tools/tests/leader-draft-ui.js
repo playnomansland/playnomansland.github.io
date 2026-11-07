@@ -29,7 +29,7 @@ const URL = 'http://127.0.0.1:8766/?test';
       const r1 = await p.evaluate(() => ({ chars: window.__pb().m.chars, pack: window.__pb().m.packages[0].map(x => x.char) }));
       ok(!r1.chars[0] && !r1.chars[1] && r1.pack.every(c => !c), 'round 1: no leaders, packages without one');
       if (run % 2) await p.evaluate(() => { window.__pb().m.armies[1] = []; }); // win round 1: the AI's round 1 army goes
-      await p.click('#fight');
+      await p.click('#ready');
       await p.waitForFunction(() => window.__pb().phase === 'battle' || window.__pb().phase === 'result', null, { timeout: 20000 });
       await p.evaluate(() => { const s = window.__pb(); if (s.bt) while (s.bt.step()) {} });
       // on to round 2

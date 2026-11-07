@@ -69,7 +69,7 @@ const dock = require('./dock');
     const fit = await p.evaluate(() => { const pn = document.getElementById('panel'), q = pn.getBoundingClientRect(), last = pn.lastElementChild.getBoundingClientRect(), shop = document.getElementById('shop').getBoundingClientRect(), f = pn.lastElementChild.querySelector('.btn').getBoundingClientRect();
       return { bottom: Math.round(innerHeight - q.bottom), below: Math.round(q.bottom - f.bottom), overlap: Math.round(shop.bottom - last.top) }; });
     check(fit.bottom === 0 && fit.below <= 9 && fit.overlap <= 0, `${board}: the drawer is compact (${JSON.stringify(fit)})`);
-    await p.click('#fight'); await p.waitForTimeout(800);
+    await p.click('#ready'); await p.waitForTimeout(800);
     l = await lay(p);
     check(l.dock && await p.locator('#panel [data-s]').count() === 3, `${board}: the fight's speed bar is docked`);
     await p.close();

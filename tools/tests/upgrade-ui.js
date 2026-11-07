@@ -93,7 +93,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     await p.click('#close'); await sleep(200);
     // 5. skip asks first; a tapped body shows its ring in the fight
     await p.evaluate(() => { const { m } = window.__pb(); m.armies[1] = []; m.hp[1] = 1; }); // an empty enemy army on its last health: this fight ends the match
-    await p.click('#fight'); await sleep(500);
+    await p.click('#ready'); await sleep(500);
     const body = await p.evaluate(() => { const { bt, me } = window.__pb(), q = bt.bodies.find(x => x.alive && x.side === me && x.u.name === 'Flame Wizard'); return [q.x / Game.TILE + (Game.COLS - 1) / 2, (Game.ROWS - 1) / 2 - q.y / Game.TILE]; });
     if (board === '2d') { const [x, y] = await scr(p, body[0] - 0.5, body[1] - 0.5); await p.mouse.click(x, y); } else { const [x, y] = await scr(p, body[0], body[1]); await p.mouse.click(x, y); }
     await sleep(60);

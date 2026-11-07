@@ -1158,6 +1158,10 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // ---------- state ----------
   let mode = 'ai';          // ai | claude | tutorial | host | guest
   const solo = () => mode === 'ai' || mode === 'claude' || mode === 'tutorial' || mode === 'sandbox'; // playing against the computer on this screen (sandbox: Replay a round)
+  // the solo modes with a Fight button. Against the AI (mode 'ai') both sides press Ready as online: the AI presses it
+  // AI_READY_MS into each deploy (aiReadyTick), so the looks' "opponent is ready" moments show against it too
+  const fightBtn = () => solo() && mode !== 'ai';
+  const AI_READY_MS = (() => { try { if (/[?&]test\b/.test(location.search)) { const v = /[?&]aiready=(\d+)/.exec(location.search); return v ? +v[1] : 0; } } catch (e) {} return 5000; })(); // UI tests: at once, unless ?aiready=ms
   // the opponent's account on a server match ({ tag, title }), if their phone has one
   const foePlayer = () => mode === 'net' && net.players && net.players[foe()] || null;
   const foeName = () => (mode === 'sandbox' && sbx.foe) || (mode === 'spec' && tour.spec ? tour.spec.foe : '') || tourFoe() || (foePlayer() ? foePlayer().tag : '') || (mode === 'ai' || mode === 'tutorial' ? 'Enemy' : mode === 'claude' ? 'Claude' : 'Opponent'); // a tournament opponent by username
@@ -2333,7 +2337,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     battleCam: cam && cam.k > 0 ? { zoom: 1 + (CAM.zoom - 1) * cam.k, x: cam.x, y: cam.y, k: cam.k } : null,
     aim: phase === 'deploy' && (aimMode != null || aimDrag) ? { id: aimDrag ? aimDrag.id : aimMode, end: aimDrag ? aimDrag.end : hoverTile } : null, // (aimDrag without aimMode: a head dragged)
     placingBuilding: placingBuilding(), win: null, duo: duoBoard(),
-    foeReady: phase === 'deploy' && !solo() && !!ready[foe()] && !ready[me] }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
+    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me] }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
   const board = Render2D(cv, boardView);
   let board3d = null; // the 3D board when it's on (see "the 3D board" below)
   const size = () => (board3d || board).size();
@@ -2508,16 +2512,16 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     try { localStorage.setItem(SKINS_SEEN, JSON.stringify(seen)); } catch (e) {}
   }
 
-  // Ashlands: the dragon's shadow sweeps over the field each time the opponent turns ready (against the computer, a
-  // moment into each deploy, since it is ready at once). Scenery3D.flyover does nothing on other looks.
+  // Ashlands: the dragon's shadow sweeps over the field each time the opponent turns ready (in the solo modes with a
+  // Fight button, a moment into each deploy). Scenery3D.flyover does nothing on other looks.
   const dragonCue = { was: false, round: 0 };
   function dragonCheck() {
     if (!board3d || !m || mode === 'spec') return;
-    const on = phase === 'deploy' && (solo() ? true : !!ready[foe()]);
-    if (on && !dragonCue.was && !(solo() && dragonCue.round === m.round)) {
+    const on = phase === 'deploy' && (fightBtn() ? true : !!ready[foe()]);
+    if (on && !dragonCue.was && !(fightBtn() && dragonCue.round === m.round)) {
       dragonCue.round = m.round;
       const go = () => { const sc = board3d && board3d.scenery, ms = sc && sc.flyover ? sc.flyover() : 0; if (ms) { wakeUntil = Math.max(wakeUntil, performance.now() + ms); if (!raf3d) raf3d = requestAnimationFrame(frame3d); } };
-      if (solo()) setTimeout(() => { if (phase === 'deploy') go(); }, 1800); else go();
+      if (fightBtn()) setTimeout(() => { if (phase === 'deploy') go(); }, 1800); else go();
     }
     dragonCue.was = on;
   }
@@ -2651,8 +2655,24 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const fmtClock = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   const editable = () => phase === 'deploy' && mode !== 'spec' && !ready[me] && !timeUp && !(mode === 'claude' && claude.fightWaiting);
 
+  // against the AI: it presses Ready AI_READY_MS after the player can deploy (its count waits while they pick a package,
+  // tower or leader, or the AI waits on their leader pick to deploy: aiWaits, unless they press Ready without picking:
+  // runFight settles it); the fight starts at once if the player is ready already
+  let aiReadyAt = 0;
+  function aiReadyTick(t) {
+    if (mode !== 'ai' || phase !== 'deploy' || !m || ready[foe()]) return false;
+    if (!ready[me] && (aiWaits || picksPending() || choosingPack())) { aiReadyAt = 0; return false; }
+    if (!aiReadyAt) { aiReadyAt = t + AI_READY_MS; if (AI_READY_MS > 0) return false; }
+    if (t < aiReadyAt) return false;
+    ready[foe()] = true;
+    if (ready[me]) { runFight(); return true; }
+    panelDeploy(); render();
+    return false;
+  }
+
   function tick() {
     const t = now();
+    if (aiReadyTick(t)) return;
     if (phase === 'deploy') {
       // host: the countdown waits while the opponent is away
       if (mode === 'host' && !net.connected && deadline) { pausedLeft = Math.max(5000, deadline - t); deadline = 0; panelDeploy(); }
@@ -3015,7 +3035,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (mode === 'tutorial' || lost <= 0) { go(); return; }
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Unspent gold</h3><button class="btn small" id="close">Keep shopping</button></div>
       <p style="margin:0">You have ${g} gold. Only ${Game.CARRY_CAP} carries over to the next round, so ${lost} will be lost.</p>
-      <div class="btnrow"><button class="btn primary" id="cap-go">${solo() ? 'Fight anyway' : 'Ready anyway'}</button></div>`;
+      <div class="btnrow"><button class="btn primary" id="cap-go">${fightBtn() ? 'Fight anyway' : 'Ready anyway'}</button></div>`;
     $('sheet-back').hidden = false;
     $('close').addEventListener('click', closeSheet);
     $('cap-go').addEventListener('click', () => { closeSheet(); if (phase === 'deploy' && !timeUp) go(); });
@@ -3231,7 +3251,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         ${Game.movedId(m, me) != null ? `<button class="btn small" id="undo-move" ${can ? '' : 'disabled'}>Undo move · +${Game.CONFIG.moveCost}</button>` : ''}
       </span>`;
     let action, status;
-    if (solo()) {
+    if (fightBtn()) {
       status = `${m.armies[me].length} squad${m.armies[me].length === 1 ? '' : 's'} on the board`;
       if (mode === 'claude') status = claudeStatus();
       action = `<button class="btn primary" id="fight" ${m.armies[me].length && !choosingTower() ? '' : 'disabled'}>${deadline ? 'Fight now' : 'Fight'}</button>`;
@@ -3241,7 +3261,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       action = `<button class="btn ${ready[me] ? '' : 'primary'}" id="ready" ${timeUp || choosingTower() ? 'disabled' : ''}>${ready[me] ? 'Not ready' : 'Ready'}</button>`;
     }
     const showShop = !((choosingPack() || choosingTower() || devPicking()) && can);
-    const tip = inline || (selected !== null ? hint : !solo() ? status : !can ? hint
+    const tip = inline || (selected !== null ? hint : !solo() || (mode === 'ai' && ready[foe()]) ? status : !can ? hint
       : left <= 0 ? 'No deployments left · tap a squad to level it up or buy skills'
       : fresh ? `Drag a squad to move it · drag it ${pcLayout() ? 'onto the shop' : 'down here'} to take it back` : `Drag a card ${pcLayout() ? 'onto' : 'up onto'} your zone · hold a card for details`);
     const pips = Array.from({ length: Math.max(allowed, 0) }, (_, k) => `<i class="${k < left ? 'on' : ''}"></i>`).join('');
@@ -3365,6 +3385,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (mode === 'guest') sendSide();
     if (mode === 'net') send({ t: 'ready', v: ready[me], round: m.round });
     if (mode === 'host') { sendStatus(); if (ready[0] && ready[1] && net.connected) { runFight(); return; } }
+    if (mode === 'ai' && ready[0] && ready[1]) { runFight(); return; }
     panelDeploy(); render();
   }
 
@@ -5989,7 +6010,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
   function enterDeploy(ms) {
     phase = 'deploy'; bt = null; watchSq = null; battlePre = null; lastPre = null; fx = []; selected = null; rangeOf = null; timeUp = false; resultShownAt = 0; elfPlacing = false; wallPlacing = false; buildPlacing = null;
-    ready = [false, false];
+    ready = [false, false]; aiReadyAt = 0;
     heldMs = ms > 0 && mode !== 'guest' && mode !== 'net' && picksPending() ? ms : 0;
     deadline = ms > 0 && !heldMs ? now() + ms : 0;
     $('clock').textContent = '';

@@ -51,7 +51,7 @@ const { chromium } = require('playwright-core');
   await tap(...ft[1]); s = await st(); console.log('angled taken back:', !s.army.some(q => q.id === pa.id), '| level', await lv());
   await p.click('#levels .chip:nth-child(1)'); await p.waitForTimeout(1500); console.log('Strategic chip -> level', await lv());
   await p.click('#auto'); s = await st(); console.log('auto deploy -> squads', s.army.length, 'gold', s.gold);
-  await p.click('#fight'); await p.waitForTimeout(300);
+  await p.click('#ready'); await p.waitForTimeout(300);
   console.log('phase', await p.evaluate(() => window.__lab3d.phase), '| shop hidden', await p.locator('#shop').isHidden());
   await p.click('#next'); await p.waitForTimeout(300);
   s = await st(); console.log('round', s.round, 'phase', await p.evaluate(() => window.__lab3d.phase), '| shop shown', await p.locator('#shop').isVisible(), '| gold', s.gold, '|', await p.locator('#gold').textContent());

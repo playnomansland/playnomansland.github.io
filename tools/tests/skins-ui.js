@@ -55,7 +55,7 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 4 * 60 *
     ok(r.mine && !r.theirs, 'our Brutes wear the Champion skin, the AI\'s don\'t: ' + JSON.stringify(r));
     await sleep(1500);
     await p.screenshot({ path: process.argv[2] || 'skins-ui.png' });
-    await p.click('#fight'); await sleep(300);
+    await p.click('#ready'); await sleep(300);
     if (await p.locator('#cap-go').count()) await p.click('#cap-go').catch(() => {});
     await sleep(3500);
     await p.screenshot({ path: (process.argv[2] || 'skins-ui.png').replace('.png', '-fight.png') });

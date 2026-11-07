@@ -133,7 +133,7 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
     // into the battle: my music goes on
     await p.dblclick('[data-pack="0"]'); await sleep(500);
     await p.evaluate(() => { const { m, me } = window.__pb(); for (let ui = 0; ui < m.units.length; ui++) { if (Game.isOff(m, ui, me) || !Game.isUnlocked(m, me, ui)) continue; for (let r = 0; r < 20; r++) for (let c = 0; c < 12; c++) if (Game.canPlaceAt(m, me, c, r, ui) && Game.spotFree(m, me, c, r, ui) && Game.place(m, me, ui, c, r)) { window.__pbRedraw(); return; } } });
-    await p.click('#fight'); await sleep(300);
+    await p.click('#ready'); await sleep(300);
     if (await vis('#cap-go')) await p.click('#cap-go');
     await p.waitForFunction(() => window.__pb().phase === 'battle', null, { timeout: 15000 });
     await sleep(600);

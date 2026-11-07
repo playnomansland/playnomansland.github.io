@@ -29,7 +29,7 @@ const EXE = ['/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', '/opt/pw-br
   await tap(sq[0] - 1, sq[1]); await sleep(400); await log('tap own squad (opens its sheet)');
   const tb = p.locator('#take-back'); if (await tb.count()) { await tb.click(); await sleep(300); await log('take back'); }
   await p.keyboard.press('Escape').catch(() => {}); await p.mouse.click(5, 5); await sleep(200); await p.evaluate(() => window.__sfxLog.splice(0));
-  await p.click('#fight'); await sleep(2500); await log('fight');
+  await p.click('#ready'); await sleep(2500); await log('fight');
   await p.click('#cog'); await sleep(300); await p.click('[data-sfx="0"]'); await sleep(200); await p.evaluate(() => window.__sfxLog.splice(0));
   console.log('saved:', await p.evaluate(() => localStorage.getItem('phonebellum.sound.v1')));
   await b.close();

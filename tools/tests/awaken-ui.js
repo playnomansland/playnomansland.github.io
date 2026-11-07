@@ -43,7 +43,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     assert.ok(/Master: Berserkers/.test(sheet) && /all your squads/.test(sheet), sheet.slice(0, 600));
     await p.click('#sheet #close'); await sleep(200);
     await p.screenshot({ path: `awaken-${board}-deploy.png` });
-    await p.click('#fight'); await sleep(board === '3d' ? 4000 : 2500);
+    await p.click('#ready'); await sleep(board === '3d' ? 4000 : 2500);
     const fight = await p.evaluate(() => { const { bt } = window.__pb(); return bt ? { mech: bt.bodies.filter(x => x.u.mech).length, missiles: bt.projectiles().filter(x => x.missile).length, t: bt.time() } : null; });
     console.log(board, 'fight:', JSON.stringify(fight));
     assert.ok(fight && fight.mech === 1, 'one leaf-mech in the fight');

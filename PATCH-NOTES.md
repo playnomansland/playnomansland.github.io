@@ -20,6 +20,14 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 7 November 2026 – The AI presses Ready
+
+- **No more Fight now against the AI:** you get the same **Ready** / **Not ready** button as online. The AI presses Ready 5 seconds into each deploy (counting from when you can place: not while you pick a package, tower or leader). The fight starts as soon as you're both ready, or when the clock runs out. Press Ready first and the fight starts the moment the AI is ready.
+- So the maps' "opponent is ready" moments now happen against the AI too: the Forest Glade explorer, the Savanna vultures over your tower and the Ashlands dragon's shadow.
+- Tutorial puzzles, Replay a round and matches against Claude keep their Fight button.
+
+---
+
 ## 7 November 2026 – Snow: a windy glacier pass above the clouds (prototype)
 
 **Snow**, Frozen Peak's own look, used to be a snowy forest at dusk, close to Moonlit Snow. Now it has its own place: a mountain summit in hard daylight, high above the clouds. On the 3D board:
@@ -51,7 +59,7 @@ The rules don't change, and Frozen Peak's hail and altar stay switched off. Moon
 - **The old gate:** past the far end stands a stone gate with broken fences on either side and a shrine and candles before it, flickering warm in the dark. An old path of stones leads there from the board.
 - **A new forest floor:** moss and leaf litter, dappled light, old roots creeping in from the woods on both sides, and a broken stone road across no man's land (the ice and the mountain rock are gone).
 - **Undergrowth:** ferns, tall wispy grass, orange shelf fungus and mushrooms, fallen logs by the sides.
-- **The lost explorer:** when your opponent presses Ready (online, while you still deploy), an explorer with a far too big backpack comes running out of the woods along the old road. He stops in the middle, looks left, looks right, squints at his map, scratches his head (a **?** pops up over him), shrugs and hurries on into the woods. If the fight starts before he's off the board, he panics (**!**) and sprints away. On the 3D board.
+- **The lost explorer:** when your opponent presses Ready (online or the AI, while you still deploy), an explorer with a far too big backpack comes running out of the woods along the old road. He stops in the middle, looks left, looks right, squints at his map, scratches his head (a **?** pops up over him), shrugs and hurries on into the woods. If the fight starts before he's off the board, he panics (**!**) and sprints away. On the 3D board.
 - **Forest Clearing:** its twisted trees now have moss-green leaves too (they were dark red).
 
 Trees and fungus from Quaternius' Stylized Nature MegaKit; the gate, shrine and candles from KayKit's Halloween Bits; the logs from KayKit's Resource Bits (all CC0).
