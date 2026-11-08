@@ -22,9 +22,27 @@ look as itself, and a developer's empty map pick is the Standard map under the D
 one fixed place (bottom right, beside the music player) on every screen; the match's old music panel closes when
 you come home; the playlist has no scrollbar; Log out's underline sits closer to the word.
 
-**Fixed from the owner's note (2026-11-08, second session):** Profile opened from Play, Rooms or New room showed on top
-of them (both screens at once, dimmed). Profile now opens over the plain menu: `leavePlay()` (shared with the logo's
-`goMenu`) closes New room (your own battlefield back), Rooms and Play first.
+**Done from the owner's second trial notes (2026-11-08, second session):**
+- Profile opened from Play, Rooms or New room showed on top of them. Profile now opens over the plain menu
+  (`leavePlay()`, shared with the logo's `goMenu`); `dioPaint` never reopens Play while Profile is open, `openPlay`
+  closes Profile, and the CSS hides the Play side under `#dio.profile`. (The owner's second report was most likely a
+  cached page: Pages lets browsers keep `index.html` 10 minutes.) **Back** (`#pf-back`, saffron, under Match history)
+  returns to where Profile was opened from (`pfFrom`: Play, Rooms, New room or the menu).
+- Profile's buttons share one hover, the saffron board (Titles, Save, Log out, as Units); the picked title keeps its colour.
+- Change battlefield's line is back: from the fixed note to the nearest island corner or edge (`bfDots`).
+- Island notes: a piece's note shows at once (leaving waits 250 ms); Sniper and Fire Mage only on hover; the Ent on
+  hover ("Sleeping Ent. · Sshhhh!"); the skeleton's always-on hint "Hover stuff on the island to learn more!" (above
+  left, clear of the golem's note; to the right where the logo is in the way).
+- Full leaderboard hangs under the Rankings note (`.lb-rank`, moved out of the standings at boot; on phones it is
+  hidden with the notes: step 8). The right-hand menu notes' rail clears HOW TO PLAY.
+- Multiplayer: "challenge your friend"; 1v1 Ranked: "BO3"; 2v2 (developers): "with new buildings and units".
+- How to play's Leaders (both UIs): "Leaders give you passive abilities throughout the game. Choose a leader in round
+  2 of a match." and the list, no draft rules.
+- Settings: Full screen is a saffron button under the heading.
+- Puzzles' note (the left-hand menu notes) sits above Back to match when it shows.
+- The player redraws when the home shows and on every `dioPaint` (the owner saw a wrong song after a match; not
+  reproduced here after a vs-computer round, so ask what they saw if it happens again).
+- "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 **Open, in order:**
 1. **Ask the owner to try again** at `?ui=diorama` (list below) and fix what they find.

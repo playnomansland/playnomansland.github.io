@@ -1008,8 +1008,10 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <!-- notes. data-home: shown on the menu; data-hover: shown while that thing is pointed at; data-btn: shown while that menu word is -->
   <div class="note rw-note" data-anchor="golem" data-home role="button" tabindex="0" aria-label="Rewards: invite a friend"><span class="tag">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></div>
-  <div class="note" data-anchor="sniper" data-home>Sniper.<small>Unit · Long range · Good against single targets</small></div>
-  <div class="note" data-anchor="mage" data-home>Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
+  <div class="note" data-anchor="skeleton" data-home>Hover stuff on the island to learn more!</div>
+  <div class="note" data-anchor="sniper" data-hover="sniper">Sniper.<small>Unit · Long range · Good against single targets</small></div>
+  <div class="note" data-anchor="mage" data-hover="mage">Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
+  <div class="note" data-anchor="ent" data-hover="ent">Sleeping Ent.<small>Sshhhh!</small></div>
 
   <div class="note" data-anchor="keepYou" data-hover="keepYou">Your keep.<small>Tower · If it falls, you lose</small></div>
   <div class="note" data-anchor="keepFoe" data-hover="keepFoe">Their keep.<small>Tower · Bring it down to hurt the opponent and weaken their army</small></div>
@@ -1056,10 +1058,10 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <section class="orders" aria-label="New match">
     <div class="who">
       <button class="item" id="go"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,10 96,0 100,90 5,100"/></svg>Vs computer <small>it never gets tired</small></button>
-      <button class="item" id="multi" aria-expanded="false" aria-controls="mp-list"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,12 96,100 0,88"/></svg>Multiplayer<svg class="car" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg> <small>friendships may be tested</small></button>
+      <button class="item" id="multi" aria-expanded="false" aria-controls="mp-list"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="3,0 100,12 96,100 0,88"/></svg>Multiplayer<svg class="car" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg> <small>challenge your friend</small></button>
       <ul class="mp" id="mp-list">
         <li><button class="item" data-q="standard"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,8 97,0 100,92 3,100"/></svg>1v1 Standard <small>no stakes</small></button></li>
-        <li><button class="item" data-q="ranked"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,0 100,10 98,100 0,90"/></svg>1v1 Ranked <small>it goes on your record</small></button></li>
+        <li><button class="item" data-q="ranked"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,0 100,10 98,100 0,90"/></svg>1v1 Ranked <small>BO3</small></button></li>
         <li><button class="item" data-q="2v2" disabled aria-disabled="true">2v2 <small><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg>coming soon</small></button></li>
       </ul>
     </div>
@@ -1150,6 +1152,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <div class="nr-opts pf-opts" id="pf-opts"></div>
       <p class="r-msg" id="pf-msg" aria-live="polite"></p>
     <button class="create" id="pf-hist">Match history <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+    <button class="create" id="pf-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
   </section>
 
   <!-- Match history: your online matches, newest first; a match folds out its rounds, each with a replay -->
@@ -4312,10 +4315,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         ${[
           ['Starting package', 'Round 1: pick one of three, each with free squads.', `
             <li>Each package unlocks two units for free and gives you free squads of them worth ${Game.PACKAGE.value}, plus ${Game.START_GOLD} gold to spend.</li>`],
-          ['Leader draft', `Before round ${Game.DRAFT.round}: the winner of round 1 picks a leader first.`, `
-            <li>After the first fight you both pick a leader from the same ${Game.DRAFT.pool}. Their ability lasts the whole match.</li>
-            <li>The winner of round 1 picks first (a draw: a coin flip); the other player picks from the rest, so you never have the same leader. Both picks are open.</li>
-            <li>In an online match each pick has ${Math.round(Referee.DRAFT_PICK_MS / 1000)} seconds; then you get the first leader left.</li>
+          ['Leaders', `Leaders give you passive abilities throughout the game. Choose a leader in round ${Game.DRAFT.round} of a match.`, `
             ${Game.CHARACTERS.map(c => `<li>${armsImg(c.id)}<b>${esc(c.name)}</b>: ${esc(c.ability)}</li>`).join('')}`],
           ['Towers', `If yours falls, your army is crippled for a few seconds. Pick your real one in round ${Game.TOWER_PICK_ROUND}.`, `
             <li>Your tower stands in the back of your zone. Until round ${Game.TOWER_PICK_ROUND} it is a small outpost; then, before the clock runs, you pick one for the rest of the match.</li>
