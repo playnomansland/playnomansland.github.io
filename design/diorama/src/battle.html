@@ -186,6 +186,33 @@ body.fighting .scrim.left { width: calc(var(--pw) + 60px); opacity: .7; }
   .round h1 { font-size: 28px; }
 }
 
+/* ── the room you wait in: the column turns into New room's rows of words ── */
+.rhead .k { font: 700 12px var(--type); letter-spacing: .1em; text-transform: uppercase; opacity: .85; text-shadow: var(--halo); }
+.rhead h2 { margin: 2px 0 6px; font: 700 clamp(44px, 7vh, 62px)/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.015em; text-shadow: var(--halo); text-wrap: balance; }
+.rlead { margin: 0; font: 400 14px/1.4 var(--type); text-shadow: var(--halo); }
+.rlead b { color: var(--saffron); }
+.rrows { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: grid; align-content: start; gap: 16px; margin-top: 18px; }
+.rrow { display: grid; gap: 3px; }
+.rrow .lab { font: 700 11px var(--type); letter-spacing: .1em; text-transform: uppercase; opacity: .75; text-shadow: var(--halo); }
+.rrow .ws { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; margin-left: -9px; }
+.rrow .w { font-size: 26px; opacity: .55; }
+.rrow .w[aria-pressed="true"] { opacity: 1; }
+.rrow .note { font: 400 13px/1.35 var(--type); opacity: .85; text-shadow: var(--halo); }
+.rrow .arrow { font: 700 26px/1 var(--stencil); padding: 0 8px; opacity: .8; text-shadow: var(--halo); }
+.rrow .arrow:hover { opacity: 1; color: var(--saffron); }
+.xrow.invite { margin-top: 10px; }
+.xrow.invite .w { font-size: 20px; opacity: 1; }
+.ready.mid { font-size: 44px; white-space: nowrap; }
+.go.room { flex-direction: column; align-items: flex-start; gap: 12px; }
+.go.room .say small { max-width: none; }
+.side .hp .bar.empty { background: repeating-linear-gradient(90deg, rgba(244,236,216,.5) 0 7px, transparent 7px 12px); opacity: .8; }
+.knote { position: fixed; z-index: 3; transform: translate(0, -100%); padding-bottom: 7px; width: max-content; max-width: 320px; font: 400 15px/1.3 var(--type); text-shadow: var(--halo); pointer-events: none; }
+.knote b { font-weight: 700; } .knote small { display: block; margin-top: 3px; font-size: 13px; opacity: .85; }
+.fdot { width: 10px; height: 10px; border-radius: 50%; background: var(--saffron); justify-self: center; }
+.fdot.off { background: none; border: 1.5px solid var(--cream-2); }
+.urow .nm .ttl { font: 700 10px var(--type); font-style: normal; letter-spacing: .08em; text-transform: uppercase; margin-left: 4px; }
+@media (max-height: 820px) { .rhead h2 { font-size: 44px; } .rrows { gap: 10px; margin-top: 12px; } .rrow .w { font-size: 22px; } .ready.mid { font-size: 36px; } }
+
 /* ── the unit note: a card pointed at ── */
 #unote { position: fixed; z-index: 8; transform: translate(0, -100%); padding-bottom: 7px; width: max-content; max-width: 250px; font: 400 14px/1.3 var(--type); text-shadow: var(--halo); pointer-events: none; }
 #unote b { font-weight: 700; } #unote small { display: block; margin-top: 4px; font-size: 12.5px; opacity: .85; }
@@ -271,6 +298,8 @@ body.fighting .scrim.left { width: calc(var(--pw) + 60px); opacity: .7; }
 <aside id="col" aria-label="Your army"></aside>
 
 <div id="unote" role="tooltip" hidden></div>
+<div class="knote" id="kn0" hidden></div>
+<div class="knote" id="kn1" hidden></div>
 <div id="ghost" hidden></div>
 <div id="veil" class="veil" hidden></div>
 <section id="moment" class="moment" role="dialog" aria-labelledby="moment-h" hidden></section>

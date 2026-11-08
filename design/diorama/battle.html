@@ -186,6 +186,33 @@ body.fighting .scrim.left { width: calc(var(--pw) + 60px); opacity: .7; }
   .round h1 { font-size: 28px; }
 }
 
+/* ── the room you wait in: the column turns into New room's rows of words ── */
+.rhead .k { font: 700 12px var(--type); letter-spacing: .1em; text-transform: uppercase; opacity: .85; text-shadow: var(--halo); }
+.rhead h2 { margin: 2px 0 6px; font: 700 clamp(44px, 7vh, 62px)/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.015em; text-shadow: var(--halo); text-wrap: balance; }
+.rlead { margin: 0; font: 400 14px/1.4 var(--type); text-shadow: var(--halo); }
+.rlead b { color: var(--saffron); }
+.rrows { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: grid; align-content: start; gap: 16px; margin-top: 18px; }
+.rrow { display: grid; gap: 3px; }
+.rrow .lab { font: 700 11px var(--type); letter-spacing: .1em; text-transform: uppercase; opacity: .75; text-shadow: var(--halo); }
+.rrow .ws { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; margin-left: -9px; }
+.rrow .w { font-size: 26px; opacity: .55; }
+.rrow .w[aria-pressed="true"] { opacity: 1; }
+.rrow .note { font: 400 13px/1.35 var(--type); opacity: .85; text-shadow: var(--halo); }
+.rrow .arrow { font: 700 26px/1 var(--stencil); padding: 0 8px; opacity: .8; text-shadow: var(--halo); }
+.rrow .arrow:hover { opacity: 1; color: var(--saffron); }
+.xrow.invite { margin-top: 10px; }
+.xrow.invite .w { font-size: 20px; opacity: 1; }
+.ready.mid { font-size: 44px; white-space: nowrap; }
+.go.room { flex-direction: column; align-items: flex-start; gap: 12px; }
+.go.room .say small { max-width: none; }
+.side .hp .bar.empty { background: repeating-linear-gradient(90deg, rgba(244,236,216,.5) 0 7px, transparent 7px 12px); opacity: .8; }
+.knote { position: fixed; z-index: 3; transform: translate(0, -100%); padding-bottom: 7px; width: max-content; max-width: 320px; font: 400 15px/1.3 var(--type); text-shadow: var(--halo); pointer-events: none; }
+.knote b { font-weight: 700; } .knote small { display: block; margin-top: 3px; font-size: 13px; opacity: .85; }
+.fdot { width: 10px; height: 10px; border-radius: 50%; background: var(--saffron); justify-self: center; }
+.fdot.off { background: none; border: 1.5px solid var(--cream-2); }
+.urow .nm .ttl { font: 700 10px var(--type); font-style: normal; letter-spacing: .08em; text-transform: uppercase; margin-left: 4px; }
+@media (max-height: 820px) { .rhead h2 { font-size: 44px; } .rrows { gap: 10px; margin-top: 12px; } .rrow .w { font-size: 22px; } .ready.mid { font-size: 36px; } }
+
 /* ── the unit note: a card pointed at ── */
 #unote { position: fixed; z-index: 8; transform: translate(0, -100%); padding-bottom: 7px; width: max-content; max-width: 250px; font: 400 14px/1.3 var(--type); text-shadow: var(--halo); pointer-events: none; }
 #unote b { font-weight: 700; } #unote small { display: block; margin-top: 4px; font-size: 12.5px; opacity: .85; }
@@ -271,6 +298,8 @@ body.fighting .scrim.left { width: calc(var(--pw) + 60px); opacity: .7; }
 <aside id="col" aria-label="Your army"></aside>
 
 <div id="unote" role="tooltip" hidden></div>
+<div class="knote" id="kn0" hidden></div>
+<div class="knote" id="kn1" hidden></div>
 <div id="ghost" hidden></div>
 <div id="veil" class="veil" hidden></div>
 <section id="moment" class="moment" role="dialog" aria-labelledby="moment-h" hidden></section>
@@ -14515,16 +14544,50 @@ const SHARD = '<svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="non
 const SONGS = { deploy: ['Bulgaria', 'audio/bulgaria.mp3'], battle: ['Habbyourmam', 'audio/habbyourmam.mp3'] };
 
 // ---------- the match ----------
-let m = null, hpMax = 100, phase = 'deploy'; // deploy | battle | result | end
+let m = null, hpMax = 100, phase = 'deploy'; // room | deploy | battle | result | end
 let bt = null, pre = null, fx = [], acc = 0, summary = null, lastSummary = null;
 let selected = null, drag = null, dragEndAt = 0, hoverTile = null, cardDrag = null;
 let ready = [false, false], deadline = 0, timeUp = false, aiReadyAt = 0, aiRound = 0, fightAt = 0;
 let timerOn = Q.get('timer') !== 'off', look = Game.SKINS.some(s => s.id === Q.get('look')) ? Q.get('look') : 'meadow';
 let undoSnap = null, capWarn = false, shopOpen = true, unlockTier = null, sqOpen = null, pickSel = null, pickHidden = false, sheetKind = null;
 
+// ---------- the room you wait in: the battlefield you'll fight on, its settings, the seat across ----------
+// ?room=host (default: you made it), guest (you joined Pebble's), ranked, private, none (straight into a match). The
+// game's drawLobby() / guestWaiting(): Public / Private, Spectators, Units (the pack), the battlefield (Match settings'
+// look), Invite friend, Start match, Cancel. Join by code and Phone to phone are left out (the owner, 2026-11-07:
+// everything goes through Rooms and friends' invites). Nobody can really join here: inviting Pebble (in the menu) brings
+// Pebble in after a moment, and "fill the seat" seats the computer; either way the game's AI plays the other side.
+const ROOM = ['host', 'guest', 'ranked', 'private', 'none'].includes(Q.get('room')) ? Q.get('room') : 'host';
+const TC = { day1: '#B67CFF', initiate: '#7FD3FF', goodsport: '#C6ECFF', legend: '#FFC83D' };
+const person = (name, title, tc) => ({ name, the: name, The: name, title, tc, ai: false });
+const COMPUTER = { name: 'Computer', the: 'the computer', The: 'The computer', title: 'AI', tc: 'rgba(244,236,216,.7)', ai: true };
+const FRIENDS = [
+  { ...person('Pebble', 'Good sport', TC.goodsport), where: 'In the menu', on: true, comes: true },
+  { ...person('Juniper', 'Initiate', TC.initiate), where: 'Playing Ranked · round 3', on: true },
+  { ...person('Moss', '', ''), where: 'Offline · 2 days ago', on: false },
+];
+let foe = ROOM === 'guest' ? FRIENDS[0] : COMPUTER;
+const room = { role: ROOM === 'guest' ? 'guest' : 'host', ranked: ROOM === 'ranked', pub: ROOM !== 'private', spec: true,
+  pack: ROOM === 'ranked' ? 'standard' : 'learn', who: ROOM === 'guest' ? FRIENDS[0] : null, invited: {}, closing: false, joinAt: 0, joining: null };
+const SP = Game.STANDARD_PACK;
+// what a match takes from the room: the Learn the game pack leaves units, leaders and towers out (the game's matchOff,
+// matchChars and matchOpts)
+function matchArgs() {
+  const learn = room.pack === 'learn';
+  return { offChars: learn ? Game.CHARACTERS.map(c => c.id).filter(id => !SP.chars.includes(id)) : [],
+    opts: { skin: look, offUnits: learn ? units.map((u, i) => SP.units.includes(u.name) ? -1 : i).filter(i => i >= 0) : [], offTowers: learn ? SP.offTowers : [] } };
+}
+function openRoom() {
+  const a = matchArgs();
+  m = Game.createMatch(units, DATA.matrix, (Math.random() * 1e9) >>> 0, 'standard', null, a.offChars, a.opts); // the board to look at
+  hpMax = m.hp[ME]; phase = 'room'; bt = null; pre = null; fx = []; summary = null; lastSummary = null; deadline = 0; aiRound = 0;
+  closeSheet(); music(); paint();
+}
+function seat(f) { room.who = f; room.joining = null; room.joinAt = 0; foe = f || COMPUTER; paint(); }
 function newMatch() {
-  m = Game.createMatch(units, DATA.matrix, (Math.random() * 1e9) >>> 0, 'standard', null, [], { skin: look });
-  hpMax = m.hp[ME]; lastSummary = null;
+  const a = matchArgs();
+  m = Game.createMatch(units, DATA.matrix, (Math.random() * 1e9) >>> 0, 'standard', null, a.offChars, a.opts);
+  hpMax = m.hp[ME]; lastSummary = null; aiRound = 0;
   startRound();
 }
 function startRound() {
@@ -14565,7 +14628,7 @@ const undoable = () => editable() && undoSnap && undoSnap.round === m.round && s
 function changed() { capWarn = false; paint(); }
 function paint() {
   takeSnap();
-  document.body.classList.toggle('fighting', phase !== 'deploy');
+  document.body.classList.toggle('fighting', phase !== 'deploy' && phase !== 'room');
   paintSides(); paintRound(); paintCol(); paintMoment(); paintSheet();
 }
 
@@ -14574,9 +14637,14 @@ function hpShown(sd) { return phase === 'battle' && summary ? summary.hpBefore[s
 function sideHtml(sd) {
   const hp = hpShown(sd), w = Math.max(0, hp / hpMax * 100);
   const lost = phase === 'result' && summary && summary.dmg[sd] > 0 ? summary.dmg[sd] / hpMax * 100 : 0;
-  const name = sd === ME ? 'Wren' : 'Computer', ttl = sd === ME ? '<span class="ttl" style="color:#F2B23A">Day 1</span>' : '<span class="ttl" style="opacity:.7">AI</span>';
+  const name = sd === ME ? 'Wren' : foe.name, ttl = sd === ME ? `<span class="ttl" style="color:${TC.day1}">Day 1</span>` : `<span class="ttl" style="color:${foe.tc}">${foe.title}</span>`;
   const streak = (m.streak && m.streak[sd]) >= 2 ? `<span class="streak">${m.streak[sd]} in a row</span>` : '';
   let state = '';
+  if (phase === 'room' && sd === FOE && !room.who) // the empty seat: a dashed bar where their health will be
+    return `<div class="who"><span class="ttl" style="opacity:.75">Open seat</span></div>
+      <div class="hp"><b class="num" style="opacity:.45">—</b><span class="bar empty"><i style="width:0"></i></span></div>
+      <div class="state">${room.joining ? `${esc(room.joining.name)} is on the way…` : room.pub ? 'Waiting for a player…' : 'Waiting for a friend you invite…'}</div>`;
+  if (phase === 'room') state = sd === ME ? (room.role === 'host' ? 'Host' : 'Joined') : `<span class="tag">Here</span>${room.role === 'guest' ? ' Host' : ''}`;
   if (sd === FOE && phase === 'deploy') state = ready[FOE] ? '<span class="tag">Ready</span>' : 'Deploying…';
   if (sd === FOE && phase === 'deploy' && Game.charOf(m, FOE)) state += `${state ? '<br>' : ''}<span style="opacity:.8">Leader: ${esc(charName(Game.charOf(m, FOE)))}</span>`;
   if (sd === ME && phase === 'deploy' && Game.charOf(m, ME)) state = `<span style="opacity:.8">Leader: ${esc(charName(Game.charOf(m, ME)))}</span>`;
@@ -14586,20 +14654,22 @@ function sideHtml(sd) {
 }
 let sidesKey = '';
 function paintSides() {
-  const k = JSON.stringify([phase, hpShown(0), hpShown(1), ready, m.round, m.chars, m.streak]);
+  const k = JSON.stringify([phase, hpShown(0), hpShown(1), ready, m.round, m.chars, m.streak, foe.name, room.who && room.who.name, room.joining && room.joining.name, room.pub, room.role]);
   if (k === sidesKey) return; sidesKey = k;
   $('you').innerHTML = sideHtml(ME); $('foe').innerHTML = sideHtml(FOE);
 }
 const charName = (id) => (Game.CHARACTERS.find(c => c.id === id) || { name: id }).name;
-const PH = { deploy: 'Deploy', battle: 'Battle', result: 'Result', end: 'Match over' };
+const PH = { room: 'Room', deploy: 'Deploy', battle: 'Battle', result: 'Result', end: 'Match over' };
 let songOn = false;
 function paintRound() {
   const r = phase === 'deploy' || phase === 'end' ? m.round : pre ? pre.round : m.round;
-  const song = SONGS[phase === 'deploy' ? 'deploy' : 'battle'];
-  $('round').innerHTML = `<div class="k">Standard · ${esc((Game.SKINS.find(s => s.id === look) || {}).name || '')}</div>
-    <h1>Round ${phase === 'end' ? m.round - 1 : r} · <span class="ph">${PH[phase]}</span></h1>
+  const song = SONGS[phase === 'deploy' || phase === 'room' ? 'deploy' : 'battle'];
+  const bf = esc((Game.SKINS.find(s => s.id === look) || {}).name || '');
+  $('round').innerHTML = `${phase === 'room' ? `<div class="k">Play · Rooms · ${room.role === 'host' ? 'your room' : `${esc(room.who.name)}’s room`} · ${bf}</div>
+    <h1>1v1 <span class="ph">${room.ranked ? 'Ranked · Bo3' : 'Standard'}</span></h1>` : `<div class="k">Standard · ${bf}</div>
+    <h1>Round ${phase === 'end' ? m.round - 1 : r} · <span class="ph">${PH[phase]}</span></h1>`}
     <nav aria-label="Match">
-      <button data-sheet="damage" aria-expanded="${sheetKind === 'damage'}" ${lastSummary ? '' : 'disabled style="opacity:.35"'}>Damage</button>
+      ${phase === 'room' ? '' : `<button data-sheet="damage" aria-expanded="${sheetKind === 'damage'}" ${lastSummary ? '' : 'disabled style="opacity:.35"'}>Damage</button>`}
       <button data-sheet="settings" aria-expanded="${sheetKind === 'settings'}">Settings</button>
       <button class="song" id="song" aria-label="${songOn ? 'Pause' : 'Play'} the music">${songOn ? '❚❚' : '▶'} <b>${song[0]}</b> by Snetänd</button>
     </nav>`;
@@ -14609,7 +14679,7 @@ function paintRound() {
 // the deployment and battle music (from the repo's audio/; the self-contained build has none, so the line just says it)
 const audio = new Audio(); audio.loop = true; audio.volume = 0.5;
 function music() {
-  const s = SONGS[phase === 'deploy' ? 'deploy' : 'battle'][1];
+  const s = SONGS[phase === 'deploy' || phase === 'room' ? 'deploy' : 'battle'][1];
   if (!songOn) { audio.pause(); return; }
   if (!audio.src.endsWith(s)) audio.src = s;
   audio.play().catch(() => {});
@@ -14618,7 +14688,7 @@ function music() {
 // ---------- the left column ----------
 function hintText() {
   const u = (i) => esc(units[i].name), left = Game.deploysLeft(m, ME);
-  if (!editable()) return ready[ME] ? (ready[FOE] ? 'Both ready. To battle.' : 'You’re ready. Waiting for the computer.') : timeUp ? 'Time’s up.' : '';
+  if (!editable()) return ready[ME] ? (ready[FOE] ? 'Both ready. To battle.' : `You’re ready. Waiting for ${foe.the}.`) : timeUp ? 'Time’s up.' : '';
   if (myPick()) return 'Choose first: the board waits.';
   if (placingTower()) return 'Tap a <b>gold tile</b> to place your tower.';
   if (selected !== null) return canBuy(selected) ? `Tap a tile in your zone to place <b>${u(selected)}</b>. Esc to put it down.`
@@ -14654,6 +14724,7 @@ function shopHtml() {
 }
 function paintCol() {
   const col = $('col');
+  if (phase === 'room') { paintRoom(); return; }
   if (phase !== 'deploy') { paintFight(); return; }
   const g = m.gold[ME], left = Game.deploysLeft(m, ME), allowed = Game.deploysAllowed(m, ME), can = editable();
   const pips = Array.from({ length: Math.max(allowed, 0) }, (_, k) => `<i class="${k < left ? 'on' : ''}"></i>`).join('');
@@ -14666,7 +14737,7 @@ function paintCol() {
   const lost = g - Game.CARRY_CAP;
   const readyLabel = ready[ME] ? 'Not ready' : capWarn ? 'Ready anyway' : 'Ready';
   const say = capWarn ? `<small>${g} gold: only ${Game.CARRY_CAP} carries over, so ${lost} will be lost.</small>`
-    : ready[ME] ? `<small>${ready[FOE] ? 'The fight starts.' : 'Waiting for the computer.'}</small>` : `<small>${ready[FOE] ? 'The computer is ready.' : 'The computer is deploying.'}</small>`;
+    : ready[ME] ? `<small>${ready[FOE] ? 'The fight starts.' : `Waiting for ${foe.the}.`}</small>` : `<small>${foe.The} ${ready[FOE] ? 'is ready.' : 'is deploying.'}</small>`;
   const clock = deadline ? `<span class="clock num" id="clock"></span>` : '<span class="clock" style="opacity:.6;font-size:16px">No clock</span>';
   const shopKeep = col.querySelector('#shop') ? col.querySelector('#shop').scrollTop : 0;
   col.innerHTML = `
@@ -14737,6 +14808,79 @@ function paintFight() {
   }
   for (const sd of [0, 1]) { const a = alive(sd); $('arm' + sd).style.setProperty('--w', `${a / total(sd) * 100}%`); $('armn' + sd).textContent = a; }
 }
+
+// ---------- the room's column: its name, its settings as rows of words (New room's), Invite, Start ----------
+function paintRoom() {
+  const col = $('col'), host = room.role === 'host', here = !!room.who, ro = !host;
+  delete col.dataset.ph;
+  const row = (label, key, opts, cur, note) => `<div class="rrow"><span class="lab">${label}</span><div class="ws">${opts.map(([v, l]) => ro || opts.length === 1
+      ? (String(v) === String(cur) ? `<span class="w" aria-pressed="true">${l}</span>` : '')
+      : `<button class="w" data-r="${key}" data-v="${v}" aria-pressed="${String(v) === String(cur)}">${l}</button>`).join('')}</div><span class="note">${note}</span></div>`;
+  const k = Game.SKINS.findIndex(s => s.id === look), bf = Game.SKINS[k];
+  const packNote = room.ranked ? 'Ranked: the Standard pack, the same 5 leaders and 3 towers for you both. Win 2 games to take the series.'
+    : room.pack === 'learn' ? `${SP.units.length} units, ${SP.chars.length} leaders, ${Game.TOWER_TYPES.length - SP.offTowers.length} towers. The best way to start.`
+    : `All ${units.length} units, ${Game.CHARACTERS.length} leaders and ${Game.TOWER_TYPES.length} towers. What ranked is played with.`;
+  const lead = !host ? `${esc(room.who.name)} picks the settings and starts the match.`
+    : here ? `<b>${esc(foe.name)}</b> is here. Start when you’re ready.`
+    : room.pub ? 'Listed in Rooms: anyone can join. Friends you invite get a message.' : 'Not listed. Only friends you invite can join.';
+  col.innerHTML = `
+    <div class="rhead"><span class="k">${host ? 'Your room' : `${esc(room.who.name)}’s room`} · ${room.pub ? 'public' : 'private'}${room.spec ? ' · watchable' : ''}</span>
+      <h2>${host ? 'Your room' : `${esc(room.who.name)}’s room`}</h2><p class="rlead">${lead}</p></div>
+    <div class="rrows">
+      ${row('Who can find it', 'pub', [[1, 'Public'], [0, 'Private']], room.pub ? 1 : 0, room.pub ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.')}
+      ${row('Spectators', 'spec', [[1, 'On'], [0, 'Off']], room.spec ? 1 : 0, room.spec ? 'Anyone can watch once it starts.' : 'Just the two of you.')}
+      ${row('Units', 'pack', room.ranked ? [['standard', 'Standard']] : [['learn', 'Learn the game'], ['standard', 'Standard']], room.pack, packNote)}
+      <div class="rrow"><span class="lab">Battlefield</span><div class="ws">${ro ? `<span class="w" aria-pressed="true">${bf.name}</span>`
+        : `<button class="arrow" data-bf="-1" aria-label="Previous battlefield">‹</button><span class="w" aria-pressed="true">${bf.name}</span><button class="arrow" data-bf="1" aria-label="Next battlefield">›</button>`}</div>
+        <span class="note">${k + 1} of ${Game.SKINS.length}. The match is played here.</span></div>
+    </div>
+    <div class="xrow invite"><button class="w" data-sheet="invite" aria-expanded="${sheetKind === 'invite'}">+ Invite a friend</button></div>
+    <div class="go room">
+      ${host ? `<button class="ready mid" id="start" ${here ? '' : 'disabled'}>${SHARD}Start match</button>
+        <div class="say"><span class="clock" style="font-size:20px">${here ? `${esc(foe.name)} is here` : 'Open seat'}</span>
+          <small>${here ? 'The match starts for you both.' : room.joining ? `${esc(room.joining.name)} accepted. Joining…` : 'Nobody yet.'}</small>
+          ${here ? '' : '<button class="help" id="fill">Prototype: seat the computer</button>'}
+          <button class="help" id="close-room">${room.closing ? 'Sure? Close it' : 'Close room'}</button></div>`
+      : `<div class="say" style="gap:6px"><span class="clock" style="font-size:22px">Waiting for ${esc(room.who.name)}</span>
+          <small style="max-width:none">${esc(room.who.name)} starts the match.</small>
+          <button class="help" id="host-starts">Prototype: ${esc(room.who.name)} starts it</button>
+          <button class="help" id="leave-room">Leave room</button></div>`}
+    </div>`;
+  col.querySelectorAll('[data-r]').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.v, key = b.dataset.r;
+    if (key === 'pub') room.pub = v === '1'; if (key === 'spec') room.spec = v === '1'; if (key === 'pack') room.pack = v;
+    room.closing = false; paint();
+  }));
+  col.querySelectorAll('[data-bf]').forEach(b => b.addEventListener('click', () => {
+    look = Game.SKINS[(k + +b.dataset.bf + Game.SKINS.length) % Game.SKINS.length].id; m.skin = look; paint();
+  }));
+  col.querySelectorAll('[data-sheet]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openSheet(b.dataset.sheet, b); paintRoom(); }));
+  const on = (id, f) => { const b = $(id); if (b) b.addEventListener('click', f); };
+  on('start', () => { if (room.who) { closeSheet(); newMatch(); } });
+  on('fill', () => seat(COMPUTER));
+  on('host-starts', () => { closeSheet(); newMatch(); });
+  on('close-room', () => { if (!room.closing) { room.closing = true; paintRoom(); return; } // tap twice; in the game: back to Rooms
+    room.closing = false; room.invited = {}; seat(null); });
+  on('leave-room', () => { room.role = 'host'; room.invited = {}; seat(null); }); // in the game: back to Rooms; here, a room of your own
+}
+// the keeps' notes in the room: whose keep is whose, and the empty one across
+function roomNotes() {
+  const show = phase === 'room' && m && m.towers;
+  for (const sd of [ME, FOE]) {
+    const n = $('kn' + sd); n.hidden = !show; if (!show) continue;
+    const t = m.towers[sd]; if (!t) { n.hidden = true; continue; }
+    const [x, y] = board.screenAt(t.col, t.row, sd === ME ? 2.4 : 2.6);
+    n.innerHTML = sd === ME ? `<b>Your keep.</b><small>Wren · ${room.role === 'host' ? 'host' : 'joined'} · 100 health</small>`
+      : room.who ? `<b>${esc(foe.name)}’s keep.</b><small>${foe.ai ? 'The game’s AI' : `${esc(foe.title)} · ready`} · 100 health</small>`
+      : `<b>An empty keep.</b><small>${room.pub ? 'Anyone in Rooms can take it' : 'For a friend you invite'}</small>`;
+    const w = n.offsetWidth, left = sd === FOE, lx = left ? x - 70 - w : x + 70, ly = y - 34;
+    n.style.left = lx + 'px'; n.style.top = ly + 'px';
+    roomLines[sd] = { pts: [[x, y], [left ? lx + w : lx, ly], [left ? lx : lx + w, ly]] };
+  }
+  if (!show) roomLines = [];
+  drawLines();
+}
+let roomLines = [];
 
 // ---------- the unit note: a card pointed at ----------
 function unitNote(i, el) {
@@ -14846,10 +14990,10 @@ function paintSheet() {
   if (!sheetKind || (sheetKind === 'squad' && sqOpen == null) || (sheetKind === 'unlock' && unlockTier == null)) { s.hidden = true; sqLine = null; return; }
   const can = editable();
   let html = '';
-  s.className = 'sheet' + (['settings', 'damage', 'help'].includes(sheetKind) ? ' drop' : '') + (sheetKind === 'settings' ? ' wide' : '');
+  s.className = 'sheet' + (['settings', 'damage', 'help', 'invite'].includes(sheetKind) ? ' drop' : '') + (sheetKind === 'settings' ? ' wide' : '');
   if (sheetKind === 'unlock') {
     const t = unlockTier, list = units.map((u, i) => i).filter(i => tierOf(i) === t && !Game.isOff(m, i, ME) && locked(i));
-    html = `<span class="tag" style="background:${tierColor(t)}">Tier ${t}</span><h3>Unlock a unit<small>Once unlocked, it's yours for the match. The computer sees it after the next fight.</small></h3>
+    html = `<span class="tag" style="background:${tierColor(t)}">Tier ${t}</span><h3>Unlock a unit<small>Once unlocked, it's yours for the match. ${foe.The} sees it after the next fight.</small></h3>
       ${list.map(i => { const u = units[i], c = Game.unlockCost(m, i, ME); return `<div class="urow"><span style="color:${u.color};display:grid;place-items:center">${Shapes.svg(u.shape, 28)}</span>
         <span class="nm">${esc(u.name)}<small>${plural(u.bodies, 'body')} · ${u.range <= 1.6 ? 'melee' : `range ${Math.round(u.range)}`} · ${Game.shopCost(m, ME, i)} a squad</small></span>
         <button class="w" data-unl="${i}" ${can && m.gold[ME] >= c ? '' : 'disabled'}>${c ? `Unlock <small>${c}</small>` : 'Unlock'}</button></div>`; }).join('') || '<p>Nothing left to unlock here.</p>'}`;
@@ -14863,6 +15007,13 @@ function paintSheet() {
         ${!fresh ? `<button class="w" id="sq-sell" ${can ? '' : 'disabled'}>Sell <small>+${sv}</small></button>` : ''}
       </div>
       <p>${fresh ? 'Drag it to move it, or back onto the shop to take it back.' : rdy ? 'It has the experience for its next level.' : 'It levels up once it has fought enough.'}</p>`;
+  } else if (sheetKind === 'invite') {
+    html = `<h3>Invite a friend<small>To this room · 1v1 ${room.ranked ? 'Ranked' : 'Standard'} · ${esc((Game.SKINS.find(x => x.id === look) || {}).name)}</small></h3>
+      ${FRIENDS.map((f, i) => { const inv = room.invited[f.name], full = !!room.who;
+        return `<div class="urow"><span class="fdot${f.on ? '' : ' off'}" aria-label="${f.on ? 'Online' : 'Offline'}"></span>
+        <span class="nm">${esc(f.name)}${f.title ? ` <i class="ttl" style="color:${f.tc}">${esc(f.title)}</i>` : ''}<small>${esc(f.where)}</small></span>
+        ${!f.on ? '<span class="w" style="opacity:.35">Offline</span>' : inv ? `<span class="w" style="opacity:.7">Invited</span>` : `<button class="w" data-inv="${i}" ${full ? 'disabled' : ''}>Invite</button>`}</div>`; }).join('')}
+      <p>${room.pub ? 'Anyone can also join from Rooms.' : 'Private: only the friends you invite can join.'} An invite shows in their Friends list, with Join.</p>`;
   } else if (sheetKind === 'help') {
     html = `<h3>How to deploy<small>Round ${m.round}${m.round === 1 ? ' · your first' : ''}</small></h3>
       <p><b>Drag a card</b> from the shop onto your zone (the near seven rows), or tap a card, then a tile.</p>
@@ -14878,10 +15029,10 @@ function paintSheet() {
       <div class="set">
         <span class="lab">Camera</span>${seg('cam', [[0, 'Top'], [1, 'Tilted'], [2, 'Angled']], lv)}
         <span class="lab">3D quality</span>${seg('q', [['high', 'High'], ['medium', 'Medium'], ['low', 'Low']], q)}
-        <span class="lab">Deploy timer</span>${seg('timer', [[1, 'On'], [0, 'Off']], timerOn ? 1 : 0)}
+        ${phase === 'room' ? '' : '<span class="lab">Deploy timer</span>'}${phase === 'room' ? '' : seg('timer', [[1, 'On'], [0, 'Off']], timerOn ? 1 : 0)}
         <span class="lab">Battlefield</span>${seg('look', Game.SKINS.map(k => [k.id, k.name]), look)}
       </div>
-      <div class="acts"><button class="w" id="new-match">New match</button></div>
+      ${phase === 'room' ? '' : '<div class="acts"><button class="w" id="new-match">New match</button></div>'}
       <p style="opacity:.7">Sound, chat and the rest stay in the menu's Settings.</p>`;
   } else if (sheetKind === 'damage') {
     const S = lastSummary; if (!S) { s.hidden = true; return; }
@@ -14889,7 +15040,7 @@ function paintSheet() {
       return list.map(q => `<span>${esc(units[q.unit].name)}</span><span class="track" style="--tc:var(--${sd === ME ? 'you' : 'foe'})"><i style="width:${q.dealt / top * 100}%"></i></span><b class="num">${q.dealt}</b>`).join(''); };
     html = `<h3>Damage<small>Round ${S.round}: who did the work</small></h3>
       <span class="k">Yours</span><div class="dmg">${rows(ME) || '<span>No squads.</span>'}</div>
-      <span class="k">The computer's</span><div class="dmg">${rows(FOE) || '<span>No squads.</span>'}</div>`;
+      <span class="k">${foe.The}'s</span><div class="dmg">${rows(FOE) || '<span>No squads.</span>'}</div>`;
   }
   s.innerHTML = `<button class="x" aria-label="Close">✕</button>` + html;
   s.hidden = false;
@@ -14901,12 +15052,17 @@ function paintSheet() {
   on('sq-lvl', () => { if (editable() && Game.levelUp(m, ME, sqOpen)) changed(); });
   on('sq-sell', () => { if (editable() && Game.sell(m, ME, sqOpen)) { closeSheet(); changed(); } });
   on('new-match', () => { closeSheet(); newMatch(); });
+  s.querySelectorAll('[data-inv]').forEach(b => b.addEventListener('click', () => {
+    const f = FRIENDS[+b.dataset.inv]; room.invited[f.name] = true;
+    if (f.comes && !room.who && !room.joining) { room.joining = f; room.joinAt = now() + 2600; } // Pebble accepts; Juniper is mid-match
+    paint();
+  }));
   s.querySelectorAll('[data-set]').forEach(g => g.querySelectorAll('[data-v]').forEach(b => b.addEventListener('click', () => {
     const v = b.dataset.v, k = g.dataset.set;
     if (k === 'cam') board.camera.setLevel(+v);
     if (k === 'q') { quality = v; board.quality(v); }
     if (k === 'timer') { timerOn = v === '1'; deadline = timerOn && phase === 'deploy' && !timeUp ? now() + DEPLOY_MS : 0; paintCol(); }
-    if (k === 'look') { look = v; m.skin = v; paintRound(); }
+    if (k === 'look') { look = v; m.skin = v; paintRound(); if (phase === 'room') paintRoom(); }
     paintSheet();
   })));
 }
@@ -14918,8 +15074,9 @@ function placeSheet() {
     const [sx, sy] = board.screenAt(sq.col, sq.row, 1.2), right = sx + 60 + w < innerWidth - 16;
     x = right ? sx + 60 : sx - 60 - w; y = Math.max(110, Math.min(innerHeight - h - 16, sy - h / 2));
     sqLine = { x1: sx, y1: sy, x2: right ? x : x + w, y2: y + 28 };
-  } else if (sheetKind === 'unlock' && sheetAnchor && document.body.contains(sheetAnchor)) {
-    const r = $('col').getBoundingClientRect(), a = sheetAnchor.getBoundingClientRect();
+  } else if (sheetKind === 'invite' || (sheetKind === 'unlock' && sheetAnchor && document.body.contains(sheetAnchor))) {
+    const anc = sheetKind === 'invite' ? document.querySelector('#col [data-sheet="invite"]') || $('col') : sheetAnchor; // (the column redraws: find it again)
+    const r = $('col').getBoundingClientRect(), a = anc.getBoundingClientRect();
     x = r.right + 18; y = Math.max(110, Math.min(innerHeight - h - 16, a.top - 20));
   } else {
     const a = (sheetAnchor && document.body.contains(sheetAnchor) ? sheetAnchor : $('round')).getBoundingClientRect();
@@ -14933,7 +15090,7 @@ function placeSheet() {
 // ---------- lines: a dot on the thing, a thin line to its words (the Diorama's notes) ----------
 let noteLine = null, sqLine = null;
 function drawLines() {
-  const ls = [noteLine, sqLine].filter(Boolean).map(l => l.pts || [[l.x1, l.y1], [l.x2, l.y2]]);
+  const ls = [noteLine, sqLine, ...roomLines].filter(Boolean).map(l => l.pts || [[l.x1, l.y1], [l.x2, l.y2]]);
   $('lines').innerHTML = ls.map(p => `<polyline points="${p.map(q => q.join(',')).join(' ')}"/><circle class="ring" cx="${p[0][0]}" cy="${p[0][1]}" r="7"/><circle class="dot" cx="${p[0][0]}" cy="${p[0][1]}" r="3"/>`).join('');
 }
 
@@ -14959,7 +15116,7 @@ function paintMoment() {
   } else if (show === 'leader') {
     const ids = Game.draftLeft(m);
     html = `<div class="k">Round ${m.round} · the leader draft</div><h2 id="moment-h">Choose your leader</h2>
-      <p class="lead">A leader gives you a passive ability for the rest of the match. ${Game.charOf(m, FOE) ? `<b>The computer took ${esc(charName(Game.charOf(m, FOE)))}.</b>` : 'You pick first.'}</p>
+      <p class="lead">A leader gives you a passive ability for the rest of the match. ${Game.charOf(m, FOE) ? `<b>${foe.The} took ${esc(charName(Game.charOf(m, FOE)))}.</b>` : 'You pick first.'}</p>
       <div class="opts">${ids.map((id, k) => { const c = Game.CHARACTERS.find(x => x.id === id) || { name: id, ability: '' }; return opt(k, '', esc(c.name), esc(c.ability)); }).join('')}</div>`;
   } else if (show === 'tower') {
     const ch = Game.towerChoices(m, ME);
@@ -14970,13 +15127,13 @@ function paintMoment() {
     const S = summary, w = S.winner, dealt = S.dmg[FOE], took = S.dmg[ME];
     const word = w === ME ? 'Won' : w === FOE ? 'Lost' : 'Draw';
     html = `<div class="k">Round ${S.round}${S.timeout ? ' · time ran out' : ''}</div><h2 id="moment-h" class="${w === ME ? 'won' : w === FOE ? 'lost' : ''}">${word}</h2>
-      <p class="lead">${w === ME ? `The computer takes <b>${dealt}</b> damage.` : w === FOE ? `You take <b>${took}</b> damage.` : took || dealt ? `You take ${took}, the computer ${dealt}.` : 'Nobody takes damage.'} ${m.over ? '' : `+${S.income} gold next round.`}</p>
+      <p class="lead">${w === ME ? `${foe.The} takes <b>${dealt}</b> damage.` : w === FOE ? `You take <b>${took}</b> damage.` : took || dealt ? `You take ${took}, ${foe.the} ${dealt}.` : 'Nobody takes damage.'} ${m.over ? '' : `+${S.income} gold next round.`}</p>
       <div class="row"><button class="ready" id="next">${SHARD}${m.over ? 'See the end' : 'Next round'}</button><button class="lnk" data-sheet="damage">Damage</button></div>`;
   } else if (show === 'end') {
     const won = m.winner === ME;
     html = `<div class="k">Match over · ${plural(m.round - 1, 'round')}</div><h2 id="moment-h" class="${won ? 'won' : 'lost'}" style="font-size:clamp(80px,14vh,140px)">${won ? 'Victory' : 'Defeat'}</h2>
-      <p class="lead">${won ? 'Their keep is rubble. The computer would like a rematch. It never gets tired.' : 'Your keep has fallen. The computer is gracious about it.'}</p>
-      <div class="row"><button class="ready" id="again">${SHARD}Play again</button></div>`;
+      <p class="lead">${won ? `Their keep is rubble. ${foe.The} would like a rematch.${foe.ai ? ' It never gets tired.' : ''}` : `Your keep has fallen. ${foe.The} is gracious about it.`}</p>
+      <div class="row"><button class="ready" id="again">${SHARD}Rematch</button><button class="lnk" id="to-room">Back to the room</button></div>`;
   }
   if (show === 'pack' || show === 'leader' || show === 'tower')
     html += `<div class="row"><button class="ready${pickSel == null ? '' : ''}" id="choose" ${pickSel == null ? 'disabled' : ''}>${SHARD}Choose</button><button class="lnk" id="hide">Look at the board</button></div>`;
@@ -14989,6 +15146,7 @@ function paintMoment() {
   on('hide', () => { pickHidden = true; paintMoment(); });
   on('next', () => { if (m.over) { phase = 'end'; music(); paint(); } else startRound(); });
   on('again', newMatch);
+  on('to-room', openRoom);
   mo.querySelectorAll('[data-sheet]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openSheet(b.dataset.sheet, b); }));
 }
 function choose() {
@@ -15031,8 +15189,8 @@ function absorb() {
 // ---------- the board, edge to edge ----------
 let quality = 'high';
 const board = Render3D(THREE, $('view'), () => {
-  const fighting = phase !== 'deploy';
-  return { m: fighting && pre ? pre : m, me: ME, phase: phase === 'end' ? 'result' : phase, units, mode: 'ai', bt: fighting ? bt : null, battlePre: pre, fx,
+  const fighting = phase !== 'deploy' && phase !== 'room';
+  return { m: fighting && pre ? pre : m, me: ME, phase: phase === 'end' ? 'result' : phase === 'room' ? 'deploy' : phase, units, mode: 'ai', bt: fighting ? bt : null, battlePre: pre, fx,
     selected: phase === 'deploy' ? selected : null, moving: null, drag, hoverTile, editable: editable(), placingUnit: phase === 'deploy' ? placingUnit() : null,
     placingElf: false, placingTower: placingTower(), foeReady: phase === 'deploy' && ready[FOE] && !ready[ME] };
 }, {
@@ -15101,6 +15259,8 @@ function frame(ts) {
     if (fightAt && !(ready[ME] && ready[FOE])) fightAt = 0;
     tickClock();
   }
+  if (phase === 'room') { if (room.joinAt && now() >= room.joinAt) seat(room.joining); roomNotes(); }
+  else if (roomLines.length || !$('kn0').hidden) roomNotes();
   if (phase === 'battle' && bt) {
     const speed = bt.time() > 20 ? 3 : 1.5;
     acc += dt * speed;
@@ -15118,7 +15278,7 @@ function frame(ts) {
 }
 board.size();
 if (Q.get('cam') !== 'top') board.camera.setLevel(1); // the tilted view: the board as the menu's island, your zone nearest and biggest
-newMatch();
+if (ROOM === 'none') newMatch(); else openRoom();
 fitView();
 requestAnimationFrame(frame);
 
@@ -15126,6 +15286,7 @@ requestAnimationFrame(frame);
 window.__battle = { board, get m() { return m; }, get phase() { return phase; }, get selected() { return selected; }, set selected(i) { selected = i; paint(); },
   paint, pressReady, choose: (k) => { pickSel = k; choose(); }, fight: () => { ready = [true, true]; fight(); },
   skip: () => { if (phase === 'battle') { while (bt.step()) absorb(); fx = []; endFight(); } }, next: () => { if (m.over) { phase = 'end'; paint(); } else startRound(); },
+  seat: (n) => seat(n === 'computer' ? COMPUTER : FRIENDS.find(f => f.name === n) || null), openRoom, newMatch,
   holdAi: () => { aiReadyAt = 1e15; ready[FOE] = false; paint(); }, // (shots: the computer still deploying)
   openSheet, unitNote, freeTiles: () => { const out = []; for (const row of Game.zoneRows(ME)) for (let col = 1; col < Game.COLS - 1; col++) if (!Game.occupied(m, ME, col, row)) out.push([col, row]); return out; } };
 

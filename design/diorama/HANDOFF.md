@@ -22,7 +22,7 @@ the design reference. The work is on the branch `claude/nice-mendel-scnrpy` (fro
 | `screens/` | Screenshots of the current state (listed below); `contact-sheet.jpg` has every screen. |
 | `test/` | The checks (2026-11-07): `collide.js` (text overlapping, note lines through words, text off screen, for every state in `states.json` at given window sizes; it can save shots), `flow.js` (a 39-step click-through of every screen), `contact-sheet.py`. Commands at the top of each file. |
 | `INTEGRATION.md` | The plan for putting the Diorama into the game, and the owner's decisions for it. |
-| `battle.html` | The battle screen prototype (2026-11-08), built: a real match against the computer on the game's own 3D board. Serve the repo root and open `/design/diorama/battle.html`. See "Battle screen" below. |
+| `battle.html` | The room and battle screen prototype (2026-11-08), built: the room you wait in, then a real match on the game's own 3D board. Serve the repo root and open `/design/diorama/battle.html`. See "Battle screen" and "The room" below. |
 | `src/battle.html`, `src/battle.js`, `build-battle.js` | Its source and build: `node design/diorama/build-battle.js` (add `--standalone <out.html>` for one self-contained ~7 MB file with three.js and the scenery inlined, no music). |
 
 ```bash
@@ -279,3 +279,31 @@ Computer).
 **Open questions for the owner:** Tilted as the default view? The left column vs the game's right-hand panel (left
 keeps "yours on the left, theirs on the right" under the HP)? READY at the bottom (as PLAY) vs at the top of the shop?
 How phones should work (probably the shop as a bottom drawer under a full-screen board, the HP still overlaid).
+
+## The room you wait in (first prototype, 2026-11-08)
+
+The screen after CREATE ROOM (the game's `drawLobby()`, and `guestWaiting()` for the one who joined). It is the first
+state of `battle.html`: **the room is the battlefield you are about to fight on**, edge to edge in the tilted view, and
+when the match starts the same column turns into the deploy panel, with no screen change. (`screens/room-*.jpg`)
+- **Top, as in the match:** you top left with your 100 health and "Host" (or "Joined"); the other seat top right is
+  an **open seat**: "Open seat", a dashed bar where their health will be, "Waiting for a player…" (or "Pebble is on the
+  way…" once an invite is accepted); when someone takes it, their name, title and health, with a saffron HERE tag.
+  Top middle: `Play · Rooms · your room · Meadow`, 1V1 STANDARD (or 1V1 RANKED · BO3), Settings and the music line.
+- **The keeps carry notes** (the Diorama's dot, line and typed label): "Your keep. Wren · host · 100 health" and across
+  the board "An empty keep. Anyone in Rooms can take it" (private: "For a friend you invite"), which becomes
+  "Pebble's keep." when they join.
+- **The column:** a kicker (`Your room · public · watchable`), YOUR ROOM huge, a status line, then New room's rows of
+  words: Who can find it (Public / Private), Spectators (On / Off), Units (Learn the game / Standard, with the game's
+  pack note; ranked: Standard only, with the series rule), Battlefield (‹ Meadow ›, changes the board at once), then
+  **+ Invite a friend** (an ink sheet: friends with a saffron dot online or a ring offline, where they are, Invite →
+  Invited), and **START MATCH** on the saffron shard (off until the seat is taken), "Close room" (tap twice).
+- **Joined someone's room** (`?room=guest`): PEBBLE'S ROOM, the settings shown as picked words only (the host picks),
+  "Waiting for Pebble · Pebble starts the match", Leave room.
+- **Left out on purpose:** the match code, the link (Share / Copy) and Phone to phone instead: the owner's call of
+  2026-11-07 (no join by code; everything through Rooms and friends' invites). Easy to put back as a typed
+  "Copy invite link" if wanted. The developer's Match settings (other maps, Custom pack, Factions) aren't in it yet.
+- **Prototype stand-ins:** nobody can really join: inviting Pebble (in the menu) seats Pebble after a moment; Juniper
+  is mid-match and never comes; "Prototype: seat the computer" fills the seat. Whoever sits there, the game's AI plays
+  them. The match uses the room's Units pack for real (`matchArgs`: the game's matchOff / matchChars / offTowers).
+  After the match, Rematch or Back to the room. URL: `?room=host|guest|ranked|private|none` (none: straight into a
+  match).
