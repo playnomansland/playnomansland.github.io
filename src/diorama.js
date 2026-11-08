@@ -61,7 +61,7 @@
     const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1, metalness: 0, flatShading: true });
     const vmat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, flatShading: true });
     const mesh = (g, m, cast = true) => { const o = new THREE.Mesh(g, m); o.castShadow = cast; o.receiveShadow = true; return o; };
-    await Promise.all(['700 200px "Chakra Petch"', '700 56px "Bricolage Grotesque"', '400 40px "Courier Prime"', '700 40px "Courier Prime"'].map(f => document.fonts.load(f)));
+    await Promise.all(['700 200px "Chakra Petch"', '700 56px "Bricolage Grotesque"', '500 40px "Bricolage Grotesque"', '700 40px "Bricolage Grotesque"'].map(f => document.fonts.load(f)));
 
     // ── the island: the Standard map, 14 columns by 18 rows (zones of 7 rows, 4 rows of no man's land), one tile = 1 ──
     // col c, row r -> x = c - 6.5, z = r - 8.5 (row 0 is the back of their zone, row 17 the back of yours)
@@ -268,7 +268,7 @@
       const b = tile(1.9, h, 2.6, (g, w, hh) => { g.fillStyle = paper; g.fillRect(0, 0, w, hh); g.strokeStyle = first ? 'rgba(23,20,15,.35)' : 'rgba(23,20,15,.2)'; g.lineWidth = 6; g.setLineDash([18, 14]); g.strokeRect(22, 22, w - 44, hh - 44);
           g.fillStyle = '#17140F'; g.textAlign = 'center'; g.font = '700 220px "Chakra Petch"'; g.fillText(String(n), w / 2, hh * 0.72);
           fitFont(g, P[0], 700, 60, '"Bricolage Grotesque"', 440); if (!PLAYERS[n]) g.globalAlpha = .45; g.fillText(P[0], w / 2, hh * 0.87); g.globalAlpha = 1; },
-        (g, w, hh) => { g.fillStyle = side; g.fillRect(0, 0, w, hh); g.fillStyle = '#17140F'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 40px "Courier Prime"'; g.fillText((PLAYERS[n] ? `${P[1]} SCORE · ${P[2]}` : ''), w / 2, Math.min(hh / 2, 46)); }, side);
+        (g, w, hh) => { g.fillStyle = side; g.fillRect(0, 0, w, hh); g.fillStyle = '#17140F'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 40px "Bricolage Grotesque"'; g.fillText((PLAYERS[n] ? `${P[1]} SCORE · ${P[2]}` : ''), w / 2, Math.min(hh / 2, 46)); }, side);
       b.position.set(x, h / 2, 0.3); podium.add(b);
       const [kind, tint] = pick[n - 1], k = kind === 'mammoth' ? 0.4 : kind === 'golem' ? 0.46 : 0.52;
       if (PLAYERS[n]) { const u = unit(kind, tint, first ? '#F2B23A' : '#E9E3CF', x, -0.6, k, Math.PI + (i - 2) * 0.12, podium); u.position.y = h; }
@@ -315,7 +315,7 @@
         const x = (i - (n - 1) / 2) * gap, g = new THREE.Group(); g.position.set(x, 0, -0.5); roster.add(g);
         const b = tile(gap - 0.14, 0.16, 2.3, (c, w, hh) => { c.fillStyle = '#F4ECD8'; c.fillRect(0, 0, w, hh); c.strokeStyle = 'rgba(23,20,15,.2)'; c.lineWidth = 6; c.setLineDash([18, 14]); c.strokeRect(20, 20, w - 40, hh - 40);
             c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.8);
-            c.font = '400 40px "Courier Prime"'; c.globalAlpha = .75; c.fillText(`${u.cost} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
+            c.font = '500 40px "Bricolage Grotesque"'; c.globalAlpha = .75; c.fillText(`${u.cost} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
         b.position.set(0, 0.08, 0.35); g.add(b);
         const w = wornOf(u.name), kind = w ? SKIN[w.id].model : M.kindOf(u), ht = M.height(kind) || 2, sc = Math.min(0.66, 2.0 / ht), copies = Math.min(u.bodies || 1, 3);
         const spots = copies === 1 ? [[0, 0]] : copies === 2 ? [[-0.28, 0.05], [0.28, -0.05]] : [[-0.32, 0.12], [0.32, 0.12], [0, -0.25]];
@@ -424,7 +424,7 @@
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
-          if (on && !phone() && !body.classList.contains('music-open')) {
+          if (on && !phone() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf')) {
             const r = el.getBoundingClientRect(), ty = r.top - 4; let best = null, bd = 1e9;
             for (const o of bfDots) { const [x, y] = proj(o, 0), d = Math.hypot(x - r.right, y - ty);
               if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd && !(menuR && crosses(`M${x} ${y} L${r.right} ${ty}`, menuR))) { bd = d; best = [x, y]; } } // (never across the menu's words)
@@ -506,10 +506,11 @@
         // over the music player only when there is no other room; then the player steps aside while the sheet is open
         const under = sx + w > mu.left - 14 && tb + h > mu.top - 14, floor = sx + w > mu.left - 14 && !under ? mu.top - 14 : innerHeight - 24, sy = Math.max(tb, Math.min(y + 90, floor - h));
         body.classList.toggle('sheet-over-music', under);
+        { const br = body.querySelector('.bf-note').getBoundingClientRect(); body.classList.toggle('sheet-over-bf', sx < br.right && sx + w > br.left && sy + h > br.top - 8); } // Change battlefield steps aside too
         sh.style.left = sx + 'px'; sh.style.top = sy + 'px';
         const ex = Math.min(Math.max(x, sx + 30), sx + w - 30), ey = sy;
         html += `<path d="M${x} ${y} L${ex} ${ey}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
-      } else { sh.hidden = true; body.classList.remove('sheet-over-music'); }
+      } else { sh.hidden = true; body.classList.remove('sheet-over-music', 'sheet-over-bf'); }
       // a unit pointed at in the roster
       const hn = document.getElementById('unote');
       if (hovered && hovered.startsWith('u:') && body.classList.contains('units') && (!picked || picked.userData.i !== +hovered.slice(2))) {

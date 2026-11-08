@@ -68,6 +68,9 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   (`.bf-btn`: stencil words on the saffron board, an ink board on the Play screen), the battlefield's name above it, its
   bottom on the music player's bottom line (both 40 px up); its line never crosses the menu's words. Shown to the owner,
   not built: the small text in Chakra Petch instead of Courier Prime (a one-line change: `--type` on `#dio`).
+- Tenth round: the small text is Bricolage Grotesque (the owner's pick of eight, 2026-11-08): `--type` in
+  `src/diorama.css`, the sheets' `--font-data`, the friend banners, and the names painted on the roster tiles and the
+  podium; Courier Prime is no longer loaded. A unit sheet over Change battlefield hides the button and its line.
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 **Open, in order:**
