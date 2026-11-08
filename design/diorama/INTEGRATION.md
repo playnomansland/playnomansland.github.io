@@ -52,6 +52,10 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   Mage's first spot lands on PLAY on small windows). Goblin Swarm note (the five goblins are one group, `goblins`).
   A click on a unit model (`UNIT_MODELS`) on the main menu opens Units; notes are their own elements, so a click on
   one doesn't. `#dio` has `user-select: none` (inputs excepted).
+- Fifth round: every island note fades out over 1 s once it isn't wanted (a quick sweep leaves each readable for a
+  second); a pointed-at note shows at once. A hover note keeps the spot it got when it appeared (`el._off`, offsets
+  from its dot) until it's gone; the menu's own notes are laid out first, then notes already up, then new ones, each
+  avoiding the boxes before it; the pointed-at note may sit over fading boxes when there's no free spot.
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 **Open, in order:**

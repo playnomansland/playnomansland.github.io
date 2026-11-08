@@ -673,3 +673,4 @@ html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35) !impo
 #dio { -webkit-user-select: none; user-select: none; }
 #dio input, #dio textarea, #dio [contenteditable] { -webkit-user-select: text; user-select: text; }
 #dio .note[data-home] { transition: none; } /* (its fade is drawn frame by frame) */
+#dio .note:not(.btn-note):not(.bf-note) { transition: none; } /* (island notes fade frame by frame) */

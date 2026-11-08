@@ -379,16 +379,24 @@
     const showing = (el, hovered) => hovered && TOWERS.includes(hovered) && TOWERS.includes(el.dataset.hover) && !body.classList.contains('welcome') && viewName === 'play' ? true : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
     // a label off the point (x, y): a line out to it and under it, kept on screen. Returns the line's svg
     let placed = []; // the island notes' boxes laid out so far this frame (notes() empties it)
+    let pinFading = false, pinOverFading = false; // the note being laid out is fading; it may sit over fading boxes
     function pin(el, x, y, dx, dy, keep) {
-      const w = el.offsetWidth, k = phone() ? 0.55 : 1;
-      if (keep) {} else if (dx > 0 && x + dx * k + w > innerWidth - 24) dx = -dx; if (dx < 0 && x + dx * k - w < 24) dx = -dx;
-      const h = el.offsetHeight, lx = x + dx * k, left = dx < 0, L = left ? lx - w : lx;
-      let ly = Math.min(Math.max(y + dy * k, h + 76), innerHeight - 12); // the box stays on screen, under the header
-      for (let n = 0; n < 6; n++) { const hit = placed.find(r => L < r.r + 10 && L + w > r.l - 10 && ly - h < r.b + 6 && ly > r.t - 6); if (!hit) break; ly = hit.b + 8 + h; } // and below a box it would cover
-      placed.push({ l: L, r: L + w, t: ly - h, b: ly });
-      el.style.left = (left ? lx - w : lx) + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
+      const w = el.offsetWidth, h = el.offsetHeight, k = phone() ? 0.55 : 1;
+      let lx, ly, left;
+      if (el._off) { [lx, ly, left] = [x + el._off[0], y + el._off[1], el._off[2]]; } // an island note keeps its spot while it's up (no jumps)
+      else {
+        if (keep) {} else if (dx > 0 && x + dx * k + w > innerWidth - 24) dx = -dx; if (dx < 0 && x + dx * k - w < 24) dx = -dx;
+        lx = x + dx * k; left = dx < 0; const L = left ? lx - w : lx;
+        ly = Math.min(Math.max(y + dy * k, h + 76), innerHeight - 12); // the box stays on screen, under the header
+        for (let n = 0; n < 8; n++) { const hit = placed.find(r => !(pinOverFading && r.f) && L < r.r + 10 && L + w > r.l - 10 && ly - h < r.b + 6 && ly > r.t - 6); if (!hit) break; ly = hit.b + 8 + h; } // and below a box it would cover
+        if (el.hasAttribute('data-hover')) el._off = [lx - x, ly - y, left];
+      }
+      const L = left ? lx - w : lx;
+      placed.push({ l: L, r: L + w, t: ly - h, b: ly, f: pinFading });
+      el.style.left = L + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
       return `<path d="M${x} ${y} L${lx} ${ly} L${left ? lx - w : lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
     }
+    addEventListener('resize', () => body.querySelectorAll('.note').forEach(n => { n._off = null; }));
     function notes() {
       let html = ''; placed = [];
       const playR = document.getElementById('play').getBoundingClientRect(), inProf = body.classList.contains('profile');
@@ -408,7 +416,8 @@
         return !(r.left < menuR.right + 8 && r.right > menuR.left - 8 && r.top < menuR.bottom + 8 && r.bottom > menuR.top - 8) && !crosses((ln.match(/d="([^"]*)"/) || [])[1] || '', menuR); };
       const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
       let lbOn = false;
-      for (const el of body.querySelectorAll('.note:not(.pnote)')) {
+      const rank = (n) => n.hasAttribute('data-home') ? 2 : n._off ? 1 : 0;
+      for (const el of [...body.querySelectorAll('.note:not(.pnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
@@ -422,17 +431,19 @@
           continue;
         }
         let show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el, hovered) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
-        // the menu's own notes (the golem's, the skeleton's): while something is pointed at they fade out over a second
-        // and come back in a quarter of one when it isn't (owner, 2026-11-08)
+        // every island note on the menu fades out over a second once it isn't wanted (owner, 2026-11-08: a quick sweep
+        // over the island leaves each note readable for a second); a pointed-at piece's note shows at once, the menu's
+        // own notes (the golem's, the skeleton's) come back in a quarter of a second
         let op = 1, fading = false;
-        if (el.hasAttribute('data-home')) {
-          const idle = !phone() && showing(el, null) && !inPlay && !inProf, t = performance.now(), dt = Math.min(100, t - (el._t || t)); el._t = t;
-          if (!idle) el._op = 1;
-          else if (show) el._op = Math.min(1, (el._op ?? 1) + dt / 250);
-          else { el._op = Math.max(0, (el._op ?? 1) - dt / 1000); fading = el._op > 0; }
+        if (el.dataset.anchor !== 'btn') {
+          const home = el.hasAttribute('data-home'), t = performance.now(), dt = Math.min(100, t - (el._t || t)); el._t = t;
+          const menu = !phone() && !inPlay && !inProf && viewName === 'play' && !body.classList.contains('welcome');
+          if (!menu) el._op = show ? 1 : home ? 1 : 0;
+          else if (show) el._op = home ? Math.min(1, (el._op ?? 1) + dt / 250) : 1;
+          else { el._op = Math.max(0, (el._op ?? (home ? 1 : 0)) - dt / 1000); fading = el._op > 0; }
           op = el._op; show = show || fading;
         }
-        el.style.display = show ? '' : 'none'; el.style.opacity = op < 1 ? op : ''; el.style.pointerEvents = fading ? 'none' : ''; if (!show) continue;
+        el.style.display = show ? '' : 'none'; el.style.opacity = op < 1 ? op : ''; el.style.pointerEvents = fading ? 'none' : ''; if (!show) { el._off = null; continue; }
         const w = el.offsetWidth, h = el.offsetHeight;
         if (el.dataset.anchor === 'btn') {
           // a menu word's note: the dot on the word; the label finds open space. Left-hand words run a rail up the left
@@ -461,9 +472,13 @@
         // a pointed-at piece's note tries other spots before giving up (on a small window the first can land on PLAY)
         const tries = el.hasAttribute('data-hover') ? [[sdx, ddy], [-sdx, ddy], [sdx, -150], [-sdx, -150], [sdx, 150], [-sdx, 150]] : [[sdx, ddy]];
         let ln = '';
-        for (const [tx, ty] of tries) { const l = pin(el, x, y, tx, ty, el.dataset.anchor === 'skeleton'); if (clear(el, x, y) && offMenu(el, l)) { ln = l; break; } placed.pop(); }
-        if (fading) placed.pop(); // (a fading note doesn't push the pointed-at one aside)
-        if (ln) html += op < 1 ? `<g opacity="${op.toFixed(3)}">${ln}</g>` : ln; else el.style.display = 'none';
+        pinFading = fading; if (el._off) { const l = pin(el, x, y, sdx, ddy); if (clear(el, x, y) && offMenu(el, l)) ln = l; else { placed.pop(); el._off = null; } }
+        pinFading = fading;
+        for (const over of fading ? [false] : [false, true]) { // the pointed-at note always shows: over the fading boxes if it must
+          pinOverFading = over; if (ln) break;
+          for (const [tx, ty] of tries) { const l = pin(el, x, y, tx, ty, el.dataset.anchor === 'skeleton'); if (clear(el, x, y) && offMenu(el, l)) { ln = l; break; } placed.pop(); el._off = null; } }
+        pinOverFading = false;
+        if (ln) html += op < 1 ? `<g opacity="${op.toFixed(3)}">${ln}</g>` : ln; else { el.style.display = 'none'; el._off = null; }
       }
       lbBtn.style.display = lbOn ? '' : 'none';
       // Profile: the golem's note, while you can still earn its skin
@@ -515,6 +530,7 @@
     addEventListener('pointermove', (e) => {
       if (!dio.shown) return;
       if (pinnedHover) return;
+      if (e.target.closest && e.target.closest('#dio .note[data-hover]')) return; // over the pointed-at piece's note: keep it
       let key = null, unitHot = false;
       if (e.target === cv && !body.classList.contains('play')) {
         if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
@@ -522,8 +538,8 @@
       }
       setHover(key); cv.classList.toggle('world-hot', !!key || unitHot);
     });
-    // what's pointed at shows its note at once, and goes at once (owner, 2026-11-08: no delay); the golem's and the
-    // skeleton's notes fade out over a second meanwhile (in notes()), so a sweep over the island doesn't flicker
+    // what's pointed at shows its note at once (owner, 2026-11-08: no delay); notes no longer wanted fade out over a
+    // second (in notes()), so a sweep over the island doesn't flicker
     let hoverNow = null;
     function setHover(key) {
       if (key === hoverNow) return; hoverNow = hovered = key;
