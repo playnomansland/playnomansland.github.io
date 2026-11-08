@@ -62,10 +62,9 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
 
 **Open, in order:**
 1. **Ask the owner to try again** at `?ui=diorama` (list below) and fix what they find.
-2. **"Older player still shows up":** fixed for the menu (the match's panel closes at home). In a match the HUD's music
-   button still opens the game's old panel (`openPlaylist`, `mp-pop`); the owner may want it in the Diorama's look
-   (restyle it under `html.diorama`, as the sheets) or the Diorama's list. Ask.
-3. **The PC launch** when the owner says so: `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`, push to `main`
+2. **The in-match music panel:** the owner designs it with the new Battle screen, in that separate session (answered
+   2026-11-08). Leave the game's panel (`openPlaylist`, `mp-pop`) as it is here.
+3. **The PC launch** when the owner says so (planned for 2026-11-08 if all goes well, otherwise Monday 2026-11-09): `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`, push to `main`
    (the Diorama on computers, the old UI on phones and tablets). Never commit a non-`classic` build otherwise.
 4. **Designs the owner wants before the full launch:** Puzzles, How to play, and the room you wait in (still the
    game's sheets / screens, restyled).
