@@ -60,6 +60,10 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   tower and treasury shows only its own note (the four-at-once group is gone).
 - Seventh round: the golem's and the skeleton's notes wait 1 s after the pointer leaves a piece (`hoverOff`) before
   fading back in (0.25 s); meanwhile they keep fading out.
+- Eighth round: the typed (Courier Prime) text is bold everywhere in the Diorama, its opacity a step higher (as PLAY's
+  tagline; Courier Prime is monospace, so widths don't change). Full leaderboard is a saffron stencil button. Profile:
+  the big name is the username field (`#pf-tag` inside `#pf-name`, sized by `.pf-sizer`), the Username row is gone,
+  the line under the name says when it can change and holds Save (`#pf-save`); Enter saves, Esc puts it back.
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 **Open, in order:**

@@ -405,7 +405,7 @@
       const playR = document.getElementById('play').getBoundingClientRect(), inProf = body.classList.contains('profile');
       // Profile: where the left column's words end (right and bottom); the island's notes and the Units view keep clear of it
       let colR = 24, colB = 0, nameR = 24, kR = 0, kB = 0;
-      if (inProf) for (const el of body.querySelectorAll('#pf-name, .pf .k, .pf-opts > *, #pf-hist, #pf-back')) {
+      if (inProf) for (const el of body.querySelectorAll('#pf-name, #pf-namenote, .pf .k, .pf-opts > *, #pf-hist, #pf-back')) {
         const rg = document.createRange(), nm = el.id === 'pf-name', kk = el.matches('.pf .k'); rg.selectNodeContents(el);
         for (const r of rg.getClientRects()) if (r.width > 1) { colR = Math.max(colR, r.right + 28); colB = Math.max(colB, r.bottom); if (nm) nameR = Math.max(nameR, r.right + 28); if (kk) { kR = Math.max(kR, r.right + 12); kB = Math.max(kB, r.bottom); } } }
       // an open dropdown: notes it would cover hide while it's open, and the music player steps aside if it's under it
@@ -845,7 +845,14 @@
     function drawProfile() {
       acctBtn.querySelector('span').textContent = A ? A.tag : 'Guest';
       $('pf-k').innerHTML = (!A ? 'Profile · no account yet' : A.google ? 'Profile · signed in with Google' : 'Profile · guest on this phone') + (A && A.dev ? ' · <span class="dev">developer mode is on</span>' : '');
-      $('pf-name').textContent = A ? A.tag : 'Nobody yet';
+      // the big name is where you rename (owner, 2026-11-08): an input dressed as the name while a change is allowed
+      const wait = A && !A.dev && A.tagNext > Date.now(), nm = $('pf-name');
+      if (!(document.activeElement && document.activeElement.id === 'pf-tag')) { // (typing stays typed)
+        if (A && !wait) { nm.innerHTML = `<input id="pf-tag" class="pf-name-in" maxlength="16" spellcheck="false" autocomplete="nickname" aria-label="Your username: click it to change it" title="Click to change your name" value="${esc(A.tag)}" ${pf.busy ? 'disabled' : ''}><span class="pf-sizer" aria-hidden="true"></span>`; fitName(); }
+        else nm.textContent = A ? A.tag : 'Nobody yet';
+      }
+      $('pf-namenote').innerHTML = !A ? '' : `<span>${A.dev ? 'Developer: click your name to change it, any time.' : wait ? `You can change your name again on ${esc(tagWhen(A.tagNext))}.` : 'Click your name to change it (once a week).'}</span><button class="pf-save" id="pf-save" hidden>Save</button>`;
+      nameSave();
       const T = A && DTITLES[A.title], pt = $('pf-title'); pt.hidden = !T;
       if (T) { pt.style.setProperty('--tc', T[1]); pt.innerHTML = `<i></i>${esc(T[0])}<i></i>`; }
       const g = GOOGLE_CLIENT_ID && !acctUi.off ? '<div id="acct-google" class="acct-google"></div>' : '';
@@ -859,18 +866,13 @@
         { const skins = A.skins || [], on = skins.filter(k => k.worn && SKIN[k.id]).map(k => `${SKIN[k.id].name} ${SKIN[k.id].unit}`), un = body.classList.contains('units');
           h += `<span class="lab ur">Skins</span><span class="pf-units ur"><button class="item${un ? ' on' : ''}" data-units aria-pressed="${un}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,6 97,0 100,96 4,100"/></svg>Units</button></span>
             <span class="ur"></span><p class="nr-note ur"></p>`; }
-        const wait = !A.dev && A.tagNext > Date.now(); // the server's next allowed change (once a week; developers any time)
-        h += row('Username', `<input id="pf-tag" maxlength="16" spellcheck="false" autocomplete="nickname" aria-label="Your username" value="${esc(A.tag)}" ${wait || pf.busy ? 'disabled' : ''}><button class="act" id="pf-save" hidden>Save</button>`,
-          A.dev ? 'Developer: change it any time.' : wait ? `You can change it again on ${esc(tagWhen(A.tagNext))}.` : 'You can change it once a week.', 'pf-user');
         if (!A.google && g) h += row('Keep it', g, 'Guest on this phone. Sign in with Google to keep it if you change or reset your phone. Sign-in is handled by Google.');
         h += row('Account', `<button class="act${pf.outSure ? ' sure' : ''}" id="acct-out" data-out ${dis}>${pf.outSure ? 'Tap again to log out' : 'Log out'}</button><button class="del${pf.sure ? ' sure' : ''}" id="acct-del" data-del ${dis}>${pf.sure ? 'Tap again to delete' : 'Delete account'}</button>`,
           pf.sure ? 'Deleting removes your username and sign-in for good. Past match results stay, without your name.'
           : A.google ? 'Signed in with Google. Sign in on another phone to play as the same player.'
           : pf.outSure ? 'A guest can’t log back in: sign up with Google first to keep this username and your results.' : 'Log out of this phone. A guest can’t log back in.');
       } else h += row('Account', `<button class="act primary" id="acct-guest" data-guest ${dis}>Play as a guest</button>${g}`, `No account needed to play. Make a guest to get a username on this phone${g ? ', or sign in with Google to keep it on any phone' : ''}.`);
-      const inp = document.activeElement && document.activeElement.id === 'pf-tag' ? $('pf-tag').value : null; // typing stays typed
       $('pf-opts').innerHTML = body.classList.contains('profile') ? h : ''; $('pf-msg').textContent = pf.msg; // (only while it's open: no stray #acct-google)
-      if (inp != null && $('pf-tag')) { $('pf-tag').value = inp; $('pf-tag').focus(); $('pf-save').hidden = inp.trim() === A.tag || inp.trim().length < 2; }
       if (g && $('acct-google') && body.classList.contains('profile')) { // Google's own button; afterwards the profile shows the account
         acctUi.after = async () => { pfMsg('Signed in with Google.'); if (phase === 'start') drawHome(); };
         acctGoogleButton('signin_with');
@@ -898,7 +900,6 @@
       const b = e.target.closest('button'); if (!b || b.disabled) return;
       if (b.dataset.title !== undefined) pfDo(async () => { const r = await acctCall('title', { title: b.dataset.title }, true); if (r.status !== 200) return acctFail(r); acctTake(r); return 'Title saved.'; });
       else if (b.hasAttribute('data-units')) profileUnits(!body.classList.contains('units'));
-      else if (b.id === 'pf-save') pfSave();
       else if (b.hasAttribute('data-out')) { // a guest taps twice (with the warning); then the welcome screen, as the old Log out
         if (!A.google && !pf.outSure) { pf.outSure = true; return drawProfile(); }
         pf.outSure = false; closeProfile(); acctLogOut();
@@ -906,8 +907,14 @@
       else if (b.hasAttribute('data-del')) { if (!pf.sure) { pf.sure = true; return drawProfile(); } pf.sure = false; pfDo(async () => { await acctDelete(); return acctUi.msg; }); }
       else if (b.hasAttribute('data-guest')) pfDo(async () => { const r = await acctCall('guest', {}); if (r.status !== 200) return acctFail(r); acctTake(r); welcomed(); return 'You’re playing as a guest on this phone.'; });
     });
-    $('pf-opts').addEventListener('input', (e) => { if (e.target.id === 'pf-tag') $('pf-save').hidden = e.target.value.trim() === A.tag || e.target.value.trim().length < 2; });
-    $('pf-opts').addEventListener('keydown', (e) => { if (e.target.id === 'pf-tag' && e.key === 'Enter' && !$('pf-save').hidden) pfSave(); if (e.key === 'Escape') e.stopPropagation(); });
+    // the name's input: as wide as what's typed; Save shows once it's a different name; Enter saves, Esc puts it back
+    function fitName() { const i = $('pf-tag'), z = $('pf-name').querySelector('.pf-sizer'); if (!i || !z) return; z.textContent = i.value || ' '; i.style.width = (z.offsetWidth + 8) + 'px'; }
+    function nameSave() { const i = $('pf-tag'), b = $('pf-save'); if (b) b.hidden = !i || !A || i.value.trim() === A.tag || i.value.trim().length < 2; }
+    $('pf-name').addEventListener('input', (e) => { if (e.target.id === 'pf-tag') { fitName(); nameSave(); } });
+    $('pf-name').addEventListener('keydown', (e) => { if (e.target.id !== 'pf-tag') return;
+      if (e.key === 'Enter' && !$('pf-save').hidden) pfSave();
+      if (e.key === 'Escape') { e.stopPropagation(); e.target.value = A.tag; fitName(); nameSave(); e.target.blur(); } });
+    $('pf-namenote').addEventListener('click', (e) => { if (e.target.closest('#pf-save')) pfSave(); });
 
     // Profile opens over the menu; the account is refreshed from the server (the session rotates daily, titles and skins may be new)
     // where Profile was opened from, for its Back: the Play screen, Rooms (and New room), or the menu
