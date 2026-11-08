@@ -665,3 +665,7 @@ html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35) !impo
 #dio .drop .fs-big { justify-self: start; display: inline-flex; align-items: center; gap: 10px; margin: 14px 0 16px; padding: 9px 18px 7px 14px; font: 700 22px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); background: var(--saffron); clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); transition: transform .15s ease; }
 #dio .drop .fs-big svg { width: 20px; height: 20px; flex: none; }
 #dio .drop .fs-big:hover, #dio .drop .fs-big:focus-visible { transform: rotate(-1.5deg) scale(1.03); outline: none; }
+/* the full-screen icon, last in the top-right row (owner, 2026-11-08) */
+#dio .acct .fs-ico svg { width: 20px; height: 20px; }
+#dio .acct .fs-ico:hover { text-decoration: none; transform: scale(1.12); }
+#dio .acct .fs-ico[hidden] { display: none; }

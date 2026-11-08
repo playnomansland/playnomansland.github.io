@@ -42,6 +42,10 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
 - Puzzles' note (the left-hand menu notes) sits above Back to match when it shows.
 - The player redraws when the home shows and on every `dioPaint` (the owner saw a wrong song after a match; not
   reproduced here after a vs-computer round, so ask what they saw if it happens again).
+- Third round: a full-screen icon after Settings (`#dio-fs`, toggles full screen; hidden where the browser can't); the
+  skeleton's hint reads "Hover over stuff on the island with your mouse!" and goes up-right of it (left only without
+  room); a note's box stays on screen under the header and moves below a box it would cover (`placed` in `pin`);
+  pointing at a piece lays the notes out at once (`notes()` from `setHover`, not on the next frame).
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 **Open, in order:**

@@ -376,15 +376,19 @@
     const TOWERS = ['keepYou', 'keepFoe', 'vaultYou', 'vaultFoe'];
     const showing = (el) => hovered && TOWERS.includes(hovered) && TOWERS.includes(el.dataset.hover) && !body.classList.contains('welcome') && viewName === 'play' ? true : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
     // a label off the point (x, y): a line out to it and under it, kept on screen. Returns the line's svg
+    let placed = []; // the island notes' boxes laid out so far this frame (notes() empties it)
     function pin(el, x, y, dx, dy, keep) {
       const w = el.offsetWidth, k = phone() ? 0.55 : 1;
       if (keep) {} else if (dx > 0 && x + dx * k + w > innerWidth - 24) dx = -dx; if (dx < 0 && x + dx * k - w < 24) dx = -dx;
-      const lx = x + dx * k, ly = y + dy * k, left = dx < 0;
+      const h = el.offsetHeight, lx = x + dx * k, left = dx < 0, L = left ? lx - w : lx;
+      let ly = Math.min(Math.max(y + dy * k, h + 76), innerHeight - 12); // the box stays on screen, under the header
+      for (let n = 0; n < 6; n++) { const hit = placed.find(r => L < r.r + 10 && L + w > r.l - 10 && ly - h < r.b + 6 && ly > r.t - 6); if (!hit) break; ly = hit.b + 8 + h; } // and below a box it would cover
+      placed.push({ l: L, r: L + w, t: ly - h, b: ly });
       el.style.left = (left ? lx - w : lx) + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
       return `<path d="M${x} ${y} L${lx} ${ly} L${left ? lx - w : lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
     }
     function notes() {
-      let html = '';
+      let html = ''; placed = [];
       const playR = document.getElementById('play').getBoundingClientRect(), inProf = body.classList.contains('profile');
       // Profile: where the left column's words end (right and bottom); the island's notes and the Units view keep clear of it
       let colR = 24, colB = 0, nameR = 24, kR = 0, kB = 0;
@@ -437,10 +441,10 @@
         }
         const [o, hh, [dx, dy]] = bf ? (inPlay ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
         let ddy = dy; if (el.dataset.anchor === 'golemW') { const lb = body.querySelector('.logo').getBoundingClientRect().bottom; ddy = Math.max(dy, lb + 16 + el.offsetHeight - y); } // clear of the big logo
-        let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the left, above the golem's note; to the right if the logo is in the way
+        let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the right, in the sky over the far towers; else up and left, above the golem's note
           const gn = body.querySelector('.rw-note:not(.pnote)'), gr = gn && gn.style.display !== 'none' ? gn.getBoundingClientRect() : null, lg = body.querySelector('.logo').getBoundingClientRect();
-          let ly = Math.max(gr ? Math.min(y - 110, gr.top - 14) : y - 110, h + 12); sdx = -120;
-          if (x - 120 - w < lg.right + 24 && ly - h < lg.bottom + 12) { sdx = Math.min(80, innerWidth - 32 - w - x); ly = Math.max(y - 110, lg.bottom + 20 + h); }
+          let ly = Math.max(y - 110, lg.bottom + 20 + h); sdx = Math.min(80, innerWidth - 32 - w - x);
+          if (sdx < 4) { sdx = -120; ly = Math.max(gr ? Math.min(y - 110, gr.top - 14) : y - 110, h + 12); }
           ddy = ly - y; }
         const ln = pin(el, x, y, sdx, ddy, el.dataset.anchor === 'skeleton'); if (clear(el, x, y) && offMenu(el, ln)) html += ln; else el.style.display = 'none';
       }
@@ -505,7 +509,7 @@
     function setHover(key) {
       if (key === hoverNow) return; hoverNow = key; clearTimeout(hoverT);
       const tw = (k) => k && TOWERS.includes(k);
-      if (!key || !key.startsWith('u:')) { if (tw(key) && tw(hovered)) { hovered = key; return; } if (key) hovered = key; else hoverT = setTimeout(() => { hovered = hoverNow; }, 250); }
+      if (!key || !key.startsWith('u:')) { if (tw(key) && tw(hovered)) { hovered = key; notes(); return; } if (key) { hovered = key; notes(); } else hoverT = setTimeout(() => { hovered = hoverNow; }, 250); }
       else hovered = key;
     }
     body.addEventListener('click', (e) => { if (e.target !== cv || !body.classList.contains('units')) return; const i = hitOf(e, rosterHot); pickUnit(i >= 0 ? rosterHot[i] : null); });
@@ -1167,7 +1171,12 @@
         if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }
       drawSettings();
     });
-    document.addEventListener('fullscreenchange', () => { if (dd.open === 'settings') drawSettings(); }); // (Esc leaves full screen too)
+    // the full-screen icon next to Settings (owner, 2026-11-08)
+    const fsBtn = $('dio-fs'); fsBtn.hidden = !document.fullscreenEnabled;
+    const fsDraw = () => { const on = !!document.fullscreenElement; fsBtn.setAttribute('aria-pressed', String(on)); fsBtn.setAttribute('aria-label', on ? 'Leave full screen' : 'Full screen'); fsBtn.title = on ? 'Leave full screen' : 'Full screen'; };
+    fsBtn.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch (er) {} });
+    fsDraw();
+    document.addEventListener('fullscreenchange', () => { fsDraw(); if (dd.open === 'settings') drawSettings(); }); // (Esc leaves full screen too)
     $('dd-settings').addEventListener('input', (e) => {
       const k = e.target.dataset.vol; if (!k) return;
       const v = +e.target.value; e.target.style.setProperty('--v', v + '%'); e.target.nextElementSibling.textContent = v;
