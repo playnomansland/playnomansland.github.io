@@ -289,9 +289,9 @@ when the match starts the same column turns into the deploy panel, with no scree
   an **open seat**: "Open seat", a dashed bar where their health will be, "Waiting for a player…" (or "Pebble is on the
   way…" once an invite is accepted); when someone takes it, their name, title and health, with a saffron HERE tag.
   Top middle: `Play · Rooms · your room · Meadow`, 1V1 STANDARD (or 1V1 RANKED · BO3), Settings and the music line.
-- **The keeps carry notes** (the Diorama's dot, line and typed label): "Your keep. Wren · host · 100 health" and across
-  the board "An empty keep. Anyone in Rooms can take it" (private: "For a friend you invite"), which becomes
-  "Pebble's keep." when they join.
+- **The keeps say who is in the game** (the owner, 2026-11-08): a dot on each keep, a line, and one typed line: your
+  keep always "Wren · connected"; theirs "Pebble · connected", or "Waiting for opponent…" while the seat is open. (Room
+  only for now; open question: keep them through the match, where "connected" would matter online?)
 - **The column:** a kicker (`Your room · public · watchable`), YOUR ROOM huge, a status line, then New room's rows of
   words: Who can find it (Public / Private), Spectators (On / Off), Units (Learn the game / Standard, with the game's
   pack note; ranked: Standard only, with the series rule), Battlefield (‹ Meadow ›, changes the board at once), then
@@ -307,3 +307,32 @@ when the match starts the same column turns into the deploy panel, with no scree
   them. The match uses the room's Units pack for real (`matchArgs`: the game's matchOff / matchChars / offTowers).
   After the match, Rematch or Back to the room. URL: `?room=host|guest|ranked|private|none` (none: straight into a
   match).
+
+### Fixed: the camera jump between views (2026-11-08)
+
+The owner saw the camera glitch on a view switch. Cause: `fitView` measured the board's corners in every view, so going
+in past Tilted it fought the zoom, then flipped to "follow the camera" at zoom 1.2, a one-frame jump of about 100 px
+coming back from Angled. Now it measures only in the Top and Tilted views and, between Tilted and Angled, blends from
+that last fit to no fit at all, so it is continuous both ways (`fitHeld`; checked frame by frame through Top, Tilted,
+Angled and back: the 101 px jump is down to 19 px of ordinary glide).
+
+## Next: the island flies into the battlefield (planned, not started)
+
+The owner's wish (2026-11-08): pressing anything that leads to this screen (Create room, Join, Vs computer; not Start
+match) zooms in on the menu's floating island, moves it over and fades it into the real board. The plan:
+1. **Both scenes already show the same map.** The island is the real Standard map, 14 by 18, keeps at col 8 row 16 and
+   col 5 row 1, the same as the board. So a tile on the island and a tile on the board can be matched one to one.
+2. **Preload the board while the player is on Play / Rooms / New room:** create the match's Render3D off screen (hidden
+   canvas) so `models/scenery.bin` and the models are loaded before the click; the transition must never wait on a fetch.
+3. **On the click:** the menu's camera (orthographic, `VIEWS` in `src/diorama.js`) glides from its view to a pose that
+   puts the island's four corners where the board's corners will be in the tilted view (we know both: `screenAt` on the
+   board, the island's own projection). The words of the menu fade out as it starts.
+4. **Over the last third:** the island's slab sides and its miniatures sink (they already can), the board's canvas
+   fades in on top, already on the matching pose, and the scenery grows out from the board's edges (a fade, or a
+   radial mask widening). Then the room's words come in. About 1 to 1.2 s in all; reduced motion: a plain crossfade.
+5. **Then dispose the menu's renderer** (two WebGL contexts only for that second; on phones, if that's too heavy,
+   the plain crossfade).
+
+The hard part is matching an orthographic camera to the board's perspective one; the crossfade hides a small
+mismatch, so matching the corners is enough. Doing it means the room and the battle screen move into the game proper
+(`src/diorama.js` owns the menu's scene), so it belongs with that integration step. A good day's session.

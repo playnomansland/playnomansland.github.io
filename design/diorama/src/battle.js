@@ -349,9 +349,8 @@ function roomNotes() {
     const n = $('kn' + sd); n.hidden = !show; if (!show) continue;
     const t = m.towers[sd]; if (!t) { n.hidden = true; continue; }
     const [x, y] = board.screenAt(t.col, t.row, sd === ME ? 2.4 : 2.6);
-    n.innerHTML = sd === ME ? `<b>Your keep.</b><small>Wren · ${room.role === 'host' ? 'host' : 'joined'} · 100 health</small>`
-      : room.who ? `<b>${esc(foe.name)}’s keep.</b><small>${foe.ai ? 'The game’s AI' : `${esc(foe.title)} · ready`} · 100 health</small>`
-      : `<b>An empty keep.</b><small>${room.pub ? 'Anyone in Rooms can take it' : 'For a friend you invite'}</small>`;
+    // who is in the game: each keep carries its player's name and whether they're connected (the owner, 2026-11-08)
+    n.innerHTML = sd === ME ? `<b>Wren</b> · connected` : room.who ? `<b>${esc(room.who.name)}</b> · connected` : '<span class="wait">Waiting for opponent</span>';
     const w = n.offsetWidth, left = sd === FOE, lx = left ? x - 70 - w : x + 70, ly = y - 34;
     n.style.left = lx + 'px'; n.style.top = ly + 'px';
     roomLines[sd] = { pts: [[x, y], [left ? lx + w : lx, ly], [left ? lx : lx + w, ly]] };
@@ -692,18 +691,27 @@ function safeRect() {
   const c = $('col').getBoundingClientRect(), top = Math.max($('you').getBoundingClientRect().bottom, $('round').getBoundingClientRect().bottom);
   return { x0: c.right + 28, x1: innerWidth - 24, y0: top + 14, y1: innerHeight - 10 };
 }
+let fitHeld = null; // the last fit measured in the top or tilted view: { k, dx, dy } (the board's middle from the window's)
 function fitView(dt) {
   const cam3 = board.cam3; if (!cam3) return;
   const W = innerWidth, H = innerHeight, R = safeRect(), z = board.camera.zoom();
   const base = (p) => [p[0] / fit.k + fit.ox, p[1] / fit.k + fit.oy];
-  let k = 1, cx = W / 2, cy = H / 2;
-  if (z < 1.2) {
+  let k, cx, cy;
+  if (z <= 1.001 || !fitHeld) {
+    // the top and tilted views (and anything between): measure the board's corners and fit them into the free space
     const C = Game.COLS - 1, Rw = Game.ROWS - 1;
     const pts = [[0, 0, 0], [C, 0, 0], [0, Rw, 0], [C, Rw, 0], [0, 0, 5], [C, 0, 5]].map(([c, r, h]) => base(board.screenAt(c, r, h)));
     let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0])), y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
     const px = (x1 - x0) / C * 0.6, py = (y1 - y0) / Rw * 0.6; x0 -= px; x1 += px; y0 -= py; y1 += py;
     k = Math.min(1.08, (R.x1 - R.x0) / (x1 - x0), (R.y1 - R.y0) / (y1 - y0));
     cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+    if (z <= 1.001) fitHeld = { k, dx: cx - W / 2, dy: cy - H / 2 };
+  } else {
+    // the closer views: never measured (the board runs off the screen, so a fit would fight the zoom). From the tilted
+    // fit, blend to no scaling and the camera's own middle as the zoom goes from tilted (1) to angled (2): continuous
+    // both ways, so there is no jump at any level
+    const w = Math.min(1, z - 1), h = fitHeld;
+    k = h.k + (1 - h.k) * w; cx = W / 2 + h.dx * (1 - w); cy = H / 2 + h.dy * (1 - w);
   }
   const tox = cx - (R.x0 + R.x1) / 2 / k, toy = cy - (R.y0 + R.y1) / 2 / k;
   const a = dt == null ? 1 : 1 - Math.exp(-dt * 9);
@@ -766,5 +774,6 @@ window.__battle = { board, get m() { return m; }, get phase() { return phase; },
   paint, pressReady, choose: (k) => { pickSel = k; choose(); }, fight: () => { ready = [true, true]; fight(); },
   skip: () => { if (phase === 'battle') { while (bt.step()) absorb(); fx = []; endFight(); } }, next: () => { if (m.over) { phase = 'end'; paint(); } else startRound(); },
   seat: (n) => seat(n === 'computer' ? COMPUTER : FRIENDS.find(f => f.name === n) || null), openRoom, newMatch,
+  fit, zoom: () => board.camera.zoom(),
   holdAi: () => { aiReadyAt = 1e15; ready[FOE] = false; paint(); }, // (shots: the computer still deploying)
   openSheet, unitNote, freeTiles: () => { const out = []; for (const row of Game.zoneRows(ME)) for (let col = 1; col < Game.COLS - 1; col++) if (!Game.occupied(m, ME, col, row)) out.push([col, row]); return out; } };
