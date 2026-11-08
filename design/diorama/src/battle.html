@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+{{BASE}}
+<title>Battle screen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Chakra+Petch:wght@700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* The battle screen in the Diorama's look (prototype, 2026-11-08).
+   Rule: the 3D world is the whole screen. Nothing sits in a bar or a gutter; every word floats over the board's own
+   scenery, and the camera frames the board in what the words leave free (see fitView in battle.js). */
+:root {
+  /* the Diorama */
+  --cream: #F4ECD8; --cream-2: rgba(244, 236, 216, .72); --ink: #17140F; --ink-2: #2C2820; --saffron: #F2B23A;
+  --stencil: "Chakra Petch", "Arial Narrow", sans-serif; --sans: "Bricolage Grotesque", system-ui, sans-serif; --type: "Courier Prime", "Courier New", monospace;
+  /* the board renderer reads these (the game's tokens) */
+  --bg: #0D1315; --board: #13201F; --muted: #8DA1A1; --you: #5CC6DF; --foe: #EE6E5C; --gold: #E6B84A;
+  --pw: clamp(318px, 25vw, 400px); /* the left column: your gold, the shop, Ready */
+  --halo: 0 0 2px var(--ink), 0 0 6px var(--ink), 0 0 12px rgba(23,20,15,.9), 0 0 22px rgba(23,20,15,.7);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--ink); color: var(--cream); font: 500 16px/1.35 var(--sans); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+button:disabled { cursor: default; }
+:focus-visible { outline: 2px solid var(--saffron); outline-offset: 3px; }
+[hidden] { display: none !important; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ── the world: edge to edge ── */
+#view { position: fixed; inset: 0; touch-action: none; }
+#view canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+/* soft ink only where words sit, so they read over the trees; the scenery shows through */
+.scrim { position: fixed; pointer-events: none; }
+.scrim.top { left: 0; right: 0; top: 0; height: 150px; background: linear-gradient(180deg, rgba(23,20,15,.72), rgba(23,20,15,.32) 55%, transparent); }
+.scrim.left { left: 0; top: 0; bottom: 0; width: calc(var(--pw) + 190px); background: linear-gradient(90deg, rgba(23,20,15,.80) 0, rgba(23,20,15,.66) calc(var(--pw) - 20px), transparent); }
+body.fighting .scrim.left { width: calc(var(--pw) + 60px); opacity: .7; }
+.lines { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 4; }
+.lines polyline { fill: none; stroke: var(--cream); stroke-width: 1.5; }
+.lines circle.ring { fill: none; stroke: var(--cream); stroke-width: 1.5; }
+.lines circle.dot { fill: var(--cream); }
+
+/* ── top: you, the round, the opponent. Overlaid, no bar ── */
+.side { position: fixed; top: 18px; width: min(330px, 28vw); text-shadow: var(--halo); z-index: 3; }
+.side.you { left: 32px; }
+.side.foe { right: 32px; text-align: right; }
+.side .who { display: flex; align-items: baseline; gap: 8px; font: 700 16px var(--sans); white-space: nowrap; }
+.side.foe .who { justify-content: flex-end; }
+.side .who .ttl { font: 700 11px var(--type); letter-spacing: .08em; text-transform: uppercase; }
+.side .who .streak { font: 700 12px var(--type); color: var(--saffron); }
+.side .hp { display: flex; align-items: center; gap: 12px; margin-top: 2px; }
+.side.foe .hp { flex-direction: row-reverse; }
+.side .hp b { font: 700 46px/.9 var(--stencil); letter-spacing: -.01em; min-width: 2.2ch; }
+.side .hp .bar { flex: 1; height: 8px; position: relative; background: rgba(244,236,216,.16); clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
+.side.foe .hp .bar { clip-path: polygon(0 0, 100% 0, 100% 100%, 6px 100%); }
+.side .hp .bar i { position: absolute; top: 0; bottom: 0; left: 0; width: var(--w, 100%); background: var(--tc); transition: width .9s cubic-bezier(.2,.8,.2,1); }
+.side.foe .hp .bar i { left: auto; right: 0; }
+.side .hp .bar s { position: absolute; top: 0; bottom: 0; left: var(--w); width: var(--lost, 0%); background: var(--cream); opacity: .55; animation: lost 1.6s ease-out forwards; }
+.side.foe .hp .bar s { left: auto; right: var(--w); }
+@keyframes lost { 0%, 35% { opacity: .7; } 100% { opacity: 0; } }
+.side.you { --tc: var(--you); } .side.foe { --tc: var(--foe); }
+.side .state { margin-top: 8px; font: 400 13px var(--type); opacity: .9; }
+.tag { display: inline-block; padding: 3px 7px 2px; font: 700 11px var(--type); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: var(--saffron); clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); text-shadow: none; }
+
+.round { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); text-align: center; text-shadow: var(--halo); z-index: 3; white-space: nowrap; }
+.round .k { font: 700 12px var(--type); letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+.round h1 { margin: 0; font: 700 34px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+.round h1 .ph { color: var(--saffron); }
+.round nav { display: flex; gap: 16px; justify-content: center; margin-top: 4px; font: 700 12px var(--type); letter-spacing: .05em; text-transform: uppercase; }
+.round nav button { opacity: .75; display: inline-flex; gap: 6px; align-items: center; }
+.round nav button:hover, .round nav button[aria-expanded="true"] { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+.round nav .new::after { content: ""; width: 6px; height: 6px; background: var(--saffron); transform: rotate(45deg); }
+.round nav .song { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.round nav .song b { font-weight: 700; }
+
+/* ── the left column: what you have, what you can buy, and the one thing to press ── */
+#col { position: fixed; left: 32px; top: 112px; bottom: 24px; width: var(--pw); display: flex; flex-direction: column; z-index: 3; }
+.purse { display: flex; align-items: flex-end; gap: 14px; text-shadow: var(--halo); }
+.purse .g { display: flex; align-items: baseline; gap: 8px; }
+.purse .g b { font: 700 64px/.82 var(--stencil); color: var(--saffron); letter-spacing: -.02em; }
+.purse .g span { font: 400 14px var(--type); }
+.purse .deps { margin-left: auto; display: grid; justify-items: end; gap: 4px; padding-bottom: 2px; }
+.pips { display: flex; gap: 5px; }
+.pips i { width: 13px; height: 13px; border: 2px solid var(--cream); transform: rotate(45deg) scale(.8); opacity: .55; }
+.pips i.on { background: var(--cream); opacity: 1; }
+.deps small { font: 400 12px var(--type); opacity: .8; }
+.chip { font: 700 12px var(--type); letter-spacing: .04em; text-transform: uppercase; padding: 3px 0 1px; border-bottom: 1.5px dashed var(--cream-2); opacity: .9; }
+.chip:hover:not(:disabled) { color: var(--saffron); border-color: var(--saffron); opacity: 1; }
+.chip:disabled { opacity: .35; }
+.hint { margin: 12px 0 0; min-height: 2.7em; font: 400 14px/1.35 var(--type); text-shadow: var(--halo); }
+.hint b { color: var(--saffron); }
+/* extra moves: rows of small stencil words, as the Settings dropdown's */
+.xrow { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 4px 0 2px -9px; }
+.w { position: relative; isolation: isolate; padding: 4px 9px 1px; font: 700 17px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; white-space: nowrap; opacity: .85; text-shadow: var(--halo); }
+.w small { font: 700 12px var(--type); letter-spacing: 0; margin-left: 2px; }
+.w:hover:not(:disabled) { opacity: 1; color: var(--ink); text-shadow: none; }
+.w:hover:not(:disabled)::before, .w[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+.w[aria-pressed="true"] { color: var(--ink); opacity: 1; text-shadow: none; }
+.w:disabled { opacity: .35; }
+
+/* the shop: a tier is a typed label and its cards */
+.shophd { display: flex; align-items: baseline; gap: 10px; margin: 14px 0 6px; font: 700 12px var(--type); letter-spacing: .1em; text-transform: uppercase; text-shadow: var(--halo); }
+.shophd .rule { flex: 1; height: 1px; background: var(--cream-2); opacity: .5; align-self: center; }
+.shophd button { letter-spacing: .05em; opacity: .8; } .shophd button:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+#shop { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: grid; align-content: start; gap: 10px; padding: 4px 4px 8px 0; margin-right: -4px; }
+#shop::-webkit-scrollbar { display: none; }
+.tier { display: grid; grid-template-columns: 30px 1fr; gap: 0 6px; }
+.tier .lab { display: grid; justify-items: center; align-content: start; gap: 2px; padding-top: 3px; border-left: 3px solid var(--tc); text-shadow: var(--halo); }
+.tier .lab b { font: 700 18px/1 var(--stencil); color: var(--tc); }
+.tier .lab span { font: 700 11px var(--type); opacity: .8; writing-mode: vertical-rl; transform: rotate(180deg); }
+.tier .cards { display: flex; flex-wrap: wrap; gap: 6px; }
+.card { position: relative; isolation: isolate; width: 70px; height: 92px; display: grid; grid-template-rows: 36px 1fr auto; justify-items: center; align-content: start; padding: 8px 3px 6px; color: var(--cream);
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; transition: transform .14s cubic-bezier(.3,1.6,.5,1); }
+.card::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%); box-shadow: inset 0 3px 0 var(--tc); }
+.card::after { content: ""; position: absolute; left: 0; right: 12px; top: 0; height: 3px; background: var(--tc); }
+.card .ic { display: grid; place-items: center; }
+.card .n { font: 700 11.5px/1.12 var(--sans); text-align: center; max-width: 100%; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.card .c { font: 700 13px var(--type); color: var(--saffron); }
+.card .c.free { color: var(--ink); background: var(--saffron); padding: 1px 5px 0; clip-path: polygon(0 8%, 96% 0, 100% 90%, 4% 100%); font-size: 11px; }
+.card .st { position: absolute; top: 5px; left: 6px; font: 700 10px var(--type); color: var(--saffron); }
+.card .cap { position: absolute; top: 5px; right: 14px; font: 700 10px var(--type); opacity: .7; }
+.card:hover:not([aria-disabled="true"]) { transform: translateY(-3px); }
+.card[aria-pressed="true"] { color: var(--ink); transform: translateY(-4px) rotate(-2deg); }
+.card[aria-pressed="true"]::before { background: var(--saffron); box-shadow: none; clip-path: polygon(0 4%, 60% 0, 100% 7%, 97% 100%, 30% 97%, 2% 100%); }
+.card[aria-pressed="true"]::after { display: none; }
+.card[aria-pressed="true"] .c { color: var(--ink); }
+.card[aria-disabled="true"] { opacity: .42; cursor: pointer; }
+.card.lift { opacity: .25; }
+.card.add { cursor: pointer; color: var(--cream); grid-template-rows: 36px 1fr auto; }
+.card.add::before { background: rgba(23,20,15,.45); box-shadow: none; }
+.card.add::after { display: none; }
+.card.add .frame { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; overflow: visible; }
+.card.add .frame polygon { fill: none; stroke: var(--tc); stroke-width: 1.5; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.card.add .p { font: 700 30px/36px var(--stencil); color: var(--tc); }
+.card.add .n { font: 700 12px var(--stencil); text-transform: uppercase; }
+.card.add .c { font: 400 11px var(--type); color: var(--cream); opacity: .8; }
+.card.add:hover { transform: translateY(-3px); }
+.card.add[aria-expanded="true"] .frame polygon { stroke-dasharray: none; stroke-width: 2; }
+
+/* the one thing to press: READY on the saffron shard, as PLAY on the menu */
+.go { display: flex; align-items: center; gap: 16px; padding-top: 14px; }
+.ready { position: relative; isolation: isolate; font: 700 56px/.86 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); padding: 10px 22px 4px 16px; transition: transform .14s ease; }
+.ready .shard { position: absolute; z-index: -1; inset: -4px -8px -6px -6px; width: calc(100% + 14px); height: calc(100% + 10px); fill: var(--saffron); transition: transform .18s cubic-bezier(.3,1.6,.5,1); }
+.ready:hover:not(:disabled) { transform: rotate(-1.5deg) scale(1.02); }
+.ready:active:not(:disabled) { transform: scale(.96); }
+.ready.on { color: var(--cream); text-shadow: var(--halo); }
+.ready.on .shard { fill: none; stroke: var(--cream); stroke-width: 2; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; }
+.ready.warn .shard { fill: var(--cream); }
+.ready:disabled { opacity: .45; }
+.ready.small { font-size: 34px; padding: 8px 16px 3px 12px; }
+.go .say { display: grid; gap: 3px; font: 700 14px/1.3 var(--type); text-shadow: var(--halo); }
+.go .clock { font: 700 30px/1 var(--stencil); letter-spacing: .02em; }
+.go .clock.low { color: var(--saffron); }
+.go .say small { font-weight: 400; font-size: 13px; opacity: .85; max-width: 150px; }
+.go .say .help { justify-self: start; white-space: nowrap; font-weight: 700; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; opacity: .8; text-decoration: underline; text-underline-offset: 3px; }
+.go .say .help:hover { opacity: 1; }
+
+/* in a fight the shop folds away */
+.fight { display: grid; gap: 10px; margin-top: 18px; text-shadow: var(--halo); }
+.fight .k { font: 700 12px var(--type); letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
+.army { display: grid; grid-template-columns: 60px 1fr 34px; gap: 8px; align-items: center; font: 700 13px var(--type); }
+.army .track { height: 6px; background: rgba(244,236,216,.16); position: relative; }
+.army .track i { position: absolute; inset: 0 auto 0 0; width: var(--w); background: var(--tc); transition: width .25s linear; }
+.army span:last-child { text-align: right; }
+
+/* short windows (a 720 to 820 px laptop): the same column, tighter, so all four tiers stay in sight */
+@media (max-height: 820px) {
+  #col { top: 100px; bottom: 16px; }
+  .purse .g b { font-size: 50px; }
+  .hint { margin-top: 8px; min-height: 0; font-size: 13px; }
+  .shophd { margin: 8px 0 4px; }
+  #shop { gap: 6px; }
+  .card { width: 60px; height: 76px; grid-template-rows: 28px 1fr auto; padding: 6px 2px 4px; }
+  .card .ic svg { width: 24px; height: 24px; }
+  .card .n { font-size: 10.5px; }
+  .card .c { font-size: 12px; }
+  .card.add .p { font-size: 24px; line-height: 28px; }
+  .card.add .frame { }
+  .tier .lab b { font-size: 15px; }
+  .go { padding-top: 8px; }
+  .ready { font-size: 44px; }
+  .ready.small { font-size: 28px; }
+  .side .hp b { font-size: 38px; }
+  .round h1 { font-size: 28px; }
+}
+
+/* ── the unit note: a card pointed at ── */
+#unote { position: fixed; z-index: 8; transform: translate(0, -100%); padding-bottom: 7px; width: max-content; max-width: 250px; font: 400 14px/1.3 var(--type); text-shadow: var(--halo); pointer-events: none; }
+#unote b { font-weight: 700; } #unote small { display: block; margin-top: 4px; font-size: 12.5px; opacity: .85; }
+
+/* ── sheets: an ink panel with a cut corner, where words sit over the busy board ── */
+.sheet { position: fixed; z-index: 7; width: 330px; padding: 18px 20px 16px; color: var(--cream); isolation: isolate; filter: drop-shadow(0 14px 26px rgba(0,0,0,.4)); animation: sheetin .18s cubic-bezier(.16,.9,.24,1) both; }
+.sheet::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 4%, 64% 0, 100% 3%, 100% 100%, 0 100%); }
+.sheet.drop::before { clip-path: polygon(0 0, 100% 0, 100% 100%, 7% 100%, 0 calc(100% - 22px)); }
+@keyframes sheetin { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.sheet .x { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; display: grid; place-items: center; opacity: .75; font-size: 18px; } .sheet .x:hover { opacity: 1; }
+.sheet h3 { margin: 6px 0 10px; font: 700 30px/.95 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; padding-right: 26px; }
+.sheet h3 small { display: block; margin-top: 6px; font: 400 13px var(--type); text-transform: none; letter-spacing: 0; opacity: .8; }
+.sheet p { margin: 8px 0 0; font: 400 13px/1.45 var(--type); opacity: .88; }
+.sheet .k { display: block; margin: 14px 0 6px; font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .7; }
+.sheet .w { text-shadow: none; }
+.sheet .acts { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 12px 0 0 -9px; }
+.urow { display: grid; grid-template-columns: 32px 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px dashed rgba(244,236,216,.18); }
+.urow:first-of-type { border-top: 0; }
+.urow .nm { font: 700 15px var(--sans); }
+.urow .nm small { display: block; font: 400 12px/1.3 var(--type); opacity: .8; }
+.sheet.wide { width: 440px; }
+.set { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px 8px; align-items: center; }
+.set .lab { font: 400 13px var(--type); opacity: .85; }
+.set .seg { display: flex; flex-wrap: wrap; gap: 2px; margin-left: -9px; }
+.set .w { font-size: 15px; padding: 4px 7px 1px; opacity: .6; }
+.dmg { display: grid; grid-template-columns: 1fr 120px 36px; gap: 6px 10px; align-items: center; font: 400 13px var(--type); }
+.dmg .track { height: 6px; background: rgba(244,236,216,.14); position: relative; } .dmg .track i { position: absolute; inset: 0 auto 0 0; background: var(--tc); }
+.dmg b { text-align: right; }
+
+/* ── the big moments over the board: a pick, a round's end ── */
+.veil { position: fixed; inset: 0; z-index: 5; background: rgba(23,20,15,.58); animation: fade .25s ease both; }
+@keyframes fade { from { opacity: 0; } }
+.moment { position: fixed; z-index: 6; transform: translate(-50%, -50%); width: min(720px, calc(100vw - var(--pw) - 120px)); text-shadow: var(--halo); animation: rise .35s cubic-bezier(.16,.9,.24,1) both; }
+@keyframes rise { from { opacity: 0; transform: translate(-50%, calc(-50% + 14px)); } }
+.moment .k { font: 700 13px var(--type); letter-spacing: .1em; text-transform: uppercase; opacity: .85; }
+.moment h2 { margin: 4px 0 8px; font: 700 clamp(48px, 8vh, 84px)/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.015em; }
+.moment .lead { margin: 0 0 18px; max-width: 560px; font: 400 15px/1.45 var(--type); }
+.moment .lead b { color: var(--saffron); }
+.opts { display: grid; gap: 4px; margin: 0 0 22px; }
+.opt { position: relative; isolation: isolate; display: grid; grid-template-columns: 34px auto 1fr; gap: 14px; align-items: center; text-align: left; padding: 10px 16px 8px 10px; margin-left: -10px; }
+.opt .n { font: 700 13px var(--type); opacity: .7; }
+.opt .ics { display: flex; gap: 6px; }
+.opt .t { display: grid; }
+.opt .t b { font: 700 30px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+.opt .t small { font: 400 13.5px/1.35 var(--type); opacity: .85; margin-top: 3px; }
+.opt::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 10%, 62% 0, 100% 6%, 98% 92%, 34% 100%, 1% 88%); opacity: 0; transform: scaleX(.96) rotate(-1deg); transition: opacity .12s, transform .18s cubic-bezier(.3,1.6,.5,1); }
+.opt:hover::before { opacity: .22; transform: none; }
+.opt[aria-pressed="true"] { color: var(--ink); text-shadow: none; }
+.opt[aria-pressed="true"]::before { opacity: 1; transform: none; }
+.opt[aria-pressed="true"] .ics span { filter: drop-shadow(0 0 0 var(--ink)) drop-shadow(0 0 1px var(--ink)); }
+.moment .row { display: flex; align-items: center; gap: 22px; }
+.moment .lnk { font: 400 14px var(--type); opacity: .85; text-decoration: underline; text-underline-offset: 4px; }
+.moment .lnk:hover { opacity: 1; }
+.result { text-align: center; }
+.result h2 { font-size: clamp(80px, 15vh, 150px); }
+.result h2.won { color: var(--saffron); }
+.result h2.lost { color: #B9B1A0; }
+.moment.result::before { content: ""; position: absolute; inset: -90px -140px; z-index: -1; background: radial-gradient(closest-side, rgba(23,20,15,.62), rgba(23,20,15,.3) 60%, transparent); pointer-events: none; }
+.result .row { justify-content: center; }
+.result .lead { margin-inline: auto; }
+.peek { position: fixed; z-index: 6; top: 120px; left: calc((100vw + var(--pw)) / 2); transform: translateX(-50%); }
+
+/* ── the ghost of a card being dragged onto the board ── */
+#ghost { position: fixed; z-index: 9; pointer-events: none; transform: translate(-50%, -60%) rotate(-4deg); display: grid; justify-items: center; gap: 2px; padding: 8px 10px 6px; color: var(--ink); filter: drop-shadow(0 10px 18px rgba(0,0,0,.45)); }
+#ghost::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 4%, 60% 0, 100% 7%, 97% 100%, 30% 97%, 2% 100%); }
+#ghost b { font: 700 12px var(--sans); }
+#ghost.off { opacity: .55; }
+
+/* the 3D board's own text overlay (render3d) in the Diorama's type */
+#view > div { font-family: var(--type) !important; }
+</style>
+</head>
+<body>
+<div id="view" aria-label="The battlefield. Your zone is the near seven rows, the enemy's the far seven, with no man's land between."></div>
+<div class="scrim top" aria-hidden="true"></div>
+<div class="scrim left" aria-hidden="true"></div>
+<svg class="lines" id="lines" aria-hidden="true"></svg>
+
+<header class="side you" id="you" aria-label="You"></header>
+<header class="round" id="round"></header>
+<header class="side foe" id="foe" aria-label="Opponent"></header>
+
+<aside id="col" aria-label="Your army"></aside>
+
+<div id="unote" role="tooltip" hidden></div>
+<div id="ghost" hidden></div>
+<div id="veil" class="veil" hidden></div>
+<section id="moment" class="moment" role="dialog" aria-labelledby="moment-h" hidden></section>
+<button id="peek" class="ready small peek" hidden><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,9 61,0 99,6 96,93 38,100 0,86"/></svg>Back to the choice</button>
+<section id="sheet" class="sheet" hidden></section>
+
+<script>
+{{SHAPES}}
+{{ENGINE}}
+</script>
+<script>
+{{GAME}}
+</script>
+<script>
+{{REFEREE}}
+</script>
+<script>
+{{ART}}
+{{RENDER2D}}
+{{CAMERA3D}}
+const DATA = {{DATA}};
+</script>
+{{SCENERY}}
+{{IMPORTMAP}}
+<script type="module">
+import * as THREE from '{{THREE_URL}}';
+{{MODELS3D}}
+{{RENDER3D}}
+{{BATTLE}}
+</script>
+</body>
+</html>

@@ -22,6 +22,8 @@ the design reference. The work is on the branch `claude/nice-mendel-scnrpy` (fro
 | `screens/` | Screenshots of the current state (listed below); `contact-sheet.jpg` has every screen. |
 | `test/` | The checks (2026-11-07): `collide.js` (text overlapping, note lines through words, text off screen, for every state in `states.json` at given window sizes; it can save shots), `flow.js` (a 39-step click-through of every screen), `contact-sheet.py`. Commands at the top of each file. |
 | `INTEGRATION.md` | The plan for putting the Diorama into the game, and the owner's decisions for it. |
+| `battle.html` | The battle screen prototype (2026-11-08), built: a real match against the computer on the game's own 3D board. Serve the repo root and open `/design/diorama/battle.html`. See "Battle screen" below. |
+| `src/battle.html`, `src/battle.js`, `build-battle.js` | Its source and build: `node design/diorama/build-battle.js` (add `--standalone <out.html>` for one self-contained ~7 MB file with three.js and the scenery inlined, no music). |
 
 ```bash
 node design/diorama/build.js
@@ -221,3 +223,59 @@ has every function with its line):
 - **Log out**, and **Delete account** (tap twice; a guest can't log back in).
 
 
+
+## Battle screen (first prototype, 2026-11-08)
+
+The match screen in the Diorama's look. The owner's brief: the deployment panel keeps every function but needn't look
+the same; the 3D view covers as much of the screen as possible; HP and the top section are overlaid; **no dead space
+that isn't the 3D world or its scenery.** (`screens/battle-*.jpg`; `battle-before.jpg` is today's screen.)
+
+**It runs the real thing.** `battle.html` is the game's engine, AI and 3D board (`src/game.js`, `src/referee.js`,
+`src/render3d.js` and the scenery) with a new screen on top: a vs-computer match from round 1 to the end. Nothing in
+`src/` changed; the build hands the page Render3D's THREE camera (`cam3`) by a string patch, checked at build time.
+
+**Layout (PC).**
+- The canvas is the whole window. There is no bar, panel box or gutter: words sit on the scenery with an ink halo and
+  a soft ink scrim behind the left column and the top edge (the menu's `.scrim` idea), so the trees still show.
+- **The board frames itself** in what the words leave free (`fitView` in `src/battle.js`): each frame the board's
+  corners are measured and THREE's `setViewOffset` (as the menu's island) moves and scales the picture into the free
+  rectangle right of the column and under the top line. The camera, taps and drags are the game's own; a resize or a
+  camera change glides. It opens in the **Tilted** view (the icon's camera; your zone nearest and biggest); `?cam=top`
+  for the game's top view. Settings switches Top / Tilted / Angled, and the wheel works as in the game.
+- **Top, overlaid:** you top left (name, title, HP huge in Chakra Petch, a thin team-blue bar; damage taken flashes on
+  the bar), the opponent top right, mirrored, with their state under it (Deploying… / the saffron READY tag, their
+  leader). Top middle: `Standard · Meadow`, ROUND 1 · DEPLOY (the phase in saffron), and typed links: Damage (last
+  round, per squad), Settings, and the music line (`▶ Bulgaria by Snetänd`, plays from `audio/`).
+- **Left column = your army,** top to bottom: gold huge in saffron with "gold"; deployments as diamonds, "n of n
+  deployments", `+1 deployment · 50` as a dashed link; the hint line (only what the next tap does, as the game's);
+  extra moves as small stencil words (Undo all, Loan +100 / Pay back loan, Refund unused); SHOP with Fold; the tiers
+  (a coloured rule, the tier number and price, then the cards: ink tiles with a cut corner and the tier's colour on
+  top; the picked one on a saffron shard; + UNLOCK as a dashed tile); and at the bottom **READY on the big saffron
+  shard**, as PLAY on the menu, with the clock and the opponent's state beside it. Ready again reads NOT READY on a
+  dashed outline; over 500 gold the first press warns (READY ANYWAY: the game's carry-cap check).
+- **Notes and sheets:** pointing at a card gives a Diorama note (dot on the card, up into the gap, along under the
+  words right of the column: `Sniper. Tier 1 · 1 body · 140 health · hits 210 · range 29`, plus why it can't be
+  bought). + Unlock, a tapped squad (Take back / Level up / Sell, with a line to the squad), Help, Settings and Damage
+  are ink sheets with a cut corner, as the menu's dropdowns.
+- **Moments over the board:** round 1's CHOOSE YOUR START, round 2's leader and round 3's tower are one component:
+  a veil, the kicker, a huge title, numbered options that sit on a saffron shard when picked, CHOOSE and "Look at the
+  board" (the game's Hide). The round's end: WON (saffron) / LOST / DRAW huge in the middle, the damage and the
+  income, NEXT ROUND on the shard. The match's end: VICTORY / DEFEAT, PLAY AGAIN. In a fight the shop folds away and
+  the column shows each army's bodies left and "Skip to the end".
+- **Short windows** (720 to 820 px high): the same column, tighter, all four tiers in sight (`battle-deploy-1280.jpg`).
+
+**Deploy panel, function by function** (the game's `panelDeploy()`): gold · deployments left · +1 deployment ·
+clock · Help · Ready / Not ready with the carry-cap warning · the hint line · Undo all · Loan / Pay back · Refund
+unused · the shop by tier · Unlock (a tier's locked units with their price) · a card dragged onto the board or tapped
+then a tile · a squad dragged to move it, or back onto the shop to take it back · Fold. The squad sheet's take back,
+level up and sell. All call the same `Game` functions as the game. Esc puts a card down or closes a sheet before it
+reaches the camera; Space is Ready.
+
+**Not in the prototype yet:** the leaders' and maps' own buttons (Otto's Slots, Charisma, Mark, Fortify, the tower
+skill, the elves' bribe, the altar, mushrooms), skills on the squad sheet, the devtest extras, the battle cam, chat
+and emotes, online play and spectating, the tutorial coach, and **phones** (PC only so far). Sample names (Wren /
+Computer).
+
+**Open questions for the owner:** Tilted as the default view? The left column vs the game's right-hand panel (left
+keeps "yours on the left, theirs on the right" under the HP)? READY at the bottom (as PLAY) vs at the top of the shop?
+How phones should work (probably the shop as a bottom drawer under a full-screen board, the HP still overlaid).
