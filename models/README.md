@@ -32,4 +32,4 @@ To put one in the game: copy its BUILD entry into `src/models3d.js` (and for a s
 
 UI heads for the leaders. Start with `heads/HANDOFF.md`: status, decisions, the model format, the reference sheets
 (`heads/refs/`), renders (`heads/renders/`) and the render/compare tool (`node tools/heads-render.js`).
-Done: Emile (`heads/emile.js`). Next: Zoe, redone from her reference with the image-to-three.js skill in Claude Code.
+New direction (2026-11-07): heads are minimal faceted tokens of about 300-600 triangles. First one: `heads/zoe-token.js` (344 triangles). Earlier detailed style: Emile (`heads/emile.js`, approved), Zoe attempts (`heads/zoe.js`, `heads/zoe-v6.js`).

@@ -14,11 +14,6 @@
     <path d="M60 256 C64 214 90 196 128 196 C166 196 192 214 196 256 Z" fill="#f7d154"/>
     <path d="M160 200 C182 210 194 230 196 256 L166 256 C166 230 164 214 160 200 Z" fill="#c9a52f" stroke="none"/>
     <path d="M86 210 L150 256" stroke="#4fa3ff" stroke-width="12"/>
-    <!-- the rifle, barrel bent and smoking -->
-    <path d="M168 238 L214 214 C226 206 232 192 228 174" stroke-width="11"/>
-    <path d="M168 238 L214 214 C226 206 232 192 228 174" stroke="#2b2f33" stroke-width="5"/>
-    <path d="M178 222 L204 210" stroke="#b8c0c8" stroke-width="10"/>
-    <path d="M232 166 C226 154 240 148 232 136" stroke="#8b8f94" stroke-width="6"/>
     <!-- head -->
     <path d="M70 140 C70 96 98 76 128 76 C158 76 186 96 186 140 C186 180 160 204 128 204 C96 204 70 180 70 140 Z" fill="#d9a27a"/>
     <path d="M160 90 C180 104 190 132 184 160 C178 186 160 200 140 204 C170 180 176 130 160 90 Z" fill="#b97f5a" stroke="none"/>

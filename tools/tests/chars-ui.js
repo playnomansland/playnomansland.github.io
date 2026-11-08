@@ -18,7 +18,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   await p.click('#settings summary'); await p.click('[data-tm="0"]'); await p.click('#go'); await sleep(300);
   console.log('hint:', await hint(p));
   const ps = await packs(p);
-  console.log('packs:', ps.length, ps.map(t => t.match(/(Frickolas Cage|Zoe|Emile|Wilhelm)/)?.[1]).join(', '));
+  console.log('packs:', ps.length, ps.map(t => t.match(/(Friggo|Zoe|Emile|Wilhelm)/)?.[1]).join(', '));
   await p.screenshot({ path: 'chars-packs.png' });
   await p.dblclick(`[data-pack="${Math.max(0, ps.findIndex(t => /Zoe/.test(t)))}"]`); await sleep(300);
   console.log('after pick:', (await hint(p)).slice(0, 160));

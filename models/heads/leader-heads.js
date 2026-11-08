@@ -29,7 +29,7 @@ const Heads = (THREE) => {
   ];
 
   const BUILD = {
-    // Frickolas Cage: just a dude with a smirk. Messy brown hair, stubble, one brow up, one mouth corner up.
+    // Friggo: just a dude with a smirk. Messy brown hair, stubble, one brow up, one mouth corner up.
     cage: () => {
       const SKIN = '#EBC3A2', STUB = '#D6AF97', LID = '#DDAE8E', HAIR = '#7A5444', DARK = '#3A2A28', WHITE = '#F4EFE6', CREST = '#C2656C';
       const parts = [

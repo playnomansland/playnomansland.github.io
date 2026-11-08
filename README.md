@@ -29,7 +29,7 @@ A small auto-battler for the phone browser. Buy squads, place them, and watch th
 The start screen and the friend lobby have **Units: Standard pack / All units** (saved on the device; the host's choice counts in a match with a friend). Standard is the default: a smaller match for new players, set in `STANDARD_PACK` in `src/game.js`:
 
 - 18 units: Goblin Swarm, Skeleton Archers, Fire Mage, Sniper, Wisps (tier 1); Brute, Leaf Wizard, Earth Wizard, Shiv, Slimeshots (tier 2); Flame Wizard, Steel Wizard, Water Mage, Frost Wizard (tier 3); Ether Golem, Sun Priest, War Mammoth, Necromancer (tier 4). The four added on 2026-10-28 (one a tier) were picked from the counter table for sitting in the middle of the pack: none beats the pack on average more than its strongest unit of that tier does.
-- 6 leaders: Frickolas Cage, Zoe, Emile, Wilhelm, Phil, Felix (50 more gold a round from round 3, 100 from round 6).
+- 6 leaders: Friggo, Zoe, Emile, Wilhelm, Phil, Felix (50 more gold a round from round 3, 100 from round 6).
 - No mage or slime tower: the round 3 offer is drawn from the Keep, Sniper tower, Bastion and Bank tower.
 
 The Shiv is never in a round 1 starting package (`noPack`), in either pack; it can still be unlocked and bought.

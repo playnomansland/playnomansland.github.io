@@ -20,6 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 8 November 2026 – Shell-shocked emote touch-up
+
+- The **Shell-shocked** Sniper emote no longer holds the bent, smoking rifle: at emote size it read as a cigarette. He's still singed, wide-eyed and steaming.
+
+---
+
 ## 7 November 2026 – See what your opponent starts with
 
 - **Round 1:** once your opponent has picked their starting package, its squads show at the back of their side of the board as see-through figures, side by side, with a label: *Starting units · placement hidden*. You see which units they start with, but not where they're going to stand. Their leader and anything else they buy stay hidden until the fight, as before.
@@ -53,7 +59,8 @@ The rules don't change, and Frozen Peak's hail and altar stay switched off. Moon
 ## 7 November 2026 – Blixten takes a break, leader heads on the way
 
 - **Blixten is out of the game for now.** He's getting a rework, so he no longer shows up in packages, the leader draft or the Leaders menu, in any mode. (He was already left out of Standard and ranked.) He'll be back with new rules.
-- **Leader heads (in the works):** every leader is getting a small 3D head, used as a symbol around the menus and the battle UI. Each one is a clear character built from its own reference sheet: Emile, the warm grandpa walrus with a ginger moustache and a key on his cap, is finished; Zoe, the bossy alien, is next. None are in the game yet.
+- **Leader heads (in the works):** every leader is getting a small 3D head, used as a symbol around the menus and the battle UI. Each one is a clear character built from its own reference sheet: They're now going for a simpler, bolder look: each head is a small faceted token, like a little artifact. Zoe, the bossy alien with gold stars on her antennae, and Friggo, the dude with the pompadour and sunglasses, are the first ones. None are in the game yet.
+- **Frickolas Cage is now Friggo.** Same leader, same ability (+10% health for all units), new name.
 
 ---
 

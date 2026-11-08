@@ -6059,7 +6059,7 @@ const Game = (() => {
   // RETIRED_CHARS: out of the game for now. Blixten (2026-11-07): being reworked; his rules stay in the code.
   const RETIRED_CHARS = ['blixten'];
   const ALL_CHARACTERS = [
-    { id: 'cage', name: 'Frickolas Cage', ability: 'Units +10% health.' },
+    { id: 'cage', name: 'Friggo', ability: 'Units +10% health.' },
     { id: 'zoe', name: 'Zoe', ability: '2 buff tiles each round. Their bonus grows each time you use them.' },
     { id: 'emile', name: 'Emile', ability: 'Tier 1 unlocks are free.' },
     { id: 'wilhelm', name: 'Wilhelm', ability: 'Flank and no man’s land squads: +4 armor. Flanks start faster.' },
@@ -7059,13 +7059,13 @@ const Game = (() => {
     const { skills, skillDefs, skillsOn, skillsInnate, skillMods, spawn, ...plain } = E.applySkills(m.units[si], defs, m.units);
     return { ...u, spawn: { ...sp, unit: E.withTraits({ ...plain, level: 0 }) } };
   }
-  // the player's character on one of their units (spawned ones too): Noah cuts health and damage, Cage adds health
+  // the player's character on one of their units (spawned ones too): Noah cuts health and damage, Friggo adds health
   function withCharacter(m, side, u) {
     if (charOf(m, side) === 'noah') { // Noah: 10% less health and damage, spawned ones too
       const k = 1 - CHAR.noahCut / 100, cut = (x) => ({ ...x, hp: x.hp * k, hit: x.hit * k });
       u = withKids(cut(u), cut);
     }
-    if (charOf(m, side) === 'cage') { // Frickolas Cage: +10% health for every unit, spawned ones too
+    if (charOf(m, side) === 'cage') { // Friggo: +10% health for every unit, spawned ones too
       const k = 1 + CHAR.cageHp / 100, tough = (x) => ({ ...x, hp: x.hp * k });
       u = withKids(tough(u), tough);
     }
@@ -17127,7 +17127,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '7 Nov 2026 · 59fb7f2'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '8 Nov 2026 · 93768a7'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -22240,7 +22240,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
-  const V3D = '6d7c2cb3e0'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '0ac89d37af'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);

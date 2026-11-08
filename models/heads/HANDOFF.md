@@ -4,6 +4,50 @@ Read this first. It is everything from the claude.ai session that started the le
 without that conversation. The Project doc "claude/leader-heads.md" in the Phone Bellum project says the same in
 short form.
 
+## NEW DIRECTION (2026-11-07, evening): heads are tokens
+
+After Claude Code's skill-based Zoe came out worse, Vilhelm changed the brief: **the head is also a token, a little
+artifact. The design language can be much more minimal and needs little detail.** His new Zoe sheet
+(`refs/zoe-token-reference.png`) shows it: bold faceted shapes, a clean iconic silhouette, **about 300–600
+triangles**, flat shading, a 4-colour palette, no pupils, no soft sculpting.
+
+The first token is built: **`zoe-token.js` (ZoeToken v3, 308 triangles)**, from that sheet, in the claude.ai session (v2: a six-sided gem with triangular facets and eyes/brows carved flush; v3: narrower almond eyes, about a quarter of the head wide each, closer to the middle; budget allowed up to 2,000).
+Renders: `renders/zoe-token-sheet.png`, `renders/zoe-token-vs-reference.png`. It's waiting for Vilhelm's verdict.
+
+How the token is built (reuse it for the next leaders):
+- The head is a gem built from rings of 6 vertices (`RINGS`: radius, height, turn). A ring turned half a step
+  against its neighbour gives triangular facets (top, chin); two rings at the same turn give one band of flat quads
+  (the eye band). A vertex faces -z, so a ridge runs down the front and the front outline is a hexagon. Flat-shaded.
+- Face features are flat, double-sided shapes laid flush on the eye band's two front quads (`facet()` + `onFacet()`):
+  Zoe's dark brow wedges (thick outside, thin at the middle, a V) with the blank cream eyes right under them.
+- Props are simple solids: four-sided prisms for the antennae (each piece runs a little past the kink so the joint
+  has no gap), a faceted star (a star outline with its middle raised to a point on both sides), an 8-sided collar
+  band, an octahedron as the diamond.
+- Compare against the sheet's front turnaround and hero with `tools/heads-render.js` (add `--flat`). Crops of the
+  token sheet (1536 x 1024): front `400,65,200,280` (`--yaw 0`), hero `40,300,310,445` (`--yaw -0.55`).
+
+**Friggo** (the leader formerly called Frickolas Cage; id `cage`, renamed in the game on 2026-11-07): token built
+from `refs/friggo-reference.png` (target 1,200-2,000 triangles; the token is **`friggo.js`, FriggoHead v4, 672
+triangles**, waiting for Vilhelm's verdict). v3 rebuilt the face after "the facial structure is totally off": the
+face is now `loftPoly()` (stacked polygon rings with explicit points, not a round lathe), measured row by row from
+the sheet's front view: a wide flat front plane, cheek planes at chamfered corners, straight sides down past the
+glasses, a jaw tapering to a square flat-bottomed chin, and a neck. The hair (`loft()`, 6 sides) is about 1.6x the
+face's width, with a hard front edge overhanging the forehead, sides past the temples, a steep roof up to a peak
+off to one side, and runs down the back of the head to the neck. Wedge nose, ears at glasses height, wide
+sunglasses, toothpick, plaster on the cheek plane, a ring collar with a square tab carrying a red heart.
+v4, after "the angled view should also copy the picture": measured the sheet's PROFILE too (same scale as the front
+view) and built face and hair from both: the quiff is a forward-pointing wedge about 0.8 of the face's height, its
+point jutting 0.7 past the forehead, the peak above the face's front, the top sloping down to the back, the sides
+tapering in to the temples; the head is as deep as it's tall; nose and ears bigger. Compare all three views:
+front `345,50,170,265` (yaw 0), hero `0,225,340,495` (yaw 0.5), profile `935,50,175,265` (yaw -1.5708).
+Lesson: for a planar, angular face, build cross-sections from explicit points measured off the reference in BOTH
+the front and the profile; round lofts read as tubes, and front-only measurements get the depth wrong. Renders: `renders/friggo-*.png`.
+Crops of his sheet: front `345,50,170,265` (`--yaw 0`), hero `0,225,340,495` (`--yaw 0.5`).
+
+Everything below this section was written for the earlier, detailed style. The hand-built Zoe versions
+(`zoe.js` v5, `zoe-v6.js`) and the detailed Emile (`emile.js`, approved before the change) are kept, but whether
+Emile is redone as a token is Vilhelm's call.
+
 ## The task
 
 Every leader gets a small 3D head (no body): a symbol for the menus and the battle UI, not a model on the
