@@ -319,7 +319,7 @@ Angled and back: the 101 px jump is down to 19 px of ordinary glide).
 ## The way in: the island flies into the battlefield (prototype, 2026-11-08)
 
 The owner's wish: what leads to the room (Create room, Join, Vs computer; not Start match) zooms in on the menu's
-floating island, moves it over and fades it into the real map.  now opens on it: New room on the saffron
+floating island, moves it over and fades it into the real map. `battle.html` now opens on it: New room on the saffron
 field with the island (the menu's `orders` view), CREATE ROOM (it presses itself once the board has loaded; `?auto=off`
 holds it, `?fly=off` skips it, Settings: Replay the way in), then about 1.9 s:
 - **The island is the menu's own:** `build-battle.js` lifts its block out of `src/diorama.js` (the slab, the look's painted
