@@ -920,12 +920,17 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .series-chip { display: block; margin: 0 auto 2px; width: max-content; padding: 1px 8px; border: 1px solid var(--gold); border-radius: 999px; color: var(--gold); font: 700 11px var(--font-data); letter-spacing: 0.06em; background: rgba(230, 184, 74, 0.1); }
 </style>
 <script>
-// The Diorama UI (2026-11-07, design/diorama/): on with ?ui=diorama (kept on this device; ?ui=classic turns it off) or
-// localStorage pb-ui = 'diorama'. The old home stays the default until the launch. Its two extra fonts load only when on.
+// The Diorama UI (2026-11-07, design/diorama/). ?ui=diorama / ?ui=classic choose it on this device (kept as pb-ui);
+// without a choice the build's default decides (src/build.js, PB_UI_DEFAULT): 'classic' (the old UI everywhere, until
+// the launch), 'pc' (the Diorama on a computer: a fine pointer that hovers and a window at least 900 px wide, the old
+// UI on phones and tablets, whose layouts aren't done) or 'diorama' (everywhere). Its two extra fonts load only when on.
 (() => {
-  let on = false;
-  const DEF = '/*UI_DEFAULT*/'; // src/build.js: 'classic' until the launch (PB_UI_DEFAULT=diorama builds it on, for a test run or the launch)
-  try { const q = new URLSearchParams(location.search).get('ui'); if (q === 'diorama' || q === 'classic') localStorage.setItem('pb-ui', q); on = (localStorage.getItem('pb-ui') || DEF) === 'diorama'; } catch (e) { on = /[?&]ui=diorama\b/.test(location.search) || (DEF === 'diorama' && !/[?&]ui=classic\b/.test(location.search)); }
+  const DEF = '/*UI_DEFAULT*/';
+  const pcLike = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches && innerWidth >= 900; } catch (e) { return false; } };
+  let pick = '';
+  try { const q = new URLSearchParams(location.search).get('ui'); if (q === 'diorama' || q === 'classic') localStorage.setItem('pb-ui', q); pick = localStorage.getItem('pb-ui') || ''; }
+  catch (e) { pick = (location.search.match(/[?&]ui=(diorama|classic)\b/) || [])[1] || ''; }
+  const on = pick ? pick === 'diorama' : DEF === 'diorama' || (DEF === 'pc' && pcLike());
   if (!on) return;
   document.documentElement.classList.add('diorama');
   const l = document.createElement('link'); l.rel = 'stylesheet';
