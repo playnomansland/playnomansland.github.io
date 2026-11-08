@@ -593,8 +593,12 @@
       if (body.classList.contains('welcome')) return;
       openDrop(''); closeMusic();
       if (body.classList.contains('profile')) closeProfile();
+      leavePlay(); unpin();
+    }
+    // off the Play side (Play, Rooms, New room) to the plain menu: the logo and Profile, which opens over the menu only
+    function leavePlay() {
+      if (body.classList.contains('in-create')) closeCreate(); // (puts your own battlefield back)
       if (home.screen === 'lobby' || home.pop || body.classList.contains('play')) { home.screen = 'menu'; home.pop = false; drawHome(); closePlay(); }
-      unpin();
     }
     { const lg = body.querySelector('.logo'); lg.addEventListener('click', goMenu); lg.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goMenu(); } }); }
     body.addEventListener('click', (e) => { const c = e.target.closest('[data-crumb]'); if (!c) return; const w = c.dataset.crumb;
@@ -838,7 +842,7 @@
     $('pf-opts').addEventListener('keydown', (e) => { if (e.target.id === 'pf-tag' && e.key === 'Enter' && !$('pf-save').hidden) pfSave(); if (e.key === 'Escape') e.stopPropagation(); });
 
     // Profile opens over the menu; the account is refreshed from the server (the session rotates daily, titles and skins may be new)
-    function openProfile() { openDrop(''); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
+    function openProfile() { openDrop(''); leavePlay(); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
       if (acct && !sampleAcct) acctCall('me', {}, true).then(r => { if (r.status === 200) { acctTake(r); A = acct; buildTier(tier); drawProfile(); } else if (r.status === 401) { acctFail(r); A = acct; drawProfile(); } }); }
     function closeProfile() { body.classList.remove('profile', 'in-history', 'units'); picked = null; hovered = null; want = VIEWS.play; backBtn.textContent = '← Menu'; acctUi.after = null; drawProfile(); }
     acctBtn.addEventListener('click', openProfile);

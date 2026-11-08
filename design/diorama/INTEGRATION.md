@@ -22,6 +22,10 @@ look as itself, and a developer's empty map pick is the Standard map under the D
 one fixed place (bottom right, beside the music player) on every screen; the match's old music panel closes when
 you come home; the playlist has no scrollbar; Log out's underline sits closer to the word.
 
+**Fixed from the owner's note (2026-11-08, second session):** Profile opened from Play, Rooms or New room showed on top
+of them (both screens at once, dimmed). Profile now opens over the plain menu: `leavePlay()` (shared with the logo's
+`goMenu`) closes New room (your own battlefield back), Rooms and Play first.
+
 **Open, in order:**
 1. **Ask the owner to try again** at `?ui=diorama` (list below) and fix what they find.
 2. **"Older player still shows up":** fixed for the menu (the match's panel closes at home). In a match the HUD's music
