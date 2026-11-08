@@ -56,6 +56,8 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   second); a pointed-at note shows at once. A hover note keeps the spot it got when it appeared (`el._off`, offsets
   from its dot) until it's gone; the menu's own notes are laid out first, then notes already up, then new ones, each
   avoiding the boxes before it; the pointed-at note may sit over fading boxes when there's no free spot.
+- Sixth round: the goblin swarm has one invisible hit box (a `colorWrite: false` box in the `goblins` group); each
+  tower and treasury shows only its own note (the four-at-once group is gone).
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 **Open, in order:**

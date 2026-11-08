@@ -233,6 +233,9 @@
     const goblins = new THREE.Group(); island.add(goblins); // the swarm: pointed at (and lifted) as one
     for (const [x, z] of [[-2.6, -3.6], [-1.9, -4.0], [-3.2, -4.2], [-2.3, -4.6], [-3.0, -3.3]]) goblins.add(unit('goblin', '#7FA35A', FOE, x, z, s * 0.75, Y + (rnd() - 0.5) * 0.6));
     goblins.userData.y0 = 0; const gobDot = new THREE.Object3D(); gobDot.position.set(-2.6, 0, -4.0); goblins.add(gobDot);
+    { // one hit area round the whole swarm (owner: not five small ones); never drawn
+      const hb = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.9, 1.9), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false }));
+      hb.position.set(-2.55, 0.45, -3.95); hb.castShadow = hb.receiveShadow = false; goblins.add(hb); }
     const mammoth = unit('mammoth', '#8E7A68', FOE, 3.4, -4.6, s * 0.8, Y - 0.3);
     const skeleton = unit('skeleton', '#E9E3CF', FOE, -5.0, -5.6, s * 0.9, Y + 0.3);
     const pieces = new THREE.Group(); island.add(pieces);
@@ -375,8 +378,8 @@
     const lbBtn = document.getElementById('lb-open'); body.appendChild(lbBtn); lbBtn.classList.add('lb-rank'); // (out of the standings: it hangs under the Rankings note)
     const proj = (o, h) => { const v = new THREE.Vector3(); o.getWorldPosition(v); v.y += h; v.project(cam); return [(v.x + 1) / 2 * cv.clientWidth, (1 - v.y) / 2 * cv.clientHeight]; };
     const dotSvg = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="currentColor"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>`;
-    const TOWERS = ['keepYou', 'keepFoe', 'vaultYou', 'vaultFoe'];
-    const showing = (el, hovered) => hovered && TOWERS.includes(hovered) && TOWERS.includes(el.dataset.hover) && !body.classList.contains('welcome') && viewName === 'play' ? true : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
+    // (each tower and treasury shows only its own note: owner, 2026-11-08)
+    const showing = (el, hovered) => body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
     // a label off the point (x, y): a line out to it and under it, kept on screen. Returns the line's svg
     let placed = []; // the island notes' boxes laid out so far this frame (notes() empties it)
     let pinFading = false, pinOverFading = false; // the note being laid out is fading; it may sit over fading boxes
@@ -1392,5 +1395,5 @@
     dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
     dioPaint();
     if (dio.shown) resume();
-    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(goblins.children[0], 0.25) : proj(g, 0.5)])); } // the tests: the roster standing; show / hide the home by hand
+    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); } // the tests: the roster standing; show / hide the home by hand
   }
