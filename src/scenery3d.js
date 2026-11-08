@@ -1248,7 +1248,27 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
         const u = b.userData, n = u.now, ps = !preyAt && roosting && perch[u.i];
         // to the tree they spiral down onto their spot (the circle shrinks to nothing), a little quicker than they gather
         const to = preyAt ? { r: 6 + u.i * 2.8, y: 15 + u.i * 2.5, c: [preyAt.x, preyAt.z] } : ps ? { r: 0, y: ps[1], c: [ps[0], ps[2]] } : u.home;
-        const e = ps ? 1 - Math.exp(-dt * 0.9) : ease;
+        // between the tree and your tower they don't cross the board: they fly off, fast and away from it, then come back
+        // in from beyond the board's edge nearest where they're going (warp)
+        const kind = preyAt ? 'prey' : ps ? 'perch' : 'home';
+        if (u.kind && u.kind !== kind && (u.kind === 'perch' || kind === 'perch') && (u.kind === 'prey' || kind === 'prey')) {
+          const p = b.position, l = Math.hypot(p.x, p.z) || 1; u.warp = { t: 0, from: p.clone(), d: [p.x / l, p.z / l] };
+        }
+        u.kind = kind;
+        if (u.warp) {
+          const w = u.warp; w.t += dt;
+          if (w.t < 1.4) { // leaving: accelerating out past the edge of the screen, climbing a little
+            const go = 12 * w.t + 22 * w.t * w.t, flap = 0.12 + 0.5 * Math.sin(vultureT * 10 + u.a0);
+            b.position.set(w.from.x + w.d[0] * go, w.from.y + 2 * w.t + 6 * w.t * w.t, w.from.z + w.d[1] * go);
+            b.rotation.set(0, Math.atan2(-w.d[0], -w.d[1]), 0, 'YXZ'); b.rotateX(0.25);
+            u.wings[0].rotation.set(0, 0, flap); u.wings[1].rotation.set(0, 0, -flap); u.wings[0].scale.x = 1; u.wings[1].scale.x = -1;
+            continue;
+          }
+          const l = Math.hypot(to.c[0], to.c[1]) || 1; // gone: start again 75 m out beyond the target, a little higher
+          n.c[0] = to.c[0] + to.c[0] / l * 75; n.c[1] = to.c[1] + to.c[1] / l * 75; n.y = to.y + 10; n.r = Math.max(to.r, 6); u.warp = null; u.back = true;
+        }
+        if (u.back && Math.hypot(n.c[0] - to.c[0], n.c[1] - to.c[1]) < 3) u.back = false;
+        const e = u.back ? 1 - Math.exp(-dt * 1.1) : ps ? 1 - Math.exp(-dt * 0.9) : ease;
         n.r += (to.r - n.r) * e; n.y += (to.y - n.y) * e; n.c[0] += (to.c[0] - n.c[0]) * e; n.c[1] += (to.c[1] - n.c[1]) * e;
         const sit = ps && n.r < 0.35 && Math.hypot(n.c[0] - to.c[0], n.c[1] - to.c[1]) < 0.35 && Math.abs(n.y - to.y) < 0.3;
         const air = smoothstep(0.4, 4, n.r); // 0 on the perch: no bobbing or banking
