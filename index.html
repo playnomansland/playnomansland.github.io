@@ -741,19 +741,19 @@ html.diorama .sheet {
   background: #17140F; color: #F4ECD8; border: 0; border-radius: 0; font-family: var(--font-body);
   clip-path: polygon(0 0, 100% 0, 100% 100%, 22px 100%, 0 calc(100% - 22px)); filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .38)); }
 html.diorama.pc .sheet { padding: 24px 26px 26px; }
-html.diorama .sheet h3 { font: 700 32px/.95 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; }
+html.diorama .sheet h3 { font: 700 30px/1 var(--font-display); letter-spacing: -.01em; } /* (no uppercasing in sheets: it changes the text tests and screen readers read) */
 html.diorama .sheet .hint, html.diorama .sheet p { font-family: var(--font-data); }
 html.diorama .sheet .hint { font-size: 13px; }
 html.diorama .sheet .eyebrow { color: #F2B23A; font-weight: 700; }
 html.diorama .sheet .btn { position: relative; isolation: isolate; border: 0; border-radius: 0; background: none; padding: 5px 10px 2px; color: #F4ECD8;
-  font: 700 18px/1 var(--font-display); text-transform: uppercase; letter-spacing: -.01em; opacity: .75; }
+  font: 700 18px/1 var(--font-display); letter-spacing: -.01em; opacity: .75; }
 html.diorama .sheet .btn.small { font-size: 15px; padding: 4px 9px 1px; }
 html.diorama .sheet .btn:hover:not(:disabled) { opacity: 1; }
 html.diorama .sheet .btn.primary { opacity: 1; color: #17140F; background: none; }
 html.diorama .sheet .btn.primary::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 10%, 96% 0, 100% 86%, 3% 100%); }
 html.diorama .sheet #close { font-family: var(--font-data); font-size: 13px; text-transform: none; text-decoration: underline; text-underline-offset: 4px; opacity: .7; }
 html.diorama .sheet .seg { border: 0; border-radius: 0; gap: 2px; overflow: visible; }
-html.diorama .sheet .seg button { position: relative; isolation: isolate; padding: 4px 9px 1px; font: 700 15px/1 var(--font-display); text-transform: uppercase; opacity: .6; background: none; }
+html.diorama .sheet .seg button { position: relative; isolation: isolate; padding: 4px 9px 1px; font: 700 15px/1 var(--font-display); opacity: .6; background: none; }
 html.diorama .sheet .seg button:hover { opacity: 1; }
 html.diorama .sheet .seg button[aria-pressed="true"] { opacity: 1; color: #17140F; background: none; }
 html.diorama .sheet .seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
@@ -1666,12 +1666,17 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .series-chip { display: block; margin: 0 auto 2px; width: max-content; padding: 1px 8px; border: 1px solid var(--gold); border-radius: 999px; color: var(--gold); font: 700 11px var(--font-data); letter-spacing: 0.06em; background: rgba(230, 184, 74, 0.1); }
 </style>
 <script>
-// The Diorama UI (2026-11-07, design/diorama/): on with ?ui=diorama (kept on this device; ?ui=classic turns it off) or
-// localStorage pb-ui = 'diorama'. The old home stays the default until the launch. Its two extra fonts load only when on.
+// The Diorama UI (2026-11-07, design/diorama/). ?ui=diorama / ?ui=classic choose it on this device (kept as pb-ui);
+// without a choice the build's default decides (src/build.js, PB_UI_DEFAULT): 'classic' (the old UI everywhere, until
+// the launch), 'pc' (the Diorama on a computer: a fine pointer that hovers and a window at least 900 px wide, the old
+// UI on phones and tablets, whose layouts aren't done) or 'diorama' (everywhere). Its two extra fonts load only when on.
 (() => {
-  let on = false;
-  const DEF = 'classic'; // src/build.js: 'classic' until the launch (PB_UI_DEFAULT=diorama builds it on, for a test run or the launch)
-  try { const q = new URLSearchParams(location.search).get('ui'); if (q === 'diorama' || q === 'classic') localStorage.setItem('pb-ui', q); on = (localStorage.getItem('pb-ui') || DEF) === 'diorama'; } catch (e) { on = /[?&]ui=diorama\b/.test(location.search) || (DEF === 'diorama' && !/[?&]ui=classic\b/.test(location.search)); }
+  const DEF = 'classic';
+  const pcLike = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches && innerWidth >= 900; } catch (e) { return false; } };
+  let pick = '';
+  try { const q = new URLSearchParams(location.search).get('ui'); if (q === 'diorama' || q === 'classic') localStorage.setItem('pb-ui', q); pick = localStorage.getItem('pb-ui') || ''; }
+  catch (e) { pick = (location.search.match(/[?&]ui=(diorama|classic)\b/) || [])[1] || ''; }
+  const on = pick ? pick === 'diorama' : DEF === 'diorama' || (DEF === 'pc' && pcLike());
   if (!on) return;
   document.documentElement.classList.add('diorama');
   const l = document.createElement('link'); l.rel = 'stylesheet';
@@ -17122,7 +17127,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '7 Nov 2026 · f1bf2d8'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '7 Nov 2026 · 59fb7f2'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -27212,6 +27217,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       $('dd-settings').innerHTML = `<h3>Settings</h3>
         <span class="k">Sound</span><div class="set">${onoff('music', 'Music', musicOn())}${vol('vol', snd.vol, true, 'Music volume')}${onoff('sfx', 'Sound effects', snd.sfx)}${vol('sfxVol', snd.sfxVol, true, 'Effects volume')}
           ${navigator.audioSession ? `<span class="lab">Other apps</span><span class="seg"><button class="w" data-set="solo|0" aria-pressed="${!snd.solo}">Keep playing</button><button class="w" data-set="solo|1" aria-pressed="${!!snd.solo}">Pause them</button></span><p class="sn">Pause them: plays even on silent.</p>` : ''}</div>
+        <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}</div>
         <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
         <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', staying(), staying() ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${acct && !acct.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
         ${devMode() ? `<span class="k" style="color:#FF5FC4">Developer</span><div class="set">${onoff('rk', 'Ranked play', home.rankedOn === true, '<span id="rk-msg">For everyone, not only developers.</span>')}</div>` : ''}
@@ -27230,6 +27236,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       else if (k === 'chat') { snd.chatOn = on; saveSound(); if (!on) { talk.tick = []; tickDraw(); } }
       else if (k === 'emo') { snd.emotesOn = on; saveSound(); }
       else if (k === 'stay') setStay(on);
+      else if (k === 'tm') timerOn = on; // the old PLAY popup's Deploy timer vs AI (for this visit, as there)
       else if (k === 'rk') { const r = await acctCall('ranked', { on }, true); if (r.status === 200) home.rankedOn = !!r.on; drawSettings();
         if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }
       drawSettings();
