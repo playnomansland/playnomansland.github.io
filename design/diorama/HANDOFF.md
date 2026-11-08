@@ -344,3 +344,10 @@ holds it, `?fly=off` skips it, Settings: Replay the way in), then about 1.9 s:
 
 The owner, 2026-11-08: in a match, "disconnected" beside the opponent's name in the top line (where their health is),
 nothing more. In the prototype: Settings, Opponent, Connected / Disconnected.
+
+## For Monday (2026-11-08, end of session)
+
+- **Small text is now Bricolage Grotesque** (the owner): the battle prototype (`src/battle.html`, `--type`) still uses
+  Courier Prime for its notes, hints and labels; switch it, and check the typed notes still fit.
+- `main` has moved on since this branch (e.g. "bolder small text", Change battlefield as a button): merge it in first.
+- Then: the owner's notes on the flight, the room and the battle screen; phones; moving them into the game.
