@@ -46,6 +46,12 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   skeleton's hint reads "Hover over stuff on the island with your mouse!" and goes up-right of it (left only without
   room); a note's box stays on screen under the header and moves below a box it would cover (`placed` in `pin`);
   pointing at a piece lays the notes out at once (`notes()` from `setHover`, not on the next frame).
+- Fourth round: no hover delay either way (`setHover`); the golem's and the skeleton's notes (`data-home`) fade out
+  over 1 s while something is pointed at and back in over 0.25 s (opacity drawn per frame in `notes()`, its line in a
+  `<g opacity>`; a fading note doesn't push others). A pointed-at piece's note tries six spots before hiding (the Fire
+  Mage's first spot lands on PLAY on small windows). Goblin Swarm note (the five goblins are one group, `goblins`).
+  A click on a unit model (`UNIT_MODELS`) on the main menu opens Units; notes are their own elements, so a click on
+  one doesn't. `#dio` has `user-select: none` (inputs excepted).
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 **Open, in order:**
