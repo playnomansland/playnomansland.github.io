@@ -18,7 +18,21 @@ const r3 = src('render3d.js');
 const render3d = r3.replace('camera: cam, info:', 'camera: cam, cam3: camera, info:');
 if (render3d === r3) throw new Error('render3d.js: the return line changed; update the cam3 patch in build-battle.js');
 
+// the menu's own island (src/diorama.js: the slab, the look's painted ground and miniatures, the keeps and pieces), lifted
+// as is into buildIsland(), for the way in: New room on the island, then the island flies into the battlefield. The
+// few names it takes from the game's page get stand-ins here
+const dj = src('diorama.js'), ia = dj.indexOf('    const mat = (c) => new THREE.MeshStandardMaterial'), ib = dj.indexOf('    // ── tiles with print on them');
+if (ia < 0 || ib < ia) throw new Error('src/diorama.js: the island block moved; update the ISLAND slice in build-battle.js');
+const islandSrc = dj.slice(ia, ib).replace(/^.*document\.fonts\.load.*\n/m, '');
+if (/await /.test(islandSrc)) throw new Error('src/diorama.js: the island block awaits something now; update build-battle.js');
+const ISLAND = `function buildIsland(THREE, scene, M, startLook) {
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const H = '', m = null, STD_MAP = 'standard', paintFlat = () => {}; let flat = false, mapPick = 'standard', skinPick = startLook; const lookShown = () => skinPick;
+${islandSrc}
+  return { island, pieces, kit, top, soil, root, floor, setLook, LOOKS, keepYou, keepFoe };
+}`;
 const fill = {
+  ISLAND,
   BASE: standalone ? '' : '<base href="../../">', // the repo root: vendor/, models/scenery.bin, audio/
   SHAPES: src('shapes.js'), ENGINE: src('engine.js'), GAME: src('game.js'), REFEREE: src('referee.js'),
   ART: src('art.js'), RENDER2D: src('render2d.js') + '\n' + src('floors.js'), CAMERA3D: src('camera3d.js'),

@@ -316,23 +316,31 @@ coming back from Angled. Now it measures only in the Top and Tilted views and, b
 that last fit to no fit at all, so it is continuous both ways (`fitHeld`; checked frame by frame through Top, Tilted,
 Angled and back: the 101 px jump is down to 19 px of ordinary glide).
 
-## Next: the island flies into the battlefield (planned, not started)
+## The way in: the island flies into the battlefield (prototype, 2026-11-08)
 
-The owner's wish (2026-11-08): pressing anything that leads to this screen (Create room, Join, Vs computer; not Start
-match) zooms in on the menu's floating island, moves it over and fades it into the real board. The plan:
-1. **Both scenes already show the same map.** The island is the real Standard map, 14 by 18, keeps at col 8 row 16 and
-   col 5 row 1, the same as the board. So a tile on the island and a tile on the board can be matched one to one.
-2. **Preload the board while the player is on Play / Rooms / New room:** create the match's Render3D off screen (hidden
-   canvas) so `models/scenery.bin` and the models are loaded before the click; the transition must never wait on a fetch.
-3. **On the click:** the menu's camera (orthographic, `VIEWS` in `src/diorama.js`) glides from its view to a pose that
-   puts the island's four corners where the board's corners will be in the tilted view (we know both: `screenAt` on the
-   board, the island's own projection). The words of the menu fade out as it starts.
-4. **Over the last third:** the island's slab sides and its miniatures sink (they already can), the board's canvas
-   fades in on top, already on the matching pose, and the scenery grows out from the board's edges (a fade, or a
-   radial mask widening). Then the room's words come in. About 1 to 1.2 s in all; reduced motion: a plain crossfade.
-5. **Then dispose the menu's renderer** (two WebGL contexts only for that second; on phones, if that's too heavy,
-   the plain crossfade).
+The owner's wish: what leads to the room (Create room, Join, Vs computer; not Start match) zooms in on the menu's
+floating island, moves it over and fades it into the real map.  now opens on it: New room on the saffron
+field with the island (the menu's `orders` view), CREATE ROOM (it presses itself once the board has loaded; `?auto=off`
+holds it, `?fly=off` skips it, Settings: Replay the way in), then about 1.9 s:
+- **The island is the menu's own:** `build-battle.js` lifts its block out of `src/diorama.js` (the slab, the look's painted
+  ground and miniatures, the keeps and pieces) into `buildIsland()`, with stand-ins for the few page names it uses, and
+  checks the block is still there at build time.
+- **It lands exactly on the board:** the island and the board are the same map at two scales (a tile is 1 on the
+  island, `Game.TILE` metres on the board, both centred, the same row and column directions), so the island's camera
+  ends on the board camera's exact pose: its position / TILE, the same angle and lens, and the same view offset (the
+  framing beside the column). The flight blends from New room's orthographic view (taken as a 5° lens far away, which
+  looks the same) to that pose: target, angle, height of view (log), lens and offset, eased in and out.
+- **On the way:** New room's words slide off; the miniatures sink (0.4 to 0.75), the keeps just after, so the hand-off
+  is ground on ground; the soil drops away; the saffron field opens from the middle of the board outward (a radial
+  mask) onto the battlefield's own scenery underneath, which was loaded and framed before the press; the island fades
+  out over the last quarter, into the board under it; the room's words come in (0.78 on).
+- Reduced motion: no flight, the fades only. (`screens/fly-*.jpg`: New room, then four moments of the flight.)
+- **For the game:** the same, with the menu's live scene instead of a second copy: on Create room / Join / Vs computer,
+  make the match's board under the field (preload it while on Play / Rooms), fly the menu's island camera to the
+  board's pose, then free the menu's renderer (`dio.api.pause`). Phones: one WebGL context at a time today, so there
+  the fades only, or measure first.
 
-The hard part is matching an orthographic camera to the board's perspective one; the crossfade hides a small
-mismatch, so matching the corners is enough. Doing it means the room and the battle screen move into the game proper
-(`src/diorama.js` owns the menu's scene), so it belongs with that integration step. A good day's session.
+## Online: a dropped opponent
+
+The owner, 2026-11-08: in a match, "disconnected" beside the opponent's name in the top line (where their health is),
+nothing more. In the prototype: Settings, Opponent, Connected / Disconnected.

@@ -28,6 +28,7 @@ let bt = null, pre = null, fx = [], acc = 0, summary = null, lastSummary = null;
 let selected = null, drag = null, dragEndAt = 0, hoverTile = null, cardDrag = null;
 let ready = [false, false], deadline = 0, timeUp = false, aiReadyAt = 0, aiRound = 0, fightAt = 0;
 let timerOn = Q.get('timer') !== 'off', look = Game.SKINS.some(s => s.id === Q.get('look')) ? Q.get('look') : 'meadow';
+let foeAway = false; // online: the opponent's connection dropped (the HUD says so beside their name; a prototype switch in Settings)
 let undoSnap = null, capWarn = false, shopOpen = true, unlockTier = null, sqOpen = null, pickSel = null, pickHidden = false, sheetKind = null;
 
 // ---------- the room you wait in: the battlefield you'll fight on, its settings, the seat across ----------
@@ -127,13 +128,14 @@ function sideHtml(sd) {
   if (sd === FOE && phase === 'deploy') state = ready[FOE] ? '<span class="tag">Ready</span>' : 'Deploying…';
   if (sd === FOE && phase === 'deploy' && Game.charOf(m, FOE)) state += `${state ? '<br>' : ''}<span style="opacity:.8">Leader: ${esc(charName(Game.charOf(m, FOE)))}</span>`;
   if (sd === ME && phase === 'deploy' && Game.charOf(m, ME)) state = `<span style="opacity:.8">Leader: ${esc(charName(Game.charOf(m, ME)))}</span>`;
-  return `<div class="who">${sd === ME ? `${esc(name)} ${ttl} ${streak}` : `${streak} ${ttl} ${esc(name)}`}</div>
+  const away = sd === FOE && foeAway && phase !== 'room' ? ' <span class="away">· disconnected</span>' : '';
+  return `<div class="who">${sd === ME ? `${esc(name)} ${ttl} ${streak}` : `${streak} ${ttl} ${esc(name)}${away}`}</div>
     <div class="hp"><b class="num">${hp}</b><span class="bar" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="${hpMax}" aria-valuenow="${hp}" style="--w:${w}%;--lost:${lost}%"><i></i>${lost ? '<s></s>' : ''}</span></div>
     ${state ? `<div class="state">${state}</div>` : ''}`;
 }
 let sidesKey = '';
 function paintSides() {
-  const k = JSON.stringify([phase, hpShown(0), hpShown(1), ready, m.round, m.chars, m.streak, foe.name, room.who && room.who.name, room.joining && room.joining.name, room.pub, room.role]);
+  const k = JSON.stringify([phase, hpShown(0), hpShown(1), ready, m.round, m.chars, m.streak, foe.name, room.who && room.who.name, room.joining && room.joining.name, room.pub, room.role, foeAway]);
   if (k === sidesKey) return; sidesKey = k;
   $('you').innerHTML = sideHtml(ME); $('foe').innerHTML = sideHtml(FOE);
 }
@@ -509,9 +511,11 @@ function paintSheet() {
         <span class="lab">3D quality</span>${seg('q', [['high', 'High'], ['medium', 'Medium'], ['low', 'Low']], q)}
         ${phase === 'room' ? '' : '<span class="lab">Deploy timer</span>'}${phase === 'room' ? '' : seg('timer', [[1, 'On'], [0, 'Off']], timerOn ? 1 : 0)}
         <span class="lab">Battlefield</span>${seg('look', Game.SKINS.map(k => [k.id, k.name]), look)}
+        ${phase === 'room' ? '' : `<span class="lab">Opponent</span>${seg('away', [[0, 'Connected'], [1, 'Disconnected']], foeAway ? 1 : 0)}`}
       </div>
       ${phase === 'room' ? '' : '<div class="acts"><button class="w" id="new-match">New match</button></div>'}
-      <p style="opacity:.7">Sound, chat and the rest stay in the menu's Settings.</p>`;
+      <div class="acts"><button class="w" id="replay-in">Replay the way in</button></div>
+      <p style="opacity:.7">Sound, chat and the rest stay in the menu's Settings. Opponent: a prototype switch for how an online drop shows.</p>`;
   } else if (sheetKind === 'damage') {
     const S = lastSummary; if (!S) { s.hidden = true; return; }
     const rows = (sd) => { const list = (S.squads[sd] || []).slice().sort((a, b) => b.dealt - a.dealt), top = Math.max(1, ...list.map(q => q.dealt));
@@ -530,6 +534,7 @@ function paintSheet() {
   on('sq-lvl', () => { if (editable() && Game.levelUp(m, ME, sqOpen)) changed(); });
   on('sq-sell', () => { if (editable() && Game.sell(m, ME, sqOpen)) { closeSheet(); changed(); } });
   on('new-match', () => { closeSheet(); newMatch(); });
+  on('replay-in', () => { closeSheet(); introStart(); });
   s.querySelectorAll('[data-inv]').forEach(b => b.addEventListener('click', () => {
     const f = FRIENDS[+b.dataset.inv]; room.invited[f.name] = true;
     if (f.comes && !room.who && !room.joining) { room.joining = f; room.joinAt = now() + 2600; } // Pebble accepts; Juniper is mid-match
@@ -541,6 +546,7 @@ function paintSheet() {
     if (k === 'q') { quality = v; board.quality(v); }
     if (k === 'timer') { timerOn = v === '1'; deadline = timerOn && phase === 'deploy' && !timeUp ? now() + DEPLOY_MS : 0; paintCol(); }
     if (k === 'look') { look = v; m.skin = v; paintRound(); if (phase === 'room') paintRoom(); }
+    if (k === 'away') { foeAway = v === '1'; paintSides(); }
     paintSheet();
   })));
 }
@@ -734,6 +740,122 @@ document.addEventListener('pointerdown', (e) => { // a press outside an open she
   closeSheet(); paint();
 });
 
+// ---------- the way in: New room on the menu's island, then CREATE ROOM flies the island into the battlefield ----------
+// The owner's wish (2026-11-08). The island is the menu's own (buildIsland: lifted from src/diorama.js at build time) and
+// the board is the real one, already loaded and framed underneath, under the saffron field. The island and the board are
+// the same map at different scales (a tile is 1 on the island, Game.TILE metres on the board, both centred), so the island
+// camera can end on the board camera's exact pose: position / TILE, the same angle, lens and view offset. The flight
+// blends from New room's view of the island (the menu's orthographic 'orders' view, as a very long lens) to that pose,
+// while the miniatures sink, the field opens from the board outward, and the island fades into the board under it.
+const ISLE_START = { at: [0, 0, 0.4], az: 0, el: 1.25, h: 13.6, fov: 5, ox: -0.24, oy: 0, k: 1 }; // VIEWS.orders in src/diorama.js
+const FLY_MS = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1900;
+let isle = null;
+const intro = { on: false, t0: 0, going: false, done: true, autoAt: 0, ready: false };
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const ease = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+function makeIsle() {
+  const cv = $('isle');
+  const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene(), I = buildIsland(THREE, scene, Models3D(THREE), look);
+  // the menu's light: a warm low sun and a cool sky
+  scene.add(new THREE.HemisphereLight('#EFE6D2', '#3B3A4E', 1.15));
+  const sun = new THREE.DirectionalLight('#FFE3B8', 2.4); sun.position.set(-9, 16, 7); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -15, right: 15, top: 15, bottom: -15, near: 1, far: 45 }); sun.shadow.bias = -0.0008; sun.shadow.normalBias = 0.02;
+  scene.add(sun);
+  const cam = new THREE.PerspectiveCamera(5, 1, 0.05, 4000);
+  // each piece's size and the soil's height, to put back on a replay
+  for (const o of I.pieces.children) o.userData.s0 = o.scale.x;
+  for (const o of [...I.soil, I.root]) o.userData.y0 = o.position.y;
+  isle = { renderer, scene, cam, I, cv };
+}
+// the keeps stand where the board has them (the menu's island puts them at the Standard map's spots)
+function isleKeeps() {
+  if (!isle || !m || !m.towers) return;
+  for (const [o, t] of [[isle.I.keepYou, m.towers[ME]], [isle.I.keepFoe, m.towers[FOE]]]) if (t) o.position.set(t.col - 6.5, 0, t.row - 8.5);
+}
+// the board camera's pose, in island units (its position / TILE), as the flight's end
+const bv = () => new THREE.Vector3();
+function boardPose() {
+  const c = board.cam3, T = Game.TILE, b = bv().set(0, 0, 1).applyQuaternion(c.quaternion);
+  const p = c.position.clone().divideScalar(T), dist = p.y / Math.max(0.05, b.y), at = p.clone().addScaledVector(b, -dist);
+  return { at: [at.x, at.y, at.z], az: Math.atan2(b.x, b.z), el: Math.asin(b.y), h: dist * Math.tan(c.fov * Math.PI / 360), fov: c.fov, ox: fit.ox / innerWidth, oy: fit.oy / innerHeight, k: fit.k };
+}
+function mixPose(A, B, e) {
+  const L = (a, b) => a + (b - a) * e; let daz = B.az - A.az; daz = Math.atan2(Math.sin(daz), Math.cos(daz));
+  return { at: A.at.map((v, i) => L(v, B.at[i])), az: A.az + daz * e, el: L(A.el, B.el), h: Math.exp(L(Math.log(A.h), Math.log(B.h))), fov: L(A.fov, B.fov), ox: L(A.ox, B.ox), oy: L(A.oy, B.oy), k: L(A.k, B.k) };
+}
+function islePose(P) {
+  const W = innerWidth, H = innerHeight, cam = isle.cam, d = P.h / Math.tan(P.fov * Math.PI / 360);
+  cam.fov = P.fov; cam.aspect = W / H; cam.near = Math.max(0.05, d * 0.02); cam.far = d * 6 + 100;
+  cam.position.set(P.at[0] + d * Math.cos(P.el) * Math.sin(P.az), P.at[1] + d * Math.sin(P.el), P.at[2] + d * Math.cos(P.el) * Math.cos(P.az));
+  cam.up.set(0, 1, 0); cam.lookAt(P.at[0], P.at[1], P.at[2]);
+  cam.setViewOffset(W, H, P.ox * W, P.oy * H, W / P.k, H / P.k);
+}
+function paintNR() {
+  const nr = $('nr'), k = Game.SKINS.findIndex(x => x.id === look);
+  const ws = (key, opts, cur) => opts.map(([v, l]) => `<button class="w" data-n="${key}" data-v="${v}" aria-pressed="${String(v) === String(cur)}">${l}</button>`).join('');
+  nr.innerHTML = `<div class="k">Play · Rooms · Create</div><h2>New room</h2>
+    <div class="r"><span class="lab">Kind</span><span class="ws">${ws('kind', [['standard', '1v1 Standard'], ['ranked', '1v1 Ranked']], room.ranked ? 'ranked' : 'standard')}</span></div>
+    <div class="r"><span class="lab">Battlefield</span><span class="ws"><button class="arrow" data-bf="-1" aria-label="Previous battlefield">‹</button><span class="w" aria-pressed="true">${Game.SKINS[k].name}</span><button class="arrow" data-bf="1" aria-label="Next battlefield">›</button></span>
+      <span class="note">${k + 1} of ${Game.SKINS.length}. The match is played here.</span></div>
+    <div class="r"><span class="lab">Who can find it</span><span class="ws">${ws('pub', [[1, 'Public'], [0, 'Private']], room.pub ? 1 : 0)}</span></div>
+    <div class="r"><span class="lab">Spectators</span><span class="ws">${ws('spec', [[1, 'On'], [0, 'Off']], room.spec ? 1 : 0)}</span></div>
+    <button class="create${intro.going ? ' pressed' : ''}" id="nr-go">${SHARD.replace('class="shard"', 'class="shard"')}Create room →</button>
+    <span class="auto">${intro.autoAt ? 'Prototype: it presses itself in a moment.' : intro.ready ? '' : 'Loading the battlefield…'}</span>`;
+  const stopAuto = () => { intro.autoAt = 0; };
+  nr.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => { stopAuto(); const v = b.dataset.v;
+    if (b.dataset.n === 'kind') { room.ranked = v === 'ranked'; room.pack = room.ranked ? 'standard' : 'learn'; }
+    if (b.dataset.n === 'pub') room.pub = v === '1'; if (b.dataset.n === 'spec') room.spec = v === '1'; paintNR(); }));
+  nr.querySelectorAll('[data-bf]').forEach(b => b.addEventListener('click', () => { stopAuto();
+    const i = (k + +b.dataset.bf + Game.SKINS.length) % Game.SKINS.length; look = Game.SKINS[i].id; m.skin = look; isle.I.setLook(i, false); paintNR(); }));
+  $('nr-go').addEventListener('click', introGo);
+}
+function introStart() {
+  if (!isle) makeIsle();
+  room.role = ROOM === 'guest' ? 'guest' : 'host'; if (room.role === 'host') { room.who = null; room.joining = null; foe = COMPUTER; }
+  openRoom(); isleKeeps();
+  isle.I.setLook(Math.max(0, Game.SKINS.findIndex(x => x.id === look)), false);
+  for (const o of isle.I.pieces.children) o.scale.setScalar(o.userData.s0);
+  for (const o of [...isle.I.soil, isle.I.root]) o.position.y = o.userData.y0;
+  document.body.classList.add('intro');
+  $('field').hidden = false; $('field').style.opacity = 1; $('field').style.webkitMaskImage = $('field').style.maskImage = 'none';
+  isle.cv.hidden = false; isle.cv.style.opacity = 1; $('nr').hidden = false; $('nr').classList.remove('leaving');
+  Object.assign(intro, { on: true, going: false, done: false, autoAt: 0, ready: false });
+  paintNR(); sizeIsle();
+  // the press waits for the board underneath: its scenery loaded and its camera settled on the tilted view
+  const ready = board.scenery && board.scenery.ready ? board.scenery.ready : Promise.resolve();
+  ready.catch(() => {}).then(() => setTimeout(() => { intro.ready = true; if (!intro.going && Q.get('auto') !== 'off') { intro.autoAt = now() + 1600; paintNR(); } else paintNR(); }, 600));
+}
+function introGo() {
+  if (!intro.on || intro.going) return;
+  intro.going = true; intro.autoAt = 0; intro.t0 = now(); paintNR();
+  $('nr').classList.add('leaving');
+}
+function sizeIsle() { if (isle) isle.renderer.setSize(innerWidth, innerHeight, false); }
+addEventListener('resize', sizeIsle);
+function introFrame() {
+  if (!intro.on || !isle) return;
+  if (intro.autoAt && now() >= intro.autoAt) introGo();
+  const t = intro.going ? (window.__introT != null ? window.__introT : FLY_MS ? clamp01((now() - intro.t0) / FLY_MS) : 1) : 0, end = boardPose(); // (__introT: checks pin a moment)
+  islePose(intro.going ? mixPose(ISLE_START, end, ease(clamp01(t / 0.92))) : ISLE_START);
+  // the miniatures sink into the island and its soil drops away, as on the menu when a screen changes
+  const sink = ease(clamp01((t - 0.4) / 0.35));
+  // (the keeps last, so the hand-off is ground on ground: the board draws its own keeps there)
+  const ksink = ease(clamp01((t - 0.55) / 0.25));
+  for (const o of isle.I.pieces.children) { const k = o === isle.I.keepYou || o === isle.I.keepFoe ? ksink : sink; o.scale.setScalar(Math.max(0.0001, o.userData.s0 * (1 - k))); }
+  for (const o of [...isle.I.soil, isle.I.root]) o.position.y = o.userData.y0 - sink * 6;
+  // the field opens from the middle of the board outward, the battlefield's own scenery under it
+  const f = ease(clamp01((t - 0.5) / 0.4)), R = safeRect(), cx = (R.x0 + R.x1) / 2, cy = (R.y0 + R.y1) / 2, far = Math.hypot(innerWidth, innerHeight);
+  const mask = f > 0 ? `radial-gradient(circle at ${cx}px ${cy}px, transparent ${f * far}px, #000 ${f * far + 220}px)` : 'none';
+  $('field').style.webkitMaskImage = $('field').style.maskImage = mask;
+  isle.cv.style.opacity = 1 - ease(clamp01((t - 0.72) / 0.28));
+  if (t >= 0.78 && document.body.classList.contains('intro')) document.body.classList.remove('intro'); // the room's words come in
+  isle.renderer.render(isle.scene, isle.cam);
+  if (t >= 1) { intro.on = false; intro.done = true; isle.cv.hidden = true; $('field').hidden = true; $('nr').hidden = true; }
+}
+
 // ---------- the loop ----------
 let last = 0;
 function frame(ts) {
@@ -760,12 +882,13 @@ function frame(ts) {
   }
   board.draw();
   fitView(dt);
+  introFrame();
   if (sheetKind === 'squad') placeSheet();
   requestAnimationFrame(frame);
 }
 board.size();
 if (Q.get('cam') !== 'top') board.camera.setLevel(1); // the tilted view: the board as the menu's island, your zone nearest and biggest
-if (ROOM === 'none') newMatch(); else openRoom();
+if (ROOM === 'none') newMatch(); else if (Q.get('fly') === 'off') openRoom(); else introStart();
 fitView();
 requestAnimationFrame(frame);
 
@@ -774,6 +897,6 @@ window.__battle = { board, get m() { return m; }, get phase() { return phase; },
   paint, pressReady, choose: (k) => { pickSel = k; choose(); }, fight: () => { ready = [true, true]; fight(); },
   skip: () => { if (phase === 'battle') { while (bt.step()) absorb(); fx = []; endFight(); } }, next: () => { if (m.over) { phase = 'end'; paint(); } else startRound(); },
   seat: (n) => seat(n === 'computer' ? COMPUTER : FRIENDS.find(f => f.name === n) || null), openRoom, newMatch,
-  fit, zoom: () => board.camera.zoom(),
+  fit, zoom: () => board.camera.zoom(), intro, introGo, isle: () => isle,
   holdAi: () => { aiReadyAt = 1e15; ready[FOE] = false; paint(); }, // (shots: the computer still deploying)
   openSheet, unitNote, freeTiles: () => { const out = []; for (const row of Game.zoneRows(ME)) for (let col = 1; col < Game.COLS - 1; col++) if (!Game.occupied(m, ME, col, row)) out.push([col, row]); return out; } };

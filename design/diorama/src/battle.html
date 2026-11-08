@@ -215,6 +215,34 @@ body.fighting .scrim.left { width: calc(var(--pw) + 60px); opacity: .7; }
 .urow .nm .ttl { font: 700 10px var(--type); font-style: normal; letter-spacing: .08em; text-transform: uppercase; margin-left: 4px; }
 @media (max-height: 820px) { .rhead h2 { font-size: 44px; } .rrows { gap: 10px; margin-top: 12px; } .rrow .w { font-size: 22px; } .ready.mid { font-size: 36px; } }
 
+/* ── the way in: New room on the menu's island (saffron, Play's colour), then the island flies into the battlefield ── */
+#field { position: fixed; inset: 0; z-index: 1; background: #F2B23A; }
+#field::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(60% 55% at 62% 52%, transparent, #D99A26 120%); }
+#isle { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 2; display: block; pointer-events: none; }
+#nr { position: fixed; z-index: 3; left: 48px; top: clamp(70px, 12vh, 130px); color: var(--ink); transition: opacity .35s ease, transform .45s cubic-bezier(.5,0,.7,.4); }
+#nr.leaving { opacity: 0; transform: translateX(-36px); pointer-events: none; }
+#nr .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+#nr h2 { margin: 0 0 clamp(14px, 3vh, 28px); font: 700 clamp(60px, 10.5vh, 96px)/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+#nr .r { display: grid; grid-template-columns: 170px auto; align-items: center; gap: 4px 12px; margin-bottom: clamp(10px, 2.4vh, 22px); }
+#nr .lab { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; }
+#nr .ws { display: flex; align-items: center; gap: 4px 10px; }
+#nr .w { font-size: clamp(24px, 3.6vh, 34px); opacity: .55; text-shadow: none; color: var(--ink); }
+#nr .w[aria-pressed="true"] { opacity: 1; color: var(--saffron); }
+#nr .w[aria-pressed="true"]::before { background: var(--ink); }
+#nr .w:hover:not([aria-pressed="true"]) { color: var(--ink); } #nr .w:hover:not([aria-pressed="true"])::before { content: none; }
+#nr .arrow { font: 700 28px var(--stencil); padding: 0 4px; }
+#nr .note { grid-column: 2; font: 400 14px var(--type); opacity: .85; }
+#nr .create { position: relative; isolation: isolate; margin-top: clamp(10px, 2.6vh, 26px); padding: 10px 26px 4px 22px; font: 700 clamp(40px, 6vh, 54px)/.9 var(--stencil); text-transform: uppercase; color: var(--saffron); transition: transform .14s ease; }
+#nr .create .shard { position: absolute; z-index: -1; inset: -4px -8px -6px -6px; width: calc(100% + 14px); height: calc(100% + 10px); fill: var(--ink); }
+#nr .create:hover, #nr .create.pressed { transform: rotate(-1.5deg) scale(1.03); }
+#nr .auto { display: block; margin-top: 14px; font: 400 13px var(--type); opacity: .75; }
+body.intro #col, body.intro .side, body.intro .round, body.intro .scrim, body.intro .knote, body.intro #lines { opacity: 0 !important; pointer-events: none; }
+#col, .side, .round, .scrim, #lines { transition: opacity .6s ease, transform .7s cubic-bezier(.16,.9,.24,1); }
+body.intro #col { transform: translateX(-24px); }
+body.intro .side, body.intro .round { transform: translateY(-10px); }
+body.intro .round { transform: translate(-50%, -10px); }
+.side .away { color: var(--saffron); font: 700 12px var(--type); letter-spacing: .04em; }
+
 /* ── the unit note: a card pointed at ── */
 #unote { position: fixed; z-index: 8; transform: translate(0, -100%); padding-bottom: 7px; width: max-content; max-width: 250px; font: 400 14px/1.3 var(--type); text-shadow: var(--halo); pointer-events: none; }
 #unote b { font-weight: 700; } #unote small { display: block; margin-top: 4px; font-size: 12.5px; opacity: .85; }
@@ -288,6 +316,9 @@ body.fighting .scrim.left { width: calc(var(--pw) + 60px); opacity: .7; }
 </style>
 </head>
 <body>
+<div id="field" aria-hidden="true" hidden></div>
+<canvas id="isle" aria-hidden="true" hidden></canvas>
+<section id="nr" aria-label="New room" hidden></section>
 <div id="view" aria-label="The battlefield. Your zone is the near seven rows, the enemy's the far seven, with no man's land between."></div>
 <div class="scrim top" aria-hidden="true"></div>
 <div class="scrim left" aria-hidden="true"></div>
@@ -330,6 +361,7 @@ const DATA = {{DATA}};
 import * as THREE from '{{THREE_URL}}';
 {{MODELS3D}}
 {{RENDER3D}}
+{{ISLAND}}
 {{BATTLE}}
 </script>
 </body>

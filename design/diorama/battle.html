@@ -215,6 +215,34 @@ body.fighting .scrim.left { width: calc(var(--pw) + 60px); opacity: .7; }
 .urow .nm .ttl { font: 700 10px var(--type); font-style: normal; letter-spacing: .08em; text-transform: uppercase; margin-left: 4px; }
 @media (max-height: 820px) { .rhead h2 { font-size: 44px; } .rrows { gap: 10px; margin-top: 12px; } .rrow .w { font-size: 22px; } .ready.mid { font-size: 36px; } }
 
+/* ── the way in: New room on the menu's island (saffron, Play's colour), then the island flies into the battlefield ── */
+#field { position: fixed; inset: 0; z-index: 1; background: #F2B23A; }
+#field::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(60% 55% at 62% 52%, transparent, #D99A26 120%); }
+#isle { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 2; display: block; pointer-events: none; }
+#nr { position: fixed; z-index: 3; left: 48px; top: clamp(70px, 12vh, 130px); color: var(--ink); transition: opacity .35s ease, transform .45s cubic-bezier(.5,0,.7,.4); }
+#nr.leaving { opacity: 0; transform: translateX(-36px); pointer-events: none; }
+#nr .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+#nr h2 { margin: 0 0 clamp(14px, 3vh, 28px); font: 700 clamp(60px, 10.5vh, 96px)/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+#nr .r { display: grid; grid-template-columns: 170px auto; align-items: center; gap: 4px 12px; margin-bottom: clamp(10px, 2.4vh, 22px); }
+#nr .lab { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; }
+#nr .ws { display: flex; align-items: center; gap: 4px 10px; }
+#nr .w { font-size: clamp(24px, 3.6vh, 34px); opacity: .55; text-shadow: none; color: var(--ink); }
+#nr .w[aria-pressed="true"] { opacity: 1; color: var(--saffron); }
+#nr .w[aria-pressed="true"]::before { background: var(--ink); }
+#nr .w:hover:not([aria-pressed="true"]) { color: var(--ink); } #nr .w:hover:not([aria-pressed="true"])::before { content: none; }
+#nr .arrow { font: 700 28px var(--stencil); padding: 0 4px; }
+#nr .note { grid-column: 2; font: 400 14px var(--type); opacity: .85; }
+#nr .create { position: relative; isolation: isolate; margin-top: clamp(10px, 2.6vh, 26px); padding: 10px 26px 4px 22px; font: 700 clamp(40px, 6vh, 54px)/.9 var(--stencil); text-transform: uppercase; color: var(--saffron); transition: transform .14s ease; }
+#nr .create .shard { position: absolute; z-index: -1; inset: -4px -8px -6px -6px; width: calc(100% + 14px); height: calc(100% + 10px); fill: var(--ink); }
+#nr .create:hover, #nr .create.pressed { transform: rotate(-1.5deg) scale(1.03); }
+#nr .auto { display: block; margin-top: 14px; font: 400 13px var(--type); opacity: .75; }
+body.intro #col, body.intro .side, body.intro .round, body.intro .scrim, body.intro .knote, body.intro #lines { opacity: 0 !important; pointer-events: none; }
+#col, .side, .round, .scrim, #lines { transition: opacity .6s ease, transform .7s cubic-bezier(.16,.9,.24,1); }
+body.intro #col { transform: translateX(-24px); }
+body.intro .side, body.intro .round { transform: translateY(-10px); }
+body.intro .round { transform: translate(-50%, -10px); }
+.side .away { color: var(--saffron); font: 700 12px var(--type); letter-spacing: .04em; }
+
 /* ── the unit note: a card pointed at ── */
 #unote { position: fixed; z-index: 8; transform: translate(0, -100%); padding-bottom: 7px; width: max-content; max-width: 250px; font: 400 14px/1.3 var(--type); text-shadow: var(--halo); pointer-events: none; }
 #unote b { font-weight: 700; } #unote small { display: block; margin-top: 4px; font-size: 12.5px; opacity: .85; }
@@ -288,6 +316,9 @@ body.fighting .scrim.left { width: calc(var(--pw) + 60px); opacity: .7; }
 </style>
 </head>
 <body>
+<div id="field" aria-hidden="true" hidden></div>
+<canvas id="isle" aria-hidden="true" hidden></canvas>
+<section id="nr" aria-label="New room" hidden></section>
 <div id="view" aria-label="The battlefield. Your zone is the near seven rows, the enemy's the far seven, with no man's land between."></div>
 <div class="scrim top" aria-hidden="true"></div>
 <div class="scrim left" aria-hidden="true"></div>
@@ -14521,6 +14552,189 @@ const Render3D = (THREE, el, view, opts = {}) => {
     quality, pixelRatio: () => renderer.getPixelRatio(), dispose, drawn, screenAt, pickAt, scenery };
 };
 
+function buildIsland(THREE, scene, M, startLook) {
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const H = '', m = null, STD_MAP = 'standard', paintFlat = () => {}; let flat = false, mapPick = 'standard', skinPick = startLook; const lookShown = () => skinPick;
+    const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1, metalness: 0, flatShading: true });
+    const vmat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, flatShading: true });
+    const mesh = (g, m, cast = true) => { const o = new THREE.Mesh(g, m); o.castShadow = cast; o.receiveShadow = true; return o; };
+
+    // ── the island: the Standard map, 14 columns by 18 rows (zones of 7 rows, 4 rows of no man's land), one tile = 1 ──
+    // col c, row r -> x = c - 6.5, z = r - 8.5 (row 0 is the back of their zone, row 17 the back of yours)
+    const W = 14, D = 18, island = new THREE.Group(); scene.add(island);
+    const tx = (c) => c - 6.5, tz = (r) => r - 8.5;
+    const top = mesh(new THREE.BoxGeometry(W, 0.5, D), mat('#9DAF73'), false); top.position.y = -0.25; island.add(top);
+    const soil = [0.7, 0.6, 0.55].map((h, i) => { const b = mesh(new THREE.BoxGeometry(W - i * 0.3, h, D - i * 0.3), mat('#7A5B3E')); b.position.y = -0.5 - h / 2 - [0, 0.7, 1.3][i]; island.add(b); return b; });
+    let root; { const g = new THREE.ConeGeometry(5.6, 5, 9, 2); const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y < 2.9) { p.setX(i, p.getX(i) * (0.8 + rnd() * 0.4)); p.setZ(i, p.getZ(i) * (0.8 + rnd() * 0.4)); p.setY(i, y + (rnd() - 0.5) * 0.8); } }
+      root = mesh(g, mat('#5B4634')); root.rotation.x = Math.PI; root.scale.set(1.18, 1.1, 1.52); root.position.y = -4.6; island.add(root); }
+
+    // ── the battlefield: the game's looks (Game.SKINS) on the Standard map. The ground is the look's own painted floor
+    // (src/floors.js; Snow: the ice ground from src/render2d.js), with no tile grid. Round it stand 10 toy miniatures of the
+    // look's signature things, in the same slots for every look: 1 centrepiece, 6 trees, 3 accents ──
+    const FT = 64, floorCv = document.createElement('canvas'); floorCv.width = W * FT; floorCv.height = D * FT;
+    const floorTex = new THREE.CanvasTexture(floorCv); floorTex.colorSpace = THREE.SRGBColorSpace; floorTex.anisotropy = 8;
+    const floor = mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 1 }), false);
+    floor.rotation.x = -Math.PI / 2; floor.position.y = 0.008; island.add(floor);
+    // each look's island: its rim and soil colours and its miniatures (KITS); the looks and their names are the game's
+    // (Game.SKINS), the ground is the look's floor (Floors.LOOKS). A look without art here borrows the Meadow's.
+    const ART = {
+      meadow: { side: '#5F714C', soil: ['#7A5B3E', '#664A33', '#55402E'], kit: 'meadow' },
+      autumn: { side: '#62633E', soil: ['#7A5B3E', '#664A33', '#55402E'], kit: 'autumn' },
+      snow: { side: '#E4ECF4', soil: ['#6E7A86', '#5E6974', '#4F5963'], kit: 'snow' }, // the glacier pass (2026-11-07): white rim
+      frost: { side: '#4A5641', soil: ['#4A3D2E', '#3C3226', '#30281F'], kit: 'glade' },
+      desert: { side: '#B39A6C', soil: ['#A07A4E', '#8C6943', '#77593A'], kit: 'desert' },
+      ash: { side: '#4B4744', soil: ['#3A3431', '#2F2A27', '#262220'], kit: 'ash' },
+      moonlit: { side: '#8F9BB0', soil: ['#5C6680', '#4D566E', '#3F475C'], kit: 'moonlit' },
+      savanna: { side: '#B09A5C', soil: ['#9C6A44', '#875A39', '#724B30'], kit: 'savanna' },
+    };
+    const LOOKS = Game.SKINS.map(k => ({ ...(ART[k.id] || ART.meadow), id: k.id, name: k.name }));
+    // a KayKit model (src/kaykit3d.js, the game's own) fitted to a height, standing on y = 0, centred
+    const kkCache = {};
+    function kk(name, h) {
+      if (!kkCache[name]) { const d = KAYKIT[name]; const dec = (b) => Uint8Array.from(atob(b), (ch) => ch.charCodeAt(0));
+        const q = new Int16Array(dec(d[0]).buffer), rgb = dec(d[1]), [lo, hi] = [d[2], d[3]], pos = new Float32Array(q.length), col = new Float32Array(q.length), c = new THREE.Color();
+        for (let i = 0; i < q.length; i++) { const k = i % 3; pos[i] = lo[k] + (q[i] + 32767) / 65534 * (hi[k] - lo[k]); }
+        for (let t = 0; t < q.length / 9; t++) { c.setRGB(rgb[t * 3] / 255, rgb[t * 3 + 1] / 255, rgb[t * 3 + 2] / 255, THREE.SRGBColorSpace); for (let k = 0; k < 3; k++) col.set([c.r, c.g, c.b], t * 9 + k * 3); }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals(); g.computeBoundingBox();
+        const b = g.boundingBox; g.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); g.computeBoundingBox(); kkCache[name] = g; }
+      const g = kkCache[name], o = mesh(g, vmat); o.scale.setScalar(h / (g.boundingBox.max.y || 1)); return o;
+    }
+    const G = () => new THREE.Group();
+    const put = (g, o, x = 0, y = 0, z = 0, s = 1) => { o.position.set(x, y, z); if (s !== 1) o.scale.multiplyScalar(s); g.add(o); return o; };
+    const blob = (r, c, detail = 0) => mesh(new THREE.IcosahedronGeometry(r, detail), mat(c));
+    const cyl = (r0, r1, h, c, n = 6) => mesh(new THREE.CylinderGeometry(r0, r1, h, n), mat(c));
+    const cone = (r, h, c, n = 7) => mesh(new THREE.ConeGeometry(r, h, n), mat(c));
+    const stone = (r, c) => mesh(new THREE.DodecahedronGeometry(r, 0), mat(c));
+    const glow = (r, c) => new THREE.Mesh(new THREE.SphereGeometry(r, 8, 6), new THREE.MeshBasicMaterial({ color: c }));
+    // a trunk standing on the ground
+    const trunk = (g, r, h, c, lean = 0) => { const t = cyl(r * 0.7, r, h, c); t.position.y = h / 2; t.rotation.z = lean; g.add(t); return t; };
+    // a pine: tiers of cones, with snow caps if asked
+    const pine = (green, snow, h = 1) => { const g = G(); trunk(g, 0.1, 0.4, '#5A4030');
+      for (let k = 0; k < 3; k++) { const r = (0.62 - k * 0.15) * h, y = (0.75 + k * 0.42) * h; put(g, cone(r, 0.9 * h, green), 0, y);
+        if (snow) put(g, cone(r * 0.62, 0.42 * h, snow), 0, y + 0.26 * h); } return g; };
+    const KITS = {
+      meadow: {
+        hero: () => { const g = G(); trunk(g, 0.26, 1.3, '#6B4A2E'); for (const [x, y, z, r, c] of [[0, 2.0, 0, 0.95, '#6F8E4E'], [0.6, 1.7, 0.3, 0.7, '#7E9A54'], [-0.55, 1.75, -0.2, 0.75, '#5F7E44'], [0.1, 2.5, -0.3, 0.6, '#7E9A54']]) put(g, blob(r, c), x, y, z); return g; },
+        tree: (i) => { const g = G(); trunk(g, 0.13, 0.7, '#6B4A2E'); put(g, blob(0.62, ['#6F8E4E', '#7E9A54'][i % 2]), 0, 0.95).scale.set(1, 0.9, 1); return g; },
+        accent: () => { const g = G(); put(g, blob(0.36, '#5F7E44'), 0, 0.26).scale.set(1.2, 0.75, 1.2);
+          for (let k = 0; k < 9; k++) { const a = k * 2.4, r = 0.3 + (k % 2) * 0.08; put(g, glow(0.06, ['#F4ECD8', '#F2D35B', '#E9A1B4'][k % 3]), Math.cos(a) * r, 0.3 + (k % 3) * 0.06, Math.sin(a) * r); } return g; },
+      },
+      autumn: {
+        hero: () => { const g = G(); trunk(g, 0.24, 1.3, '#5C3F28'); for (const [x, y, z, r, c] of [[0, 2.0, 0, 0.95, '#B8532F'], [0.6, 1.7, 0.3, 0.7, '#C9782F'], [-0.55, 1.75, -0.2, 0.75, '#9A3B2A'], [0.1, 2.5, -0.3, 0.6, '#D3A43A']]) put(g, blob(r, c), x, y, z);
+          for (let k = 0; k < 7; k++) { const a = k * 0.9, r = 1.0 + (k % 3) * 0.3; const l = mesh(new THREE.CircleGeometry(0.09, 5), mat(['#B8532F', '#C9782F', '#D3A43A'][k % 3]), false); l.rotation.x = -Math.PI / 2; put(g, l, Math.cos(a) * r, 0.02, Math.sin(a) * r); } return g; },
+        tree: (i) => { const g = G(); trunk(g, 0.09, 1.1, '#E8E2D4'); for (const y of [0.3, 0.6, 0.85]) put(g, cyl(0.075, 0.075, 0.05, '#2E2A26'), 0, y);
+          put(g, blob(0.5, ['#D3A43A', '#C9902F'][i % 2]), 0, 1.3).scale.set(0.9, 1.15, 0.9); put(g, blob(0.32, '#E0B649'), 0.2, 1.65, 0.1); return g; },
+        accent: () => { const g = G(); for (const [x, z, r, c] of [[0, 0, 0.34, '#C9782F'], [0.3, 0.15, 0.24, '#B8532F'], [-0.22, 0.2, 0.22, '#D3A43A']]) put(g, blob(r, c), x, r * 0.35, z).scale.set(1, 0.45, 1); return g; },
+      },
+      snow: {
+        hero: () => { const g = G(); for (const [x, z, r, y] of [[0, 0, 0.95, 0.6], [0.75, 0.35, 0.6, 0.35], [-0.6, 0.45, 0.55, 0.3], [0.1, -0.2, 0.55, 1.4]]) { put(g, stone(r, '#6E7880'), x, y, z).rotation.set(rnd(), rnd(), rnd());
+          put(g, blob(r * 0.62, '#E6EDF2'), x, y + r * 0.62, z).scale.set(1, 0.38, 1); } return g; },
+        tree: () => pine('#38554A', '#E6EDF2'),
+        accent: () => { const g = G(); for (const [x, z, r] of [[0, 0, 0.36], [0.32, 0.12, 0.24], [-0.24, 0.18, 0.2]]) put(g, blob(r, '#E8EEF2', 1), x, r * 0.3, z).scale.set(1, 0.5, 1); return g; },
+      },
+      glade: {
+        hero: () => { const g = G(); put(g, kk('arch_gate', 3.0), 0, 0, 0).rotation.y = -0.5; const sh = put(g, kk('shrine_candles', 0.95), 0.85, 0, 0.85); sh.rotation.y = -0.5;
+          for (const [x, z] of [[0.72, 0.96], [0.98, 0.72], [0.85, 0.88]]) put(g, glow(0.06, '#FFC26A'), x, 0.98, z); return g; },
+        tree: (i) => { const g = G(); const lean = (i % 2 ? 1 : -1) * 0.22; const t = trunk(g, 0.17, 1.3, '#3B3026', lean);
+          const b = cyl(0.05, 0.08, 0.7, '#3B3026'); b.position.set(-lean * 2, 0.95, 0); b.rotation.z = -lean * 3.2; g.add(b);
+          for (const [x, y, z, r] of [[-lean * 2.6, 1.55, 0, 0.52], [lean * 1.2, 1.35, 0.25, 0.4], [0, 1.85, -0.15, 0.36]]) put(g, blob(r, ['#2F4A36', '#3A5940', '#26402E'][(i + Math.round(y * 3)) % 3]), x, y, z);
+          return g; },
+        accent: () => { const g = G(); for (const [x, z, h, r] of [[0, 0, 0.26, 0.17], [0.2, 0.12, 0.17, 0.12], [-0.16, 0.14, 0.13, 0.1]]) { put(g, cyl(0.04, 0.05, h, '#EDE3CC'), x, h / 2, z);
+          const cap = mesh(new THREE.SphereGeometry(r, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#E8913A', emissive: '#7A3A10', roughness: 1, flatShading: true })); put(g, cap, x, h, z); } return g; },
+      },
+      desert: {
+        hero: () => { const g = G(); put(g, cyl(1.25, 1.35, 0.06, '#CDB585', 10), 0, 0.03); const w = mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.07, 12), new THREE.MeshStandardMaterial({ color: '#4FA3B5', roughness: 0.35 }), false); put(g, w, 0, 0.05);
+          for (let k = 0; k < 6; k++) { const a = k * 1.05 + 0.3; put(g, cone(0.05, 0.6 + (k % 3) * 0.15, '#7C8F45', 4), Math.cos(a) * 1.1, 0.35, Math.sin(a) * 1.1); }
+          put(g, stone(0.25, '#C08A5A'), 0.9, 0.12, -0.75); return g; },
+        tree: (i) => { const g = G(); let x = 0; const bend = (i % 2 ? 1 : -1) * 0.07;
+          for (let k = 0; k < 5; k++) { put(g, cyl(0.08 - k * 0.008, 0.1 - k * 0.008, 0.32, '#8C6B45'), x, 0.16 + k * 0.3).rotation.z = -bend * 1.5; x += bend; }
+          for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2, f = mesh(new THREE.ConeGeometry(0.12, 0.95, 4), mat(k % 2 ? '#6E8B3D' : '#5E7A34')); f.position.set(x + Math.cos(a) * 0.38, 1.55, Math.sin(a) * 0.38); f.rotation.set(0, 0, 0); f.lookAt(x + Math.cos(a) * 2, 1.15, Math.sin(a) * 2); f.rotateX(Math.PI / 2); g.add(f); }
+          return g; },
+        accent: () => { const g = G(); put(g, stone(0.38, '#C08A5A'), 0, 0.22, 0).scale.set(1.2, 0.6, 1); put(g, stone(0.26, '#A8744A'), 0.1, 0.5, 0.05).scale.set(1, 0.65, 1); put(g, stone(0.18, '#C9965F'), -0.35, 0.1, 0.25); return g; },
+      },
+      ash: {
+        hero: () => { const g = G(); put(g, kk('wall_broken', 1.3), 0, 0, 0).rotation.y = 0.4; put(g, kk('wall_archedwindow_open', 1.5), 0.85, 0, -0.75).rotation.y = 0.4 + Math.PI / 2; put(g, kk('rubble_large', 0.45), 0.6, 0, 0.5);
+          for (const [x, z] of [[0.4, 0.4], [0.75, 0.62], [0.2, 0.75]]) put(g, glow(0.06, '#FF8A4A'), x, 0.12, z); return g; },
+        tree: (i) => { const g = G(); trunk(g, 0.11, 1.4, '#2A2420', (i % 2 ? 1 : -1) * 0.06);
+          for (const [y, a, l] of [[0.8, 0.9, 0.55], [1.05, -0.8, 0.45], [1.25, 0.5, 0.35]]) { const b = cyl(0.025, 0.05, l, '#2A2420', 5); b.position.set(Math.sin(a) * l * 0.45, y + l * 0.35, Math.cos(a) * 0.05); b.rotation.z = -a; g.add(b); }
+          return g; },
+        accent: () => { const g = G(); put(g, kk('sword_shield_broken', 0.42), 0, 0, 0).rotation.y = rnd() * 6; put(g, glow(0.05, '#FF8A4A'), 0.25, 0.05, 0.2); return g; },
+      },
+      moonlit: {
+        hero: () => { const g = G(); const ry = -0.6; const h = G(); h.rotation.y = ry; g.add(h);
+          put(h, mesh(new THREE.BoxGeometry(1.6, 0.85, 1.1), mat('#6B4A2E')), 0, 0.425);
+          for (const sd of [-1, 1]) { const r = mesh(new THREE.BoxGeometry(1.8, 0.08, 0.75), mat('#E6EDF5')); r.position.set(0, 1.08, sd * 0.3); r.rotation.x = sd * 0.62; h.add(r); }
+          put(h, mesh(new THREE.BoxGeometry(0.22, 0.6, 0.22), mat('#7D8590')), 0.5, 1.25, -0.2);
+          for (const x of [-0.45, 0.35]) put(h, new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.22, 0.02), new THREE.MeshBasicMaterial({ color: '#FFB65C' })), x, 0.5, 0.56);
+          put(h, mesh(new THREE.BoxGeometry(0.3, 0.5, 0.02), mat('#3E2A1C')), -0.05, 0.25, 0.56); return g; },
+        tree: () => pine('#2E4A4E', '#E3EAF5'),
+        accent: () => { const g = G(); put(g, kk('snowman_A', 0.85), 0, 0, 0).rotation.y = 0.4 + rnd(); return g; },
+      },
+      savanna: {
+        hero: () => { const g = G(); for (const [x, z, r, y] of [[0, 0, 0.75, 0.45], [0.8, 0.3, 0.55, 0.3], [-0.6, 0.45, 0.5, 0.28], [0.2, -0.35, 0.5, 1.05], [0.65, -0.5, 0.35, 0.2]]) put(g, stone(r, ['#B4A493', '#A89786', '#C1B2A0'][Math.round(r * 10) % 3]), x, y, z).rotation.set(rnd(), rnd(), rnd()); return g; },
+        tree: (i) => { const g = G(); put(g, kk(['acacia_A', 'acacia_B', 'acacia_C'][i % 3], 1.9), 0, 0, 0); return g; },
+        accent: () => { const g = G(); const m = mesh(new THREE.ConeGeometry(0.24, 1.0, 7), mat('#A9603C')); m.position.y = 0.5; m.rotation.z = 0.12; g.add(m); put(g, cone(0.14, 0.45, '#9A5634'), 0.25, 0.22, 0.1); put(g, cone(0.1, 0.3, '#B0683F'), -0.2, 0.15, 0.12); return g; },
+      },
+    };
+    // the slots, the same on every battlefield: round the edges, clear of the keeps, treasuries and units
+    const SLOTS = { hero: [[4.7, -7.3, 1, -0.4]], tree: [[-6.25, 8.2, 1.1], [6.35, 8.35, 0.95], [6.35, 3.1, 0.8], [-6.3, 3.3, 0.75], [-6.2, -8.0, 1.0], [6.35, -4.4, 0.85]], accent: [[-6.35, 6.0, 1], [6.3, 0.7, 1], [-6.3, -4.0, 1]] };
+    const kit = G();
+    let lookI = 0, kitGrow = [];
+    function setLook(i, animate) {
+      lookI = (i + LOOKS.length) % LOOKS.length; const L = LOOKS[lookI], c = floorCv.getContext('2d');
+      c.clearRect(0, 0, floorCv.width, floorCv.height);
+      // the game's own painter for the look's ground, on the Standard map's grid (as lookThumb does)
+      Game.useGrid(STD_MAP); try { Floors.floor(c, floorCv.width, floorCv.height, FT, (Floors.LOOKS[L.id] || {}).floor || 'meadow'); } finally { Game.useGrid(m); }
+      if (flat) paintFlat();
+      floorTex.needsUpdate = true; top.material.color.set(L.side); soil.forEach((b, k) => b.material.color.set(L.soil[k])); root.material.color.set(L.soil[2]);
+      for (const o of [...kit.children]) { kit.remove(o); o.traverse(m => { if (m.geometry && !Object.values(kkCache).includes(m.geometry)) m.geometry.dispose(); }); }
+      seed = 11 + lookI; const K = KITS[L.kit]; kitGrow = [];
+      for (const [kind, list] of Object.entries(SLOTS)) list.forEach(([x, z, s, ry], k) => { const o = K[kind](k); o.position.set(x, 0, z); o.rotation.y = ry ?? rnd() * 6; o.userData.s = s; o.scale.setScalar(animate ? 0.001 : s); kit.add(o); kitGrow.push(o); });
+      kitGrow.forEach((o, k) => { o.userData.t0 = animate ? k * 0.045 : -1; });
+      changedAt = animate ? performance.now() / 1000 : -9;
+      document.dispatchEvent(new CustomEvent('battlefield'));
+    }
+    let changedAt = -9;
+    // the golem's rock (it stands on it), the same on every battlefield
+    const rock = (x, z, s) => { const r = mesh(new THREE.DodecahedronGeometry(s, 0), mat('#A39C8D')); r.position.set(x, s * 0.45, z); r.rotation.set(rnd(), rnd(), rnd()); island.add(r); return r; };
+    const base = new Set(island.children.filter(c => !c.userData.piece)); // the island itself: ground, soil, rock
+    island.add(kit); rock(-4.5, 4.5, 0.55);
+    // your battlefield at home: the game's look pick (skinPick, saved as pb-skin; '' = the Standard map's own, 'random' =
+    // a new one each match, so one at random here). Change battlefield sets it as the PLAY popup's Look row does. A
+    // room's battlefield is the host's (New room)
+    const lookIndex = () => { const id = skinPick === 'random' ? Game.SKINS[Math.floor(Math.random() * Game.SKINS.length)].id : lookShown(); return Math.max(0, LOOKS.findIndex(l => l.id === id)); };
+    const saveLook = (i) => { const id = LOOKS[i].id; skinPick = id; /* (the island's look is the match's: owner, 2026-11-08) */ try { localStorage.setItem('pb-skin', skinPick); } catch (e) {} };
+    if (!mapPick) mapPick = STD_MAP; // a developer's map pick ('' = random) isn't on the Diorama: the island's map, Standard
+    let homeLook = lookIndex();
+    { const i = LOOKS.findIndex(l => l.id === (H.match(/bf=(\w+)/) || [])[1]); if (i >= 0) homeLook = i; }
+    setLook(homeLook, false);
+
+    // ── pieces, from the game's own Models3D (with KayKit's chest for the treasuries and torches) ──
+    const YOU = '#5B8FD6', FOE = '#D9573B';
+    const unit = (kind, tint, team, x, z, s, ry = 0, into = island) => { const p = M.parts(kind), g = new THREE.Group();
+      if (p.tint) g.add(mesh(p.tint, mat(tint))); if (p.team) g.add(mesh(p.team, mat(team))); if (p.fixed) g.add(mesh(p.fixed, vmat));
+      g.scale.setScalar(s); g.position.set(x, 0, z); g.rotation.y = ry; g.userData.y0 = 0; into.add(g); return g; };
+    const s = 0.42, Y = Math.PI; // models face -z; ours face the foe (-z), theirs turn round
+    // the Standard map's own spots: your keep at col 8, row 16; theirs mirrored to col 5, row 1; each treasury beside its keep
+    const keepYou = unit('tower:keep', '#D8CFBE', YOU, tx(8), tz(16), 0.36);
+    const keepFoe = unit('tower:keep', '#C9BFAE', FOE, tx(5), tz(1), 0.36, Y);
+    const vaultYou = unit('treasury', '#D9B95B', YOU, tx(6), tz(15), 0.28, Y);
+    const vaultFoe = unit('treasury', '#D9B95B', FOE, tx(7), tz(2), 0.28);
+    const champ = unit('brute:champion', '#8D99AE', YOU, 2.6, 4.4, s * 1.05, -0.3);
+    const mage = unit('wizard:fire', '#C8463A', YOU, -2.4, 3.6, s, 0.3);
+    const sniper = unit('sniper', '#6E7B5A', YOU, 5.0, 5.6, s, -0.35);
+    const golem = unit('golem', '#4FD1C5', YOU, -4.5, 4.5, s * 0.95, 0.6); golem.position.y = golem.userData.y0 = 0.45;
+    const ent = unit('ent', '#6F8E4E', YOU, 4.6, 8.3, s * 1.05, 0); ent.rotation.set(-Math.PI / 2 + 0.08, 0, 0.5); ent.position.y = ent.userData.y0 = 0.42; // asleep, face down
+    for (const [x, z] of [[-2.6, -3.6], [-1.9, -4.0], [-3.2, -4.2], [-2.3, -4.6], [-3.0, -3.3]]) unit('goblin', '#7FA35A', FOE, x, z, s * 0.75, Y + (rnd() - 0.5) * 0.6);
+    const mammoth = unit('mammoth', '#8E7A68', FOE, 3.4, -4.6, s * 0.8, Y - 0.3);
+    const skeleton = unit('skeleton', '#E9E3CF', FOE, -5.0, -5.6, s * 0.9, Y + 0.3);
+    const pieces = new THREE.Group(); island.add(pieces);
+    for (const c of [...island.children]) if (!base.has(c) && c !== pieces) pieces.add(c);
+
+
+  return { island, pieces, kit, top, soil, root, floor, setLook, LOOKS, keepYou, keepFoe };
+}
 // ===== The battle screen in the Diorama's look: a prototype on a real match against the computer (2026-11-08) =====
 // The board is the game's own 3D renderer (src/render3d.js) running edge to edge; the match is the game's engine
 // (src/game.js), the computer is the game's AI. Everything the deploy panel does in the game works here the same way
@@ -14551,6 +14765,7 @@ let bt = null, pre = null, fx = [], acc = 0, summary = null, lastSummary = null;
 let selected = null, drag = null, dragEndAt = 0, hoverTile = null, cardDrag = null;
 let ready = [false, false], deadline = 0, timeUp = false, aiReadyAt = 0, aiRound = 0, fightAt = 0;
 let timerOn = Q.get('timer') !== 'off', look = Game.SKINS.some(s => s.id === Q.get('look')) ? Q.get('look') : 'meadow';
+let foeAway = false; // online: the opponent's connection dropped (the HUD says so beside their name; a prototype switch in Settings)
 let undoSnap = null, capWarn = false, shopOpen = true, unlockTier = null, sqOpen = null, pickSel = null, pickHidden = false, sheetKind = null;
 
 // ---------- the room you wait in: the battlefield you'll fight on, its settings, the seat across ----------
@@ -14650,13 +14865,14 @@ function sideHtml(sd) {
   if (sd === FOE && phase === 'deploy') state = ready[FOE] ? '<span class="tag">Ready</span>' : 'Deploying…';
   if (sd === FOE && phase === 'deploy' && Game.charOf(m, FOE)) state += `${state ? '<br>' : ''}<span style="opacity:.8">Leader: ${esc(charName(Game.charOf(m, FOE)))}</span>`;
   if (sd === ME && phase === 'deploy' && Game.charOf(m, ME)) state = `<span style="opacity:.8">Leader: ${esc(charName(Game.charOf(m, ME)))}</span>`;
-  return `<div class="who">${sd === ME ? `${esc(name)} ${ttl} ${streak}` : `${streak} ${ttl} ${esc(name)}`}</div>
+  const away = sd === FOE && foeAway && phase !== 'room' ? ' <span class="away">· disconnected</span>' : '';
+  return `<div class="who">${sd === ME ? `${esc(name)} ${ttl} ${streak}` : `${streak} ${ttl} ${esc(name)}${away}`}</div>
     <div class="hp"><b class="num">${hp}</b><span class="bar" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="${hpMax}" aria-valuenow="${hp}" style="--w:${w}%;--lost:${lost}%"><i></i>${lost ? '<s></s>' : ''}</span></div>
     ${state ? `<div class="state">${state}</div>` : ''}`;
 }
 let sidesKey = '';
 function paintSides() {
-  const k = JSON.stringify([phase, hpShown(0), hpShown(1), ready, m.round, m.chars, m.streak, foe.name, room.who && room.who.name, room.joining && room.joining.name, room.pub, room.role]);
+  const k = JSON.stringify([phase, hpShown(0), hpShown(1), ready, m.round, m.chars, m.streak, foe.name, room.who && room.who.name, room.joining && room.joining.name, room.pub, room.role, foeAway]);
   if (k === sidesKey) return; sidesKey = k;
   $('you').innerHTML = sideHtml(ME); $('foe').innerHTML = sideHtml(FOE);
 }
@@ -15032,9 +15248,11 @@ function paintSheet() {
         <span class="lab">3D quality</span>${seg('q', [['high', 'High'], ['medium', 'Medium'], ['low', 'Low']], q)}
         ${phase === 'room' ? '' : '<span class="lab">Deploy timer</span>'}${phase === 'room' ? '' : seg('timer', [[1, 'On'], [0, 'Off']], timerOn ? 1 : 0)}
         <span class="lab">Battlefield</span>${seg('look', Game.SKINS.map(k => [k.id, k.name]), look)}
+        ${phase === 'room' ? '' : `<span class="lab">Opponent</span>${seg('away', [[0, 'Connected'], [1, 'Disconnected']], foeAway ? 1 : 0)}`}
       </div>
       ${phase === 'room' ? '' : '<div class="acts"><button class="w" id="new-match">New match</button></div>'}
-      <p style="opacity:.7">Sound, chat and the rest stay in the menu's Settings.</p>`;
+      <div class="acts"><button class="w" id="replay-in">Replay the way in</button></div>
+      <p style="opacity:.7">Sound, chat and the rest stay in the menu's Settings. Opponent: a prototype switch for how an online drop shows.</p>`;
   } else if (sheetKind === 'damage') {
     const S = lastSummary; if (!S) { s.hidden = true; return; }
     const rows = (sd) => { const list = (S.squads[sd] || []).slice().sort((a, b) => b.dealt - a.dealt), top = Math.max(1, ...list.map(q => q.dealt));
@@ -15053,6 +15271,7 @@ function paintSheet() {
   on('sq-lvl', () => { if (editable() && Game.levelUp(m, ME, sqOpen)) changed(); });
   on('sq-sell', () => { if (editable() && Game.sell(m, ME, sqOpen)) { closeSheet(); changed(); } });
   on('new-match', () => { closeSheet(); newMatch(); });
+  on('replay-in', () => { closeSheet(); introStart(); });
   s.querySelectorAll('[data-inv]').forEach(b => b.addEventListener('click', () => {
     const f = FRIENDS[+b.dataset.inv]; room.invited[f.name] = true;
     if (f.comes && !room.who && !room.joining) { room.joining = f; room.joinAt = now() + 2600; } // Pebble accepts; Juniper is mid-match
@@ -15064,6 +15283,7 @@ function paintSheet() {
     if (k === 'q') { quality = v; board.quality(v); }
     if (k === 'timer') { timerOn = v === '1'; deadline = timerOn && phase === 'deploy' && !timeUp ? now() + DEPLOY_MS : 0; paintCol(); }
     if (k === 'look') { look = v; m.skin = v; paintRound(); if (phase === 'room') paintRoom(); }
+    if (k === 'away') { foeAway = v === '1'; paintSides(); }
     paintSheet();
   })));
 }
@@ -15257,6 +15477,122 @@ document.addEventListener('pointerdown', (e) => { // a press outside an open she
   closeSheet(); paint();
 });
 
+// ---------- the way in: New room on the menu's island, then CREATE ROOM flies the island into the battlefield ----------
+// The owner's wish (2026-11-08). The island is the menu's own (buildIsland: lifted from src/diorama.js at build time) and
+// the board is the real one, already loaded and framed underneath, under the saffron field. The island and the board are
+// the same map at different scales (a tile is 1 on the island, Game.TILE metres on the board, both centred), so the island
+// camera can end on the board camera's exact pose: position / TILE, the same angle, lens and view offset. The flight
+// blends from New room's view of the island (the menu's orthographic 'orders' view, as a very long lens) to that pose,
+// while the miniatures sink, the field opens from the board outward, and the island fades into the board under it.
+const ISLE_START = { at: [0, 0, 0.4], az: 0, el: 1.25, h: 13.6, fov: 5, ox: -0.24, oy: 0, k: 1 }; // VIEWS.orders in src/diorama.js
+const FLY_MS = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1900;
+let isle = null;
+const intro = { on: false, t0: 0, going: false, done: true, autoAt: 0, ready: false };
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const ease = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+function makeIsle() {
+  const cv = $('isle');
+  const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene(), I = buildIsland(THREE, scene, Models3D(THREE), look);
+  // the menu's light: a warm low sun and a cool sky
+  scene.add(new THREE.HemisphereLight('#EFE6D2', '#3B3A4E', 1.15));
+  const sun = new THREE.DirectionalLight('#FFE3B8', 2.4); sun.position.set(-9, 16, 7); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -15, right: 15, top: 15, bottom: -15, near: 1, far: 45 }); sun.shadow.bias = -0.0008; sun.shadow.normalBias = 0.02;
+  scene.add(sun);
+  const cam = new THREE.PerspectiveCamera(5, 1, 0.05, 4000);
+  // each piece's size and the soil's height, to put back on a replay
+  for (const o of I.pieces.children) o.userData.s0 = o.scale.x;
+  for (const o of [...I.soil, I.root]) o.userData.y0 = o.position.y;
+  isle = { renderer, scene, cam, I, cv };
+}
+// the keeps stand where the board has them (the menu's island puts them at the Standard map's spots)
+function isleKeeps() {
+  if (!isle || !m || !m.towers) return;
+  for (const [o, t] of [[isle.I.keepYou, m.towers[ME]], [isle.I.keepFoe, m.towers[FOE]]]) if (t) o.position.set(t.col - 6.5, 0, t.row - 8.5);
+}
+// the board camera's pose, in island units (its position / TILE), as the flight's end
+const bv = () => new THREE.Vector3();
+function boardPose() {
+  const c = board.cam3, T = Game.TILE, b = bv().set(0, 0, 1).applyQuaternion(c.quaternion);
+  const p = c.position.clone().divideScalar(T), dist = p.y / Math.max(0.05, b.y), at = p.clone().addScaledVector(b, -dist);
+  return { at: [at.x, at.y, at.z], az: Math.atan2(b.x, b.z), el: Math.asin(b.y), h: dist * Math.tan(c.fov * Math.PI / 360), fov: c.fov, ox: fit.ox / innerWidth, oy: fit.oy / innerHeight, k: fit.k };
+}
+function mixPose(A, B, e) {
+  const L = (a, b) => a + (b - a) * e; let daz = B.az - A.az; daz = Math.atan2(Math.sin(daz), Math.cos(daz));
+  return { at: A.at.map((v, i) => L(v, B.at[i])), az: A.az + daz * e, el: L(A.el, B.el), h: Math.exp(L(Math.log(A.h), Math.log(B.h))), fov: L(A.fov, B.fov), ox: L(A.ox, B.ox), oy: L(A.oy, B.oy), k: L(A.k, B.k) };
+}
+function islePose(P) {
+  const W = innerWidth, H = innerHeight, cam = isle.cam, d = P.h / Math.tan(P.fov * Math.PI / 360);
+  cam.fov = P.fov; cam.aspect = W / H; cam.near = Math.max(0.05, d * 0.02); cam.far = d * 6 + 100;
+  cam.position.set(P.at[0] + d * Math.cos(P.el) * Math.sin(P.az), P.at[1] + d * Math.sin(P.el), P.at[2] + d * Math.cos(P.el) * Math.cos(P.az));
+  cam.up.set(0, 1, 0); cam.lookAt(P.at[0], P.at[1], P.at[2]);
+  cam.setViewOffset(W, H, P.ox * W, P.oy * H, W / P.k, H / P.k);
+}
+function paintNR() {
+  const nr = $('nr'), k = Game.SKINS.findIndex(x => x.id === look);
+  const ws = (key, opts, cur) => opts.map(([v, l]) => `<button class="w" data-n="${key}" data-v="${v}" aria-pressed="${String(v) === String(cur)}">${l}</button>`).join('');
+  nr.innerHTML = `<div class="k">Play · Rooms · Create</div><h2>New room</h2>
+    <div class="r"><span class="lab">Kind</span><span class="ws">${ws('kind', [['standard', '1v1 Standard'], ['ranked', '1v1 Ranked']], room.ranked ? 'ranked' : 'standard')}</span></div>
+    <div class="r"><span class="lab">Battlefield</span><span class="ws"><button class="arrow" data-bf="-1" aria-label="Previous battlefield">‹</button><span class="w" aria-pressed="true">${Game.SKINS[k].name}</span><button class="arrow" data-bf="1" aria-label="Next battlefield">›</button></span>
+      <span class="note">${k + 1} of ${Game.SKINS.length}. The match is played here.</span></div>
+    <div class="r"><span class="lab">Who can find it</span><span class="ws">${ws('pub', [[1, 'Public'], [0, 'Private']], room.pub ? 1 : 0)}</span></div>
+    <div class="r"><span class="lab">Spectators</span><span class="ws">${ws('spec', [[1, 'On'], [0, 'Off']], room.spec ? 1 : 0)}</span></div>
+    <button class="create${intro.going ? ' pressed' : ''}" id="nr-go">${SHARD.replace('class="shard"', 'class="shard"')}Create room →</button>
+    <span class="auto">${intro.autoAt ? 'Prototype: it presses itself in a moment.' : intro.ready ? '' : 'Loading the battlefield…'}</span>`;
+  const stopAuto = () => { intro.autoAt = 0; };
+  nr.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => { stopAuto(); const v = b.dataset.v;
+    if (b.dataset.n === 'kind') { room.ranked = v === 'ranked'; room.pack = room.ranked ? 'standard' : 'learn'; }
+    if (b.dataset.n === 'pub') room.pub = v === '1'; if (b.dataset.n === 'spec') room.spec = v === '1'; paintNR(); }));
+  nr.querySelectorAll('[data-bf]').forEach(b => b.addEventListener('click', () => { stopAuto();
+    const i = (k + +b.dataset.bf + Game.SKINS.length) % Game.SKINS.length; look = Game.SKINS[i].id; m.skin = look; isle.I.setLook(i, false); paintNR(); }));
+  $('nr-go').addEventListener('click', introGo);
+}
+function introStart() {
+  if (!isle) makeIsle();
+  room.role = ROOM === 'guest' ? 'guest' : 'host'; if (room.role === 'host') { room.who = null; room.joining = null; foe = COMPUTER; }
+  openRoom(); isleKeeps();
+  isle.I.setLook(Math.max(0, Game.SKINS.findIndex(x => x.id === look)), false);
+  for (const o of isle.I.pieces.children) o.scale.setScalar(o.userData.s0);
+  for (const o of [...isle.I.soil, isle.I.root]) o.position.y = o.userData.y0;
+  document.body.classList.add('intro');
+  $('field').hidden = false; $('field').style.opacity = 1; $('field').style.webkitMaskImage = $('field').style.maskImage = 'none';
+  isle.cv.hidden = false; isle.cv.style.opacity = 1; $('nr').hidden = false; $('nr').classList.remove('leaving');
+  Object.assign(intro, { on: true, going: false, done: false, autoAt: 0, ready: false });
+  paintNR(); sizeIsle();
+  // the press waits for the board underneath: its scenery loaded and its camera settled on the tilted view
+  const ready = board.scenery && board.scenery.ready ? board.scenery.ready : Promise.resolve();
+  ready.catch(() => {}).then(() => setTimeout(() => { intro.ready = true; if (!intro.going && Q.get('auto') !== 'off') { intro.autoAt = now() + 1600; paintNR(); } else paintNR(); }, 600));
+}
+function introGo() {
+  if (!intro.on || intro.going) return;
+  intro.going = true; intro.autoAt = 0; intro.t0 = now(); paintNR();
+  $('nr').classList.add('leaving');
+}
+function sizeIsle() { if (isle) isle.renderer.setSize(innerWidth, innerHeight, false); }
+addEventListener('resize', sizeIsle);
+function introFrame() {
+  if (!intro.on || !isle) return;
+  if (intro.autoAt && now() >= intro.autoAt) introGo();
+  const t = intro.going ? (window.__introT != null ? window.__introT : FLY_MS ? clamp01((now() - intro.t0) / FLY_MS) : 1) : 0, end = boardPose(); // (__introT: checks pin a moment)
+  islePose(intro.going ? mixPose(ISLE_START, end, ease(clamp01(t / 0.92))) : ISLE_START);
+  // the miniatures sink into the island and its soil drops away, as on the menu when a screen changes
+  const sink = ease(clamp01((t - 0.4) / 0.35));
+  // (the keeps last, so the hand-off is ground on ground: the board draws its own keeps there)
+  const ksink = ease(clamp01((t - 0.55) / 0.25));
+  for (const o of isle.I.pieces.children) { const k = o === isle.I.keepYou || o === isle.I.keepFoe ? ksink : sink; o.scale.setScalar(Math.max(0.0001, o.userData.s0 * (1 - k))); }
+  for (const o of [...isle.I.soil, isle.I.root]) o.position.y = o.userData.y0 - sink * 6;
+  // the field opens from the middle of the board outward, the battlefield's own scenery under it
+  const f = ease(clamp01((t - 0.5) / 0.4)), R = safeRect(), cx = (R.x0 + R.x1) / 2, cy = (R.y0 + R.y1) / 2, far = Math.hypot(innerWidth, innerHeight);
+  const mask = f > 0 ? `radial-gradient(circle at ${cx}px ${cy}px, transparent ${f * far}px, #000 ${f * far + 220}px)` : 'none';
+  $('field').style.webkitMaskImage = $('field').style.maskImage = mask;
+  isle.cv.style.opacity = 1 - ease(clamp01((t - 0.72) / 0.28));
+  if (t >= 0.78 && document.body.classList.contains('intro')) document.body.classList.remove('intro'); // the room's words come in
+  isle.renderer.render(isle.scene, isle.cam);
+  if (t >= 1) { intro.on = false; intro.done = true; isle.cv.hidden = true; $('field').hidden = true; $('nr').hidden = true; }
+}
+
 // ---------- the loop ----------
 let last = 0;
 function frame(ts) {
@@ -15283,12 +15619,13 @@ function frame(ts) {
   }
   board.draw();
   fitView(dt);
+  introFrame();
   if (sheetKind === 'squad') placeSheet();
   requestAnimationFrame(frame);
 }
 board.size();
 if (Q.get('cam') !== 'top') board.camera.setLevel(1); // the tilted view: the board as the menu's island, your zone nearest and biggest
-if (ROOM === 'none') newMatch(); else openRoom();
+if (ROOM === 'none') newMatch(); else if (Q.get('fly') === 'off') openRoom(); else introStart();
 fitView();
 requestAnimationFrame(frame);
 
@@ -15297,7 +15634,7 @@ window.__battle = { board, get m() { return m; }, get phase() { return phase; },
   paint, pressReady, choose: (k) => { pickSel = k; choose(); }, fight: () => { ready = [true, true]; fight(); },
   skip: () => { if (phase === 'battle') { while (bt.step()) absorb(); fx = []; endFight(); } }, next: () => { if (m.over) { phase = 'end'; paint(); } else startRound(); },
   seat: (n) => seat(n === 'computer' ? COMPUTER : FRIENDS.find(f => f.name === n) || null), openRoom, newMatch,
-  fit, zoom: () => board.camera.zoom(),
+  fit, zoom: () => board.camera.zoom(), intro, introGo, isle: () => isle,
   holdAi: () => { aiReadyAt = 1e15; ready[FOE] = false; paint(); }, // (shots: the computer still deploying)
   openSheet, unitNote, freeTiles: () => { const out = []; for (const row of Game.zoneRows(ME)) for (let col = 1; col < Game.COLS - 1; col++) if (!Game.occupied(m, ME, col, row)) out.push([col, row]); return out; } };
 
