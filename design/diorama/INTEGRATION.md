@@ -4,6 +4,47 @@ Written 2026-11-07 at the end of the session that finished the mockup. Read `des
 design language and every screen), then this file. Work on a branch (`claude/nice-mendel-scnrpy` has the mockup and
 is level with `main` as of 2026-11-07; merge `main` in again before starting, the game moves fast).
 
+## Next session: start here (handoff, 2026-11-08)
+
+**State.** The Diorama is in the game behind the switch and live on `main` as a trial: every player gets the old UI;
+`?ui=diorama` turns the Diorama on for that device (`?ui=classic` off). Branch: `claude/nice-mendel-scnrpy` (level
+with `main` after the last push). Steps 1 to 7 and 9 are done (notes under Progress); step 8 (phones) and the test
+rewrite were set aside for their own sessions by the owner.
+
+**Done from the owner's first trial notes (2026-11-08):** Friends, your name and Settings on every screen; the logo
+goes to the menu; no back link (sub-screens have a clickable trail in their small heading: Play · Rooms · New room,
+Profile · Match history, Welcome · sign up); Profile's rows stay when Units is open, no note under Units; accents
+(Ä) clear the line above big names; pointing at any keep or treasury shows all four notes (their keep: "Bring it
+down to hurt the opponent and weaken their army", their treasury: "Destroy their treasury to steal their gold"), and
+notes change only after half a second so a sweep doesn't flicker (the piece lifts at once); Full screen in Settings;
+the developer rows no longer show on Rooms; Vs computer plays the island's battlefield (Change battlefield saves the
+look as itself, and a developer's empty map pick is the Standard map under the Diorama); Change battlefield sits in
+one fixed place (bottom right, beside the music player) on every screen; the match's old music panel closes when
+you come home; the playlist has no scrollbar; Log out's underline sits closer to the word.
+
+**Open, in order:**
+1. **Ask the owner to try again** at `?ui=diorama` (list below) and fix what they find.
+2. **"Older player still shows up":** fixed for the menu (the match's panel closes at home). In a match the HUD's music
+   button still opens the game's old panel (`openPlaylist`, `mp-pop`); the owner may want it in the Diorama's look
+   (restyle it under `html.diorama`, as the sheets) or the Diorama's list. Ask.
+3. **The PC launch** when the owner says so: `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`, push to `main`
+   (the Diorama on computers, the old UI on phones and tablets). Never commit a non-`classic` build otherwise.
+4. **Designs the owner wants before the full launch:** Puzzles, How to play, and the room you wait in (still the
+   game's sheets / screens, restyled).
+5. **Own sessions (owner's call):** step 8, phone layouts for every screen; the test rewrite (tests that click Play vs
+   Friend `#friend`, `#online`, Quick play, join by code, the old Create-room sheet, the old playlist panel,
+   `#tutorial-new`, `[data-tm]` / `#settings` in the old popup must go through the Diorama's screens: Vs computer
+   `#go`, Rooms `#lob-list` / `#lob-create`, Settings' Deploy timer). 57 of the 78 page tests already fail on a clean
+   `main` in the sandbox (see Live trial below), so compare against `main` before blaming a change.
+6. Small: Quick play isn't on Rooms (not in the design; ask if wanted); no "Add friend" on an opponent in history (the
+   game doesn't have it yet).
+
+**How to check work here:** build with `node src/build.js`; serve with `python3 -m http.server 8766 --bind 127.0.0.1`
+from the repo root; Chromium + Playwright are preinstalled (`require('playwright')`). Load
+`/?ui=diorama&test` (?test skips the welcome screen; `&welcome` brings it back; `&server=http://stub.test` with
+`page.route` / `page.routeWebSocket` stubs the game server, which this sandbox can't reach). The game's own tests:
+`export NODE_PATH=/opt/node-tools/node_modules` and see "Running the UI tests in this sandbox" below.
+
 ## Live trial (2026-11-08): what is live, what to try
 
 **On `main` (the live site) since the night of 2026-11-07/08,** if the final checks passed (see the commit log):

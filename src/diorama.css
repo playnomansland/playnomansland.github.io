@@ -417,7 +417,6 @@
 #dio .ptitle i { width: 7px; height: 7px; background: currentColor; transform: rotate(45deg); }
 #dio .ptitle[hidden] { display: none; }
 #dio .pf .k .dev { color: #FF5FC4; }
-#dio.profile.units .pf-opts > :not(.ur), #dio.profile.units #pf-hist { display: none; }
 #dio.profile.units .pf-opts { margin-top: 18px; }
 #dio .pf, #dio .history { top: clamp(100px, 14.2vh, 128px); }
 #dio .rooms, #dio .newroom { top: clamp(100px, 14.2vh, 128px) !important; }
@@ -628,3 +627,26 @@ html.diorama .sheet table { font-family: var(--font-data); }
 html.diorama .sheet details > summary { font-family: var(--font-data); }
 html.diorama .sheet .btn small, html.diorama .sheet .btn .hint, html.diorama .sheet .btn em { text-transform: none; letter-spacing: 0; font: 400 13px/1.4 var(--font-data); }
 html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35) !important; border-radius: 0 !important; background: rgba(244, 236, 216, .04) !important; }
+
+/* ── owner's live-trial notes (2026-11-08) ── */
+/* Friends, your name and Settings on every screen (not the welcome screens); the logo is the way home, so no back link */
+#dio.play .acct, #dio.pinned .acct, #dio.profile .acct { display: flex; }
+#dio .back, #dio.play .back, #dio.pinned .back, #dio.profile .back, #dio.welcome.in-signin .back { display: none; }
+#dio .logo { cursor: pointer; } #dio.welcome .logo { cursor: default; }
+/* a sub-screen's heading is its trail: Play · Rooms · New room, Profile · Match history; the earlier ones are links */
+#dio .crumb { font: inherit; letter-spacing: inherit; text-transform: inherit; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 4px; opacity: .9; }
+#dio .crumb:hover { opacity: 1; text-decoration-thickness: 2.5px; }
+/* Change battlefield: always in the same place, bottom right beside the music player */
+#dio .note.bf-note { position: fixed; left: auto !important; top: auto !important; right: 340px; bottom: 36px; transform: none; text-align: right !important; padding-bottom: 0; }
+#dio.welcome .bf-note { display: none !important; }
+#dio.flat .bf-note { right: 340px; bottom: 36px; }
+/* accents over capitals (Ä, Å, É) clear the line above the big name and titles */
+#dio .plate h2 { line-height: 1.02; margin-top: 8px; }
+#dio .rooms h2, #dio .newroom h2, #dio .history h2, #dio .signin h2, #dio .standings h2 { line-height: 1; }
+/* the developer rows belong to the Play screen, not Rooms or New room */
+#dio.play.dev.in-rooms .devs { display: none; }
+/* Log out / Delete account: the underline clear of the note under them */
+#dio .pf-opts .act, #dio .pf-opts .del { text-underline-offset: 3px; }
+#dio .pf-opts .seg:has(.act) + span + .nr-note { margin-top: 10px; }
+/* the playlist scrolls without a scrollbar (owner, 2026-11-08) */
+#dio .pl-list { overflow-x: hidden; scrollbar-width: none; } #dio .pl-list::-webkit-scrollbar { display: none; }

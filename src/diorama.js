@@ -10,6 +10,7 @@
     if (on) {
       dioBoot();
       if (dio.api) dio.api.resume();
+      if (mpui.open) mpClose(true); // the match's music panel doesn't stay over the Diorama
       // phones: one WebGL context at a time, so the board's 3D waits while the island is up (back when the home hides)
       if (!document.documentElement.classList.contains('pc')) {
         if (board3d) { stop3d(); dio.held3d = true; }
@@ -207,7 +208,8 @@
     // a new one each match, so one at random here). Change battlefield sets it as the PLAY popup's Look row does. A
     // room's battlefield is the host's (New room)
     const lookIndex = () => { const id = skinPick === 'random' ? Game.SKINS[Math.floor(Math.random() * Game.SKINS.length)].id : lookShown(); return Math.max(0, LOOKS.findIndex(l => l.id === id)); };
-    const saveLook = (i) => { const id = LOOKS[i].id; skinPick = id === (Game.MAP_LOOK[curMap() || 'standard'] || '') ? '' : id; try { localStorage.setItem('pb-skin', skinPick); } catch (e) {} };
+    const saveLook = (i) => { const id = LOOKS[i].id; skinPick = id; /* (the island's look is the match's: owner, 2026-11-08) */ try { localStorage.setItem('pb-skin', skinPick); } catch (e) {} };
+    if (!mapPick) mapPick = STD_MAP; // a developer's map pick ('' = random) isn't on the Diorama: the island's map, Standard
     let homeLook = lookIndex();
     { const i = LOOKS.findIndex(l => l.id === (H.match(/bf=(\w+)/) || [])[1]); if (i >= 0) homeLook = i; }
     setLook(homeLook, false);
@@ -367,7 +369,8 @@
     const svg = document.getElementById('lines');
     const proj = (o, h) => { const v = new THREE.Vector3(); o.getWorldPosition(v); v.y += h; v.project(cam); return [(v.x + 1) / 2 * cv.clientWidth, (1 - v.y) / 2 * cv.clientHeight]; };
     const dotSvg = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="currentColor"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>`;
-    const showing = (el) => body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
+    const TOWERS = ['keepYou', 'keepFoe', 'vaultYou', 'vaultFoe'];
+    const showing = (el) => hovered && TOWERS.includes(hovered) && TOWERS.includes(el.dataset.hover) && !body.classList.contains('welcome') && viewName === 'play' ? true : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
     // a label off the point (x, y): a line out to it and under it, kept on screen. Returns the line's svg
     function pin(el, x, y, dx, dy, keep) {
       const w = el.offsetWidth, k = phone() ? 0.55 : 1;
@@ -381,7 +384,7 @@
       const playR = document.getElementById('play').getBoundingClientRect(), inProf = body.classList.contains('profile');
       // Profile: where the left column's words end (right and bottom); the island's notes and the Units view keep clear of it
       let colR = 24, colB = 0, nameR = 24, kR = 0, kB = 0;
-      if (inProf) for (const el of body.querySelectorAll(body.classList.contains('units') ? '#pf-name, .pf .k, .pf-opts .ur' : '#pf-name, .pf .k, .pf-opts > *, #pf-hist')) {
+      if (inProf) for (const el of body.querySelectorAll('#pf-name, .pf .k, .pf-opts > *, #pf-hist')) {
         const rg = document.createRange(), nm = el.id === 'pf-name', kk = el.matches('.pf .k'); rg.selectNodeContents(el);
         for (const r of rg.getClientRects()) if (r.width > 1) { colR = Math.max(colR, r.right + 28); colB = Math.max(colB, r.bottom); if (nm) nameR = Math.max(nameR, r.right + 28); if (kk) { kR = Math.max(kR, r.right + 12); kB = Math.max(kB, r.bottom); } } }
       // an open dropdown: notes it would cover hide while it's open, and the music player steps aside if it's under it
@@ -396,6 +399,7 @@
       const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
       for (const el of body.querySelectorAll('.note:not(.pnote)')) {
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
+        if (bf) { el.style.display = !body.classList.contains('welcome') && $('dio-stay').hidden ? '' : 'none'; continue; } // fixed in place (CSS): the same spot on every screen
         const show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
         el.style.display = show ? '' : 'none'; if (!show) continue;
         const w = el.offsetWidth, h = el.offsetHeight;
@@ -470,8 +474,17 @@
         if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
         else if (viewName === 'play' && !body.classList.contains('profile')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; }
       }
-      hovered = key; cv.classList.toggle('world-hot', !!key);
+      setHover(key); cv.classList.toggle('world-hot', !!key);
     });
+    // the notes change only after the pointer has stayed half a second (owner, 2026-11-08: a sweep looked glitchy); the
+    // piece under the pointer lifts at once (hoverNow). Moving between the towers keeps their notes up; the roster is at once
+    let hoverNow = null, hoverT = 0;
+    function setHover(key) {
+      if (key === hoverNow) return; hoverNow = key; clearTimeout(hoverT);
+      const tw = (k) => k && TOWERS.includes(k);
+      if (!key || !key.startsWith('u:')) { if (tw(key) && tw(hovered)) { hovered = key; return; } hoverT = setTimeout(() => { hovered = hoverNow; }, key ? 500 : 350); }
+      else hovered = key;
+    }
     body.addEventListener('click', (e) => { if (e.target !== cv || !body.classList.contains('units')) return; const i = hitOf(e, rosterHot); pickUnit(i >= 0 ? rosterHot[i] : null); });
     function pickUnit(g) {
       picked = g; const sh = document.getElementById('usheet');
@@ -537,7 +550,7 @@
         f.scale.setScalar(Math.max(0.001, f.userData.s * (p >= 1 ? 1 : e))); if (p >= 1) f.userData.pop = 0; }
       podium.position.y = lerp(podium.position.y, rk ? 0 : -4, kk); podium.visible = podium.position.y > -3.6;
       roster.position.y = lerp(roster.position.y, un ? 0 : -4, kk); roster.visible = roster.position.y > -3.6;
-      for (const [key, g] of Object.entries(HOT)) g.position.y = lerp(g.position.y, g.userData.y0 + (hovered === key ? 0.18 : 0), still ? 1 : 0.25);
+      for (const [key, g] of Object.entries(HOT)) g.position.y = lerp(g.position.y, g.userData.y0 + ((typeof hoverNow !== 'undefined' ? hoverNow : hovered) === key ? 0.18 : 0), still ? 1 : 0.25);
       rosterHot.forEach((g, i) => { g.position.y = lerp(g.position.y, (hovered === 'u:' + i || picked === g) ? 0.22 : 0, still ? 1 : 0.25); });
       place(); if (renderer) renderer.render(scene, cam); notes();
       raf = requestAnimationFrame(frame);
@@ -563,7 +576,7 @@
       b.addEventListener('mouseenter', go); b.addEventListener('focus', go);
     }
     body.querySelector('.menu').addEventListener('mouseleave', () => { if (body.classList.contains('pinned')) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
-    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
+    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
     // Puzzles and How to play open the game's sheets (until they're designed); the camera move on pointing stays
     $('puzzles-open').addEventListener('click', openPuzzles);
     $('how').addEventListener('click', openHowTo);
@@ -575,6 +588,20 @@
     const closePlay = () => { body.classList.remove('play', 'mp-open'); setMp(false); unpin(); home.pop = false; };
     document.getElementById('play').addEventListener('click', openPlay);
     const backBtn = body.querySelector('.back');
+    // the logo: the main menu from anywhere (not from the welcome screens). Nothing else needs a back link
+    function goMenu() {
+      if (body.classList.contains('welcome')) return;
+      openDrop(''); closeMusic();
+      if (body.classList.contains('profile')) closeProfile();
+      if (home.screen === 'lobby' || home.pop || body.classList.contains('play')) { home.screen = 'menu'; home.pop = false; drawHome(); closePlay(); }
+      unpin();
+    }
+    { const lg = body.querySelector('.logo'); lg.addEventListener('click', goMenu); lg.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goMenu(); } }); }
+    body.addEventListener('click', (e) => { const c = e.target.closest('[data-crumb]'); if (!c) return; const w = c.dataset.crumb;
+      if (w === 'play') { home.screen = 'menu'; home.pop = true; drawHome(); }
+      else if (w === 'rooms') closeCreate();
+      else if (w === 'profile') closeHistory();
+      else if (w === 'welcome') goScreen('welcome'); });
     const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
       if (body.classList.contains('in-rooms')) return closeRooms(); closePlay(); };
     backBtn.addEventListener('click', goBack);
@@ -759,7 +786,7 @@
           T ? T[2] : 'Nothing shows under your name.');
         { const skins = A.skins || [], on = skins.filter(k => k.worn && SKIN[k.id]).map(k => `${SKIN[k.id].name} ${SKIN[k.id].unit}`), un = body.classList.contains('units');
           h += `<span class="lab ur">Skins</span><span class="pf-units ur"><button class="item${un ? ' on' : ''}" data-units aria-pressed="${un}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,6 97,0 100,96 4,100"/></svg>Units</button></span>
-            <span class="ur"></span><p class="nr-note ur">${!skins.length ? 'No skins yet. Every unit is in Units, on the island.' : `${on.length > 2 ? `${on.length} skins are on.` : on.length ? `${esc(on.join(' and '))} ${on.length > 1 ? 'are' : 'is'} on.` : 'All plain.'} Pick a unit to change its skin.`}</p>`; }
+            <span class="ur"></span><p class="nr-note ur"></p>`; }
         const wait = !A.dev && A.tagNext > Date.now(); // the server's next allowed change (once a week; developers any time)
         h += row('Username', `<input id="pf-tag" maxlength="16" spellcheck="false" autocomplete="nickname" aria-label="Your username" value="${esc(A.tag)}" ${wait || pf.busy ? 'disabled' : ''}><button class="act" id="pf-save" hidden>Save</button>`,
           A.dev ? 'Developer: change it any time.' : wait ? `You can change it again on ${esc(tagWhen(A.tagNext))}.` : 'You can change it once a week.', 'pf-user');
@@ -886,7 +913,7 @@
     const TAG_RULE = 'Letters, digits, spaces, _ . or -. You can change it once a week.', TAG_BAD = 'Usernames are 2–16 letters, digits, spaces, _ . or -.';
     function drawSignin() {
       const up = door.screen === 'signup';
-      $('si-k').textContent = up ? 'Welcome · sign up' : 'Welcome · log in';
+      $('si-k').innerHTML = `<button class="crumb" data-crumb="welcome">Welcome</button> · ${up ? 'sign up' : 'log in'}`;
       $('si-h').textContent = up ? 'Sign up' : 'Log in';
       $('si-lead').textContent = up ? 'Pick your username. Sign up with Google to keep your account on any phone or computer, or just make a guest on this one.'
         : 'Log in with the Google account you signed up with. You get your username, match history and ranked results back on this device.';
@@ -1082,7 +1109,7 @@
           ${navigator.audioSession ? `<span class="lab">Other apps</span><span class="seg"><button class="w" data-set="solo|0" aria-pressed="${!snd.solo}">Keep playing</button><button class="w" data-set="solo|1" aria-pressed="${!!snd.solo}">Pause them</button></span><p class="sn">Pause them: plays even on silent.</p>` : ''}</div>
         <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}</div>
         <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
-        <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', staying(), staying() ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${acct && !acct.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
+        <span class="k">This device</span><div class="set">${document.fullscreenEnabled ? onoff('fs', 'Full screen', !!document.fullscreenElement) : ''}${onoff('stay', 'Stay logged in', staying(), staying() ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${acct && !acct.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
         ${devMode() ? `<span class="k" style="color:#FF5FC4">Developer</span><div class="set">${onoff('rk', 'Ranked play', home.rankedOn === true, '<span id="rk-msg">For everyone, not only developers.</span>')}</div>` : ''}
         <div class="set-foot"><button class="lnk" id="mp-open2" data-playlists>Playlists</button><button class="lnk" id="bug-open" data-bug>Report a bug</button></div>
         <p class="hint" style="opacity:.55">In a match, Settings also has the 2D or 3D board and its quality.</p>`;
@@ -1099,11 +1126,13 @@
       else if (k === 'chat') { snd.chatOn = on; saveSound(); if (!on) { talk.tick = []; tickDraw(); } }
       else if (k === 'emo') { snd.emotesOn = on; saveSound(); }
       else if (k === 'stay') setStay(on);
+      else if (k === 'fs') { try { if (on && !document.fullscreenElement) await document.documentElement.requestFullscreen(); else if (!on && document.fullscreenElement) await document.exitFullscreen(); } catch (er) {} }
       else if (k === 'tm') timerOn = on; // the old PLAY popup's Deploy timer vs AI (for this visit, as there)
       else if (k === 'rk') { const r = await acctCall('ranked', { on }, true); if (r.status === 200) home.rankedOn = !!r.on; drawSettings();
         if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }
       drawSettings();
     });
+    document.addEventListener('fullscreenchange', () => { if (dd.open === 'settings') drawSettings(); }); // (Esc leaves full screen too)
     $('dd-settings').addEventListener('input', (e) => {
       const k = e.target.dataset.vol; if (!k) return;
       const v = +e.target.value; e.target.style.setProperty('--v', v + '%'); e.target.nextElementSibling.textContent = v;

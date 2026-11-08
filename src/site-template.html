@@ -982,7 +982,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <div class="scrim" aria-hidden="true"></div>
   <div class="notes"><svg id="lines" aria-hidden="true"></svg></div>
 
-  <img class="logo" src="img/title.png" alt="No Mans Land">
+  <img class="logo" src="img/title.png" alt="No Mans Land: main menu" role="button" tabindex="0">
   <nav class="acct" aria-label="Account">
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="currentColor"/><path d="M2 20c0-3.9 3.1-6 7-6s7 2.1 7 6" fill="currentColor"/><circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".7"/><path d="M17 13.5c2.9.2 5 1.9 5 5.5h-4.4c0-2-.6-3.7-1.8-5" fill="currentColor" opacity=".7"/></svg><span>Friends</span><b class="badge" id="fr-badge" hidden></b></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>Guest</span></button>
@@ -1012,9 +1012,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <div class="note" data-anchor="mage" data-home>Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
 
   <div class="note" data-anchor="keepYou" data-hover="keepYou">Your keep.<small>Tower · If it falls, you lose</small></div>
-  <div class="note" data-anchor="keepFoe" data-hover="keepFoe">Their keep.<small>Tower · Bring it down to win</small></div>
+  <div class="note" data-anchor="keepFoe" data-hover="keepFoe">Their keep.<small>Tower · Bring it down to hurt the opponent and weaken their army</small></div>
   <div class="note" data-anchor="vaultYou" data-hover="vaultYou">Your treasury.<small>Building · 50 gold for every fight it survives</small></div>
-  <div class="note" data-anchor="vaultFoe" data-hover="vaultFoe">Their treasury.<small>Building · Destroy it to steal their gold</small></div>
+  <div class="note" data-anchor="vaultFoe" data-hover="vaultFoe">Their treasury.<small>Building · Destroy their treasury to steal their gold</small></div>
   <div class="note" data-anchor="mammoth" data-hover="mammoth">War Mammoth.<small>Unit · Huge health · Fast for its size</small></div>
 
   <div class="note btn-note" data-anchor="btn" data-side="left" data-btn="puzzles">Puzzles.<small>Small battles to solve · Learn one idea at a time</small></div>
@@ -1083,7 +1083,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <!-- Rooms: the open matches of one kind. One button above the list -->
   <section class="rooms" aria-label="Rooms">
-    <span class="k">Multiplayer · rooms</span>
+    <span class="k"><button class="crumb" data-crumb="play">Play</button> · Rooms</span>
     <h2>Rooms <small id="r-count"></small></h2>
     <div class="rsearch">
       <svg class="mag" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.8"/></svg>
@@ -1102,7 +1102,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <!-- Create room: the game's three settings (kind, who can find it, spectators) as rows of words, then one button -->
   <section class="newroom" aria-label="Create room">
-    <span class="k">Rooms · create</span>
+    <span class="k"><button class="crumb" data-crumb="play">Play</button> · <button class="crumb" data-crumb="rooms">Rooms</button> · New room</span>
     <h2>New room</h2>
     <div class="nr-opts">
       <span class="lab">Kind</span>
@@ -1154,7 +1154,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <!-- Match history: your online matches, newest first; a match folds out its rounds, each with a replay -->
   <section class="history" aria-label="Match history">
-    <span class="k">Profile · match history</span>
+    <span class="k"><button class="crumb" data-crumb="profile">Profile</button> · Match history</span>
     <h2>Matches <small id="h-count"></small></h2>
     <div class="h-tabs" role="group" aria-label="Whose matches"><button data-h="mine" aria-pressed="true">My matches</button><button data-h="all" aria-pressed="false">All online</button></div>
     <p class="r-msg" id="h-msg" aria-live="polite"></p>
