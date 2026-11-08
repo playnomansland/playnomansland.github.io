@@ -4,6 +4,31 @@ Written 2026-11-07 at the end of the session that finished the mockup. Read `des
 design language and every screen), then this file. Work on a branch (`claude/nice-mendel-scnrpy` has the mockup and
 is level with `main` as of 2026-11-07; merge `main` in again before starting, the game moves fast).
 
+## Live trial (2026-11-08): what is live, what to try
+
+**On `main` (the live site) since the night of 2026-11-07/08,** if the final checks passed (see the commit log):
+- **Every player gets the old UI**, as before (the build's default is `'classic'`).
+- **The Diorama** is at `playnomansland.github.io/?ui=diorama` (this device remembers it; `?ui=classic` goes back).
+- **Phones keep the old UI** whatever happens next: the switch can split by device (`PB_UI_DEFAULT=pc`), and the phone
+  layouts (step 8) aren't done.
+
+**What to try (on a PC):** Welcome / Sign up / Log in (open `?ui=diorama&welcome` in a private window), Vs computer,
+Multiplayer → Rooms → Join / Create room, Profile (title, username, skins on a unit's sheet), Match history and a
+replay, Friends (invite, a message), Settings (sound, Deploy timer, Stay logged in), the playlist, Puzzles, How to
+play, Units, Rankings, Change battlefield, and a developer account's Developer rows.
+
+**After the trial, the PC launch** is one build setting: `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`,
+push to `main` (the Diorama for PCs, the old UI on phones and tablets). `PB_UI_DEFAULT=diorama` would be everywhere:
+only after step 8.
+
+**Test status (2026-11-08):** of the 78 tests that load the page, with the switch off 57 fail on a clean `main` too
+(28 click a "Match settings" box that is no longer on the PLAY popup; the rest need the network, Google or the local
+server's accounts, or time out under software 3D); none fails because of this work. With the switch on, the extra
+failures are tests that click controls the Diorama doesn't have (Play vs Friend `#friend`, `#online`, Quick play, join
+by code, the old Create-room sheet, the old playlist panel, `#tutorial-new`, `[data-tm]` / `#settings` in the old
+popup): the test-rewrite session's work. Two real gaps the run found are fixed: the Deploy timer vs AI setting (now in
+Settings) and uppercased sheet titles.
+
 ## The owner's decisions (2026-11-07)
 
 - **Everything works with the real game before the launch.** Nothing reaches `main` except **one live trial** (below).
@@ -408,4 +433,4 @@ timeout leaves `wrangler dev` / `workerd` running and the next run's accounts fa
 
 ## Still to ask the owner
 
-- Whether the developer buttons' design (`screens/dev-play.jpg`) is OK, or what to change.
+- After the live trial: make the Diorama the PC default (`PB_UI_DEFAULT=pc`)?
