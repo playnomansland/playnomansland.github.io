@@ -339,7 +339,7 @@
       play:    { az: 0.72, el: 0.62, zoom: 13.4, at: [0, -0.6, 0], off: [0.2, 0] },
       puzzles: { az: 0.95, el: 0.5, zoom: 6.6, at: [-2.4, 0.6, 3.6], off: [0.18, 0] },
       rules:   { az: 0.0, el: 1.45, zoom: 12.8, at: [0, 0, 0], off: [0.2, 0] },
-      units:   { az: 0.36, el: 0.62, zoom: 10.4, at: [0, 0.4, 1.0], off: [0.21, 0.08] },
+      units:   { az: 0.2, el: 0.72, zoom: 7.9, at: [0.3, 0.3, -0.4], off: [0.19, 0.04] }, // close on the roster (owner, 2026-11-08: it couldn't be read)
       ranks:   { az: 0.42, el: 0.6, zoom: 10.2, at: [0, 0.2, 0.2], off: [0.2, 0.02] },
       orders:  { az: 0.0, el: 1.25, zoom: 13.6, at: [0, 0, 0.4], off: [0.24, 0] },
       welcome: { az: 0.98, el: 0.4, zoom: 12.8, at: [0, -0.6, 0], off: [0.19, 0.0] },
@@ -427,7 +427,7 @@
           if (on && !phone() && !body.classList.contains('music-open')) {
             const r = el.getBoundingClientRect(), ty = r.top - 4; let best = null, bd = 1e9;
             for (const o of bfDots) { const [x, y] = proj(o, 0), d = Math.hypot(x - r.right, y - ty);
-              if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd) { bd = d; best = [x, y]; } }
+              if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd && !(menuR && crosses(`M${x} ${y} L${r.right} ${ty}`, menuR))) { bd = d; best = [x, y]; } } // (never across the menu's words)
             if (best && !under(r)) { const [x, y] = best, right = x > (r.left + r.right) / 2;
               html += `<path d="M${x} ${y} L${right ? r.right : r.left} ${ty} L${right ? r.left : r.right} ${ty}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`; }
           }

@@ -64,6 +64,10 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   tagline; Courier Prime is monospace, so widths don't change). Full leaderboard is a saffron stencil button. Profile:
   the big name is the username field (`#pf-tag` inside `#pf-name`, sized by `.pf-sizer`), the Username row is gone,
   the line under the name says when it can change and holds Save (`#pf-save`); Enter saves, Esc puts it back.
+- Ninth round: Units' camera closes in on the roster (`VIEWS.units`); Change battlefield is a button like the big ones
+  (`.bf-btn`: stencil words on the saffron board, an ink board on the Play screen), the battlefield's name above it, its
+  bottom on the music player's bottom line (both 40 px up); its line never crosses the menu's words. Shown to the owner,
+  not built: the small text in Chakra Petch instead of Courier Prime (a one-line change: `--type` on `#dio`).
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 **Open, in order:**

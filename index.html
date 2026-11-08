@@ -825,6 +825,15 @@ html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35) !impo
 #dio .pf-save { position: relative; isolation: isolate; padding: 5px 12px 3px; font: 700 18px/1 var(--stencil); text-transform: uppercase; color: var(--ink); }
 #dio .pf-save::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 #dio .pf-save[hidden] { display: none; }
+/* Change battlefield: a button like the other big ones (owner, 2026-11-08): stencil words on the saffron board (an ink
+   board on the saffron Play screen), the battlefield's name above it; its bottom on the music player's bottom line */
+#dio .note.bf-note { bottom: 40px; display: grid; justify-items: end; gap: 7px; padding: 0; cursor: default; }
+#dio.flat .bf-note { bottom: 40px; }
+#dio .bf-note .bf-sub { font: 700 13px var(--type); opacity: .88; }
+#dio .bf-note .bf-btn { display: inline-flex; align-items: center; height: 30px; padding: 2px 14px 0 12px; font: 700 19px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); background: var(--saffron); clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; cursor: pointer; transition: transform .15s ease; }
+#dio .bf-note:hover .bf-btn, #dio .bf-note:focus-visible .bf-btn { transform: rotate(-1.5deg) scale(1.04); }
+#dio .bf-note:focus-visible { outline: none; }
+#dio.play .bf-note .bf-btn { color: #F2B23A; background: var(--ink); }
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -1833,7 +1842,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <div class="note btn-note" data-anchor="btn" data-side="right" data-btn="rules">How to play.<small>The rules, explained simply</small></div>
   <div class="note btn-note" data-anchor="btn" data-side="left" data-btn="units">Units.<small>Every unit · What it does and what it beats</small></div>
   <div class="note btn-note" data-anchor="btn" data-side="right" data-btn="ranks">Rankings.<small>The leaderboard · Ranked matches only</small></div>
-  <div class="note bf-note" data-anchor="bf" role="button" tabindex="0">Change battlefield.<small id="bf-sub"></small></div>
+  <div class="note bf-note" data-anchor="bf" role="button" tabindex="0" aria-label="Change battlefield"><span class="bf-sub" id="bf-sub"></span><span class="bf-btn">Change battlefield</span></div>
   <div id="unote" style="display:none"></div>
   <nav class="tiers" aria-label="Unit tiers"><span class="k">Units by tier</span><button data-t="1" aria-pressed="true">Tier 1</button><button data-t="2" aria-pressed="false">Tier 2</button><button data-t="3" aria-pressed="false">Tier 3</button><button data-t="4" aria-pressed="false">Tier 4</button></nav>
   <section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><div class="skn" hidden></div><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
@@ -17195,7 +17204,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '8 Nov 2026 · a18e18b'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '8 Nov 2026 · bc4fc82'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -26541,7 +26550,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       play:    { az: 0.72, el: 0.62, zoom: 13.4, at: [0, -0.6, 0], off: [0.2, 0] },
       puzzles: { az: 0.95, el: 0.5, zoom: 6.6, at: [-2.4, 0.6, 3.6], off: [0.18, 0] },
       rules:   { az: 0.0, el: 1.45, zoom: 12.8, at: [0, 0, 0], off: [0.2, 0] },
-      units:   { az: 0.36, el: 0.62, zoom: 10.4, at: [0, 0.4, 1.0], off: [0.21, 0.08] },
+      units:   { az: 0.2, el: 0.72, zoom: 7.9, at: [0.3, 0.3, -0.4], off: [0.19, 0.04] }, // close on the roster (owner, 2026-11-08: it couldn't be read)
       ranks:   { az: 0.42, el: 0.6, zoom: 10.2, at: [0, 0.2, 0.2], off: [0.2, 0.02] },
       orders:  { az: 0.0, el: 1.25, zoom: 13.6, at: [0, 0, 0.4], off: [0.24, 0] },
       welcome: { az: 0.98, el: 0.4, zoom: 12.8, at: [0, -0.6, 0], off: [0.19, 0.0] },
@@ -26629,7 +26638,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
           if (on && !phone() && !body.classList.contains('music-open')) {
             const r = el.getBoundingClientRect(), ty = r.top - 4; let best = null, bd = 1e9;
             for (const o of bfDots) { const [x, y] = proj(o, 0), d = Math.hypot(x - r.right, y - ty);
-              if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd) { bd = d; best = [x, y]; } }
+              if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd && !(menuR && crosses(`M${x} ${y} L${r.right} ${ty}`, menuR))) { bd = d; best = [x, y]; } } // (never across the menu's words)
             if (best && !under(r)) { const [x, y] = best, right = x > (r.left + r.right) / 2;
               html += `<path d="M${x} ${y} L${right ? r.right : r.left} ${ty} L${right ? r.left : r.right} ${ty}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`; }
           }

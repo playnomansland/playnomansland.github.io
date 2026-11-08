@@ -690,3 +690,12 @@ html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35) !impo
 #dio .pf-save { position: relative; isolation: isolate; padding: 5px 12px 3px; font: 700 18px/1 var(--stencil); text-transform: uppercase; color: var(--ink); }
 #dio .pf-save::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 #dio .pf-save[hidden] { display: none; }
+/* Change battlefield: a button like the other big ones (owner, 2026-11-08): stencil words on the saffron board (an ink
+   board on the saffron Play screen), the battlefield's name above it; its bottom on the music player's bottom line */
+#dio .note.bf-note { bottom: 40px; display: grid; justify-items: end; gap: 7px; padding: 0; cursor: default; }
+#dio.flat .bf-note { bottom: 40px; }
+#dio .bf-note .bf-sub { font: 700 13px var(--type); opacity: .88; }
+#dio .bf-note .bf-btn { display: inline-flex; align-items: center; height: 30px; padding: 2px 14px 0 12px; font: 700 19px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); background: var(--saffron); clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; cursor: pointer; transition: transform .15s ease; }
+#dio .bf-note:hover .bf-btn, #dio .bf-note:focus-visible .bf-btn { transform: rotate(-1.5deg) scale(1.04); }
+#dio .bf-note:focus-visible { outline: none; }
+#dio.play .bf-note .bf-btn { color: #F2B23A; background: var(--ink); }
