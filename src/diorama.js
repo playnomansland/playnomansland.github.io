@@ -442,8 +442,8 @@
           const home = el.hasAttribute('data-home'), t = performance.now(), dt = Math.min(100, t - (el._t || t)); el._t = t;
           const menu = !phone() && !inPlay && !inProf && viewName === 'play' && !body.classList.contains('welcome');
           if (!menu) el._op = show ? 1 : home ? 1 : 0;
-          else if (show) el._op = home ? Math.min(1, (el._op ?? 1) + dt / 250) : 1;
-          else { el._op = Math.max(0, (el._op ?? (home ? 1 : 0)) - dt / 1000); fading = el._op > 0; }
+          else if (show && !(home && (el._op ?? 1) < 1 && t - hoverOff < 1000)) el._op = home ? Math.min(1, (el._op ?? 1) + dt / 250) : 1; // the menu's own notes wait a second after the pointer leaves before coming back
+          else { show = false; el._op = Math.max(0, (el._op ?? (home ? 1 : 0)) - dt / 1000); fading = el._op > 0; }
           op = el._op; show = show || fading;
         }
         el.style.display = show ? '' : 'none'; el.style.opacity = op < 1 ? op : ''; el.style.pointerEvents = fading ? 'none' : ''; if (!show) { el._off = null; continue; }
@@ -543,9 +543,9 @@
     });
     // what's pointed at shows its note at once (owner, 2026-11-08: no delay); notes no longer wanted fade out over a
     // second (in notes()), so a sweep over the island doesn't flicker
-    let hoverNow = null;
+    let hoverNow = null, hoverOff = -1e9; // hoverOff: when the pointer last left a piece
     function setHover(key) {
-      if (key === hoverNow) return; hoverNow = hovered = key;
+      if (key === hoverNow) return; if (!key && hoverNow) hoverOff = performance.now(); hoverNow = hovered = key;
       if (!key || !key.startsWith('u:')) notes();
     }
     body.addEventListener('click', (e) => { // the main menu: a unit model opens Units (its note doesn't: notes are their own elements)
