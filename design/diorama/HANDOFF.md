@@ -430,3 +430,11 @@ Otto's Slots, buildings, walls, online play, spectating, the tutorial, replays, 
   Close, a box per row), as the old one the panel lighter than the rows in it (both from the battlefield's card colour),
   clipped tile corners and a thin saffron top edge. The owner on the old buttons in the new screens: "Much better".
 - **Still in the new style:** the room's choices (Public / Private, On / Off, the units, the battlefield arrows). Ask.
+
+### The test page (2026-11-09)
+The owner asked for it "behind the Diorama site, not the actual live site": `design/diorama/game.html`, at
+`playnomansland.github.io/design/diorama/game.html`, is the whole game with the Diorama always on (`node src/build.js
+--diorama-page`; `const DEF = 'force'`, a `<base href="../../">` so it loads the root's `src/`, `vendor/`, `models/`,
+`audio/`). It never changes a device's `pb-ui` choice for the live game. On `main` since commit b3a6407, with only the
+`cam3` line of `src/render3d.js` beside it; the live `index.html` is not changed. Rebuild it with `--diorama-page` and
+put it on `main` the same way (only that file, plus any `src/` 3D file it needs) to update the test page.
