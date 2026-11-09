@@ -415,3 +415,16 @@ Otto's Slots, buildings, walls, online play, spectating, the tutorial, replays, 
 
   The classic UI's carry-cap and ai-ready tests pass. Not checked: a real online match with two players (the sandbox
   can't reach the game server), the 2D board under the Diorama (it keeps the old layout, restyled sheets only).
+
+### The owner's calls on the match screen (2026-11-09, after the first in-game shots)
+- **Unit cards:** never cut from the scenery. They take the game's own card colour, tinted per battlefield at the same
+  darkness (`--dcard` in `src/diorama.css`, set by `data-dlook` on `<html>`): Meadow `#0D130D` (moss), Autumn `#17110D`
+  (rust), Snow `#0E1317` (ice), Forest Glade `#0D1311` (pine), Desert `#14120C` (sand), Ashlands `#19100F` (ember),
+  Moonlit Snow `#0F121A` (night), Savanna `#13120C` (dry grass). The owner: "go with these colours for now".
+- **Scenery-cut panels** (`dioPatterns`): only the picks' options and details and the coach / task lines, a trial on
+  Forest Glade (`?dpat=all` tries every look). The + Unlock tiles stay see-through, the sheets keep their own colour.
+- **Buttons:** the old ones from before the Diorama (hairline box, gold primary, IBM Plex Sans) everywhere in a match
+  "for now", except READY / Fight / Not ready, which keep the skewed saffron shard. The tile slab (owner's pick for
+  small buttons before this) is in the CSS history (commit c0e3854) if it comes back.
+- **Sheets in a match:** back toward the old layout (rising from the bottom over the board, hairline edge, title and
+  Close, a box per row), in the battlefield's card colour with clipped tile corners and a thin saffron top edge.
