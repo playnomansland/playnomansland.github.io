@@ -1312,6 +1312,42 @@ html.diorama.pcwide #mp-pop.dock .mp-foot { display: flex; flex-direction: row-r
 html.diorama.pcwide #mp-pop.dock .mp-where { font: 500 12px "Bricolage Grotesque", system-ui, sans-serif; opacity: .75; }
 html.diorama.pcwide .panel .speeds button[aria-pressed="true"]::before, html.diorama.pcwide .panel .speeds button.offer::before { content: none; display: none; }
 
+/* the column never squeezes its rows (on a short window they collapsed onto the gold, the owner's screenshot,
+   2026-11-09): it scrolls instead, and ends above READY so nothing runs under it; */
+html.diorama.pcwide .panel > * { flex-shrink: 0; }
+html.diorama.pcwide .panel { bottom: 104px; padding-bottom: 14px; } /* (no fade mask: it would clip READY, which is fixed inside the column) */
+html.diorama.pcwide.pcfight .panel, html.diorama.pcwide .panel:not(:has(#ready, #fight)) { bottom: 0; }
+html.droom-on .panel { bottom: 160px; padding-bottom: 14px; }
+/* short windows (a laptop): the same column, tighter, all four tiers in sight */
+@media (max-height: 860px) {
+  html.diorama.pcwide .hud { padding-top: 12px; }
+  html.diorama.pcwide .hud .side .num { font-size: 38px; }
+  html.diorama.pcwide .hud .round #round, html.diorama.pcwide .hud .round #phase { font-size: 30px; }
+  html.diorama.pcwide .panel { top: 92px; gap: 8px; bottom: 88px; }
+  html.droom-on .panel { top: 92px; bottom: 150px; }
+  html.diorama.pcwide .panel .trow .g2 { font-size: 50px; }
+  html.diorama.pcwide .panel .hint2 { font-size: 13px; -webkit-line-clamp: 3; }
+  html.diorama.pcwide .panel .shop2 { row-gap: 8px; gap: 6px; padding-top: 12px; margin-top: 4px; }
+  html.diorama.pcwide .panel .uc2, html.diorama.pcwide .panel .add2 { flex-basis: 62px; height: 82px; }
+  html.diorama.pcwide .panel .tier2 { height: 82px; }
+  html.diorama.pcwide .panel .uc2 .ic svg { width: 24px; height: 24px; }
+  html.diorama.pcwide .panel #ready, html.diorama.pcwide .panel #fight { font-size: 44px; bottom: 18px; padding: 10px 20px 4px 16px; }
+  html.diorama.pcwide .panel #ready:not(.primary) { font-size: 32px; }
+  html.diorama.pcwide .panel .trow .timer { bottom: 38px; font-size: 26px; }
+}
+
+/* the deploy panel on the right (a trial for the owner, 2026-11-09: ?side=right): the column, its scrim, READY and the
+   clock mirror to the right edge; the board frames itself in what's left (dioSafe); the music player moves beside it */
+html.dright.diorama.pcwide .panel { left: auto; right: 0; padding-left: 22px; padding-right: 32px; }
+html.dright.diorama.pcwide #wrap::before { left: auto; right: 0; background: linear-gradient(270deg, rgba(23,20,15,.8) 0, rgba(23,20,15,.66) calc(var(--dpw, 340px) - 30px), rgba(23,20,15,0) 100%); }
+html.dright.diorama.pcwide .panel #ready, html.dright.diorama.pcwide .panel #fight { left: auto; right: 26px; }
+html.dright.diorama.pcwide .panel .trow .timer { left: auto; right: calc(var(--dpw, 340px) - 72px); text-align: right; }
+html.dright.diorama.pcwide .droom .rgo { left: auto; right: 26px; align-items: flex-end; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-dock { right: calc(var(--dpw, 340px) + 30px); }
+html.dright.diorama.pcwide #mp-pop.dock::before { background: radial-gradient(46% 80% at 70% 100%, rgba(10, 13, 12, .9), rgba(10, 13, 12, .55) 55%, transparent 80%); }
+html.dright.diorama.pcwide .talk-fab { left: 32px; top: 112px; }
+html.dright.diorama.pcwide .sheet-back { padding-left: 24px; padding-right: calc(var(--dpw, 340px) + 28px); }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -17698,7 +17734,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · ce681d2'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 5e4408a'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -17822,6 +17858,12 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
           <button data-board="2d" aria-pressed="${!want3d}">2D</button><button data-board="3d" aria-pressed="${want3d}">3D</button>
         </div>
       </div>
+      ${DIO && document.documentElement.classList.contains('pc') ? `<div class="bar">
+        <span class="hint">Deploy panel</span>
+        <div class="seg" role="group" aria-label="Deploy panel">
+          <button data-dside="left" aria-pressed="${dSide === 'left'}">Left</button><button data-dside="right" aria-pressed="${dSide === 'right'}">Right</button>
+        </div>
+      </div>` : ''}
       ${document.documentElement.classList.contains('pc') ? '' : `<div class="bar">
         <span class="hint">Phone layout</span>
         <div class="seg" role="group" aria-label="Phone layout">
@@ -17932,6 +17974,10 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       if (r.status !== 200) { $('rk-msg').textContent = r.status === 403 ? 'Only a developer can do that.' : acctFail(r); return; }
       home.rankedOn = !!r.on; $('rk-msg').textContent = r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).';
       $('sheet').querySelectorAll('[data-rk]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.rk === '1') === !!r.on)));
+    }));
+    $('sheet').querySelectorAll('[data-dside]').forEach(b => b.addEventListener('click', () => { // the Diorama: the deploy panel's side
+      setDeploySide(b.dataset.dside, true);
+      $('sheet').querySelectorAll('[data-dside]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     }));
     $('sheet').querySelectorAll('[data-board]').forEach(b => b.addEventListener('click', () => {
       set3d(b.dataset.board === '3d');
@@ -22992,12 +23038,25 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // strategic and tilted views the board's corners are measured and fitted; between tilted and angled the fit blends to
   // none, so no view switch jumps; closer in, the camera's own framing. Off: the plain picture again.
   const dfit = { k: 1, ox: 0, oy: 0, held: null, on: false, ts: 0 };
+  // the deploy panel's side (the owner, 2026-11-09: an option in Settings, right by default for now), kept on this device;
+  // ?side=left / ?side=right set it too. html.dright mirrors the column (src/diorama.css), dioSafe frames the board
+  const DSIDE_STORE = 'pb-deploy-side';
+  let dSide = 'right';
+  try { const q = (location.search.match(/[?&]side=(left|right)\b/) || [])[1]; if (q) localStorage.setItem(DSIDE_STORE, q); dSide = localStorage.getItem(DSIDE_STORE) === 'left' ? 'left' : 'right'; } catch (e) {}
+  function setDeploySide(side, save) {
+    dSide = side === 'left' ? 'left' : 'right';
+    if (save) { try { localStorage.setItem(DSIDE_STORE, dSide); } catch (e) {} }
+    document.documentElement.classList.toggle('dright', DIO && dSide === 'right');
+    if (board3d) wake3d();
+  }
+  setDeploySide(dSide);
   try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
   const dioWide = () => DIO && document.documentElement.classList.contains('pcwide');
   const dioPw = () => Math.round(Math.min(400, Math.max(318, innerWidth * 0.25))); // the left column's width (--dpw), as the prototype's clamp(318px, 25vw, 400px)
   function dioSafe() {
     const hb = document.querySelector('.hud').getBoundingClientRect(), pw = dioPw();
-    const r = { x0: pw + 28, x1: innerWidth - 24, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
+    const right = document.documentElement.classList.contains('dright'); // the deploy panel on the right (?side=right)
+    const r = right ? { x0: 24, x1: innerWidth - pw - 28, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 } : { x0: pw + 28, x1: innerWidth - 24, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
     const st = document.documentElement.style, vs = [pw, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
     if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); } // (the column, the pick and the result cards follow these)
     return r;
@@ -28241,6 +28300,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         ${document.fullscreenEnabled ? `<button class="fs-big" data-set="fs|${fs ? 0 : 1}" aria-pressed="${fs}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6">${fsIco}</svg>${fs ? 'Leave full screen' : 'Full screen'}</button>` : ''}
         <span class="k">Sound</span><div class="set">${spkVol('vol', 'music', musicOn(), snd.vol, 'Music')}${spkVol('sfxVol', 'sfx', !!snd.sfx && snd.sfxVol > 0, snd.sfxVol, 'Sound effects')}
           ${navigator.audioSession ? `<span class="lab">Other apps</span><span class="seg"><button class="w" data-set="solo|0" aria-pressed="${!snd.solo}">Keep playing</button><button class="w" data-set="solo|1" aria-pressed="${!!snd.solo}">Pause them</button></span><p class="sn">Pause them: plays even on silent.</p>` : ''}</div>
+        ${PC() ? `<span class="k">Match screen</span><div class="set"><span class="lab">Deploy panel</span><span class="seg"><button class="w" data-set="dside|0" aria-pressed="${dSide === 'left'}">Left</button><button class="w" data-set="dside|1" aria-pressed="${dSide === 'right'}">Right</button></span><p class="sn">Where your gold, the shop and READY sit in a match.</p></div>` : ''}
         <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}</div>
         <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
         <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', staying(), staying() ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${acct && !acct.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
@@ -28261,6 +28321,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       else if (k === 'emo') { snd.emotesOn = on; saveSound(); }
       else if (k === 'stay') setStay(on);
       else if (k === 'fs') { try { if (on && !document.fullscreenElement) await document.documentElement.requestFullscreen(); else if (!on && document.fullscreenElement) await document.exitFullscreen(); } catch (er) {} }
+      else if (k === 'dside') setDeploySide(on ? 'right' : 'left', true);
       else if (k === 'tm') timerOn = on; // the old PLAY popup's Deploy timer vs AI (for this visit, as there)
       else if (k === 'rk') { const r = await acctCall('ranked', { on }, true); if (r.status === 200) home.rankedOn = !!r.on; drawSettings();
         if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }
