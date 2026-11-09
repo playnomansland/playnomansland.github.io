@@ -1404,6 +1404,29 @@ html.dright.diorama.pcwide #mp-pop.dock .mp-songs { padding: 0 14px 0 2px; }
 html.dright.diorama.pcwide #mp-pop.dock .mp-foot { flex-direction: row; }
 html.dright.diorama.pcwide #mp-pop.dock .mp-name { align-self: flex-start; text-align: left; }
 
+/* the player hides and comes back (the owner, 2026-11-09): its down arrow slides it away; a small "♪ Music ⌃" in the
+   corner slides it back up */
+html.diorama.pcwide #mp-pop.dock .mplayer { position: relative; width: fit-content; min-width: 270px; transition: opacity .25s ease, transform .3s cubic-bezier(.2, .9, .25, 1); }
+html.diorama.pcwide #mp-pop.dock .mp-dock { align-items: flex-end; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-dock { align-items: flex-start; }
+html.diorama.pcwide #mp-pop.dock .mp-panel { align-self: stretch; }
+html.diorama.pcwide #mp-pop.dock .dm-hide { position: absolute; top: 0; left: -30px; width: 22px; height: 22px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: #F4ECD8; opacity: .75; filter: drop-shadow(0 0 3px rgba(10,13,12,.9)); }
+html.dright.diorama.pcwide #mp-pop.dock .dm-hide { left: auto; right: -30px; }
+html.diorama.pcwide #mp-pop.dock .dm-hide:hover { opacity: 1; transform: translateY(2px); }
+html.diorama.pcwide #mp-pop.dock .dm-hide svg { width: 14px; height: 14px; }
+html.diorama.pcwide #mp-pop.dock:not(.mini) .dm-hide { display: none; } /* (the playlists' own arrow folds them first) */
+html.diorama.pcwide #mp-pop.dock .dm-show { position: absolute; bottom: 0; right: 0; display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; border: 0; background: none; color: #F4ECD8;
+  font: 700 13px "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; text-shadow: 0 0 3px rgba(10,13,12,.95), 0 0 9px rgba(10,13,12,.8);
+  opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .2s ease, transform .25s ease; }
+html.dright.diorama.pcwide #mp-pop.dock .dm-show { right: auto; left: 0; }
+html.diorama.pcwide #mp-pop.dock .dm-show svg { width: 13px; height: 13px; filter: drop-shadow(0 0 3px rgba(10,13,12,.9)); }
+html.diorama.pcwide #mp-pop.dock .dm-show svg:first-child { color: #F2B23A; }
+html.diorama.pcwide #mp-pop.dock .dm-show:hover span { text-decoration: underline; text-underline-offset: 4px; }
+html.diorama.pcwide #mp-pop.dock.hid .mplayer { opacity: 0; transform: translateY(30px); pointer-events: none; }
+html.diorama.pcwide #mp-pop.dock.hid .dm-show { opacity: 1; transform: none; pointer-events: auto; transition-delay: .12s; }
+html.diorama.pcwide #mp-pop.dock.hid::before { opacity: 0; }
+html.diorama.pcwide #mp-pop.dock::before { transition: opacity .3s ease; }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -17617,6 +17640,30 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (want && !mpui.open) { openPlaylist(); const p2 = $('mp-pop'); if (p2) p2.classList.add('mini'); }
     else if (!want && mpui.open && pop && pop.classList.contains('dmini')) mpClose(true);
     const p3 = $('mp-pop'); if (p3 && want && mpui.open) p3.classList.add('dmini');
+    dioMusicDecor();
+  }
+  // the player's own down arrow slides it away, leaving a small "♪ Music ⌃" that brings it back (the owner, 2026-11-09);
+  // kept on this device
+  let dmHid = false;
+  try { dmHid = localStorage.getItem('pb-dmusic') === 'hid'; } catch (e) {}
+  function dioMusicDecor() {
+    const pop = $('mp-pop'); if (!pop || !pop.classList.contains('dmini')) return;
+    const pl = pop.querySelector('.mplayer'), dk = pop.querySelector('.mp-dock');
+    if (pl && !pl.querySelector('.dm-hide')) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'dm-hide'; b.setAttribute('aria-label', 'Hide the music player'); b.title = 'Hide'; b.innerHTML = CHEV_DOWN;
+      b.addEventListener('click', () => dioMusicHide(true)); pl.appendChild(b);
+    }
+    if (dk && !dk.querySelector('.dm-show')) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'dm-show'; b.setAttribute('aria-label', 'Show the music player');
+      b.innerHTML = `${NOTE_SVG}<span>Music</span>${CHEV_UP}`; b.addEventListener('click', () => dioMusicHide(false)); dk.appendChild(b);
+    }
+    pop.classList.toggle('hid', dmHid);
+  }
+  function dioMusicHide(h) {
+    dmHid = h; try { localStorage.setItem('pb-dmusic', h ? 'hid' : ''); } catch (e) {}
+    const pop = $('mp-pop'); if (!pop) return;
+    if (h) { pop.classList.add('mini'); mpui.edit = null; }
+    pop.classList.toggle('hid', h);
   }
   function openPlaylist() {
     if (mpui.open && dioMini() && $('mp-pop') && $('mp-pop').classList.contains('mini')) { $('mp-pop').classList.remove('mini'); mpDraw(true); showPlayer(); return; } // the playlists unfold
@@ -17834,7 +17881,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 1b8b6ff'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 22b466e'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
