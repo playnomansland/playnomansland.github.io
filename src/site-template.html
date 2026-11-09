@@ -7361,7 +7361,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // the battlefield"). Once the board's scenery has loaded, a few patches of the rendered picture left of the board are
   // copied into images (--dpat0..5 on <html>), each from a different spot, and the panels take one each, darkened as
   // the scrim darkens the scenery. A trial on Forest Glade first (DPAT_LOOKS); other looks keep the ink panels.
-  const DPAT_LOOKS = ['frost'], DPAT_N = 6;
+  const DPAT_LOOKS = /[?&]dpat=all\b/.test(location.search) ? Game.SKINS.map(x => x.id) : ['frost'], DPAT_N = 6; // (?dpat=all: try it on every look)
   const dpat = { key: '', want: '', at: 0, ready: false };
   function dioPatterns() {
     const root = document.documentElement, v = dioWide() && boardView().m, look = v ? Game.lookOf(v) : '';
