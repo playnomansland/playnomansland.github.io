@@ -821,10 +821,10 @@ html.diorama.pcwide .panel .tier2.gap { margin-left: 0; }
 html.diorama.pcwide .panel .tier2 b { font: 700 20px/1 var(--dstencil); color: var(--tier); }
 html.diorama.pcwide .panel .tier2 b::first-letter { font-size: 0; } /* "T1" reads "1": the colour says it's a tier */
 html.diorama.pcwide .panel .tier2 span { font: 700 11px var(--dtype); color: #F4ECD8; opacity: .85; }
-html.diorama.pcwide .panel .uc2 { flex: 0 0 70px; height: 96px; border: 0; border-top: 3px solid var(--tier); border-radius: 0; background: #17140F; color: #F4ECD8; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%); box-shadow: none; }
+html.diorama.pcwide .panel .uc2 { flex: 0 0 70px; height: 96px; border: 0; border-top: 3px solid var(--tier); border-radius: 0; background: #0D1315; /* the game's own card colour (the owner, 2026-11-09) */ color: #F4ECD8; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%); box-shadow: none; }
 html.diorama.pcwide .panel .uc2 .n { font: 700 11.5px/1.12 var(--dtype); }
 html.diorama.pcwide .panel .uc2 .c { font: 700 13px var(--dstencil); color: #F2B23A; }
-html.diorama.pcwide .panel .uc2:hover:not([aria-disabled="true"]):not([aria-pressed="true"]) { background: #2C2820; }
+html.diorama.pcwide .panel .uc2:hover:not([aria-disabled="true"]):not([aria-pressed="true"]) { background: #18242A; }
 html.diorama.pcwide .panel .uc2[aria-pressed="true"] { transform: none; color: #17140F; background: #F2B23A; border-top-color: #17140F; box-shadow: none; }
 html.diorama.pcwide .panel .uc2[aria-pressed="true"] .c, html.diorama.pcwide .panel .uc2[aria-pressed="true"] .st { color: #17140F; }
 html.diorama.pcwide .panel .uc2[aria-disabled="true"] { opacity: .5; }
