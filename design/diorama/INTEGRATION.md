@@ -73,9 +73,14 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   podium; Courier Prime is no longer loaded. A unit sheet over Change battlefield hides the button and its line.
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
-**Monday 2026-11-09, start here (owner):** the golem's "Invite a friend" note is clickable (it opens Rewards) but looks
-like the notes that aren't: give it a small saffron button, as Change battlefield got (the owner said yes, for Monday).
-Then the PC launch if the owner says go (item 3). Everything under "Done from the owner's second trial notes" is live
+- Eleventh round (2026-11-09): the golem's note (menu and Profile) has a small saffron button, INVITE A FRIEND
+  (`.rw-btn` in `.rw-row`, the `.bf-btn` style a size smaller, an ink board on the Play screen), under "This golem's
+  skin is yours when a friend joins."; the whole note still opens Rewards and fades like the other island notes. Profile's
+  copy opens it with Enter / Space too, as the menu's (it only shows with an account: with none, Google's button is in
+  its way, as before).
+
+**Monday 2026-11-09 (owner):** the golem's note button is done (eleventh round above). Next: the owner's PC trial,
+then the PC launch if the owner says go (item 3). Everything under "Done from the owner's second trial notes" is live
 on `main` behind `?ui=diorama` (last commit of 2026-11-08: the small text in Bricolage Grotesque).
 
 **Open, in order:**
