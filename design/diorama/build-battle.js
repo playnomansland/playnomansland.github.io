@@ -15,8 +15,8 @@ const args = process.argv.slice(2), standalone = args[0] === '--standalone', out
 // the page needs the board's THREE camera, to frame the board around the words (setViewOffset): Render3D hands it out
 // as cam3 here only; the game's file is not changed
 const r3 = src('render3d.js');
-const render3d = r3.replace('camera: cam, info:', 'camera: cam, cam3: camera, info:');
-if (render3d === r3) throw new Error('render3d.js: the return line changed; update the cam3 patch in build-battle.js');
+const render3d = r3.includes('cam3: camera') ? r3 : r3.replace('camera: cam, info:', 'camera: cam, cam3: camera, info:'); // (the game's file hands it out itself since 2026-11-09)
+if (!render3d.includes('cam3: camera')) throw new Error('render3d.js: the return line changed; update the cam3 patch in build-battle.js');
 
 // the menu's own island (src/diorama.js: the slab, the look's painted ground and miniatures, the keeps and pieces), lifted
 // as is into buildIsland(), for the way in: New room on the island, then the island flies into the battlefield. The

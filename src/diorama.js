@@ -4,6 +4,15 @@
   // under #dio (src/diorama.css); sample data is replaced by the game's own screen by screen (INTEGRATION.md).
   // syncHome: the home screen shows (on) or a match / another screen takes over. Idempotent (hud() calls it often).
   function dioSync(on) {
+    if (on && dio.api && dio.api.flying && dio.api.flying()) { dio.api.flyStop(); document.documentElement.classList.remove('dfly'); } // back home mid-flight
+    if (!on && dio.shown && dio.api && dio.api.fly && dioFlyWanted()) { // the way in: the island flies into the board, then the home hides
+      dio.shown = false;
+      document.documentElement.classList.add('dfly');
+      dio.api.fly({ end: dioBoardPose, ready: board3d.scenery && board3d.scenery.ready,
+        shown: () => document.documentElement.classList.remove('dfly'),
+        done: () => { if (dio.shown) return; $('dio').hidden = true; dio.api.pause(); } });
+      return;
+    }
     $('dio').hidden = !on;
     if (on === dio.shown) return;
     dio.shown = on;
@@ -599,6 +608,7 @@
     const clock = new THREE.Clock();
     function frame() {
       raf = 0; if (!running) return;
+      if (fly) { flyFrame(); raf = requestAnimationFrame(frame); return; }
       const t = still ? 1.3 : clock.getElapsedTime(), k = still ? 1 : 0.08, kk = still ? 1 : 0.12;
       now.az = lerp(now.az, want.az, k); now.el = lerp(now.el, want.el, k); now.zoom = lerp(now.zoom, want.zoom, k);
       for (let i = 0; i < 3; i++) now.at[i] = lerp(now.at[i], want.at[i], k);
@@ -623,6 +633,70 @@
       rosterHot.forEach((g, i) => { g.position.y = lerp(g.position.y, (hovered === 'u:' + i || picked === g) ? 0.22 : 0, still ? 1 : 0.25); });
       place(); if (renderer) renderer.render(scene, cam); notes();
       raf = requestAnimationFrame(frame);
+    }
+    // ── the way in (the battle prototype's fly-in, 2026-11-08; the owner's wish): Create room, Join and Vs computer zoom
+    // in on the island, move it over and fade it into the real board under it. The island and the board are the same
+    // map at two scales (a tile is 1 here, Game.TILE metres on the board, both centred), so the flight ends on the board
+    // camera's exact pose (its position / TILE, the same angle, lens and view offset: end() from the page). It starts
+    // from this screen's view (the orthographic camera taken as a 5° lens far away, which looks the same). On the way
+    // the words go, the miniatures sink (the keeps last, where the board has its towers), the soil drops away, the
+    // field opens from the board's middle outward onto the battlefield's scenery, and the island fades into the board.
+    const flyCam = new THREE.PerspectiveCamera(5, 1, 0.05, 4000), FLY_MS = 1900;
+    let fly = null;
+    const clamp01 = (x) => Math.max(0, Math.min(1, x)), ease = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    function flyPose(P) {
+      const w = cv.clientWidth || innerWidth, h = cv.clientHeight || innerHeight, d = P.h / Math.tan(P.fov * Math.PI / 360);
+      flyCam.fov = P.fov; flyCam.aspect = w / h; flyCam.near = Math.max(0.05, d * 0.02); flyCam.far = d * 6 + 100;
+      flyCam.position.set(P.at[0] + d * Math.cos(P.el) * Math.sin(P.az), P.at[1] + d * Math.sin(P.el), P.at[2] + d * Math.cos(P.el) * Math.cos(P.az));
+      flyCam.up.set(0, 1, 0); flyCam.lookAt(P.at[0], P.at[1], P.at[2]);
+      flyCam.setViewOffset(w, h, P.ox * w, P.oy * h, w / P.k, h / P.k);
+    }
+    function flyMix(A, B, e) {
+      const L = (a, b) => a + (b - a) * e; let daz = B.az - A.az; daz = Math.atan2(Math.sin(daz), Math.cos(daz));
+      return { at: A.at.map((v, i) => L(v, B.at[i])), az: A.az + daz * e, el: L(A.el, B.el), h: Math.exp(L(Math.log(A.h), Math.log(B.h))), fov: L(A.fov, B.fov), ox: L(A.ox, B.ox), oy: L(A.oy, B.oy), k: L(A.k, B.k) };
+    }
+    // o: { end() -> the board's pose or null (not framed yet), ready: a promise (the board's scenery), shown() (the
+    // match's words may come in), done() (the island's part is over: hide the home) }
+    function flyStart(o) {
+      if (fly || flat || !renderer) { o.shown(); o.done(); return; }
+      const z = phone() ? now.zoom * 0.86 : now.zoom;
+      fly = { ...o, t0: 0, ready: false, wait: performance.now() + 2500, shownYet: false, keepsSet: false,
+        start: { at: [...now.at], az: now.az, el: now.el, h: z, fov: 5, ox: -(phone() ? 0 : now.off[0]), oy: phone() ? 0.02 : now.off[1], k: 1 },
+        save: { pieces: pieces.children.map(c => [c, c.scale.x]), low: [...soil, root].map(c => [c, c.position.y]), keeps: [[keepYou, keepYou.position.clone()], [keepFoe, keepFoe.position.clone()]], iy: island.position.y, ir: island.rotation.y } };
+      Promise.resolve(o.ready).catch(() => {}).then(() => { if (fly) fly.ready = true; });
+      body.classList.add('flying');
+      if (!running) resume();
+    }
+    function flyEnd(skip) {
+      const F = fly; if (!F) return;
+      fly = null;
+      for (const [c, s0] of F.save.pieces) c.scale.setScalar(s0);
+      for (const [c, y0] of F.save.low) c.position.y = y0;
+      for (const [c, p0] of F.save.keeps) c.position.copy(p0);
+      cv.style.opacity = ''; const fl = body.querySelector('.field'); fl.style.webkitMaskImage = fl.style.maskImage = '';
+      body.classList.remove('flying');
+      if (!skip) { if (!F.shownYet) F.shown(); F.done(); }
+    }
+    function flyFrame() {
+      const F = fly, T = performance.now(), E = F.end();
+      if (!F.t0) { // the press waits (up to 2.5 s) for the board underneath: framed, and its scenery loaded
+        if ((!E || !F.ready) && T < F.wait) { flyPose(F.start); renderer.render(scene, flyCam); return; }
+        if (!E) { flyEnd(); return; }
+        F.t0 = T;
+      }
+      if (!F.keepsSet && E.keeps) { F.keepsSet = true; E.keeps.forEach(([o, x, z]) => (o ? keepYou : keepFoe).position.set(x, keepYou.position.y, z)); }
+      const t = window.__flyT != null ? window.__flyT : clamp01((T - F.t0) / FLY_MS); // (__flyT: checks pin a moment)
+      island.position.y = F.save.iy * (1 - clamp01(t / 0.3)); island.rotation.y = F.save.ir * (1 - clamp01(t / 0.3)); // (the bob settles: the board doesn't float)
+      flyPose(flyMix(F.start, E, ease(clamp01(t / 0.92))));
+      const sink = ease(clamp01((t - 0.4) / 0.35)), ksink = ease(clamp01((t - 0.55) / 0.25));
+      for (const [c, s0] of F.save.pieces) c.scale.setScalar(Math.max(0.0001, s0 * (1 - (c === keepYou || c === keepFoe ? ksink : sink))));
+      for (const [c, y0] of F.save.low) c.position.y = y0 - sink * 6;
+      const f = ease(clamp01((t - 0.5) / 0.4)), far = Math.hypot(innerWidth, innerHeight), fl = body.querySelector('.field');
+      fl.style.webkitMaskImage = fl.style.maskImage = f > 0 ? `radial-gradient(circle at ${E.cx}px ${E.cy}px, transparent ${f * far}px, #000 ${f * far + 220}px)` : '';
+      cv.style.opacity = String(1 - ease(clamp01((t - 0.72) / 0.28)));
+      if (t >= 0.78 && !F.shownYet) { F.shownYet = true; F.shown(); }
+      renderer.render(scene, flyCam);
+      if (t >= 1) flyEnd();
     }
     // the home shows: a renderer and the loop; it hides (a match): both go, the scene stays in memory for next time
     function resume() { if (running) return; if (!flat && !renderer) makeRenderer(); running = true; size(); if (flat) paintFlat(); else frame(); }
@@ -1400,7 +1474,7 @@
       skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
       homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
     }
-    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
+    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
     dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); } // the tests: the roster standing; show / hide the home by hand

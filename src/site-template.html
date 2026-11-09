@@ -2540,7 +2540,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // bigger grid shows as Standard in that map's look, so the board keeps its size). A match made once per pick, never played.
   let menuPreKey = '', menuPreM = null;
   const menuPre = () => {
-    if (phase !== 'start' || m) return null;
+    if ((phase !== 'start' && !(DIO && phase === 'lobby')) || m) return null; // (the Diorama's room is on the battlefield too)
     const mp = Game.MAPS.find(x => x.id === mapPick), id = mp && !mp.grid ? mapPick : 'standard';
     const sk = skinPick && skinPick !== 'random' ? skinPick : mp && mp.grid ? Game.MAP_LOOK[mapPick] : null;
     const key = id + '|' + sk;
@@ -2624,10 +2624,12 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       taskEl.setAttribute('aria-label', dockTask.x ? `${taskEl.querySelector('#task-text').textContent} Tap to cancel.` : taskEl.querySelector('#task-text').textContent);
     }
     // a PC in a match on the 3D board: the board takes the rest of the window beside the side panel, deploy and fights alike
-    const wide = root.classList.contains('pc') && !!board3d && !!m && ['deploy', 'battle', 'result', 'end'].includes(phase), wasWide = root.classList.contains('pcwide');
+    const wide = root.classList.contains('pc') && !!board3d && ((!!m && ['deploy', 'battle', 'result', 'end'].includes(phase)) || dioRoomOn()), wasWide = root.classList.contains('pcwide');
+    root.classList.toggle('droom-on', wide && dioRoomOn()); // the Diorama's room (dioRoom)
     root.classList.toggle('pcwide', wide);
     const fight = wide && ['battle', 'result'].includes(phase), wasFight = root.classList.contains('pcfight');
     root.classList.toggle('pcfight', fight);
+    if (DIO && wide && !wasWide && board3d && board3d.camera.level() === 0) board3d.camera.setLevel(1); // the Diorama: the match opens in the tilted view (the prototype's)
     // and, from the strategic view, it goes to the tilted one for the fight (the wide board shows bigger that way), back after
     if (fight !== wasFight && board3d) {
       const cam = board3d.camera;
@@ -2853,12 +2855,13 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (rk && phase !== 'battle') chip.textContent = `Bo${rk.best} · ${rk.wins[me]}–${rk.wins[foe()]}${rk.ties ? ` · ${rk.ties} draw${rk.ties > 1 ? 's' : ''}` : ''}`;
     if ($('foe-name').innerHTML !== fh) $('foe-name').innerHTML = fh;
     if ($('you-name').innerHTML !== yh) $('you-name').innerHTML = yh;
-    document.querySelector('.hud').hidden = phase === 'start' || phase === 'lobby' || phase === 'draft'; // no match yet: nothing to show
+    document.querySelector('.hud').hidden = (phase === 'start' || phase === 'lobby' || phase === 'draft') && !dioRoomOn(); // no match yet: nothing to show (the Diorama's room: you and the open seat)
     syncMusicBtn();
     if ((mode !== 'tutorial' && !(tutHint && phase === 'deploy')) || phase === 'battle') coach(null); // the fight speaks for itself
     syncPick(); syncMusic();
     if (typeof talk === 'object' && talk) talkSync(); // chat and emotes (server matches)
     $('foe-name').classList.toggle('np-tap', typeof talk === 'object' && !!talk && talkOn() && mode === 'net' && !net.duo);
+    dioHud();
   }
 
   function setNet(text, state) {
@@ -2880,7 +2883,38 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     else if (phase === 'lobby') setNet('');
     else if (phase === 'draft' && mode === 'guest') setNet('Connection lost. Reconnecting…', 'bad');
     else setNet(mode === 'host' ? `Opponent disconnected. Waiting for them to come back…` : 'Connection lost. Reconnecting…', 'bad');
+    dioHud();
     dock(); // the line above the board moves it
+  }
+  // The Diorama's top line (html.diorama): the match's map and look above the round, the opponent's state under their
+  // health (Deploying… / Ready), and, online, "disconnected" beside the name of whoever dropped (the owner, 2026-11-08:
+  // that and nothing more; the old status line above the board is hidden under the Diorama)
+  function dioHud() {
+    if (!DIO) return;
+    const r = document.querySelector('.hud .round'), mp = m && Game.mapOf(m), sk = m && Game.SKINS.find(x => x.id === m.skin);
+    let st = $('foe-state');
+    if (!st) { st = document.createElement('span'); st.id = 'foe-state'; st.className = 'foe-state'; document.querySelector('.hud .side.foe').appendChild(st); }
+    const roomOn = dioRoomOn(), host = me === 0, rk = mode === 'net' && net.ranked;
+    const kick = roomOn ? ['Play · Rooms', host ? 'your room' : 'their room', (Game.SKINS.find(x => x.id === lookShown()) || {}).name].filter(Boolean).join(' · ') : [mp && mp.name, sk && sk.name].filter(Boolean).join(' · ');
+    if (r.dataset.kick !== kick) r.dataset.kick = kick;
+    const seat = roomOn && host && !(mode === 'net' ? net.foeHere : net.connected); // the room's other seat is open
+    document.querySelector('.hud .side.foe').classList.toggle('open', seat);
+    if (roomOn) {
+      $('phase').textContent = rk ? '1v1 Ranked · Bo3' : '1v1 Standard';
+      if (seat) $('foe-name').textContent = 'Open seat';
+      let st0 = $('foe-state');
+      if (st0) { const t0 = seat ? 'Waiting for a player…' : 'Here'; if (st0.textContent !== t0) st0.textContent = t0; st0.classList.toggle('on', !seat); st0.hidden = false; }
+      $('foe-name').dataset.dc = ''; $('you-name').dataset.dc = '';
+      return;
+    }
+    const live = !!m && !solo() && mode !== 'spec' && mode !== 'replay' && !m.over;
+    const foeAway = live && ((mode === 'host' && !net.connected) || ((mode === 'net' || mode === 'guest') && net.connected && net.foeHere === false));
+    const meAway = live && (mode === 'net' || mode === 'guest') && !net.connected;
+    $('foe-name').dataset.dc = foeAway ? 'disconnected' : '';
+    $('you-name').dataset.dc = meAway ? 'reconnecting…' : '';
+    const t = phase === 'deploy' && m && mode !== 'spec' && mode !== 'tutorial' ? (foeAway ? '' : ready[foe()] ? 'Ready' : solo() ? '' : 'Deploying…') : '';
+    if (st.textContent !== t) st.textContent = t;
+    st.classList.toggle('on', t === 'Ready'); st.hidden = !t;
   }
 
   // ---------- countdown ----------
@@ -3398,6 +3432,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   function panelDeploy() {
     foeSlotNews();
     if (phase !== 'deploy') return;
+    dioHud();
     if (mode === 'tutorial') { panelTutorial(); return; }
     const g = m.gold[me];
     const fresh = m.armies[me].filter(s => s.round === m.round).length;
@@ -7269,11 +7304,73 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const busy = phase === 'battle' || !board3d.still() || performance.now() < wakeUntil, alive = board3d.alive && board3d.alive();
     if (busy || !alive || ts - lastIdle >= 30) {
       if (!busy) lastIdle = ts;
+      dioFit(ts);
       board3d.draw();
       boardMarks();
+      if (DIO) dioRoomNotes();
       meterFrame(ts);
     }
     if (board3d && (busy || alive)) raf3d = requestAnimationFrame(frame3d);
+  }
+  // The Diorama on a PC (html.diorama.pcwide): the 3D board's canvas is the whole window (the scenery under the words)
+  // and THREE's view offset moves and scales the picture so the board sits in what the words leave free: right of the
+  // left column, under the top line (design/diorama/src/battle.js fitView, the battle screen prototype). In the
+  // strategic and tilted views the board's corners are measured and fitted; between tilted and angled the fit blends to
+  // none, so no view switch jumps; closer in, the camera's own framing. Off: the plain picture again.
+  const dfit = { k: 1, ox: 0, oy: 0, held: null, on: false, ts: 0 };
+  try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
+  const dioWide = () => DIO && document.documentElement.classList.contains('pcwide');
+  const dioPw = () => Math.round(Math.min(400, Math.max(318, innerWidth * 0.25))); // the left column's width (--dpw), as the prototype's clamp(318px, 25vw, 400px)
+  function dioSafe() {
+    const hb = document.querySelector('.hud').getBoundingClientRect(), pw = dioPw();
+    const r = { x0: pw + 28, x1: innerWidth - 24, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
+    const st = document.documentElement.style, vs = [pw, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
+    if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); } // (the column, the pick and the result cards follow these)
+    return r;
+  }
+  function dioFit(ts) {
+    const b = board3d, c3 = b && b.cam3; if (!c3) return;
+    if (!dioWide()) { if (dfit.on) { c3.clearViewOffset(); Object.assign(dfit, { k: 1, ox: 0, oy: 0, held: null, on: false }); } return; }
+    const dt = dfit.on && dfit.ts ? Math.min(0.1, (ts - dfit.ts) / 1000) : null; dfit.ts = ts;
+    const W = innerWidth, H = innerHeight, R = dioSafe(), z = b.camera.zoom();
+    const base = (p) => [(p[0]) / dfit.k + dfit.ox, (p[1]) / dfit.k + dfit.oy];
+    let k, cx, cy;
+    if (z <= 1.001 || !dfit.held) {
+      const C = Game.COLS - 1, Rw = Game.ROWS - 1;
+      const pts = [[0, 0, 0], [C, 0, 0], [0, Rw, 0], [C, Rw, 0], [0, 0, 5], [C, 0, 5]].map(([c, r, h]) => base(b.screenAt(c, r, h)));
+      let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0])), y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
+      const px = (x1 - x0) / C * 0.6, py = (y1 - y0) / Rw * 0.6; x0 -= px; x1 += px; y0 -= py; y1 += py;
+      k = Math.min(1.08, (R.x1 - R.x0) / (x1 - x0), (R.y1 - R.y0) / (y1 - y0));
+      cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+      if (z <= 1.001) dfit.held = { k, dx: cx - W / 2, dy: cy - H / 2 };
+    } else {
+      const w = Math.min(1, z - 1), h = dfit.held;
+      k = h.k + (1 - h.k) * w; cx = W / 2 + h.dx * (1 - w); cy = H / 2 + h.dy * (1 - w);
+    }
+    if (!isFinite(k) || k <= 0) return;
+    const tox = cx - (R.x0 + R.x1) / 2 / k, toy = cy - (R.y0 + R.y1) / 2 / k;
+    const a = dt == null ? 1 : 1 - Math.exp(-dt * 9);
+    dfit.k += (k - dfit.k) * a; dfit.ox += (tox - dfit.ox) * a; dfit.oy += (toy - dfit.oy) * a; dfit.on = true;
+    c3.setViewOffset(W, H, dfit.ox, dfit.oy, W / dfit.k, H / dfit.k);
+    dfit.to = [k, tox, toy];
+    if (Math.abs(k - dfit.k) > 0.002 || Math.abs(tox - dfit.ox) > 0.5 || Math.abs(toy - dfit.oy) > 0.5) wakeUntil = Math.max(wakeUntil, performance.now() + 120); // still gliding: keep drawing
+  }
+  addEventListener('resize', () => { if (dioWide()) wake3d(); });
+  // the way in (src/diorama.js flyStart): Create room, Join and Vs computer on a PC fly the menu's island into the board.
+  // The board camera's pose in island units (its position / TILE, the same angle, lens and view offset), the keeps' spots
+  // (the board's towers) and the middle of the free space, where the field opens from; null until the board is framed
+  const dioFlyWanted = () => pcLayout() && !!board3d && !matchMedia('(prefers-reduced-motion: reduce)').matches && !/[?&]fly=off\b/.test(location.search)
+    && (dioRoomOn() || (phase === 'deploy' && !!m && m.round === 1 && (mode === 'ai' || mode === 'net')));
+  function dioBoardPose() {
+    const b = board3d, c = b && b.cam3; if (!c) return null;
+    wake3d();
+    if (!dioWide() || !dfit.on) return null;
+    const T = Game.TILE, bk = new c.position.constructor(0, 0, 1).applyQuaternion(c.quaternion);
+    const p = c.position.clone().divideScalar(T), dist = p.y / Math.max(0.05, bk.y), at = p.clone().addScaledVector(bk, -dist);
+    const v = boardView().m, f = me === 1 ? -1 : 1, R = dioSafe();
+    const keeps = v && v.towers ? [me, 1 - me].filter(sd => v.towers[sd]).map(sd => [sd === me, f * (v.towers[sd].col - (Game.COLS - 1) / 2), f * (v.towers[sd].row - (Game.ROWS - 1) / 2)]) : null;
+    return { at: [at.x, at.y, at.z], az: Math.atan2(bk.x, bk.z), el: Math.asin(Math.max(-1, Math.min(1, bk.y))), h: dist * Math.tan(c.fov * Math.PI / 360), fov: c.fov,
+      ox: dfit.ox / innerWidth, oy: dfit.oy / innerHeight, k: dfit.k, keeps, cx: (R.x0 + R.x1) / 2, cy: (R.y0 + R.y1) / 2 };
   }
   // The speed meter counts frames and sums up each fight for the too-slow rule. When 3D is forced for testing, it
   // shows top right on the 3D board: frames drawn in the last second (0 while the board idles), the slowest frame among
@@ -8374,6 +8471,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
   function drawLobby(problem) {
     if (tourLive()) { drawTourLobby(tourLive(), problem); return; } // a tournament match starts by itself
+    if (dioRoomOn()) { dioRoom(problem); return; } // the Diorama on a PC: the room is the battlefield
     const srv = mode === 'net';
     const link = srv ? playLink() : shareLink();
     const here = srv ? net.foeHere : net.connected;
@@ -8427,6 +8525,108 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     $('panel').querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); drawLobby(); }));
     $('panel').querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); drawLobby(); }));
     if (rk) wireLookSeg(); else { wireMapSeg(); wireCharSeg(); wirePackSeg(); wireSettings(); }
+  }
+  // ---------- the Diorama's room (a PC): the room you wait in is the battlefield you're about to fight on ----------
+  // (design/diorama/battle.html, the room prototype, 2026-11-08) The board shows the room's map in its look, edge to edge;
+  // the top line has you top left and the other seat top right (open until someone takes it); the keeps say who is in
+  // the game ("Wren · connected" / "Waiting for opponent…", the owner, 2026-11-08); the left column has the room's
+  // settings as rows of words (Who can find it, Spectators, Units, Battlefield), + Invite a friend, and START MATCH on the
+  // saffron shard, the deploy panel's place. No match code or link (the owner, 2026-11-07: everything goes through
+  // Rooms and friends' invites), except for a developer's phone-to-phone room, which can't be found any other way.
+  const dioRoomOn = () => DIO && pcLayout() && phase === 'lobby' && !m && mode !== 'spec' && !net.duo && !tourLive();
+  let dioClosing = false, dioGuestText = '';
+  function dioRoom(problem, guestText) {
+    if (guestText != null) dioGuestText = guestText;
+    const o = $('overlay'); if (!o.hidden) { o.hidden = true; o.innerHTML = ''; }
+    const srv = mode === 'net', host = me === 0, rk = srv && net.ranked;
+    const here = host ? !!(srv ? net.foeHere : net.connected) : !!net.connected;
+    const nm0 = foeName(), nm = nm0 && nm0 !== 'Opponent' && nm0 !== 'Enemy' ? nm0 : '';
+    const whose = host ? 'Your room' : nm ? `${esc(nm)}’s room` : 'Their room';
+    const pub = srv && !net.tourCode ? talk.pub : false, watch = srv && !net.tourCode ? talk.spectate : false;
+    const skins = Game.SKINS, k = Math.max(0, skins.findIndex(x => x.id === (lookShown() || 'meadow'))), bf = skins[k] || skins[0];
+    const word = (key, v, label, cur) => `<button class="w" data-${key}="${v}" aria-pressed="${String(cur)}">${label}</button>`;
+    const row = (label, ws, note, id) => `<div class="rrow"${id ? ` id="${id}"` : ''}><span class="lab">${label}</span><div class="ws">${ws}</div>${note ? `<span class="note"${id ? ` id="${id}-note"` : ''}>${note}</span>` : ''}</div>`;
+    const lead = problem ? esc(problem) : !host ? esc(dioGuestText || `${nm || 'The host'} starts the match.`)
+      : here ? `<b>${esc(nm || 'Your opponent')}</b> is here. Start when you’re ready.`
+      : srv && !net.connected ? 'Setting up the room…'
+      : !srv ? 'Phone to phone: send the link below to a friend and keep this page open.'
+      : pub ? 'Listed in Rooms: anyone can join. Friends you invite get a message.' : 'Not listed. Only friends you invite can join.';
+    const rows = !host ? row('Battlefield', `<span class="w" aria-pressed="true">${esc(bf.name)}</span>`, `The match is played on ${nm ? esc(nm) + '’s' : 'the host’s'} pick.`)
+      : `${srv && !net.tourCode ? row('Who can find it', word('pub', 1, 'Public', pub) + word('pub', 0, 'Private', !pub), pub ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.')
+          + row('Spectators', word('spec', 1, 'On', watch) + word('spec', 0, 'Off', !watch), watch ? 'Anyone can watch once it starts.' : 'Just the two of you.') : ''}
+        ${rk ? row('Units', '<span class="w" aria-pressed="true">Standard</span>', 'Ranked: the Standard map and pack, the same 5 leaders and 3 towers for you both. Win 2 games to take the series; only ranked series count on the leaderboard.')
+          : customSet ? row('Units', `<span class="w" aria-pressed="true">Your ${units.length}</span>`, 'Your Counter Lab units, on this device.')
+          : row('Units', word('pack', 'learn', 'Learn the game', packNow() === 'learn') + word('pack', 'standard', 'Standard', packNow() === 'standard') + (devMode() ? word('pack', 'custom', 'Custom', packNow() === 'custom') : ''), packNote(), 'pack-row')}
+        ${row('Battlefield', `<button class="arrow" data-bf="-1" aria-label="Previous battlefield">‹</button><span class="w" aria-pressed="true">${esc(bf.name)}</span><button class="arrow" data-bf="1" aria-label="Next battlefield">›</button>`, `${k + 1} of ${skins.length}. The match is played here.`)}`;
+    const dev = host && devMode() && !rk ? `<div class="ddev"><span class="lab">Developer</span>
+        ${factionsReady() ? `<div class="seg" role="group" aria-label="Gamemode"><button data-kind="standard" aria-pressed="${matchKind !== 'factions'}">Standard</button><button data-kind="factions" aria-pressed="${matchKind === 'factions'}">Factions</button></div>` : ''}
+        ${settingsBox(`${mapSeg()}${charSeg()}`)}
+        ${srv ? '<button class="help" id="use-peer">Phone to phone instead (for Factions)</button>' : ''}</div>` : '';
+    const link = !srv && host ? `<div class="rlink"><span class="linkbox" id="link">${esc(shareLink())}</span><button class="help" id="copy">Copy link</button></div>` : '';
+    $('panel').innerHTML = `<div class="droom">
+      <div class="rhead"><span class="k">${whose} · ${pub ? 'public' : 'private'}${watch ? ' · watchable' : ''}${rk ? ' · ranked' : ''}</span>
+        <h2>${whose}</h2><p class="rlead" id="lobby-status">${lead}</p></div>
+      ${link}
+      <div class="rrows">${rows}</div>
+      ${srv && !net.tourCode && frOk() ? '<div class="xrow invite"><button class="w" id="fr-room">+ Invite a friend</button></div>' : ''}
+      ${dev}
+      <div class="rgo">
+        ${host ? `<button class="btn primary" id="start" ${here ? '' : 'disabled'}>Start match</button>
+          <div class="say"><span class="big">${here ? `${esc(nm || 'Your opponent')} is here` : 'Open seat'}</span>
+            <small>${here ? 'The match starts for you both.' : 'Nobody yet.'}</small>
+            <button class="help" id="cancel">${dioClosing ? 'Sure? Close it' : 'Close room'}</button></div>`
+        : `<div class="say"><span class="big">Waiting for ${esc(nm || 'the host')}</span><small>${esc(nm || 'The host')} starts the match.</small>
+            <button class="help" id="leave">Leave room</button></div>`}
+      </div></div>`;
+    const P = $('panel'), on = (id, f) => { const b = $(id); if (b) b.addEventListener('click', f); };
+    P.querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); dioRoom(); }));
+    P.querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); dioRoom(); }));
+    P.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {
+      const v = b.dataset.pack; unitPack = v === 'custom' && devMode() ? 'custom' : v === 'standard' ? 'standard' : 'learn';
+      try { localStorage.setItem(PACK_STORE, unitPack); } catch (e) {}
+      dioRoom();
+    }));
+    P.querySelectorAll('[data-bf]').forEach(b => b.addEventListener('click', () => { // the battlefield: the room's look, saved as the menu's (pb-skin); the board changes at once
+      const nx = skins[(k + +b.dataset.bf + skins.length) % skins.length].id;
+      skinPick = nx === (Game.MAP_LOOK[curMap() || 'standard'] || '') ? '' : nx;
+      try { localStorage.setItem('pb-skin', skinPick); } catch (e) {}
+      render(); dioRoom();
+    }));
+    on('fr-room', () => openFriends('friends')); // friends: Invite sends this room's code
+    on('start', hostStartMatch);
+    on('cancel', () => { if (!dioClosing) { dioClosing = true; dioRoom(); setTimeout(() => { if (dioClosing) { dioClosing = false; if (dioRoomOn()) dioRoom(); } }, 3000); return; } dioClosing = false; clearHost(); showStart(); }); // tap twice
+    on('leave', showStart);
+    on('use-peer', () => hostLobby(true));
+    on('copy', () => { const l = shareLink(), done = () => { if ($('copy')) $('copy').textContent = 'Copied'; }; if (navigator.clipboard) navigator.clipboard.writeText(l).then(done, () => selectLink()); else selectLink(); });
+    P.querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => { matchKind = b.dataset.kind; if (srv && matchKind === 'factions') hostLobby(true); else dioRoom(); }));
+    if (dev) { wireMapSeg(); wireCharSeg(); wireSettings(); }
+    hud(); dock(); render();
+  }
+  // the keeps' notes: a dot on each keep, a line, and who is there (drawn with the board's frames)
+  function dioRoomNotes() {
+    const show = dioRoomOn() && !!board3d && dioWide();
+    let svg = $('dlines');
+    if (!svg) {
+      document.querySelector('.app').insertAdjacentHTML('beforeend', '<svg id="dlines" class="dlines" aria-hidden="true"></svg><div class="knote" id="dkn0" hidden></div><div class="knote" id="dkn1" hidden></div>');
+      svg = $('dlines');
+    }
+    svg.style.display = show ? '' : 'none';
+    const v = boardView().m, lines = [];
+    for (const sd of [0, 1]) {
+      const n = $('dkn' + sd), t = show && v && v.towers && v.towers[sd];
+      n.hidden = !t; if (!t) continue;
+      const mine = sd === me, host = me === 0, srv = mode === 'net';
+      const there = mine ? (host || !!net.connected) : host ? !!(srv ? net.foeHere : net.connected) : !!net.connected;
+      const nm = mine ? (acct ? acct.tag : 'You') : (foeName() !== 'Opponent' ? foeName() : 'Opponent');
+      const html = there ? `<b>${esc(nm)}</b> · connected` : mine ? `<b>${esc(nm)}</b> · connecting…` : '<span class="wait">Waiting for opponent…</span>';
+      if (n.innerHTML !== html) n.innerHTML = html;
+      const [x, y] = board3d.screenAt(t.col, t.row, mine ? 2.4 : 2.6), w = n.offsetWidth, left = !mine, gap = 70;
+      const lx = Math.max(8, Math.min(innerWidth - w - 8, left ? x - gap - w : x + gap)), ly = y - 34;
+      n.style.left = lx + 'px'; n.style.top = ly + 'px';
+      const near = Math.abs(lx + w - x) < Math.abs(lx - x) ? lx + w : lx, far = near === lx ? lx + w : lx;
+      lines.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5"/><polyline points="${x.toFixed(1)},${y.toFixed(1)} ${near.toFixed(1)},${(ly + 26).toFixed(1)} ${far.toFixed(1)},${(ly + 26).toFixed(1)}"/>`);
+    }
+    const h = lines.join(''); if (svg.innerHTML !== h) svg.innerHTML = h;
   }
   function selectLink() { const r = document.createRange(); r.selectNodeContents($('link')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
 
@@ -8806,6 +9006,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
 
   function guestWaiting(text) {
+    if (dioRoomOn()) { dioRoom('', text); return; }
     overlay(`<div class="card">
       <span class="eyebrow">Live match</span>
       <span class="code">${esc(net.code)}</span>

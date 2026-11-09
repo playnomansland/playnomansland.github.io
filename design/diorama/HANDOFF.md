@@ -372,3 +372,46 @@ The room, the battle screen and the way in, held upright (700 px wide or less; `
   flight into the board's pose above the drawer.
 - Not done: phones held sideways (the PC layout is too tall for them; probably the column on the left again, tighter),
   and a real touch device (only checked with Chromium's touch emulation).
+
+## In the game (2026-11-09): the battle screen, the room and the way in, on a PC
+
+The owner: "I want everything to be ready and testable asap (for PC)." The three prototypes are now the real game's
+screens under the Diorama switch (`?ui=diorama`), on a PC with the 3D board. Phones and the old UI are unchanged.
+**Not the prototype's code:** the game's own match screen is restyled, so every feature keeps working (leaders' buttons,
+Otto's Slots, buildings, walls, online play, spectating, the tutorial, replays, chat).
+- **The match** (`html.diorama.pcwide`; CSS at the end of `src/diorama.css`): the 3D canvas is the whole window, with
+  ink scrims on the left and the top. The board frames itself in the free space (`dioFit` in `src/site-template.html`,
+  the prototype's `fitView`: THREE's view offset). `src/render3d.js` now hands out its THREE camera as `cam3`, a one-line
+  change; `build-battle.js` uses it when it is there. The top line is the game's `.hud`, restyled:
+  - the map and look above ROUND n · PHASE;
+  - Damage, Settings and Music as words;
+  - the opponent's Ready / Deploying… under their health;
+  - online, "· disconnected" beside the name of an opponent who dropped, and "· reconnecting…" beside yours when you
+    drop. The old status line above the board is hidden (`dioHud`).
+
+  The left column is the game's own `panelDeploy()`, restyled (gold, diamonds, the hint, the extra moves as stencil
+  words, SHOP by tier, + UNLOCK). READY / Fight / Not ready sit on the big saffron shard at the bottom left with the
+  clock. The picks (start, leader, tower), round results and the match's end are centred on the free space. The match
+  opens in the Tilted view.
+- **The room** (`dioRoom` / `dioRoomOn` in the page; `html.droom-on`): `drawLobby` and `guestWaiting` draw it on a PC
+  under the Diorama. The board shows the room's map in its look (`menuPre` now also runs in the lobby). The top line
+  shows you and the open seat (Open seat, a dashed bar, "Waiting for a player…", then their name and HERE). The keeps
+  carry "Name · connected" / "Waiting for opponent…" (`dioRoomNotes`, drawn with the board's frames). The column:
+  - the rows Who can find it, Spectators, Units and Battlefield (‹ › changes the board at once and saves `pb-skin`);
+  - + Invite a friend (the game's Friends sheet);
+  - START MATCH on the shard, with Close room (tap twice);
+  - for a guest: Leave room;
+  - for a developer: Factions, Match settings and Phone to phone.
+
+  There is no code or link, except in a developer's phone-to-phone room, which can't be found any other way.
+- **The way in** (`flyStart` in `src/diorama.js`; `dioFlyWanted` / `dioBoardPose` in the page): Create room, Join and
+  Vs computer on a PC fly the menu's island into the board, as in the prototype. It waits up to 2.5 s for the board to
+  be framed and its scenery loaded, then takes 1.9 s. The match's words wait (`html.dfly`) until 0.78, then the home
+  hides and frees its renderer. Not with reduced motion, `?fly=off`, phones, or the 2D board.
+- **Checked here** (Chromium, software 3D, 1440×900):
+  - Vs computer: start pick, deploy, a card picked, fight, result;
+  - a room against a stand-in game server: open seat, then Pebble seated;
+  - the flight at pinned moments (`window.__flyT`).
+
+  The classic UI's carry-cap and ai-ready tests pass. Not checked: a real online match with two players (the sandbox
+  can't reach the game server), the 2D board under the Diorama (it keeps the old layout, restyled sheets only).
