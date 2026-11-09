@@ -453,3 +453,5 @@ under 860 px high.
   `dock()`); the song or "Playlist" unfolds the playlists above it, their down arrow or Esc folds them back (`mpClose`
   doesn't close it there). The top-line music line (`dioMusicLine`) is hidden; the "Music" link too. **+1 deployment** reads "+1 deployment, a gold coin, the cost" (the owner). The right
   panel sits closer to the edge.
+  The player itself hides too (the owner): its down arrow (`.dm-hide`) slides it away, leaving a small "♪ Music ⌃"
+  (`.dm-show`) that slides it back up; kept on the device (`pb-dmusic`). Three steps down: playlists → player → Music.

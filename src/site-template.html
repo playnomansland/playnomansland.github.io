@@ -1960,6 +1960,30 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (want && !mpui.open) { openPlaylist(); const p2 = $('mp-pop'); if (p2) p2.classList.add('mini'); }
     else if (!want && mpui.open && pop && pop.classList.contains('dmini')) mpClose(true);
     const p3 = $('mp-pop'); if (p3 && want && mpui.open) p3.classList.add('dmini');
+    dioMusicDecor();
+  }
+  // the player's own down arrow slides it away, leaving a small "♪ Music ⌃" that brings it back (the owner, 2026-11-09);
+  // kept on this device
+  let dmHid = false;
+  try { dmHid = localStorage.getItem('pb-dmusic') === 'hid'; } catch (e) {}
+  function dioMusicDecor() {
+    const pop = $('mp-pop'); if (!pop || !pop.classList.contains('dmini')) return;
+    const pl = pop.querySelector('.mplayer'), dk = pop.querySelector('.mp-dock');
+    if (pl && !pl.querySelector('.dm-hide')) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'dm-hide'; b.setAttribute('aria-label', 'Hide the music player'); b.title = 'Hide'; b.innerHTML = CHEV_DOWN;
+      b.addEventListener('click', () => dioMusicHide(true)); pl.appendChild(b);
+    }
+    if (dk && !dk.querySelector('.dm-show')) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'dm-show'; b.setAttribute('aria-label', 'Show the music player');
+      b.innerHTML = `${NOTE_SVG}<span>Music</span>${CHEV_UP}`; b.addEventListener('click', () => dioMusicHide(false)); dk.appendChild(b);
+    }
+    pop.classList.toggle('hid', dmHid);
+  }
+  function dioMusicHide(h) {
+    dmHid = h; try { localStorage.setItem('pb-dmusic', h ? 'hid' : ''); } catch (e) {}
+    const pop = $('mp-pop'); if (!pop) return;
+    if (h) { pop.classList.add('mini'); mpui.edit = null; }
+    pop.classList.toggle('hid', h);
   }
   function openPlaylist() {
     if (mpui.open && dioMini() && $('mp-pop') && $('mp-pop').classList.contains('mini')) { $('mp-pop').classList.remove('mini'); mpDraw(true); showPlayer(); return; } // the playlists unfold

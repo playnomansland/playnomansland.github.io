@@ -1266,3 +1266,26 @@ html.dright.diorama.pcwide #mp-pop.dock .mp-n { text-align: left; }
 html.dright.diorama.pcwide #mp-pop.dock .mp-songs { padding: 0 14px 0 2px; }
 html.dright.diorama.pcwide #mp-pop.dock .mp-foot { flex-direction: row; }
 html.dright.diorama.pcwide #mp-pop.dock .mp-name { align-self: flex-start; text-align: left; }
+
+/* the player hides and comes back (the owner, 2026-11-09): its down arrow slides it away; a small "♪ Music ⌃" in the
+   corner slides it back up */
+html.diorama.pcwide #mp-pop.dock .mplayer { position: relative; width: fit-content; min-width: 270px; transition: opacity .25s ease, transform .3s cubic-bezier(.2, .9, .25, 1); }
+html.diorama.pcwide #mp-pop.dock .mp-dock { align-items: flex-end; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-dock { align-items: flex-start; }
+html.diorama.pcwide #mp-pop.dock .mp-panel { align-self: stretch; }
+html.diorama.pcwide #mp-pop.dock .dm-hide { position: absolute; top: 0; left: -30px; width: 22px; height: 22px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: #F4ECD8; opacity: .75; filter: drop-shadow(0 0 3px rgba(10,13,12,.9)); }
+html.dright.diorama.pcwide #mp-pop.dock .dm-hide { left: auto; right: -30px; }
+html.diorama.pcwide #mp-pop.dock .dm-hide:hover { opacity: 1; transform: translateY(2px); }
+html.diorama.pcwide #mp-pop.dock .dm-hide svg { width: 14px; height: 14px; }
+html.diorama.pcwide #mp-pop.dock:not(.mini) .dm-hide { display: none; } /* (the playlists' own arrow folds them first) */
+html.diorama.pcwide #mp-pop.dock .dm-show { position: absolute; bottom: 0; right: 0; display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; border: 0; background: none; color: #F4ECD8;
+  font: 700 13px "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; text-shadow: 0 0 3px rgba(10,13,12,.95), 0 0 9px rgba(10,13,12,.8);
+  opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .2s ease, transform .25s ease; }
+html.dright.diorama.pcwide #mp-pop.dock .dm-show { right: auto; left: 0; }
+html.diorama.pcwide #mp-pop.dock .dm-show svg { width: 13px; height: 13px; filter: drop-shadow(0 0 3px rgba(10,13,12,.9)); }
+html.diorama.pcwide #mp-pop.dock .dm-show svg:first-child { color: #F2B23A; }
+html.diorama.pcwide #mp-pop.dock .dm-show:hover span { text-decoration: underline; text-underline-offset: 4px; }
+html.diorama.pcwide #mp-pop.dock.hid .mplayer { opacity: 0; transform: translateY(30px); pointer-events: none; }
+html.diorama.pcwide #mp-pop.dock.hid .dm-show { opacity: 1; transform: none; pointer-events: auto; transition-delay: .12s; }
+html.diorama.pcwide #mp-pop.dock.hid::before { opacity: 0; }
+html.diorama.pcwide #mp-pop.dock::before { transition: opacity .3s ease; }
