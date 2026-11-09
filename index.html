@@ -1310,6 +1310,42 @@ html.diorama.pcwide #mp-pop.dock .mp-foot { display: flex; flex-direction: row-r
 html.diorama.pcwide #mp-pop.dock .mp-where { font: 500 12px "Bricolage Grotesque", system-ui, sans-serif; opacity: .75; }
 html.diorama.pcwide .panel .speeds button[aria-pressed="true"]::before, html.diorama.pcwide .panel .speeds button.offer::before { content: none; display: none; }
 
+/* the column never squeezes its rows (on a short window they collapsed onto the gold, the owner's screenshot,
+   2026-11-09): it scrolls instead, and ends above READY so nothing runs under it; its bottom edge fades when it scrolls */
+html.diorama.pcwide .panel > * { flex-shrink: 0; }
+html.diorama.pcwide .panel { bottom: 104px; padding-bottom: 14px; -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent); }
+html.diorama.pcwide.pcfight .panel, html.diorama.pcwide .panel:not(:has(#ready, #fight)) { bottom: 0; -webkit-mask-image: none; mask-image: none; }
+html.droom-on .panel { bottom: 160px; padding-bottom: 14px; }
+/* short windows (a laptop): the same column, tighter, all four tiers in sight */
+@media (max-height: 860px) {
+  html.diorama.pcwide .hud { padding-top: 12px; }
+  html.diorama.pcwide .hud .side .num { font-size: 38px; }
+  html.diorama.pcwide .hud .round #round, html.diorama.pcwide .hud .round #phase { font-size: 30px; }
+  html.diorama.pcwide .panel { top: 92px; gap: 8px; bottom: 88px; }
+  html.droom-on .panel { top: 92px; bottom: 150px; }
+  html.diorama.pcwide .panel .trow .g2 { font-size: 50px; }
+  html.diorama.pcwide .panel .hint2 { font-size: 13px; -webkit-line-clamp: 3; }
+  html.diorama.pcwide .panel .shop2 { row-gap: 8px; gap: 6px; padding-top: 12px; margin-top: 4px; }
+  html.diorama.pcwide .panel .uc2, html.diorama.pcwide .panel .add2 { flex-basis: 62px; height: 82px; }
+  html.diorama.pcwide .panel .tier2 { height: 82px; }
+  html.diorama.pcwide .panel .uc2 .ic svg { width: 24px; height: 24px; }
+  html.diorama.pcwide .panel #ready, html.diorama.pcwide .panel #fight { font-size: 44px; bottom: 18px; padding: 10px 20px 4px 16px; }
+  html.diorama.pcwide .panel #ready:not(.primary) { font-size: 32px; }
+  html.diorama.pcwide .panel .trow .timer { bottom: 38px; font-size: 26px; }
+}
+
+/* the deploy panel on the right (a trial for the owner, 2026-11-09: ?side=right): the column, its scrim, READY and the
+   clock mirror to the right edge; the board frames itself in what's left (dioSafe); the music player moves beside it */
+html.dright.diorama.pcwide .panel { left: auto; right: 0; padding-left: 22px; padding-right: 32px; }
+html.dright.diorama.pcwide #wrap::before { left: auto; right: 0; background: linear-gradient(270deg, rgba(23,20,15,.8) 0, rgba(23,20,15,.66) calc(var(--dpw, 340px) - 30px), rgba(23,20,15,0) 100%); }
+html.dright.diorama.pcwide .panel #ready, html.dright.diorama.pcwide .panel #fight { left: auto; right: 26px; }
+html.dright.diorama.pcwide .panel .trow .timer { left: auto; right: calc(var(--dpw, 340px) - 72px); text-align: right; }
+html.dright.diorama.pcwide .droom .rgo { left: auto; right: 26px; align-items: flex-end; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-dock { right: calc(var(--dpw, 340px) + 30px); }
+html.dright.diorama.pcwide #mp-pop.dock::before { background: radial-gradient(46% 80% at 70% 100%, rgba(10, 13, 12, .9), rgba(10, 13, 12, .55) 55%, transparent 80%); }
+html.dright.diorama.pcwide .talk-fab { left: 32px; top: 112px; }
+html.dright.diorama.pcwide .sheet-back { padding-left: 24px; padding-right: calc(var(--dpw, 340px) + 28px); }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -17696,7 +17732,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · ce681d2'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 708699f'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -22990,12 +23026,14 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // strategic and tilted views the board's corners are measured and fitted; between tilted and angled the fit blends to
   // none, so no view switch jumps; closer in, the camera's own framing. Off: the plain picture again.
   const dfit = { k: 1, ox: 0, oy: 0, held: null, on: false, ts: 0 };
+  if (/[?&]side=right\b/.test(location.search)) document.documentElement.classList.add('dright'); // a trial: the deploy panel on the right
   try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
   const dioWide = () => DIO && document.documentElement.classList.contains('pcwide');
   const dioPw = () => Math.round(Math.min(400, Math.max(318, innerWidth * 0.25))); // the left column's width (--dpw), as the prototype's clamp(318px, 25vw, 400px)
   function dioSafe() {
     const hb = document.querySelector('.hud').getBoundingClientRect(), pw = dioPw();
-    const r = { x0: pw + 28, x1: innerWidth - 24, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
+    const right = document.documentElement.classList.contains('dright'); // the deploy panel on the right (?side=right)
+    const r = right ? { x0: 24, x1: innerWidth - pw - 28, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 } : { x0: pw + 28, x1: innerWidth - 24, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
     const st = document.documentElement.style, vs = [pw, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
     if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); } // (the column, the pick and the result cards follow these)
     return r;

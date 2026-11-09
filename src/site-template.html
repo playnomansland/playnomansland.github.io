@@ -7365,12 +7365,14 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // strategic and tilted views the board's corners are measured and fitted; between tilted and angled the fit blends to
   // none, so no view switch jumps; closer in, the camera's own framing. Off: the plain picture again.
   const dfit = { k: 1, ox: 0, oy: 0, held: null, on: false, ts: 0 };
+  if (/[?&]side=right\b/.test(location.search)) document.documentElement.classList.add('dright'); // a trial: the deploy panel on the right
   try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
   const dioWide = () => DIO && document.documentElement.classList.contains('pcwide');
   const dioPw = () => Math.round(Math.min(400, Math.max(318, innerWidth * 0.25))); // the left column's width (--dpw), as the prototype's clamp(318px, 25vw, 400px)
   function dioSafe() {
     const hb = document.querySelector('.hud').getBoundingClientRect(), pw = dioPw();
-    const r = { x0: pw + 28, x1: innerWidth - 24, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
+    const right = document.documentElement.classList.contains('dright'); // the deploy panel on the right (?side=right)
+    const r = right ? { x0: 24, x1: innerWidth - pw - 28, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 } : { x0: pw + 28, x1: innerWidth - 24, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
     const st = document.documentElement.style, vs = [pw, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
     if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); } // (the column, the pick and the result cards follow these)
     return r;
