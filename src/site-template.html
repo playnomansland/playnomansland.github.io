@@ -2208,11 +2208,22 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   // the cog in a match opens it as Settings (music, the 2D / 3D board and Main menu), the menu's Music button as music only.
   // data-keep: phase changes leave this sheet open (closeSheet)
+  // the Diorama's speaker button (Settings, owner 2026-11-09): waves when the sound is on, a cross when it's off
+  const spkSvg = (on) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" stroke="none"/>${on ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg>`;
   function openSoundSheet() {
     const inMatch = !!m && phase !== 'start' && phase !== 'lobby';
+    // under the Diorama, Music and Sound effects are a speaker button before the slider (no On / Off rows)
+    const spk = DIO && document.documentElement.classList.contains('diorama');
     $('sheet').innerHTML = `
       <div class="bar" data-keep><h3 id="sheet-h">Settings</h3><button class="btn small" id="close">Close</button></div>
+      ${spk ? `<div class="bar">
+        <span class="hint">Music</span>
+        <span class="volrow"><button class="spk" id="spk-music"></button><input type="range" id="vol" min="0" max="100" step="5" value="${snd.vol}" aria-label="Music volume"><span class="num" id="vol-n">${snd.vol}</span></span>
+      </div>
       <div class="bar">
+        <span class="hint">Sound effects</span>
+        <span class="volrow"><button class="spk" id="spk-sfx"></button><input type="range" id="sfx-vol" min="0" max="100" step="5" value="${snd.sfxVol}" aria-label="Effects volume"><span class="num" id="sfx-vol-n">${snd.sfxVol}</span></span>
+      </div>` : `<div class="bar">
         <span class="hint">Music</span>
         <div class="seg" role="group" aria-label="Music">
           <button data-mute="0" aria-pressed="${musicOn()}">On</button><button data-mute="1" aria-pressed="${!musicOn()}">Off</button>
@@ -2231,7 +2242,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <div class="bar">
         <span class="hint">Effects volume</span>
         <span class="volrow"><input type="range" id="sfx-vol" min="0" max="100" step="5" value="${snd.sfxVol}" aria-label="Effects volume"><span class="num" id="sfx-vol-n">${snd.sfxVol}</span></span>
-      </div>
+      </div>`}
       ${navigator.audioSession ? `<div class="bar">
         <span class="hint">Other apps' sound</span>
         <div class="seg" role="group" aria-label="Other apps' sound">
@@ -2300,7 +2311,23 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     $('sheet').querySelectorAll('[data-emo]').forEach(b => b.addEventListener('click', () => { snd.emotesOn = b.dataset.emo === '1'; saveSound(); $('sheet').querySelectorAll('[data-emo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     $('sheet').querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { send({ t: 'spectate', on: b.dataset.spec === '1' }); $('sheet').querySelectorAll('[data-spec]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     if ($('fr-open2')) { $('fr-open2').addEventListener('click', () => openFriends()); frBadge(); }
-    const showOn = () => $('sheet').querySelectorAll('[data-mute]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.mute === '0') === musicOn())));
+    const spkDraw = () => { // the Diorama's speakers follow the sound (a volume of 0 is off)
+      for (const [id, lab, on] of [['spk-music', 'Music', musicOn()], ['spk-sfx', 'Sound effects', !!snd.sfx && snd.sfxVol > 0]]) {
+        const b = $(id); if (!b) continue;
+        b.innerHTML = spkSvg(on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', `${lab}: ${on ? 'on (turn off)' : 'off (turn on)'}`); b.title = on ? 'Turn off' : 'Turn on';
+        b.parentElement.classList.toggle('off', !on);
+      }
+    };
+    const showOn = () => { $('sheet').querySelectorAll('[data-mute]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.mute === '0') === musicOn()))); spkDraw(); };
+    spkDraw();
+    if ($('spk-music')) $('spk-music').addEventListener('click', () => {
+      setMusic(!musicOn()); if (musicOn()) { menuPaused = false; mine.paused = false; syncMusic(); } showPlayer();
+      $('vol').value = snd.vol; $('vol-n').textContent = snd.vol; showOn();
+    });
+    if ($('spk-sfx')) $('spk-sfx').addEventListener('click', () => {
+      snd.sfx = !(snd.sfx && snd.sfxVol > 0); if (snd.sfx && !snd.sfxVol) { snd.sfxVol = DEFAULT_SFX_VOL; $('sfx-vol').value = snd.sfxVol; $('sfx-vol-n').textContent = snd.sfxVol; }
+      saveSound(); wakeAudio(true); spkDraw();
+    });
     $('vol').addEventListener('input', (e) => {
       snd.vol = +e.target.value; $('vol-n').textContent = snd.vol;
       if (snd.vol && snd.muted) { snd.muted = false; wakeAudio(true); } // turning the volume up turns music on
@@ -2317,7 +2344,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     $('sfx-vol').addEventListener('input', (e) => {
       snd.sfxVol = +e.target.value; $('sfx-vol-n').textContent = snd.sfxVol;
       if (snd.sfxVol && !snd.sfx) { snd.sfx = true; $('sheet').querySelectorAll('[data-sfx]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.sfx === '1'))); }
-      saveSound();
+      saveSound(); spkDraw();
     });
     $('sheet').querySelectorAll('[data-solo]').forEach(b => b.addEventListener('click', () => {
       snd.solo = b.dataset.solo === '1'; saveSound(); setAudioSession(); wakeAudio(true);

@@ -1188,8 +1188,7 @@
     // Settings: the game's sound and match settings (snd, saveSound), rows of words
     const onoff = (key, lab, on, note = '') => `<span class="lab">${lab}</span><span class="seg"><button class="w" data-set="${key}|1" aria-pressed="${!!on}">On</button><button class="w" data-set="${key}|0" aria-pressed="${!on}">Off</button></span>${note ? `<p class="sn">${note}</p>` : ''}`;
     // Music and Sound effects: a speaker before the slider turns it on or off (owner, 2026-11-09: no On / Off words)
-    const SPK = '<path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" stroke="none"/>';
-    const spkVol = (key, set, on, v, lab) => `<span class="lab">${lab}</span><span class="vol${on ? '' : ' off'}"><button class="spk" data-set="${set}|${on ? 0 : 1}" aria-pressed="${on}" aria-label="${lab}: ${on ? 'on (turn off)' : 'off (turn on)'}" title="${on ? 'Turn off' : 'Turn on'}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">${SPK}${on ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg></button><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}" style="--v:${v}%" aria-label="${lab} volume"><b>${v}</b></span>`;
+    const spkVol = (key, set, on, v, lab) => `<span class="lab">${lab}</span><span class="vol${on ? '' : ' off'}"><button class="spk" data-set="${set}|${on ? 0 : 1}" aria-pressed="${on}" aria-label="${lab}: ${on ? 'on (turn off)' : 'off (turn on)'}" title="${on ? 'Turn off' : 'Turn on'}">${spkSvg(on)}</button><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}" style="--v:${v}%" aria-label="${lab} volume"><b>${v}</b></span>`;
     function drawSettings() {
       if (dd.open !== 'settings') return;
       const fs = !!document.fullscreenElement, fsIco = fs ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';

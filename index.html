@@ -770,6 +770,12 @@ html.diorama .sheet .seg button[aria-pressed="true"] { opacity: 1; color: #17140
 html.diorama .sheet .seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 html.diorama .sheet input:not([type="range"]), html.diorama .sheet textarea, html.diorama .sheet select { border: 0; border-bottom: 1px dashed rgba(244, 236, 216, .5); border-radius: 0; background: none; color: #F4ECD8; font: 500 16px var(--font-body); }
 html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35); padding: 8px; }
+/* in-match Settings: Music and Sound effects are a speaker before the slider, as the menu's Settings (owner, 2026-11-09) */
+html.diorama .sheet .volrow .spk { flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -4px -2px -4px 0; padding: 0; color: #F4ECD8; background: none; border: 0; cursor: pointer; transition: color .15s ease, transform .15s ease; }
+html.diorama .sheet .volrow .spk svg { width: 20px; height: 20px; }
+html.diorama .sheet .volrow .spk:hover, html.diorama .sheet .volrow .spk:focus-visible { color: #F2B23A; transform: rotate(-4deg) scale(1.08); outline: none; }
+html.diorama .sheet .volrow.off .spk { opacity: .6; }
+html.diorama .sheet .volrow.off input, html.diorama .sheet .volrow.off .num { opacity: .4; }
 html.diorama .sheet table { font-family: var(--font-data); }
 html.diorama .sheet details > summary { font-family: var(--font-data); }
 html.diorama .sheet .btn small, html.diorama .sheet .btn .hint, html.diorama .sheet .btn em { text-transform: none; letter-spacing: 0; font: 400 13px/1.4 var(--font-data); }
@@ -17231,7 +17237,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 9b4d12e'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · f01e951'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -17307,11 +17313,22 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
 
   // the cog in a match opens it as Settings (music, the 2D / 3D board and Main menu), the menu's Music button as music only.
   // data-keep: phase changes leave this sheet open (closeSheet)
+  // the Diorama's speaker button (Settings, owner 2026-11-09): waves when the sound is on, a cross when it's off
+  const spkSvg = (on) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" stroke="none"/>${on ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg>`;
   function openSoundSheet() {
     const inMatch = !!m && phase !== 'start' && phase !== 'lobby';
+    // under the Diorama, Music and Sound effects are a speaker button before the slider (no On / Off rows)
+    const spk = DIO && document.documentElement.classList.contains('diorama');
     $('sheet').innerHTML = `
       <div class="bar" data-keep><h3 id="sheet-h">Settings</h3><button class="btn small" id="close">Close</button></div>
+      ${spk ? `<div class="bar">
+        <span class="hint">Music</span>
+        <span class="volrow"><button class="spk" id="spk-music"></button><input type="range" id="vol" min="0" max="100" step="5" value="${snd.vol}" aria-label="Music volume"><span class="num" id="vol-n">${snd.vol}</span></span>
+      </div>
       <div class="bar">
+        <span class="hint">Sound effects</span>
+        <span class="volrow"><button class="spk" id="spk-sfx"></button><input type="range" id="sfx-vol" min="0" max="100" step="5" value="${snd.sfxVol}" aria-label="Effects volume"><span class="num" id="sfx-vol-n">${snd.sfxVol}</span></span>
+      </div>` : `<div class="bar">
         <span class="hint">Music</span>
         <div class="seg" role="group" aria-label="Music">
           <button data-mute="0" aria-pressed="${musicOn()}">On</button><button data-mute="1" aria-pressed="${!musicOn()}">Off</button>
@@ -17330,7 +17347,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       <div class="bar">
         <span class="hint">Effects volume</span>
         <span class="volrow"><input type="range" id="sfx-vol" min="0" max="100" step="5" value="${snd.sfxVol}" aria-label="Effects volume"><span class="num" id="sfx-vol-n">${snd.sfxVol}</span></span>
-      </div>
+      </div>`}
       ${navigator.audioSession ? `<div class="bar">
         <span class="hint">Other apps' sound</span>
         <div class="seg" role="group" aria-label="Other apps' sound">
@@ -17399,7 +17416,23 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     $('sheet').querySelectorAll('[data-emo]').forEach(b => b.addEventListener('click', () => { snd.emotesOn = b.dataset.emo === '1'; saveSound(); $('sheet').querySelectorAll('[data-emo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     $('sheet').querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { send({ t: 'spectate', on: b.dataset.spec === '1' }); $('sheet').querySelectorAll('[data-spec]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     if ($('fr-open2')) { $('fr-open2').addEventListener('click', () => openFriends()); frBadge(); }
-    const showOn = () => $('sheet').querySelectorAll('[data-mute]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.mute === '0') === musicOn())));
+    const spkDraw = () => { // the Diorama's speakers follow the sound (a volume of 0 is off)
+      for (const [id, lab, on] of [['spk-music', 'Music', musicOn()], ['spk-sfx', 'Sound effects', !!snd.sfx && snd.sfxVol > 0]]) {
+        const b = $(id); if (!b) continue;
+        b.innerHTML = spkSvg(on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', `${lab}: ${on ? 'on (turn off)' : 'off (turn on)'}`); b.title = on ? 'Turn off' : 'Turn on';
+        b.parentElement.classList.toggle('off', !on);
+      }
+    };
+    const showOn = () => { $('sheet').querySelectorAll('[data-mute]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.mute === '0') === musicOn()))); spkDraw(); };
+    spkDraw();
+    if ($('spk-music')) $('spk-music').addEventListener('click', () => {
+      setMusic(!musicOn()); if (musicOn()) { menuPaused = false; mine.paused = false; syncMusic(); } showPlayer();
+      $('vol').value = snd.vol; $('vol-n').textContent = snd.vol; showOn();
+    });
+    if ($('spk-sfx')) $('spk-sfx').addEventListener('click', () => {
+      snd.sfx = !(snd.sfx && snd.sfxVol > 0); if (snd.sfx && !snd.sfxVol) { snd.sfxVol = DEFAULT_SFX_VOL; $('sfx-vol').value = snd.sfxVol; $('sfx-vol-n').textContent = snd.sfxVol; }
+      saveSound(); wakeAudio(true); spkDraw();
+    });
     $('vol').addEventListener('input', (e) => {
       snd.vol = +e.target.value; $('vol-n').textContent = snd.vol;
       if (snd.vol && snd.muted) { snd.muted = false; wakeAudio(true); } // turning the volume up turns music on
@@ -17416,7 +17449,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     $('sfx-vol').addEventListener('input', (e) => {
       snd.sfxVol = +e.target.value; $('sfx-vol-n').textContent = snd.sfxVol;
       if (snd.sfxVol && !snd.sfx) { snd.sfx = true; $('sheet').querySelectorAll('[data-sfx]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.sfx === '1'))); }
-      saveSound();
+      saveSound(); spkDraw();
     });
     $('sheet').querySelectorAll('[data-solo]').forEach(b => b.addEventListener('click', () => {
       snd.solo = b.dataset.solo === '1'; saveSound(); setAudioSession(); wakeAudio(true);
@@ -27427,8 +27460,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     // Settings: the game's sound and match settings (snd, saveSound), rows of words
     const onoff = (key, lab, on, note = '') => `<span class="lab">${lab}</span><span class="seg"><button class="w" data-set="${key}|1" aria-pressed="${!!on}">On</button><button class="w" data-set="${key}|0" aria-pressed="${!on}">Off</button></span>${note ? `<p class="sn">${note}</p>` : ''}`;
     // Music and Sound effects: a speaker before the slider turns it on or off (owner, 2026-11-09: no On / Off words)
-    const SPK = '<path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" stroke="none"/>';
-    const spkVol = (key, set, on, v, lab) => `<span class="lab">${lab}</span><span class="vol${on ? '' : ' off'}"><button class="spk" data-set="${set}|${on ? 0 : 1}" aria-pressed="${on}" aria-label="${lab}: ${on ? 'on (turn off)' : 'off (turn on)'}" title="${on ? 'Turn off' : 'Turn on'}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">${SPK}${on ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg></button><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}" style="--v:${v}%" aria-label="${lab} volume"><b>${v}</b></span>`;
+    const spkVol = (key, set, on, v, lab) => `<span class="lab">${lab}</span><span class="vol${on ? '' : ' off'}"><button class="spk" data-set="${set}|${on ? 0 : 1}" aria-pressed="${on}" aria-label="${lab}: ${on ? 'on (turn off)' : 'off (turn on)'}" title="${on ? 'Turn off' : 'Turn on'}">${spkSvg(on)}</button><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}" style="--v:${v}%" aria-label="${lab} volume"><b>${v}</b></span>`;
     function drawSettings() {
       if (dd.open !== 'settings') return;
       const fs = !!document.fullscreenElement, fsIco = fs ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';

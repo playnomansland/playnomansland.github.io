@@ -635,6 +635,12 @@ html.diorama .sheet .seg button[aria-pressed="true"] { opacity: 1; color: #17140
 html.diorama .sheet .seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 html.diorama .sheet input:not([type="range"]), html.diorama .sheet textarea, html.diorama .sheet select { border: 0; border-bottom: 1px dashed rgba(244, 236, 216, .5); border-radius: 0; background: none; color: #F4ECD8; font: 500 16px var(--font-body); }
 html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35); padding: 8px; }
+/* in-match Settings: Music and Sound effects are a speaker before the slider, as the menu's Settings (owner, 2026-11-09) */
+html.diorama .sheet .volrow .spk { flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -4px -2px -4px 0; padding: 0; color: #F4ECD8; background: none; border: 0; cursor: pointer; transition: color .15s ease, transform .15s ease; }
+html.diorama .sheet .volrow .spk svg { width: 20px; height: 20px; }
+html.diorama .sheet .volrow .spk:hover, html.diorama .sheet .volrow .spk:focus-visible { color: #F2B23A; transform: rotate(-4deg) scale(1.08); outline: none; }
+html.diorama .sheet .volrow.off .spk { opacity: .6; }
+html.diorama .sheet .volrow.off input, html.diorama .sheet .volrow.off .num { opacity: .4; }
 html.diorama .sheet table { font-family: var(--font-data); }
 html.diorama .sheet details > summary { font-family: var(--font-data); }
 html.diorama .sheet .btn small, html.diorama .sheet .btn .hint, html.diorama .sheet .btn em { text-transform: none; letter-spacing: 0; font: 400 13px/1.4 var(--font-data); }
