@@ -2895,6 +2895,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     let st = $('foe-state');
     if (!st) { st = document.createElement('span'); st.id = 'foe-state'; st.className = 'foe-state'; document.querySelector('.hud .side.foe').appendChild(st); }
     const roomOn = dioRoomOn(), host = me === 0, rk = mode === 'net' && net.ranked;
+    const dl = roomOn ? lookShown() : m ? Game.lookOf(m) : ''; // the battlefield's look: the unit cards' colour follows it (src/diorama.css --dcard)
+    if (document.documentElement.dataset.dlook !== dl) document.documentElement.dataset.dlook = dl;
     const kick = roomOn ? ['Play · Rooms', host ? 'your room' : 'their room', (Game.SKINS.find(x => x.id === lookShown()) || {}).name].filter(Boolean).join(' · ') : [mp && mp.name, sk && sk.name].filter(Boolean).join(' · ');
     if (r.dataset.kick !== kick) r.dataset.kick = kick;
     const seat = roomOn && host && !(mode === 'net' ? net.foeHere : net.connected); // the room's other seat is open

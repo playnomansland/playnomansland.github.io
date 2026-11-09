@@ -956,10 +956,10 @@ html.diorama.pcwide .panel .tier2.gap { margin-left: 0; }
 html.diorama.pcwide .panel .tier2 b { font: 700 20px/1 var(--dstencil); color: var(--tier); }
 html.diorama.pcwide .panel .tier2 b::first-letter { font-size: 0; } /* "T1" reads "1": the colour says it's a tier */
 html.diorama.pcwide .panel .tier2 span { font: 700 11px var(--dtype); color: #F4ECD8; opacity: .85; }
-html.diorama.pcwide .panel .uc2 { flex: 0 0 70px; height: 96px; border: 0; border-top: 3px solid var(--tier); border-radius: 0; background: #0D1315; /* the game's own card colour (the owner, 2026-11-09) */ color: #F4ECD8; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%); box-shadow: none; }
+html.diorama.pcwide .panel .uc2 { flex: 0 0 70px; height: 96px; border: 0; border-top: 3px solid var(--tier); border-radius: 0; background: var(--dcard, #0D1315); /* the game's own card colour, tinted by the battlefield (the owner, 2026-11-09) */ color: #F4ECD8; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%); box-shadow: none; }
 html.diorama.pcwide .panel .uc2 .n { font: 700 11.5px/1.12 var(--dtype); }
 html.diorama.pcwide .panel .uc2 .c { font: 700 13px var(--dstencil); color: #F2B23A; }
-html.diorama.pcwide .panel .uc2:hover:not([aria-disabled="true"]):not([aria-pressed="true"]) { background: #18242A; }
+html.diorama.pcwide .panel .uc2:hover:not([aria-disabled="true"]):not([aria-pressed="true"]) { background: color-mix(in srgb, var(--dcard, #0D1315), #F4ECD8 9%); }
 html.diorama.pcwide .panel .uc2[aria-pressed="true"] { transform: none; color: #17140F; background: #F2B23A; border-top-color: #17140F; box-shadow: none; }
 html.diorama.pcwide .panel .uc2[aria-pressed="true"] .c, html.diorama.pcwide .panel .uc2[aria-pressed="true"] .st { color: #17140F; }
 html.diorama.pcwide .panel .uc2[aria-disabled="true"] { opacity: .5; }
@@ -1127,7 +1127,7 @@ html.diorama.pcwide .sheet .btn:not(#close), html.diorama.pcwide .panel .xrow .b
   position: relative; isolation: isolate; margin: 0 0 6px; padding: 7px 12px 3px; border: 0; border-radius: 0; background: none; box-shadow: none;
   color: #F4ECD8; opacity: 1; text-shadow: none; font: 700 15px/1 var(--dstencil); text-transform: uppercase; letter-spacing: 0; transition: transform .1s ease; }
 html.diorama.pcwide .sheet .btn:not(#close)::before, html.diorama.pcwide .panel .xrow .btn.small::before {
-  content: ""; position: absolute; inset: 0; z-index: -1; background: #0D1315; box-shadow: none;
+  content: ""; position: absolute; inset: 0; z-index: -1; background: var(--dcard, #0D1315); box-shadow: none;
   clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%, 0 6px); }
 html.diorama.pcwide .sheet .btn:not(#close)::after, html.diorama.pcwide .panel .xrow .btn.small::after {
   content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 5px; z-index: -1; background: #04070A; clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 5px 100%); transition: height .1s ease; }
@@ -1136,13 +1136,24 @@ html.diorama.pcwide .sheet .btn.primary:not(#close)::before, html.diorama.pcwide
   background: linear-gradient(#F7C25A, #F2B23A 60%); clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%, 0 6px); }
 html.diorama.pcwide .sheet .btn.primary:not(#close)::after, html.diorama.pcwide .panel .xrow .btn.small.primary::after, html.diorama.pcwide .panel .xrow .btn.small[aria-pressed="true"]::after { background: #0D1315; }
 html.diorama.pcwide .sheet .btn:not(#close):hover:not(:disabled), html.diorama.pcwide .panel .xrow .btn.small:hover:not(:disabled) { transform: translateY(-1px); }
-html.diorama.pcwide .sheet .btn:not(#close):hover:not(:disabled)::before, html.diorama.pcwide .panel .xrow .btn.small:not(.primary):not([aria-pressed="true"]):hover:not(:disabled)::before { background: #18242A; }
+html.diorama.pcwide .sheet .btn:not(#close):hover:not(:disabled)::before, html.diorama.pcwide .panel .xrow .btn.small:not(.primary):not([aria-pressed="true"]):hover:not(:disabled)::before { background: color-mix(in srgb, var(--dcard, #0D1315), #F4ECD8 9%); }
 html.diorama.pcwide .sheet .btn.primary:not(#close):hover:not(:disabled)::before { background: linear-gradient(#FFD06A, #F7BC45 60%); }
 html.diorama.pcwide .sheet .btn:not(#close):active:not(:disabled), html.diorama.pcwide .panel .xrow .btn.small:active:not(:disabled) { transform: translateY(4px); }
 html.diorama.pcwide .sheet .btn:not(#close):active:not(:disabled)::after, html.diorama.pcwide .panel .xrow .btn.small:active:not(:disabled)::after { height: 1px; }
 html.diorama.pcwide .sheet .btn:not(#close):disabled, html.diorama.pcwide .panel .xrow .btn.small:disabled { opacity: .4; }
 html.diorama.pcwide .panel .xrow { gap: 4px 8px; margin-left: 0; }
 html.diorama.pcwide .sheet .btn:not(#close) small, html.diorama.pcwide .sheet .btn:not(#close) .hint { color: inherit; }
+
+/* the unit cards' colour (and the small buttons' face) follows the battlefield, always as dark as the game's own card
+   colour #0D1315 (the same luminance; the owner, 2026-11-09) */
+html[data-dlook="meadow"] { --dcard: #0D130D; }   /* moss */
+html[data-dlook="autumn"] { --dcard: #17110D; }   /* rust */
+html[data-dlook="snow"] { --dcard: #0E1317; }     /* ice */
+html[data-dlook="frost"] { --dcard: #0D1311; }    /* Forest Glade: pine */
+html[data-dlook="desert"] { --dcard: #14120C; }   /* sand */
+html[data-dlook="ash"] { --dcard: #19100F; }      /* Ashlands: ember */
+html[data-dlook="moonlit"] { --dcard: #0F121A; }  /* night */
+html[data-dlook="savanna"] { --dcard: #13120C; }  /* dry grass */
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -17513,7 +17524,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '8 Nov 2026 · 910c7cc'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '8 Nov 2026 · ef216e5'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -18292,6 +18303,8 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     let st = $('foe-state');
     if (!st) { st = document.createElement('span'); st.id = 'foe-state'; st.className = 'foe-state'; document.querySelector('.hud .side.foe').appendChild(st); }
     const roomOn = dioRoomOn(), host = me === 0, rk = mode === 'net' && net.ranked;
+    const dl = roomOn ? lookShown() : m ? Game.lookOf(m) : ''; // the battlefield's look: the unit cards' colour follows it (src/diorama.css --dcard)
+    if (document.documentElement.dataset.dlook !== dl) document.documentElement.dataset.dlook = dl;
     const kick = roomOn ? ['Play · Rooms', host ? 'your room' : 'their room', (Game.SKINS.find(x => x.id === lookShown()) || {}).name].filter(Boolean).join(' · ') : [mp && mp.name, sk && sk.name].filter(Boolean).join(' · ');
     if (r.dataset.kick !== kick) r.dataset.kick = kick;
     const seat = roomOn && host && !(mode === 'net' ? net.foeHere : net.connected); // the room's other seat is open
