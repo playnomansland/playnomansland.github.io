@@ -20,6 +20,15 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 9 November 2026 – New UI sounds
+
+- **Ready** now has its own sound when you're waiting for your opponent.
+- **Create room**, **Join** and **Quick play** have their own sound.
+- Picking your **tower** or your **leader** has its own sound.
+- On a PC, moving the mouse onto a **menu button** makes a soft tick.
+
+---
+
 ## 8 November 2026 – Shell-shocked emote touch-up
 
 - The **Shell-shocked** Sniper emote no longer holds the bent, smoking rifle: at emote size it read as a cigarette. He's still singed, wide-eyed and steaming.

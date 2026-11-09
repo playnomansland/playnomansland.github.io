@@ -2037,6 +2037,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     battle: 'battle-start', release: 'release', drop: 'drop-unit', evolve: 'evolve', toMenu: 'to-menu', level: 'level-up',
     menu: 'menu-click', nope: 'nope', pressBoard: 'press-board', button: 'button', pressCard: 'press-card', sell: 'sell',
     undo: 'undo', skill: 'skill',
+    ready: 'ready', room: 'room', hover: 'hover', pick: 'pick', // (2026-11-09) Ready, Create / Join room, a menu button under the mouse, the tower or leader pick
   };
   const SFX_GAIN = { button: 0.85, menu: 0.85, battle: 0.85 }; // these a little quieter than the rest
   const SFX_VARY = new Set(['button', 'menu', 'pressBoard', 'pressCard', 'release', 'drop']); // frequent ones: a slightly different pitch each time
@@ -2079,6 +2080,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     buySkill: (a) => Game.isMaster(a[0], a[2], a[3]) ? 'evolve' : 'skill',
     awaken: 'evolve', buyTowerSkill: 'skill', buyBuildingSkill: 'skill', unlock: 'skill',
     unplaceSquad: 'undo', unplaceBwall: 'undo',
+    setTowerType: 'pick', pickLeader: 'pick', // round 3's tower, the leader draft
   };
   for (const name of Object.keys(Game)) {
     const act = SFX_ACTS[name] || (/^undo[A-Z]/.test(name) ? 'undo' : null);
@@ -2110,8 +2112,22 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   document.addEventListener('click', (e) => {
     const b = e.target.closest && e.target.closest('button, .btn, [role="button"]');
     if (!b || b.disabled || b.closest('.uc2') || performance.now() - sfxAt < 150) return;
-    sfx(clickInMatch ? 'button' : 'menu');
+    sfx(b.matches(ROOM_BTNS) ? 'room' : clickInMatch ? 'button' : 'menu');
   });
+  // Create room and Join (the online lobby, the Diorama's Rooms, a join code, a friend's invite) and Quick play: the room sound
+  const ROOM_BTNS = '#lob-create, #nr-go, #create-go, #lob-quick, #join, #lob-join, #fr-join, [data-join]';
+  // a mouse over a button outside a match: the soft hover tick (once per button, not while a match is on screen)
+  let hoverBtn = null, hoverAt = -1e9;
+  document.addEventListener('pointerover', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    const b = e.target.closest && e.target.closest('button, .btn, [role="button"]');
+    if (b === hoverBtn) return;
+    hoverBtn = b;
+    if (!b || b.disabled || b.closest('.uc2') || (m && ['deploy', 'battle', 'result'].includes(phase))) return;
+    const t = performance.now();
+    if (t - hoverAt < 60 || t - sfxAt < 150) return; // a sweep across a row ticks, it doesn't buzz; a click's own sound goes first
+    hoverAt = t; sfx('hover'); sfxAt = -1e9; // a hover doesn't hold back the next click's sound
+  }, { passive: true });
 
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
@@ -3614,6 +3630,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (phase !== 'deploy' || timeUp) return;
     if (!ready[me]) commitPick();
     ready[me] = !ready[me];
+    if (ready[me] && byHand() && !((mode === 'host' && ready[0] && ready[1] && net.connected) || (mode === 'ai' && ready[0] && ready[1]))) sfx('ready'); // (the fight starting now plays its own)
     if (ready[me]) { selected = null; closeSheet(); }
     if (mode === 'guest') sendSide();
     if (mode === 'net') send({ t: 'ready', v: ready[me], round: m.round });
@@ -4167,7 +4184,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       if (srvOk()) srvJoin(c, { typed: true }); else joinMatch(c); // the game server first (an older phone-to-phone match: see 'nomatch')
     };
     $('join').addEventListener('click', joinNow);
-    $('code-in').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinNow(); });
+    $('code-in').addEventListener('keydown', (e) => { if (e.key === 'Enter') { sfx('room'); joinNow(); } }); // Enter joins as the Join button does
     root.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => {
       Game.CONFIG.levelCostPerTier = +b.dataset.c;
       root.querySelectorAll('[data-c]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
@@ -9262,7 +9279,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       home.back = 'lobby'; srvJoin(c, { typed: true });
     };
     $('lob-join').addEventListener('click', joinNow);
-    $('lob-code').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinNow(); });
+    $('lob-code').addEventListener('keydown', (e) => { if (e.key === 'Enter') { sfx('room'); joinNow(); } }); // Enter joins as the Join button does
     $('lob-list').addEventListener('click', (e) => {
       const j = e.target.closest('[data-join]'), w = e.target.closest('[data-watch]');
       const l = lob.list.get((j || w || {}).dataset ? (j || w).dataset.join || (j || w).dataset.watch : '');
