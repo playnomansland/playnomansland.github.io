@@ -2257,6 +2257,12 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
           <button data-board="2d" aria-pressed="${!want3d}">2D</button><button data-board="3d" aria-pressed="${want3d}">3D</button>
         </div>
       </div>
+      ${DIO && document.documentElement.classList.contains('pc') ? `<div class="bar">
+        <span class="hint">Deploy panel</span>
+        <div class="seg" role="group" aria-label="Deploy panel">
+          <button data-dside="left" aria-pressed="${dSide === 'left'}">Left</button><button data-dside="right" aria-pressed="${dSide === 'right'}">Right</button>
+        </div>
+      </div>` : ''}
       ${document.documentElement.classList.contains('pc') ? '' : `<div class="bar">
         <span class="hint">Phone layout</span>
         <div class="seg" role="group" aria-label="Phone layout">
@@ -2367,6 +2373,10 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       if (r.status !== 200) { $('rk-msg').textContent = r.status === 403 ? 'Only a developer can do that.' : acctFail(r); return; }
       home.rankedOn = !!r.on; $('rk-msg').textContent = r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).';
       $('sheet').querySelectorAll('[data-rk]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.rk === '1') === !!r.on)));
+    }));
+    $('sheet').querySelectorAll('[data-dside]').forEach(b => b.addEventListener('click', () => { // the Diorama: the deploy panel's side
+      setDeploySide(b.dataset.dside, true);
+      $('sheet').querySelectorAll('[data-dside]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     }));
     $('sheet').querySelectorAll('[data-board]').forEach(b => b.addEventListener('click', () => {
       set3d(b.dataset.board === '3d');
@@ -7365,7 +7375,18 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // strategic and tilted views the board's corners are measured and fitted; between tilted and angled the fit blends to
   // none, so no view switch jumps; closer in, the camera's own framing. Off: the plain picture again.
   const dfit = { k: 1, ox: 0, oy: 0, held: null, on: false, ts: 0 };
-  if (/[?&]side=right\b/.test(location.search)) document.documentElement.classList.add('dright'); // a trial: the deploy panel on the right
+  // the deploy panel's side (the owner, 2026-11-09: an option in Settings, right by default for now), kept on this device;
+  // ?side=left / ?side=right set it too. html.dright mirrors the column (src/diorama.css), dioSafe frames the board
+  const DSIDE_STORE = 'pb-deploy-side';
+  let dSide = 'right';
+  try { const q = (location.search.match(/[?&]side=(left|right)\b/) || [])[1]; if (q) localStorage.setItem(DSIDE_STORE, q); dSide = localStorage.getItem(DSIDE_STORE) === 'left' ? 'left' : 'right'; } catch (e) {}
+  function setDeploySide(side, save) {
+    dSide = side === 'left' ? 'left' : 'right';
+    if (save) { try { localStorage.setItem(DSIDE_STORE, dSide); } catch (e) {} }
+    document.documentElement.classList.toggle('dright', DIO && dSide === 'right');
+    if (board3d) wake3d();
+  }
+  setDeploySide(dSide);
   try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
   const dioWide = () => DIO && document.documentElement.classList.contains('pcwide');
   const dioPw = () => Math.round(Math.min(400, Math.max(318, innerWidth * 0.25))); // the left column's width (--dpw), as the prototype's clamp(318px, 25vw, 400px)

@@ -438,3 +438,12 @@ The owner asked for it "behind the Diorama site, not the actual live site": `des
 `audio/`). It never changes a device's `pb-ui` choice for the live game. On `main` since commit b3a6407, with only the
 `cam3` line of `src/render3d.js` beside it; the live `index.html` is not changed. Rebuild it with `--diorama-page` and
 put it on `main` the same way (only that file, plus any `src/` 3D file it needs) to update the test page.
+
+### The deploy panel's side (2026-11-09)
+The owner: "an option in settings to put deploy left or right. Make right side the standard for now." Settings (the
+menu's dropdown, Match screen; and the match's own Settings sheet, on a PC) has **Deploy panel: Left / Right**, kept on
+the device as `pb-deploy-side` (default right; `?side=left|right` sets it). `setDeploySide` toggles `html.dright`; the CSS
+mirrors the column, its scrim, READY, the clock, the room's START MATCH, the music player and the sheets; `dioSafe`
+frames the board in what's left. Also fixed: on short windows (laptops) the column's rows collapsed onto each other (a
+flex column squeezing them); they keep their size now, the column scrolls and ends above READY, with a tighter layout
+under 860 px high.
