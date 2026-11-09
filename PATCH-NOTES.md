@@ -25,7 +25,8 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 - **Ready** now has its own sound when you're waiting for your opponent, and your opponent hears it when you press Ready.
 - **Create room**, **Join** and **Quick play** have their own sound.
 - Picking your **tower** or your **leader** has its own sound.
-- On a PC, moving the mouse onto a **menu button** makes a soft tick.
+- On a PC, moving the mouse onto a **menu button** makes a soft tick (a little quieter when you sweep across several).
+- The **Snow** battlefield is now called **Mountain Pass**.
 
 ---
 
