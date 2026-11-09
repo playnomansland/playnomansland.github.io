@@ -405,7 +405,7 @@ Otto's Slots, buildings, walls, online play, spectating, the tutorial, replays, 
 
   There is no code or link, except in a developer's phone-to-phone room, which can't be found any other way.
 - **The way in** (`flyStart` in `src/diorama.js`; `dioFlyWanted` / `dioBoardPose` in the page): Create room, Join and
-  Vs computer on a PC fly the menu's island into the board, as in the prototype. It waits up to 2.5 s for the board to
+  Vs computer on a PC fly the menu's island into the board, as in the prototype. It waits up to 4 s for the board to
   be framed and its scenery loaded, then takes 1.9 s. The match's words wait (`html.dfly`) until 0.78, then the home
   hides and frees its renderer. Not with reduced motion, `?fly=off`, phones, or the 2D board.
 - **Checked here** (Chromium, software 3D, 1440×900):

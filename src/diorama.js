@@ -660,7 +660,7 @@
     function flyStart(o) {
       if (fly || flat || !renderer) { o.shown(); o.done(); return; }
       const z = phone() ? now.zoom * 0.86 : now.zoom;
-      fly = { ...o, t0: 0, ready: false, wait: performance.now() + 2500, shownYet: false, keepsSet: false,
+      fly = { ...o, t0: 0, ready: false, wait: performance.now() + (window.__flyWait || 4000), shownYet: false, keepsSet: false,
         start: { at: [...now.at], az: now.az, el: now.el, h: z, fov: 5, ox: -(phone() ? 0 : now.off[0]), oy: phone() ? 0.02 : now.off[1], k: 1 },
         save: { pieces: pieces.children.map(c => [c, c.scale.x]), low: [...soil, root].map(c => [c, c.position.y]), keeps: [[keepYou, keepYou.position.clone()], [keepFoe, keepFoe.position.clone()]], iy: island.position.y, ir: island.rotation.y } };
       Promise.resolve(o.ready).catch(() => {}).then(() => { if (fly) fly.ready = true; });
@@ -679,7 +679,7 @@
     }
     function flyFrame() {
       const F = fly, T = performance.now(), E = F.end();
-      if (!F.t0) { // the press waits (up to 2.5 s) for the board underneath: framed, and its scenery loaded
+      if (!F.t0) { // the press waits (up to 4 s) for the board underneath: framed, and its scenery loaded
         if ((!E || !F.ready) && T < F.wait) { flyPose(F.start); renderer.render(scene, flyCam); return; }
         if (!E) { flyEnd(); return; }
         F.t0 = T;
