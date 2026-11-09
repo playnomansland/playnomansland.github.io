@@ -1077,3 +1077,12 @@ html.diorama.pcwide .panel .speeds { display: inline-flex; gap: 0; border: 1px s
 html.diorama.pcwide .panel .speeds button { padding: 7px 12px; border: 0; border-radius: 0; background: transparent; color: #E5ECE9; opacity: 1; text-shadow: none; font: 13px "IBM Plex Mono", ui-monospace, monospace; }
 html.diorama.pcwide .panel .speeds button::before { content: none; }
 html.diorama.pcwide .panel .speeds button[aria-pressed="true"] { background: #27393D; color: #E6B84A; }
+html.diorama.pcwide .panel .speeds button[aria-pressed="true"], html.diorama.pcwide .panel .speeds button[aria-pressed="true"]:hover { background: #27393D; color: #E6B84A; }
+html.diorama.pcwide .panel .speeds button.offer { text-decoration: none; box-shadow: inset 0 0 0 1px #E6B84A; }
+html.diorama.pcwide .panel #skip.primary { background: #E6B84A; border-color: #E6B84A; color: #0D1315; }
+html.diorama.pcwide .panel #skip.primary::before { content: none; }
+/* the sheets' switches (On / Off, 2D / 3D...): the old segmented row */
+html.diorama.pcwide .sheet .seg { display: inline-flex; gap: 0; border: 1px solid #27393D; border-radius: 4px; overflow: hidden; }
+html.diorama.pcwide .sheet .seg button { padding: 6px 11px; border: 0; background: transparent; color: #E5ECE9; opacity: 1; font: 13px "IBM Plex Mono", ui-monospace, monospace; }
+html.diorama.pcwide .sheet .seg button::before { content: none; }
+html.diorama.pcwide .sheet .seg button[aria-pressed="true"] { background: #27393D; color: #E6B84A; }
