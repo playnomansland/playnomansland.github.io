@@ -1313,10 +1313,10 @@ html.diorama.pcwide #mp-pop.dock .mp-where { font: 500 12px "Bricolage Grotesque
 html.diorama.pcwide .panel .speeds button[aria-pressed="true"]::before, html.diorama.pcwide .panel .speeds button.offer::before { content: none; display: none; }
 
 /* the column never squeezes its rows (on a short window they collapsed onto the gold, the owner's screenshot,
-   2026-11-09): it scrolls instead, and ends above READY so nothing runs under it; its bottom edge fades when it scrolls */
+   2026-11-09): it scrolls instead, and ends above READY so nothing runs under it; */
 html.diorama.pcwide .panel > * { flex-shrink: 0; }
-html.diorama.pcwide .panel { bottom: 104px; padding-bottom: 14px; -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent); }
-html.diorama.pcwide.pcfight .panel, html.diorama.pcwide .panel:not(:has(#ready, #fight)) { bottom: 0; -webkit-mask-image: none; mask-image: none; }
+html.diorama.pcwide .panel { bottom: 104px; padding-bottom: 14px; } /* (no fade mask: it would clip READY, which is fixed inside the column) */
+html.diorama.pcwide.pcfight .panel, html.diorama.pcwide .panel:not(:has(#ready, #fight)) { bottom: 0; }
 html.droom-on .panel { bottom: 160px; padding-bottom: 14px; }
 /* short windows (a laptop): the same column, tighter, all four tiers in sight */
 @media (max-height: 860px) {
@@ -17734,7 +17734,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 708699f'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 32e9262'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
