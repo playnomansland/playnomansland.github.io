@@ -1376,6 +1376,34 @@ html.dright.diorama.pcwide .panel .trow .timer { right: calc(var(--dpw, 340px) -
 html.diorama.pcwide .dmus .dm-t { display: inline-flex; align-items: baseline; gap: 5px; }
 html.diorama.pcwide .dmus .dm-t .dm-n { margin-right: 1px; }
 
+/* the music player stays down in a match (the owner, 2026-11-09): in the bottom corner opposite the deploy panel, the
+   player only ('mini'); the playlists unfold above it from the song or "Playlist", and fold back with the arrow. The
+   music line in the top line is gone again */
+html.diorama.pcwide .hud .round .dmus { display: none; }
+html.diorama.pcwide #mp-pop.dock.mini .mp-panel { display: none; }
+html.diorama.pcwide #mp-pop.dock.mini::before { background: radial-gradient(30% 32% at 100% 100%, rgba(10, 13, 12, .75), transparent 80%); }
+html.diorama.pcwide #mp-pop.dock .mp-dock { bottom: 22px; }
+html.diorama.pcwide #mp-pop.dock .mp-now .mp-up { display: inline-flex; width: auto; height: auto; border: 0; border-radius: 0; background: none; gap: 5px; align-items: center; color: #F4ECD8; opacity: .9;
+  font: 700 12px "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; transform: none; }
+html.diorama.pcwide #mp-pop.dock .mp-now .mp-up::before { content: "Playlist"; }
+html.diorama.pcwide #mp-pop.dock:not(.mini) .mp-now .mp-up { display: none; }
+html.diorama.pcwide #mp-pop.dock .mp-now .mp-up svg { width: 11px; height: 11px; }
+html.diorama.pcwide #mp-pop.dock .mp-now:hover .mp-title { text-decoration: underline; text-underline-offset: 3px; }
+/* the deploy panel on the right: the player bottom left, its type and lists aligned left */
+html.dright.diorama.pcwide #mp-pop.dock .mp-dock { left: 32px; right: auto; text-align: left; }
+html.dright.diorama.pcwide #mp-pop.dock::before { background: radial-gradient(46% 80% at 0% 100%, rgba(10, 13, 12, .9), rgba(10, 13, 12, .55) 55%, transparent 80%); }
+html.dright.diorama.pcwide #mp-pop.dock.mini::before { background: radial-gradient(30% 32% at 0% 100%, rgba(10, 13, 12, .75), transparent 80%); }
+html.dright.diorama.pcwide #mp-pop.dock :is(.mplayer, .mp-now, .mp-meta, .mp-hd, .mp-songs) { justify-items: start; text-align: left; }
+html.dright.diorama.pcwide #mp-pop.dock :is(.mp-row, .mp-tabrow, .mp-tabs) { justify-content: flex-start; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-head { flex-direction: row; justify-content: flex-start; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-acts { flex-direction: row; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-song { flex-direction: row; text-align: left; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-song::before { inset: 0 -14px 0 -10px; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-n { text-align: left; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-songs { padding: 0 14px 0 2px; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-foot { flex-direction: row; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-name { align-self: flex-start; text-align: left; }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -17580,7 +17608,18 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     return pop;
   }
   // Now playing (tap): the playlists roll up out of the player; tapped again, they roll back down
+  // The Diorama's match screen (html.pcwide): the player stays down in the bottom corner opposite the deploy panel for
+  // the whole match ('mini': the player only); the song or the music button opens the playlists above it, and their
+  // down arrow (or Esc) folds them back into the player instead of closing it (the owner, 2026-11-09)
+  const dioMini = () => DIO && document.documentElement.classList.contains('pcwide');
+  function dioMusicDock() {
+    const pop = $('mp-pop'), want = dioMini();
+    if (want && !mpui.open) { openPlaylist(); const p2 = $('mp-pop'); if (p2) p2.classList.add('mini'); }
+    else if (!want && mpui.open && pop && pop.classList.contains('dmini')) mpClose(true);
+    const p3 = $('mp-pop'); if (p3 && want && mpui.open) p3.classList.add('dmini');
+  }
   function openPlaylist() {
+    if (mpui.open && dioMini() && $('mp-pop') && $('mp-pop').classList.contains('mini')) { $('mp-pop').classList.remove('mini'); mpDraw(true); showPlayer(); return; } // the playlists unfold
     if (mpui.open) return mpClose();
     const pop = mpPop(), a = homePlayer();
     clearTimeout(mpui.closeT);
@@ -17605,6 +17644,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   }
   function mpClose(instant) {
     if (!mpui.open) return;
+    if (!instant && dioMini() && $('mp-pop') && $('mp-pop').classList.contains('dmini')) { $('mp-pop').classList.add('mini'); mpui.edit = null; mpui.sure = ''; return; } // the Diorama's match: folds down into the player
     mpui.open = false; mpui.edit = null; mpui.sure = '';
     const pop = $('mp-pop');
     const done = () => {
@@ -17794,7 +17834,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · cadd843'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 1b8b6ff'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -18360,6 +18400,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       root.style.setProperty('--board-h', h + 'px');
     }
     if (on !== was || h !== boardH || fight !== wasFight || wide !== wasWide) { boardH = h; size(); render(); } // the board changed size: draw it again (3D too)
+    if (DIO && wide !== wasWide) setTimeout(dioMusicDock, 0); // the Diorama's player comes up with the match screen and goes with it
     boardMarks();
     fitOverlay();
   }
