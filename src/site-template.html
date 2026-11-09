@@ -7310,7 +7310,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (DIO) { dioRoomNotes(); dioPatterns(); }
       meterFrame(ts);
     }
-    if (board3d && (busy || alive)) raf3d = requestAnimationFrame(frame3d);
+    if (board3d && (busy || alive || (dpat.want && dpat.key !== dpat.want))) raf3d = requestAnimationFrame(frame3d); // (the Diorama's panels: keep drawing until the scenery's patches are taken)
   }
   // The Diorama on a PC (html.diorama.pcwide): the 3D board's canvas is the whole window (the scenery under the words)
   // and THREE's view offset moves and scales the picture so the board sits in what the words leave free: right of the

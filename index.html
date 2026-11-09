@@ -993,8 +993,8 @@ html.diorama.pcwide .pick .ph .hint b { color: #F2B23A; }
 html.diorama.pcwide .pick .opts { margin: 8px auto 0; width: 100%; max-width: 860px; gap: 14px; }
 html.diorama.pcwide .pick .opt { position: relative; isolation: isolate; padding: 16px 10px 14px; border: 0; border-radius: 0; background: none; color: #F4ECD8; box-shadow: none; transition: transform .14s ease; }
 html.diorama.pcwide .pick .opt::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #17140F; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%); }
-html.diorama.pcwide .pick .opt:hover:not(:disabled) { transform: translateY(-2px); }
-html.diorama.pcwide .pick .opt:hover:not(:disabled)::before { background: #2C2820; }
+html.diorama.pcwide .pick .opt:hover:not(:disabled):not([aria-pressed="true"]) { transform: translateY(-2px); }
+html.diorama.pcwide .pick .opt:hover:not(:disabled):not([aria-pressed="true"])::before { background: #2C2820; }
 html.diorama.pcwide .pick .opt[aria-pressed="true"] { transform: rotate(-1deg); color: #17140F; border: 0; box-shadow: none; }
 html.diorama.pcwide .pick .opt[aria-pressed="true"]::before { background: #F2B23A; clip-path: var(--dshard); }
 html.diorama.pcwide .pick .opt[aria-pressed="true"] .sub, html.diorama.pcwide .pick .opt[aria-pressed="true"] .who { color: #17140F; }
@@ -1115,7 +1115,7 @@ html.dpat.pcwide .pick .opt:nth-child(4)::before { background: var(--dpshade), v
 html.dpat.pcwide .pick .det, html.dpat.pcwide #wrap > .task { background: var(--dpshade), var(--dpat4) center / cover, #0E120D; }
 html.dpat.pcwide #wrap > .coach { background: var(--dpshade), var(--dpat5) center / cover, #0E120D; }
 html.dpat.pcwide .sheet { background: linear-gradient(rgba(7, 10, 7, .66), rgba(7, 10, 7, .66)), var(--dpat3) center / cover, #0E120D; }
-html.dpat.pcwide .pick .opt:hover:not(:disabled)::before { filter: brightness(1.35); }
+html.dpat.pcwide .pick .opt:hover:not(:disabled):not([aria-pressed="true"])::before { filter: brightness(1.35); }
 html.dpat.pcwide .pick .opt[aria-pressed="true"]::before { background: #F2B23A; filter: none; }
 html.dpat.pcwide .pick .opt { text-shadow: 0 0 3px rgba(7,10,7,.9), 0 0 8px rgba(7,10,7,.7); }
 html.dpat.pcwide .pick .opt[aria-pressed="true"] { text-shadow: none; }
@@ -17489,7 +17489,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '8 Nov 2026 · df627fa'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '8 Nov 2026 · 9d49aa1'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -22745,7 +22745,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (DIO) { dioRoomNotes(); dioPatterns(); }
       meterFrame(ts);
     }
-    if (board3d && (busy || alive)) raf3d = requestAnimationFrame(frame3d);
+    if (board3d && (busy || alive || (dpat.want && dpat.key !== dpat.want))) raf3d = requestAnimationFrame(frame3d); // (the Diorama's panels: keep drawing until the scenery's patches are taken)
   }
   // The Diorama on a PC (html.diorama.pcwide): the 3D board's canvas is the whole window (the scenery under the words)
   // and THREE's view offset moves and scales the picture so the board sits in what the words leave free: right of the
