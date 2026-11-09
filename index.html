@@ -1155,6 +1155,36 @@ html[data-dlook="ash"] { --dcard: #19100F; }      /* Ashlands: ember */
 html[data-dlook="moonlit"] { --dcard: #0F121A; }  /* night */
 html[data-dlook="savanna"] { --dcard: #13120C; }  /* dry grass */
 
+/* the sheets in a match (Unlock, Help, a squad, Settings, Damage...), back toward the game's own sheet from before the
+   Diorama (the owner, 2026-11-09: "I like the old sheet layout better... still keep it fresh"): a flat panel rising from
+   the bottom over the board (the free space beside the column), a hairline edge, the title with a Close button, each
+   row in its own box, solid buttons in sentence case. Fresh: the battlefield's card colour instead of the ink, the
+   board tile's clipped corners instead of round ones, Chakra Petch titles, Bricolage text, the tile-slab buttons */
+html.diorama.pcwide .sheet-back { align-items: end; justify-items: center; padding-left: var(--dsx0, 380px); padding-right: var(--dsx1, 24px); background: rgba(5, 8, 9, .45); }
+html.diorama.pcwide .sheet {
+  --sc: var(--dcard, #0D1315); --panel: var(--sc); --bg: color-mix(in srgb, var(--sc), #F4ECD8 4%); --line: rgba(244, 236, 216, .14);
+  width: 100%; max-width: 600px; padding: 18px 18px 20px; gap: 12px; color: #F4ECD8; filter: drop-shadow(0 -8px 30px rgba(0, 0, 0, .45));
+  background: var(--sc); border: 1px solid rgba(244, 236, 216, .16); border-bottom: 0; border-radius: 0;
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%, 0 12px); font-family: var(--dtype); }
+html.diorama.pcwide .sheet::before { content: ""; position: absolute; left: 12px; right: 12px; top: 0; height: 2px; background: rgba(242, 178, 58, .7); } /* a thin saffron edge on top: the one Diorama mark */
+html.diorama.pcwide .sheet { position: relative; }
+html.diorama.pcwide .sheet h3 { font: 700 22px/1.1 var(--dstencil); letter-spacing: 0; text-transform: none; }
+html.diorama.pcwide .sheet p, html.diorama.pcwide .sheet .hint, html.diorama.pcwide .sheet li { font: 500 14px/1.45 var(--dtype); color: rgba(244, 236, 216, .9); }
+html.diorama.pcwide .sheet .hint { color: rgba(244, 236, 216, .72); font-size: 13px; }
+html.diorama.pcwide .sheet b { font-weight: 700; }
+html.diorama.pcwide .sheet .urow, html.diorama.pcwide .sheet .card2, html.diorama.pcwide .sheet .row2 { background: var(--bg); border: 1px solid var(--line); border-radius: 0;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px); }
+html.diorama.pcwide .sheet .urow .info2 b { font: 700 14px var(--dtype); }
+html.diorama.pcwide .sheet .urow .info2 span { font: 500 12px var(--dtype); color: rgba(244, 236, 216, .7); }
+/* buttons: the tile slab, in sentence case as the old ones; Close is one too */
+html.diorama.pcwide .sheet .btn:not(#close), html.diorama.pcwide .sheet #close { text-transform: none; font: 700 14px/1 var(--dtype); padding: 8px 12px 6px; }
+html.diorama.pcwide .sheet #close { position: relative; isolation: isolate; margin: 0 0 5px; border: 0; background: none; color: #F4ECD8; opacity: 1; text-decoration: none; }
+html.diorama.pcwide .sheet #close::before { content: ""; position: absolute; inset: 0; z-index: -1; background: color-mix(in srgb, var(--sc), #F4ECD8 9%); clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%, 0 6px); }
+html.diorama.pcwide .sheet #close::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 5px; z-index: -1; background: #04070A; clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 5px 100%); }
+html.diorama.pcwide .sheet #close:hover::before { background: color-mix(in srgb, var(--sc), #F4ECD8 16%); }
+html.diorama.pcwide .sheet .btn:not(#close):not(.primary)::before { background: color-mix(in srgb, var(--sc), #F4ECD8 9%); }
+html.diorama.pcwide .sheet .seg button { text-transform: none; font: 700 14px var(--dtype); }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -17524,7 +17554,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '8 Nov 2026 · ef216e5'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '8 Nov 2026 · 384e65c'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
