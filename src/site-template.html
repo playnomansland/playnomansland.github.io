@@ -3628,6 +3628,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (mode === 'host') saveHost();
   }
 
+  // the opponent pressed Ready (their status or side came in): the same sound on this screen, unless this player is
+  // ready too (the fight starts now and plays its own)
+  function foeReadySfx(was) { if (!was && phase === 'deploy' && ready[foe()] && !ready[me]) sfx('ready'); }
   function toggleReady() {
     if (phase !== 'deploy' || timeUp) return;
     if (!ready[me]) commitPick();
@@ -8627,7 +8630,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     m.gold[1] = Math.max(0, +d.gold || 0);
     m.extraDeploys[1] = Math.max(0, Math.min(Game.CONFIG.maxExtraDeploys, d.extra | 0));
     m.nextId[1] = Math.max(m.nextId[1], d.nextId | 0);
-    ready[1] = !!d.ready;
+    { const was = ready[1]; ready[1] = !!d.ready; foeReadySfx(was); }
     // the guest's package: picked once in round 1; package squads beyond what it holds are dropped
     if (m.round === 1 && m.pack && m.pack[1] == null && Number.isInteger(d.pack)) Game.choosePack(m, 1, d.pack);
     if (typeof d.leader === 'string' && Game.canPickLeader(m, 1, d.leader)) Game.pickLeader(m, 1, d.leader); // the leader draft: only in turn and from what's left
@@ -8923,7 +8926,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       nextReady = [false, false]; rematch = [false, false];
       playBattle(d.pre);
     } else if (d.t === 'status') {
-      if (d.ready) ready[0] = !!d.ready[0];
+      if (d.ready) { const was = ready[0]; ready[0] = !!d.ready[0]; foeReadySfx(was); }
       if (d.nextReady) nextReady[0] = !!d.nextReady[0];
       if (d.rematch) rematch[0] = !!d.rematch[0];
       if (phase === 'deploy' && m && m.round === 1 && Array.isArray(d.start) && d.start.every(Number.isInteger)) { m.packSeen = { 0: d.start.slice() }; render(); } // the host's starting units
@@ -9115,7 +9118,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (mode === 'spec') { srvSpec(d); return; }
     if (d.t === 'status') {
       if (d.here) net.foeHere = !!d.here[foe()];
-      if (d.ready) { ready[foe()] = !!d.ready[foe()]; if (!timeUp) ready[me] = !!d.ready[me]; }
+      if (d.ready) { const was = ready[foe()]; ready[foe()] = !!d.ready[foe()]; if (!timeUp) ready[me] = !!d.ready[me]; foeReadySfx(was); }
       if (d.nextReady) nextReady = d.nextReady.slice();
       if (d.rematch) rematch = d.rematch.slice();
       srvClock(d); netStatus();
