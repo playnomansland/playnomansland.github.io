@@ -18,6 +18,7 @@ const TIER_COLORS = ['#9AA5A8', '#6FD08C', '#5BA8F5', '#C58BF2', '#F2B84B'];
 const tierOf = (i) => Game.tierOf(units, i);
 const tierColor = (t) => TIER_COLORS[Math.min(TIER_COLORS.length - 1, t - 1)];
 const now = () => performance.now();
+const phone = () => innerWidth <= 700; // a phone held upright: the column becomes a drawer along the bottom (the CSS's @media too)
 const plural = (n, w) => `${n} ${n === 1 ? w : w === 'body' ? 'bodies' : w + 's'}`;
 const SHARD = '<svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="2,9 61,0 99,6 96,93 38,100 0,86"/></svg>';
 const SONGS = { deploy: ['Bulgaria', 'audio/bulgaria.mp3'], battle: ['Habbyourmam', 'audio/habbyourmam.mp3'] };
@@ -148,7 +149,7 @@ function paintRound() {
   const bf = esc((Game.SKINS.find(s => s.id === look) || {}).name || '');
   $('round').innerHTML = `${phase === 'room' ? `<div class="k">Play · Rooms · ${room.role === 'host' ? 'your room' : `${esc(room.who.name)}’s room`} · ${bf}</div>
     <h1>1v1 <span class="ph">${room.ranked ? 'Ranked · Bo3' : 'Standard'}</span></h1>` : `<div class="k">Standard · ${bf}</div>
-    <h1>Round ${phase === 'end' ? m.round - 1 : r} · <span class="ph">${PH[phase]}</span></h1>`}
+    <h1><span class="rw">Round </span><span class="rs">R</span>${phase === 'end' ? m.round - 1 : r} · <span class="ph">${PH[phase]}</span></h1>`}
     <nav aria-label="Match">
       ${phase === 'room' ? '' : `<button data-sheet="damage" aria-expanded="${sheetKind === 'damage'}" ${lastSummary ? '' : 'disabled style="opacity:.35"'}>Damage</button>`}
       <button data-sheet="settings" aria-expanded="${sheetKind === 'settings'}">Settings</button>
@@ -307,14 +308,15 @@ function paintRoom() {
   col.innerHTML = `
     <div class="rhead"><span class="k">${host ? 'Your room' : `${esc(room.who.name)}’s room`} · ${room.pub ? 'public' : 'private'}${room.spec ? ' · watchable' : ''}</span>
       <h2>${host ? 'Your room' : `${esc(room.who.name)}’s room`}</h2><p class="rlead">${lead}</p></div>
-    <div class="rrows">
+    ${phone() && !roomOpen ? `<button class="rsum" id="room-more" aria-expanded="false">${[room.pub ? 'Public' : 'Private', room.spec ? 'watchable' : 'no spectators', room.ranked ? 'Ranked' : room.pack === 'learn' ? 'Learn the game' : 'Standard units', bf.name].join(' · ')} <b>${ro ? 'See' : 'Change'} ▾</b></button>` : `<div class="rrows">
+      ${phone() ? `<button class="rsum" id="room-more" aria-expanded="true"><b>Done ▴</b></button>` : ''}
       ${row('Who can find it', 'pub', [[1, 'Public'], [0, 'Private']], room.pub ? 1 : 0, room.pub ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.')}
       ${row('Spectators', 'spec', [[1, 'On'], [0, 'Off']], room.spec ? 1 : 0, room.spec ? 'Anyone can watch once it starts.' : 'Just the two of you.')}
       ${row('Units', 'pack', room.ranked ? [['standard', 'Standard']] : [['learn', 'Learn the game'], ['standard', 'Standard']], room.pack, packNote)}
       <div class="rrow"><span class="lab">Battlefield</span><div class="ws">${ro ? `<span class="w" aria-pressed="true">${bf.name}</span>`
         : `<button class="arrow" data-bf="-1" aria-label="Previous battlefield">‹</button><span class="w" aria-pressed="true">${bf.name}</span><button class="arrow" data-bf="1" aria-label="Next battlefield">›</button>`}</div>
         <span class="note">${k + 1} of ${Game.SKINS.length}. The match is played here.</span></div>
-    </div>
+    </div>`}
     <div class="xrow invite"><button class="w" data-sheet="invite" aria-expanded="${sheetKind === 'invite'}">+ Invite a friend</button></div>
     <div class="go room">
       ${host ? `<button class="ready mid" id="start" ${here ? '' : 'disabled'}>${SHARD}Start match</button>
@@ -337,6 +339,7 @@ function paintRoom() {
   }));
   col.querySelectorAll('[data-sheet]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openSheet(b.dataset.sheet, b); paintRoom(); }));
   const on = (id, f) => { const b = $(id); if (b) b.addEventListener('click', f); };
+  on('room-more', () => { roomOpen = !roomOpen; paintRoom(); }); // (a phone: the settings fold into one line, so the board has room)
   on('start', () => { if (room.who) { closeSheet(); newMatch(); } });
   on('fill', () => seat(COMPUTER));
   on('host-starts', () => { closeSheet(); newMatch(); });
@@ -353,14 +356,15 @@ function roomNotes() {
     const [x, y] = board.screenAt(t.col, t.row, sd === ME ? 2.4 : 2.6);
     // who is in the game: each keep carries its player's name and whether they're connected (the owner, 2026-11-08)
     n.innerHTML = sd === ME ? `<b>Wren</b> · connected` : room.who ? `<b>${esc(room.who.name)}</b> · connected` : '<span class="wait">Waiting for opponent</span>';
-    const w = n.offsetWidth, left = sd === FOE, lx = left ? x - 70 - w : x + 70, ly = y - 34;
+    const w = n.offsetWidth, left = sd === FOE, gap = phone() ? 34 : 70, lx = Math.max(8, Math.min(innerWidth - w - 8, left ? x - gap - w : x + gap)), ly = y - (phone() ? 22 : 34);
     n.style.left = lx + 'px'; n.style.top = ly + 'px';
-    roomLines[sd] = { pts: [[x, y], [left ? lx + w : lx, ly], [left ? lx : lx + w, ly]] };
+    const near = Math.abs(lx + w - x) < Math.abs(lx - x) ? lx + w : lx; // the label's end nearer the keep
+    roomLines[sd] = { pts: [[x, y], [near, ly], [near === lx ? lx + w : lx, ly]] };
   }
   if (!show) roomLines = [];
   drawLines();
 }
-let roomLines = [];
+let roomLines = [], roomOpen = false;
 
 // ---------- the unit note: a card pointed at ----------
 function unitNote(i, el) {
@@ -372,6 +376,7 @@ function unitNote(i, el) {
   n.innerHTML = `<b>${esc(u.name)}.</b><small>${facts.join(' · ')}</small>${why ? `<small style="color:var(--saffron)">${why}</small>` : ''}`;
   // a Diorama note: the dot on the card, up into the gap above its row, then along under the words, which stand in the
   // open space right of the column (no line through a word)
+  if (phone()) { n.hidden = false; n.style.left = '14px'; n.style.top = (c.top - 6) + 'px'; noteLine = null; drawLines(); return; } // above the drawer
   const y = r.top - 5, x = c.right + 26;
   n.hidden = false; n.style.left = x + 'px'; n.style.top = y + 'px';
   noteLine = { pts: [[r.left + r.width / 2, r.top + 14], [r.left + r.width / 2, y], [x + n.offsetWidth, y]] };
@@ -386,7 +391,8 @@ function cardPress(e, i, el) {
   el.setPointerCapture(e.pointerId);
   const mv = (ev) => {
     if (!cardDrag) return;
-    if (!cardDrag.on && Math.hypot(ev.clientX - cardDrag.x0, ev.clientY - cardDrag.y0) > 6 && !dis) {
+    const dx = ev.clientX - cardDrag.x0, dy = ev.clientY - cardDrag.y0;
+    if (!cardDrag.on && !dis && (phone() ? dy < -10 && -dy > Math.abs(dx) : Math.hypot(dx, dy) > 6)) { // (a phone: up onto the board; sideways scrolls the shop)
       cardDrag.on = true; selected = i; el.classList.add('lift'); unitNote(null);
       $('ghost').innerHTML = `<span style="color:${units[i].color};display:grid">${Shapes.svg(units[i].shape, 28)}</span><b>${esc(units[i].name)}</b>`;
       $('ghost').hidden = false; paintHint();
@@ -552,6 +558,7 @@ function paintSheet() {
 }
 function placeSheet() {
   const s = $('sheet'), w = s.offsetWidth, h = s.offsetHeight;
+  if (phone()) { s.style.left = s.style.top = ''; sqLine = null; drawLines(); return; } // a bottom sheet (the CSS)
   let x, y;
   if (sheetKind === 'squad') {
     const sq = m.armies[ME].find(q => q.id === sqOpen); if (!sq) return;
@@ -584,11 +591,12 @@ function paintMoment() {
   const pick = myPick(), mo = $('moment');
   const show = phase === 'deploy' ? (pick && !pickHidden ? pick : null) : phase === 'result' ? 'result' : phase === 'end' ? 'end' : null;
   $('veil').hidden = !(show && show !== 'result');
+  document.body.classList.toggle('moment-on', !!show && show !== 'result'); // (a phone: the drawer steps aside for a pick)
   $('peek').hidden = !(phase === 'deploy' && pick && pickHidden);
   const key = JSON.stringify([show, pickSel, m.round, phase]);
   if (!show) { mo.hidden = true; momentKey = ''; return; }
   if (key === momentKey) return; momentKey = key;
-  const R = safeRect(); mo.style.left = (R.x0 + R.x1) / 2 + 'px'; mo.style.top = (R.y0 + R.y1) / 2 + 'px';
+  const R = phone() && show !== 'result' ? { x0: 0, x1: innerWidth, y0: 0, y1: innerHeight } : safeRect(); mo.style.left = (R.x0 + R.x1) / 2 + 'px'; mo.style.top = (R.y0 + R.y1) / 2 + 'px';
   let html = '';
   const opt = (k, ics, title, sub) => `<button class="opt" data-k="${k}" aria-pressed="${pickSel === k}"><span class="n">0${k + 1}</span><span class="ics">${ics}</span><span class="t"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</span></button>`;
   const icon = (i) => `<span style="color:${units[i].color};display:inline-flex">${Shapes.svg(units[i].shape, 30)}</span>`;
@@ -695,6 +703,7 @@ function placingUnit() {
 const fit = { k: 1, ox: 0, oy: 0 };
 function safeRect() {
   const c = $('col').getBoundingClientRect(), top = Math.max($('you').getBoundingClientRect().bottom, $('round').getBoundingClientRect().bottom);
+  if (phone()) return { x0: 4, x1: innerWidth - 4, y0: top + 4, y1: c.top - 2 }; // above the drawer
   return { x0: c.right + 28, x1: innerWidth - 24, y0: top + 14, y1: innerHeight - 10 };
 }
 let fitHeld = null; // the last fit measured in the top or tilted view: { k, dx, dy } (the board's middle from the window's)
@@ -748,6 +757,8 @@ document.addEventListener('pointerdown', (e) => { // a press outside an open she
 // blends from New room's view of the island (the menu's orthographic 'orders' view, as a very long lens) to that pose,
 // while the miniatures sink, the field opens from the board outward, and the island fades into the board under it.
 const ISLE_START = { at: [0, 0, 0.4], az: 0, el: 1.25, h: 13.6, fov: 5, ox: -0.24, oy: 0, k: 1 }; // VIEWS.orders in src/diorama.js
+const ISLE_START_PHONE = { at: [0, 0, 0.4], az: 0, el: 1.25, h: 19.5, fov: 5, ox: 0, oy: 0.24, k: 1 }; // a phone: the island in the top half
+const isleStart = () => phone() ? ISLE_START_PHONE : ISLE_START;
 const FLY_MS = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1900;
 let isle = null;
 const intro = { on: false, t0: 0, going: false, done: true, autoAt: 0, ready: false };
@@ -839,7 +850,7 @@ function introFrame() {
   if (!intro.on || !isle) return;
   if (intro.autoAt && now() >= intro.autoAt) introGo();
   const t = intro.going ? (window.__introT != null ? window.__introT : FLY_MS ? clamp01((now() - intro.t0) / FLY_MS) : 1) : 0, end = boardPose(); // (__introT: checks pin a moment)
-  islePose(intro.going ? mixPose(ISLE_START, end, ease(clamp01(t / 0.92))) : ISLE_START);
+  islePose(intro.going ? mixPose(isleStart(), end, ease(clamp01(t / 0.92))) : isleStart());
   // the miniatures sink into the island and its soil drops away, as on the menu when a screen changes
   const sink = ease(clamp01((t - 0.4) / 0.35));
   // (the keeps last, so the hand-off is ground on ground: the board draws its own keeps there)

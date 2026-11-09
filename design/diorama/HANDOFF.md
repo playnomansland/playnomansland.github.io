@@ -349,3 +349,26 @@ nothing more. In the prototype: Settings, Opponent, Connected / Disconnected.
 
 - Done 2026-11-09: `main` merged in; the prototype's small text is Bricolage Grotesque 700, as the menu's (`--type`).
 - Then: the owner's notes on the flight, the room and the battle screen; phones; moving them into the game.
+
+## Phones (2026-11-09)
+
+The room, the battle screen and the way in, held upright (700 px wide or less; `@media (max-width: 700px)` in
+`src/battle.html`, `phone()` in `src/battle.js`). Checked at 390 x 844 and 360 x 740 with touch. (`screens/phone-*.jpg`)
+- **The world stays edge to edge.** The left column becomes a **drawer along the bottom** over the scenery (an ink
+  scrim rises from the bottom edge), and the camera frames the board between the top line and the drawer: the same
+  `fitView`, measuring a different free space (`safeRect`). Fold the shop and the board grows; in a fight the drawer is
+  only the gold and the armies, so the board is bigger still.
+- **Top line:** you, the round and the opponent in one compact row: the name, the health big with its bar; the round
+  reads "R1 · DEPLOY"; titles and the music line drop out (titles still show in Friends and on the keeps' notes).
+- **Deploy drawer:** gold, deployments, the hint, the extra moves, then **the shop as one strip that scrolls sideways**
+  (tier label, cards, + Unlock, tier after tier), READY with the clock. A card is dragged **up** onto the board (a
+  sideways swipe scrolls the shop instead); a tap picks it, as on PC.
+- **The room:** YOUR ROOM, the status line, and the settings **folded into one line** ("Public · watchable · Learn
+  the game · Desert · Change"), which opens to New room's rows; + Invite a friend; START MATCH with the seat's status
+  under it. Folded, the board keeps about 60% of the screen.
+- **Sheets rise from the bottom** (Unlock, a squad, Invite, Settings, Damage, Help), full width. Picks (start, leader,
+  tower) and the match's end take the whole screen and the drawer steps aside; a round's result sits over the board.
+- **The way in:** the island in the top half, New room's words under it (the menu's phone layout), then the same
+  flight into the board's pose above the drawer.
+- Not done: phones held sideways (the PC layout is too tall for them; probably the column on the left again, tighter),
+  and a real touch device (only checked with Chromium's touch emulation).
