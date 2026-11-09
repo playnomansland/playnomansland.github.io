@@ -1027,9 +1027,9 @@ html[data-dlook="savanna"] { --dcard: #13120C; }  /* dry grass */
    board tile's clipped corners instead of round ones, Chakra Petch titles, Bricolage text, the tile-slab buttons */
 html.diorama.pcwide .sheet-back { align-items: end; justify-items: center; padding-left: var(--dsx0, 380px); padding-right: var(--dsx1, 24px); background: rgba(5, 8, 9, .45); }
 html.diorama.pcwide .sheet {
-  --sc: var(--dcard, #0D1315); --panel: var(--sc); --bg: color-mix(in srgb, var(--sc), #F4ECD8 4%); --line: rgba(244, 236, 216, .14);
+  --sc: var(--dcard, #0D1315); --sl: color-mix(in srgb, var(--sc), #F4ECD8 6%); --panel: var(--sl); --bg: var(--sc); --line: rgba(244, 236, 216, .12); /* as the old sheet: the panel lighter, the rows in it darker (the owner, 2026-11-09) */
   width: 100%; max-width: 600px; padding: 18px 18px 20px; gap: 12px; color: #F4ECD8; filter: drop-shadow(0 -8px 30px rgba(0, 0, 0, .45));
-  background: var(--sc); border: 1px solid rgba(244, 236, 216, .16); border-bottom: 0; border-radius: 0;
+  background: var(--sl); border: 1px solid rgba(244, 236, 216, .16); border-bottom: 0; border-radius: 0;
   clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%, 0 12px); font-family: var(--dtype); }
 html.diorama.pcwide .sheet::before { content: ""; position: absolute; left: 12px; right: 12px; top: 0; height: 2px; background: rgba(242, 178, 58, .7); } /* a thin saffron edge on top: the one Diorama mark */
 html.diorama.pcwide .sheet { position: relative; }
