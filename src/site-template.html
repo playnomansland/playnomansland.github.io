@@ -7360,7 +7360,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // The board camera's pose in island units (its position / TILE, the same angle, lens and view offset), the keeps' spots
   // (the board's towers) and the middle of the free space, where the field opens from; null until the board is framed
   const dioFlyWanted = () => pcLayout() && !!board3d && !matchMedia('(prefers-reduced-motion: reduce)').matches && !/[?&]fly=off\b/.test(location.search)
-    && (dioRoomOn() || (phase === 'deploy' && !!m && m.round === 1 && (mode === 'ai' || mode === 'net')));
+    && (dioRoomOn() || ((phase === 'deploy' || phase === 'start') && !!m && m.round === 1 && (mode === 'ai' || mode === 'net'))); // (start: the match is made a moment before its deploy begins, and the home hides then)
   function dioBoardPose() {
     const b = board3d, c = b && b.cam3; if (!c) return null;
     wake3d();
