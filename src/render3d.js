@@ -1154,7 +1154,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     renderer.dispose();
     renderer.forceContextLoss();
   }
-  return { size: sizeTo, draw, tileAt, thumb: (match) => floor2d.thumb(match), camera: cam, info: () => renderer.info.render,
+  return { size: sizeTo, draw, tileAt, thumb: (match) => floor2d.thumb(match), camera: cam, cam3: camera, info: () => renderer.info.render,
     still: () => !cam.busy(), alive: () => !!(scenery && scenery.alive && scenery.alive()), explore: (x0) => scenery && scenery.explore && scenery.explore(x0), // (tests: send Forest Glade's explorer out) // alive: the scenery moves on its own (Savanna's vultures) kinds: () => [...new Set(Object.keys(groups).filter(k => used.has(groups[k])).map(k => k.split('#')[0]))], // the models drawn in the last frame (UI tests)
     quality, pixelRatio: () => renderer.getPixelRatio(), dispose, drawn, screenAt, pickAt, scenery };
 };
