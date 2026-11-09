@@ -969,18 +969,18 @@ html.droom-on .panel { padding-bottom: 190px; }
 html.dfly .hud, html.dfly .panel, html.dfly #wrap > .pick, html.dfly #wrap > .overlay, html.dfly .knote, html.dfly .dlines, html.dfly .talk-fab { opacity: 0; pointer-events: none; }
 html.diorama.pcwide .hud, html.diorama.pcwide .panel, html.diorama.pcwide #wrap > .pick, html.droom-on .knote, html.droom-on .dlines { transition: opacity .45s ease; }
 
-/* the small panels cut from the battlefield's scenery (dioPatterns in the page; html.dpat, a trial on Forest Glade):
-   each panel takes a different patch, darkened as the scrim darkens the scenery beside it. Picked: the saffron shard */
-html.dpat.pcwide { --dpshade: linear-gradient(rgba(7, 10, 7, .6), rgba(7, 10, 7, .6)); }
-html.dpat.pcwide .panel .uc2, html.dpat.pcwide .pick .opt::before, html.dpat.pcwide .pick .det, html.dpat.pcwide #wrap > .coach, html.dpat.pcwide #wrap > .task {
-  background: var(--dpshade), var(--dpat0) center / cover, #0E120D; }
-html.dpat.pcwide .panel .uc2:nth-child(6n+2), html.dpat.pcwide .pick .opt:nth-child(2)::before { background: var(--dpshade), var(--dpat1) center / cover, #0E120D; }
-html.dpat.pcwide .panel .uc2:nth-child(6n+3), html.dpat.pcwide .pick .opt:nth-child(3)::before { background: var(--dpshade), var(--dpat2) center / cover, #0E120D; }
-html.dpat.pcwide .panel .uc2:nth-child(6n+4), html.dpat.pcwide .pick .opt:nth-child(4)::before { background: var(--dpshade), var(--dpat3) center / cover, #0E120D; }
-html.dpat.pcwide .panel .uc2:nth-child(6n+5), html.dpat.pcwide .pick .det { background: var(--dpshade), var(--dpat4) center / cover, #0E120D; }
-html.dpat.pcwide .panel .uc2:nth-child(6n), html.dpat.pcwide #wrap > .coach { background: var(--dpshade), var(--dpat5) center / cover, #0E120D; }
-html.dpat.pcwide .panel .uc2:hover:not([aria-disabled="true"]):not([aria-pressed="true"]) { background-blend-mode: normal; filter: brightness(1.35); }
+/* the panels cut from the battlefield's scenery (dioPatterns in the page; html.dpat, a trial on Forest Glade): the
+   picks' options and details, the coach and task lines and the sheets in a match, each a different patch, darkened as
+   the scrim darkens the scenery beside it. Never the unit cards in the shop (the owner, 2026-11-09). Picked: the shard */
+html.dpat.pcwide { --dpshade: linear-gradient(rgba(7, 10, 7, .58), rgba(7, 10, 7, .58)); }
+html.dpat.pcwide .pick .opt::before { background: var(--dpshade), var(--dpat0) center / cover, #0E120D; }
+html.dpat.pcwide .pick .opt:nth-child(2)::before { background: var(--dpshade), var(--dpat1) center / cover, #0E120D; }
+html.dpat.pcwide .pick .opt:nth-child(3)::before { background: var(--dpshade), var(--dpat2) center / cover, #0E120D; }
+html.dpat.pcwide .pick .opt:nth-child(4)::before { background: var(--dpshade), var(--dpat3) center / cover, #0E120D; }
+html.dpat.pcwide .pick .det, html.dpat.pcwide #wrap > .task { background: var(--dpshade), var(--dpat4) center / cover, #0E120D; }
+html.dpat.pcwide #wrap > .coach { background: var(--dpshade), var(--dpat5) center / cover, #0E120D; }
+html.dpat.pcwide .sheet { background: linear-gradient(rgba(7, 10, 7, .66), rgba(7, 10, 7, .66)), var(--dpat3) center / cover, #0E120D; }
 html.dpat.pcwide .pick .opt:hover:not(:disabled)::before { filter: brightness(1.35); }
-html.dpat.pcwide .panel .uc2[aria-pressed="true"], html.dpat.pcwide .pick .opt[aria-pressed="true"]::before { background: #F2B23A; filter: none; }
-html.dpat.pcwide .panel .uc2 .n, html.dpat.pcwide .pick .opt { text-shadow: 0 0 3px rgba(7,10,7,.9), 0 0 8px rgba(7,10,7,.7); }
-html.dpat.pcwide .panel .uc2[aria-pressed="true"] .n, html.dpat.pcwide .pick .opt[aria-pressed="true"] { text-shadow: none; }
+html.dpat.pcwide .pick .opt[aria-pressed="true"]::before { background: #F2B23A; filter: none; }
+html.dpat.pcwide .pick .opt { text-shadow: 0 0 3px rgba(7,10,7,.9), 0 0 8px rgba(7,10,7,.7); }
+html.dpat.pcwide .pick .opt[aria-pressed="true"] { text-shadow: none; }

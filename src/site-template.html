@@ -7356,7 +7356,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (Math.abs(k - dfit.k) > 0.002 || Math.abs(tox - dfit.ox) > 0.5 || Math.abs(toy - dfit.oy) > 0.5) wakeUntil = Math.max(wakeUntil, performance.now() + 120); // still gliding: keep drawing
   }
   addEventListener('resize', () => { if (dioWide()) wake3d(); });
-  // The Diorama's small panels (shop cards, the picks' options, the coach line) are cut from the battlefield's own
+  // The Diorama's panels in a match (the picks' options and details, the coach line, the sheets; never the shop's unit
+  // cards, the owner, 2026-11-09) are cut from the battlefield's own
   // scenery instead of a flat ink (the owner, 2026-11-09: "using the colours or patterns from the scenery to the left of
   // the battlefield"). Once the board's scenery has loaded, a few patches of the rendered picture left of the board are
   // copied into images (--dpat0..5 on <html>), each from a different spot, and the panels take one each, darkened as
@@ -7376,13 +7377,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (!dpat.ready || performance.now() < dpat.at) return;
     const cv3 = $('wrap').querySelector('.board3d canvas'); if (!cv3 || !cv3.width) return;
     const r = cv3.getBoundingClientRect(), sx = cv3.width / r.width, sy = cv3.height / r.height, pw = dioPw();
-    const W = 240, Hh = 240, c = document.createElement('canvas'); c.width = W; c.height = Hh;
+    const W = 360, Hh = 360, c = document.createElement('canvas'); c.width = W; c.height = Hh;
     const g = c.getContext('2d');
     // spots spread over the scenery under the column (left of the board, below the top line, above READY)
     const xs = [0.06, 0.42, 0.2, 0.55, 0.1, 0.36], ys = [0.22, 0.3, 0.45, 0.52, 0.66, 0.74];
     try {
       for (let i = 0; i < DPAT_N; i++) {
-        const x = Math.max(0, Math.min(pw - W, xs[i] * pw)), y = Math.max(0, Math.min(innerHeight - Hh, ys[i] * innerHeight));
+        const x = Math.max(0, Math.min(pw + 80 - W, xs[i] * pw)), y = Math.max(0, Math.min(innerHeight - Hh, ys[i] * innerHeight));
         g.clearRect(0, 0, W, Hh); g.drawImage(cv3, x * sx, y * sy, W * sx, Hh * sy, 0, 0, W, Hh);
         root.style.setProperty('--dpat' + i, `url(${c.toDataURL('image/jpeg', 0.82)})`);
       }
