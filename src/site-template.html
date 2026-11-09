@@ -7307,7 +7307,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       dioFit(ts);
       board3d.draw();
       boardMarks();
-      if (DIO) dioRoomNotes();
+      if (DIO) { dioRoomNotes(); dioPatterns(); }
       meterFrame(ts);
     }
     if (board3d && (busy || alive)) raf3d = requestAnimationFrame(frame3d);
@@ -7356,6 +7356,39 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (Math.abs(k - dfit.k) > 0.002 || Math.abs(tox - dfit.ox) > 0.5 || Math.abs(toy - dfit.oy) > 0.5) wakeUntil = Math.max(wakeUntil, performance.now() + 120); // still gliding: keep drawing
   }
   addEventListener('resize', () => { if (dioWide()) wake3d(); });
+  // The Diorama's small panels (shop cards, the picks' options, the coach line) are cut from the battlefield's own
+  // scenery instead of a flat ink (the owner, 2026-11-09: "using the colours or patterns from the scenery to the left of
+  // the battlefield"). Once the board's scenery has loaded, a few patches of the rendered picture left of the board are
+  // copied into images (--dpat0..5 on <html>), each from a different spot, and the panels take one each, darkened as
+  // the scrim darkens the scenery. A trial on Forest Glade first (DPAT_LOOKS); other looks keep the ink panels.
+  const DPAT_LOOKS = ['frost'], DPAT_N = 6;
+  const dpat = { key: '', want: '', at: 0, ready: false };
+  function dioPatterns() {
+    const root = document.documentElement, v = dioWide() && boardView().m, look = v ? Game.lookOf(v) : '';
+    const want = v && DPAT_LOOKS.includes(look) ? look + '|' + ((v.map && v.map.id) || '') : '';
+    if (!want) { if (dpat.key) { dpat.key = ''; root.classList.remove('dpat'); } dpat.want = ''; return; }
+    if (dpat.key === want) return;
+    if (dpat.want !== want) { // a new battlefield: wait for its scenery, then a moment for the camera to settle
+      dpat.want = want; dpat.ready = false; dpat.at = performance.now() + 1800;
+      const sc = board3d && board3d.scenery; Promise.resolve(sc && sc.ready).catch(() => {}).then(() => { if (dpat.want === want) { dpat.ready = true; dpat.at = Math.max(dpat.at, performance.now() + 600); } });
+    }
+    wakeUntil = Math.max(wakeUntil, performance.now() + 200); // keep drawing until the patches are taken
+    if (!dpat.ready || performance.now() < dpat.at) return;
+    const cv3 = $('wrap').querySelector('.board3d canvas'); if (!cv3 || !cv3.width) return;
+    const r = cv3.getBoundingClientRect(), sx = cv3.width / r.width, sy = cv3.height / r.height, pw = dioPw();
+    const W = 240, Hh = 240, c = document.createElement('canvas'); c.width = W; c.height = Hh;
+    const g = c.getContext('2d');
+    // spots spread over the scenery under the column (left of the board, below the top line, above READY)
+    const xs = [0.06, 0.42, 0.2, 0.55, 0.1, 0.36], ys = [0.22, 0.3, 0.45, 0.52, 0.66, 0.74];
+    try {
+      for (let i = 0; i < DPAT_N; i++) {
+        const x = Math.max(0, Math.min(pw - W, xs[i] * pw)), y = Math.max(0, Math.min(innerHeight - Hh, ys[i] * innerHeight));
+        g.clearRect(0, 0, W, Hh); g.drawImage(cv3, x * sx, y * sy, W * sx, Hh * sy, 0, 0, W, Hh);
+        root.style.setProperty('--dpat' + i, `url(${c.toDataURL('image/jpeg', 0.82)})`);
+      }
+    } catch (e) { dpat.key = want; return; } // (a tainted or lost canvas: the ink panels stay)
+    dpat.key = want; root.classList.add('dpat');
+  }
   // the way in (src/diorama.js flyStart): Create room, Join and Vs computer on a PC fly the menu's island into the board.
   // The board camera's pose in island units (its position / TILE, the same angle, lens and view offset), the keeps' spots
   // (the board's towers) and the middle of the free space, where the field opens from; null until the board is framed
