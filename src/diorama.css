@@ -964,6 +964,7 @@ html.droom-on .panel { padding-bottom: 190px; }
 /* the way in (flyStart in src/diorama.js): the menu's words go, the field and the island fly into the board; the
    match's words wait (html.dfly) until the island has nearly landed, then come in */
 #dio.flying > :not(.field):not(#world) { opacity: 0 !important; pointer-events: none !important; transition: opacity .25s ease; }
-#dio.flying { pointer-events: none; }
+#dio.flying { pointer-events: none; background: transparent; transition: none; } /* the colour moves onto .field, which the flight masks open */
+#dio.flying .field { background-color: var(--field); }
 html.dfly .hud, html.dfly .panel, html.dfly #wrap > .pick, html.dfly #wrap > .overlay, html.dfly .knote, html.dfly .dlines, html.dfly .talk-fab { opacity: 0; pointer-events: none; }
 html.diorama.pcwide .hud, html.diorama.pcwide .panel, html.diorama.pcwide #wrap > .pick, html.droom-on .knote, html.droom-on .dlines { transition: opacity .45s ease; }

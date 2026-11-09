@@ -1099,7 +1099,8 @@ html.droom-on .panel { padding-bottom: 190px; }
 /* the way in (flyStart in src/diorama.js): the menu's words go, the field and the island fly into the board; the
    match's words wait (html.dfly) until the island has nearly landed, then come in */
 #dio.flying > :not(.field):not(#world) { opacity: 0 !important; pointer-events: none !important; transition: opacity .25s ease; }
-#dio.flying { pointer-events: none; }
+#dio.flying { pointer-events: none; background: transparent; transition: none; } /* the colour moves onto .field, which the flight masks open */
+#dio.flying .field { background-color: var(--field); }
 html.dfly .hud, html.dfly .panel, html.dfly #wrap > .pick, html.dfly #wrap > .overlay, html.dfly .knote, html.dfly .dlines, html.dfly .talk-fab { opacity: 0; pointer-events: none; }
 html.diorama.pcwide .hud, html.diorama.pcwide .panel, html.diorama.pcwide #wrap > .pick, html.droom-on .knote, html.droom-on .dlines { transition: opacity .45s ease; }
 
@@ -17472,7 +17473,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '8 Nov 2026 · da8c319'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '8 Nov 2026 · 2865244'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
