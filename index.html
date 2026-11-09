@@ -1239,7 +1239,7 @@ html.diorama.pcwide .sheet .seg button[aria-pressed="true"] { background: #27393
    artist, a thin line, small controls; the list grows up out of it, right-aligned, the tabs as words ── */
 html.diorama.pcwide #mp-pop.dock { inset: 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; animation: none; }
 html.diorama.pcwide #mp-pop.dock::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(46% 80% at 100% 100%, rgba(10, 13, 12, .9), rgba(10, 13, 12, .55) 55%, transparent 80%); animation: mp-fade .25s ease; }
-html.diorama.pcwide #mp-pop.dock .mp-dock { left: auto; right: 40px; bottom: 30px; transform: none; width: min(460px, calc(100vw - var(--dpw, 340px) - 80px)); height: auto; max-height: calc(100vh - 150px);
+html.diorama.pcwide #mp-pop.dock .mp-dock { left: auto; right: 40px; bottom: 30px; transform: none; width: min(460px, calc(100vw - var(--dpw, 340px) - 80px)); height: auto; max-height: min(620px, calc(100vh - 170px));
   display: flex; flex-direction: column; align-items: stretch; pointer-events: auto; color: #F4ECD8; text-align: right;
   text-shadow: 0 0 3px rgba(10,13,12,.95), 0 0 9px rgba(10,13,12,.8); font: 700 14px "Bricolage Grotesque", system-ui, sans-serif; }
 /* the player */
@@ -1288,11 +1288,14 @@ html.diorama.pcwide #mp-pop.dock .mp-pill { color: #F2B23A; opacity: 1; }
 html.diorama.pcwide #mp-pop.dock .mp-ghost.sure { color: #FF8F78; opacity: 1; }
 html.diorama.pcwide #mp-pop.dock .mp-songs { display: grid; justify-items: end; gap: 1px; overflow-y: auto; scrollbar-width: none; padding: 0 2px 0 14px; }
 html.diorama.pcwide #mp-pop.dock .mp-songs::-webkit-scrollbar { display: none; }
-html.diorama.pcwide #mp-pop.dock .mp-song { position: relative; isolation: isolate; display: flex; flex-direction: row-reverse; align-items: baseline; justify-content: flex-start; gap: 14px; width: auto; max-width: 100%; padding: 3px 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: #F4ECD8; opacity: .62; text-align: right; }
+html.diorama.pcwide #mp-pop.dock .mp-song { position: relative; isolation: isolate; min-height: 0; display: flex; flex-direction: row-reverse; align-items: baseline; justify-content: flex-start; gap: 14px; width: auto; max-width: 100%; padding: 3px 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: #F4ECD8; opacity: .62; text-align: right; }
 html.diorama.pcwide #mp-pop.dock .mp-song::before { content: ""; position: absolute; inset: 0 -10px 0 -14px; z-index: -1; background: rgba(23, 20, 15, .55); clip-path: polygon(0 8%, 98% 0, 100% 90%, 2% 100%); opacity: 0; transition: opacity .12s ease; }
 html.diorama.pcwide #mp-pop.dock .mp-song:hover { opacity: 1; background: none; }
 html.diorama.pcwide #mp-pop.dock .mp-song:hover::before { opacity: 1; }
-html.diorama.pcwide #mp-pop.dock .mp-song[aria-pressed="true"] { opacity: 1; }
+html.diorama.pcwide #mp-pop.dock .mp-song[aria-pressed="true"] { opacity: 1; background: none; }
+html.diorama.pcwide #mp-pop.dock .mp-song[aria-pressed="true"]::before { left: -14px; top: 0; bottom: 0; width: auto; border-radius: 0; box-shadow: none; background: rgba(23, 20, 15, .55); opacity: 0; }
+html.diorama.pcwide #mp-pop.dock .mp-song[aria-pressed="true"] .mp-st b { color: #F4ECD8; }
+html.diorama.pcwide #mp-pop.dock .mp-song .mp-eq { color: #F2B23A; }
 html.diorama.pcwide #mp-pop.dock .mp-song[aria-pressed="true"] .mp-n { color: #F2B23A; }
 html.diorama.pcwide #mp-pop.dock .mp-n { flex: none; width: auto; min-width: 22px; font: 700 13px "Bricolage Grotesque", system-ui, sans-serif; color: #F4ECD8; opacity: .85; text-align: right; }
 html.diorama.pcwide #mp-pop.dock .mp-n em { font: 700 10px "Bricolage Grotesque", system-ui, sans-serif; font-style: normal; letter-spacing: .08em; text-transform: uppercase; padding: 0; border: 0; background: none; color: #F2B23A; }
@@ -17494,7 +17497,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     } else {
       mpui.anchor = null;
       // the menu's own player (under the dock) gives its ids to the dock's while it is open
-      document.querySelectorAll('.mplayer [id]').forEach(x => { x.dataset.keepId = x.id; x.removeAttribute('id'); });
+      document.querySelectorAll('.mplayer [id], #dio .music :is(#mp-play, #mp-next, #mp-back, #mp-bar, #mp-now, #mp-shuffle, #mp-repeat)').forEach(x => { x.dataset.keepId = x.id; x.removeAttribute('id'); }); // (the Diorama's home player too: its buttons have the same ids, and wirePlayer would wire those)
       pop.innerHTML = `<div class="mp-dock"><div class="mp-panel" id="mp-panel" role="dialog" aria-label="Playlists"></div>${playerHtml()}</div>`;
       pop.querySelector('.mplayer').classList.add('joined');
       wirePlayer();
@@ -17692,7 +17695,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 7bc12d2'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · b1e630f'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches

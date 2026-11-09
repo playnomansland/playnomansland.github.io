@@ -1935,7 +1935,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     } else {
       mpui.anchor = null;
       // the menu's own player (under the dock) gives its ids to the dock's while it is open
-      document.querySelectorAll('.mplayer [id]').forEach(x => { x.dataset.keepId = x.id; x.removeAttribute('id'); });
+      document.querySelectorAll('.mplayer [id], #dio .music :is(#mp-play, #mp-next, #mp-back, #mp-bar, #mp-now, #mp-shuffle, #mp-repeat)').forEach(x => { x.dataset.keepId = x.id; x.removeAttribute('id'); }); // (the Diorama's home player too: its buttons have the same ids, and wirePlayer would wire those)
       pop.innerHTML = `<div class="mp-dock"><div class="mp-panel" id="mp-panel" role="dialog" aria-label="Playlists"></div>${playerHtml()}</div>`;
       pop.querySelector('.mplayer').classList.add('joined');
       wirePlayer();
