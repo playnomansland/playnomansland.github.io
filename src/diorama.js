@@ -61,7 +61,7 @@
     const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1, metalness: 0, flatShading: true });
     const vmat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, flatShading: true });
     const mesh = (g, m, cast = true) => { const o = new THREE.Mesh(g, m); o.castShadow = cast; o.receiveShadow = true; return o; };
-    await Promise.all(['700 200px "Chakra Petch"', '700 56px "Bricolage Grotesque"', '400 40px "Courier Prime"', '700 40px "Courier Prime"'].map(f => document.fonts.load(f)));
+    await Promise.all(['700 200px "Chakra Petch"', '700 56px "Bricolage Grotesque"', '500 40px "Bricolage Grotesque"', '700 40px "Bricolage Grotesque"'].map(f => document.fonts.load(f)));
 
     // ── the island: the Standard map, 14 columns by 18 rows (zones of 7 rows, 4 rows of no man's land), one tile = 1 ──
     // col c, row r -> x = c - 6.5, z = r - 8.5 (row 0 is the back of their zone, row 17 the back of yours)
@@ -230,7 +230,12 @@
     const sniper = unit('sniper', '#6E7B5A', YOU, 5.0, 5.6, s, -0.35);
     const golem = unit('golem', '#4FD1C5', YOU, -4.5, 4.5, s * 0.95, 0.6); golem.position.y = golem.userData.y0 = 0.45;
     const ent = unit('ent', '#6F8E4E', YOU, 4.6, 8.3, s * 1.05, 0); ent.rotation.set(-Math.PI / 2 + 0.08, 0, 0.5); ent.position.y = ent.userData.y0 = 0.42; // asleep, face down
-    for (const [x, z] of [[-2.6, -3.6], [-1.9, -4.0], [-3.2, -4.2], [-2.3, -4.6], [-3.0, -3.3]]) unit('goblin', '#7FA35A', FOE, x, z, s * 0.75, Y + (rnd() - 0.5) * 0.6);
+    const goblins = new THREE.Group(); island.add(goblins); // the swarm: pointed at (and lifted) as one
+    for (const [x, z] of [[-2.6, -3.6], [-1.9, -4.0], [-3.2, -4.2], [-2.3, -4.6], [-3.0, -3.3]]) goblins.add(unit('goblin', '#7FA35A', FOE, x, z, s * 0.75, Y + (rnd() - 0.5) * 0.6));
+    goblins.userData.y0 = 0; const gobDot = new THREE.Object3D(); gobDot.position.set(-2.6, 0, -4.0); goblins.add(gobDot);
+    { // one hit area round the whole swarm (owner: not five small ones); never drawn
+      const hb = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.9, 1.9), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false }));
+      hb.position.set(-2.55, 0.45, -3.95); hb.castShadow = hb.receiveShadow = false; goblins.add(hb); }
     const mammoth = unit('mammoth', '#8E7A68', FOE, 3.4, -4.6, s * 0.8, Y - 0.3);
     const skeleton = unit('skeleton', '#E9E3CF', FOE, -5.0, -5.6, s * 0.9, Y + 0.3);
     const pieces = new THREE.Group(); island.add(pieces);
@@ -263,7 +268,7 @@
       const b = tile(1.9, h, 2.6, (g, w, hh) => { g.fillStyle = paper; g.fillRect(0, 0, w, hh); g.strokeStyle = first ? 'rgba(23,20,15,.35)' : 'rgba(23,20,15,.2)'; g.lineWidth = 6; g.setLineDash([18, 14]); g.strokeRect(22, 22, w - 44, hh - 44);
           g.fillStyle = '#17140F'; g.textAlign = 'center'; g.font = '700 220px "Chakra Petch"'; g.fillText(String(n), w / 2, hh * 0.72);
           fitFont(g, P[0], 700, 60, '"Bricolage Grotesque"', 440); if (!PLAYERS[n]) g.globalAlpha = .45; g.fillText(P[0], w / 2, hh * 0.87); g.globalAlpha = 1; },
-        (g, w, hh) => { g.fillStyle = side; g.fillRect(0, 0, w, hh); g.fillStyle = '#17140F'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 40px "Courier Prime"'; g.fillText((PLAYERS[n] ? `${P[1]} SCORE · ${P[2]}` : ''), w / 2, Math.min(hh / 2, 46)); }, side);
+        (g, w, hh) => { g.fillStyle = side; g.fillRect(0, 0, w, hh); g.fillStyle = '#17140F'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 40px "Bricolage Grotesque"'; g.fillText((PLAYERS[n] ? `${P[1]} SCORE · ${P[2]}` : ''), w / 2, Math.min(hh / 2, 46)); }, side);
       b.position.set(x, h / 2, 0.3); podium.add(b);
       const [kind, tint] = pick[n - 1], k = kind === 'mammoth' ? 0.4 : kind === 'golem' ? 0.46 : 0.52;
       if (PLAYERS[n]) { const u = unit(kind, tint, first ? '#F2B23A' : '#E9E3CF', x, -0.6, k, Math.PI + (i - 2) * 0.12, podium); u.position.y = h; }
@@ -310,7 +315,7 @@
         const x = (i - (n - 1) / 2) * gap, g = new THREE.Group(); g.position.set(x, 0, -0.5); roster.add(g);
         const b = tile(gap - 0.14, 0.16, 2.3, (c, w, hh) => { c.fillStyle = '#F4ECD8'; c.fillRect(0, 0, w, hh); c.strokeStyle = 'rgba(23,20,15,.2)'; c.lineWidth = 6; c.setLineDash([18, 14]); c.strokeRect(20, 20, w - 40, hh - 40);
             c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.8);
-            c.font = '400 40px "Courier Prime"'; c.globalAlpha = .75; c.fillText(`${u.cost} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
+            c.font = '500 40px "Bricolage Grotesque"'; c.globalAlpha = .75; c.fillText(`${u.cost} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
         b.position.set(0, 0.08, 0.35); g.add(b);
         const w = wornOf(u.name), kind = w ? SKIN[w.id].model : M.kindOf(u), ht = M.height(kind) || 2, sc = Math.min(0.66, 2.0 / ht), copies = Math.min(u.bodies || 1, 3);
         const spots = copies === 1 ? [[0, 0]] : copies === 2 ? [[-0.28, 0.05], [0.28, -0.05]] : [[-0.32, 0.12], [0.32, 0.12], [0, -0.25]];
@@ -334,7 +339,7 @@
       play:    { az: 0.72, el: 0.62, zoom: 13.4, at: [0, -0.6, 0], off: [0.2, 0] },
       puzzles: { az: 0.95, el: 0.5, zoom: 6.6, at: [-2.4, 0.6, 3.6], off: [0.18, 0] },
       rules:   { az: 0.0, el: 1.45, zoom: 12.8, at: [0, 0, 0], off: [0.2, 0] },
-      units:   { az: 0.36, el: 0.62, zoom: 10.4, at: [0, 0.4, 1.0], off: [0.21, 0.08] },
+      units:   { az: 0.2, el: 0.72, zoom: 7.9, at: [0.3, 0.3, -0.4], off: [0.19, 0.04] }, // close on the roster (owner, 2026-11-08: it couldn't be read)
       ranks:   { az: 0.42, el: 0.6, zoom: 10.2, at: [0, 0.2, 0.2], off: [0.2, 0.02] },
       orders:  { az: 0.0, el: 1.25, zoom: 13.6, at: [0, 0, 0.4], off: [0.24, 0] },
       welcome: { az: 0.98, el: 0.4, zoom: 12.8, at: [0, -0.6, 0], off: [0.19, 0.0] },
@@ -361,7 +366,7 @@
     const anchors = {
       golem: [golem, 1.35, [-190, -170]], golemW: [golem, 1.35, [-200, -80]], sniper: [sniper, 1.0, [170, 120]], mage: [mage, 1.05, [-300, 40]],
       keepYou: [keepYou, 2.3, [-260, -40]], keepFoe: [keepFoe, 2.4, [-200, -120]], vaultYou: [vaultYou, 0.7, [-230, 70]], vaultFoe: [vaultFoe, 0.7, [180, -110]], mammoth: [mammoth, 1.3, [200, -120]],
-      skeleton: [skeleton, 1.1, [80, -110]], ent: [ent, 0.6, [190, 60]],
+      skeleton: [skeleton, 1.1, [80, -110]], ent: [ent, 0.6, [190, 60]], goblins: [gobDot, 0.9, [-200, -90]],
     };
     // the battlefield note's dot: the island's right corner in the menu's view, the middle of its near edge in the plan view
     const bfMenu = new THREE.Object3D(); bfMenu.position.set(7, 0, -9); island.add(bfMenu);
@@ -373,22 +378,34 @@
     const lbBtn = document.getElementById('lb-open'); body.appendChild(lbBtn); lbBtn.classList.add('lb-rank'); // (out of the standings: it hangs under the Rankings note)
     const proj = (o, h) => { const v = new THREE.Vector3(); o.getWorldPosition(v); v.y += h; v.project(cam); return [(v.x + 1) / 2 * cv.clientWidth, (1 - v.y) / 2 * cv.clientHeight]; };
     const dotSvg = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="currentColor"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>`;
-    const TOWERS = ['keepYou', 'keepFoe', 'vaultYou', 'vaultFoe'];
-    const showing = (el) => hovered && TOWERS.includes(hovered) && TOWERS.includes(el.dataset.hover) && !body.classList.contains('welcome') && viewName === 'play' ? true : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
+    // (each tower and treasury shows only its own note: owner, 2026-11-08)
+    const showing = (el, hovered) => body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
     // a label off the point (x, y): a line out to it and under it, kept on screen. Returns the line's svg
+    let placed = []; // the island notes' boxes laid out so far this frame (notes() empties it)
+    let pinFading = false, pinOverFading = false; // the note being laid out is fading; it may sit over fading boxes
     function pin(el, x, y, dx, dy, keep) {
-      const w = el.offsetWidth, k = phone() ? 0.55 : 1;
-      if (keep) {} else if (dx > 0 && x + dx * k + w > innerWidth - 24) dx = -dx; if (dx < 0 && x + dx * k - w < 24) dx = -dx;
-      const lx = x + dx * k, ly = y + dy * k, left = dx < 0;
-      el.style.left = (left ? lx - w : lx) + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
+      const w = el.offsetWidth, h = el.offsetHeight, k = phone() ? 0.55 : 1;
+      let lx, ly, left;
+      if (el._off) { [lx, ly, left] = [x + el._off[0], y + el._off[1], el._off[2]]; } // an island note keeps its spot while it's up (no jumps)
+      else {
+        if (keep) {} else if (dx > 0 && x + dx * k + w > innerWidth - 24) dx = -dx; if (dx < 0 && x + dx * k - w < 24) dx = -dx;
+        lx = x + dx * k; left = dx < 0; const L = left ? lx - w : lx;
+        ly = Math.min(Math.max(y + dy * k, h + 76), innerHeight - 12); // the box stays on screen, under the header
+        for (let n = 0; n < 8; n++) { const hit = placed.find(r => !(pinOverFading && r.f) && L < r.r + 10 && L + w > r.l - 10 && ly - h < r.b + 6 && ly > r.t - 6); if (!hit) break; ly = hit.b + 8 + h; } // and below a box it would cover
+        if (el.hasAttribute('data-hover')) el._off = [lx - x, ly - y, left];
+      }
+      const L = left ? lx - w : lx;
+      placed.push({ l: L, r: L + w, t: ly - h, b: ly, f: pinFading });
+      el.style.left = L + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
       return `<path d="M${x} ${y} L${lx} ${ly} L${left ? lx - w : lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
     }
+    addEventListener('resize', () => body.querySelectorAll('.note').forEach(n => { n._off = null; }));
     function notes() {
-      let html = '';
+      let html = ''; placed = [];
       const playR = document.getElementById('play').getBoundingClientRect(), inProf = body.classList.contains('profile');
       // Profile: where the left column's words end (right and bottom); the island's notes and the Units view keep clear of it
       let colR = 24, colB = 0, nameR = 24, kR = 0, kB = 0;
-      if (inProf) for (const el of body.querySelectorAll('#pf-name, .pf .k, .pf-opts > *, #pf-hist, #pf-back')) {
+      if (inProf) for (const el of body.querySelectorAll('#pf-name, #pf-namenote, .pf .k, .pf-opts > *, #pf-hist, #pf-back')) {
         const rg = document.createRange(), nm = el.id === 'pf-name', kk = el.matches('.pf .k'); rg.selectNodeContents(el);
         for (const r of rg.getClientRects()) if (r.width > 1) { colR = Math.max(colR, r.right + 28); colB = Math.max(colB, r.bottom); if (nm) nameR = Math.max(nameR, r.right + 28); if (kk) { kR = Math.max(kR, r.right + 12); kB = Math.max(kB, r.bottom); } } }
       // an open dropdown: notes it would cover hide while it's open, and the music player steps aside if it's under it
@@ -402,21 +419,34 @@
         return !(r.left < menuR.right + 8 && r.right > menuR.left - 8 && r.top < menuR.bottom + 8 && r.bottom > menuR.top - 8) && !crosses((ln.match(/d="([^"]*)"/) || [])[1] || '', menuR); };
       const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
       let lbOn = false;
-      for (const el of body.querySelectorAll('.note:not(.pnote)')) {
+      const rank = (n) => n.hasAttribute('data-home') ? 2 : n._off ? 1 : 0;
+      for (const el of [...body.querySelectorAll('.note:not(.pnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
-          if (on && !phone() && !body.classList.contains('music-open')) {
+          if (on && !phone() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf')) {
             const r = el.getBoundingClientRect(), ty = r.top - 4; let best = null, bd = 1e9;
             for (const o of bfDots) { const [x, y] = proj(o, 0), d = Math.hypot(x - r.right, y - ty);
-              if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd) { bd = d; best = [x, y]; } }
+              if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd && !(menuR && crosses(`M${x} ${y} L${r.right} ${ty}`, menuR))) { bd = d; best = [x, y]; } } // (never across the menu's words)
             if (best && !under(r)) { const [x, y] = best, right = x > (r.left + r.right) / 2;
               html += `<path d="M${x} ${y} L${right ? r.right : r.left} ${ty} L${right ? r.left : r.right} ${ty}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`; }
           }
           continue;
         }
-        const show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
-        el.style.display = show ? '' : 'none'; if (!show) continue;
+        let show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el, hovered) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
+        // every island note on the menu fades out over a second once it isn't wanted (owner, 2026-11-08: a quick sweep
+        // over the island leaves each note readable for a second); a pointed-at piece's note shows at once, the menu's
+        // own notes (the golem's, the skeleton's) come back in a quarter of a second
+        let op = 1, fading = false;
+        if (el.dataset.anchor !== 'btn') {
+          const home = el.hasAttribute('data-home'), t = performance.now(), dt = Math.min(100, t - (el._t || t)); el._t = t;
+          const menu = !phone() && !inPlay && !inProf && viewName === 'play' && !body.classList.contains('welcome');
+          if (!menu) el._op = show ? 1 : home ? 1 : 0;
+          else if (show && !(home && (el._op ?? 1) < 1 && t - hoverOff < 1000)) el._op = home ? Math.min(1, (el._op ?? 1) + dt / 250) : 1; // the menu's own notes wait a second after the pointer leaves before coming back
+          else { show = false; el._op = Math.max(0, (el._op ?? (home ? 1 : 0)) - dt / 1000); fading = el._op > 0; }
+          op = el._op; show = show || fading;
+        }
+        el.style.display = show ? '' : 'none'; el.style.opacity = op < 1 ? op : ''; el.style.pointerEvents = fading ? 'none' : ''; if (!show) { el._off = null; continue; }
         const w = el.offsetWidth, h = el.offsetHeight;
         if (el.dataset.anchor === 'btn') {
           // a menu word's note: the dot on the word; the label finds open space. Left-hand words run a rail up the left
@@ -437,12 +467,21 @@
         }
         const [o, hh, [dx, dy]] = bf ? (inPlay ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
         let ddy = dy; if (el.dataset.anchor === 'golemW') { const lb = body.querySelector('.logo').getBoundingClientRect().bottom; ddy = Math.max(dy, lb + 16 + el.offsetHeight - y); } // clear of the big logo
-        let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the left, above the golem's note; to the right if the logo is in the way
+        let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the right, in the sky over the far towers; else up and left, above the golem's note
           const gn = body.querySelector('.rw-note:not(.pnote)'), gr = gn && gn.style.display !== 'none' ? gn.getBoundingClientRect() : null, lg = body.querySelector('.logo').getBoundingClientRect();
-          let ly = Math.max(gr ? Math.min(y - 110, gr.top - 14) : y - 110, h + 12); sdx = -120;
-          if (x - 120 - w < lg.right + 24 && ly - h < lg.bottom + 12) { sdx = Math.min(80, innerWidth - 32 - w - x); ly = Math.max(y - 110, lg.bottom + 20 + h); }
+          let ly = Math.max(y - 110, lg.bottom + 20 + h); sdx = Math.min(80, innerWidth - 32 - w - x);
+          if (sdx < 4) { sdx = -120; ly = Math.max(gr ? Math.min(y - 110, gr.top - 14) : y - 110, h + 12); }
           ddy = ly - y; }
-        const ln = pin(el, x, y, sdx, ddy, el.dataset.anchor === 'skeleton'); if (clear(el, x, y) && offMenu(el, ln)) html += ln; else el.style.display = 'none';
+        // a pointed-at piece's note tries other spots before giving up (on a small window the first can land on PLAY)
+        const tries = el.hasAttribute('data-hover') ? [[sdx, ddy], [-sdx, ddy], [sdx, -150], [-sdx, -150], [sdx, 150], [-sdx, 150]] : [[sdx, ddy]];
+        let ln = '';
+        pinFading = fading; if (el._off) { const l = pin(el, x, y, sdx, ddy); if (clear(el, x, y) && offMenu(el, l)) ln = l; else { placed.pop(); el._off = null; } }
+        pinFading = fading;
+        for (const over of fading ? [false] : [false, true]) { // the pointed-at note always shows: over the fading boxes if it must
+          pinOverFading = over; if (ln) break;
+          for (const [tx, ty] of tries) { const l = pin(el, x, y, tx, ty, el.dataset.anchor === 'skeleton'); if (clear(el, x, y) && offMenu(el, l)) { ln = l; break; } placed.pop(); el._off = null; } }
+        pinOverFading = false;
+        if (ln) html += op < 1 ? `<g opacity="${op.toFixed(3)}">${ln}</g>` : ln; else { el.style.display = 'none'; el._off = null; }
       }
       lbBtn.style.display = lbOn ? '' : 'none';
       // Profile: the golem's note, while you can still earn its skin
@@ -467,10 +506,11 @@
         // over the music player only when there is no other room; then the player steps aside while the sheet is open
         const under = sx + w > mu.left - 14 && tb + h > mu.top - 14, floor = sx + w > mu.left - 14 && !under ? mu.top - 14 : innerHeight - 24, sy = Math.max(tb, Math.min(y + 90, floor - h));
         body.classList.toggle('sheet-over-music', under);
+        { const br = body.querySelector('.bf-note').getBoundingClientRect(); body.classList.toggle('sheet-over-bf', sx < br.right && sx + w > br.left && sy + h > br.top - 8); } // Change battlefield steps aside too
         sh.style.left = sx + 'px'; sh.style.top = sy + 'px';
         const ex = Math.min(Math.max(x, sx + 30), sx + w - 30), ey = sy;
         html += `<path d="M${x} ${y} L${ex} ${ey}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
-      } else { sh.hidden = true; body.classList.remove('sheet-over-music'); }
+      } else { sh.hidden = true; body.classList.remove('sheet-over-music', 'sheet-over-bf'); }
       // a unit pointed at in the roster
       const hn = document.getElementById('unote');
       if (hovered && hovered.startsWith('u:') && body.classList.contains('units') && (!picked || picked.userData.i !== +hovered.slice(2))) {
@@ -485,29 +525,35 @@
     }
 
     // ── pointing: pieces on the menu, units in the roster ──
-    const HOT = { keepYou, keepFoe, vaultYou, vaultFoe, mammoth, mage, sniper, ent };
+    const HOT = { keepYou, keepFoe, vaultYou, vaultFoe, mammoth, mage, sniper, ent, goblins };
+    // the unit models on the island: a click on one (not on its note) opens Units, as the menu's word does
+    const UNIT_MODELS = [mage, sniper, ent, golem, champ, mammoth, goblins, skeleton];
     const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
     const hitOf = (e, groups) => { ptr.set(e.clientX / cv.clientWidth * 2 - 1, -(e.clientY / cv.clientHeight) * 2 + 1); ray.setFromCamera(ptr, cam);
       const hit = ray.intersectObjects(groups, true)[0]; if (!hit) return -1; return groups.findIndex(g => { let o = hit.object; while (o && o !== g) o = o.parent; return !!o; }); };
     addEventListener('pointermove', (e) => {
       if (!dio.shown) return;
       if (pinnedHover) return;
-      let key = null;
+      if (e.target.closest && e.target.closest('#dio .note[data-hover]')) return; // over the pointed-at piece's note: keep it
+      let key = null, unitHot = false;
       if (e.target === cv && !body.classList.contains('play')) {
         if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
-        else if (viewName === 'play' && !body.classList.contains('profile')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; }
+        else if (viewName === 'play' && !body.classList.contains('profile')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; else if (!body.classList.contains('welcome') && hitOf(e, UNIT_MODELS) >= 0) unitHot = true; }
       }
-      setHover(key); cv.classList.toggle('world-hot', !!key);
+      setHover(key); cv.classList.toggle('world-hot', !!key || unitHot);
     });
-    // a piece's note shows at once (owner, 2026-11-08, second round); leaving to empty ground waits a moment, so a sweep
-    // across the gaps between pieces doesn't flash the menu's notes. Moving between the towers keeps their notes up
-    let hoverNow = null, hoverT = 0;
+    // what's pointed at shows its note at once (owner, 2026-11-08: no delay); notes no longer wanted fade out over a
+    // second (in notes()), so a sweep over the island doesn't flicker
+    let hoverNow = null, hoverOff = -1e9; // hoverOff: when the pointer last left a piece
     function setHover(key) {
-      if (key === hoverNow) return; hoverNow = key; clearTimeout(hoverT);
-      const tw = (k) => k && TOWERS.includes(k);
-      if (!key || !key.startsWith('u:')) { if (tw(key) && tw(hovered)) { hovered = key; return; } if (key) hovered = key; else hoverT = setTimeout(() => { hovered = hoverNow; }, 250); }
-      else hovered = key;
+      if (key === hoverNow) return; if (!key && hoverNow) hoverOff = performance.now(); hoverNow = hovered = key;
+      if (!key || !key.startsWith('u:')) notes();
     }
+    body.addEventListener('click', (e) => { // the main menu: a unit model opens Units (its note doesn't: notes are their own elements)
+      if (e.target !== cv || viewName !== 'play' || ['play', 'profile', 'welcome', 'units', 'ranks', 'pinned'].some(c => body.classList.contains(c))) return;
+      if (hitOf(e, UNIT_MODELS) < 0) return;
+      items.forEach(x => x.classList.toggle('on', x.dataset.cam === 'units')); viewName = 'units'; want = VIEWS.units; setMode('units'); body.classList.add('pinned'); setHover(null); cv.classList.remove('world-hot');
+    });
     body.addEventListener('click', (e) => { if (e.target !== cv || !body.classList.contains('units')) return; const i = hitOf(e, rosterHot); pickUnit(i >= 0 ? rosterHot[i] : null); });
     function pickUnit(g) {
       picked = g; const sh = document.getElementById('usheet');
@@ -800,7 +846,14 @@
     function drawProfile() {
       acctBtn.querySelector('span').textContent = A ? A.tag : 'Guest';
       $('pf-k').innerHTML = (!A ? 'Profile · no account yet' : A.google ? 'Profile · signed in with Google' : 'Profile · guest on this phone') + (A && A.dev ? ' · <span class="dev">developer mode is on</span>' : '');
-      $('pf-name').textContent = A ? A.tag : 'Nobody yet';
+      // the big name is where you rename (owner, 2026-11-08): an input dressed as the name while a change is allowed
+      const wait = A && !A.dev && A.tagNext > Date.now(), nm = $('pf-name');
+      if (!(document.activeElement && document.activeElement.id === 'pf-tag')) { // (typing stays typed)
+        if (A && !wait) { nm.innerHTML = `<input id="pf-tag" class="pf-name-in" maxlength="16" spellcheck="false" autocomplete="nickname" aria-label="Your username: click it to change it" title="Click to change your name" value="${esc(A.tag)}" ${pf.busy ? 'disabled' : ''}><span class="pf-sizer" aria-hidden="true"></span>`; fitName(); }
+        else nm.textContent = A ? A.tag : 'Nobody yet';
+      }
+      $('pf-namenote').innerHTML = !A ? '' : `<span>${A.dev ? 'Developer: click your name to change it, any time.' : wait ? `You can change your name again on ${esc(tagWhen(A.tagNext))}.` : 'Click your name to change it (once a week).'}</span><button class="pf-save" id="pf-save" hidden>Save</button>`;
+      nameSave();
       const T = A && DTITLES[A.title], pt = $('pf-title'); pt.hidden = !T;
       if (T) { pt.style.setProperty('--tc', T[1]); pt.innerHTML = `<i></i>${esc(T[0])}<i></i>`; }
       const g = GOOGLE_CLIENT_ID && !acctUi.off ? '<div id="acct-google" class="acct-google"></div>' : '';
@@ -814,18 +867,13 @@
         { const skins = A.skins || [], on = skins.filter(k => k.worn && SKIN[k.id]).map(k => `${SKIN[k.id].name} ${SKIN[k.id].unit}`), un = body.classList.contains('units');
           h += `<span class="lab ur">Skins</span><span class="pf-units ur"><button class="item${un ? ' on' : ''}" data-units aria-pressed="${un}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,6 97,0 100,96 4,100"/></svg>Units</button></span>
             <span class="ur"></span><p class="nr-note ur"></p>`; }
-        const wait = !A.dev && A.tagNext > Date.now(); // the server's next allowed change (once a week; developers any time)
-        h += row('Username', `<input id="pf-tag" maxlength="16" spellcheck="false" autocomplete="nickname" aria-label="Your username" value="${esc(A.tag)}" ${wait || pf.busy ? 'disabled' : ''}><button class="act" id="pf-save" hidden>Save</button>`,
-          A.dev ? 'Developer: change it any time.' : wait ? `You can change it again on ${esc(tagWhen(A.tagNext))}.` : 'You can change it once a week.', 'pf-user');
         if (!A.google && g) h += row('Keep it', g, 'Guest on this phone. Sign in with Google to keep it if you change or reset your phone. Sign-in is handled by Google.');
         h += row('Account', `<button class="act${pf.outSure ? ' sure' : ''}" id="acct-out" data-out ${dis}>${pf.outSure ? 'Tap again to log out' : 'Log out'}</button><button class="del${pf.sure ? ' sure' : ''}" id="acct-del" data-del ${dis}>${pf.sure ? 'Tap again to delete' : 'Delete account'}</button>`,
           pf.sure ? 'Deleting removes your username and sign-in for good. Past match results stay, without your name.'
           : A.google ? 'Signed in with Google. Sign in on another phone to play as the same player.'
           : pf.outSure ? 'A guest can’t log back in: sign up with Google first to keep this username and your results.' : 'Log out of this phone. A guest can’t log back in.');
       } else h += row('Account', `<button class="act primary" id="acct-guest" data-guest ${dis}>Play as a guest</button>${g}`, `No account needed to play. Make a guest to get a username on this phone${g ? ', or sign in with Google to keep it on any phone' : ''}.`);
-      const inp = document.activeElement && document.activeElement.id === 'pf-tag' ? $('pf-tag').value : null; // typing stays typed
       $('pf-opts').innerHTML = body.classList.contains('profile') ? h : ''; $('pf-msg').textContent = pf.msg; // (only while it's open: no stray #acct-google)
-      if (inp != null && $('pf-tag')) { $('pf-tag').value = inp; $('pf-tag').focus(); $('pf-save').hidden = inp.trim() === A.tag || inp.trim().length < 2; }
       if (g && $('acct-google') && body.classList.contains('profile')) { // Google's own button; afterwards the profile shows the account
         acctUi.after = async () => { pfMsg('Signed in with Google.'); if (phase === 'start') drawHome(); };
         acctGoogleButton('signin_with');
@@ -853,7 +901,6 @@
       const b = e.target.closest('button'); if (!b || b.disabled) return;
       if (b.dataset.title !== undefined) pfDo(async () => { const r = await acctCall('title', { title: b.dataset.title }, true); if (r.status !== 200) return acctFail(r); acctTake(r); return 'Title saved.'; });
       else if (b.hasAttribute('data-units')) profileUnits(!body.classList.contains('units'));
-      else if (b.id === 'pf-save') pfSave();
       else if (b.hasAttribute('data-out')) { // a guest taps twice (with the warning); then the welcome screen, as the old Log out
         if (!A.google && !pf.outSure) { pf.outSure = true; return drawProfile(); }
         pf.outSure = false; closeProfile(); acctLogOut();
@@ -861,8 +908,14 @@
       else if (b.hasAttribute('data-del')) { if (!pf.sure) { pf.sure = true; return drawProfile(); } pf.sure = false; pfDo(async () => { await acctDelete(); return acctUi.msg; }); }
       else if (b.hasAttribute('data-guest')) pfDo(async () => { const r = await acctCall('guest', {}); if (r.status !== 200) return acctFail(r); acctTake(r); welcomed(); return 'You’re playing as a guest on this phone.'; });
     });
-    $('pf-opts').addEventListener('input', (e) => { if (e.target.id === 'pf-tag') $('pf-save').hidden = e.target.value.trim() === A.tag || e.target.value.trim().length < 2; });
-    $('pf-opts').addEventListener('keydown', (e) => { if (e.target.id === 'pf-tag' && e.key === 'Enter' && !$('pf-save').hidden) pfSave(); if (e.key === 'Escape') e.stopPropagation(); });
+    // the name's input: as wide as what's typed; Save shows once it's a different name; Enter saves, Esc puts it back
+    function fitName() { const i = $('pf-tag'), z = $('pf-name').querySelector('.pf-sizer'); if (!i || !z) return; z.textContent = i.value || ' '; i.style.width = (z.offsetWidth + 8) + 'px'; }
+    function nameSave() { const i = $('pf-tag'), b = $('pf-save'); if (b) b.hidden = !i || !A || i.value.trim() === A.tag || i.value.trim().length < 2; }
+    $('pf-name').addEventListener('input', (e) => { if (e.target.id === 'pf-tag') { fitName(); nameSave(); } });
+    $('pf-name').addEventListener('keydown', (e) => { if (e.target.id !== 'pf-tag') return;
+      if (e.key === 'Enter' && !$('pf-save').hidden) pfSave();
+      if (e.key === 'Escape') { e.stopPropagation(); e.target.value = A.tag; fitName(); nameSave(); e.target.blur(); } });
+    $('pf-namenote').addEventListener('click', (e) => { if (e.target.closest('#pf-save')) pfSave(); });
 
     // Profile opens over the menu; the account is refreshed from the server (the session rotates daily, titles and skins may be new)
     // where Profile was opened from, for its Back: the Play screen, Rooms (and New room), or the menu
@@ -1167,7 +1220,12 @@
         if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }
       drawSettings();
     });
-    document.addEventListener('fullscreenchange', () => { if (dd.open === 'settings') drawSettings(); }); // (Esc leaves full screen too)
+    // the full-screen icon next to Settings (owner, 2026-11-08)
+    const fsBtn = $('dio-fs'); fsBtn.hidden = !document.fullscreenEnabled;
+    const fsDraw = () => { const on = !!document.fullscreenElement; fsBtn.setAttribute('aria-pressed', String(on)); fsBtn.setAttribute('aria-label', on ? 'Leave full screen' : 'Full screen'); fsBtn.title = on ? 'Leave full screen' : 'Full screen'; };
+    fsBtn.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch (er) {} });
+    fsDraw();
+    document.addEventListener('fullscreenchange', () => { fsDraw(); if (dd.open === 'settings') drawSettings(); }); // (Esc leaves full screen too)
     $('dd-settings').addEventListener('input', (e) => {
       const k = e.target.dataset.vol; if (!k) return;
       const v = +e.target.value; e.target.style.setProperty('--v', v + '%'); e.target.nextElementSibling.textContent = v;
@@ -1345,5 +1403,5 @@
     dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
     dioPaint();
     if (dio.shown) resume();
-    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, proj(g, 0.5)])); } // the tests: the roster standing; show / hide the home by hand
+    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); } // the tests: the roster standing; show / hide the home by hand
   }

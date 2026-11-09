@@ -934,7 +934,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   if (!on) return;
   document.documentElement.classList.add('diorama');
   const l = document.createElement('link'); l.rel = 'stylesheet';
-  l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Courier+Prime:wght@400;700&display=swap';
+  l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap';
   document.head.appendChild(l);
 })();
 </script>
@@ -987,6 +987,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="currentColor"/><path d="M2 20c0-3.9 3.1-6 7-6s7 2.1 7 6" fill="currentColor"/><circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".7"/><path d="M17 13.5c2.9.2 5 1.9 5 5.5h-4.4c0-2-.6-3.7-1.8-5" fill="currentColor" opacity=".7"/></svg><span>Friends</span><b class="badge" id="fr-badge" hidden></b></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>Guest</span></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg><span>Settings</span></button>
+    <button class="fs-ico" id="dio-fs" aria-label="Full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9V4.5a1 1 0 0 1 1-1H9M15 3.5h4.5a1 1 0 0 1 1 1V9M20.5 15v4.5a1 1 0 0 1-1 1H15M9 20.5H4.5a1 1 0 0 1-1-1V15"/></svg></button>
   </nav>
   <section class="stay" id="dio-stay" hidden role="dialog" aria-labelledby="stay-h"></section>
   <button class="back">← Menu</button>
@@ -1008,10 +1009,11 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <!-- notes. data-home: shown on the menu; data-hover: shown while that thing is pointed at; data-btn: shown while that menu word is -->
   <div class="note rw-note" data-anchor="golem" data-home role="button" tabindex="0" aria-label="Rewards: invite a friend"><span class="tag">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></div>
-  <div class="note" data-anchor="skeleton" data-home>Hover stuff on the island to learn more!</div>
+  <div class="note" data-anchor="skeleton" data-home>Hover over stuff on the island with your mouse!</div>
   <div class="note" data-anchor="sniper" data-hover="sniper">Sniper.<small>Unit · Long range · Good against single targets</small></div>
   <div class="note" data-anchor="mage" data-hover="mage">Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
   <div class="note" data-anchor="ent" data-hover="ent">Sleeping Ent.<small>Sshhhh!</small></div>
+  <div class="note" data-anchor="goblins" data-hover="goblins">Goblin Swarm.<small>Unit · Twelve goblins in one squad · Strength in numbers</small></div>
 
   <div class="note" data-anchor="keepYou" data-hover="keepYou">Your keep.<small>Tower · If it falls, you lose</small></div>
   <div class="note" data-anchor="keepFoe" data-hover="keepFoe">Their keep.<small>Tower · Bring it down to hurt the opponent and weaken their army</small></div>
@@ -1023,7 +1025,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <div class="note btn-note" data-anchor="btn" data-side="right" data-btn="rules">How to play.<small>The rules, explained simply</small></div>
   <div class="note btn-note" data-anchor="btn" data-side="left" data-btn="units">Units.<small>Every unit · What it does and what it beats</small></div>
   <div class="note btn-note" data-anchor="btn" data-side="right" data-btn="ranks">Rankings.<small>The leaderboard · Ranked matches only</small></div>
-  <div class="note bf-note" data-anchor="bf" role="button" tabindex="0">Change battlefield.<small id="bf-sub"></small></div>
+  <div class="note bf-note" data-anchor="bf" role="button" tabindex="0" aria-label="Change battlefield"><span class="bf-sub" id="bf-sub"></span><span class="bf-btn">Change battlefield</span></div>
   <div id="unote" style="display:none"></div>
   <nav class="tiers" aria-label="Unit tiers"><span class="k">Units by tier</span><button data-t="1" aria-pressed="true">Tier 1</button><button data-t="2" aria-pressed="false">Tier 2</button><button data-t="3" aria-pressed="false">Tier 3</button><button data-t="4" aria-pressed="false">Tier 4</button></nav>
   <section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><div class="skn" hidden></div><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
@@ -1149,6 +1151,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <section class="pf" aria-label="Profile">
     <span class="k" id="pf-k"></span>
     <div class="plate"><h2 id="pf-name"></h2><span class="ptitle" id="pf-title" hidden></span></div>
+    <p class="pf-namenote" id="pf-namenote"></p>
       <div class="nr-opts pf-opts" id="pf-opts"></div>
       <p class="r-msg" id="pf-msg" aria-live="polite"></p>
     <button class="create" id="pf-hist">Match history <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>

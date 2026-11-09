@@ -148,7 +148,7 @@ canvas { display: block; width: 100%; height: 100%; }
   --you: #6FB3E0; --foe: #E5674B;
   --stencil: "Big Shoulders Stencil", "Arial Narrow", Impact, sans-serif;
   --sans: "Bricolage Grotesque", system-ui, sans-serif;
-  --type: "Courier Prime", "Courier New", monospace;
+  --type: "Bricolage Grotesque", system-ui, sans-serif; /* the small text (owner, 2026-11-08) */
   color-scheme: dark;
 }
 /* the game's own classes that the Diorama reuses (.seg, .hint, .tiers, .ptitle, .fr-list, .fr-inv) carry the old
@@ -187,7 +187,7 @@ canvas { display: block; width: 100%; height: 100%; }
 /* ── the menu: words, not boxes ── */
 #dio .menu { position: fixed; left: 48px; bottom: 96px; display: grid; justify-items: start; }
 #dio .item { position: relative; display: flex; align-items: baseline; gap: 14px; font: var(--st-wght, 900) calc(52px * var(--k, 1))/0.92 var(--stencil); font-variation-settings: var(--st-var, normal); font-style: var(--st-style, normal); text-transform: uppercase; letter-spacing: var(--st-ls, 0.01em); padding: 4px 14px 4px 0; isolation: isolate; transition: transform .14s ease, color .14s ease; }
-#dio .item .n { font: 700 13px var(--type); letter-spacing: 0; opacity: .7; transform: translateY(-4px); }
+#dio .item .n { font: 700 13px var(--type); letter-spacing: 0; opacity: .85; transform: translateY(-4px); }
 #dio .item .shard { position: absolute; z-index: -1; left: -14px; top: -6px; width: calc(100% + 24px); height: calc(100% + 14px); fill: var(--saffron); opacity: 0; transform: scale(.85) rotate(-3deg); transition: opacity .12s ease, transform .18s cubic-bezier(.3,1.6,.5,1); }
 #dio .item:hover, #dio .item:focus-visible, #dio .item.on { color: var(--ink); outline: none; }
 #dio .item:hover .shard, #dio .item:focus-visible .shard, #dio .item.on .shard { opacity: 1; transform: none; }
@@ -199,15 +199,15 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .menu .sub { display: grid; grid-template-columns: auto auto; gap: 2px 28px; }
 
 /* ── annotations: a dot on the thing, a line, a typed label. The UI's way of saying anything ── */
-#dio .note { position: fixed; transform: translate(0, -100%); padding-bottom: 8px; pointer-events: auto; max-width: 250px; font: 400 15px/1.3 var(--type); color: var(--cream); text-shadow: 0 0 3px var(--field), 0 0 6px var(--field), 0 0 10px var(--field), 0 0 14px var(--field); cursor: pointer; }
+#dio .note { position: fixed; transform: translate(0, -100%); padding-bottom: 8px; pointer-events: auto; max-width: 250px; font: 700 15px/1.3 var(--type); color: var(--cream); text-shadow: 0 0 3px var(--field), 0 0 6px var(--field), 0 0 10px var(--field), 0 0 14px var(--field); cursor: pointer; }
 #dio .note b { font-weight: 700; }
 #dio .note .tag { display: inline-block; margin-bottom: 6px; padding: 3px 7px 2px; font: 700 11px var(--type); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: var(--saffron); clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
-#dio .note small { display: block; margin-top: 4px; font-size: 13px; opacity: .75; }
+#dio .note small { display: block; margin-top: 4px; font-size: 13px; opacity: .88; }
 #dio .note:hover { color: #fff; }
 #dio .zz { position: fixed; font: 700 22px var(--type); color: var(--cream); pointer-events: none; transform: translate(-50%, -50%); }
 
 /* ── bottom: the soundtrack credit, set like a film's ── */
-#dio .music { position: fixed; right: 48px; bottom: 40px; display: grid; justify-items: end; gap: 6px; font: 400 14px var(--type); text-align: right; }
+#dio .music { position: fixed; right: 48px; bottom: 40px; display: grid; justify-items: end; gap: 6px; font: 700 14px var(--type); text-align: right; }
 #dio .music .t { font: 700 17px var(--sans); }
 #dio .music .t em { font-style: normal; opacity: .7; font-weight: 500; }
 #dio .music .ctl { display: flex; gap: 16px; align-items: center; }
@@ -216,7 +216,7 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .music .ctl svg { width: 15px; height: 15px; }
 #dio .music .line { width: 220px; height: 2px; background: color-mix(in srgb, var(--cream) 25%, transparent); position: relative; }
 #dio .music .line i { position: absolute; inset: 0 auto 0 0; width: 36%; background: var(--cream); }
-#dio .build { position: fixed; left: 48px; bottom: 40px; font: 400 13px var(--type); opacity: .6; }
+#dio .build { position: fixed; left: 48px; bottom: 40px; font: 700 13px var(--type); opacity: .8; }
 
 /* ── Play: the screen turns saffron, the camera goes up to the plan view, the menu becomes the orders ── */
 /* two choices, one click each. The block's top stays put so Multiplayer's list folds out downward */
@@ -226,7 +226,7 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .orders .who .item { font-size: calc(76px * var(--k, 1)); }
 #dio .orders .item .shard { fill: var(--ink); }
 #dio .orders .item:hover, #dio .orders .item:focus-visible, #dio .orders .item.on { color: #F2B23A; }
-#dio .orders .item small { font: 400 15px var(--type); text-transform: none; letter-spacing: 0; opacity: .8; }
+#dio .orders .item small { font: 700 15px var(--type); text-transform: none; letter-spacing: 0; opacity: .9; }
 #dio .orders .car { width: .42em; height: .42em; align-self: center; margin-left: -4px; transition: transform .2s ease; }
 #dio.mp-open #multi .car { transform: rotate(180deg); }
 #dio.mp-open #multi { color: #F2B23A; } #dio.mp-open #multi .shard { opacity: 1; transform: none; }
@@ -247,9 +247,9 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .devs { position: fixed; left: 48px; top: 128px; display: none; max-width: min(720px, 56vw); align-content: start; }
 #dio.play.dev .devs { display: grid; } #dio.in-rooms .devs { display: none; }
 #dio .dvt, #dio .devs .dk b { display: inline-block; padding: 3px 8px 2px; font: 700 11px var(--type); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: #FF5FC4; clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
-#dio .devs .dk { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font: 400 13px var(--type); opacity: .85; }
+#dio .devs .dk { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font: 700 13px var(--type); opacity: .92; }
 #dio .devs .dv { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 4px 12px; align-items: baseline; }
-#dio .devs .lab { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+#dio .devs .lab { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .88; }
 #dio .devs .seg { display: flex; flex-wrap: wrap; margin-left: -9px; }
 #dio .devs .seg button { position: relative; isolation: isolate; padding: 4px 9px 1px; font: 700 20px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .62; white-space: nowrap; }
 /* an action word (starts something) gets the ink shard on hover, as Play's choices do; Exploit bot is a pick:
@@ -258,19 +258,19 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .devs .seg [data-dv]:hover, #dio .devs .seg [data-dv]:focus-visible, #dio .devs .seg [data-dv].on, #dio .devs .seg [aria-pressed="true"] { opacity: 1; color: #F2B23A; }
 #dio .devs .seg [data-dv]:hover::before, #dio .devs .seg [data-dv]:focus-visible::before, #dio .devs .seg [data-dv].on::before, #dio .devs .seg [aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 #dio .devs .seg button[disabled] { opacity: .3; cursor: not-allowed; color: var(--ink); } #dio .devs .seg button[disabled]::before { display: none; }
-#dio .devs .dn { margin: 8px 0 0 130px; max-width: 480px; min-height: 2.8em; font: 400 14px/1.4 var(--type); opacity: .85; }
+#dio .devs .dn { margin: 8px 0 0 130px; max-width: 480px; min-height: 2.8em; font: 700 14px/1.4 var(--type); opacity: .92; }
 #dio .devs .dn b { font-weight: 700; }
 #dio .orders .mp .item .dvt { margin-right: 8px; vertical-align: 2px; }
 
 /* Rooms: the list sits on the field where the choices were; the island stays on the right */
 #dio .rooms { position: fixed; left: 48px; top: 128px; bottom: 96px; width: min(620px, 46vw); display: none; grid-template-rows: auto auto auto auto minmax(0, 1fr); align-content: start; }
 #dio.in-rooms .rooms { display: grid; } #dio.in-rooms .orders { display: none; }
-#dio .rooms .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+#dio .rooms .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
 #dio .rooms h2 { margin: 0 0 14px; font: 700 76px/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
-#dio .rooms h2 small { font: 400 15px var(--type); text-transform: none; letter-spacing: 0; opacity: .75; margin-left: 10px; }
+#dio .rooms h2 small { font: 700 15px var(--type); text-transform: none; letter-spacing: 0; opacity: .88; margin-left: 10px; }
 #dio .rsearch { position: relative; display: flex; align-items: center; gap: 10px; padding: 0 0 8px; border-bottom: 2px solid var(--ink); margin-bottom: 22px; }
 #dio .rsearch .mag { width: 20px; height: 20px; flex: none; }
-#dio .rsearch input { flex: 1; min-width: 0; font: 400 17px var(--type); color: var(--ink); background: none; border: 0; outline: 0; padding: 4px 0; }
+#dio .rsearch input { flex: 1; min-width: 0; font: 700 17px var(--type); color: var(--ink); background: none; border: 0; outline: 0; padding: 4px 0; }
 #dio .rsearch input::placeholder { color: var(--ink); opacity: .5; }
 #dio .tok { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 4px; font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; color: #F2B23A; background: var(--ink); clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
 #dio .tok svg { width: 11px; height: 11px; transition: transform .2s ease; } #dio .tok[aria-expanded="true"] svg { transform: rotate(180deg); }
@@ -288,30 +288,30 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .rlist li:last-child { border-bottom: 0; }
 #dio .rlist b { font: 700 20px/1.15 var(--sans); }
 #dio .rlist .sc { font: 700 13px var(--type); margin-left: 8px; }
-#dio .rlist .tg { display: inline-block; margin-left: 8px; padding: 1px 6px 0; font: 700 10px var(--type); letter-spacing: .08em; text-transform: uppercase; border: 1px solid currentColor; vertical-align: 3px; opacity: .75; }
-#dio .rlist small { display: block; margin-top: 3px; font: 400 13px var(--type); opacity: .72; }
+#dio .rlist .tg { display: inline-block; margin-left: 8px; padding: 1px 6px 0; font: 700 10px var(--type); letter-spacing: .08em; text-transform: uppercase; border: 1px solid currentColor; vertical-align: 3px; opacity: .88; }
+#dio .rlist small { display: block; margin-top: 3px; font: 700 13px var(--type); opacity: .86; }
 #dio .rlist .go { position: relative; isolation: isolate; padding: 6px 14px 3px; font: 700 26px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
 #dio .rlist .go::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); opacity: 0; transition: opacity .12s ease; }
 #dio .rlist .go:hover, #dio .rlist li.on .go { color: #F2B23A; } #dio .rlist .go:hover::before, #dio .rlist li.on .go::before { opacity: 1; }
 #dio .rlist .go.watch { opacity: .7; } #dio .rlist .go.watch:hover { opacity: 1; }
-#dio .rlist .full { font: 400 13px var(--type); opacity: .55; padding-right: 14px; }
-#dio .rlist .empty { display: block; padding: 18px 0; font: 400 15px var(--type); opacity: .8; border: 0; }
+#dio .rlist .full { font: 700 13px var(--type); opacity: .75; padding-right: 14px; }
+#dio .rlist .empty { display: block; padding: 18px 0; font: 700 15px var(--type); opacity: .9; border: 0; }
 /* Create room: settings as rows of words; the picked word has the ink shard */
 #dio .newroom { position: fixed; left: 48px; top: 128px; width: min(740px, 54vw); display: none; align-content: start; }
 #dio.in-create .newroom { display: grid; } #dio.in-create .rooms { display: none; }
-#dio .newroom .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+#dio .newroom .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
 #dio .newroom h2 { margin: 0 0 26px; font: 700 76px/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
 #dio .nr-opts { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 4px 14px; align-items: baseline; margin-bottom: 30px; }
-#dio .nr-opts .lab { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+#dio .nr-opts .lab { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .88; }
 #dio .nr-opts .seg { display: flex; flex-wrap: wrap; gap: 4px; }
 #dio .nr-opts .seg button { position: relative; isolation: isolate; padding: 6px 14px 3px; font: 700 30px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .55; }
 #dio .nr-opts .seg button:hover { opacity: 1; }
 #dio .nr-opts .seg button[aria-pressed="true"] { opacity: 1; color: #F2B23A; }
 #dio .nr-opts .seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 #dio .nr-opts .seg button[disabled] { opacity: .35; cursor: not-allowed; }
-#dio .nr-opts .seg small { font: 400 13px var(--type); text-transform: none; letter-spacing: 0; margin-left: 4px; }
+#dio .nr-opts .seg small { font: 700 13px var(--type); text-transform: none; letter-spacing: 0; margin-left: 4px; }
 #dio .nr-opts .lock { width: 11px; height: 11px; margin-right: 4px; vertical-align: -1px; }
-#dio .nr-note { margin: 0 0 18px 14px; font: 400 14px/1.4 var(--type); opacity: .8; max-width: 440px; }
+#dio .nr-note { margin: 0 0 18px 14px; font: 700 14px/1.4 var(--type); opacity: .9; max-width: 440px; }
 #dio .create.go { margin-bottom: 0; }
 #dio .nr-opts .bf-step { align-items: baseline; gap: 2px; }
 #dio .nr-opts .bf-step b { position: relative; isolation: isolate; min-width: 8.6em; padding: 6px 14px 3px; text-align: center; font: 700 30px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: #F2B23A; }
@@ -354,7 +354,7 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .music { text-shadow: 0 0 3px var(--field), 0 0 8px var(--field), 0 0 14px var(--field); z-index: 3; }
 #dio .music .t { cursor: pointer; }
 #dio .music .ctl .open { display: inline-flex; width: auto; height: 30px; margin-left: 10px; white-space: nowrap; }
-#dio .music .open { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; align-items: center; gap: 6px; opacity: .85; }
+#dio .music .open { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; align-items: center; gap: 6px; opacity: .92; }
 #dio .music .open:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
 #dio .music .open svg { width: 12px; height: 12px; transition: transform .2s ease; }
 #dio.music-open .music .open svg { transform: rotate(180deg); }
@@ -372,7 +372,7 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .pl-list { list-style: none; margin: 0; padding: 0; display: grid; justify-items: end; gap: 1px; }
 #dio .pl-row { display: grid; grid-template-columns: auto auto auto 22px; gap: 14px; align-items: baseline; padding: 3px 0; font: 500 16px var(--sans); opacity: .58; text-align: right; }
 #dio .pl-row b { font-weight: 700; } #dio .pl-row em { font-style: normal; font-weight: 500; opacity: .75; }
-#dio .pl-row .d, #dio .pl-row .n { font: 400 13px var(--type); } #dio .pl-row .n { opacity: .7; }
+#dio .pl-row .d, #dio .pl-row .n { font: 700 13px var(--type); } #dio .pl-row .n { opacity: .85; }
 #dio .pl-row .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; width: 14px; color: var(--saffron); visibility: hidden; }
 #dio .pl-row .eq i { width: 3px; background: currentColor; animation: eq .9s ease-in-out infinite alternate; }
 #dio .pl-row .eq i:nth-child(2) { animation-delay: -.3s; } #dio .pl-row .eq i:nth-child(3) { animation-delay: -.6s; }
@@ -396,42 +396,42 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio.ranks .zz { opacity: 0; }
 #dio .standings { position: fixed; left: 48px; top: 150px; width: min(440px, 36vw); display: grid; gap: 6px; opacity: 0; transform: translateY(16px); pointer-events: none; transition: opacity .3s ease, transform .35s cubic-bezier(.16,.9,.24,1); }
 #dio.ranks .standings { opacity: 1; transform: none; pointer-events: auto; }
-#dio .standings .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+#dio .standings .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
 #dio .standings h2 { margin: 0 0 10px; font: 700 76px/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
 #dio .standings ol { list-style: none; margin: 0; padding: 0; display: grid; }
 #dio .standings li { position: relative; isolation: isolate; display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 12px 16px 12px 8px; border-bottom: 1px dashed rgba(244,236,216,.2); }
 #dio .standings li:last-child { border-bottom: 0; }
 #dio .standings .r { font: 700 38px/1 var(--stencil); opacity: .85; }
 #dio .standings b { display: block; font: 700 21px/1.15 var(--sans); }
-#dio .standings small { display: block; font: 400 13px var(--type); opacity: .7; margin-top: 3px; }
+#dio .standings small { display: block; font: 700 13px var(--type); opacity: .85; margin-top: 3px; }
 #dio .standings .s { font: 700 34px/1 var(--stencil); }
 #dio .standings .s small { display: inline; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; margin-left: 4px; }
 #dio .standings li.first { color: var(--ink); border-bottom-color: transparent; }
 #dio .standings li.first::before { content: ""; position: absolute; inset: -2px -6px; z-index: -1; background: var(--saffron); clip-path: polygon(0 8%, 62% 0, 100% 6%, 98% 92%, 34% 100%, 1% 90%); }
 #dio .standings li.first .r { opacity: 1; }
-#dio .standings .leg { margin: 4px 0 0; font: 400 13px var(--type); opacity: .7; }
+#dio .standings .leg { margin: 4px 0 0; font: 700 13px var(--type); opacity: .85; }
 #dio.pinned .back { display: block; } #dio.pinned .acct { display: none; }
 #dio.units .zz { opacity: 0; }
 
 /* ── Units: tier tabs above the island; a unit's sheet hangs off the unit ── */
 #dio .tiers { position: fixed; transform: translateX(-50%); display: flex; gap: 6px; align-items: baseline; opacity: 0; pointer-events: none; transition: opacity .25s ease; white-space: nowrap; text-shadow: 0 0 3px var(--field), 0 0 8px var(--field); }
 #dio.units .tiers { opacity: 1; pointer-events: auto; }
-#dio .tiers .k { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; margin-right: 12px; }
+#dio .tiers .k { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .88; margin-right: 12px; }
 #dio .tiers button { position: relative; isolation: isolate; padding: 6px 14px 3px; font: 700 30px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .7; }
 #dio .tiers button:hover { opacity: 1; }
 #dio .tiers button[aria-pressed="true"] { opacity: 1; color: var(--ink); text-shadow: none; }
 #dio .tiers button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
-#dio .tiers .hint { font: 400 13px var(--type); opacity: .7; margin-left: 14px; }
-#dio #unote { position: fixed; transform: translate(0, -100%); padding-bottom: 8px; width: max-content; max-width: 240px; font: 400 15px/1.3 var(--type); text-shadow: 0 0 3px var(--field), 0 0 6px var(--field), 0 0 10px var(--field); pointer-events: none; }
+#dio .tiers .hint { font: 700 13px var(--type); opacity: .85; margin-left: 14px; }
+#dio #unote { position: fixed; transform: translate(0, -100%); padding-bottom: 8px; width: max-content; max-width: 240px; font: 700 15px/1.3 var(--type); text-shadow: 0 0 3px var(--field), 0 0 6px var(--field), 0 0 10px var(--field); pointer-events: none; }
 #dio #unote small { display: block; margin-top: 4px; font-size: 13px; opacity: .75; }
 #dio #usheet { position: fixed; width: 330px; padding: 18px 20px 18px; color: var(--cream); isolation: isolate; filter: drop-shadow(0 14px 24px rgba(0,0,0,.35)); }
 #dio #usheet::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #17140F; clip-path: polygon(0 4%, 64% 0, 100% 3%, 100% 100%, 0 100%); }
 #dio #usheet[hidden] { display: none; }
 #dio #usheet .tag { display: inline-block; padding: 3px 7px 2px; font: 700 11px var(--type); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: var(--saffron); clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
 #dio #usheet h3 { margin: 10px 0 12px; font: 700 34px/.95 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
-#dio #usheet .st { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font: 400 14px/1.3 var(--type); }
+#dio #usheet .st { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font: 700 14px/1.3 var(--type); }
 #dio #usheet .st b { font-weight: 700; }
-#dio #usheet .sk { margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(244,236,216,.2); font: 400 13px/1.45 var(--type); opacity: .85; }
+#dio #usheet .sk { margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(244,236,216,.2); font: 700 13px/1.45 var(--type); opacity: .92; }
 #dio #usheet .sk b { display: block; font: 700 14px var(--sans); opacity: 1; margin-top: 2px; }
 #dio #usheet .x { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; display: grid; place-items: center; opacity: .8; }
 #dio #usheet .x:hover { opacity: 1; }
@@ -444,15 +444,15 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio.welcome .logo { width: min(600px, 44vw); top: 58px; transition: width .4s cubic-bezier(.16,.9,.24,1); }
 #dio.welcome.in-signin .logo { width: 330px; top: 34px; }
 #dio .door .sub { display: grid; grid-template-columns: auto auto; gap: 2px 30px; }
-#dio .door .item small { font: 400 14px var(--type); text-transform: none; letter-spacing: 0; opacity: .75; margin-left: 2px; }
+#dio .door .item small { font: 700 14px var(--type); text-transform: none; letter-spacing: 0; opacity: .88; margin-left: 2px; }
 #dio .door .item:hover small, #dio .door .item.on small { opacity: 1; }
 #dio .door .item.play .go { max-width: 270px; }
 #dio.welcome.in-signin .back { display: block; }
 #dio.welcome.in-signin .signin { display: grid; }
 #dio .signin { position: fixed; left: 48px; top: clamp(110px, 15vh, 140px); width: min(700px, 52vw); align-content: start; justify-items: start; }
-#dio .signin .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+#dio .signin .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
 #dio .signin h2 { margin: 0 0 12px; font: 700 clamp(60px, 10.5vh, 96px)/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
-#dio .si-lead { margin: 0 0 clamp(14px, 3vh, 26px); max-width: 520px; font: 400 15px/1.45 var(--type); opacity: .9; }
+#dio .si-lead { margin: 0 0 clamp(14px, 3vh, 26px); max-width: 520px; font: 700 15px/1.45 var(--type); opacity: .9; }
 #dio .si-opts { margin-bottom: 4px; }
 #dio .si-opts .seg { align-items: center; }
 #dio .si-opts input { width: 11em; padding: 2px 2px 5px; font: 700 clamp(22px, 3.3vh, 30px) var(--sans); color: var(--cream); background: none; border: 0; border-bottom: 2px dashed rgba(244,236,216,.5); outline: 0; }
@@ -464,7 +464,7 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .si-opts .gbtn i { width: 30px; height: 30px; border-radius: 50%; background: #F4ECD8; color: #131314; display: grid; place-items: center; font: 700 17px system-ui, sans-serif; font-style: normal; }
 #dio .si-opts .act { opacity: .75; } #dio .si-opts .act:hover { opacity: 1; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
 #dio .si-err { color: var(--saffron); font-weight: 700; }
-#dio .si-other { margin-top: 6px; font: 400 14px var(--type); opacity: .8; text-decoration: underline; text-underline-offset: 4px; } #dio .si-other:hover { opacity: 1; }
+#dio .si-other { margin-top: 6px; font: 700 14px var(--type); opacity: .9; text-decoration: underline; text-underline-offset: 4px; } #dio .si-other:hover { opacity: 1; }
 
 /* ── the dropdowns: Friends and Settings hang off their buttons, top right ── */
 #dio .acct button { position: relative; }
@@ -477,21 +477,21 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio.profile .drop::before { background: #2C2820; }
 @keyframes dropin { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 #dio .drop h3 { margin: 0; font: 700 34px/.95 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
-#dio .drop h3 small { margin-left: 10px; font: 400 13px var(--type); text-transform: none; letter-spacing: 0; opacity: .75; }
-#dio .drop .k { display: block; margin: 18px 0 6px; font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .7; }
-#dio .drop .hint { margin: 12px 0 0; font: 400 13px/1.45 var(--type); opacity: .8; }
+#dio .drop h3 small { margin-left: 10px; font: 700 13px var(--type); text-transform: none; letter-spacing: 0; opacity: .88; }
+#dio .drop .k { display: block; margin: 18px 0 6px; font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .85; }
+#dio .drop .hint { margin: 12px 0 0; font: 700 13px/1.45 var(--type); opacity: .9; }
 #dio .drop .w { position: relative; isolation: isolate; padding: 4px 9px 1px; font: 700 20px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .6; white-space: nowrap; }
 #dio .drop .w:hover { opacity: 1; }
 #dio .drop .w[aria-pressed="true"], #dio .drop .w.go { opacity: 1; color: var(--ink); }
 #dio .drop .w[aria-pressed="true"]::before, #dio .drop .w.go::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 #dio .drop .w.go:hover { transform: rotate(-2deg); }
-#dio .drop .lnk { font: 400 13px var(--type); opacity: .75; text-decoration: underline; text-underline-offset: 4px; }
+#dio .drop .lnk { font: 700 13px var(--type); opacity: .88; text-decoration: underline; text-underline-offset: 4px; }
 #dio .drop .lnk:hover { opacity: 1; } #dio .drop .lnk.sure { opacity: 1; color: #F2B23A; }
 /* Settings: rows of words */
 #dio .set { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 7px 10px; align-items: center; }
-#dio .set .lab { font: 400 14px var(--type); opacity: .85; }
+#dio .set .lab { font: 700 14px var(--type); opacity: .92; }
 #dio .set .seg { display: flex; gap: 2px; margin-left: -9px; }
-#dio .set .sn { grid-column: 2; margin: 2px 0 4px; font: 400 12.5px/1.4 var(--type); opacity: .7; }
+#dio .set .sn { grid-column: 2; margin: 2px 0 4px; font: 700 12.5px/1.4 var(--type); opacity: .85; }
 #dio .vol { display: flex; align-items: center; gap: 12px; }
 #dio .vol input { flex: 1; min-width: 0; height: 22px; margin: 0; background: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
 #dio .vol input::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(90deg, #F4ECD8 var(--v), rgba(244,236,216,.25) var(--v)); }
@@ -506,7 +506,7 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .fr-tabs button { opacity: .55; } #dio .fr-tabs button:hover { opacity: 1; } #dio .fr-tabs [aria-pressed="true"] { opacity: 1; color: #F2B23A; }
 #dio .fr-tabs i { font-style: normal; margin-left: 4px; padding: 0 5px; color: var(--ink); background: #F2B23A; }
 #dio .fr-add { display: flex; align-items: baseline; gap: 10px; margin: 12px 0 4px; padding-bottom: 6px; border-bottom: 1px dashed rgba(244,236,216,.35); }
-#dio .fr-add input { flex: 1; min-width: 0; font: 400 15px var(--type); color: #F4ECD8; background: none; border: 0; outline: 0; padding: 3px 0; }
+#dio .fr-add input { flex: 1; min-width: 0; font: 700 15px var(--type); color: #F4ECD8; background: none; border: 0; outline: 0; padding: 3px 0; }
 #dio .fr-add input::placeholder { color: #F4ECD8; opacity: .5; }
 #dio .fr-list { list-style: none; margin: 0; padding: 0; }
 #dio .fr-list li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 10px 0; border-bottom: 1px dashed rgba(244,236,216,.14); }
@@ -515,28 +515,28 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .fr-list .dot.on { background: #F2B23A; border-color: #F2B23A; }
 #dio .fr-list b { font: 700 17px/1.15 var(--sans); }
 #dio .fr-list .tt { margin-left: 7px; font: 700 12px var(--stencil); text-transform: uppercase; color: var(--tc); }
-#dio .fr-list small { display: block; margin-top: 2px; font: 400 12.5px var(--type); opacity: .7; }
+#dio .fr-list small { display: block; margin-top: 2px; font: 700 12.5px var(--type); opacity: .85; }
 #dio .fr-list .acts { display: flex; align-items: center; gap: 4px; }
 #dio .fr-list .msg { position: relative; width: 30px; height: 30px; display: grid; place-items: center; opacity: .75; } #dio .fr-list .msg:hover { opacity: 1; }
 #dio .fr-list .msg svg { width: 18px; height: 18px; }
 #dio .fr-list .msg i { position: absolute; top: 0; right: -2px; font: 700 10px/14px var(--type); font-style: normal; padding: 0 4px; color: var(--ink); background: #F2B23A; }
-#dio .fr-list .more { width: 24px; height: 30px; font: 700 16px var(--type); opacity: .6; } #dio .fr-list .more:hover { opacity: 1; }
+#dio .fr-list .more { width: 24px; height: 30px; font: 700 16px var(--type); opacity: .8; } #dio .fr-list .more:hover { opacity: 1; }
 #dio .fr-list .sub { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; margin-top: 4px; }
 #dio .fr-list .sub .w { font-size: 17px; }
-#dio .fr-list .done { font: 400 13px var(--type); opacity: .8; }
+#dio .fr-list .done { font: 700 13px var(--type); opacity: .9; }
 #dio .fr-list .acts .lnk { margin-left: 10px; }
 #dio .fr-inv { position: relative; isolation: isolate; margin: 14px -8px 2px; padding: 12px 14px 12px; color: var(--ink); }
 #dio .fr-inv::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 4%, 97% 0, 100% 94%, 2% 100%); }
 #dio .fr-inv .k { margin: 0 0 9px; color: var(--ink); opacity: .8; }
-#dio .fr-inv p { margin: 0 0 8px; font: 400 15px/1.35 var(--type); } #dio .fr-inv p b { font: 700 17px var(--sans); }
+#dio .fr-inv p { margin: 0 0 8px; font: 700 15px/1.35 var(--type); } #dio .fr-inv p b { font: 700 17px var(--sans); }
 #dio .fr-inv .row { display: flex; gap: 16px; align-items: baseline; }
 #dio .fr-inv .w { color: #F2B23A; opacity: 1; } #dio .fr-inv .w::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 #dio .fr-inv .lnk { color: var(--ink); opacity: .85; }
 #dio .thread { list-style: none; margin: 14px 0 10px; padding: 0; display: grid; gap: 10px; }
-#dio .thread li { max-width: 82%; font: 400 14px/1.4 var(--type); }
+#dio .thread li { max-width: 82%; font: 700 14px/1.4 var(--type); }
 #dio .thread li small { display: block; font-size: 11px; opacity: .55; margin-top: 2px; }
 #dio .thread li.me { justify-self: end; text-align: right; color: #F2B23A; }
-#dio .fr-back { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; margin-bottom: 14px; } #dio .fr-back:hover { opacity: 1; }
+#dio .fr-back { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .88; margin-bottom: 14px; } #dio .fr-back:hover { opacity: 1; }
 #dio .drop .gbtn { display: inline-flex; align-items: center; gap: 10px; height: 40px; margin-top: 14px; padding: 0 18px 0 6px; border-radius: 20px; background: #131314; border: 1px solid #8E918F; font: 500 15px system-ui, sans-serif; color: #E3E3E3; }
 #dio .drop .gbtn i { width: 28px; height: 28px; border-radius: 50%; background: #F4ECD8; color: #131314; display: grid; place-items: center; font: 700 16px system-ui, sans-serif; font-style: normal; }
 
@@ -547,7 +547,7 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio.profile .back { display: block; }
 #dio .pf, #dio .history { position: fixed; left: 48px; top: 128px; width: min(760px, 54vw); display: none; align-content: start; justify-items: start; }
 #dio.profile .pf { display: grid; } #dio.in-history .pf { display: none; } #dio.in-history .history { display: grid; }
-#dio .pf .k, #dio .history .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+#dio .pf .k, #dio .history .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
 #dio .plate h2 { margin: 2px 0 0; font: 700 104px/.86 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
 #dio .ptitle { display: inline-flex; align-items: center; gap: 12px; margin-top: 12px; font: 700 26px/1 var(--stencil); text-transform: uppercase; color: var(--tc); }
 #dio .ptitle i { width: 7px; height: 7px; background: currentColor; transform: rotate(45deg); }
@@ -578,7 +578,7 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .pf-opts .nr-note { margin-bottom: 13px; }
 #dio .pf-opts .seg .gbtn { display: inline-flex; align-items: center; gap: 10px; align-self: center; height: 40px; padding: 0 18px 0 6px; margin-right: 12px; border-radius: 20px; background: #131314; border: 1px solid #8E918F; font: 500 15px system-ui, sans-serif; text-transform: none; letter-spacing: 0; color: #E3E3E3; opacity: 1; }
 #dio .pf-opts .seg .gbtn:hover { background: #1E1F20; }
-#dio .pf-opts .seg .del { align-self: center; margin-left: 14px; padding: 0; font: 400 13px var(--type); text-transform: none; letter-spacing: 0; opacity: .6; text-decoration: underline; text-underline-offset: 4px; }
+#dio .pf-opts .seg .del { align-self: center; margin-left: 14px; padding: 0; font: 700 13px var(--type); text-transform: none; letter-spacing: 0; opacity: .8; text-decoration: underline; text-underline-offset: 4px; }
 #dio .pf-opts .seg .del:hover { opacity: 1; } #dio .pf-opts .seg .del.sure { opacity: 1; color: var(--saffron); }
 #dio .pf-opts .seg button[aria-pressed="true"] { color: var(--ink); }
 #dio .pf-opts .seg button[aria-pressed="true"]::before { background: var(--pc, var(--saffron)); }
@@ -602,7 +602,7 @@ canvas { display: block; width: 100%; height: 100%; }
 /* a unit's sheet: its skins, as a row of words (the picked one on the saffron shard) */
 #dio #usheet .skn { margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(244,236,216,.2); }
 #dio #usheet .skn[hidden] { display: none; }
-#dio #usheet .skn .lab { display: block; margin-bottom: 6px; font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+#dio #usheet .skn .lab { display: block; margin-bottom: 6px; font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .88; }
 #dio #usheet .skn .seg { display: flex; flex-wrap: wrap; gap: 2px; margin-left: -10px; }
 #dio #usheet .skn .seg button { position: relative; isolation: isolate; padding: 5px 10px 2px; font: 700 22px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .6; }
 #dio #usheet .skn .seg button:hover { opacity: 1; }
@@ -610,11 +610,11 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio #usheet .skn .seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 #dio #usheet .skn .seg button[disabled] { opacity: .35; cursor: not-allowed; }
 #dio #usheet .skn .lock { width: 12px; height: 12px; margin-right: 5px; vertical-align: 1px; }
-#dio #usheet .skn p { margin: 8px 0 0; font: 400 13px/1.45 var(--type); opacity: .85; }
+#dio #usheet .skn p { margin: 8px 0 0; font: 700 13px/1.45 var(--type); opacity: .92; }
 
 /* Match history: typed rows like Rooms, on the ink field */
 #dio .history h2 { margin: 0 0 14px; font: 700 76px/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
-#dio .history h2 small { font: 400 15px var(--type); text-transform: none; letter-spacing: 0; opacity: .75; margin-left: 10px; }
+#dio .history h2 small { font: 700 15px var(--type); text-transform: none; letter-spacing: 0; opacity: .88; margin-left: 10px; }
 #dio .history { bottom: 96px; grid-template-rows: auto auto auto auto minmax(0, 1fr) auto; align-content: stretch; width: min(680px, 48vw); justify-items: stretch; }
 #dio .h-tabs { display: flex; gap: 22px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid rgba(244,236,216,.5); font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; }
 #dio .h-tabs button { opacity: .55; } #dio .h-tabs button:hover { opacity: 1; }
@@ -623,12 +623,12 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .hlist .res { font: 700 28px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
 #dio .hlist .res.won { color: var(--saffron); } #dio .hlist .res.lost { opacity: .5; } #dio .hlist .res.left, #dio .hlist .res.draw { opacity: .8; }
 #dio .hlist .tt { margin-left: 10px; font: 700 13px var(--stencil); text-transform: uppercase; color: var(--tc); letter-spacing: .02em; }
-#dio .hlist .rd { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .75; display: inline-flex; gap: 6px; align-items: center; }
+#dio .hlist .rd { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .88; display: inline-flex; gap: 6px; align-items: center; }
 #dio .hlist .rd:hover, #dio .hlist li.open .rd { opacity: 1; }
 #dio .hlist .rd svg { width: 11px; height: 11px; transition: transform .2s ease; } #dio .hlist li.open .rd svg { transform: rotate(180deg); }
 #dio .hlist .rounds { grid-column: 2 / -1; display: none; list-style: none; margin: 6px 0 2px; padding: 0; }
 #dio .hlist li.open .rounds { display: grid; }
-#dio .hlist .rounds li { grid-template-columns: minmax(0, 1fr) auto; padding: 6px 0; border-bottom: 1px dashed rgba(244,236,216,.12); font: 400 14px var(--type); }
+#dio .hlist .rounds li { grid-template-columns: minmax(0, 1fr) auto; padding: 6px 0; border-bottom: 1px dashed rgba(244,236,216,.12); font: 700 14px var(--type); }
 #dio .hlist .rounds li:last-child { border-bottom: 0; }
 #dio .hlist .rounds b { font: 700 14px var(--type); margin-right: 6px; }
 #dio .hlist .rounds small { margin-top: 2px; }
@@ -640,16 +640,16 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .si-msg { display: block; margin: 0 0 12px; max-width: 520px; font: 700 14px/1.4 var(--type); color: var(--saffron); }
 #dio .si-msg:empty, #dio .door-msg:empty { display: none; }
 #dio .door-msg { margin: 14px 0 0; font: 700 14px/1.4 var(--type); color: var(--saffron); }
-#dio .si-off { font: 400 14px var(--type); opacity: .8; }
+#dio .si-off { font: 700 14px var(--type); opacity: .9; }
 /* Google's own button (acctGoogleButton renders it into #acct-google): its dark pill, as wide as it wants */
-#dio .si-opts .acct-google { width: 300px; min-height: 44px; display: flex; align-items: center; font: 400 14px var(--type); }
+#dio .si-opts .acct-google { width: 300px; min-height: 44px; display: flex; align-items: center; font: 700 14px var(--type); }
 #dio .si-opts .acct-google:not(.ready) { opacity: .7; }
 /* Stay logged in? A note hanging off the account button: a line down from it, the question, Yes on the shard */
 #dio .stay { position: fixed; top: 92px; right: 48px; z-index: 5; width: 330px; padding: 16px 0 0; text-align: right; color: var(--cream); }
 #dio .stay::before { content: ""; position: absolute; top: -18px; right: 120px; width: 1.5px; height: 30px; background: currentColor; }
 #dio .stay::after { content: ""; position: absolute; top: -24px; right: 116px; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
 #dio .stay .k { display: block; font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; }
-#dio .stay p { margin: 6px 0 8px; font: 400 14px/1.45 var(--type); opacity: .9; }
+#dio .stay p { margin: 6px 0 8px; font: 700 14px/1.45 var(--type); opacity: .9; }
 #dio .stay .seg { display: inline-flex; gap: 6px; }
 #dio .stay .w { position: relative; isolation: isolate; padding: 4px 10px 1px; font: 700 22px/1 var(--stencil); text-transform: uppercase; opacity: .7; }
 #dio .stay .w:hover { opacity: 1; }
@@ -664,16 +664,16 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .backto .bt::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); }
 #dio .backto .bt b { margin-left: 8px; font: 700 18px var(--type); letter-spacing: .06em; }
 #dio .backto .bt:hover { transform: rotate(-1deg); }
-#dio .menu .item small { margin-left: 8px; font: 400 14px var(--type); text-transform: none; letter-spacing: 0; opacity: .85; }
+#dio .menu .item small { margin-left: 8px; font: 700 14px var(--type); text-transform: none; letter-spacing: 0; opacity: .92; }
 #dio .menu .item.hot small { color: var(--saffron); opacity: 1; }
 #dio .rw-note { cursor: pointer; }
 #dio .rw-note:hover b { text-decoration: underline; text-underline-offset: 4px; }
 
 /* ── step 3.5: the full leaderboard under STANDINGS; a new Title or skin in the account's note ── */
-#dio .standings .lb-all { justify-self: start; margin-top: 6px; font: 700 14px var(--type); letter-spacing: .04em; text-decoration: underline; text-underline-offset: 5px; opacity: .85; }
+#dio .standings .lb-all { justify-self: start; margin-top: 6px; font: 700 14px var(--type); letter-spacing: .04em; text-decoration: underline; text-underline-offset: 5px; opacity: .92; }
 #dio .standings .lb-all:hover { opacity: 1; }
 #dio.ranks .standings .lb-all { pointer-events: auto; }
-#dio .lb-rank { position: fixed; z-index: 3; font: 700 14px var(--type); letter-spacing: .04em; color: var(--cream); text-decoration: underline; text-underline-offset: 5px; opacity: .85; text-shadow: 0 0 3px var(--field), 0 0 8px var(--field); } #dio .lb-rank:hover { opacity: 1; }
+#dio .lb-rank { position: fixed; z-index: 3; font: 700 14px var(--type); letter-spacing: .04em; color: var(--cream); text-decoration: underline; text-underline-offset: 5px; opacity: .92; text-shadow: 0 0 3px var(--field), 0 0 8px var(--field); } #dio .lb-rank:hover { opacity: 1; }
 #dio .stay .tagnew { display: inline-block; padding: 3px 8px 2px; font-style: normal; color: var(--ink); background: var(--saffron); clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
 #dio .stay .nts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin: 10px 0 4px; }
 #dio .stay .nts .ptitle { margin: 0; font-size: 22px; }
@@ -696,17 +696,17 @@ canvas { display: block; width: 100%; height: 100%; }
 
 /* ── step 6: the game's thread lines (frThreadDraw) and messages in the Friends dropdown ── */
 #dio .drop .thread { display: grid; gap: 10px; max-height: 320px; overflow-y: auto; margin: 14px 0 10px; }
-#dio .drop .fr-line { justify-self: start; max-width: 80%; font: 400 14px/1.4 var(--type); }
+#dio .drop .fr-line { justify-self: start; max-width: 80%; font: 700 14px/1.4 var(--type); }
 #dio .drop .fr-line.me { justify-self: end; text-align: right; color: var(--saffron); }
 #dio .drop .fr-line small { display: block; font-size: 11px; opacity: .55; margin-top: 2px; }
-#dio .drop .thread .btn { justify-self: center; font: 400 12px var(--type); text-decoration: underline; opacity: .75; }
+#dio .drop .thread .btn { justify-self: center; font: 700 12px var(--type); text-decoration: underline; opacity: .88; }
 #dio .drop .fr-msg:empty, #dio .drop #fr-tmsg:empty { display: none; }
 #dio .drop .fr-msg { color: var(--saffron); opacity: 1; }
 #dio .drop .acct-google { margin-top: 14px; width: 280px; }
 #dio .drop .w[disabled] { opacity: .3; }
 /* the game's invite banner and friend toasts (they live outside #dio, over everything): in the Diorama's look while
    the switch is on. Ink panel with a cut corner, typed words, Join on the saffron shard */
-html.diorama .fr-banner, html.diorama .fr-toast { border: 0; border-radius: 0; box-shadow: none; background: #17140F; color: #F4ECD8; font: 400 14px/1.4 "Courier Prime", "Courier New", monospace;
+html.diorama .fr-banner, html.diorama .fr-toast { border: 0; border-radius: 0; box-shadow: none; background: #17140F; color: #F4ECD8; font: 700 14px/1.4 "Bricolage Grotesque", system-ui, sans-serif;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 5% 100%, 0 calc(100% - 16px)); filter: drop-shadow(0 12px 24px rgba(0,0,0,.35)); }
 html.diorama .fr-banner b, html.diorama .fr-toast b { font: 700 16px "Bricolage Grotesque", system-ui, sans-serif; }
 html.diorama .fr-banner .btn { border: 0; border-radius: 0; background: none; color: #F4ECD8; padding: 4px 10px 1px; font: 700 18px/1 "Chakra Petch", sans-serif; text-transform: uppercase; opacity: .7; }
@@ -725,7 +725,7 @@ html.diorama .fr-toast { text-align: left; }
 #dio .pl-tabs .eq i:nth-child(2) { animation-delay: -.3s; } #dio .pl-tabs .eq i:nth-child(3) { animation-delay: -.6s; }
 #dio:not(.mp-playing) .eq i { animation: none; height: 3px; }
 #dio .pl-name { justify-self: end; width: 260px; padding: 4px 0; border: 0; border-bottom: 1px dashed currentColor; background: none; color: inherit; font: 700 20px var(--sans); text-align: right; outline: none; }
-#dio .pl-note { margin: 0; font: 400 13px var(--type); opacity: .75; text-align: right; }
+#dio .pl-note { margin: 0; font: 700 13px var(--type); opacity: .88; text-align: right; }
 #dio .pl-modes button[disabled] { opacity: .3; cursor: not-allowed; }
 #dio .pl-modes .sure { opacity: 1; color: var(--saffron); }
 
@@ -738,7 +738,7 @@ html.diorama.pc .sheet-back { align-items: center; }
 html.diorama .sheet {
   --panel: #17140F; --bg: #17140F; --board: #221E17; --line: rgba(244, 236, 216, .2); --ink: #F4ECD8; --muted: rgba(244, 236, 216, .7);
   --gold: #F2B23A; --gold-dark: #D99A26;
-  --font-display: "Chakra Petch", "Arial Narrow", sans-serif; --font-body: "Bricolage Grotesque", system-ui, sans-serif; --font-data: "Courier Prime", "Courier New", monospace;
+  --font-display: "Chakra Petch", "Arial Narrow", sans-serif; --font-body: "Bricolage Grotesque", system-ui, sans-serif; --font-data: "Bricolage Grotesque", system-ui, sans-serif;
   background: #17140F; color: #F4ECD8; border: 0; border-radius: 0; font-family: var(--font-body);
   clip-path: polygon(0 0, 100% 0, 100% 100%, 22px 100%, 0 calc(100% - 22px)); filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .38)); }
 html.diorama.pc .sheet { padding: 24px 26px 26px; }
@@ -800,6 +800,41 @@ html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35) !impo
 #dio .drop .fs-big { justify-self: start; display: inline-flex; align-items: center; gap: 10px; margin: 14px 0 16px; padding: 9px 18px 7px 14px; font: 700 22px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); background: var(--saffron); clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); transition: transform .15s ease; }
 #dio .drop .fs-big svg { width: 20px; height: 20px; flex: none; }
 #dio .drop .fs-big:hover, #dio .drop .fs-big:focus-visible { transform: rotate(-1.5deg) scale(1.03); outline: none; }
+/* the full-screen icon, last in the top-right row (owner, 2026-11-08) */
+#dio .acct .fs-ico svg { width: 20px; height: 20px; }
+#dio .acct .fs-ico:hover { text-decoration: none; transform: scale(1.12); }
+#dio .acct .fs-ico[hidden] { display: none; }
+/* no marking text by dragging over it (owner, 2026-11-08); what you type in stays selectable */
+#dio { -webkit-user-select: none; user-select: none; }
+#dio input, #dio textarea, #dio [contenteditable] { -webkit-user-select: text; user-select: text; }
+#dio .note[data-home] { transition: none; } /* (its fade is drawn frame by frame) */
+#dio .note:not(.btn-note):not(.bf-note) { transition: none; } /* (island notes fade frame by frame) */
+
+/* Full leaderboard: a stencil word on the saffron board (owner, 2026-11-08), under the Rankings note */
+#dio .lb-rank { padding: 7px 14px 5px 11px; font: 700 18px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); text-decoration: none; text-shadow: none; opacity: 1; background: var(--saffron); clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); transition: transform .15s ease; }
+#dio .lb-rank:hover, #dio .lb-rank:focus-visible { transform: rotate(-1.5deg) scale(1.04); outline: none; }
+/* Profile: the big name is the username field (owner, 2026-11-08) */
+#dio .plate h2 { position: relative; }
+#dio .pf-name-in { display: inline-block; max-width: 100%; padding: 0; margin: 0; font: inherit; line-height: inherit; text-transform: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; border-bottom: 4px dashed transparent; outline: 0; cursor: text; }
+#dio .pf-name-in:hover { border-bottom-color: rgba(244,236,216,.35); }
+#dio .pf-name-in:focus { border-bottom-color: var(--saffron); }
+#dio .pf-name-in:disabled { opacity: .6; }
+#dio .pf-sizer { position: absolute; left: 0; top: 0; visibility: hidden; white-space: pre; pointer-events: none; }
+#dio .pf-namenote { display: flex; align-items: center; gap: 14px; min-height: 30px; margin: 6px 0 0; font: 700 13px var(--type); }
+#dio .pf-namenote span { opacity: .88; }
+#dio .pf-save { position: relative; isolation: isolate; padding: 5px 12px 3px; font: 700 18px/1 var(--stencil); text-transform: uppercase; color: var(--ink); }
+#dio .pf-save::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+#dio .pf-save[hidden] { display: none; }
+/* Change battlefield: a button like the other big ones (owner, 2026-11-08): stencil words on the saffron board (an ink
+   board on the saffron Play screen), the battlefield's name above it; its bottom on the music player's bottom line */
+#dio .note.bf-note { bottom: 40px; display: grid; justify-items: end; gap: 7px; padding: 0; cursor: default; }
+#dio.flat .bf-note { bottom: 40px; }
+#dio .bf-note .bf-sub { font: 700 13px var(--type); opacity: .88; }
+#dio .bf-note .bf-btn { display: inline-flex; align-items: center; height: 30px; padding: 2px 14px 0 12px; font: 700 19px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); background: var(--saffron); clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; cursor: pointer; transition: transform .15s ease; }
+#dio .bf-note:hover .bf-btn, #dio .bf-note:focus-visible .bf-btn { transform: rotate(-1.5deg) scale(1.04); }
+#dio .bf-note:focus-visible { outline: none; }
+#dio.play .bf-note .bf-btn { color: #F2B23A; background: var(--ink); }
+#dio.sheet-over-bf .bf-note { opacity: 0; pointer-events: none; } /* (a unit sheet over it) */
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -1717,7 +1752,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   if (!on) return;
   document.documentElement.classList.add('diorama');
   const l = document.createElement('link'); l.rel = 'stylesheet';
-  l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Courier+Prime:wght@400;700&display=swap';
+  l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap';
   document.head.appendChild(l);
 })();
 </script>
@@ -1770,6 +1805,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="currentColor"/><path d="M2 20c0-3.9 3.1-6 7-6s7 2.1 7 6" fill="currentColor"/><circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".7"/><path d="M17 13.5c2.9.2 5 1.9 5 5.5h-4.4c0-2-.6-3.7-1.8-5" fill="currentColor" opacity=".7"/></svg><span>Friends</span><b class="badge" id="fr-badge" hidden></b></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>Guest</span></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg><span>Settings</span></button>
+    <button class="fs-ico" id="dio-fs" aria-label="Full screen" title="Full screen" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9V4.5a1 1 0 0 1 1-1H9M15 3.5h4.5a1 1 0 0 1 1 1V9M20.5 15v4.5a1 1 0 0 1-1 1H15M9 20.5H4.5a1 1 0 0 1-1-1V15"/></svg></button>
   </nav>
   <section class="stay" id="dio-stay" hidden role="dialog" aria-labelledby="stay-h"></section>
   <button class="back">← Menu</button>
@@ -1791,10 +1827,11 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <!-- notes. data-home: shown on the menu; data-hover: shown while that thing is pointed at; data-btn: shown while that menu word is -->
   <div class="note rw-note" data-anchor="golem" data-home role="button" tabindex="0" aria-label="Rewards: invite a friend"><span class="tag">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></div>
-  <div class="note" data-anchor="skeleton" data-home>Hover stuff on the island to learn more!</div>
+  <div class="note" data-anchor="skeleton" data-home>Hover over stuff on the island with your mouse!</div>
   <div class="note" data-anchor="sniper" data-hover="sniper">Sniper.<small>Unit · Long range · Good against single targets</small></div>
   <div class="note" data-anchor="mage" data-hover="mage">Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
   <div class="note" data-anchor="ent" data-hover="ent">Sleeping Ent.<small>Sshhhh!</small></div>
+  <div class="note" data-anchor="goblins" data-hover="goblins">Goblin Swarm.<small>Unit · Twelve goblins in one squad · Strength in numbers</small></div>
 
   <div class="note" data-anchor="keepYou" data-hover="keepYou">Your keep.<small>Tower · If it falls, you lose</small></div>
   <div class="note" data-anchor="keepFoe" data-hover="keepFoe">Their keep.<small>Tower · Bring it down to hurt the opponent and weaken their army</small></div>
@@ -1806,7 +1843,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <div class="note btn-note" data-anchor="btn" data-side="right" data-btn="rules">How to play.<small>The rules, explained simply</small></div>
   <div class="note btn-note" data-anchor="btn" data-side="left" data-btn="units">Units.<small>Every unit · What it does and what it beats</small></div>
   <div class="note btn-note" data-anchor="btn" data-side="right" data-btn="ranks">Rankings.<small>The leaderboard · Ranked matches only</small></div>
-  <div class="note bf-note" data-anchor="bf" role="button" tabindex="0">Change battlefield.<small id="bf-sub"></small></div>
+  <div class="note bf-note" data-anchor="bf" role="button" tabindex="0" aria-label="Change battlefield"><span class="bf-sub" id="bf-sub"></span><span class="bf-btn">Change battlefield</span></div>
   <div id="unote" style="display:none"></div>
   <nav class="tiers" aria-label="Unit tiers"><span class="k">Units by tier</span><button data-t="1" aria-pressed="true">Tier 1</button><button data-t="2" aria-pressed="false">Tier 2</button><button data-t="3" aria-pressed="false">Tier 3</button><button data-t="4" aria-pressed="false">Tier 4</button></nav>
   <section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><div class="skn" hidden></div><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
@@ -1932,6 +1969,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <section class="pf" aria-label="Profile">
     <span class="k" id="pf-k"></span>
     <div class="plate"><h2 id="pf-name"></h2><span class="ptitle" id="pf-title" hidden></span></div>
+    <p class="pf-namenote" id="pf-namenote"></p>
       <div class="nr-opts pf-opts" id="pf-opts"></div>
       <p class="r-msg" id="pf-msg" aria-live="polite"></p>
     <button class="create" id="pf-hist">Match history <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
@@ -17167,7 +17205,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '8 Nov 2026 · 261a9fd'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '8 Nov 2026 · 98ab70b'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -26235,7 +26273,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const mat = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 1, metalness: 0, flatShading: true });
     const vmat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, flatShading: true });
     const mesh = (g, m, cast = true) => { const o = new THREE.Mesh(g, m); o.castShadow = cast; o.receiveShadow = true; return o; };
-    await Promise.all(['700 200px "Chakra Petch"', '700 56px "Bricolage Grotesque"', '400 40px "Courier Prime"', '700 40px "Courier Prime"'].map(f => document.fonts.load(f)));
+    await Promise.all(['700 200px "Chakra Petch"', '700 56px "Bricolage Grotesque"', '500 40px "Bricolage Grotesque"', '700 40px "Bricolage Grotesque"'].map(f => document.fonts.load(f)));
 
     // ── the island: the Standard map, 14 columns by 18 rows (zones of 7 rows, 4 rows of no man's land), one tile = 1 ──
     // col c, row r -> x = c - 6.5, z = r - 8.5 (row 0 is the back of their zone, row 17 the back of yours)
@@ -26404,7 +26442,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const sniper = unit('sniper', '#6E7B5A', YOU, 5.0, 5.6, s, -0.35);
     const golem = unit('golem', '#4FD1C5', YOU, -4.5, 4.5, s * 0.95, 0.6); golem.position.y = golem.userData.y0 = 0.45;
     const ent = unit('ent', '#6F8E4E', YOU, 4.6, 8.3, s * 1.05, 0); ent.rotation.set(-Math.PI / 2 + 0.08, 0, 0.5); ent.position.y = ent.userData.y0 = 0.42; // asleep, face down
-    for (const [x, z] of [[-2.6, -3.6], [-1.9, -4.0], [-3.2, -4.2], [-2.3, -4.6], [-3.0, -3.3]]) unit('goblin', '#7FA35A', FOE, x, z, s * 0.75, Y + (rnd() - 0.5) * 0.6);
+    const goblins = new THREE.Group(); island.add(goblins); // the swarm: pointed at (and lifted) as one
+    for (const [x, z] of [[-2.6, -3.6], [-1.9, -4.0], [-3.2, -4.2], [-2.3, -4.6], [-3.0, -3.3]]) goblins.add(unit('goblin', '#7FA35A', FOE, x, z, s * 0.75, Y + (rnd() - 0.5) * 0.6));
+    goblins.userData.y0 = 0; const gobDot = new THREE.Object3D(); gobDot.position.set(-2.6, 0, -4.0); goblins.add(gobDot);
+    { // one hit area round the whole swarm (owner: not five small ones); never drawn
+      const hb = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.9, 1.9), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false }));
+      hb.position.set(-2.55, 0.45, -3.95); hb.castShadow = hb.receiveShadow = false; goblins.add(hb); }
     const mammoth = unit('mammoth', '#8E7A68', FOE, 3.4, -4.6, s * 0.8, Y - 0.3);
     const skeleton = unit('skeleton', '#E9E3CF', FOE, -5.0, -5.6, s * 0.9, Y + 0.3);
     const pieces = new THREE.Group(); island.add(pieces);
@@ -26437,7 +26480,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const b = tile(1.9, h, 2.6, (g, w, hh) => { g.fillStyle = paper; g.fillRect(0, 0, w, hh); g.strokeStyle = first ? 'rgba(23,20,15,.35)' : 'rgba(23,20,15,.2)'; g.lineWidth = 6; g.setLineDash([18, 14]); g.strokeRect(22, 22, w - 44, hh - 44);
           g.fillStyle = '#17140F'; g.textAlign = 'center'; g.font = '700 220px "Chakra Petch"'; g.fillText(String(n), w / 2, hh * 0.72);
           fitFont(g, P[0], 700, 60, '"Bricolage Grotesque"', 440); if (!PLAYERS[n]) g.globalAlpha = .45; g.fillText(P[0], w / 2, hh * 0.87); g.globalAlpha = 1; },
-        (g, w, hh) => { g.fillStyle = side; g.fillRect(0, 0, w, hh); g.fillStyle = '#17140F'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 40px "Courier Prime"'; g.fillText((PLAYERS[n] ? `${P[1]} SCORE · ${P[2]}` : ''), w / 2, Math.min(hh / 2, 46)); }, side);
+        (g, w, hh) => { g.fillStyle = side; g.fillRect(0, 0, w, hh); g.fillStyle = '#17140F'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 40px "Bricolage Grotesque"'; g.fillText((PLAYERS[n] ? `${P[1]} SCORE · ${P[2]}` : ''), w / 2, Math.min(hh / 2, 46)); }, side);
       b.position.set(x, h / 2, 0.3); podium.add(b);
       const [kind, tint] = pick[n - 1], k = kind === 'mammoth' ? 0.4 : kind === 'golem' ? 0.46 : 0.52;
       if (PLAYERS[n]) { const u = unit(kind, tint, first ? '#F2B23A' : '#E9E3CF', x, -0.6, k, Math.PI + (i - 2) * 0.12, podium); u.position.y = h; }
@@ -26484,7 +26527,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         const x = (i - (n - 1) / 2) * gap, g = new THREE.Group(); g.position.set(x, 0, -0.5); roster.add(g);
         const b = tile(gap - 0.14, 0.16, 2.3, (c, w, hh) => { c.fillStyle = '#F4ECD8'; c.fillRect(0, 0, w, hh); c.strokeStyle = 'rgba(23,20,15,.2)'; c.lineWidth = 6; c.setLineDash([18, 14]); c.strokeRect(20, 20, w - 40, hh - 40);
             c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.8);
-            c.font = '400 40px "Courier Prime"'; c.globalAlpha = .75; c.fillText(`${u.cost} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
+            c.font = '500 40px "Bricolage Grotesque"'; c.globalAlpha = .75; c.fillText(`${u.cost} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
         b.position.set(0, 0.08, 0.35); g.add(b);
         const w = wornOf(u.name), kind = w ? SKIN[w.id].model : M.kindOf(u), ht = M.height(kind) || 2, sc = Math.min(0.66, 2.0 / ht), copies = Math.min(u.bodies || 1, 3);
         const spots = copies === 1 ? [[0, 0]] : copies === 2 ? [[-0.28, 0.05], [0.28, -0.05]] : [[-0.32, 0.12], [0.32, 0.12], [0, -0.25]];
@@ -26508,7 +26551,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       play:    { az: 0.72, el: 0.62, zoom: 13.4, at: [0, -0.6, 0], off: [0.2, 0] },
       puzzles: { az: 0.95, el: 0.5, zoom: 6.6, at: [-2.4, 0.6, 3.6], off: [0.18, 0] },
       rules:   { az: 0.0, el: 1.45, zoom: 12.8, at: [0, 0, 0], off: [0.2, 0] },
-      units:   { az: 0.36, el: 0.62, zoom: 10.4, at: [0, 0.4, 1.0], off: [0.21, 0.08] },
+      units:   { az: 0.2, el: 0.72, zoom: 7.9, at: [0.3, 0.3, -0.4], off: [0.19, 0.04] }, // close on the roster (owner, 2026-11-08: it couldn't be read)
       ranks:   { az: 0.42, el: 0.6, zoom: 10.2, at: [0, 0.2, 0.2], off: [0.2, 0.02] },
       orders:  { az: 0.0, el: 1.25, zoom: 13.6, at: [0, 0, 0.4], off: [0.24, 0] },
       welcome: { az: 0.98, el: 0.4, zoom: 12.8, at: [0, -0.6, 0], off: [0.19, 0.0] },
@@ -26535,7 +26578,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const anchors = {
       golem: [golem, 1.35, [-190, -170]], golemW: [golem, 1.35, [-200, -80]], sniper: [sniper, 1.0, [170, 120]], mage: [mage, 1.05, [-300, 40]],
       keepYou: [keepYou, 2.3, [-260, -40]], keepFoe: [keepFoe, 2.4, [-200, -120]], vaultYou: [vaultYou, 0.7, [-230, 70]], vaultFoe: [vaultFoe, 0.7, [180, -110]], mammoth: [mammoth, 1.3, [200, -120]],
-      skeleton: [skeleton, 1.1, [80, -110]], ent: [ent, 0.6, [190, 60]],
+      skeleton: [skeleton, 1.1, [80, -110]], ent: [ent, 0.6, [190, 60]], goblins: [gobDot, 0.9, [-200, -90]],
     };
     // the battlefield note's dot: the island's right corner in the menu's view, the middle of its near edge in the plan view
     const bfMenu = new THREE.Object3D(); bfMenu.position.set(7, 0, -9); island.add(bfMenu);
@@ -26547,22 +26590,34 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const lbBtn = document.getElementById('lb-open'); body.appendChild(lbBtn); lbBtn.classList.add('lb-rank'); // (out of the standings: it hangs under the Rankings note)
     const proj = (o, h) => { const v = new THREE.Vector3(); o.getWorldPosition(v); v.y += h; v.project(cam); return [(v.x + 1) / 2 * cv.clientWidth, (1 - v.y) / 2 * cv.clientHeight]; };
     const dotSvg = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="currentColor"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>`;
-    const TOWERS = ['keepYou', 'keepFoe', 'vaultYou', 'vaultFoe'];
-    const showing = (el) => hovered && TOWERS.includes(hovered) && TOWERS.includes(el.dataset.hover) && !body.classList.contains('welcome') && viewName === 'play' ? true : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
+    // (each tower and treasury shows only its own note: owner, 2026-11-08)
+    const showing = (el, hovered) => body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
     // a label off the point (x, y): a line out to it and under it, kept on screen. Returns the line's svg
+    let placed = []; // the island notes' boxes laid out so far this frame (notes() empties it)
+    let pinFading = false, pinOverFading = false; // the note being laid out is fading; it may sit over fading boxes
     function pin(el, x, y, dx, dy, keep) {
-      const w = el.offsetWidth, k = phone() ? 0.55 : 1;
-      if (keep) {} else if (dx > 0 && x + dx * k + w > innerWidth - 24) dx = -dx; if (dx < 0 && x + dx * k - w < 24) dx = -dx;
-      const lx = x + dx * k, ly = y + dy * k, left = dx < 0;
-      el.style.left = (left ? lx - w : lx) + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
+      const w = el.offsetWidth, h = el.offsetHeight, k = phone() ? 0.55 : 1;
+      let lx, ly, left;
+      if (el._off) { [lx, ly, left] = [x + el._off[0], y + el._off[1], el._off[2]]; } // an island note keeps its spot while it's up (no jumps)
+      else {
+        if (keep) {} else if (dx > 0 && x + dx * k + w > innerWidth - 24) dx = -dx; if (dx < 0 && x + dx * k - w < 24) dx = -dx;
+        lx = x + dx * k; left = dx < 0; const L = left ? lx - w : lx;
+        ly = Math.min(Math.max(y + dy * k, h + 76), innerHeight - 12); // the box stays on screen, under the header
+        for (let n = 0; n < 8; n++) { const hit = placed.find(r => !(pinOverFading && r.f) && L < r.r + 10 && L + w > r.l - 10 && ly - h < r.b + 6 && ly > r.t - 6); if (!hit) break; ly = hit.b + 8 + h; } // and below a box it would cover
+        if (el.hasAttribute('data-hover')) el._off = [lx - x, ly - y, left];
+      }
+      const L = left ? lx - w : lx;
+      placed.push({ l: L, r: L + w, t: ly - h, b: ly, f: pinFading });
+      el.style.left = L + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
       return `<path d="M${x} ${y} L${lx} ${ly} L${left ? lx - w : lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
     }
+    addEventListener('resize', () => body.querySelectorAll('.note').forEach(n => { n._off = null; }));
     function notes() {
-      let html = '';
+      let html = ''; placed = [];
       const playR = document.getElementById('play').getBoundingClientRect(), inProf = body.classList.contains('profile');
       // Profile: where the left column's words end (right and bottom); the island's notes and the Units view keep clear of it
       let colR = 24, colB = 0, nameR = 24, kR = 0, kB = 0;
-      if (inProf) for (const el of body.querySelectorAll('#pf-name, .pf .k, .pf-opts > *, #pf-hist, #pf-back')) {
+      if (inProf) for (const el of body.querySelectorAll('#pf-name, #pf-namenote, .pf .k, .pf-opts > *, #pf-hist, #pf-back')) {
         const rg = document.createRange(), nm = el.id === 'pf-name', kk = el.matches('.pf .k'); rg.selectNodeContents(el);
         for (const r of rg.getClientRects()) if (r.width > 1) { colR = Math.max(colR, r.right + 28); colB = Math.max(colB, r.bottom); if (nm) nameR = Math.max(nameR, r.right + 28); if (kk) { kR = Math.max(kR, r.right + 12); kB = Math.max(kB, r.bottom); } } }
       // an open dropdown: notes it would cover hide while it's open, and the music player steps aside if it's under it
@@ -26576,21 +26631,34 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         return !(r.left < menuR.right + 8 && r.right > menuR.left - 8 && r.top < menuR.bottom + 8 && r.bottom > menuR.top - 8) && !crosses((ln.match(/d="([^"]*)"/) || [])[1] || '', menuR); };
       const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
       let lbOn = false;
-      for (const el of body.querySelectorAll('.note:not(.pnote)')) {
+      const rank = (n) => n.hasAttribute('data-home') ? 2 : n._off ? 1 : 0;
+      for (const el of [...body.querySelectorAll('.note:not(.pnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
-          if (on && !phone() && !body.classList.contains('music-open')) {
+          if (on && !phone() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf')) {
             const r = el.getBoundingClientRect(), ty = r.top - 4; let best = null, bd = 1e9;
             for (const o of bfDots) { const [x, y] = proj(o, 0), d = Math.hypot(x - r.right, y - ty);
-              if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd) { bd = d; best = [x, y]; } }
+              if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd && !(menuR && crosses(`M${x} ${y} L${r.right} ${ty}`, menuR))) { bd = d; best = [x, y]; } } // (never across the menu's words)
             if (best && !under(r)) { const [x, y] = best, right = x > (r.left + r.right) / 2;
               html += `<path d="M${x} ${y} L${right ? r.right : r.left} ${ty} L${right ? r.left : r.right} ${ty}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`; }
           }
           continue;
         }
-        const show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
-        el.style.display = show ? '' : 'none'; if (!show) continue;
+        let show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el, hovered) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
+        // every island note on the menu fades out over a second once it isn't wanted (owner, 2026-11-08: a quick sweep
+        // over the island leaves each note readable for a second); a pointed-at piece's note shows at once, the menu's
+        // own notes (the golem's, the skeleton's) come back in a quarter of a second
+        let op = 1, fading = false;
+        if (el.dataset.anchor !== 'btn') {
+          const home = el.hasAttribute('data-home'), t = performance.now(), dt = Math.min(100, t - (el._t || t)); el._t = t;
+          const menu = !phone() && !inPlay && !inProf && viewName === 'play' && !body.classList.contains('welcome');
+          if (!menu) el._op = show ? 1 : home ? 1 : 0;
+          else if (show && !(home && (el._op ?? 1) < 1 && t - hoverOff < 1000)) el._op = home ? Math.min(1, (el._op ?? 1) + dt / 250) : 1; // the menu's own notes wait a second after the pointer leaves before coming back
+          else { show = false; el._op = Math.max(0, (el._op ?? (home ? 1 : 0)) - dt / 1000); fading = el._op > 0; }
+          op = el._op; show = show || fading;
+        }
+        el.style.display = show ? '' : 'none'; el.style.opacity = op < 1 ? op : ''; el.style.pointerEvents = fading ? 'none' : ''; if (!show) { el._off = null; continue; }
         const w = el.offsetWidth, h = el.offsetHeight;
         if (el.dataset.anchor === 'btn') {
           // a menu word's note: the dot on the word; the label finds open space. Left-hand words run a rail up the left
@@ -26611,12 +26679,21 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         }
         const [o, hh, [dx, dy]] = bf ? (inPlay ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
         let ddy = dy; if (el.dataset.anchor === 'golemW') { const lb = body.querySelector('.logo').getBoundingClientRect().bottom; ddy = Math.max(dy, lb + 16 + el.offsetHeight - y); } // clear of the big logo
-        let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the left, above the golem's note; to the right if the logo is in the way
+        let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the right, in the sky over the far towers; else up and left, above the golem's note
           const gn = body.querySelector('.rw-note:not(.pnote)'), gr = gn && gn.style.display !== 'none' ? gn.getBoundingClientRect() : null, lg = body.querySelector('.logo').getBoundingClientRect();
-          let ly = Math.max(gr ? Math.min(y - 110, gr.top - 14) : y - 110, h + 12); sdx = -120;
-          if (x - 120 - w < lg.right + 24 && ly - h < lg.bottom + 12) { sdx = Math.min(80, innerWidth - 32 - w - x); ly = Math.max(y - 110, lg.bottom + 20 + h); }
+          let ly = Math.max(y - 110, lg.bottom + 20 + h); sdx = Math.min(80, innerWidth - 32 - w - x);
+          if (sdx < 4) { sdx = -120; ly = Math.max(gr ? Math.min(y - 110, gr.top - 14) : y - 110, h + 12); }
           ddy = ly - y; }
-        const ln = pin(el, x, y, sdx, ddy, el.dataset.anchor === 'skeleton'); if (clear(el, x, y) && offMenu(el, ln)) html += ln; else el.style.display = 'none';
+        // a pointed-at piece's note tries other spots before giving up (on a small window the first can land on PLAY)
+        const tries = el.hasAttribute('data-hover') ? [[sdx, ddy], [-sdx, ddy], [sdx, -150], [-sdx, -150], [sdx, 150], [-sdx, 150]] : [[sdx, ddy]];
+        let ln = '';
+        pinFading = fading; if (el._off) { const l = pin(el, x, y, sdx, ddy); if (clear(el, x, y) && offMenu(el, l)) ln = l; else { placed.pop(); el._off = null; } }
+        pinFading = fading;
+        for (const over of fading ? [false] : [false, true]) { // the pointed-at note always shows: over the fading boxes if it must
+          pinOverFading = over; if (ln) break;
+          for (const [tx, ty] of tries) { const l = pin(el, x, y, tx, ty, el.dataset.anchor === 'skeleton'); if (clear(el, x, y) && offMenu(el, l)) { ln = l; break; } placed.pop(); el._off = null; } }
+        pinOverFading = false;
+        if (ln) html += op < 1 ? `<g opacity="${op.toFixed(3)}">${ln}</g>` : ln; else { el.style.display = 'none'; el._off = null; }
       }
       lbBtn.style.display = lbOn ? '' : 'none';
       // Profile: the golem's note, while you can still earn its skin
@@ -26641,10 +26718,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         // over the music player only when there is no other room; then the player steps aside while the sheet is open
         const under = sx + w > mu.left - 14 && tb + h > mu.top - 14, floor = sx + w > mu.left - 14 && !under ? mu.top - 14 : innerHeight - 24, sy = Math.max(tb, Math.min(y + 90, floor - h));
         body.classList.toggle('sheet-over-music', under);
+        { const br = body.querySelector('.bf-note').getBoundingClientRect(); body.classList.toggle('sheet-over-bf', sx < br.right && sx + w > br.left && sy + h > br.top - 8); } // Change battlefield steps aside too
         sh.style.left = sx + 'px'; sh.style.top = sy + 'px';
         const ex = Math.min(Math.max(x, sx + 30), sx + w - 30), ey = sy;
         html += `<path d="M${x} ${y} L${ex} ${ey}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
-      } else { sh.hidden = true; body.classList.remove('sheet-over-music'); }
+      } else { sh.hidden = true; body.classList.remove('sheet-over-music', 'sheet-over-bf'); }
       // a unit pointed at in the roster
       const hn = document.getElementById('unote');
       if (hovered && hovered.startsWith('u:') && body.classList.contains('units') && (!picked || picked.userData.i !== +hovered.slice(2))) {
@@ -26659,29 +26737,35 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     }
 
     // ── pointing: pieces on the menu, units in the roster ──
-    const HOT = { keepYou, keepFoe, vaultYou, vaultFoe, mammoth, mage, sniper, ent };
+    const HOT = { keepYou, keepFoe, vaultYou, vaultFoe, mammoth, mage, sniper, ent, goblins };
+    // the unit models on the island: a click on one (not on its note) opens Units, as the menu's word does
+    const UNIT_MODELS = [mage, sniper, ent, golem, champ, mammoth, goblins, skeleton];
     const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
     const hitOf = (e, groups) => { ptr.set(e.clientX / cv.clientWidth * 2 - 1, -(e.clientY / cv.clientHeight) * 2 + 1); ray.setFromCamera(ptr, cam);
       const hit = ray.intersectObjects(groups, true)[0]; if (!hit) return -1; return groups.findIndex(g => { let o = hit.object; while (o && o !== g) o = o.parent; return !!o; }); };
     addEventListener('pointermove', (e) => {
       if (!dio.shown) return;
       if (pinnedHover) return;
-      let key = null;
+      if (e.target.closest && e.target.closest('#dio .note[data-hover]')) return; // over the pointed-at piece's note: keep it
+      let key = null, unitHot = false;
       if (e.target === cv && !body.classList.contains('play')) {
         if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
-        else if (viewName === 'play' && !body.classList.contains('profile')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; }
+        else if (viewName === 'play' && !body.classList.contains('profile')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; else if (!body.classList.contains('welcome') && hitOf(e, UNIT_MODELS) >= 0) unitHot = true; }
       }
-      setHover(key); cv.classList.toggle('world-hot', !!key);
+      setHover(key); cv.classList.toggle('world-hot', !!key || unitHot);
     });
-    // a piece's note shows at once (owner, 2026-11-08, second round); leaving to empty ground waits a moment, so a sweep
-    // across the gaps between pieces doesn't flash the menu's notes. Moving between the towers keeps their notes up
-    let hoverNow = null, hoverT = 0;
+    // what's pointed at shows its note at once (owner, 2026-11-08: no delay); notes no longer wanted fade out over a
+    // second (in notes()), so a sweep over the island doesn't flicker
+    let hoverNow = null, hoverOff = -1e9; // hoverOff: when the pointer last left a piece
     function setHover(key) {
-      if (key === hoverNow) return; hoverNow = key; clearTimeout(hoverT);
-      const tw = (k) => k && TOWERS.includes(k);
-      if (!key || !key.startsWith('u:')) { if (tw(key) && tw(hovered)) { hovered = key; return; } if (key) hovered = key; else hoverT = setTimeout(() => { hovered = hoverNow; }, 250); }
-      else hovered = key;
+      if (key === hoverNow) return; if (!key && hoverNow) hoverOff = performance.now(); hoverNow = hovered = key;
+      if (!key || !key.startsWith('u:')) notes();
     }
+    body.addEventListener('click', (e) => { // the main menu: a unit model opens Units (its note doesn't: notes are their own elements)
+      if (e.target !== cv || viewName !== 'play' || ['play', 'profile', 'welcome', 'units', 'ranks', 'pinned'].some(c => body.classList.contains(c))) return;
+      if (hitOf(e, UNIT_MODELS) < 0) return;
+      items.forEach(x => x.classList.toggle('on', x.dataset.cam === 'units')); viewName = 'units'; want = VIEWS.units; setMode('units'); body.classList.add('pinned'); setHover(null); cv.classList.remove('world-hot');
+    });
     body.addEventListener('click', (e) => { if (e.target !== cv || !body.classList.contains('units')) return; const i = hitOf(e, rosterHot); pickUnit(i >= 0 ? rosterHot[i] : null); });
     function pickUnit(g) {
       picked = g; const sh = document.getElementById('usheet');
@@ -26974,7 +27058,14 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     function drawProfile() {
       acctBtn.querySelector('span').textContent = A ? A.tag : 'Guest';
       $('pf-k').innerHTML = (!A ? 'Profile · no account yet' : A.google ? 'Profile · signed in with Google' : 'Profile · guest on this phone') + (A && A.dev ? ' · <span class="dev">developer mode is on</span>' : '');
-      $('pf-name').textContent = A ? A.tag : 'Nobody yet';
+      // the big name is where you rename (owner, 2026-11-08): an input dressed as the name while a change is allowed
+      const wait = A && !A.dev && A.tagNext > Date.now(), nm = $('pf-name');
+      if (!(document.activeElement && document.activeElement.id === 'pf-tag')) { // (typing stays typed)
+        if (A && !wait) { nm.innerHTML = `<input id="pf-tag" class="pf-name-in" maxlength="16" spellcheck="false" autocomplete="nickname" aria-label="Your username: click it to change it" title="Click to change your name" value="${esc(A.tag)}" ${pf.busy ? 'disabled' : ''}><span class="pf-sizer" aria-hidden="true"></span>`; fitName(); }
+        else nm.textContent = A ? A.tag : 'Nobody yet';
+      }
+      $('pf-namenote').innerHTML = !A ? '' : `<span>${A.dev ? 'Developer: click your name to change it, any time.' : wait ? `You can change your name again on ${esc(tagWhen(A.tagNext))}.` : 'Click your name to change it (once a week).'}</span><button class="pf-save" id="pf-save" hidden>Save</button>`;
+      nameSave();
       const T = A && DTITLES[A.title], pt = $('pf-title'); pt.hidden = !T;
       if (T) { pt.style.setProperty('--tc', T[1]); pt.innerHTML = `<i></i>${esc(T[0])}<i></i>`; }
       const g = GOOGLE_CLIENT_ID && !acctUi.off ? '<div id="acct-google" class="acct-google"></div>' : '';
@@ -26988,18 +27079,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         { const skins = A.skins || [], on = skins.filter(k => k.worn && SKIN[k.id]).map(k => `${SKIN[k.id].name} ${SKIN[k.id].unit}`), un = body.classList.contains('units');
           h += `<span class="lab ur">Skins</span><span class="pf-units ur"><button class="item${un ? ' on' : ''}" data-units aria-pressed="${un}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,6 97,0 100,96 4,100"/></svg>Units</button></span>
             <span class="ur"></span><p class="nr-note ur"></p>`; }
-        const wait = !A.dev && A.tagNext > Date.now(); // the server's next allowed change (once a week; developers any time)
-        h += row('Username', `<input id="pf-tag" maxlength="16" spellcheck="false" autocomplete="nickname" aria-label="Your username" value="${esc(A.tag)}" ${wait || pf.busy ? 'disabled' : ''}><button class="act" id="pf-save" hidden>Save</button>`,
-          A.dev ? 'Developer: change it any time.' : wait ? `You can change it again on ${esc(tagWhen(A.tagNext))}.` : 'You can change it once a week.', 'pf-user');
         if (!A.google && g) h += row('Keep it', g, 'Guest on this phone. Sign in with Google to keep it if you change or reset your phone. Sign-in is handled by Google.');
         h += row('Account', `<button class="act${pf.outSure ? ' sure' : ''}" id="acct-out" data-out ${dis}>${pf.outSure ? 'Tap again to log out' : 'Log out'}</button><button class="del${pf.sure ? ' sure' : ''}" id="acct-del" data-del ${dis}>${pf.sure ? 'Tap again to delete' : 'Delete account'}</button>`,
           pf.sure ? 'Deleting removes your username and sign-in for good. Past match results stay, without your name.'
           : A.google ? 'Signed in with Google. Sign in on another phone to play as the same player.'
           : pf.outSure ? 'A guest can’t log back in: sign up with Google first to keep this username and your results.' : 'Log out of this phone. A guest can’t log back in.');
       } else h += row('Account', `<button class="act primary" id="acct-guest" data-guest ${dis}>Play as a guest</button>${g}`, `No account needed to play. Make a guest to get a username on this phone${g ? ', or sign in with Google to keep it on any phone' : ''}.`);
-      const inp = document.activeElement && document.activeElement.id === 'pf-tag' ? $('pf-tag').value : null; // typing stays typed
       $('pf-opts').innerHTML = body.classList.contains('profile') ? h : ''; $('pf-msg').textContent = pf.msg; // (only while it's open: no stray #acct-google)
-      if (inp != null && $('pf-tag')) { $('pf-tag').value = inp; $('pf-tag').focus(); $('pf-save').hidden = inp.trim() === A.tag || inp.trim().length < 2; }
       if (g && $('acct-google') && body.classList.contains('profile')) { // Google's own button; afterwards the profile shows the account
         acctUi.after = async () => { pfMsg('Signed in with Google.'); if (phase === 'start') drawHome(); };
         acctGoogleButton('signin_with');
@@ -27027,7 +27113,6 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const b = e.target.closest('button'); if (!b || b.disabled) return;
       if (b.dataset.title !== undefined) pfDo(async () => { const r = await acctCall('title', { title: b.dataset.title }, true); if (r.status !== 200) return acctFail(r); acctTake(r); return 'Title saved.'; });
       else if (b.hasAttribute('data-units')) profileUnits(!body.classList.contains('units'));
-      else if (b.id === 'pf-save') pfSave();
       else if (b.hasAttribute('data-out')) { // a guest taps twice (with the warning); then the welcome screen, as the old Log out
         if (!A.google && !pf.outSure) { pf.outSure = true; return drawProfile(); }
         pf.outSure = false; closeProfile(); acctLogOut();
@@ -27035,8 +27120,14 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       else if (b.hasAttribute('data-del')) { if (!pf.sure) { pf.sure = true; return drawProfile(); } pf.sure = false; pfDo(async () => { await acctDelete(); return acctUi.msg; }); }
       else if (b.hasAttribute('data-guest')) pfDo(async () => { const r = await acctCall('guest', {}); if (r.status !== 200) return acctFail(r); acctTake(r); welcomed(); return 'You’re playing as a guest on this phone.'; });
     });
-    $('pf-opts').addEventListener('input', (e) => { if (e.target.id === 'pf-tag') $('pf-save').hidden = e.target.value.trim() === A.tag || e.target.value.trim().length < 2; });
-    $('pf-opts').addEventListener('keydown', (e) => { if (e.target.id === 'pf-tag' && e.key === 'Enter' && !$('pf-save').hidden) pfSave(); if (e.key === 'Escape') e.stopPropagation(); });
+    // the name's input: as wide as what's typed; Save shows once it's a different name; Enter saves, Esc puts it back
+    function fitName() { const i = $('pf-tag'), z = $('pf-name').querySelector('.pf-sizer'); if (!i || !z) return; z.textContent = i.value || ' '; i.style.width = (z.offsetWidth + 8) + 'px'; }
+    function nameSave() { const i = $('pf-tag'), b = $('pf-save'); if (b) b.hidden = !i || !A || i.value.trim() === A.tag || i.value.trim().length < 2; }
+    $('pf-name').addEventListener('input', (e) => { if (e.target.id === 'pf-tag') { fitName(); nameSave(); } });
+    $('pf-name').addEventListener('keydown', (e) => { if (e.target.id !== 'pf-tag') return;
+      if (e.key === 'Enter' && !$('pf-save').hidden) pfSave();
+      if (e.key === 'Escape') { e.stopPropagation(); e.target.value = A.tag; fitName(); nameSave(); e.target.blur(); } });
+    $('pf-namenote').addEventListener('click', (e) => { if (e.target.closest('#pf-save')) pfSave(); });
 
     // Profile opens over the menu; the account is refreshed from the server (the session rotates daily, titles and skins may be new)
     // where Profile was opened from, for its Back: the Play screen, Rooms (and New room), or the menu
@@ -27341,7 +27432,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }
       drawSettings();
     });
-    document.addEventListener('fullscreenchange', () => { if (dd.open === 'settings') drawSettings(); }); // (Esc leaves full screen too)
+    // the full-screen icon next to Settings (owner, 2026-11-08)
+    const fsBtn = $('dio-fs'); fsBtn.hidden = !document.fullscreenEnabled;
+    const fsDraw = () => { const on = !!document.fullscreenElement; fsBtn.setAttribute('aria-pressed', String(on)); fsBtn.setAttribute('aria-label', on ? 'Leave full screen' : 'Full screen'); fsBtn.title = on ? 'Leave full screen' : 'Full screen'; };
+    fsBtn.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch (er) {} });
+    fsDraw();
+    document.addEventListener('fullscreenchange', () => { fsDraw(); if (dd.open === 'settings') drawSettings(); }); // (Esc leaves full screen too)
     $('dd-settings').addEventListener('input', (e) => {
       const k = e.target.dataset.vol; if (!k) return;
       const v = +e.target.value; e.target.style.setProperty('--v', v + '%'); e.target.nextElementSibling.textContent = v;
@@ -27519,7 +27615,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
     dioPaint();
     if (dio.shown) resume();
-    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, proj(g, 0.5)])); } // the tests: the roster standing; show / hide the home by hand
+    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); } // the tests: the roster standing; show / hide the home by hand
   }
 
   const joinCode = (qs.get('join') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');

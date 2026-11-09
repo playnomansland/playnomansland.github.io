@@ -42,14 +42,47 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
 - Puzzles' note (the left-hand menu notes) sits above Back to match when it shows.
 - The player redraws when the home shows and on every `dioPaint` (the owner saw a wrong song after a match; not
   reproduced here after a vs-computer round, so ask what they saw if it happens again).
+- Third round: a full-screen icon after Settings (`#dio-fs`, toggles full screen; hidden where the browser can't); the
+  skeleton's hint reads "Hover over stuff on the island with your mouse!" and goes up-right of it (left only without
+  room); a note's box stays on screen under the header and moves below a box it would cover (`placed` in `pin`);
+  pointing at a piece lays the notes out at once (`notes()` from `setHover`, not on the next frame).
+- Fourth round: no hover delay either way (`setHover`); the golem's and the skeleton's notes (`data-home`) fade out
+  over 1 s while something is pointed at and back in over 0.25 s (opacity drawn per frame in `notes()`, its line in a
+  `<g opacity>`; a fading note doesn't push others). A pointed-at piece's note tries six spots before hiding (the Fire
+  Mage's first spot lands on PLAY on small windows). Goblin Swarm note (the five goblins are one group, `goblins`).
+  A click on a unit model (`UNIT_MODELS`) on the main menu opens Units; notes are their own elements, so a click on
+  one doesn't. `#dio` has `user-select: none` (inputs excepted).
+- Fifth round: every island note fades out over 1 s once it isn't wanted (a quick sweep leaves each readable for a
+  second); a pointed-at note shows at once. A hover note keeps the spot it got when it appeared (`el._off`, offsets
+  from its dot) until it's gone; the menu's own notes are laid out first, then notes already up, then new ones, each
+  avoiding the boxes before it; the pointed-at note may sit over fading boxes when there's no free spot.
+- Sixth round: the goblin swarm has one invisible hit box (a `colorWrite: false` box in the `goblins` group); each
+  tower and treasury shows only its own note (the four-at-once group is gone).
+- Seventh round: the golem's and the skeleton's notes wait 1 s after the pointer leaves a piece (`hoverOff`) before
+  fading back in (0.25 s); meanwhile they keep fading out.
+- Eighth round: the typed (Courier Prime) text is bold everywhere in the Diorama, its opacity a step higher (as PLAY's
+  tagline; Courier Prime is monospace, so widths don't change). Full leaderboard is a saffron stencil button. Profile:
+  the big name is the username field (`#pf-tag` inside `#pf-name`, sized by `.pf-sizer`), the Username row is gone,
+  the line under the name says when it can change and holds Save (`#pf-save`); Enter saves, Esc puts it back.
+- Ninth round: Units' camera closes in on the roster (`VIEWS.units`); Change battlefield is a button like the big ones
+  (`.bf-btn`: stencil words on the saffron board, an ink board on the Play screen), the battlefield's name above it, its
+  bottom on the music player's bottom line (both 40 px up); its line never crosses the menu's words. Shown to the owner,
+  not built: the small text in Chakra Petch instead of Courier Prime (a one-line change: `--type` on `#dio`).
+- Tenth round: the small text is Bricolage Grotesque (the owner's pick of eight, 2026-11-08): `--type` in
+  `src/diorama.css`, the sheets' `--font-data`, the friend banners, and the names painted on the roster tiles and the
+  podium; Courier Prime is no longer loaded. A unit sheet over Change battlefield hides the button and its line.
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
+
+**Monday 2026-11-09, start here (owner):** the golem's "Invite a friend" note is clickable (it opens Rewards) but looks
+like the notes that aren't: give it a small saffron button, as Change battlefield got (the owner said yes, for Monday).
+Then the PC launch if the owner says go (item 3). Everything under "Done from the owner's second trial notes" is live
+on `main` behind `?ui=diorama` (last commit of 2026-11-08: the small text in Bricolage Grotesque).
 
 **Open, in order:**
 1. **Ask the owner to try again** at `?ui=diorama` (list below) and fix what they find.
-2. **"Older player still shows up":** fixed for the menu (the match's panel closes at home). In a match the HUD's music
-   button still opens the game's old panel (`openPlaylist`, `mp-pop`); the owner may want it in the Diorama's look
-   (restyle it under `html.diorama`, as the sheets) or the Diorama's list. Ask.
-3. **The PC launch** when the owner says so: `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`, push to `main`
+2. **The in-match music panel:** the owner designs it with the new Battle screen, in that separate session (answered
+   2026-11-08). Leave the game's panel (`openPlaylist`, `mp-pop`) as it is here.
+3. **The PC launch** when the owner says so (planned for 2026-11-08 if all goes well, otherwise Monday 2026-11-09): `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`, push to `main`
    (the Diorama on computers, the old UI on phones and tablets). Never commit a non-`classic` build otherwise.
 4. **Designs the owner wants before the full launch:** Puzzles, How to play, and the room you wait in (still the
    game's sheets / screens, restyled).
