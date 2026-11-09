@@ -1235,6 +1235,79 @@ html.diorama.pcwide .sheet .seg button { padding: 6px 11px; border: 0; backgroun
 html.diorama.pcwide .sheet .seg button::before { content: none; }
 html.diorama.pcwide .sheet .seg button[aria-pressed="true"] { background: #27393D; color: #E6B84A; }
 
+/* ── the music player in a match (the owner, 2026-11-09: "match the one on the homescreen more"): the game's own
+   player and playlists (openPlaylist's dock: the map's Adaptive music, Menu playlist, All music, your own, + New), drawn
+   as the home screen's: type on the scenery bottom right over a soft ink shade, no glass. Now playing, the song and its
+   artist, a thin line, small controls; the list grows up out of it, right-aligned, the tabs as words ── */
+html.diorama.pcwide #mp-pop.dock { inset: 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; animation: none; }
+html.diorama.pcwide #mp-pop.dock::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(46% 80% at 100% 100%, rgba(10, 13, 12, .9), rgba(10, 13, 12, .55) 55%, transparent 80%); animation: mp-fade .25s ease; }
+html.diorama.pcwide #mp-pop.dock .mp-dock { left: auto; right: 40px; bottom: 30px; transform: none; width: min(460px, calc(100vw - var(--dpw, 340px) - 80px)); height: auto; max-height: calc(100vh - 150px);
+  display: flex; flex-direction: column; align-items: stretch; pointer-events: auto; color: #F4ECD8; text-align: right;
+  text-shadow: 0 0 3px rgba(10,13,12,.95), 0 0 9px rgba(10,13,12,.8); font: 700 14px "Bricolage Grotesque", system-ui, sans-serif; }
+/* the player */
+html.diorama.pcwide #mp-pop.dock .mplayer { width: 100%; padding: 0; gap: 7px; justify-items: end; border: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; text-align: right; animation: none; }
+html.diorama.pcwide #mp-pop.dock .mp-now { display: grid; grid-template-columns: auto; justify-items: end; gap: 3px; width: auto; padding: 0; border: 0; background: none; text-align: right; cursor: pointer; }
+html.diorama.pcwide #mp-pop.dock .mp-now:hover { background: none; }
+html.diorama.pcwide #mp-pop.dock .mp-disc, html.diorama.pcwide #mp-pop.dock .mp-up { display: none; }
+html.diorama.pcwide #mp-pop.dock .mp-meta { justify-items: end; gap: 3px; }
+html.diorama.pcwide #mp-pop.dock .mp-label { font: 700 14px "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: 0; text-transform: none; color: #F4ECD8; opacity: 1; }
+html.diorama.pcwide #mp-pop.dock .mp-title { font: 700 18px "Bricolage Grotesque", system-ui, sans-serif; color: #F4ECD8; max-width: 420px; }
+html.diorama.pcwide #mp-pop.dock .mp-prog { width: 240px; height: 2px; margin: 2px 0; border-radius: 0; background: rgba(244, 236, 216, .25); }
+html.diorama.pcwide #mp-pop.dock .mp-prog i { background: #F4ECD8; box-shadow: none; }
+html.diorama.pcwide #mp-pop.dock .mp-row { justify-content: flex-end; gap: 14px; }
+html.diorama.pcwide #mp-pop.dock .mp-btn { width: 30px; height: 30px; border: 0; border-radius: 0; background: none; box-shadow: none; color: #F4ECD8; opacity: .85; filter: drop-shadow(0 0 4px rgba(10,13,12,.9)); }
+html.diorama.pcwide #mp-pop.dock .mp-btn:hover { opacity: 1; color: #F4ECD8; background: none; }
+html.diorama.pcwide #mp-pop.dock .mp-btn svg { width: 15px; height: 15px; }
+html.diorama.pcwide #mp-pop.dock .mp-btn.mp-main { width: 30px; height: 30px; color: #F4ECD8; background: none; border: 0; box-shadow: none; }
+html.diorama.pcwide #mp-pop.dock .mp-btn.mp-main svg { width: 17px; height: 17px; }
+html.diorama.pcwide #mp-pop.dock .mp-btn.mp-mode { opacity: .5; }
+html.diorama.pcwide #mp-pop.dock .mp-btn.mp-mode[aria-pressed="true"] { opacity: 1; color: #F2B23A; }
+/* the playlists, above it */
+html.diorama.pcwide #mp-pop.dock .mp-panel { flex: 1 1 auto; min-height: 0; margin-bottom: 22px; display: flex; flex-direction: column; gap: 14px; animation: none; }
+html.diorama.pcwide #mp-pop.dock .mp-tabrow { justify-content: flex-end; align-items: center; gap: 14px; margin: 0; padding: 0; }
+html.diorama.pcwide #mp-pop.dock .mp-tabs { flex: 0 1 auto; justify-content: flex-end; gap: 16px; padding: 0; -webkit-mask-image: none; mask-image: none; }
+html.diorama.pcwide #mp-pop.dock .mp-tab { height: auto; padding: 2px 0; border: 0; border-radius: 0; background: none; box-shadow: none; transform: none; gap: 5px; color: #F4ECD8; opacity: .55;
+  font: 700 12px "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+html.diorama.pcwide #mp-pop.dock .mp-tab::before, html.diorama.pcwide #mp-pop.dock .mp-tab::after { content: none; }
+html.diorama.pcwide #mp-pop.dock .mp-tab:hover { opacity: 1; transform: none; }
+html.diorama.pcwide #mp-pop.dock .mp-tab[aria-selected="true"] { height: auto; opacity: 1; color: #F4ECD8; background: none; box-shadow: none; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+html.diorama.pcwide #mp-pop.dock .mp-tab.on .mp-eq { color: #F2B23A; }
+html.diorama.pcwide #mp-pop.dock .mp-tab.mp-add { color: #F2B23A; opacity: 1; font-size: 14px; }
+html.diorama.pcwide #mp-pop.dock .mp-x { width: 24px; height: 24px; margin: 0; border: 0; background: none; color: #F4ECD8; opacity: .7; }
+html.diorama.pcwide #mp-pop.dock .mp-x:hover { opacity: 1; }
+html.diorama.pcwide #mp-pop.dock .mp-body { flex: 1 1 auto; min-height: 0; gap: 10px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+html.diorama.pcwide #mp-pop.dock .mp-body::before, html.diorama.pcwide #mp-pop.dock .mp-body::after { content: none; }
+html.diorama.pcwide #mp-pop.dock .mp-head { flex-direction: row-reverse; justify-content: flex-start; gap: 16px; padding: 0; }
+html.diorama.pcwide #mp-pop.dock .mp-head::before, html.diorama.pcwide #mp-pop.dock .mp-head::after { content: none; }
+html.diorama.pcwide #mp-pop.dock .mp-hd { justify-items: end; text-align: right; }
+html.diorama.pcwide #mp-pop.dock .mp-hd b { font: 700 13px "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #F4ECD8; }
+html.diorama.pcwide #mp-pop.dock .mp-hd small { font: 500 12px "Bricolage Grotesque", system-ui, sans-serif; color: rgba(244, 236, 216, .75); }
+html.diorama.pcwide #mp-pop.dock .mp-acts { display: inline-flex; flex-direction: row-reverse; gap: 14px; }
+html.diorama.pcwide #mp-pop.dock :is(.mp-pill, .mp-ghost) { height: auto; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: #F4ECD8; opacity: .85; gap: 6px;
+  font: 700 12px "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; text-shadow: inherit; }
+html.diorama.pcwide #mp-pop.dock :is(.mp-pill, .mp-ghost):hover:not([disabled]) { opacity: 1; box-shadow: none; text-decoration: underline; text-underline-offset: 4px; }
+html.diorama.pcwide #mp-pop.dock .mp-pill { color: #F2B23A; opacity: 1; }
+html.diorama.pcwide #mp-pop.dock .mp-ghost.sure { color: #FF8F78; opacity: 1; }
+html.diorama.pcwide #mp-pop.dock .mp-songs { display: grid; justify-items: end; gap: 1px; overflow-y: auto; scrollbar-width: none; padding: 0 2px 0 14px; }
+html.diorama.pcwide #mp-pop.dock .mp-songs::-webkit-scrollbar { display: none; }
+html.diorama.pcwide #mp-pop.dock .mp-song { position: relative; isolation: isolate; display: flex; flex-direction: row-reverse; align-items: baseline; justify-content: flex-start; gap: 14px; width: auto; max-width: 100%; padding: 3px 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: #F4ECD8; opacity: .62; text-align: right; }
+html.diorama.pcwide #mp-pop.dock .mp-song::before { content: ""; position: absolute; inset: 0 -10px 0 -14px; z-index: -1; background: rgba(23, 20, 15, .55); clip-path: polygon(0 8%, 98% 0, 100% 90%, 2% 100%); opacity: 0; transition: opacity .12s ease; }
+html.diorama.pcwide #mp-pop.dock .mp-song:hover { opacity: 1; background: none; }
+html.diorama.pcwide #mp-pop.dock .mp-song:hover::before { opacity: 1; }
+html.diorama.pcwide #mp-pop.dock .mp-song[aria-pressed="true"] { opacity: 1; }
+html.diorama.pcwide #mp-pop.dock .mp-song[aria-pressed="true"] .mp-n { color: #F2B23A; }
+html.diorama.pcwide #mp-pop.dock .mp-n { flex: none; width: auto; min-width: 22px; font: 700 13px "Bricolage Grotesque", system-ui, sans-serif; color: #F4ECD8; opacity: .85; text-align: right; }
+html.diorama.pcwide #mp-pop.dock .mp-n em { font: 700 10px "Bricolage Grotesque", system-ui, sans-serif; font-style: normal; letter-spacing: .08em; text-transform: uppercase; padding: 0; border: 0; background: none; color: #F2B23A; }
+html.diorama.pcwide #mp-pop.dock .mp-st { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 500 16px "Bricolage Grotesque", system-ui, sans-serif; }
+html.diorama.pcwide #mp-pop.dock .mp-st b { font-weight: 700; color: #F4ECD8; }
+html.diorama.pcwide #mp-pop.dock .mp-st small { font: 500 16px "Bricolage Grotesque", system-ui, sans-serif; color: rgba(244, 236, 216, .75); }
+html.diorama.pcwide #mp-pop.dock .mp-st small::before { content: " by "; }
+html.diorama.pcwide #mp-pop.dock .mp-song > :not(.mp-n):not(.mp-st) { flex: none; }
+html.diorama.pcwide #mp-pop.dock .mp-empty { font: 500 14px "Bricolage Grotesque", system-ui, sans-serif; opacity: .8; }
+html.diorama.pcwide #mp-pop.dock .mp-name { align-self: flex-end; width: 260px; border: 0; border-bottom: 1px dashed rgba(244,236,216,.5); border-radius: 0; background: none; color: #F4ECD8; text-align: right; font: 700 18px "Bricolage Grotesque", system-ui, sans-serif; }
+html.diorama.pcwide #mp-pop.dock .mp-foot { display: flex; flex-direction: row-reverse; justify-content: space-between; gap: 12px; align-items: center; }
+html.diorama.pcwide #mp-pop.dock .mp-where { font: 500 12px "Bricolage Grotesque", system-ui, sans-serif; opacity: .75; }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -17621,7 +17694,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · f8c9903'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 7bc12d2'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
