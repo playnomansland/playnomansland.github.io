@@ -1105,7 +1105,7 @@ html.dfly .hud, html.dfly .panel, html.dfly #wrap > .pick, html.dfly #wrap > .ov
 html.diorama.pcwide .hud, html.diorama.pcwide .panel, html.diorama.pcwide #wrap > .pick, html.droom-on .knote, html.droom-on .dlines { transition: opacity .45s ease; }
 
 /* the panels cut from the battlefield's scenery (dioPatterns in the page; html.dpat, a trial on Forest Glade): the
-   picks' options and details, the coach and task lines and the sheets in a match, each a different patch, darkened as
+   picks' options and details, the coach and task lines, each a different patch, darkened as
    the scrim darkens the scenery beside it. Never the unit cards in the shop (the owner, 2026-11-09). Picked: the shard */
 html.dpat.pcwide { --dpshade: linear-gradient(rgba(7, 10, 7, .58), rgba(7, 10, 7, .58)); }
 html.dpat.pcwide .pick .opt::before { background: var(--dpshade), var(--dpat0) center / cover, #0E120D; }
@@ -1114,11 +1114,35 @@ html.dpat.pcwide .pick .opt:nth-child(3)::before { background: var(--dpshade), v
 html.dpat.pcwide .pick .opt:nth-child(4)::before { background: var(--dpshade), var(--dpat3) center / cover, #0E120D; }
 html.dpat.pcwide .pick .det, html.dpat.pcwide #wrap > .task { background: var(--dpshade), var(--dpat4) center / cover, #0E120D; }
 html.dpat.pcwide #wrap > .coach { background: var(--dpshade), var(--dpat5) center / cover, #0E120D; }
-html.dpat.pcwide .sheet { background: linear-gradient(rgba(7, 10, 7, .66), rgba(7, 10, 7, .66)), var(--dpat3) center / cover, #0E120D; }
 html.dpat.pcwide .pick .opt:hover:not(:disabled):not([aria-pressed="true"])::before { filter: brightness(1.35); }
 html.dpat.pcwide .pick .opt[aria-pressed="true"]::before { background: #F2B23A; filter: none; }
 html.dpat.pcwide .pick .opt { text-shadow: 0 0 3px rgba(7,10,7,.9), 0 0 8px rgba(7,10,7,.7); }
 html.dpat.pcwide .pick .opt[aria-pressed="true"] { text-shadow: none; }
+
+/* the smaller buttons in a match: the tile slab (the owner's pick, 2026-11-09: "A and B together"), a straight plate
+   with the board tile's clipped top corners and a dark base under it, as if lifted out of the ground; pressed, it sinks.
+   Saffron for a buy (Unlock, a skill, Level up), the game's card colour for the rest (Loan, Undo all, Sell...). The big
+   one on each screen (READY, CHOOSE, NEXT ROUND, START MATCH) keeps the skewed shard */
+html.diorama.pcwide .sheet .btn:not(#close), html.diorama.pcwide .panel .xrow .btn.small {
+  position: relative; isolation: isolate; margin: 0 0 6px; padding: 7px 12px 3px; border: 0; border-radius: 0; background: none; box-shadow: none;
+  color: #F4ECD8; opacity: 1; text-shadow: none; font: 700 15px/1 var(--dstencil); text-transform: uppercase; letter-spacing: 0; transition: transform .1s ease; }
+html.diorama.pcwide .sheet .btn:not(#close)::before, html.diorama.pcwide .panel .xrow .btn.small::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; background: #0D1315; box-shadow: none;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%, 0 6px); }
+html.diorama.pcwide .sheet .btn:not(#close)::after, html.diorama.pcwide .panel .xrow .btn.small::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 5px; z-index: -1; background: #04070A; clip-path: polygon(0 0, 100% 0, calc(100% - 5px) 100%, 5px 100%); transition: height .1s ease; }
+html.diorama.pcwide .sheet .btn.primary:not(#close), html.diorama.pcwide .panel .xrow .btn.small.primary, html.diorama.pcwide .panel .xrow .btn.small[aria-pressed="true"] { color: #17140F; }
+html.diorama.pcwide .sheet .btn.primary:not(#close)::before, html.diorama.pcwide .panel .xrow .btn.small.primary::before, html.diorama.pcwide .panel .xrow .btn.small[aria-pressed="true"]::before {
+  background: linear-gradient(#F7C25A, #F2B23A 60%); clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%, 0 6px); }
+html.diorama.pcwide .sheet .btn.primary:not(#close)::after, html.diorama.pcwide .panel .xrow .btn.small.primary::after, html.diorama.pcwide .panel .xrow .btn.small[aria-pressed="true"]::after { background: #0D1315; }
+html.diorama.pcwide .sheet .btn:not(#close):hover:not(:disabled), html.diorama.pcwide .panel .xrow .btn.small:hover:not(:disabled) { transform: translateY(-1px); }
+html.diorama.pcwide .sheet .btn:not(#close):hover:not(:disabled)::before, html.diorama.pcwide .panel .xrow .btn.small:not(.primary):not([aria-pressed="true"]):hover:not(:disabled)::before { background: #18242A; }
+html.diorama.pcwide .sheet .btn.primary:not(#close):hover:not(:disabled)::before { background: linear-gradient(#FFD06A, #F7BC45 60%); }
+html.diorama.pcwide .sheet .btn:not(#close):active:not(:disabled), html.diorama.pcwide .panel .xrow .btn.small:active:not(:disabled) { transform: translateY(4px); }
+html.diorama.pcwide .sheet .btn:not(#close):active:not(:disabled)::after, html.diorama.pcwide .panel .xrow .btn.small:active:not(:disabled)::after { height: 1px; }
+html.diorama.pcwide .sheet .btn:not(#close):disabled, html.diorama.pcwide .panel .xrow .btn.small:disabled { opacity: .4; }
+html.diorama.pcwide .panel .xrow { gap: 4px 8px; margin-left: 0; }
+html.diorama.pcwide .sheet .btn:not(#close) small, html.diorama.pcwide .sheet .btn:not(#close) .hint { color: inherit; }
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -17489,7 +17513,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '8 Nov 2026 · 9d49aa1'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '8 Nov 2026 · 910c7cc'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
