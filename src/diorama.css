@@ -1173,3 +1173,4 @@ html.diorama.pcwide #mp-pop.dock .mp-empty { font: 500 14px "Bricolage Grotesque
 html.diorama.pcwide #mp-pop.dock .mp-name { align-self: flex-end; width: 260px; border: 0; border-bottom: 1px dashed rgba(244,236,216,.5); border-radius: 0; background: none; color: #F4ECD8; text-align: right; font: 700 18px "Bricolage Grotesque", system-ui, sans-serif; }
 html.diorama.pcwide #mp-pop.dock .mp-foot { display: flex; flex-direction: row-reverse; justify-content: space-between; gap: 12px; align-items: center; }
 html.diorama.pcwide #mp-pop.dock .mp-where { font: 500 12px "Bricolage Grotesque", system-ui, sans-serif; opacity: .75; }
+html.diorama.pcwide .panel .speeds button[aria-pressed="true"]::before, html.diorama.pcwide .panel .speeds button.offer::before { content: none; display: none; }
