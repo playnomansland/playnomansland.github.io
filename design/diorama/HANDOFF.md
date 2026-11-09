@@ -447,3 +447,8 @@ mirrors the column, its scrim, READY, the clock, the room's START MATCH, the mus
 frames the board in what's left. Also fixed: on short windows (laptops) the column's rows collapsed onto each other (a
 flex column squeezing them); they keep their size now, the column scrolls and ends above READY, with a tighter layout
 under 860 px high.
+- **Music in a match (2026-11-09):** the owner asked "where is the music player?". It is now always in the top line
+  under the round (`dioMusicLine`): the song and its artist (a click opens the playlists, the home-style dock beside
+  the column), Back, Play / Pause, Next. The "Music" link is hidden under the Diorama. Not at a bottom corner, where it
+  would cover the board's tiles. **+1 deployment** reads "+1 deployment, a gold coin, the cost" (the owner). The right
+  panel sits closer to the edge.

@@ -1210,3 +1210,31 @@ html.dright.diorama.pcwide #mp-pop.dock .mp-dock { right: calc(var(--dpw, 340px)
 html.dright.diorama.pcwide #mp-pop.dock::before { background: radial-gradient(46% 80% at 70% 100%, rgba(10, 13, 12, .9), rgba(10, 13, 12, .55) 55%, transparent 80%); }
 html.dright.diorama.pcwide .talk-fab { left: 32px; top: 112px; }
 html.dright.diorama.pcwide .sheet-back { padding-left: 24px; padding-right: calc(var(--dpw, 340px) + 28px); }
+
+/* +1 deployment, the coin, the cost (the owner, 2026-11-09) */
+html.diorama.pcwide .panel .trow .chip2 { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+html.diorama.pcwide .panel .trow .chip2 .coin { flex: none; margin-left: 2px; filter: drop-shadow(0 0 3px rgba(23,20,15,.8)); }
+
+/* the music line in the top line, always there in a match (dioMusicLine): the song and its artist, Back, Play / Pause,
+   Next, in the home player's type; the "Music" link it replaces is hidden */
+html.diorama.pcwide .hud .round #music-btn { display: none !important; }
+.dmus { display: none; }
+html.diorama.pcwide .hud .round .dmus { order: 4; flex: 0 0 100%; display: inline-flex; justify-content: center; align-items: center; gap: 6px; margin-top: 4px; }
+html.diorama.pcwide .dmus .dm-t { max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 4px 0 0; border: 0; background: none; color: #F4ECD8; text-shadow: var(--dhalo);
+  font: 500 14px "Bricolage Grotesque", system-ui, sans-serif; cursor: pointer; }
+html.diorama.pcwide .dmus .dm-t b { font-weight: 700; }
+html.diorama.pcwide .dmus .dm-t em { font-style: normal; opacity: .75; }
+html.diorama.pcwide .dmus .dm-t .dm-n { color: #F2B23A; margin-right: 6px; font-weight: 700; }
+html.diorama.pcwide .dmus .dm-t:hover b { text-decoration: underline; text-underline-offset: 3px; }
+html.diorama.pcwide .dmus .dm-b { width: 24px; height: 24px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: #F4ECD8; opacity: .8; filter: drop-shadow(0 0 3px rgba(10,13,12,.9)); }
+html.diorama.pcwide .dmus .dm-b:hover { opacity: 1; }
+html.diorama.pcwide .dmus .dm-b svg { width: 12px; height: 12px; }
+/* the panel on the right: closer to the edge (the owner, 2026-11-09: "bring it in a bit more to the side") */
+html.dright.diorama.pcwide .panel { padding-left: 26px; padding-right: 16px; }
+html.dright.diorama.pcwide .panel #ready, html.dright.diorama.pcwide .panel #fight { right: 12px; }
+html.dright.diorama.pcwide .droom .rgo { right: 14px; }
+/* the clock's place also says "picking towers" and the like: one line, never under READY */
+html.diorama.pcwide .panel .trow .timer { width: auto; white-space: nowrap; }
+html.dright.diorama.pcwide .panel .trow .timer { right: calc(var(--dpw, 340px) - 90px); }
+html.diorama.pcwide .dmus .dm-t { display: inline-flex; align-items: baseline; gap: 5px; }
+html.diorama.pcwide .dmus .dm-t .dm-n { margin-right: 1px; }
