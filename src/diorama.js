@@ -13,6 +13,7 @@
         done: () => { if (dio.shown) return; $('dio').hidden = true; dio.api.pause(); } });
       return;
     }
+    if (!on && dio.api && dio.api.flying && dio.api.flying()) return; // the island is flying in: it hides when it lands
     $('dio').hidden = !on;
     if (on === dio.shown) return;
     dio.shown = on;
