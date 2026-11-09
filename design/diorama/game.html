@@ -501,6 +501,11 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .vol input::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 20px; margin-top: -9px; border: 0; background: #F2B23A; clip-path: polygon(0 8%, 90% 0, 100% 92%, 10% 100%); }
 #dio .vol input::-moz-range-thumb { width: 14px; height: 20px; border: 0; border-radius: 0; background: #F2B23A; clip-path: polygon(0 8%, 90% 0, 100% 92%, 10% 100%); }
 #dio .vol input:disabled { opacity: .35; cursor: not-allowed; }
+#dio .vol .spk { flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -3px -4px -3px -6px; padding: 0; color: var(--cream); background: none; border: 0; cursor: pointer; transition: color .15s ease, transform .15s ease; }
+#dio .vol .spk svg { width: 20px; height: 20px; }
+#dio .vol .spk:hover, #dio .vol .spk:focus-visible { color: #F2B23A; transform: rotate(-4deg) scale(1.08); outline: none; }
+#dio .vol.off .spk { opacity: .6; }
+#dio .vol.off input, #dio .vol.off b { opacity: .4; }
 #dio .vol b { width: 28px; text-align: right; font: 700 13px var(--type); }
 #dio .set-foot { display: flex; gap: 22px; margin-top: 18px; padding-top: 12px; border-top: 1px dashed rgba(244,236,216,.2); }
 /* Friends */
@@ -767,6 +772,12 @@ html.diorama .sheet .seg button[aria-pressed="true"] { opacity: 1; color: #17140
 html.diorama .sheet .seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
 html.diorama .sheet input:not([type="range"]), html.diorama .sheet textarea, html.diorama .sheet select { border: 0; border-bottom: 1px dashed rgba(244, 236, 216, .5); border-radius: 0; background: none; color: #F4ECD8; font: 500 16px var(--font-body); }
 html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35); padding: 8px; }
+/* in-match Settings: Music and Sound effects are a speaker before the slider, as the menu's Settings (owner, 2026-11-09) */
+html.diorama .sheet .volrow .spk { flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -4px -2px -4px 0; padding: 0; color: #F4ECD8; background: none; border: 0; cursor: pointer; transition: color .15s ease, transform .15s ease; }
+html.diorama .sheet .volrow .spk svg { width: 20px; height: 20px; }
+html.diorama .sheet .volrow .spk:hover, html.diorama .sheet .volrow .spk:focus-visible { color: #F2B23A; transform: rotate(-4deg) scale(1.08); outline: none; }
+html.diorama .sheet .volrow.off .spk { opacity: .6; }
+html.diorama .sheet .volrow.off input, html.diorama .sheet .volrow.off .num { opacity: .4; }
 html.diorama .sheet table { font-family: var(--font-data); }
 html.diorama .sheet details > summary { font-family: var(--font-data); }
 html.diorama .sheet .btn small, html.diorama .sheet .btn .hint, html.diorama .sheet .btn em { text-transform: none; letter-spacing: 0; font: 400 13px/1.4 var(--font-data); }
@@ -17515,6 +17526,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     battle: 'battle-start', release: 'release', drop: 'drop-unit', evolve: 'evolve', toMenu: 'to-menu', level: 'level-up',
     menu: 'menu-click', nope: 'nope', pressBoard: 'press-board', button: 'button', pressCard: 'press-card', sell: 'sell',
     undo: 'undo', skill: 'skill',
+    ready: 'ready', room: 'room', hover: 'hover', pick: 'pick', // (2026-11-09) Ready, Create / Join room, a menu button under the mouse, the tower or leader pick
   };
   const SFX_GAIN = { button: 0.85, menu: 0.85, battle: 0.85 }; // these a little quieter than the rest
   const SFX_VARY = new Set(['button', 'menu', 'pressBoard', 'pressCard', 'release', 'drop']); // frequent ones: a slightly different pitch each time
@@ -17557,6 +17569,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     buySkill: (a) => Game.isMaster(a[0], a[2], a[3]) ? 'evolve' : 'skill',
     awaken: 'evolve', buyTowerSkill: 'skill', buyBuildingSkill: 'skill', unlock: 'skill',
     unplaceSquad: 'undo', unplaceBwall: 'undo',
+    setTowerType: 'pick', pickLeader: 'pick', // round 3's tower, the leader draft
   };
   for (const name of Object.keys(Game)) {
     const act = SFX_ACTS[name] || (/^undo[A-Z]/.test(name) ? 'undo' : null);
@@ -17588,13 +17601,27 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   document.addEventListener('click', (e) => {
     const b = e.target.closest && e.target.closest('button, .btn, [role="button"]');
     if (!b || b.disabled || b.closest('.uc2') || performance.now() - sfxAt < 150) return;
-    sfx(clickInMatch ? 'button' : 'menu');
+    sfx(b.matches(ROOM_BTNS) ? 'room' : clickInMatch ? 'button' : 'menu');
   });
+  // Create room and Join (the online lobby, the Diorama's Rooms, a join code, a friend's invite) and Quick play: the room sound
+  const ROOM_BTNS = '#lob-create, #nr-go, #create-go, #lob-quick, #join, #lob-join, #fr-join, [data-join]';
+  // a mouse over a button outside a match: the soft hover tick (once per button, not while a match is on screen)
+  let hoverBtn = null, hoverAt = -1e9;
+  document.addEventListener('pointerover', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    const b = e.target.closest && e.target.closest('button, .btn, [role="button"]');
+    if (b === hoverBtn) return;
+    hoverBtn = b;
+    if (!b || b.disabled || b.closest('.uc2') || (m && ['deploy', 'battle', 'result'].includes(phase))) return;
+    const t = performance.now();
+    if (t - hoverAt < 60 || t - sfxAt < 150) return; // a sweep across a row ticks, it doesn't buzz; a click's own sound goes first
+    hoverAt = t; sfx('hover'); sfxAt = -1e9; // a hover doesn't hold back the next click's sound
+  }, { passive: true });
 
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '8 Nov 2026 · e53b5cb'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · f8c9903'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -17670,11 +17697,22 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
 
   // the cog in a match opens it as Settings (music, the 2D / 3D board and Main menu), the menu's Music button as music only.
   // data-keep: phase changes leave this sheet open (closeSheet)
+  // the Diorama's speaker button (Settings, owner 2026-11-09): waves when the sound is on, a cross when it's off
+  const spkSvg = (on) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" stroke="none"/>${on ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg>`;
   function openSoundSheet() {
     const inMatch = !!m && phase !== 'start' && phase !== 'lobby';
+    // under the Diorama, Music and Sound effects are a speaker button before the slider (no On / Off rows)
+    const spk = DIO && document.documentElement.classList.contains('diorama');
     $('sheet').innerHTML = `
       <div class="bar" data-keep><h3 id="sheet-h">Settings</h3><button class="btn small" id="close">Close</button></div>
+      ${spk ? `<div class="bar">
+        <span class="hint">Music</span>
+        <span class="volrow"><button class="spk" id="spk-music"></button><input type="range" id="vol" min="0" max="100" step="5" value="${snd.vol}" aria-label="Music volume"><span class="num" id="vol-n">${snd.vol}</span></span>
+      </div>
       <div class="bar">
+        <span class="hint">Sound effects</span>
+        <span class="volrow"><button class="spk" id="spk-sfx"></button><input type="range" id="sfx-vol" min="0" max="100" step="5" value="${snd.sfxVol}" aria-label="Effects volume"><span class="num" id="sfx-vol-n">${snd.sfxVol}</span></span>
+      </div>` : `<div class="bar">
         <span class="hint">Music</span>
         <div class="seg" role="group" aria-label="Music">
           <button data-mute="0" aria-pressed="${musicOn()}">On</button><button data-mute="1" aria-pressed="${!musicOn()}">Off</button>
@@ -17693,7 +17731,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       <div class="bar">
         <span class="hint">Effects volume</span>
         <span class="volrow"><input type="range" id="sfx-vol" min="0" max="100" step="5" value="${snd.sfxVol}" aria-label="Effects volume"><span class="num" id="sfx-vol-n">${snd.sfxVol}</span></span>
-      </div>
+      </div>`}
       ${navigator.audioSession ? `<div class="bar">
         <span class="hint">Other apps' sound</span>
         <div class="seg" role="group" aria-label="Other apps' sound">
@@ -17762,7 +17800,23 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     $('sheet').querySelectorAll('[data-emo]').forEach(b => b.addEventListener('click', () => { snd.emotesOn = b.dataset.emo === '1'; saveSound(); $('sheet').querySelectorAll('[data-emo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     $('sheet').querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { send({ t: 'spectate', on: b.dataset.spec === '1' }); $('sheet').querySelectorAll('[data-spec]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     if ($('fr-open2')) { $('fr-open2').addEventListener('click', () => openFriends()); frBadge(); }
-    const showOn = () => $('sheet').querySelectorAll('[data-mute]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.mute === '0') === musicOn())));
+    const spkDraw = () => { // the Diorama's speakers follow the sound (a volume of 0 is off)
+      for (const [id, lab, on] of [['spk-music', 'Music', musicOn()], ['spk-sfx', 'Sound effects', !!snd.sfx && snd.sfxVol > 0]]) {
+        const b = $(id); if (!b) continue;
+        b.innerHTML = spkSvg(on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', `${lab}: ${on ? 'on (turn off)' : 'off (turn on)'}`); b.title = on ? 'Turn off' : 'Turn on';
+        b.parentElement.classList.toggle('off', !on);
+      }
+    };
+    const showOn = () => { $('sheet').querySelectorAll('[data-mute]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.mute === '0') === musicOn()))); spkDraw(); };
+    spkDraw();
+    if ($('spk-music')) $('spk-music').addEventListener('click', () => {
+      setMusic(!musicOn()); if (musicOn()) { menuPaused = false; mine.paused = false; syncMusic(); } showPlayer();
+      $('vol').value = snd.vol; $('vol-n').textContent = snd.vol; showOn();
+    });
+    if ($('spk-sfx')) $('spk-sfx').addEventListener('click', () => {
+      snd.sfx = !(snd.sfx && snd.sfxVol > 0); if (snd.sfx && !snd.sfxVol) { snd.sfxVol = DEFAULT_SFX_VOL; $('sfx-vol').value = snd.sfxVol; $('sfx-vol-n').textContent = snd.sfxVol; }
+      saveSound(); wakeAudio(true); spkDraw();
+    });
     $('vol').addEventListener('input', (e) => {
       snd.vol = +e.target.value; $('vol-n').textContent = snd.vol;
       if (snd.vol && snd.muted) { snd.muted = false; wakeAudio(true); } // turning the volume up turns music on
@@ -17779,7 +17833,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     $('sfx-vol').addEventListener('input', (e) => {
       snd.sfxVol = +e.target.value; $('sfx-vol-n').textContent = snd.sfxVol;
       if (snd.sfxVol && !snd.sfx) { snd.sfx = true; $('sheet').querySelectorAll('[data-sfx]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.sfx === '1'))); }
-      saveSound();
+      saveSound(); spkDraw();
     });
     $('sheet').querySelectorAll('[data-solo]').forEach(b => b.addEventListener('click', () => {
       snd.solo = b.dataset.solo === '1'; saveSound(); setAudioSession(); wakeAudio(true);
@@ -19129,6 +19183,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (phase !== 'deploy' || timeUp) return;
     if (!ready[me]) commitPick();
     ready[me] = !ready[me];
+    if (ready[me] && byHand() && !((mode === 'host' && ready[0] && ready[1] && net.connected) || (mode === 'ai' && ready[0] && ready[1]))) sfx('ready'); // (the fight starting now plays its own)
     if (ready[me]) { selected = null; closeSheet(); }
     if (mode === 'guest') sendSide();
     if (mode === 'net') send({ t: 'ready', v: ready[me], round: m.round });
@@ -19682,7 +19737,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       if (srvOk()) srvJoin(c, { typed: true }); else joinMatch(c); // the game server first (an older phone-to-phone match: see 'nomatch')
     };
     $('join').addEventListener('click', joinNow);
-    $('code-in').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinNow(); });
+    $('code-in').addEventListener('keydown', (e) => { if (e.key === 'Enter') { sfx('room'); joinNow(); } }); // Enter joins as the Join button does
     root.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => {
       Game.CONFIG.levelCostPerTier = +b.dataset.c;
       root.querySelectorAll('[data-c]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
@@ -25039,7 +25094,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       home.back = 'lobby'; srvJoin(c, { typed: true });
     };
     $('lob-join').addEventListener('click', joinNow);
-    $('lob-code').addEventListener('keydown', (e) => { if (e.key === 'Enter') joinNow(); });
+    $('lob-code').addEventListener('keydown', (e) => { if (e.key === 'Enter') { sfx('room'); joinNow(); } }); // Enter joins as the Join button does
     $('lob-list').addEventListener('click', (e) => {
       const j = e.target.closest('[data-join]'), w = e.target.closest('[data-watch]');
       const l = lob.list.get((j || w || {}).dataset ? (j || w).dataset.join || (j || w).dataset.watch : '');
@@ -28100,13 +28155,14 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
     // Settings: the game's sound and match settings (snd, saveSound), rows of words
     const onoff = (key, lab, on, note = '') => `<span class="lab">${lab}</span><span class="seg"><button class="w" data-set="${key}|1" aria-pressed="${!!on}">On</button><button class="w" data-set="${key}|0" aria-pressed="${!on}">Off</button></span>${note ? `<p class="sn">${note}</p>` : ''}`;
-    const vol = (key, v, enabled, lab) => `<span class="lab">${lab}</span><span class="vol"><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}" style="--v:${v}%" aria-label="${lab}" ${enabled ? '' : 'disabled'}><b>${v}</b></span>`;
+    // Music and Sound effects: a speaker before the slider turns it on or off (owner, 2026-11-09: no On / Off words)
+    const spkVol = (key, set, on, v, lab) => `<span class="lab">${lab}</span><span class="vol${on ? '' : ' off'}"><button class="spk" data-set="${set}|${on ? 0 : 1}" aria-pressed="${on}" aria-label="${lab}: ${on ? 'on (turn off)' : 'off (turn on)'}" title="${on ? 'Turn off' : 'Turn on'}">${spkSvg(on)}</button><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}" style="--v:${v}%" aria-label="${lab} volume"><b>${v}</b></span>`;
     function drawSettings() {
       if (dd.open !== 'settings') return;
       const fs = !!document.fullscreenElement, fsIco = fs ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
       $('dd-settings').innerHTML = `<h3>Settings</h3>
         ${document.fullscreenEnabled ? `<button class="fs-big" data-set="fs|${fs ? 0 : 1}" aria-pressed="${fs}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6">${fsIco}</svg>${fs ? 'Leave full screen' : 'Full screen'}</button>` : ''}
-        <span class="k">Sound</span><div class="set">${onoff('music', 'Music', musicOn())}${vol('vol', snd.vol, true, 'Music volume')}${onoff('sfx', 'Sound effects', snd.sfx)}${vol('sfxVol', snd.sfxVol, true, 'Effects volume')}
+        <span class="k">Sound</span><div class="set">${spkVol('vol', 'music', musicOn(), snd.vol, 'Music')}${spkVol('sfxVol', 'sfx', !!snd.sfx && snd.sfxVol > 0, snd.sfxVol, 'Sound effects')}
           ${navigator.audioSession ? `<span class="lab">Other apps</span><span class="seg"><button class="w" data-set="solo|0" aria-pressed="${!snd.solo}">Keep playing</button><button class="w" data-set="solo|1" aria-pressed="${!!snd.solo}">Pause them</button></span><p class="sn">Pause them: plays even on silent.</p>` : ''}</div>
         <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}</div>
         <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
@@ -28145,7 +28201,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (k === 'vol') { snd.vol = v; if (v && snd.muted) { snd.muted = false; wakeAudio(true); } saveSound(); Object.values(music).forEach(pl => { if (pl.playing) pl.ramp(musicLevel(), 0.05); }); syncMusic(); }
       else { snd.sfxVol = v; if (v && !snd.sfx) snd.sfx = true; saveSound(); }
     });
-    $('dd-settings').addEventListener('change', (e) => { if (e.target.dataset.vol === 'sfxVol') sfx('button'); else if (e.target.dataset.vol === 'vol') drawSettings(); }); // a sample at the new volume
+    $('dd-settings').addEventListener('change', (e) => { if (e.target.dataset.vol === 'sfxVol') sfx('button'); if (e.target.dataset.vol) drawSettings(); }); // a sample at the new volume; the speaker follows (0 is off)
     function openDrop(which) {
       for (const k of ['friends', 'settings']) { const on = k === which; $('dd-' + k).hidden = !on; ddBtn[k].setAttribute('aria-expanded', on); }
       dd.open = which || ''; dio.frOpen = which === 'friends';

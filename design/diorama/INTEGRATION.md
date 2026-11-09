@@ -71,6 +71,13 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
 - Tenth round: the small text is Bricolage Grotesque (the owner's pick of eight, 2026-11-08): `--type` in
   `src/diorama.css`, the sheets' `--font-data`, the friend banners, and the names painted on the roster tiles and the
   podium; Courier Prime is no longer loaded. A unit sheet over Change battlefield hides the button and its line.
+- Twelfth round (2026-11-09, the owner's PC trial): Settings' Music and Sound effects have no On / Off words; a
+  speaker button before each slider turns it on or off (`spkVol`, `.vol .spk`: waves when on, an ✕ when off, the slider
+  dimmed). The same calls as before (`setMusic`, `snd.sfx`); a slider at 0 shows the speaker off, moving it up turns
+  the sound on. The in-match Settings sheet (`openSoundSheet`, the cog) does the same under the Diorama (`#spk-music`,
+  `#spk-sfx`, `spkDraw`; the icon is the game's `spkSvg`, shared with the menu's); the old UI keeps its On / Off rows
+  (`data-mute`, `data-sfx`) and their tests (music-ui, sfx-ui pass with the old UI; with the Diorama they stop at the
+  same old controls as on `main`).
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 - Eleventh round (2026-11-09): the golem's note (menu and Profile) has a small saffron button, INVITE A FRIEND

@@ -1262,13 +1262,14 @@
 
     // Settings: the game's sound and match settings (snd, saveSound), rows of words
     const onoff = (key, lab, on, note = '') => `<span class="lab">${lab}</span><span class="seg"><button class="w" data-set="${key}|1" aria-pressed="${!!on}">On</button><button class="w" data-set="${key}|0" aria-pressed="${!on}">Off</button></span>${note ? `<p class="sn">${note}</p>` : ''}`;
-    const vol = (key, v, enabled, lab) => `<span class="lab">${lab}</span><span class="vol"><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}" style="--v:${v}%" aria-label="${lab}" ${enabled ? '' : 'disabled'}><b>${v}</b></span>`;
+    // Music and Sound effects: a speaker before the slider turns it on or off (owner, 2026-11-09: no On / Off words)
+    const spkVol = (key, set, on, v, lab) => `<span class="lab">${lab}</span><span class="vol${on ? '' : ' off'}"><button class="spk" data-set="${set}|${on ? 0 : 1}" aria-pressed="${on}" aria-label="${lab}: ${on ? 'on (turn off)' : 'off (turn on)'}" title="${on ? 'Turn off' : 'Turn on'}">${spkSvg(on)}</button><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}" style="--v:${v}%" aria-label="${lab} volume"><b>${v}</b></span>`;
     function drawSettings() {
       if (dd.open !== 'settings') return;
       const fs = !!document.fullscreenElement, fsIco = fs ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
       $('dd-settings').innerHTML = `<h3>Settings</h3>
         ${document.fullscreenEnabled ? `<button class="fs-big" data-set="fs|${fs ? 0 : 1}" aria-pressed="${fs}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6">${fsIco}</svg>${fs ? 'Leave full screen' : 'Full screen'}</button>` : ''}
-        <span class="k">Sound</span><div class="set">${onoff('music', 'Music', musicOn())}${vol('vol', snd.vol, true, 'Music volume')}${onoff('sfx', 'Sound effects', snd.sfx)}${vol('sfxVol', snd.sfxVol, true, 'Effects volume')}
+        <span class="k">Sound</span><div class="set">${spkVol('vol', 'music', musicOn(), snd.vol, 'Music')}${spkVol('sfxVol', 'sfx', !!snd.sfx && snd.sfxVol > 0, snd.sfxVol, 'Sound effects')}
           ${navigator.audioSession ? `<span class="lab">Other apps</span><span class="seg"><button class="w" data-set="solo|0" aria-pressed="${!snd.solo}">Keep playing</button><button class="w" data-set="solo|1" aria-pressed="${!!snd.solo}">Pause them</button></span><p class="sn">Pause them: plays even on silent.</p>` : ''}</div>
         <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}</div>
         <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
@@ -1307,7 +1308,7 @@
       if (k === 'vol') { snd.vol = v; if (v && snd.muted) { snd.muted = false; wakeAudio(true); } saveSound(); Object.values(music).forEach(pl => { if (pl.playing) pl.ramp(musicLevel(), 0.05); }); syncMusic(); }
       else { snd.sfxVol = v; if (v && !snd.sfx) snd.sfx = true; saveSound(); }
     });
-    $('dd-settings').addEventListener('change', (e) => { if (e.target.dataset.vol === 'sfxVol') sfx('button'); else if (e.target.dataset.vol === 'vol') drawSettings(); }); // a sample at the new volume
+    $('dd-settings').addEventListener('change', (e) => { if (e.target.dataset.vol === 'sfxVol') sfx('button'); if (e.target.dataset.vol) drawSettings(); }); // a sample at the new volume; the speaker follows (0 is off)
     function openDrop(which) {
       for (const k of ['friends', 'settings']) { const on = k === which; $('dd-' + k).hidden = !on; ddBtn[k].setAttribute('aria-expanded', on); }
       dd.open = which || ''; dio.frOpen = which === 'friends';
