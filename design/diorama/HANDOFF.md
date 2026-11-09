@@ -427,4 +427,6 @@ Otto's Slots, buildings, walls, online play, spectating, the tutorial, replays, 
   "for now", except READY / Fight / Not ready, which keep the skewed saffron shard. The tile slab (owner's pick for
   small buttons before this) is in the CSS history (commit c0e3854) if it comes back.
 - **Sheets in a match:** back toward the old layout (rising from the bottom over the board, hairline edge, title and
-  Close, a box per row), in the battlefield's card colour with clipped tile corners and a thin saffron top edge.
+  Close, a box per row), as the old one the panel lighter than the rows in it (both from the battlefield's card colour),
+  clipped tile corners and a thin saffron top edge. The owner on the old buttons in the new screens: "Much better".
+- **Still in the new style:** the room's choices (Public / Private, On / Off, the units, the battlefield arrows). Ask.
