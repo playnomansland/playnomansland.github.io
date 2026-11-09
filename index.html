@@ -1017,7 +1017,7 @@ html.diorama.pcwide #wrap > .overlay { padding: var(--dsy0, 110px) var(--dsx1, 2
   --panel: #17140F; --bg: #17140F; --line: rgba(244,236,216,.22); --ink: #F4ECD8; --muted: rgba(244,236,216,.78); --gold: #F2B23A; }
 html.diorama.pcwide #wrap > .overlay.peek { background: rgba(23,20,15,.1); }
 html.diorama.pcwide .overlay > .card { margin: auto; max-width: 640px; border: 0; border-radius: 0; background: none; box-shadow: none; padding: 0; display: grid; gap: 12px; justify-items: center; text-shadow: var(--dhalo); }
-html.diorama.pcwide .overlay > .card h2 { font: 700 clamp(84px, 15vh, 150px)/.86 var(--dstencil); text-transform: uppercase; letter-spacing: -.02em; color: #F4ECD8; }
+html.diorama.pcwide .overlay > .card h2 { font: 700 clamp(64px, 11vh, 108px)/.88 var(--dstencil); text-wrap: balance; text-transform: uppercase; letter-spacing: -.02em; color: #F4ECD8; }
 html.diorama.pcwide .overlay > .card h2.you { color: #F2B23A; }
 html.diorama.pcwide .overlay > .card h2.foe { color: #B9B1A0; }
 html.diorama.pcwide .overlay > .card .eyebrow { font: 700 13px var(--dtype); letter-spacing: .16em; text-transform: uppercase; color: #F2B23A; }
@@ -17489,7 +17489,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '8 Nov 2026 · 300b15a'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '8 Nov 2026 · 606545e'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
