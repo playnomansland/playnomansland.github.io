@@ -1238,3 +1238,31 @@ html.diorama.pcwide .panel .trow .timer { width: auto; white-space: nowrap; }
 html.dright.diorama.pcwide .panel .trow .timer { right: calc(var(--dpw, 340px) - 90px); }
 html.diorama.pcwide .dmus .dm-t { display: inline-flex; align-items: baseline; gap: 5px; }
 html.diorama.pcwide .dmus .dm-t .dm-n { margin-right: 1px; }
+
+/* the music player stays down in a match (the owner, 2026-11-09): in the bottom corner opposite the deploy panel, the
+   player only ('mini'); the playlists unfold above it from the song or "Playlist", and fold back with the arrow. The
+   music line in the top line is gone again */
+html.diorama.pcwide .hud .round .dmus { display: none; }
+html.diorama.pcwide #mp-pop.dock.mini .mp-panel { display: none; }
+html.diorama.pcwide #mp-pop.dock.mini::before { background: radial-gradient(30% 32% at 100% 100%, rgba(10, 13, 12, .75), transparent 80%); }
+html.diorama.pcwide #mp-pop.dock .mp-dock { bottom: 22px; }
+html.diorama.pcwide #mp-pop.dock .mp-now .mp-up { display: inline-flex; width: auto; height: auto; border: 0; border-radius: 0; background: none; gap: 5px; align-items: center; color: #F4ECD8; opacity: .9;
+  font: 700 12px "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; transform: none; }
+html.diorama.pcwide #mp-pop.dock .mp-now .mp-up::before { content: "Playlist"; }
+html.diorama.pcwide #mp-pop.dock:not(.mini) .mp-now .mp-up { display: none; }
+html.diorama.pcwide #mp-pop.dock .mp-now .mp-up svg { width: 11px; height: 11px; }
+html.diorama.pcwide #mp-pop.dock .mp-now:hover .mp-title { text-decoration: underline; text-underline-offset: 3px; }
+/* the deploy panel on the right: the player bottom left, its type and lists aligned left */
+html.dright.diorama.pcwide #mp-pop.dock .mp-dock { left: 32px; right: auto; text-align: left; }
+html.dright.diorama.pcwide #mp-pop.dock::before { background: radial-gradient(46% 80% at 0% 100%, rgba(10, 13, 12, .9), rgba(10, 13, 12, .55) 55%, transparent 80%); }
+html.dright.diorama.pcwide #mp-pop.dock.mini::before { background: radial-gradient(30% 32% at 0% 100%, rgba(10, 13, 12, .75), transparent 80%); }
+html.dright.diorama.pcwide #mp-pop.dock :is(.mplayer, .mp-now, .mp-meta, .mp-hd, .mp-songs) { justify-items: start; text-align: left; }
+html.dright.diorama.pcwide #mp-pop.dock :is(.mp-row, .mp-tabrow, .mp-tabs) { justify-content: flex-start; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-head { flex-direction: row; justify-content: flex-start; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-acts { flex-direction: row; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-song { flex-direction: row; text-align: left; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-song::before { inset: 0 -14px 0 -10px; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-n { text-align: left; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-songs { padding: 0 14px 0 2px; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-foot { flex-direction: row; }
+html.dright.diorama.pcwide #mp-pop.dock .mp-name { align-self: flex-start; text-align: left; }

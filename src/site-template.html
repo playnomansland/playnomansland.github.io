@@ -1951,7 +1951,18 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     return pop;
   }
   // Now playing (tap): the playlists roll up out of the player; tapped again, they roll back down
+  // The Diorama's match screen (html.pcwide): the player stays down in the bottom corner opposite the deploy panel for
+  // the whole match ('mini': the player only); the song or the music button opens the playlists above it, and their
+  // down arrow (or Esc) folds them back into the player instead of closing it (the owner, 2026-11-09)
+  const dioMini = () => DIO && document.documentElement.classList.contains('pcwide');
+  function dioMusicDock() {
+    const pop = $('mp-pop'), want = dioMini();
+    if (want && !mpui.open) { openPlaylist(); const p2 = $('mp-pop'); if (p2) p2.classList.add('mini'); }
+    else if (!want && mpui.open && pop && pop.classList.contains('dmini')) mpClose(true);
+    const p3 = $('mp-pop'); if (p3 && want && mpui.open) p3.classList.add('dmini');
+  }
   function openPlaylist() {
+    if (mpui.open && dioMini() && $('mp-pop') && $('mp-pop').classList.contains('mini')) { $('mp-pop').classList.remove('mini'); mpDraw(true); showPlayer(); return; } // the playlists unfold
     if (mpui.open) return mpClose();
     const pop = mpPop(), a = homePlayer();
     clearTimeout(mpui.closeT);
@@ -1976,6 +1987,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   }
   function mpClose(instant) {
     if (!mpui.open) return;
+    if (!instant && dioMini() && $('mp-pop') && $('mp-pop').classList.contains('dmini')) { $('mp-pop').classList.add('mini'); mpui.edit = null; mpui.sure = ''; return; } // the Diorama's match: folds down into the player
     mpui.open = false; mpui.edit = null; mpui.sure = '';
     const pop = $('mp-pop');
     const done = () => {
@@ -2731,6 +2743,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       root.style.setProperty('--board-h', h + 'px');
     }
     if (on !== was || h !== boardH || fight !== wasFight || wide !== wasWide) { boardH = h; size(); render(); } // the board changed size: draw it again (3D too)
+    if (DIO && wide !== wasWide) setTimeout(dioMusicDock, 0); // the Diorama's player comes up with the match screen and goes with it
     boardMarks();
     fitOverlay();
   }
