@@ -63,6 +63,50 @@ const dev = () => Math.random().toString(36).slice(2, 12).padEnd(10, 'x');
     assert.strictEqual(await count(), 1, 'still one device');
     console.log('ok   a page that stops pinging drops out; a ping brings it back');
     a1.close(); a2.close();
+    await waitFor(async () => (await count()) === 0, 5000);
+
+    // who (2026-11-10): /account/online { list: true }, from each page's hello { session }
+    const who = async () => { const r = await call('online', { list: true }, D.session); assert.strictEqual(r.status, 200, JSON.stringify(r)); return r; };
+    assert.strictEqual((await call('online', { list: true }, G.session)).status, 403, 'the list: developers only too');
+    const hello = async (ws, session) => { ws.send(JSON.stringify({ t: 'hello', session })); };
+    const pg = await page(dev()), pd1 = await page(dev()), pd2 = await page(dev()), pn = await page(dev()), pf = await page(dev());
+    await hello(pg, guest.session); await hello(pd1, D.session); await hello(pd2, D.session); await hello(pn, null);
+    await hello(pf, 'f'.repeat(64)); // a made-up session: no account
+    let w = await waitFor(async () => { const x = await who(); return x.players.length === 2 && x.anon === 2 ? x : null; }, 5000);
+    assert.strictEqual(w.online, 5);
+    const byId = Object.fromEntries(w.players.map((p) => [p.id, p]));
+    assert.deepStrictEqual({ tag: byId[guest.player.id].tag, google: byId[guest.player.id].google, devices: byId[guest.player.id].devices }, { tag: guest.player.tag, google: false, devices: 1 }, 'the guest');
+    assert.deepStrictEqual({ tag: byId[D.player.id].tag, google: byId[D.player.id].google, dev: byId[D.player.id].dev, title: byId[D.player.id].title, devices: byId[D.player.id].devices }, { tag: D.player.tag, google: true, dev: true, title: 'dev', devices: 2 }, 'the developer, on two devices');
+    assert.ok(!('session' in byId[D.player.id]), 'no sessions in the list');
+    console.log('ok   who: signed-in players by account (devices counted), the rest as no account; a made-up session is no account');
+
+    // where (2026-11-10): the game screen; a player on two devices shows the busier one; junk is ignored
+    assert.strictEqual(byId[D.player.id].where, null, 'nothing said yet');
+    pg.send(JSON.stringify({ t: 'where', w: 'ai', r: 3 }));
+    pd1.send(JSON.stringify({ t: 'where', w: 'menu', r: 5 })); pd2.send(JSON.stringify({ t: 'where', w: 'online', r: 2 }));
+    pn.send(JSON.stringify({ t: 'where', w: 'online' }));
+    w = await waitFor(async () => { const x = await who(); const g1 = x.players.find((p) => p.id === guest.player.id), d1 = x.players.find((p) => p.id === D.player.id); return g1.where && d1.where && d1.where.w === 'online' ? x : null; }, 5000);
+    assert.deepStrictEqual(w.players.find((p) => p.id === guest.player.id).where, { w: 'ai', r: 3 }, 'the guest: vs the computer, round 3');
+    assert.deepStrictEqual(w.players.find((p) => p.id === D.player.id).where, { w: 'online', r: 2 }, 'the developer: the online match beats the menu');
+    assert.ok(!('where' in w) && w.anon === 2, 'pages with no account: counted only');
+    pg.send(JSON.stringify({ t: 'where', w: 'the moon', r: 1 })); pg.send(JSON.stringify({ t: 'where', w: 'room', r: 4 }));
+    w = await waitFor(async () => { const x = await who(); const g1 = x.players.find((p) => p.id === guest.player.id); return g1.where.w === 'room' ? x : null; }, 5000);
+    assert.deepStrictEqual(w.players.find((p) => p.id === guest.player.id).where, { w: 'room' }, 'an unknown screen is ignored; no round outside a match');
+    console.log('ok   where: the game screen and round, the busier device wins, junk ignored');
+
+    // signing out (hello null) and in again; a closed page leaves the list
+    await hello(pg, null);
+    w = await waitFor(async () => { const x = await who(); return x.players.length === 1 && x.anon === 3 ? x : null; }, 5000);
+    await hello(pg, G.session);
+    w = await waitFor(async () => { const x = await who(); return x.players.some((p) => p.id === G.player.id) && x.anon === 2 ? x : null; }, 5000);
+    pd2.close();
+    w = await waitFor(async () => { const x = await who(); const d = x.players.find((p) => p.id === D.player.id); return d && d.devices === 1 ? x : null; }, 5000);
+    // too many hellos: the rest are ignored (the socket stays counted)
+    for (let i = 0; i < 8; i++) await hello(pn, i % 2 ? null : D.session);
+    await sleep(500);
+    assert.strictEqual((await who()).online, 4, 'still counted');
+    console.log('ok   sign out, sign in, a closed page; a hello flood is cut off');
+    for (const s of [pg, pd1, pn, pf]) s.close();
     console.log('all online checks passed');
   } finally { srv.stop(); }
   process.exit(0);
