@@ -26,7 +26,7 @@ A small auto-battler for the phone browser. Buy squads, place them, and watch th
 
 ## Standard pack
 
-The start screen and the friend lobby have **Units: Standard pack / All units** (saved on the device; the host's choice counts in a match with a friend). Standard is the default: a smaller match for new players, set in `STANDARD_PACK` in `src/game.js`:
+**Removed from the menu (2026-11-10):** every match, against the computer, a friend or in a tournament, plays with every unit, leader and tower in the pool (the Standard pack in the code, `unitPack = 'standard'` in `src/site-template.html`). Only a developer still sees the Units choice (Standard / Custom). A device that had Learn the game saved plays Standard. What follows is the old smaller pack, still in `STANDARD_PACK` in `src/game.js` but not reachable from the page:
 
 - 18 units: Goblin Swarm, Skeleton Archers, Fire Mage, Sniper, Wisps (tier 1); Brute, Leaf Wizard, Earth Wizard, Shiv, Slimeshots (tier 2); Flame Wizard, Steel Wizard, Water Mage, Frost Wizard (tier 3); Ether Golem, Sun Priest, War Mammoth, Necromancer (tier 4). The four added on 2026-10-28 (one a tier) were picked from the counter table for sitting in the middle of the pack: none beats the pack on average more than its strongest unit of that tier does.
 - 6 leaders: Friggo, Zoe, Emile, Wilhelm, Phil, Felix (50 more gold a round from round 3, 100 from round 6).
