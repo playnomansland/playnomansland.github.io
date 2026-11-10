@@ -20,6 +20,14 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 10 November 2026 – Poison weakens
+
+- **Poison** now also makes poisoned units deal **20% less damage** with their attacks, on top of moving 20% slower and healing 50% less. Slime units still drink poison and aren't affected.
+- Poisoners keep the attacks they have: Poison shot and Poisonous fangs still attack 30% slower, and Graverot arrows still doesn't.
+- **Fixed:** a web that landed on a unit that wasn't poisoned never wore off: it didn't slow the unit, and its damage cut stayed for the rest of the fight. Webs now always slow for their 3 seconds and then wear off.
+
+---
+
 ## 10 November 2026 – A new look on PC
 
 On a computer the game has a whole new look. Phones and tablets keep the one they have for now.

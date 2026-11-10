@@ -159,8 +159,9 @@ const Engine = (() => {
   // stacks is stunned that many seconds.
   const BLEED = { dmg: 6, pulse: 0.5, secs: 2.5, max: 4, pct: { 3: 2, 4: 5 } };
   // Poisoned bodies heal POISON_HEAL % as much (slime units drink poison and heal fully) and move POISON_SLOW % slower
-  // while the poison lasts (the stronger of this and any other slow counts; not slime units or Berserkers)
-  const POISON_HEAL = 50, POISON_SLOW = 20;
+  // while the poison lasts (the stronger of this and any other slow counts; not slime units or Berserkers). Since
+  // 2026-11-10 their hits also deal POISON_DMG % less (not slime units; poison, bleed and burn ticks aren't cut).
+  const POISON_HEAL = 50, POISON_SLOW = 20, POISON_DMG = 20;
   // waterHeal: allies inside the splash of its attacks heal for its hit; with no enemy in reach it shoots at the most
   // wounded ally in reach instead (structures aren't healed)
   // pools = { pct, speed, secs }: where its attacks land they leave a pool the size of their splash, for the rest of the
@@ -253,7 +254,7 @@ const Engine = (() => {
   // Each skill type and its settings (key, label, default, step). Shared by Counter Lab and the game.
   const SKILL_TYPES = {
     regen:   { label: 'Regeneration', params: [['pct', 'Health regained per second (% of max)', 2, 0.5], ['hp', 'Health (+%)', 20, 5]] },
-    poison:  { label: 'Poison shot', params: [['pct', 'Poison damage (% of hit, in total)', 100, 10], ['duration', 'Poison lasts (s)', 4, 0.5], ['slow', 'Longer time between attacks (%)', 30, 5]] },
+    poison:  { label: 'Poison shot', params: [['pct', 'Poison damage (% of hit, in total)', 100, 10], ['duration', 'Poison lasts (s)', 4, 0.5], ['slow', 'Longer time between attacks (%)', 0, 5]] },
     stealth: { label: 'Stealth', params: [['hit', 'Hit size (+%)', 0, 5]] },
     armorHp: { label: 'Armor and health', params: [['armor', 'Armor (blocked from every hit)', 8, 1], ['hp', 'Health (+%)', 25, 5]] },
     spawn:   { label: 'Spawn goblins', params: [['unit', 'Spawns (unit name)', 'Goblin Swarm', null], ['count', 'Bodies per spawn', 2, 1], ['every', 'Every (s)', 4, 0.5], ['max', 'Most alive at once', 6, 1], ['waves', 'Most waves per fight (0 = no limit)', 0, 1]] },
@@ -1618,6 +1619,8 @@ const Engine = (() => {
       if (owner.sniperMark > 0 && v.marked && owner.side !== v.side) { hit = hit * (1 + owner.sniperMark / 100); pct = pct * (1 + owner.sniperMark / 100); } // Mark Bounty (sniper tower)
       if (cripple[ck(owner)] > 0) { hit = hit * (1 - towerDown.attack / 100); pct = pct * (1 - towerDown.attack / 100); }
       if (owner.web) { hit = hit * (1 - owner.web.dmg / 100); pct = pct * (1 - owner.web.dmg / 100); } // webbed: it hits softer
+      // poisoned (as it was when the tick's attacks began, so who goes first doesn't matter): it hits softer too
+      if (owner.atkPois) { hit = hit * (1 - POISON_DMG / 100); pct = pct * (1 - POISON_DMG / 100); }
       // Shield: the whole hit is blocked, however big, and it brings no poison
       if (v.shield > 0) { v.shield--; st.blocked += hit + pct; return; }
       // ice walls (towers on the ice map): four walls, one per direction; each blocks a number of whole hits
@@ -2950,15 +2953,17 @@ const Engine = (() => {
           }
           if (b.poison) b.poison = b.poison.filter(p => p.t > 0); // a body won over by a Gentleman just now lost its poison
           if (!b.alive) continue;
-          if (b.web) { // webbed (Web shots): slower while it lasts
-            b.web.t -= dt;
-            if (b.web.t <= 1e-9) b.web = null;
-            else if (!b.u.unstoppable) { if (!(b.slowT > 0)) { b.slowMove = 0; b.slowAtk = 0; } b.slowMove = Math.max(b.slowMove, b.web.slow); b.slowT = Math.max(b.slowT, dt * 1.5); }
-          }
           if (b.poison && b.poison.length && !b.u.slime && !b.u.unstoppable) { // poison slows (see POISON_SLOW)
             if (!(b.slowT > 0)) { b.slowMove = 0; b.slowAtk = 0; }
             b.slowMove = Math.max(b.slowMove, POISON_SLOW); b.slowT = Math.max(b.slowT, dt * 1.5);
           }
+        }
+        // webbed (Web shots): slower while it lasts, poisoned or not (until 2026-11-10 this sat inside the poison
+        // block above, so a web on a body that wasn't poisoned never wore off or slowed, and its damage cut stayed)
+        if (b.web) {
+          b.web.t -= dt;
+          if (b.web.t <= 1e-9) b.web = null;
+          else if (!b.u.unstoppable) { if (!(b.slowT > 0)) { b.slowMove = 0; b.slowAtk = 0; } b.slowMove = Math.max(b.slowMove, b.web.slow); b.slowT = Math.max(b.slowT, dt * 1.5); }
         }
         if (b.bleed) { // every BLEED.pulse s: BLEED.dmg, doubled for each stack after the first, and a share of max health at 3 and 4 stacks
           const bl = b.bleed;
@@ -3065,10 +3070,10 @@ const Engine = (() => {
       // attacks. A body killed earlier in this same tick still gets its attack, so neither side
       // wins a trade just by being processed first (side 0 used to win one-shot duels like Sniper vs Sniper); the sides
       // take turns going first (see first). Likewise a stun or slow that lands during the attacks only counts from the
-      // next tick (atkStun, atkSlow: as they were when the attacks began), and heals wait for the end (healLater)
+      // next tick (atkStun, atkSlow, atkPois: as they were when the attacks began), and heals wait for the end (healLater)
       targetIndex = null; targetIndexDirty = true; // movement phase has finished for this tick
       const attackers = turnOrder();
-      for (const b of attackers) { b.atkStun = b.stunT > 0; b.atkSlow = b.slowT > 0 ? b.slowAtk : 0; }
+      for (const b of attackers) { b.atkStun = b.stunT > 0; b.atkSlow = b.slowT > 0 ? b.slowAtk : 0; b.atkPois = !!(b.poison && b.poison.length) && !b.u.slime; }
       healLater = [];
       for (const b of attackers) {
         if ((!b.alive && b.diedTick !== tick) || b.delay > 0 || b.u.ram || b.boarded || b.turning) continue;
@@ -3283,7 +3288,7 @@ const Engine = (() => {
         v.windTarget = null; v.windT = 0; v.setUp = false; v.firing = -1; v.burstLeft = 0; v.trampleLeft = 0; v.trampled = null;
         v.spinTarget = null; v.aims = null; v.lock = null; v.intent = null; v.march = null; v.guide = null; v.guideT = null; v.goal = null; v.spreadTo = null; v.engaged = false; v.holdT = 0; v.avenge = null; v.delay = 0; v.band = null; v.hidden = false;
         v.slowT = 0; v.slowMove = 0; v.slowAtk = 0; v.shrinkT = 0; v.shrinkM = 0; v.kids = null; v.stunT = 0; v.frenzy = 0; v.flow = 0; v.knives = null; v.atkN = 0; v.forgeT = 0; v.spearReady = false;
-        v.burn = null; v.web = null; v.webs = 0; v.kills = 0; v.flurryLeft = 0; v.flurryTgt = null; v.rootTgt = null; v.rootedBy = null; v.hunt = null; v.bullN = 0; v.charging = false; v.inside = null; v.missileT = 0; v.roarSpd = 0; v.roarAtk = 0; v.frost = null; v.frozenT = 0; v.beamAims = null; v.stormCd = 0; v.aimedAt = 0; v.wwDodges = 0; v.watchT = 0;
+        v.burn = null; v.web = null; v.webs = 0; v.atkPois = false; v.kills = 0; v.flurryLeft = 0; v.flurryTgt = null; v.rootTgt = null; v.rootedBy = null; v.hunt = null; v.bullN = 0; v.charging = false; v.inside = null; v.missileT = 0; v.roarSpd = 0; v.roarAtk = 0; v.frost = null; v.frozenT = 0; v.beamAims = null; v.stormCd = 0; v.aimedAt = 0; v.wwDodges = 0; v.watchT = 0;
         sides[v.side].push(v); stats[v.side].totalHp += v.hp;
         for (const b of all) {
           if (b.windTarget === v) { b.windTarget = null; b.windT = 0; }
@@ -3447,6 +3452,6 @@ const Engine = (() => {
     return m;
   }
 
-  return { NAV, HEIGHT, SIGHT_NEAR, POISON_SLOW, DASH_SPEED, LONE_R, WATCH_IDLE, BURN, FROST_ON, EAT_R, glutUnit, TOWER_DOWN, ARTIFACT, RULES, ruleOn, STEALTH_BACK, SKILL_SLOTS, SLOTS, SKILL_TYPES, skillParam, describeSkill, applySkills, innateUnit, fairBudget, battle, makeArmy, matrix, createBattle, buildSquad, rawStrength, squadsFor, withTraits, leveled, TRAIT_DEFAULTS, SPIN_CAP, CHARGE_RUN, TRAMPLE_RUN, BLAST_RADIUS, BLEED, POISON_HEAL, RAM_REACH, ROLL_START, ROLL_PAST, BUILD_GAP, BUILD_COOP, SITE_REACH, MINE_TRIGGER, REPAIR_SECS, LEVEL_BONUS, levelHpK, MAX_LEVEL, CHARM_MAX, CONVERT_HP, CONVERT_SQUAD };
+  return { NAV, HEIGHT, SIGHT_NEAR, POISON_SLOW, POISON_DMG, DASH_SPEED, LONE_R, WATCH_IDLE, BURN, FROST_ON, EAT_R, glutUnit, TOWER_DOWN, ARTIFACT, RULES, ruleOn, STEALTH_BACK, SKILL_SLOTS, SLOTS, SKILL_TYPES, skillParam, describeSkill, applySkills, innateUnit, fairBudget, battle, makeArmy, matrix, createBattle, buildSquad, rawStrength, squadsFor, withTraits, leveled, TRAIT_DEFAULTS, SPIN_CAP, CHARGE_RUN, TRAMPLE_RUN, BLAST_RADIUS, BLEED, POISON_HEAL, RAM_REACH, ROLL_START, ROLL_PAST, BUILD_GAP, BUILD_COOP, SITE_REACH, MINE_TRIGGER, REPAIR_SECS, LEVEL_BONUS, levelHpK, MAX_LEVEL, CHARM_MAX, CONVERT_HP, CONVERT_SQUAD };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

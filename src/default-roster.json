@@ -27,7 +27,8 @@
       "cost": 100,
       "params": {
         "pct": 150,
-        "duration": 6
+        "duration": 6,
+        "slow": 30
       }
     },
     {
@@ -144,7 +145,8 @@
       "cost": 100,
       "params": {
         "pct": 150,
-        "duration": 6
+        "duration": 6,
+        "slow": 30
       }
     },
     {

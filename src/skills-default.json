@@ -12,7 +12,9 @@
    "type": "poison",
    "name": "Poison shot",
    "cost": 100,
-   "params": {}
+   "params": {
+    "slow": 30
+   }
   },
   {
    "id": "stealth",
