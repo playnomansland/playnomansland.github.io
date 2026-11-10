@@ -17362,12 +17362,14 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     eyesInTheFront2: { title: 'Eyes in the front 2', file: 'audio/eyes-in-the-front-2.mp3' }, // the whole song (menu)
     // the same song as battle music: plays from start to end (seconds), then loops back to start
     joeBiden: { title: 'Joe biden', file: 'audio/joe-biden.mp3' },
+    broski: { title: 'Broski', file: 'audio/broski.mp3' },
+    dawnOnU: { title: 'DawnOnU', file: 'audio/dawn-on-u.mp3' },
     eyesInTheFront2Battle: { title: 'Eyes in the front 2', file: 'audio/eyes-in-the-front-2.mp3', start: 22.15, end: 88.61 },
   };
   // deployment / battle music not given to a look yet: kept out of the menu playlist and played nowhere until it goes
   // in PLAYLISTS or MUSIC_COMBOS (and then out of this list). Developers hear them in the DEV playlist ('dev', devMusic);
   // everyone else doesn't see them anywhere, not in All music or their own playlists either.
-  const UNASSIGNED = ['evening', 's4knandet', 'eyesInTheFront2Battle'];
+  const UNASSIGNED = ['evening', 's4knandet', 'eyesInTheFront2Battle', 'broski', 'dawnOnU'];
   const ARTIST = 'Snetänd'; // unless a song names its own
   const songName = (id) => `“${SONGS[id].title}” - ${SONGS[id].artist || ARTIST}`;
   const PLAYLISTS = { deploy: ['bulgaria'], battle: ['habbyourmam'] };
@@ -18131,7 +18133,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · 856c99c'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 22cf052'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches

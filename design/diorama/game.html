@@ -7137,7 +7137,7 @@ const Game = (() => {
   const findMap = (id) => MAPS.find(x => x.id === id) || TEAM_MAPS.find(x => x.id === id) || VIEW_MAPS.find(x => x.id === id);
   // Looks (skins) for the 3D board: a map with skins (the Standard and the Test Grid) can be played in any of them; the
   // others have their own look. Only how the board looks: the rules stay the map's. The match keeps the host's pick (m.skin).
-  const SKINS = [{ id: 'meadow', name: 'Meadow' }, { id: 'autumn', name: 'Autumn' }, { id: 'snow', name: 'Snow' }, { id: 'frost', name: 'Forest Glade' }, { id: 'desert', name: 'Desert' }, { id: 'ash', name: 'Ashlands' }, { id: 'moonlit', name: 'Moonlit Snow' }, { id: 'savanna', name: 'Savanna' }];
+  const SKINS = [{ id: 'meadow', name: 'Meadow' }, { id: 'autumn', name: 'Autumn' }, { id: 'snow', name: 'Mountain Pass' }, { id: 'frost', name: 'Forest Glade' }, { id: 'desert', name: 'Desert' }, { id: 'ash', name: 'Ashlands' }, { id: 'moonlit', name: 'Moonlit Snow' }, { id: 'savanna', name: 'Savanna' }];
   // each map's own look (the rest: meadow), and the look a match is drawn in: the host's pick on a map with skins, else
   // the map's own. The deployment and battle music follow the look too (LOOK_MUSIC in the page).
   const MAP_LOOK = { standard: 'meadow', testgrid: 'frost', ice: 'snow', forest: 'forest', cavern: 'cavern' };
@@ -17346,11 +17346,11 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // results. Each fades out when its phase ends and fades back in where it stopped when the phase comes round again.
   // Volume goes through Web Audio because iPhones ignore audio.volume.
   const SOUND_STORE = 'phonebellum.sound.v1';
-  const SONGS = { // all mastered to the same loudness
+  const SONGS = { // all mastered to the same loudness; this order is the playlists' order
+    superCoffee: { title: 'Super coffee', file: 'audio/super-coffee.mp3' }, // no. 1, and a new player's first song (FIRST_SONG)
     sisi: { title: 'sisi', file: 'audio/sisi.mp3' },
     jonah: { title: 'Jonah', file: 'audio/jonah.mp3' },
     long: { title: 'Long', file: 'audio/long.mp3' },
-    superCoffee: { title: 'Super coffee', file: 'audio/super-coffee.mp3' },
     reveal: { title: 'Reveal', file: 'audio/reveal.mp3' },
     salig: { title: 'Salig', file: 'audio/salig.mp3', artist: 'Emil Helleday' },
     bulgaria: { title: 'Bulgaria', file: 'audio/bulgaria.mp3' },
@@ -17364,12 +17364,14 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     eyesInTheFront2: { title: 'Eyes in the front 2', file: 'audio/eyes-in-the-front-2.mp3' }, // the whole song (menu)
     // the same song as battle music: plays from start to end (seconds), then loops back to start
     joeBiden: { title: 'Joe biden', file: 'audio/joe-biden.mp3' },
+    broski: { title: 'Broski', file: 'audio/broski.mp3' },
+    dawnOnU: { title: 'DawnOnU', file: 'audio/dawn-on-u.mp3' },
     eyesInTheFront2Battle: { title: 'Eyes in the front 2', file: 'audio/eyes-in-the-front-2.mp3', start: 22.15, end: 88.61 },
   };
   // deployment / battle music not given to a look yet: kept out of the menu playlist and played nowhere until it goes
   // in PLAYLISTS or MUSIC_COMBOS (and then out of this list). Developers hear them in the DEV playlist ('dev', devMusic);
   // everyone else doesn't see them anywhere, not in All music or their own playlists either.
-  const UNASSIGNED = ['evening', 's4knandet', 'eyesInTheFront2Battle'];
+  const UNASSIGNED = ['evening', 's4knandet', 'eyesInTheFront2Battle', 'broski', 'dawnOnU'];
   const ARTIST = 'Snetänd'; // unless a song names its own
   const songName = (id) => `“${SONGS[id].title}” - ${SONGS[id].artist || ARTIST}`;
   const PLAYLISTS = { deploy: ['bulgaria'], battle: ['habbyourmam'] };
@@ -17390,8 +17392,13 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const DEFAULT_VOL = 10;
   // song: the one menu song the player picked ('' = the menu playlist); solo: on an iPhone, take over the phone's sound (see setAudioSession)
   let snd = { vol: DEFAULT_VOL, muted: false, song: '', solo: false };
+  // what the menu plays first for a new player: no sound settings saved, and the menu music has never played on this
+  // device (FIRST_SEEN, set the first time it does)
+  const FIRST_SONG = 'superCoffee', FIRST_SEEN = 'pb-first-song';
+  let soundNew = true;
   try {
     const p = JSON.parse(localStorage.getItem(SOUND_STORE) || 'null');
+    soundNew = !p && !localStorage.getItem('phonebellum.music.v1') && !localStorage.getItem(FIRST_SEEN); // (the old On/Off switch: not new)
     if (p && isFinite(p.vol)) snd = { vol: Math.max(0, Math.min(100, +p.vol)), muted: !!p.muted, song: SONGS[p.song] ? p.song : '', solo: !!p.solo, shuffle: !!p.shuffle, repeat: !!p.repeat, chatOn: p.chatOn !== false, emotesOn: p.emotesOn !== false, src: typeof p.src === 'string' ? p.src : 'menu' }; // chatOn, emotesOn: online matches (the lobby)
     else if (localStorage.getItem('phonebellum.music.v1') === 'off') snd.muted = true; // the old On/Off switch
   } catch (e) {}
@@ -17440,6 +17447,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     el.addEventListener('ended', () => { if (cur().end != null && (tracks.length < 2 || pl.repeat)) { rewind(); el.play().catch(() => {}); } else pl.next(); });
     pl.song = () => tracks[track];
     pl.list = () => tracks.slice();
+    pl.first = (id) => { const t = tracks.indexOf(id); if (t >= 0 && t !== track) load(t); }; // start on this one (no Back to the one before)
     pl.play = (id) => { const t = tracks.indexOf(id); if (t < 0) return; if (t !== track) { past.push(tracks[track]); if (past.length > 20) past.shift(); load(t); } else rewind(); };
     pl.setRepeat = (on) => { pl.repeat = !!on; el.loop = pl.repeat; };
     pl.next = () => { past.push(tracks[track]); if (past.length > 20) past.shift(); load(pickNext(track)); };
@@ -17529,6 +17537,10 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   for (const id in MUSIC_COMBOS) for (const k in MUSIC_COMBOS[id]) music[k + '-' + id] = playlist(MUSIC_COMBOS[id][k]);
   music.menu.setRepeat(!!snd.repeat); music.mine.setRepeat(!!snd.repeat);
   if (snd.song && srcSongs(menuSrc()).includes(snd.song)) music.menu.play(snd.song); // the song picked last time starts the list
+  else if (soundNew) { // a new player: Super coffee first
+    music.menu.first(FIRST_SONG);
+    music.menu.el.addEventListener('playing', () => { try { localStorage.setItem(FIRST_SEEN, '1'); } catch (e) {} }, { once: true });
+  }
   let mine = { key: '', on: false, paused: false, src: 'all' };
   const musicInMatch = () => !!m && (phase === 'deploy' || phase === 'battle' || phase === 'result' || phase === 'end');
   const matchKey = () => (m && musicInMatch() ? `${mode}:${m.seed}:${(net && net.code) || ''}` : '');
@@ -18046,15 +18058,15 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       got.then(ab => new Promise((ok, no) => actx.decodeAudioData(ab, ok, no))).then(b => { sfxBuf[k] = b; }).catch(() => {});
     }
   }
-  function sfx(k) {
+  function sfx(k, vol = 1) { // vol: this play only (a quick run of hovers)
     sfxAt = performance.now();
-    if (window.__sfxLog) window.__sfxLog.push(k + (sfxBuf[k] ? '' : '?')); // tests (? = not loaded)
+    if (window.__sfxLog) window.__sfxLog.push(k + (vol !== 1 ? '@' + vol : '') + (sfxBuf[k] ? '' : '?')); // tests (? = not loaded)
     if (!snd.sfx || !snd.sfxVol || !actx || actx.state !== 'running' || !sfxBuf[k]) return;
     try {
       const src = actx.createBufferSource(), g = actx.createGain();
       src.buffer = sfxBuf[k];
       if (SFX_VARY.has(k)) src.playbackRate.value = 0.96 + Math.random() * 0.08;
-      g.gain.value = snd.sfxVol / 100 * (SFX_GAIN[k] || 1);
+      g.gain.value = snd.sfxVol / 100 * (SFX_GAIN[k] || 1) * vol;
       src.connect(g).connect(actx.destination); src.start();
     } catch (e) {}
   }
@@ -18107,6 +18119,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const ROOM_BTNS = '#lob-create, #nr-go, #create-go, #lob-quick, #join, #lob-join, #fr-join, [data-join]';
   // a mouse over a button outside a match: the soft hover tick (once per button, not while a match is on screen)
   let hoverBtn = null, hoverAt = -1e9;
+  const HOVER_RUN_MS = 500, HOVER_RUN_VOL = 0.7; // a hover soon after the last one: 70% (owner, 2026-11-09)
   document.addEventListener('pointerover', (e) => {
     if (e.pointerType !== 'mouse') return;
     const b = e.target.closest && e.target.closest('button, .btn, [role="button"]');
@@ -18115,13 +18128,14 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (!b || b.disabled || b.closest('.uc2') || (m && ['deploy', 'battle', 'result'].includes(phase))) return;
     const t = performance.now();
     if (t - hoverAt < 60 || t - sfxAt < 150) return; // a sweep across a row ticks, it doesn't buzz; a click's own sound goes first
-    hoverAt = t; sfx('hover'); sfxAt = -1e9; // a hover doesn't hold back the next click's sound
+    const run = t - hoverAt < HOVER_RUN_MS;
+    hoverAt = t; sfx('hover', run ? HOVER_RUN_VOL : 1); sfxAt = -1e9; // a hover doesn't hold back the next click's sound
   }, { passive: true });
 
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · 95b23e5'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 22cf052'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19717,6 +19731,9 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (mode === 'host') saveHost();
   }
 
+  // the opponent pressed Ready (their status or side came in): the same sound on this screen, unless this player is
+  // ready too (the fight starts now and plays its own)
+  function foeReadySfx(was) { if (!was && phase === 'deploy' && ready[foe()] && !ready[me]) sfx('ready'); }
   function toggleReady() {
     if (phase !== 'deploy' || timeUp) return;
     if (!ready[me]) commitPick();
@@ -23336,7 +23353,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
-  const V3D = '98619b0c61'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '31bd4fc220'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
@@ -25072,7 +25089,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     m.gold[1] = Math.max(0, +d.gold || 0);
     m.extraDeploys[1] = Math.max(0, Math.min(Game.CONFIG.maxExtraDeploys, d.extra | 0));
     m.nextId[1] = Math.max(m.nextId[1], d.nextId | 0);
-    ready[1] = !!d.ready;
+    { const was = ready[1]; ready[1] = !!d.ready; foeReadySfx(was); }
     // the guest's package: picked once in round 1; package squads beyond what it holds are dropped
     if (m.round === 1 && m.pack && m.pack[1] == null && Number.isInteger(d.pack)) Game.choosePack(m, 1, d.pack);
     if (typeof d.leader === 'string' && Game.canPickLeader(m, 1, d.leader)) Game.pickLeader(m, 1, d.leader); // the leader draft: only in turn and from what's left
@@ -25369,7 +25386,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       nextReady = [false, false]; rematch = [false, false];
       playBattle(d.pre);
     } else if (d.t === 'status') {
-      if (d.ready) ready[0] = !!d.ready[0];
+      if (d.ready) { const was = ready[0]; ready[0] = !!d.ready[0]; foeReadySfx(was); }
       if (d.nextReady) nextReady[0] = !!d.nextReady[0];
       if (d.rematch) rematch[0] = !!d.rematch[0];
       if (phase === 'deploy' && m && m.round === 1 && Array.isArray(d.start) && d.start.every(Number.isInteger)) { m.packSeen = { 0: d.start.slice() }; render(); } // the host's starting units
@@ -25561,7 +25578,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (mode === 'spec') { srvSpec(d); return; }
     if (d.t === 'status') {
       if (d.here) net.foeHere = !!d.here[foe()];
-      if (d.ready) { ready[foe()] = !!d.ready[foe()]; if (!timeUp) ready[me] = !!d.ready[me]; }
+      if (d.ready) { const was = ready[foe()]; ready[foe()] = !!d.ready[foe()]; if (!timeUp) ready[me] = !!d.ready[me]; foeReadySfx(was); }
       if (d.nextReady) nextReady = d.nextReady.slice();
       if (d.rematch) rematch = d.rematch.slice();
       srvClock(d); netStatus();

@@ -16,7 +16,7 @@ let bad = 0; const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + msg)
 setTimeout(() => { console.error('test timed out'); process.exit(1); }, 3 * 60 * 1000).unref();
 const ROOT = path.join(__dirname, '..', '..');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.mp3': 'audio/mpeg', '.json': 'application/json', '.glb': 'model/gltf-binary', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
-const DEV_SONGS = ['evening', 's4knandet', 'eyesInTheFront2Battle'];
+const DEV_SONGS = ['evening', 's4knandet', 'eyesInTheFront2Battle', 'broski', 'dawnOnU'];
 const player = (dev) => ({ id: 'p0123456789abcdef', tag: dev ? 'Dev' : 'Player', dev, google: false, titles: [], skins: [] });
 const SESSION = 'a'.repeat(64);
 
