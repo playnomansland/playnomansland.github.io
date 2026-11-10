@@ -27,6 +27,7 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 - Picking your **tower** or your **leader** has its own sound.
 - On a PC, moving the mouse onto a **menu button** makes a soft tick (a little quieter when you sweep across several).
 - The **Snow** battlefield is now called **Mountain Pass**.
+- **Super coffee** is now no. 1 in the playlists, and the first song new players hear.
 
 ---
 

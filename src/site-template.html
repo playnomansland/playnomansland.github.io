@@ -1448,11 +1448,11 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // results. Each fades out when its phase ends and fades back in where it stopped when the phase comes round again.
   // Volume goes through Web Audio because iPhones ignore audio.volume.
   const SOUND_STORE = 'phonebellum.sound.v1';
-  const SONGS = { // all mastered to the same loudness
+  const SONGS = { // all mastered to the same loudness; this order is the playlists' order
+    superCoffee: { title: 'Super coffee', file: 'audio/super-coffee.mp3' }, // no. 1, and a new player's first song (FIRST_SONG)
     sisi: { title: 'sisi', file: 'audio/sisi.mp3' },
     jonah: { title: 'Jonah', file: 'audio/jonah.mp3' },
     long: { title: 'Long', file: 'audio/long.mp3' },
-    superCoffee: { title: 'Super coffee', file: 'audio/super-coffee.mp3' },
     reveal: { title: 'Reveal', file: 'audio/reveal.mp3' },
     salig: { title: 'Salig', file: 'audio/salig.mp3', artist: 'Emil Helleday' },
     bulgaria: { title: 'Bulgaria', file: 'audio/bulgaria.mp3' },
@@ -1491,8 +1491,13 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const DEFAULT_VOL = 10;
   // song: the one menu song the player picked ('' = the menu playlist); solo: on an iPhone, take over the phone's sound (see setAudioSession)
   let snd = { vol: DEFAULT_VOL, muted: false, song: '', solo: false };
+  // what the menu plays first for a new player: no sound settings saved, and the menu music has never played on this
+  // device (FIRST_SEEN, set the first time it does)
+  const FIRST_SONG = 'superCoffee', FIRST_SEEN = 'pb-first-song';
+  let soundNew = true;
   try {
     const p = JSON.parse(localStorage.getItem(SOUND_STORE) || 'null');
+    soundNew = !p && !localStorage.getItem('phonebellum.music.v1') && !localStorage.getItem(FIRST_SEEN); // (the old On/Off switch: not new)
     if (p && isFinite(p.vol)) snd = { vol: Math.max(0, Math.min(100, +p.vol)), muted: !!p.muted, song: SONGS[p.song] ? p.song : '', solo: !!p.solo, shuffle: !!p.shuffle, repeat: !!p.repeat, chatOn: p.chatOn !== false, emotesOn: p.emotesOn !== false, src: typeof p.src === 'string' ? p.src : 'menu' }; // chatOn, emotesOn: online matches (the lobby)
     else if (localStorage.getItem('phonebellum.music.v1') === 'off') snd.muted = true; // the old On/Off switch
   } catch (e) {}
@@ -1541,6 +1546,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     el.addEventListener('ended', () => { if (cur().end != null && (tracks.length < 2 || pl.repeat)) { rewind(); el.play().catch(() => {}); } else pl.next(); });
     pl.song = () => tracks[track];
     pl.list = () => tracks.slice();
+    pl.first = (id) => { const t = tracks.indexOf(id); if (t >= 0 && t !== track) load(t); }; // start on this one (no Back to the one before)
     pl.play = (id) => { const t = tracks.indexOf(id); if (t < 0) return; if (t !== track) { past.push(tracks[track]); if (past.length > 20) past.shift(); load(t); } else rewind(); };
     pl.setRepeat = (on) => { pl.repeat = !!on; el.loop = pl.repeat; };
     pl.next = () => { past.push(tracks[track]); if (past.length > 20) past.shift(); load(pickNext(track)); };
@@ -1616,6 +1622,10 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   for (const id in MUSIC_COMBOS) for (const k in MUSIC_COMBOS[id]) music[k + '-' + id] = playlist(MUSIC_COMBOS[id][k]);
   music.menu.setRepeat(!!snd.repeat); music.mine.setRepeat(!!snd.repeat);
   if (snd.song && srcSongs(menuSrc()).includes(snd.song)) music.menu.play(snd.song); // the song picked last time starts the list
+  else if (soundNew) { // a new player: Super coffee first
+    music.menu.first(FIRST_SONG);
+    music.menu.el.addEventListener('playing', () => { try { localStorage.setItem(FIRST_SEEN, '1'); } catch (e) {} }, { once: true });
+  }
   let mine = { key: '', on: false, paused: false, src: 'all' };
   const musicInMatch = () => !!m && (phase === 'deploy' || phase === 'battle' || phase === 'result' || phase === 'end');
   const matchKey = () => (m && musicInMatch() ? `${mode}:${m.seed}:${(net && net.code) || ''}` : '');
