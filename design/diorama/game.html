@@ -17981,7 +17981,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 4faf5bd'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · df89518'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -23328,9 +23328,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // a sheet is open, in the room, or with Settings' "Deploy panel: Always shown". READY and the clock stay where they
   // are (they're fixed, the column only moves its left / right). The board keeps its framing, so it never moves under
   // the pointer while aiming. A thin tab at the edge shows where it went
-  const DAUTO_STORE = 'pb-deploy-auto';
-  let dAuto = true, dOut = true, dOutT = 0;
-  try { dAuto = localStorage.getItem(DAUTO_STORE) !== 'off'; } catch (e) {}
+  const DAUTO_STORE = 'pb-deploy-auto2'; // (a new key: always out by default from 2026-11-10, the owner; earlier choices don't carry over)
+  let dAuto = false, dOut = true, dOutT = 0;
+  try { dAuto = localStorage.getItem(DAUTO_STORE) === 'on'; } catch (e) {}
   function dioPanelOut(out) {
     if (dOut === out) return;
     dOut = out; document.documentElement.classList.toggle('dtuck', !out);
