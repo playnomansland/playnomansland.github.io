@@ -1646,7 +1646,7 @@
         <span class="k">Sound</span><div class="set">${spkVol('vol', 'music', musicOn(), snd.vol, 'Music')}${spkVol('sfxVol', 'sfx', !!snd.sfx && snd.sfxVol > 0, snd.sfxVol, 'Sound effects')}
           ${navigator.audioSession ? `<span class="lab">Other apps</span><span class="seg"><button class="w" data-set="solo|0" aria-pressed="${!snd.solo}">Keep playing</button><button class="w" data-set="solo|1" aria-pressed="${!!snd.solo}">Pause them</button></span><p class="sn">Pause them: plays even on silent.</p>` : ''}</div>
         ${PC() ? `<span class="k">Match screen</span><div class="set"><span class="lab">Deploy panel</span><span class="seg"><button class="w" data-set="dside|0" aria-pressed="${dSide === 'left'}">Left</button><button class="w" data-set="dside|1" aria-pressed="${dSide === 'right'}">Right</button></span><p class="sn">Where your gold, the shop and READY sit in a match.</p>${onoff('dauto', 'Slides away', dAuto, dAuto ? 'It tucks to its side when your pointer leaves it, and comes back when you point at that side.' : 'Always shown.')}</div>` : ''}
-        <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}</div>
+        <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}${PC() ? onoff('helpers', 'Helpers', helpersOn(), helpersOn() ? (helpers.done ? 'You’ve had them all. Off and On again starts them over.' : 'Yellow notes point things out in your first game.') : 'No notes. On starts them from the beginning.') : ''}</div>
         <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
         <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', staying(), staying() ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${acct && !acct.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
         ${devMode() ? `<span class="k" style="color:#FF5FC4">Developer</span><div class="set">${onoff('rk', 'Ranked play', home.rankedOn === true, '<span id="rk-msg">For everyone, not only developers.</span>')}</div>` : ''}
@@ -1669,6 +1669,7 @@
       else if (k === 'dside') setDeploySide(on ? 'right' : 'left', true);
       else if (k === 'dauto') setDeployAuto(on);
       else if (k === 'tm') timerOn = on; // the old PLAY popup's Deploy timer vs AI (for this visit, as there)
+      else if (k === 'helpers') setHelpers(on); // the yellow notes of a first game against the computer
       else if (k === 'rk') { const r = await acctCall('ranked', { on }, true); if (r.status === 200) home.rankedOn = !!r.on; drawSettings();
         if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }
       drawSettings();
