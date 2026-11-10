@@ -1422,3 +1422,38 @@ html.diorama.pcwide #stats-dd h4 { font: 700 12px var(--dtype); letter-spacing: 
 .ddline { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 8; pointer-events: none; overflow: visible; }
 .ddline circle { fill: #F4ECD8; } .ddline polyline { fill: none; stroke: #F4ECD8; stroke-width: 1.5; }
 html:not(.pcwide) .ddline { display: none; }
+
+/* ── version B of the match's Settings (html.dsetmenu, ?settings=menu): the main menu's Settings dropdown, as it is on the
+   home screen: the ink panel, a big stencil title, small cream headings, a label and its choices as stencil words (the
+   picked one on the saffron shard) with the note under them, thin sliders with a square saffron knob, the extras as
+   underlined links, Main menu as a stencil word ── */
+html.dsetmenu.diorama.pcwide .sheet-back.ddrop #sheet { --sc: #17140F; background: #17140F; width: min(470px, calc(100vw - 32px)); padding: 24px 28px 22px; row-gap: 4px; }
+html.dsetmenu.diorama.pcwide #sheet .bar[data-keep] #close { display: none; }
+html.dsetmenu.diorama.pcwide #sheet h3 { font: 700 38px/.95 var(--dstencil); text-transform: uppercase; margin-bottom: 14px; }
+html.dsetmenu.diorama.pcwide #sheet .bar:is(:has(#spk-music), :has([data-board]), :has([data-dside]), :has([data-chat]))::before {
+  margin: 14px 0 2px; padding-top: 0; border-top: 0; color: #F4ECD8; opacity: .85; font: 700 12px var(--dtype); letter-spacing: .06em; }
+html.dsetmenu.diorama.pcwide #sheet .bar:has(#spk-music)::before { margin-top: 0; }
+html.dsetmenu.diorama.pcwide #sheet > .bar { display: grid; grid-template-columns: 130px 1fr; align-items: center; justify-content: start; column-gap: 12px; min-height: 30px; }
+html.dsetmenu.diorama.pcwide #sheet > .bar::before { grid-column: 1 / -1; }
+html.dsetmenu.diorama.pcwide #sheet > .bar > .hint { font: 700 15px var(--dtype); color: #F4ECD8; opacity: 1; }
+/* choices: stencil words, the picked one on the shard */
+html.dsetmenu.diorama.pcwide #sheet .seg { justify-self: start; display: inline-flex; gap: 6px; padding: 0; margin-left: -9px; border: 0; border-radius: 0; background: none; }
+html.dsetmenu.diorama.pcwide #sheet .seg button { position: relative; isolation: isolate; min-width: 0; padding: 4px 9px 1px; border: 0; border-radius: 0; background: none; color: #F4ECD8; opacity: .6;
+  font: 700 20px/1 var(--dstencil); text-transform: uppercase; letter-spacing: -.01em; }
+html.dsetmenu.diorama.pcwide #sheet .seg button:hover:not([aria-pressed="true"]) { opacity: 1; background: none; }
+html.dsetmenu.diorama.pcwide #sheet .seg button[aria-pressed="true"] { opacity: 1; color: #17140F; background: none; }
+html.dsetmenu.diorama.pcwide #sheet .seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+/* sliders: a thin cream line and a square saffron knob */
+html.dsetmenu.diorama.pcwide #sheet .volrow { justify-self: stretch; max-width: none; justify-content: flex-start; }
+html.dsetmenu.diorama.pcwide #sheet input[type="range"] { -webkit-appearance: none; appearance: none; flex: 1; height: 18px; background: none; }
+html.dsetmenu.diorama.pcwide #sheet input[type="range"]::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(90deg, #F4ECD8 var(--v, 50%), rgba(244,236,216,.3) var(--v, 50%)); }
+html.dsetmenu.diorama.pcwide #sheet input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 18px; margin-top: -8px; border: 0; border-radius: 0; background: #F2B23A; }
+html.dsetmenu.diorama.pcwide #sheet input[type="range"]::-moz-range-track { height: 2px; background: rgba(244,236,216,.3); }
+html.dsetmenu.diorama.pcwide #sheet input[type="range"]::-moz-range-thumb { width: 14px; height: 18px; border: 0; border-radius: 0; background: #F2B23A; }
+html.dsetmenu.diorama.pcwide #sheet .volrow .num { font: 700 14px var(--dtype); }
+/* the extras: underlined links in a row under a hairline; Main menu a stencil word */
+html.dsetmenu.diorama.pcwide #sheet .bar:is(:has(#fr-open2), :has(#mp-open2), :has(#bug-open)) { display: flex; grid-column: auto; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(244,236,216,.2); }
+html.dsetmenu.diorama.pcwide #sheet .btn:is(#fr-open2, #mp-open2, #bug-open) { flex: none; padding: 0; border: 0; background: none; font: 700 13px var(--dtype); text-decoration: underline; text-underline-offset: 4px; opacity: .88; }
+html.dsetmenu.diorama.pcwide #sheet .btn:is(#fr-open2, #mp-open2, #bug-open):hover:not(:disabled) { background: none; border: 0; opacity: 1; }
+html.dsetmenu.diorama.pcwide #sheet .btn#to-menu { justify-self: start; width: auto; margin-top: 10px; margin-left: -9px; padding: 4px 9px 1px; border: 0; background: none; color: #FF8F78; font: 700 20px/1 var(--dstencil); text-transform: uppercase; }
+html.dsetmenu.diorama.pcwide #sheet .btn#to-menu:hover:not(:disabled) { background: none; border: 0; text-decoration: underline; text-underline-offset: 4px; }

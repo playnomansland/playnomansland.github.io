@@ -8519,10 +8519,17 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // A Diorama dropdown in a match: the panel hangs under its button (Settings: #sheet in #sheet-back.ddrop; Damage:
   // #stats-dd), and a cream line with a dot on the button runs down to the panel, as the menu's notes
   const ddrop = { which: '', btn: null };
+  // version B of the match's Settings (the owner, 2026-11-10: "another version that uses the main menu design language
+  // more"): ?settings=menu turns it on (kept on this device), ?settings=a goes back; html.dsetmenu in src/diorama.css
+  try { const q = (location.search.match(/[?&]settings=(menu|a)\b/) || [])[1]; if (q) localStorage.setItem('pb-dset', q); if (localStorage.getItem('pb-dset') === 'menu') document.documentElement.classList.add('dsetmenu'); } catch (e) {}
   function dioDropOn(which, btn) {
     ddrop.which = which; ddrop.btn = btn;
     const back = $('sheet-back');
-    if (which === 'sheet') back.classList.add('ddrop');
+    if (which === 'sheet') {
+      back.classList.add('ddrop');
+      const fill = (el) => el.style.setProperty('--v', ((+el.value - +el.min) / ((+el.max - +el.min) || 1) * 100) + '%'); // (version B's sliders fill up to the knob)
+      $('sheet').querySelectorAll('input[type="range"]').forEach(el => { fill(el); el.addEventListener('input', () => fill(el)); });
+    }
     dioDropPlace();
   }
   function dioDropOff(which) {
