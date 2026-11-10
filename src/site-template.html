@@ -396,6 +396,32 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 .task.through { pointer-events: none; } /* a direction arrow: a tap on the line goes to the tile under it, only the X cancels */
 .task.through .task-x { pointer-events: auto; cursor: pointer; }
 .task .task-x { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); font-size: 16px; line-height: 1; display: grid; place-items: center; }
+/* helpers (2026-11-10): in a first game against the computer on a PC, one small yellow note at a time points at the
+   next thing to press (the box's tail is on the side of what it's about). Under the sheets, over everything else */
+.helper { position: fixed; z-index: 4; left: 0; top: 0; width: max-content; max-width: 236px; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45)); font: 700 13.5px/1.34 "Bricolage Grotesque", system-ui, sans-serif; color: #17140F; pointer-events: none; }
+.helper[hidden] { display: none; }
+.helper .hp-box { display: grid; gap: 3px; padding: 10px 13px 8px 12px; background: #F2B23A; clip-path: polygon(0 3px, calc(100% - 5px) 0, 100% calc(100% - 4px), 4px 100%); pointer-events: auto; animation: hp-in .22s cubic-bezier(.3, 1.5, .5, 1) both; }
+.helper .hp-box b { font-size: 14.5px; }
+.helper .hp-box span { font-weight: 600; }
+.helper .hp-box small { font-size: 11.5px; opacity: .6; white-space: nowrap; }
+.helper .hp-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.helper .hp-row button { padding: 0; border: 0; background: none; font: 700 12px/1.2 "Bricolage Grotesque", system-ui, sans-serif; color: #17140F; cursor: pointer; opacity: .7; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.helper .hp-row button:hover, .helper .hp-row button:focus-visible { opacity: 1; }
+.helper .hp-row #hp-ok { padding: 3px 9px 2px; background: #17140F; color: #F2B23A; opacity: 1; text-decoration: none; clip-path: polygon(0 8%, 96% 0, 100% 90%, 4% 100%); }
+.helper .hp-row #hp-ok:hover, .helper .hp-row #hp-ok:focus-visible { color: #fff; }
+.helper .hp-tail { position: absolute; background: #F2B23A; }
+.helper[data-side="right"] .hp-tail { left: -9px; top: var(--tail, 50%); width: 10px; height: 16px; margin-top: -8px; clip-path: polygon(100% 0, 0 50%, 100% 100%); }
+.helper[data-side="left"] .hp-tail { right: -9px; top: var(--tail, 50%); width: 10px; height: 16px; margin-top: -8px; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.helper[data-side="top"] .hp-tail { bottom: -9px; left: var(--tail, 50%); width: 16px; height: 10px; margin-left: -8px; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.helper[data-side="bottom"] .hp-tail { top: -9px; left: var(--tail, 50%); width: 16px; height: 10px; margin-left: -8px; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.helper[data-side="right"] { animation: hp-nudge-x 1.7s ease-in-out infinite; --nudge: -4px; }
+.helper[data-side="left"] { animation: hp-nudge-x 1.7s ease-in-out infinite; --nudge: 4px; }
+.helper[data-side="top"] { animation: hp-nudge-y 1.7s ease-in-out infinite; --nudge: 4px; }
+.helper[data-side="bottom"] { animation: hp-nudge-y 1.7s ease-in-out infinite; --nudge: -4px; }
+@keyframes hp-in { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes hp-nudge-x { 0%, 100% { translate: 0 0; } 50% { translate: var(--nudge) 0; } }
+@keyframes hp-nudge-y { 0%, 100% { translate: 0 0; } 50% { translate: 0 var(--nudge); } }
+@media (prefers-reduced-motion: reduce) { .helper, .helper .hp-box { animation: none !important; } }
 /* tutorial: the coach line over the board, a ring on what it talks about, and a glow on the next thing to tap */
 .board-banner { position: absolute; left: 0; right: 0; top: 42%; z-index: 4; pointer-events: none; text-align: center; padding: 14px 8px; background: linear-gradient(90deg, transparent, rgba(13, 19, 21, 0.88) 18%, rgba(13, 19, 21, 0.88) 82%, transparent); border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold); color: var(--gold); font-size: 26px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; animation: banner-in 3.2s ease both; }
 .board-banner small { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; color: var(--text, #e8e6df); }
@@ -1244,6 +1270,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 <div class="dd" id="stats-dd" hidden role="dialog" aria-label="Damage last round"></div>
 <button class="music-fab" id="music-fab" hidden aria-label="Music"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M9 3.5v10.6A3.5 3.5 0 1 0 11 17V8.2l8-1.9v5.8A3.5 3.5 0 1 0 21 15V2z"/></svg></button>
 <div class="chat-tick" id="chat-tick" hidden aria-live="polite"></div><div class="talk-wheel" id="talk-wheel" hidden role="dialog" aria-label="Emotes and chat"></div><div class="np-menu" id="np-menu" hidden role="menu"></div><div class="emote-layer" id="emote-layer" aria-hidden="true"></div>
+<!-- a helper (2026-11-10): one small yellow note pointing at the next thing to press, in a first game against the computer -->
+<div class="helper" id="helper" hidden role="status" aria-live="polite"></div>
 <div class="sheet-back" id="sheet-back" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h"></div></div>
 
 <script src="peerjs.min.js"></script>
@@ -1464,6 +1492,14 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   try { if (/[?&]test\b/.test(location.search)) window.__pbSheet = (side, key) => openMpbSheet(side, key); } catch (e) {} // UI tests: open a 2v2 building's sheet (every kind, either team's)
   try { if (/[?&]test\b/.test(location.search)) window.__pbTeamBSheet = (side, b) => openTeamBuildingSheet(side, b); } catch (e) {} // UI tests: the other lane's building's read-only sheet (2026-11-07)
   let selected = null;      // unit index chosen in the shop
+  // helpers (2026-11-10): the yellow notes of a first game against the computer. off: switched off (Settings, or a
+  // note's own "Turn off helpers"); seen: the notes shown or done already; done: a whole game has been finished with
+  // them. On by default, except on a device that finished the old guided tutorial
+  const HELP_STORE = 'pb-helpers';
+  let helpers = { off: false, seen: [], done: false };
+  try { const h = JSON.parse(localStorage.getItem(HELP_STORE) || 'null');
+    if (h && Array.isArray(h.seen)) helpers = { off: !!h.off, seen: h.seen.map(String), done: !!h.done };
+    else if (localStorage.getItem('phonebellum.tutorial.v1') === 'done') helpers.off = true; } catch (e) {}
   let rangeOf = null;       // { side, id }: the squad last tapped on the board; its range shows as a dotted ring
   let inspect = null, inspectHtml = ''; // a fight: the body tapped (its card shows, see inspectCard), and what the card shows now
   let bt = null;            // battle being played back
@@ -2471,6 +2507,12 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
           <button data-dauto="1" aria-pressed="${dAuto}">On</button><button data-dauto="0" aria-pressed="${!dAuto}">Off</button>
         </div>
       </div>` : ''}
+      ${mode === 'ai' && document.documentElement.classList.contains('pc') ? `<div class="bar">
+        <span class="hint">Helpers</span>
+        <div class="seg" role="group" aria-label="Helpers: yellow notes that point things out">
+          <button data-helpers="1" aria-pressed="${helpersOn()}">On</button><button data-helpers="0" aria-pressed="${!helpersOn()}">Off</button>
+        </div>
+      </div>` : ''}
       ${document.documentElement.classList.contains('pc') ? '' : `<div class="bar">
         <span class="hint">Phone layout</span>
         <div class="seg" role="group" aria-label="Phone layout">
@@ -2574,6 +2616,10 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       if (r.status !== 200) { $('rk-msg').textContent = r.status === 403 ? 'Only a developer can do that.' : acctFail(r); return; }
       home.rankedOn = !!r.on; $('rk-msg').textContent = r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).';
       $('sheet').querySelectorAll('[data-rk]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.rk === '1') === !!r.on)));
+    }));
+    $('sheet').querySelectorAll('[data-helpers]').forEach(b => b.addEventListener('click', () => { // the yellow notes of a game against the computer
+      setHelpers(b.dataset.helpers === '1');
+      $('sheet').querySelectorAll('[data-helpers]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     }));
     $('sheet').querySelectorAll('[data-dauto]').forEach(b => b.addEventListener('click', () => {
       setDeployAuto(b.dataset.dauto === '1');
@@ -3118,7 +3164,108 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     $('foe-name').classList.toggle('np-tap', typeof talk === 'object' && !!talk && talkOn() && mode === 'net' && !net.duo);
     dioHud();
     if (DIO) dioMusicLine();
+    helperWake();
   }
+
+  // ---------- helpers (2026-11-10): a first game against the computer, on a PC ----------
+  // One small yellow note at a time, pointing at the next thing to press. Nothing is blocked: the game plays as
+  // always, and a note goes when what it is about is done (buy, place, ready), when it has been read and the game has
+  // moved on, or with its own Got it. Each shows once on this device; when a whole game is over they are done.
+  // "Turn off helpers" on any note (or Helpers in Settings) switches them off; switching them on starts them over.
+  const saveHelpers = () => { try { localStorage.setItem(HELP_STORE, JSON.stringify(helpers)); } catch (e) {} };
+  const helpersOn = () => !helpers.off;
+  const helpBought = () => !!m && m.armies[me].some(q => q.round === m.round && !q.free && !q.gift); // a squad paid for this round
+  const helpPick = () => { const el = $('pick'); return phase === 'deploy' && pickFor && !el.hidden ? pickFor.split(':')[0] : ''; }; // the pick on screen: pack, leader, tower
+  const helpDeploy = () => phase === 'deploy' && editable() && !pickFor && !ready[me];
+  const helpTile = (col, row) => { try { const c = Game.tileToWorld(col, row), [x, y] = wrapMap()(c.x, c.y), w = $('wrap').getBoundingClientRect(); return { x: w.left + x, y: w.top + y }; } catch (e) { return null; } };
+  const helpCard = () => [...document.querySelectorAll('#panel .uc2')].find(b => b.getAttribute('aria-disabled') !== 'true') || null;
+  const helpUnlock = () => [...document.querySelectorAll('#panel .add2')].find(b => units.some((u, i) => tierOf(i) === +b.dataset.add && !Game.isOff(m, i, me) && !Game.isUnlocked(m, me, i) && m.gold[me] >= Game.unlockCost(m, i, me) + Game.shopCost(m, me, i))) || null;
+  const helpLevel = () => m.armies[me].find(q => Game.isReady(m, q)) || null;
+  const helpTucked = () => document.documentElement.classList.contains('pcfight');
+  // in order of who speaks first. show: when it is the thing to say; at: what it points at (an element, or a point on
+  // the board); side: where the box sits from there (it flips when there's no room); done: (the three you act on)
+  // what makes it done, shown or not. The others are done once they've been read and the game has moved on
+  const HELP_TIPS = [
+    { id: 'start', show: () => helpPick() === 'pack', at: () => $('pick-go'), side: 'right', h: 'Your start.', t: 'Each one gives you free squads. Click a card, then Choose.' },
+    { id: 'leader', show: () => helpPick() === 'leader', at: () => $('pick-go'), side: 'right', h: 'Your leader.', t: 'A bonus that lasts the whole match. Click a card to read it, then Choose.' },
+    { id: 'tower', show: () => helpPick() === 'tower', at: () => $('pick-go'), side: 'right', h: 'Your tower.', t: 'It guards your zone. If it falls in a fight, your army is crippled for a few seconds.' },
+    { id: 'place', show: () => helpDeploy() && selected !== null && !helpBought(), done: helpBought, at: () => helpTile((Game.COLS - 1) / 2, Game.zoneRows(me)[0] + (me === 0 ? -0.5 : 0.5)), side: 'top', h: 'Place it.', t: 'Click a lit tile. Your zone is the near side of the board.' }, // (on your zone's front edge: the box lies over no man's land)
+    { id: 'buy', show: () => helpDeploy() && selected === null && !helpBought() && !!helpCard(), done: helpBought, at: helpCard, side: 'right', h: 'Buy a squad.', t: 'Click a unit, then a tile in your zone. Dragging it there works too.' },
+    { id: 'level', show: () => helpDeploy() && selected === null && !!helpLevel(), at: () => { const q = helpLevel(); return q ? helpTile(q.col, q.row) : null; }, side: 'top', h: 'It can level up.', t: 'Click the squad with the gold badge. Level 2 doubles its health and attack.' },
+    { id: 'unlock', show: () => helpDeploy() && m.round >= 2 && selected === null && !!helpUnlock(), at: helpUnlock, side: 'right', h: 'More units.', t: 'Unlocking one costs gold once. It stays in your shop for the match.' },
+    { id: 'ready', show: () => helpDeploy() && (helpBought() || Game.deploysLeft(m, me) <= 0) && !!$('ready'), done: () => phase === 'battle', at: () => $('ready'), side: 'top', h: 'Ready?', t: () => `This starts the fight. Gold you don’t spend stays yours. <small>(Up to ${Game.CARRY_CAP})</small>` }, // (the carry cap, small: the owner, 2026-11-10)
+    // (the Diorama's match screen tucks the panel away for the fight: the note is on that edge. Any other layout: on the speeds)
+    { id: 'fight', show: () => phase === 'battle', at: () => helpTucked() ? { x: dSide === 'right' ? innerWidth - 8 : 8, y: innerHeight / 2 } : document.querySelector('#panel .speeds'), side: 'right', h: 'They fight on their own.', t: () => helpTucked() ? 'Point at this edge for the speed and Skip.' : 'The speed and Skip are here.' },
+    { id: 'result', show: () => phase === 'result' && !!$('next'), at: () => $('next'), side: 'bottom', h: 'The loser takes damage.', t: 'Every squad the winner has left standing hurts. Run out of health and the match is over.' },
+    { id: 'help', show: () => helpDeploy() && m.round >= 3 && selected === null && !!$('help-btn'), at: () => $('help-btn'), side: 'right', h: 'That’s the basics.', t: 'The ? has this round’s tips and How to play.' },
+  ];
+  let helpCur = null, helpSince = 0, helpRaf = 0, helpEval = 0, helpFlash = 0;
+  const helpActive = () => mode === 'ai' && !!m && !helpers.off && !helpers.done && document.documentElement.classList.contains('pc') && ['deploy', 'battle', 'result', 'end'].includes(phase);
+  // the match's screens call this (hud): the notes run while a game against the computer is on
+  function helperWake() {
+    if (!helpActive()) { if (helpCur) { helpCur = null; helperDraw(null); } return; }
+    if (!helpRaf) helpRaf = requestAnimationFrame(helperFrame);
+  }
+  function helperFrame(t) {
+    helpRaf = 0;
+    if (!helpActive()) { helpCur = null; if (!helpFlash) helperDraw(null); return; } // (the last note, "Helpers are off", goes by itself)
+    if (m.over) { helpers.done = true; saveHelpers(); helpCur = null; helperDraw(null); return; } // a whole game: that was the first one
+    if (t - helpEval > 120) { helpEval = t; helperPick(t); }
+    helperPlace();
+    helpRaf = requestAnimationFrame(helperFrame);
+  }
+  function helperPick(t) {
+    let dirty = false;
+    const see = (id) => { if (!helpers.seen.includes(id)) { helpers.seen.push(id); dirty = true; } };
+    for (const T of HELP_TIPS) if (T.done && T.done()) see(T.id);
+    const away = !$('sheet-back').hidden || !!($('dio') && !$('dio').hidden); // a sheet is open (or the menu is still flying in): nothing to point at
+    const next = away ? null : HELP_TIPS.find(T => !helpers.seen.includes(T.id) && T.show()) || null;
+    if (next !== helpCur) {
+      if (helpCur && !helpCur.done && t - helpSince > 1200) see(helpCur.id); // read, and the game has moved on
+      helpCur = next && !helpers.seen.includes(next.id) ? next : null; helpSince = t; helperDraw(helpCur);
+    }
+    if (dirty) saveHelpers();
+  }
+  function helperDraw(T, plain) {
+    const el = $('helper'); clearTimeout(helpFlash); helpFlash = 0;
+    if (!T) { el.hidden = true; el.innerHTML = ''; return; }
+    el.innerHTML = `<div class="hp-box"><b>${T.h}</b><span>${typeof T.t === 'function' ? T.t() : T.t}</span>${plain ? '' : '<div class="hp-row"><button id="hp-ok">Got it</button><button id="hp-off">Turn off helpers</button></div>'}</div><i class="hp-tail"></i>`;
+    el.hidden = false; el.style.visibility = 'hidden'; // (shown once it has its place)
+    helperPlace(T);
+  }
+  // beside what it points at, the tail on it; on the other side when there's no room, and never off the screen
+  function helperPlace(T = helpCur) {
+    const el = $('helper'); if (!T || el.hidden) return;
+    const a = T.at(); if (!a) { el.style.visibility = 'hidden'; return; }
+    const r = a.getBoundingClientRect ? a.getBoundingClientRect() : { left: a.x, right: a.x, top: a.y, bottom: a.y, width: 1, height: 1 };
+    if (!r.width && !r.height) { el.style.visibility = 'hidden'; return; }
+    const w = el.offsetWidth, h = el.offsetHeight, gap = 13, W = innerWidth, H = innerHeight, cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
+    // its own side first, then the opposite one, then the other two: the first with room that doesn't lie over READY
+    const flip = { right: 'left', left: 'right', top: 'bottom', bottom: 'top' }, turn = T.side === 'right' || T.side === 'left' ? ['bottom', 'top'] : ['right', 'left'];
+    const spot = (sd) => sd === 'right' || sd === 'left'
+      ? { x: sd === 'right' ? r.right + gap : r.left - gap - w, y: Math.max(8, Math.min(H - h - 8, cy - h / 2)), ok: sd === 'right' ? r.right + gap + w <= W - 8 : r.left - gap - w >= 8 }
+      : { x: Math.max(8, Math.min(W - w - 8, cx - w / 2)), y: sd === 'top' ? r.top - gap - h : r.bottom + gap, ok: sd === 'top' ? r.top - gap - h >= 8 : r.bottom + gap + h <= H - 8 };
+    const go = $('ready') || $('fight'), gr = go && go !== a ? go.getBoundingClientRect() : null;
+    const clear = (q) => !gr || q.x + w < gr.left || q.x > gr.right || q.y + h < gr.top || q.y > gr.bottom;
+    const order = [T.side, flip[T.side], ...turn], side = order.find(sd => { const q = spot(sd); return q.ok && clear(q); }) || order.find(sd => spot(sd).ok) || T.side;
+    const { x, y } = spot(side);
+    el.style.setProperty('--tail', (side === 'right' || side === 'left' ? Math.max(14, Math.min(h - 14, cy - y)) : Math.max(16, Math.min(w - 16, cx - x))) + 'px');
+    if (el.dataset.side !== side) el.dataset.side = side;
+    el.style.left = Math.round(x) + 'px'; el.style.top = Math.round(y) + 'px'; el.style.visibility = '';
+  }
+  // Settings' Helpers, and a note's own "Turn off helpers". On: they start over, from the next thing to do
+  function setHelpers(on) {
+    helpers = { off: !on, seen: [], done: false }; saveHelpers();
+    helpCur = null; helperDraw(null); helperWake();
+  }
+  $('helper').addEventListener('click', (e) => {
+    if (e.target.closest('#hp-ok') && helpCur) { helpers.seen.push(helpCur.id); saveHelpers(); helpCur = null; helperDraw(null); }
+    else if (e.target.closest('#hp-off')) { // off, and one last note says where they can be had back
+      setHelpers(false);
+      if ($('cog') && $('cog').getBoundingClientRect().width) { helperDraw({ at: () => $('cog'), side: 'bottom', h: 'Helpers are off.', t: 'Settings turns them back on.' }, true); helpFlash = setTimeout(() => { helpFlash = 0; helperDraw(null); }, 4200); }
+    }
+  });
+  addEventListener('resize', () => helperPlace());
 
   function setNet(text, state) {
     const n = $('net');
