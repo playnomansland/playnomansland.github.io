@@ -481,3 +481,4 @@ under 860 px high.
 - **2026-11-10 (owner):** the picks' options (start, leader, tower), their details box and the coach line take **the unit cards' colour for the battlefield** (`--dcard`), not the scenery patches (`DPAT_LOOKS` is empty; `?dpat=all` still tries them).
 - **2026-11-10 (owner):** the board stays **centred with either option**: the same margin both sides, half the column in both cases (the owner preferred the bigger board, the always-out column overlapping its outer edge a little).
 - **2026-11-10 (owner):** **every sheet in a match is centred** on the screen (Main menu's question, Unlock, Help, a squad, Settings), all corners clipped. Damage stays a drop-down under its icon (already centred horizontally).
+- **2026-11-10 (owner):** deploy panel **left by default for everyone** (`pb-deploy-side2`, a new key so earlier test choices don't carry over); a choice in Settings is saved on the device and kept every match.

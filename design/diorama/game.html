@@ -17998,7 +17998,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 874b25a'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 69d6458'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -23330,7 +23330,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   const dfit = { k: 1, ox: 0, oy: 0, held: null, on: false, ts: 0 };
   // the deploy panel's side (the owner, 2026-11-09: an option in Settings, right by default for now), kept on this device;
   // ?side=left / ?side=right set it too. html.dright mirrors the column (src/diorama.css), dioSafe frames the board
-  const DSIDE_STORE = 'pb-deploy-side';
+  const DSIDE_STORE = 'pb-deploy-side2'; // (a new key, 2026-11-10: everyone starts on the left, the owner; a choice made in Settings is kept from then on)
   let dSide = 'left'; // (left by default again: the owner, 2026-11-09)
   try { const q = (location.search.match(/[?&]side=(left|right)\b/) || [])[1]; if (q) localStorage.setItem(DSIDE_STORE, q); dSide = localStorage.getItem(DSIDE_STORE) === 'right' ? 'right' : 'left'; } catch (e) {}
   function setDeploySide(side, save) {
