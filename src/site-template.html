@@ -1193,6 +1193,20 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   </section>
   <div class="note qnote" data-q="foe" style="display:none"></div>
 
+  <!-- How to play (2026-11-10): the rules as chapters. Left: the title and the chapters as stencil words (The basics,
+       then the rest); beside them the picked chapter's page (a line, the points, a row of words where there's a list:
+       leaders, towers), Next at its foot. The island is the diagram: each chapter stands its own pieces on it, with
+       notes (src/diorama.js) -->
+  <section class="hw" aria-label="How to play">
+    <div class="hw-left">
+      <span class="k">The rules, explained simply</span>
+      <h2>How to<br>play</h2>
+      <nav class="hw-toc" id="hw-toc" aria-label="Chapters"></nav>
+      <button class="create" id="hw-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
+    </div>
+    <article class="hw-page" id="hw-page" aria-live="polite"></article>
+  </section>
+
   <!-- Match history: your online matches, newest first; a match folds out its rounds, each with a replay -->
   <section class="history" aria-label="Match history">
     <span class="k"><button class="crumb" data-crumb="profile">Profile</button> · Match history</span>
@@ -4608,6 +4622,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if ($('ency-back')) $('ency-back').addEventListener('click', () => openEncyclopedia($('ency-back').dataset.to || null));
   }
   function openHowTo() {
+    if (DIO && typeof dio !== 'undefined' && dio.api && dio.api.howto && phase === 'start' && !m && innerWidth >= 900) { closeSheet(true); dio.api.howto(); return; } // the Diorama's How to play screen (PC only for now; in a match and on a narrow window: this sheet)
     $('sheet').innerHTML = `
       <div class="bar"><h3 id="sheet-h">How to play</h3><button class="btn small" id="close">Close</button></div>
       <div class="card" style="max-width:none;justify-items:stretch">

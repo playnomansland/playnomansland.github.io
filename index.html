@@ -866,7 +866,7 @@ html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35) !impo
 #dio .bf-note:hover .bf-btn, #dio .bf-note:focus-visible .bf-btn { transform: rotate(-1.5deg) scale(1.04); }
 #dio .bf-note:focus-visible { outline: none; }
 #dio.play .bf-note .bf-btn { color: #F2B23A; background: var(--ink); }
-#dio.sheet-over-bf .bf-note { opacity: 0; pointer-events: none; } /* (a unit sheet over it) */
+#dio.sheet-over-bf .bf-note, #dio.how-over-bf .bf-note { opacity: 0; pointer-events: none; } /* (a unit sheet over it; How to play's page on a narrow window) */
 
 /* ── the match on a PC (html.diorama.pcwide: a PC, the 3D board, a match on), from the battle screen prototype
    (design/diorama/battle.html, 2026-11-08). The owner's brief: the 3D view covers as much of the screen as it can, the
@@ -1679,6 +1679,74 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
 #dio .pz .create svg { margin-right: -2px; }
 #dio .note.qnote { max-width: 260px; cursor: default; }
 #dio.puz .acct { display: flex; }
+
+/* ── How to play (2026-11-10): its own field colour, a deep plum (the fifth: ultramarine menu, saffron Play, ink Profile,
+   teal Puzzles). The left column: the title, a line, then the chapters as stencil words (The basics, then the rest); the
+   picked one is on the saffron shard, and a dot and line run from it to its page beside it. The page: the chapter's
+   name, one line that says it all, the points, and where there's a list (leaders, towers) a row of small words, the
+   picked one on a shard, its text under the row. The island is the diagram (src/diorama.js) ── */
+#dio.how { --field: #4B2A5E; --field-lo: #2F1A3D; }
+#dio.how .menu, #dio.how .zz, #dio.how .standings, #dio.how #dio-backto, #dio.how .tiers { display: none; }
+#dio.how .acct { display: flex; }
+#dio .hw { --toc: clamp(244px, 20.5vw, 318px); --page: clamp(336px, 29.5vw, 446px);
+  position: fixed; left: 48px; top: clamp(100px, 14.2vh, 128px); display: none; grid-template-columns: var(--toc) var(--page); column-gap: 40px; align-items: stretch; }
+#dio.how .hw { display: grid; }
+#dio .hw .hw-left { display: grid; justify-items: start; align-content: start; }
+#dio .hw .hw-left > .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
+#dio .hw h2 { margin: 4px 0 clamp(14px, 2.8vh, 26px); font: 700 clamp(48px, 9vh, 84px)/.86 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; white-space: nowrap; }
+/* the chapters */
+#dio .hw .hw-toc { display: grid; justify-items: start; margin-bottom: clamp(12px, 2.4vh, 22px); }
+#dio .hw .hw-g { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; margin: clamp(8px, 1.6vh, 14px) 0 clamp(2px, .5vh, 5px); font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
+#dio .hw .hw-g:first-child { margin-top: 0; }
+#dio .hw .hw-g i { font-style: normal; letter-spacing: 0; text-transform: none; opacity: .8; }
+#dio .hw .hw-toc .item { font-size: clamp(20px, 3.45vh, 32px); gap: 12px; margin: clamp(1px, .42vh, 4px) 0 clamp(1px, .42vh, 4px) 4px; padding: 3px 6px 0 4px; white-space: nowrap; }
+#dio .hw .hw-toc .item .n { transform: translateY(-3px); }
+#dio .hw .hw-toc .item small { margin-left: -2px; font: 700 12.5px var(--type); text-transform: none; letter-spacing: 0; opacity: .78; transform: translateY(-2px); }
+#dio .hw .hw-toc .item .dvt { align-self: center; margin-left: -2px; }
+/* pointing at a chapter only marks it (a pale shard); a click opens it: its page doesn't change under a passing pointer */
+#dio .hw .hw-toc .item:not(.on):hover, #dio .hw .hw-toc .item:not(.on):focus-visible { color: var(--cream); }
+#dio .hw .hw-toc .item:not(.on):hover .shard, #dio .hw .hw-toc .item:not(.on):focus-visible .shard { fill: var(--cream); opacity: .17; }
+/* the picked chapter's dot and line, over to its page (--lead: the way to the page's rail, measured in drawHow) */
+#dio .hw .hw-toc .item.on::before { content: ""; position: absolute; left: calc(100% + 13px); top: calc(50% - 4px); width: 9px; height: 9px; border-radius: 50%; background: var(--cream); box-shadow: 0 0 0 4px var(--field), 0 0 0 5px color-mix(in srgb, var(--cream) 50%, transparent); }
+#dio .hw .hw-toc .item.on::after { content: ""; position: absolute; left: calc(100% + 17px); top: 50%; width: var(--lead, 0px); height: 1.5px; background: var(--cream); z-index: -1; }
+/* the page */
+#dio .hw .hw-page { position: relative; display: flex; flex-direction: column; align-items: flex-start; padding: 0 0 2px 22px; border-left: 1.5px solid var(--cream); }
+#dio .hw .hw-page > .k { display: flex; align-items: center; gap: 10px; font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
+#dio .hw .hw-page > .k b { font-variant-numeric: tabular-nums; }
+#dio .hw .hw-page h3 { margin: 3px 0 0; font: 700 clamp(34px, 5.6vh, 50px)/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+#dio .hw .hw-gist { margin: clamp(6px, 1.2vh, 10px) 0 0; font: 700 clamp(16px, 2.15vh, 19px)/1.28 var(--type); }
+#dio .hw .hw-pts { list-style: none; margin: clamp(8px, 1.5vh, 14px) 0 0; padding: 0; display: grid; gap: clamp(5px, .95vh, 9px); font: 700 clamp(13.5px, 1.72vh, 15px)/1.38 var(--type); }
+#dio .hw .hw-pts li { position: relative; padding-left: 20px; color: color-mix(in srgb, var(--cream) 90%, transparent); }
+#dio .hw .hw-pts li::before { content: ""; position: absolute; left: 1px; top: .42em; width: 9px; height: 8px; background: var(--saffron); clip-path: polygon(0 12%, 92% 0, 100% 84%, 8% 100%); }
+#dio .hw .hw-page b { color: var(--saffron); font-weight: 700; }
+/* a list in a chapter (leaders, towers, maps): a row of small words, the picked one on the shard; its text under the row.
+   Every text lies in the same grid cell, so the row under it never moves when the pick changes */
+#dio .hw .hw-seg { display: flex; flex-wrap: wrap; gap: 3px 4px; margin: clamp(8px, 1.6vh, 14px) 0 0 -8px; }
+#dio .hw .hw-seg button { position: relative; isolation: isolate; display: inline-flex; align-items: center; padding: 6px 9px 3px; font: 700 clamp(16px, 2.3vh, 20px)/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .74; white-space: nowrap; }
+#dio .hw .hw-seg button img { width: 13px; height: 16px; margin: -3px 6px 0 0; }
+#dio .hw .hw-seg button:hover { opacity: 1; }
+#dio .hw .hw-seg button:hover::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--cream); opacity: .17; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+#dio .hw .hw-seg button[aria-pressed="true"] { opacity: 1; color: var(--ink); }
+#dio .hw .hw-seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); opacity: 1; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+#dio .hw .hw-det { display: grid; align-self: stretch; margin-top: clamp(6px, 1.2vh, 10px); font: 700 clamp(13.5px, 1.72vh, 15px)/1.38 var(--type); }
+#dio .hw .hw-det > div { grid-area: 1 / 1; visibility: hidden; display: grid; align-content: start; gap: 5px; }
+#dio .hw .hw-det > div.on { visibility: visible; }
+#dio .hw .hw-det .nm { font: 700 clamp(16px, 2.15vh, 19px)/1.2 var(--type); }
+#dio .hw .hw-det p { margin: 0; color: color-mix(in srgb, var(--cream) 90%, transparent); }
+#dio .hw .hw-det p i { font-style: normal; color: var(--cream); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+/* the foot of the page: the next chapter (the last one: Play) */
+/* (at the foot of the page, level with Back: the same place on every page that fits, so a reader can click on through) */
+#dio .hw .hw-nav { display: flex; align-items: center; gap: 16px; margin-top: auto; padding-top: clamp(12px, 2.4vh, 22px); white-space: nowrap; }
+#dio .hw .create { background: var(--saffron); color: var(--ink); margin-bottom: 0; }
+#dio .hw #hw-back { font-size: clamp(28px, 4vh, 36.4px); padding: clamp(6px, 1.1vh, 10px) 22px clamp(5px, .9vh, 8px) 18px; }
+#dio .hw #hw-back svg { margin-right: -2px; }
+#dio .hw #hw-next { font-size: clamp(19px, 2.8vh, 25px); gap: 10px; padding: 8px 15px 6px 16px; }
+#dio .hw #hw-next svg { width: 18px; height: 18px; }
+#dio .hw #hw-next small { font: 700 12px var(--type); letter-spacing: .06em; opacity: .75; margin-right: -2px; transform: translateY(-1px); }
+#dio .hw .hw-keys { font: 700 12.5px var(--type); opacity: .7; }
+#dio .hw .hw-keys kbd { display: inline-block; min-width: 20px; margin: 0 1px; padding: 1px 5px 0; font: inherit; text-align: center; border: 1.5px solid color-mix(in srgb, var(--cream) 55%, transparent); }
+#dio .note.hnote { max-width: 204px; cursor: default; }
+#dio .note.hnote:hover { color: var(--cream); }
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -2854,6 +2922,20 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button class="create" id="pz-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
   </section>
   <div class="note qnote" data-q="foe" style="display:none"></div>
+
+  <!-- How to play (2026-11-10): the rules as chapters. Left: the title and the chapters as stencil words (The basics,
+       then the rest); beside them the picked chapter's page (a line, the points, a row of words where there's a list:
+       leaders, towers), Next at its foot. The island is the diagram: each chapter stands its own pieces on it, with
+       notes (src/diorama.js) -->
+  <section class="hw" aria-label="How to play">
+    <div class="hw-left">
+      <span class="k">The rules, explained simply</span>
+      <h2>How to<br>play</h2>
+      <nav class="hw-toc" id="hw-toc" aria-label="Chapters"></nav>
+      <button class="create" id="hw-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
+    </div>
+    <article class="hw-page" id="hw-page" aria-live="polite"></article>
+  </section>
 
   <!-- Match history: your online matches, newest first; a match folds out its rounds, each with a replay -->
   <section class="history" aria-label="Match history">
@@ -18221,7 +18303,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · 2d4efe8'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 9f874a5'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -20557,6 +20639,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if ($('ency-back')) $('ency-back').addEventListener('click', () => openEncyclopedia($('ency-back').dataset.to || null));
   }
   function openHowTo() {
+    if (DIO && typeof dio !== 'undefined' && dio.api && dio.api.howto && phase === 'start' && !m && innerWidth >= 900) { closeSheet(true); dio.api.howto(); return; } // the Diorama's How to play screen (PC only for now; in a match and on a narrow window: this sheet)
     $('sheet').innerHTML = `
       <div class="bar"><h3 id="sheet-h">How to play</h3><button class="btn small" id="close">Close</button></div>
       <div class="card" style="max-width:none;justify-items:stretch">
@@ -28096,6 +28179,142 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       });
     }
 
+    // ── How to play (2026-11-10): the island is the diagram. Each chapter stands its own pieces on the board (as Puzzles
+    // does): the zones painted on the ground with their names, squads, tiles with print, the towers, the leaders' arms.
+    // howDots: the points the chapter's notes hang on; howHot: the tiles of a chapter's list (a click picks that one) ──
+    const howStage = new THREE.Group(); island.add(howStage); howStage.position.y = -4; howStage.visible = false;
+    let howDots = {}, howHot = [], howBuilt = '';
+    const INK = '#17140F', PAPER = '#F4ECD8', CREAM = 'rgba(244,236,216,';
+    const hwUnit = (n) => ROSTER.units.find(u => u.name === n) || puzUnit(n) || ROSTER.units[0];
+    const hwDot = (key, x, z, y = 0, into = howStage) => { const o = new THREE.Object3D(); o.position.set(x, y, z); into.add(o); howDots[key] = o; return o; };
+    // paint on the ground over the tiles c0..c1 by r0..r1: a flat colour with a dashed edge, and what draw adds (words, an
+    // arrow). The canvas lies as the board does: its top is their side, so words read from your side
+    function hwPaint(c0, r0, c1, r1, col, a, draw, y = 0.022) {
+      const w = c1 - c0 + 1, d = r1 - r0 + 1, K = 64;
+      const mt = canvasTex(w * K, d * K, (g, cw, chh) => {
+        if (col) { g.globalAlpha = a; g.fillStyle = col; g.fillRect(0, 0, cw, chh); g.globalAlpha = 1;
+          g.strokeStyle = CREAM + '.85)'; g.lineWidth = 5; g.setLineDash([18, 14]); g.strokeRect(8, 8, cw - 16, chh - 16); g.setLineDash([]); }
+        if (draw) draw(g, cw, chh, K);
+      });
+      mt.transparent = true; mt.depthWrite = false;
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mt); p.rotation.x = -Math.PI / 2; p.position.set((c0 + c1) / 2 - 6.5, y, (r0 + r1) / 2 - 8.5); p.receiveShadow = true; howStage.add(p); return p;
+    }
+    // stencil words on the ground (an ink edge, so they read on sand and on snow), size in tiles; an arrow along the ground
+    const hwWords = (text, u, v, size, turn = 0) => (g, cw, chh, K) => { g.save(); g.translate(cw * u, chh * v); g.rotate(turn); g.font = `700 ${Math.round(K * size)}px "Chakra Petch"`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.lineJoin = 'round'; g.lineWidth = K * size * 0.16; g.strokeStyle = 'rgba(23,20,15,.6)'; g.strokeText(text.toUpperCase(), 0, 0); g.fillStyle = CREAM + '.96)'; g.fillText(text.toUpperCase(), 0, 0); g.restore(); };
+    const hwArrow = (u0, v0, u1, v1) => (g, cw, chh, K) => { const x0 = cw * u0, y0 = chh * v0, x1 = cw * u1, y1 = chh * v1, L = Math.hypot(x1 - x0, y1 - y0), t = K * 0.2, hd = K * 0.66;
+      g.save(); g.translate(x0, y0); g.rotate(Math.atan2(y1 - y0, x1 - x0));
+      const shape = () => { g.beginPath(); g.moveTo(0, -t / 2); g.lineTo(L - hd, -t / 2); g.lineTo(L - hd, -hd * 0.6); g.lineTo(L, 0); g.lineTo(L - hd, hd * 0.6); g.lineTo(L - hd, t / 2); g.lineTo(0, t / 2); g.closePath(); };
+      shape(); g.lineJoin = 'round'; g.lineWidth = K * 0.12; g.strokeStyle = 'rgba(23,20,15,.6)'; g.stroke(); g.fillStyle = CREAM + '.96)'; g.fill(); g.restore(); };
+    // a paper tile with print (the roster's and the podium's): draw prints its top in ink
+    const hwTile = (w, d, h, draw, paper = PAPER, side = '#CDBF9F') => tile(w, h, d, (g, cw, chh) => { g.fillStyle = paper; g.fillRect(0, 0, cw, chh); g.strokeStyle = 'rgba(23,20,15,.22)'; g.lineWidth = 6; g.setLineDash([18, 14]); g.strokeRect(20, 20, cw - 40, chh - 40); g.setLineDash([]);
+      g.fillStyle = INK; g.textAlign = 'center'; draw(g, cw, chh); }, null, side);
+    // three of the game's starting packages (Game.allPackages), no unit in two of them
+    const hwPacks = () => { const all = Game.allPackages(ROSTER.units), out = [];
+      for (let k = 0; k < all.length * 2 && out.length < 3; k++) { const p = all[(k * 7 + out.length * Math.floor(all.length / 3)) % all.length]; if (!out.includes(p) && !out.some(q => q.units.some(u => p.units.includes(u)))) out.push(p); }
+      return out; };
+    // the chapter's pieces. sub: the picked one of its list (leaders, towers): its tile stands a little higher
+    function buildHow(id, sub = 0) {
+      if (howBuilt !== id) {
+        howBuilt = id; howDots = {}; howHot = [];
+        for (const c of [...howStage.children]) { howStage.remove(c); c.traverse(o => { if (o.material) [].concat(o.material).forEach(mt => { if (mt.map && mt.map.isTexture) { mt.map.dispose(); mt.dispose(); } }); }); }
+        const keeps = (you = 'tower:keep', foe = 'tower:keep') => { unit(you, '#D8CFBE', YOU, tx(8), tz(16), 0.36, 0, howStage); unit(foe, '#C9BFAE', FOE, tx(5), tz(1), 0.36, Y, howStage); };
+        const vaults = () => { unit('treasury', '#D9B95B', YOU, tx(6), tz(15), 0.28, Y, howStage); unit('treasury', '#D9B95B', FOE, tx(7), tz(2), 0.28, 0, howStage); };
+        const sq = (name, team, c, r, ry, big = 1.3) => squad(hwUnit(name), team, tx(c), tz(r), ry, howStage, big);
+        const tr = (u) => ROSTER.units.includes(u) ? tierOf(u) : 1;
+        const zone = D - 11; // (the island is the Standard map: zones of 7 rows, 4 rows of no man's land)
+        if (id === 'round') { // both zones painted, both armies in them
+          hwPaint(0, D - zone, W - 1, D - 1, YOU, 0.4, hwWords('Your zone', 0.21, 0.82, 0.95));
+          hwPaint(0, 0, W - 1, zone - 1, FOE, 0.4, hwWords('Their zone', 0.79, 0.2, 0.95));
+          hwPaint(0, zone, W - 1, D - zone - 1, null, 0, hwWords('No man’s land', 0.5, 0.5, 1.1));
+          keeps(); vaults();
+          [['Brute', 5, 12], ['Skeleton Archers', 8, 13], ['Fire Mage', 10, 12], ['Goblin Swarm', 2, 13]].forEach(([n, c, r]) => sq(n, YOU, c, r, 0));
+          [['War Mammoth', 6, 5], ['Sniper', 10, 3], ['Goblin Swarm', 3, 5], ['Wisps', 9, 5]].forEach(([n, c, r]) => sq(n, FOE, c, r, Y));
+          hwDot('mine', tx(10), tz(12), 1.2); hwDot('theirs', tx(10), tz(3), 1.25);
+        } else if (id === 'win') { // after a fight: your squads still standing in their half, and what it cost them
+          keeps(); vaults();
+          const alive = [['Brute', 6, 5], ['Fire Mage', 8, 7], ['Skeleton Archers', 4, 6]];
+          alive.forEach(([n, c, r]) => sq(n, YOU, c, r, 0));
+          const dmg = Math.min(Game.MAX_ROUND_DMG, alive.reduce((s, [n]) => s + (Game.TIER_DMG[Math.min(4, tr(hwUnit(n)))] || 0), 0));
+          const t = hwTile(4.4, 2.3, 0.5, (g, cw, chh) => { g.font = '700 190px "Chakra Petch"'; g.fillText(String(Game.START_HP - dmg), cw * 0.34, chh * 0.76);
+            g.fillStyle = '#B5402A'; g.font = '700 96px "Chakra Petch"'; g.fillText('−' + dmg, cw * 0.76, chh * 0.56);
+            g.fillStyle = INK; g.font = '700 38px "Bricolage Grotesque"'; g.fillText('their health', cw * 0.76, chh * 0.82); });
+          t.position.set(tx(10.6), 0.25, tz(1.6)); howStage.add(t);
+          hwDot('alive', tx(8), tz(7), 1.3); hwDot('hp', tx(11.6), tz(1.6), 0.55);
+        } else if (id === 'gold') { // the treasuries, and each round's gold as steps
+          keeps(); vaults();
+          for (let i = 0; i < 5; i++) { const gold = i ? Game.incomeFor(i + 1) : Game.START_GOLD, h = 0.26 + Math.max(0, gold - Game.START_GOLD) / 100 * 0.3;
+            const t = hwTile(2.2, 2.2, h, (g, cw, chh) => { g.font = '700 176px "Chakra Petch"'; g.fillText(String(gold), cw / 2, chh * 0.58); g.font = '700 66px "Bricolage Grotesque"'; g.fillText('round ' + (i + 1), cw / 2, chh * 0.86); }, '#F2B23A', '#C98E22');
+            t.position.set((i - 2) * 2.4, h / 2, tz(8.5)); howStage.add(t); if (i === 4) hwDot('income', (i - 2) * 2.4 + 0.6, tz(8.5), h); }
+          hwDot('vaultYou', tx(6), tz(15), 0.75); hwDot('vaultFoe', tx(7), tz(2), 0.75);
+        } else if (id === 'start') { // three packages on tiles across your half; the towers are still outposts
+          keeps('tower:outpost', 'tower:outpost'); vaults();
+          hwPacks().forEach((P, i) => { const g = new THREE.Group(); g.position.set((i - 1) * 4.4, 0, tz(11.4)); howStage.add(g);
+            const us = P.units.map(k => ROSTER.units[k]), lines = P.units.map((k, j) => `${P.squads.filter(q => q === k).length} × ${us[j].name}`);
+            const b = hwTile(4.1, 2.7, 0.16, (c, cw, chh) => { lines.forEach((t, j) => { fitFont(c, t, 700, 54, '"Bricolage Grotesque"', cw - 64); c.fillText(t, cw / 2, chh * (0.7 + j * 0.18)); }); });
+            b.position.set(0, 0.08, 0.2); g.add(b);
+            us.forEach((u, j) => squad(u, YOU, (j - 0.5) * 1.8, -0.35, 0.2, g, 1.25));
+            for (const f of g.children) if (f !== b) f.position.y = 0.16;
+            hwDot('pack' + i, 0, -0.3, 1.3, g); });
+        } else if (id === 'leaders') { // every leader's arms on a tile, in two rows
+          keeps('tower:outpost', 'tower:outpost'); vaults();
+          const L = Game.CHARACTERS, per = Math.ceil(L.length / 2), gap = Math.min(2.25, 13.4 / per);
+          L.forEach((c, i) => { const row = Math.floor(i / per), nrow = row ? L.length - per : per, nm = c.name.split(' - ')[0];
+            const g = new THREE.Group(); g.position.set((i % per - (nrow - 1) / 2) * gap, 0, tz(7.25) + row * 2.75); howStage.add(g);
+            const b = hwTile(gap - 0.14, 2.55, 0.16, (cx, cw, chh) => { Art.arms(cx, c.id, cw / 2, chh * 0.39, cw * 0.5); cx.fillStyle = INK; cx.textAlign = 'center'; fitFont(cx, nm, 700, 72, '"Bricolage Grotesque"', cw - 64); cx.fillText(nm, cw / 2, chh * 0.9); });
+            b.position.y = 0.08; g.add(b); g.userData.pick = i; howHot.push(g); hwDot('pick' + i, 0, -0.5, 0.2, g); });
+        } else if (id === 'towers') { // the tower types in a row on your half, each on its tile
+          unit('tower:keep', '#C9BFAE', FOE, tx(5), tz(1), 0.36, Y, howStage); vaults();
+          const T = Game.TOWER_TYPES, gap = Math.min(2.3, 13.6 / T.length);
+          T.forEach((x, i) => { const g = new THREE.Group(); g.position.set((i - (T.length - 1) / 2) * gap, 0, tz(11.6)); howStage.add(g);
+            const b = hwTile(gap - 0.14, 2.4, 0.16, (cx, cw, chh) => { fitFont(cx, x.name, 700, 62, '"Bricolage Grotesque"', cw - 64); cx.fillText(x.name, cw / 2, chh * 0.87); });
+            b.position.set(0, 0.08, 0.3); g.add(b);
+            const k0 = 'tower:' + ((x.unit && x.unit.kind) || x.id), kind = M.KINDS.includes(k0) ? k0 : 'tower:keep';
+            const f = unit(kind, (x.unit && x.unit.color) || '#D8CFBE', YOU, 0, -0.15, 0.235, Math.PI + 0.25, g); f.position.y = 0.16;
+            g.userData.pick = i; howHot.push(g); hwDot('pick' + i, 0, -0.15, (M.height(kind) || 6) * 0.235 + 0.25, g); });
+        } else if (id === 'flanks') { // the edge columns: yours on their half, theirs on yours; a lane, and a squad coming in from each flank
+          const half = D / 2, turn = (c) => c ? Math.PI / 2 : -Math.PI / 2;
+          for (const c of [0, W - 1]) {
+            hwPaint(c, 0, c, half - 1, YOU, 0.6, hwWords('Your flank', 0.5, c ? 0.5 : 0.3, 0.62, turn(c)), 0.03);
+            hwPaint(c, half, c, D - 1, FOE, 0.6, hwWords('Their flank', 0.5, c ? 0.68 : 0.5, 0.62, turn(c)), 0.03); }
+          keeps(); vaults();
+          sq('Rogue', YOU, 0, 6, -Math.PI / 2); hwPaint(1, 6, 4, 6, null, 0, hwArrow(0.04, 0.5, 0.97, 0.5), 0.03);
+          sq('Rogue', FOE, W - 1, 11, Math.PI / 2); hwPaint(W - 5, 11, W - 2, 11, null, 0, hwArrow(0.96, 0.5, 0.03, 0.5), 0.03);
+          sq('Brute', YOU, 5, 13, 0); hwPaint(5, 8, 5, 12, null, 0, hwArrow(0.5, 0.97, 0.5, 0.03), 0.03); hwPaint(6, 8, 6, 12, null, 0, hwWords('A lane', 0.42, 0.5, 0.62, -Math.PI / 2), 0.03);
+          sq('Skeleton Archers', YOU, 9, 14, 0); sq('War Mammoth', FOE, 5, 4, Y); sq('Sniper', FOE, 10, 2, Y);
+          hwDot('flank', tx(0), tz(6), 1.15); hwDot('theirs', tx(-0.5), tz(15.5), 0);
+        } else if (id === 'army') { // one unit at level 1, 2 and 3, each a step higher
+          keeps(); vaults();
+          const u = hwUnit('Brute');
+          [1, 2, 3].forEach((lv, i) => { const h = 0.16 + i * 0.24, g = new THREE.Group(); g.position.set((i - 1) * 3.1, 0, tz(11.3)); howStage.add(g);
+            const b = hwTile(2.8, 2.6, h, (cx, cw, chh) => { cx.font = '700 104px "Chakra Petch"'; cx.fillText('LEVEL ' + lv, cw / 2, chh * 0.76); cx.font = '700 40px "Bricolage Grotesque"'; cx.fillText(lv === 1 ? 'as you buy it' : `×${lv} health and attack`, cw / 2, chh * 0.9); });
+            b.position.set(0, h / 2, 0.2); g.add(b);
+            squad(u, YOU, 0, -0.4, 0.2, g, 1.3 * (1 + i * 0.2)); for (const f of g.children) if (f !== b) f.position.y = h;
+            hwDot('lv' + lv, 0, -0.4, h + 1.25 * (1 + i * 0.2), g); });
+        } else { keeps(); vaults(); } // (Maps: the Standard map as it is)
+        if (!still) howStage.position.y = Math.min(howStage.position.y, -1.1); // the new pieces come up
+      }
+      howHot.forEach((g) => { g.userData.up = g.userData.pick === sub; });
+    }
+    // the chapters' views: what must fit beside the page (span and tall, in tiles), seen from where. The camera's zoom
+    // and place on screen follow the window: the island keeps to the open field right of the page, under the top line
+    // and above the music (nr: room kept at the right for notes, in px)
+    const HW_VIEWS = {
+      round:   { az: 0.3, el: 0.82, at: [0, 0, 0.2], span: 19.6, tall: 17.6, nr: 0 },
+      win:     { az: 0.42, el: 0.7, at: [0.9, 0.4, -3.6], span: 16, tall: 10.6, nr: 0 },
+      gold:    { az: 0.46, el: 0.64, at: [0, 0.3, 0.3], span: 21, tall: 15.6, nr: 0 },
+      start:   { az: 0.22, el: 0.72, at: [0, 0.4, 3.3], span: 15.6, tall: 9.4, nr: 0 },
+      leaders: { az: 0.16, el: 0.84, at: [0, 0.1, 0.35], span: 15.2, tall: 9.6, nr: 0 },
+      towers:  { az: 0.16, el: 0.56, at: [0, 0.9, 2.9], span: 15.4, tall: 8.4, nr: 0 },
+      flanks:  { az: 0.3, el: 0.86, at: [0, 0, 0.2], span: 19.6, tall: 18, nr: 0 },
+      army:    { az: 0.2, el: 0.66, at: [0, 0.4, 0.6], span: 17.4, tall: 14.6, nr: 0 },
+      maps:    { az: 0.3, el: 0.82, at: [0, 0, 0.2], span: 19.6, tall: 17.6, nr: 0 },
+    };
+    function hwView(id) {
+      const v = HW_VIEWS[id] || HW_VIEWS.maps, pr = document.getElementById('hw-page').getBoundingClientRect(), sw = innerWidth, sh = innerHeight;
+      const L = pr.right + 30, R = sw - 30 - v.nr, T = 96, B = sh - 150, fw = Math.max(0.15, (R - L) / sw), fh = Math.max(0.3, (B - T) / sh);
+      return { az: v.az, el: v.el, zoom: Math.max(v.span / (2 * (sw / sh) * fw), v.tall / (2 * fh)), at: v.at, off: [(L + R) / 2 / sw - 0.5, 0.5 - (T + B) / 2 / sh] };
+    }
 
     // ── light: a warm low sun and a cool sky ──
     scene.add(new THREE.HemisphereLight('#EFE6D2', '#3B3A4E', 1.15));
@@ -28175,7 +28394,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       el.style.left = L + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
       return `<path d="M${x} ${y} L${lx} ${ly} L${left ? lx - w : lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
     }
-    addEventListener('resize', () => body.querySelectorAll('.note').forEach(n => { n._off = null; }));
+    addEventListener('resize', () => body.querySelectorAll('.note').forEach(n => { n._off = null; n._c = null; }));
     function notes() {
       let html = ''; placed = [];
       const playR = document.getElementById('play').getBoundingClientRect(), inProf = body.classList.contains('profile');
@@ -28196,11 +28415,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
       let lbOn = false;
       const rank = (n) => n.hasAttribute('data-home') ? 2 : n._off ? 1 : 0;
-      for (const el of [...body.querySelectorAll('.note:not(.pnote):not(.qnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
+      for (const el of [...body.querySelectorAll('.note:not(.pnote):not(.qnote):not(.hnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
-          if (on && !phone() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf')) {
+          if (on && !phone() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf') && !body.classList.contains('how-over-bf')) {
             const r = el.getBoundingClientRect(), ty = r.top - 4;
             // the point is picked where the camera is heading and kept while it moves, so the line glides with the island
             // instead of hopping between corners mid-move (owner, 2026-11-10)
@@ -28218,7 +28437,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
           }
           continue;
         }
-        let show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el, hovered) && !inPlay && !inProf && !body.classList.contains('puz') && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
+        let show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el, hovered) && !inPlay && !inProf && !body.classList.contains('puz') && !body.classList.contains('how') && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
         // every island note on the menu fades out over a second once it isn't wanted (owner, 2026-11-08: a quick sweep
         // over the island leaves each note readable for a second); a pointed-at piece's note shows at once, the menu's
         // own notes (the golem's, the skeleton's) come back in a quarter of a second
@@ -28285,6 +28504,23 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         const [x, y] = proj(puzFoeDot, 1.0), ln = pin(el, x, y, -220, -90);
         if (clear(el, x, y)) html += ln; else el.style.display = 'none';
       }
+      // How to play: the chapter's notes, each on its thing, in the open field: clear of the page, the top line, the
+      // music and Change battlefield, and of each other. A note takes the first spot round its dot that is free (its
+      // own side and height first) and keeps it while it's good, so it doesn't hop as the island bobs
+      { const hn = body.querySelectorAll('.hnote'), there = Math.abs(now.az - want.az) < 0.02 && Math.abs(now.el - want.el) < 0.02 && Math.abs(now.zoom - want.zoom) < 0.15 && Math.abs(now.off[0] - want.off[0]) < 0.004 && now.at.every((v, i) => Math.abs(v - want.at[i]) < 0.12);
+        const on = !phone() && body.classList.contains('how') && howStage.position.y > -0.5 && there; // (once the pieces are up and the camera is there)
+        if (hn.length) { const pr = $('hw-page').getBoundingClientRect(), bx = { l: pr.right + 18, r: innerWidth - 18, t: 84, b: innerHeight - 14 };
+          const avoid = [body.querySelector('.music'), body.querySelector('.bf-note')].map(q => q.getBoundingClientRect()).concat(dr ? [dr] : []).map(q => ({ l: q.left, r: q.right, t: q.top, b: q.bottom }));
+          for (const el of hn) { const o = howDots[el.dataset.dot]; if (!on || !o) { el.style.display = 'none'; continue; }
+            el.style.display = ''; const [x, y] = proj(o, 0), w = el.offsetWidth, h = el.offsetHeight, dx = +el.dataset.dx, dy = +el.dataset.dy, s0 = dx < 0 ? -1 : 1;
+            const fits = (ox, oy) => { const L = ox < 0 ? x + ox - w : x + ox, b = y + oy, t = b - h;
+              return L >= bx.l && L + w <= bx.r && t >= bx.t && b <= bx.b && !avoid.concat(placed).some(q => L < q.r + 10 && L + w > q.l - 10 && t < q.b + 8 && b > q.t - 8); };
+            let c = el._c && fits(el._c[0], el._c[1]) ? el._c : null;
+            if (!c) for (const sx of [s0, -s0]) { for (const oy of [dy, dy * 0.62, dy * 0.34, -dy, -dy * 0.62, dy * 1.6, -dy * 1.6]) { for (const mg of [Math.abs(dx), Math.abs(dx) * 0.5, 26]) if (fits(sx * mg, oy)) { c = [sx * mg, oy]; break; } if (c) break; } if (c) break; }
+            el._c = c; if (!c) { el.style.display = 'none'; continue; }
+            const left = c[0] < 0, lx = x + c[0], ly = y + c[1], L = left ? lx - w : lx;
+            placed.push({ l: L, r: L + w, t: ly - h, b: ly }); el.style.left = L + 'px'; el.style.top = ly + 'px'; el.style.textAlign = left ? 'right' : 'left';
+            html += `<path d="M${x} ${y} L${lx} ${ly} L${left ? lx - w : lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`; } } }
       // the unit sheet, attached to the picked unit
       const sh = document.getElementById('usheet'), tabs = body.querySelector('.tiers');
       // the tier tabs sit above the island's far edge; on Profile clear of your name, or under the Units row if they can't be
@@ -28333,6 +28569,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       let key = null, unitHot = false;
       if (e.target === cv && !body.classList.contains('play')) {
         if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
+        else if (body.classList.contains('how')) { if (howHot.length && hitOf(e, howHot) >= 0) unitHot = true; }
         else if (viewName === 'play' && !body.classList.contains('profile') && !body.classList.contains('puz')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; else if (!body.classList.contains('welcome') && hitOf(e, UNIT_MODELS) >= 0) unitHot = true; }
       }
       if (e.target === cv && body.classList.contains('play') && !body.classList.contains('profile') && hitOf(e, [island]) >= 0) unitHot = true; // Play: the island switches its view
@@ -28351,7 +28588,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (!key || !key.startsWith('u:')) notes();
     }
     body.addEventListener('click', (e) => { // the main menu: a unit model opens Units (its note doesn't: notes are their own elements)
-      if (e.target !== cv || viewName !== 'play' || ['play', 'profile', 'welcome', 'units', 'ranks', 'pinned', 'puz'].some(c => body.classList.contains(c))) return;
+      if (e.target !== cv || viewName !== 'play' || ['play', 'profile', 'welcome', 'units', 'ranks', 'pinned', 'puz', 'how'].some(c => body.classList.contains(c))) return;
       if (hitOf(e, UNIT_MODELS) < 0) return;
       items.forEach(x => x.classList.toggle('on', x.dataset.cam === 'units')); viewName = 'units'; want = VIEWS.units; setMode('units'); body.classList.add('pinned'); setHover(null); cv.classList.remove('world-hot');
     });
@@ -28416,7 +28653,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       champ.rotation.y = -0.3 + Math.sin(t * 0.6) * 0.1;
       const rk = body.classList.contains('ranks'), un = body.classList.contains('units'), pz = body.classList.contains('puz');
       puzArmy.position.y = lerp(puzArmy.position.y, pz ? 0 : -4, kk); puzArmy.visible = puzArmy.position.y > -3.6;
-      pieces.position.y = lerp(pieces.position.y, rk || un || pz ? -2.6 : 0, kk); pieces.visible = pieces.position.y > -2.4;
+      const hw = body.classList.contains('how');
+      howStage.position.y = lerp(howStage.position.y, hw ? 0 : -4, kk); howStage.visible = howStage.position.y > -3.6;
+      for (const g of howHot) g.position.y = lerp(g.position.y, g.userData.up ? 0.42 : 0, still ? 1 : 0.2);
+      pieces.position.y = lerp(pieces.position.y, rk || un || pz || hw ? -2.6 : 0, kk); pieces.visible = pieces.position.y > -2.4;
       const tn = performance.now() / 1000;
       for (const g of rosterHot) for (const f of g.children) if (f.userData.pop) { const p = Math.min(1, (tn - f.userData.pop) / 0.34), e = 1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2);
         f.scale.setScalar(Math.max(0.001, f.userData.s * (p >= 1 ? 1 : e))); if (p >= 1) f.userData.pop = 0; }
@@ -28512,16 +28752,16 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       b.addEventListener('mouseenter', go); b.addEventListener('focus', go);
     }
     // (the menu hides under the pointer when Play or Profile opens: that leave keeps their view; owner's bug, 2026-11-10)
-    body.querySelector('.menu').addEventListener('mouseleave', () => { if (['pinned', 'play', 'profile', 'puz'].some(c => body.classList.contains(c))) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
+    body.querySelector('.menu').addEventListener('mouseleave', () => { if (['pinned', 'play', 'profile', 'puz', 'how'].some(c => body.classList.contains(c))) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
     for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
-    // Puzzles and How to play open the game's sheets (until they're designed); the camera move on pointing stays
+    // Puzzles and How to play: the game's own calls, which hand over to their Diorama screens (dio.api.puzzles, .howto)
     $('puzzles-open').addEventListener('click', openPuzzles);
     $('how').addEventListener('click', openHowTo);
     // the golem's note: the invite link lives in the game's Rewards sheet (owner, 2026-11-07: open it while Rewards is on hold)
     { const rn = body.querySelector('.rw-note'); rn.addEventListener('click', () => openRewardsSheet()); rn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRewardsSheet(); } }); }
     const unpin = () => { body.classList.remove('pinned'); setMode('play'); picked = null; items.forEach(x => x.classList.toggle('on', x.id === 'play')); viewName = 'play'; want = VIEWS.play; };
     // the Play screen is the old PLAY popup: home.pop says it's open (it stays open across a match, and ?test opens it at once)
-    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); if (typeof closePuz === 'function') closePuz(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = playView(); home.pop = true; };
+    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); if (typeof closePuz === 'function') closePuz(); if (typeof closeHow === 'function') closeHow(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = playView(); home.pop = true; };
     const closePlay = () => { body.classList.remove('play', 'mp-open'); setMp(false); unpin(); home.pop = false; };
     document.getElementById('play').addEventListener('click', openPlay);
     document.getElementById('play-back').addEventListener('click', () => { leavePlay(); unpin(); }); // Play's Back: the menu (owner, 2026-11-10)
@@ -28531,7 +28771,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (body.classList.contains('welcome')) return;
       openDrop(''); closeMusic();
       if (body.classList.contains('profile')) closeProfile();
-      closePuz(); leavePlay(); unpin();
+      closePuz(); closeHow(); leavePlay(); unpin();
     }
     // off the Play side (Play, Rooms, New room) to the plain menu: the logo and Profile, which opens over the menu only
     function leavePlay() {
@@ -28546,6 +28786,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       else if (w === 'welcome') goScreen('welcome'); });
     const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
       if (body.classList.contains('puz')) return closePuz();
+      if (body.classList.contains('how')) return closeHow();
       if (body.classList.contains('in-rooms')) return closeRooms(); closePlay(); };
     backBtn.addEventListener('click', goBack);
 
@@ -28791,7 +29032,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     // where Profile was opened from, for its Back: the Play screen, Rooms (and New room), or the menu
     let pfFrom = null;
     function openProfile() { if (!body.classList.contains('profile')) pfFrom = body.classList.contains('in-create') ? 'create' : home.screen === 'lobby' ? 'rooms' : body.classList.contains('play') || home.pop ? 'play' : null;
-      openDrop(''); closePuz(); leavePlay(); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
+      openDrop(''); closePuz(); closeHow(); leavePlay(); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
       if (acct && !sampleAcct) acctCall('me', {}, true).then(r => { if (r.status === 200) { acctTake(r); A = acct; buildTier(tier); drawProfile(); } else if (r.status === 401) { acctFail(r); A = acct; drawProfile(); } }); }
     function closeProfile() { body.classList.remove('profile', 'in-history', 'units'); picked = null; hovered = null; want = VIEWS.play; backBtn.textContent = '← Menu'; acctUi.after = null; drawProfile(); }
     acctBtn.addEventListener('click', openProfile);
@@ -28817,7 +29058,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
           return `<button class="item${done.includes(k) ? ' done' : ''}${k === puzPick ? ' on' : ''}" data-puz="${k}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[k % 4]}"/></svg><span class="n">${String(n).padStart(2, '0')}</span>${esc(PUZZLES[k].name)}${done.includes(k) ? '<small>✓ solved</small>' : ''}</button>`; }).join(''); }).join('');
     }
     function openPuz() {
-      openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); leavePlay(); unpin();
+      openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); closeHow(); leavePlay(); unpin();
       body.classList.add('puz'); home.puz = true; hovered = null; setHover(null);
       drawPuz(); puzShow(puzPick >= 0 ? puzPick : firstOpen()); want = VIEWS.puz;
     }
@@ -28826,6 +29067,126 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     $('pz-list').addEventListener('focusin', (e) => { const b = e.target.closest('[data-puz]'); if (b && +b.dataset.puz !== puzPick) puzShow(+b.dataset.puz); });
     $('pz-list').addEventListener('click', (e) => { const b = e.target.closest('[data-puz]'); if (b) startPuzzle(+b.dataset.puz); });
     $('pz-back').addEventListener('click', closePuz);
+
+    // ── How to play (2026-11-10): the rules as chapters (the old sheet's, said for a PC and for the Standard map everyone
+    // plays). The basics first, then the rest in the order a match brings it up. A click on a chapter opens its page
+    // beside the list and stands its pieces on the island (buildHow); a chapter with a list (leaders, towers) has a row
+    // of words, and a click on one (or on its tile on the island) shows it. ← → turn the page, ↑ ↓ go through a list; the last page
+    // leads to Play ──
+    const HW_GROUPS = ['The basics', 'As the match goes on'], HW_GNOTE = ['2 minutes', ''];
+    const arrowR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>';
+    let HOWS = [], hwAt = 0; const hwSub = {};
+    function howChapters() {
+      const G = Game, b = (x) => `<b>${x}</b>`, TD = G.TIER_DMG, tsk = G.TOWER_SKILL, tr = G.TREASURY;
+      const zone = ((G.findMap(STD_MAP) || {}).grid || G.GRID).zone, prices = ROSTER.units.map(G.unitCostOf), lo = Math.min(...prices), hi = Math.max(...prices);
+      const tower = (x) => [esc(x.text),
+        x.skill ? `<i>${esc(x.skill.name)}</i> (${tsk.cost} gold): ${esc(x.skill.text)}` : '',
+        x.skill2 ? `<i>${esc(x.skill2.name)}</i> (${x.skill2.cost ? x.skill2.cost + ' gold' : 'free'}): ${esc(x.skill2.text)}` : '',
+        x.loan ? `<i>Loan</i> (every round): ${esc(loanText())}` : '',
+        x.passive ? `<i>${esc(x.passive.name)}</i> (always on): ${esc(x.passive.text)}` : '',
+        ...(x.generals ? ['Every round you may call one mage general, for that round’s fight only.', ...G.MAGE_GENERALS.map(g => `<i>${esc(g.name.replace(/ mage general$/, ''))}</i> (${g.cost} gold): ${esc(g.text)}`)] : [])].filter(Boolean);
+      const out = [
+        { id: 'round', g: 0, name: 'A round', gist: 'Buy squads. Place them. Watch them fight.', pts: [
+            `Each round you buy squads with gold and place them in your zone: the ${b(zone + ' rows')} on your side of the board.`,
+            'Then both armies march into no man’s land and fight on their own. You can only watch.',
+            'Squads stay all match, and while you deploy you see the squads your opponent placed in earlier rounds. Build counters.',
+            `You have ${b(DEPLOY_SECONDS + ' seconds')} and ${b(G.CONFIG.deploysPerRound + ' deployments')} a round (${G.CONFIG.firstRoundDeploys} in round 1). One deployment places one squad.`],
+          notes: [['theirs', 'Their army.', 'Last round’s squads, in plain sight', 44, -112], ['mine', 'Your squads.', 'They stay all match', 34, 150]] },
+        { id: 'win', g: 0, name: 'Winning', gist: 'Lose a fight and you lose health. Run out and the match is over.', pts: [
+            `Both players start with ${b(G.START_HP + ' health')}.`,
+            `The loser of a fight takes damage from every enemy squad still standing: ${b(TD[1])} for a tier 1 squad, up to ${b(TD[4])} for a tier 4.`,
+            `A round never costs more than ${b(G.MAX_ROUND_DMG + ' health')}, so one bad fight doesn’t end the match.`,
+            `If your tower falls in a fight, your army is crippled for a few seconds and you lose ${b(G.TOWER_FALL_HP)} health as well.`],
+          notes: [['hp', 'Their health.', `${G.START_HP} at the start · at most ${G.MAX_ROUND_DMG} lost a round`, 40, -110], ['alive', 'Still standing.', 'Every squad left on the board hurts the loser', 60, 170]] },
+        { id: 'gold', g: 0, name: 'Gold', gist: 'Gold buys everything. More arrives every round.', pts: [
+            `You start with ${b(G.START_GOLD + ' gold')}. Round 2 brings ${b(G.incomeFor(2))} more, and from round 3 that grows by ${b(G.CONFIG.incomeStep)} a round.`,
+            `A squad costs ${b(lo === hi ? lo : lo + ' to ' + hi)} gold, by its unit’s tier.`,
+            `Your treasury pays ${b(tr.gold + ' gold')} for every fight it survives. Destroy theirs to steal ${b(tr.steal + ' to ' + tr.stealMax)} of their unspent gold.`,
+            `At most ${b(G.CARRY_CAP)} unspent gold carries over to the next round.`,
+            `From round ${G.LOSER_BONUS_ROUND}, the loser of a round gets ${b('+' + G.LOSER_BONUS)} gold.`,
+            `Break an enemy streak of ${G.SHUTDOWN.from} or more wins (🔥 by their health) for ${b('+' + G.SHUTDOWN.gold)} gold, and +${G.SHUTDOWN.step} for each win past ${G.SHUTDOWN.from}.`],
+          notes: [['vaultFoe', 'Their treasury.', 'Destroy it to steal their gold', 90, -90], ['income', 'Gold each round.', `${G.CONFIG.incomeStep} more every round from round 3`, 110, -70], ['vaultYou', 'Your treasury.', `${tr.gold} gold for every fight it survives`, 110, 96]] },
+        { id: 'start', g: 1, name: 'Your start', tag: 'round 1', gist: `Round 1: pick one of ${G.PACKAGE.options === 3 ? 'three' : G.PACKAGE.options} starting packages.`, pts: [
+            `Each package unlocks ${b('two units')} for free and gives you free squads of them worth ${b(G.PACKAGE.value + ' gold')}.`,
+            `You keep your ${b(G.START_GOLD + ' gold')} to spend on top, and the free squads don’t use up your deployments.`,
+            'Your opponent’s starting squads show once you have picked your own.'],
+          notes: [['pack1', 'A starting package.', `Two units unlocked · free squads worth ${G.PACKAGE.value} gold`, 60, -92]] },
+        { id: 'leaders', g: 1, name: 'Leaders', tag: 'round ' + G.DRAFT.round, gist: `Leaders give you passive abilities throughout the game. Choose a leader in round ${G.DRAFT.round} of a match.`,
+          picks: G.CHARACTERS.map(c => ({ short: c.name.split(' - ')[0], name: c.name, img: armsImg(c.id), text: [esc(c.ability)], note: [esc(c.name.split(' - ')[0]) + '.', 'Leader · click a tile to read another', 130, -120] })) },
+        { id: 'towers', g: 1, name: 'Towers', tag: 'round ' + G.TOWER_PICK_ROUND, gist: `Pick your real tower in round ${G.TOWER_PICK_ROUND}. If it falls, your army is crippled for a few seconds.`, pts: [
+            `Until round ${G.TOWER_PICK_ROUND} it is a small outpost at the back of your zone. Then you pick one of three for the rest of the match. Its skills cost gold: click your tower.`],
+          picks: G.TOWER_TYPES.map(x => ({ short: x.name.replace(/ tower$/i, ''), name: x.name, text: tower(x), note: [esc(x.name) + '.', 'Tower · click a tile to read another', 120, -110] })) },
+        { id: 'flanks', g: 1, name: 'Flanks', tag: 'round ' + G.FLANK.round, gist: `Columns are lanes. From round ${G.FLANK.round} you can deploy on the enemy’s edges.`, pts: [
+            'Squads march straight ahead and fight what they meet, curving toward any enemy within a few tiles. An empty lane lets a squad walk around the side.',
+            `From round ${G.FLANK.round}, the blue edge columns on the enemy’s half open up for you. The red ones on your half are theirs, never yours.`,
+            `A squad placed on a flank waits ${b(G.FLANK.delay + ' s')} before it moves or attacks, in its first fight only. Then it marches in sideways until it spots an enemy.`],
+          notes: [['flank', 'Your flank.', `Yours from round ${G.FLANK.round} · it comes in from the side`, 24, -150], ['theirs', 'Their flank.', 'On your half · guard your edges', 14, 120]] },
+        { id: 'army', g: 1, name: 'Your army', tag: 'every round', gist: 'Level up squads, unlock units, buy skills, sell what you don’t need.', pts: [
+            `Squads earn experience. A gold + on one means you can level it up: level 2 ${b('doubles')} its health and attack, level 3 ${b('triples')} them.`,
+            'Some units start unlocked. The rest cost gold once to unlock for the match.',
+            `Each unit has three skills. Buy one and all your squads of that unit get it. Every skill you buy for a unit makes that unit’s other skills ${b(G.SKILL_STEP + ' gold')} more expensive.`,
+            `One extra deployment a round costs ${b(G.CONFIG.extraDeployCost + ' gold')} (the Keep gives it for free). Click a squad from an earlier round to sell it for ${b('half')} its worth: its price plus its upgrades.`],
+          notes: [['lv3', 'Level 3.', 'The same squad, three times as strong', 110, -90]] },
+      ];
+      if (devMode()) out.push({ id: 'maps', g: 1, dev: true, name: 'Maps', gist: 'Every map changes the rules of the fight.', pts: ['Everyone plays the Standard map. Only developers pick another one, on the Play screen.'],
+        picks: G.MAPS.map(mp => ({ short: mp.name, name: mp.name, text: [esc(mp.text || mp.short || '')] })) });
+      return out;
+    }
+    const hw2 = (n) => String(n).padStart(2, '0');
+    function drawHowToc() {
+      const shards = ['0,12 92,0 100,84 7,100', '3,0 100,10 96,100 0,88', '0,8 97,0 100,92 3,100', '2,0 100,12 97,96 0,100'];
+      let g = -1;
+      $('hw-toc').innerHTML = HOWS.map((C, i) => `${C.g !== g ? `<div class="hw-g">${esc(HW_GROUPS[g = C.g])}${HW_GNOTE[C.g] ? `<i>${esc(HW_GNOTE[C.g])}</i>` : ''}</div>` : ''}<button class="item" data-hw="${i}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[i % 4]}"/></svg><span class="n">${hw2(i + 1)}</span>${esc(C.name)}${C.dev ? '<i class="dvt">Dev</i>' : C.tag ? `<small>${esc(C.tag)}</small>` : ''}</button>`).join('');
+    }
+    const hwPickOf = (C) => C.picks ? Math.max(0, Math.min(hwSub[C.id] || 0, C.picks.length - 1)) : 0;
+    // the chapter's notes on the island (laid out in notes()); a chapter with a list: one on the picked one's tile
+    function hwNotes(C) {
+      body.querySelectorAll('.hnote').forEach(n => n.remove());
+      const s = hwPickOf(C), list = (C.notes || []).slice(); if (C.picks && C.picks[s].note) list.push(['pick' + s, ...C.picks[s].note]);
+      for (const [dot, t, sm, dx, dy] of list) { const el = document.createElement('div'); el.className = 'note hnote'; el.dataset.dot = dot; el.dataset.dx = dx; el.dataset.dy = dy; el.innerHTML = `${t}<small>${sm}</small>`; el.style.display = 'none'; body.appendChild(el); }
+    }
+    // the line from the picked chapter's word over to its page
+    function hwLead() { const it = body.querySelector('#hw-toc .item.on'), pg = $('hw-page'); if (it && pg.offsetWidth) it.style.setProperty('--lead', Math.max(0, pg.offsetLeft - it.offsetLeft - it.offsetWidth - 17) + 'px');
+      // a narrow window: where the page reaches Change battlefield, the button steps aside (as for a unit's sheet)
+      const pr = pg.getBoundingClientRect(), br = body.querySelector('.bf-note').getBoundingClientRect();
+      body.classList.toggle('how-over-bf', body.classList.contains('how') && pr.right > br.left - 12 && pr.bottom > br.top - 30); }
+    function howShow(i) {
+      const C = HOWS[i]; if (!C) return; hwAt = i;
+      const s = hwPickOf(C), nx = HOWS[i + 1], keep = document.activeElement && document.activeElement.id === 'hw-next';
+      body.querySelectorAll('#hw-toc .item').forEach((x, k) => { x.classList.toggle('on', k === i); if (k === i) x.setAttribute('aria-current', 'page'); else x.removeAttribute('aria-current'); });
+      $('hw-page').innerHTML = `<span class="k"><b>${hw2(i + 1)}</b> of ${hw2(HOWS.length)} · ${esc(HW_GROUPS[C.g])}${C.dev ? ' <i class="dvt">Dev</i>' : ''}</span>
+        <h3>${esc(C.name)}</h3><p class="hw-gist">${C.gist}</p>
+        ${C.pts && C.pts.length ? `<ul class="hw-pts">${C.pts.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
+        ${C.picks ? `<div class="hw-seg" role="group" aria-label="${esc(C.name)}">${C.picks.map((p, k) => `<button data-hp="${k}" aria-pressed="${k === s}">${p.img || ''}${esc(p.short)}</button>`).join('')}</div>
+          <div class="hw-det">${C.picks.map((p, k) => `<div${k === s ? ' class="on"' : ''}><span class="nm">${esc(p.name)}</span>${p.text.map(t => `<p>${t}</p>`).join('')}</div>`).join('')}</div>` : ''}
+        <div class="hw-nav"><button class="create" id="hw-next">${nx ? `<small>Next</small>${esc(nx.name)}` : 'Play'}${arrowR}</button><span class="hw-keys" aria-label="Arrow keys: left and right turn the page${C.picks ? ', up and down go through the list' : ''}"><kbd>←</kbd><kbd>→</kbd> page${C.picks ? ' · <kbd>↑</kbd><kbd>↓</kbd> list' : ''}</span></div>`;
+      if (keep) $('hw-next').focus();
+      hwNotes(C); buildHow(C.id, s); want = hwView(C.id); hwLead(); notes();
+    }
+    // the picked one of a chapter's list: its word on the shard, its text, its tile a little higher, the note on it
+    function howPick(k) {
+      const C = HOWS[hwAt]; if (!C || !C.picks || !C.picks[k]) return; hwSub[C.id] = k;
+      $('hw-page').querySelectorAll('[data-hp]').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.hp === k)));
+      [...$('hw-page').querySelector('.hw-det').children].forEach((x, j) => x.classList.toggle('on', j === k));
+      hwNotes(C); buildHow(C.id, k); hwLead(); notes();
+    }
+    function openHow() {
+      openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); closePuz(); leavePlay(); unpin();
+      body.classList.add('how'); hovered = null; setHover(null);
+      HOWS = howChapters(); drawHowToc(); howShow(Math.min(hwAt, HOWS.length - 1));
+    }
+    function closeHow() { if (!body.classList.contains('how')) return; body.classList.remove('how', 'how-over-bf'); want = VIEWS.play; body.querySelectorAll('.hnote').forEach(n => n.remove()); }
+    $('hw-toc').addEventListener('click', (e) => { const b = e.target.closest('[data-hw]'); if (b) howShow(+b.dataset.hw); });
+    $('hw-page').addEventListener('click', (e) => { const p = e.target.closest('[data-hp]'); if (p) return howPick(+p.dataset.hp);
+      if (e.target.closest('#hw-next')) { if (HOWS[hwAt + 1]) howShow(hwAt + 1); else { closeHow(); openPlay(); } } });
+    $('hw-back').addEventListener('click', closeHow);
+    body.addEventListener('click', (e) => { if (e.target !== cv || !body.classList.contains('how')) return; const i = hitOf(e, howHot); if (i >= 0) howPick(howHot[i].userData.pick); }); // a tile on the island: that leader, that tower
+    addEventListener('keydown', (e) => { // ← → turn the page; ↑ ↓ go through the page's list (leaders, towers)
+      if (!dio.shown || !body.classList.contains('how') || !$('sheet-back').hidden || dd.open || typingIn(e.target) || e.altKey || e.ctrlKey || e.metaKey) return;
+      const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0, v = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0, C = HOWS[hwAt];
+      if (d) { e.preventDefault(); howShow(Math.max(0, Math.min(HOWS.length - 1, hwAt + d))); }
+      else if (v && C && C.picks) { e.preventDefault(); howPick(Math.max(0, Math.min(C.picks.length - 1, hwPickOf(C) + v))); } });
+    addEventListener('resize', () => { if (dio.shown && body.classList.contains('how') && HOWS[hwAt]) { want = hwView(HOWS[hwAt].id); hwLead(); } });
     $('pf-back').addEventListener('click', () => { const from = pfFrom; pfFrom = null; closeProfile();
       if (from === 'rooms' || from === 'create') { openRooms(roomQ); if (from === 'create') openCreate(); }
       else if (from === 'play') { home.screen = 'menu'; home.pop = true; drawHome(); } });
@@ -29279,6 +29640,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       else if ((!onMenu || !home.pop) && body.classList.contains('play') && !body.classList.contains('in-rooms')) closePlay();
       if (onMenu && home.puz && !body.classList.contains('puz') && !body.classList.contains('profile') && !home.pop) openPuz();
       else if (body.classList.contains('puz')) { if (!onMenu || home.pop) closePuz(); else drawPuz(); }
+      if (body.classList.contains('how') && (!onMenu || home.pop)) closeHow();
       drawBackTo();
       if (onMenu) { // what the old drawMenu did quietly on the menu: ranked's switch (and the leaderboard), a fresh account, Discord's answer
         if (!home.asked) rankedCheck();
@@ -29307,7 +29669,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
       homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
     }
-    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms, puzzles: openPuz };
+    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms, puzzles: openPuz, howto: openHow };
     dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); window.__dio.cam = () => ({ want: Object.keys(VIEWS).find(k => VIEWS[k] === want) || 'other', el: +now.el.toFixed(2) }); } // the tests: the roster standing; show / hide the home by hand

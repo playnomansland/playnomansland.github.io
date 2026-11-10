@@ -731,7 +731,7 @@ html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35) !impo
 #dio .bf-note:hover .bf-btn, #dio .bf-note:focus-visible .bf-btn { transform: rotate(-1.5deg) scale(1.04); }
 #dio .bf-note:focus-visible { outline: none; }
 #dio.play .bf-note .bf-btn { color: #F2B23A; background: var(--ink); }
-#dio.sheet-over-bf .bf-note { opacity: 0; pointer-events: none; } /* (a unit sheet over it) */
+#dio.sheet-over-bf .bf-note, #dio.how-over-bf .bf-note { opacity: 0; pointer-events: none; } /* (a unit sheet over it; How to play's page on a narrow window) */
 
 /* ── the match on a PC (html.diorama.pcwide: a PC, the 3D board, a match on), from the battle screen prototype
    (design/diorama/battle.html, 2026-11-08). The owner's brief: the 3D view covers as much of the screen as it can, the
@@ -1544,3 +1544,71 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
 #dio .pz .create svg { margin-right: -2px; }
 #dio .note.qnote { max-width: 260px; cursor: default; }
 #dio.puz .acct { display: flex; }
+
+/* ── How to play (2026-11-10): its own field colour, a deep plum (the fifth: ultramarine menu, saffron Play, ink Profile,
+   teal Puzzles). The left column: the title, a line, then the chapters as stencil words (The basics, then the rest); the
+   picked one is on the saffron shard, and a dot and line run from it to its page beside it. The page: the chapter's
+   name, one line that says it all, the points, and where there's a list (leaders, towers) a row of small words, the
+   picked one on a shard, its text under the row. The island is the diagram (src/diorama.js) ── */
+#dio.how { --field: #4B2A5E; --field-lo: #2F1A3D; }
+#dio.how .menu, #dio.how .zz, #dio.how .standings, #dio.how #dio-backto, #dio.how .tiers { display: none; }
+#dio.how .acct { display: flex; }
+#dio .hw { --toc: clamp(244px, 20.5vw, 318px); --page: clamp(336px, 29.5vw, 446px);
+  position: fixed; left: 48px; top: clamp(100px, 14.2vh, 128px); display: none; grid-template-columns: var(--toc) var(--page); column-gap: 40px; align-items: stretch; }
+#dio.how .hw { display: grid; }
+#dio .hw .hw-left { display: grid; justify-items: start; align-content: start; }
+#dio .hw .hw-left > .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
+#dio .hw h2 { margin: 4px 0 clamp(14px, 2.8vh, 26px); font: 700 clamp(48px, 9vh, 84px)/.86 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; white-space: nowrap; }
+/* the chapters */
+#dio .hw .hw-toc { display: grid; justify-items: start; margin-bottom: clamp(12px, 2.4vh, 22px); }
+#dio .hw .hw-g { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; margin: clamp(8px, 1.6vh, 14px) 0 clamp(2px, .5vh, 5px); font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
+#dio .hw .hw-g:first-child { margin-top: 0; }
+#dio .hw .hw-g i { font-style: normal; letter-spacing: 0; text-transform: none; opacity: .8; }
+#dio .hw .hw-toc .item { font-size: clamp(20px, 3.45vh, 32px); gap: 12px; margin: clamp(1px, .42vh, 4px) 0 clamp(1px, .42vh, 4px) 4px; padding: 3px 6px 0 4px; white-space: nowrap; }
+#dio .hw .hw-toc .item .n { transform: translateY(-3px); }
+#dio .hw .hw-toc .item small { margin-left: -2px; font: 700 12.5px var(--type); text-transform: none; letter-spacing: 0; opacity: .78; transform: translateY(-2px); }
+#dio .hw .hw-toc .item .dvt { align-self: center; margin-left: -2px; }
+/* pointing at a chapter only marks it (a pale shard); a click opens it: its page doesn't change under a passing pointer */
+#dio .hw .hw-toc .item:not(.on):hover, #dio .hw .hw-toc .item:not(.on):focus-visible { color: var(--cream); }
+#dio .hw .hw-toc .item:not(.on):hover .shard, #dio .hw .hw-toc .item:not(.on):focus-visible .shard { fill: var(--cream); opacity: .17; }
+/* the picked chapter's dot and line, over to its page (--lead: the way to the page's rail, measured in drawHow) */
+#dio .hw .hw-toc .item.on::before { content: ""; position: absolute; left: calc(100% + 13px); top: calc(50% - 4px); width: 9px; height: 9px; border-radius: 50%; background: var(--cream); box-shadow: 0 0 0 4px var(--field), 0 0 0 5px color-mix(in srgb, var(--cream) 50%, transparent); }
+#dio .hw .hw-toc .item.on::after { content: ""; position: absolute; left: calc(100% + 17px); top: 50%; width: var(--lead, 0px); height: 1.5px; background: var(--cream); z-index: -1; }
+/* the page */
+#dio .hw .hw-page { position: relative; display: flex; flex-direction: column; align-items: flex-start; padding: 0 0 2px 22px; border-left: 1.5px solid var(--cream); }
+#dio .hw .hw-page > .k { display: flex; align-items: center; gap: 10px; font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
+#dio .hw .hw-page > .k b { font-variant-numeric: tabular-nums; }
+#dio .hw .hw-page h3 { margin: 3px 0 0; font: 700 clamp(34px, 5.6vh, 50px)/.9 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+#dio .hw .hw-gist { margin: clamp(6px, 1.2vh, 10px) 0 0; font: 700 clamp(16px, 2.15vh, 19px)/1.28 var(--type); }
+#dio .hw .hw-pts { list-style: none; margin: clamp(8px, 1.5vh, 14px) 0 0; padding: 0; display: grid; gap: clamp(5px, .95vh, 9px); font: 700 clamp(13.5px, 1.72vh, 15px)/1.38 var(--type); }
+#dio .hw .hw-pts li { position: relative; padding-left: 20px; color: color-mix(in srgb, var(--cream) 90%, transparent); }
+#dio .hw .hw-pts li::before { content: ""; position: absolute; left: 1px; top: .42em; width: 9px; height: 8px; background: var(--saffron); clip-path: polygon(0 12%, 92% 0, 100% 84%, 8% 100%); }
+#dio .hw .hw-page b { color: var(--saffron); font-weight: 700; }
+/* a list in a chapter (leaders, towers, maps): a row of small words, the picked one on the shard; its text under the row.
+   Every text lies in the same grid cell, so the row under it never moves when the pick changes */
+#dio .hw .hw-seg { display: flex; flex-wrap: wrap; gap: 3px 4px; margin: clamp(8px, 1.6vh, 14px) 0 0 -8px; }
+#dio .hw .hw-seg button { position: relative; isolation: isolate; display: inline-flex; align-items: center; padding: 6px 9px 3px; font: 700 clamp(16px, 2.3vh, 20px)/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; opacity: .74; white-space: nowrap; }
+#dio .hw .hw-seg button img { width: 13px; height: 16px; margin: -3px 6px 0 0; }
+#dio .hw .hw-seg button:hover { opacity: 1; }
+#dio .hw .hw-seg button:hover::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--cream); opacity: .17; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+#dio .hw .hw-seg button[aria-pressed="true"] { opacity: 1; color: var(--ink); }
+#dio .hw .hw-seg button[aria-pressed="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--saffron); opacity: 1; clip-path: polygon(0 10%, 95% 0, 100% 86%, 4% 100%); }
+#dio .hw .hw-det { display: grid; align-self: stretch; margin-top: clamp(6px, 1.2vh, 10px); font: 700 clamp(13.5px, 1.72vh, 15px)/1.38 var(--type); }
+#dio .hw .hw-det > div { grid-area: 1 / 1; visibility: hidden; display: grid; align-content: start; gap: 5px; }
+#dio .hw .hw-det > div.on { visibility: visible; }
+#dio .hw .hw-det .nm { font: 700 clamp(16px, 2.15vh, 19px)/1.2 var(--type); }
+#dio .hw .hw-det p { margin: 0; color: color-mix(in srgb, var(--cream) 90%, transparent); }
+#dio .hw .hw-det p i { font-style: normal; color: var(--cream); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+/* the foot of the page: the next chapter (the last one: Play) */
+/* (at the foot of the page, level with Back: the same place on every page that fits, so a reader can click on through) */
+#dio .hw .hw-nav { display: flex; align-items: center; gap: 16px; margin-top: auto; padding-top: clamp(12px, 2.4vh, 22px); white-space: nowrap; }
+#dio .hw .create { background: var(--saffron); color: var(--ink); margin-bottom: 0; }
+#dio .hw #hw-back { font-size: clamp(28px, 4vh, 36.4px); padding: clamp(6px, 1.1vh, 10px) 22px clamp(5px, .9vh, 8px) 18px; }
+#dio .hw #hw-back svg { margin-right: -2px; }
+#dio .hw #hw-next { font-size: clamp(19px, 2.8vh, 25px); gap: 10px; padding: 8px 15px 6px 16px; }
+#dio .hw #hw-next svg { width: 18px; height: 18px; }
+#dio .hw #hw-next small { font: 700 12px var(--type); letter-spacing: .06em; opacity: .75; margin-right: -2px; transform: translateY(-1px); }
+#dio .hw .hw-keys { font: 700 12.5px var(--type); opacity: .7; }
+#dio .hw .hw-keys kbd { display: inline-block; min-width: 20px; margin: 0 1px; padding: 1px 5px 0; font: inherit; text-align: center; border: 1.5px solid color-mix(in srgb, var(--cream) 55%, transparent); }
+#dio .note.hnote { max-width: 204px; cursor: default; }
+#dio .note.hnote:hover { color: var(--cream); }

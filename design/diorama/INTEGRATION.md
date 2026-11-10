@@ -110,6 +110,33 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   the puzzle's name and its goal line (which ends "You have N gold."). Camera `VIEWS.puz`. A click starts it
   (`startPuzzle`); leaving or finishing it comes back to Puzzles (`home.back = 'puzzles'` → `home.puz`). Back, Esc and
   the logo go to the menu; Profile and Play close it. Checked at 1920×1080, 1440×900, 1366×768, 1280×720.
+- **How to play screen (2026-11-10, on the branch `claude/nifty-cerf-z6lrxm` for the owner to see first; PC only).** The
+  menu's HOW TO PLAY opens it instead of the game's sheet (`openHowTo` hands over to `dio.api.howto` on the home; in a
+  match, and in the old UI, the sheet stays). Its own field colour, a deep plum `#4B2A5E` (the fifth). Left column: "The
+  rules, explained simply", HOW TO / PLAY, then the chapters as numbered stencil words in two groups: **The basics**
+  (A round, Winning, Gold) and **As the match goes on** (Your start, Leaders, Towers, Flanks, Your army, each with when
+  it comes up: "round 1", "every round"), Back. A **click** opens a chapter (pointing only marks it with a pale shard,
+  so the page never changes under a passing pointer); the picked one is on the saffron shard, and a dot and line run
+  from it to its **page** beside the list: "03 of 08 · The basics", the name, one line that says it all, the points
+  (the numbers in saffron, all from `Game`'s own constants), and at the foot **Next** (level with Back, the same place
+  on every page; the last page's says Play and opens the Play screen). Leaders and Towers have a row of small words (the
+  picked one on a shard) with that one's text under the row; every text lies in one grid cell, so nothing moves when
+  the pick changes. **Keys:** ← → turn the page, ↑ ↓ go through a list, Esc goes back.
+  The island is the diagram (`buildHow`, `HW_VIEWS`): the menu's pieces sink and the chapter's stand up. A round: both
+  zones painted on the ground with their names (`hwPaint`, `hwWords`) and both armies; Winning: your squads still
+  standing and their health on a printed tile (100 less what those squads deal); Gold: each round's gold as saffron
+  steps; Your start: three real packages (`Game.allPackages`) on tiles, the towers still outposts; Leaders: every
+  leader's arms (`Art.arms`) on a tile; Towers: every tower type on a tile; Flanks: the edge columns painted in each
+  side's colour, a lane and two flankers with arrows; Your army: one unit at level 1, 2 and 3 on rising tiles. A click
+  on a leader's or tower's tile picks it (its tile stands higher). Notes (`.hnote`, laid out in `notes()`) take the
+  first free spot round their dot in the open field (never over the page, the top line, the music or Change
+  battlefield) once the camera has arrived, and keep it. The camera's zoom and place follow the window (`hwView`: what
+  must fit beside the page), so it holds at 1920×1080, 1440×900, 1366×768, 1280×720 and 1024×768.
+  **What it says differently from the old sheet:** "your zone: the 7 rows" (the Standard map everyone plays; the old
+  sheet and the in-match Help still say "bottom six rows"), a squad costs 100 to 500 gold by tier (not "a squad costs
+  100"), "click" for "tap", and the treasury, the loser's +50 and the 10 health a fallen tower costs are in. **Maps is
+  a developers' chapter** (with the DEV tag), since only developers pick a map. Not built: phones (step 8), and the
+  screen inside a match (Help's How to play button still opens the sheet there).
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 - Eleventh round (2026-11-09): the golem's note (menu and Profile) has a small saffron button, INVITE A FRIEND
@@ -128,8 +155,8 @@ on `main` behind `?ui=diorama` (last commit of 2026-11-08: the small text in Bri
    2026-11-08). Leave the game's panel (`openPlaylist`, `mp-pop`) as it is here.
 3. **The PC launch (done 2026-11-10, `57015d3`; build with `PB_UI_DEFAULT=pc` from now on)** when the owner says so (planned for 2026-11-08 if all goes well, otherwise Monday 2026-11-09): `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`, push to `main`
    (the Diorama on computers, the old UI on phones and tablets). Never commit a non-`classic` build otherwise.
-4. **Designs the owner wants before the full launch:** Puzzles, How to play, and the room you wait in (still the
-   game's sheets / screens, restyled).
+4. **Designs the owner wants before the full launch:** Puzzles (live), How to play (built 2026-11-10, on its branch
+   for the owner to see), and the room you wait in (done with the match screen).
 5. **Own sessions (owner's call):** step 8, phone layouts for every screen; the test rewrite (tests that click Play vs
    Friend `#friend`, `#online`, Quick play, join by code, the old Create-room sheet, the old playlist panel,
    `#tutorial-new`, `[data-tm]` / `#settings` in the old popup must go through the Diorama's screens: Vs computer
