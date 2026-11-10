@@ -2090,6 +2090,17 @@ html.pc .panel > .bar:last-child { margin: -6px -12px -12px; padding: 6px 12px 1
 .pick .det { min-height: 3.6em; font-size: 12px; line-height: 1.4; color: var(--muted); text-align: left; background: rgba(21, 33, 37, 0.85); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
 .pick .det b { color: var(--ink); }
 .pick .row { display: flex; gap: 8px; justify-content: center; }
+/* the pick clock (leader and tower picks): a big countdown and a bar that runs down; red and pulsing for the last 10 s */
+.pick-clock { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 12px; width: 100%; max-width: 520px; margin-inline: auto;
+  padding: 8px 14px; border-radius: 12px; background: rgba(0, 0, 0, 0.45); border: 2px solid var(--gold); color: var(--gold); }
+.pick-clock[hidden] { display: none; }
+.pick-clock .n { grid-row: span 2; font: 800 clamp(34px, 10vw, 52px)/1 system-ui, sans-serif; font-variant-numeric: tabular-nums; min-width: 2.2ch; text-align: center; }
+.pick-clock .lab { font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; }
+.pick-clock .track { display: block; height: 10px; border-radius: 5px; background: rgba(255, 255, 255, 0.15); overflow: hidden; }
+.pick-clock .track i { display: block; height: 100%; background: currentColor; transform-origin: left; transition: transform .2s linear; }
+.pick-clock.low { color: #FF5A4E; border-color: #FF5A4E; animation: pickpulse 1s ease-in-out infinite; }
+@keyframes pickpulse { 50% { transform: scale(1.04); box-shadow: 0 0 22px rgba(255, 90, 78, 0.6); } }
+@media (prefers-reduced-motion: reduce) { .pick-clock.low { animation: none; } }
 .pick-peek { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 2; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); }
 .pick-peek[hidden] { display: none; }
 @keyframes pick-in { from { opacity: 0; transform: translateY(18px) scale(0.94); } to { opacity: 1; transform: none; } }
@@ -10571,8 +10582,22 @@ if (typeof module !== 'undefined') module.exports = Game;
     R.draftDue = 0;
     draftClock(R, now); // the other player's turn
   }
+  // The tower pick (round Game.TOWER_PICK_ROUND, 2026-11-10): TOWER_PICK_MS from the round's start; a player who hasn't
+  // picked by then gets the first tower on offer (as Game.settleTowerPicks). R.towerDue = when it runs out (0: none pending).
+  const TOWER_PICK_MS = 30000;
+  function towerClock(R, now) {
+    const m = R.m, open = R.phase === 'deploy' && m && !m.over ? [0, 1].filter(sd => G.needsTowerPick(m, sd)) : [];
+    if (!open.length) { R.towerDue = 0; return; }
+    if (!R.towerDue) { R.towerDue = now + TOWER_PICK_MS; return; }
+    if (now < R.towerDue) return;
+    for (const sd of open) G.setTowerType(m, sd, G.towerChoices(m, sd)[0].id);
+    R.towerDue = 0;
+  }
+  // how long the pick on screen (the leader draft's current pick, or the tower pick) has left, in ms (0: none)
+  const pickLeft = (R, now) => R.phase !== 'deploy' ? 0 : R.draftDue ? Math.max(1, R.draftDue - now) : R.towerDue ? Math.max(1, R.towerDue - now) : 0;
   function clock(R, now) {
     draftClock(R, now);
+    towerClock(R, now);
     if (R.phase !== 'deploy') { R.deadline = 0; R.held = 0; return; }
     const stop = picksPending(R) || someoneAway(R, now);
     if (stop && R.deadline) { R.held = Math.max(MIN_LEFT_MS / 2, R.deadline - now); R.deadline = 0; }
@@ -10658,6 +10683,7 @@ if (typeof module !== 'undefined') module.exports = Game;
     if (R.deadline) return R.deadline + GRACE_MS;
     const left = [0, 1].filter(sd => R.away[sd]).map(sd => R.away[sd] + AWAY_MAX_MS).filter(t => t > now);
     if (R.draftDue) left.push(R.draftDue - 50); // a leader pick running out
+    if (R.towerDue) left.push(R.towerDue - 50); // a tower pick running out
     return left.length ? Math.min(...left) + 50 : 0;
   }
   // the results screen: both moved on (or the clock for it ran out on their phones) -> the next round
@@ -10692,7 +10718,7 @@ if (typeof module !== 'undefined') module.exports = Game;
   const api = {
     V, ACTIONS, cleanArgs, snapshot, withUnits, hide, view, viewOf, sideState, restoreSide, stable, fnv, sideHash, fight,
     cleanSettings, newMatch, create, start, act, setReady, runFight, tick, due, next, rematch, forfeit, setAway, clock,
-    canAct, save, load, DRAFT_PICK_MS, GRACE_MS, AWAY_MAX_MS, DEPLOY_SECONDS, FIRST_DEPLOY_SECONDS,
+    canAct, save, load, DRAFT_PICK_MS, TOWER_PICK_MS, pickLeft, GRACE_MS, AWAY_MAX_MS, DEPLOY_SECONDS, FIRST_DEPLOY_SECONDS,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Referee = api;
@@ -19270,6 +19296,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
 
   function tick() {
     const t = now();
+    pickTick(t);
     if (aiReadyTick(t)) return;
     if (phase === 'deploy') {
       // host: the countdown waits while the opponent is away
@@ -19496,6 +19523,49 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     while (out.length > Game.DEV.guidePoints) out.splice(Math.floor(out.length / 2) - 1, 1); // too many turns: drop some from the middle
     return out.filter((p, i) => !i || p.col !== out[i - 1].col || p.row !== out[i - 1].row);
   }
+  // ---------- the pick clock (2026-11-10): the round 2 leader pick and the round 3 tower pick count down ----------
+  // Online (mode 'net') the game server keeps it (Referee.pickLeft, sent as d.pick) and picks for a player whose time
+  // runs out (the first leader left, the first tower on offer); this page sends the card its player tapped just before.
+  // Vs the computer and phone to phone each page keeps its own player's clock and picks for them the same way.
+  // Off where there's no deploy clock (vs the computer with the timer off, the tutorial and puzzles) and in 2v2.
+  const PICK_MS = Referee.TOWER_PICK_MS; // 30 s, as Referee.DRAFT_PICK_MS for each leader pick
+  let pickDue = 0, pickClockKey = '', peekText = '';
+  const pickTimed = () => phase === 'deploy' && !!m && !m.over && !m.duoTowers && !net.duo && ['ai', 'claude', 'host', 'guest', 'net'].includes(mode)
+    && (mode === 'host' || mode === 'guest' || mode === 'net' || timerOn || tourSet());
+  // the pick the clock is for: 'tower:<round>', 'leader:<round>:<side whose turn it is>', or '' (none)
+  function pickClockFor() {
+    if (!pickTimed() || Game.needsPack(m, me)) return '';
+    if (Game.needsTowerPick(m, me)) return `tower:${m.round}`;
+    if (!Game.needsLeaderPick(m, me)) return '';
+    const turn = [0, 1].find(sd => Game.leaderTurn(m, sd));
+    return turn == null ? '' : `leader:${m.round}:${turn}`;
+  }
+  const pickMine = (k) => k.startsWith('tower') || +k.split(':')[2] === me;
+  function pickTick(t) {
+    const k = pickClockFor();
+    if (k !== pickClockKey) { pickClockKey = k; if (mode !== 'net') pickDue = k && pickMine(k) ? t + PICK_MS : 0; }
+    if (k && pickDue && t >= pickDue && pickMine(k) && editable()) {
+      pickDue = 0;
+      commitPick(); // the card they tapped
+      const o = mode !== 'net' && pickClockFor() === k ? pickOptions() : null; // nothing tapped: the first one
+      if (o) choosePick(o, o.kind === 'leader' ? Game.draftLeft(m)[0] : o.items[0].key);
+    }
+    drawPickClock(t);
+  }
+  function drawPickClock(t) {
+    const el = $('pick-clock'), on = !!pickClockKey && pickDue > 0, left = on ? Math.max(0, pickDue - t) : 0;
+    if (el) {
+      el.hidden = !on;
+      if (on) {
+        el.querySelector('.n').textContent = String(Math.ceil(left / 1000));
+        el.querySelector('.lab').textContent = pickMine(pickClockKey) ? (left > 0 ? 'seconds to pick' : 'Time’s up') : `${foeName() === 'Enemy' ? 'The AI' : foeName()} is picking`;
+        el.querySelector('i').style.transform = `scaleX(${Math.min(1, left / PICK_MS)})`;
+        el.classList.toggle('low', left <= 10000);
+      }
+    }
+    const pk = $('pick-peek');
+    if (pk && !pk.hidden && peekText) pk.textContent = on ? `${peekText} · ${Math.ceil(left / 1000)}` : peekText;
+  }
   // a card tapped once (shown, not chosen yet) counts as chosen once the player is ready or time runs out,
   // instead of falling back to the first card
   function commitPick() {
@@ -19508,15 +19578,17 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (id !== pickFor) { pickFor = id; pickSel = null; pickPeek = false; }
     if (!o) { el.hidden = true; peek.hidden = true; pickHtml = ''; return; }
     el.hidden = pickPeek; peek.hidden = !pickPeek;
-    peek.textContent = o.kind === 'pack' ? 'Choose your start' : o.kind === 'dev' ? 'Choose your pick' : o.kind === 'leader' ? 'Pick your leader' : 'Choose your tower';
+    peekText = o.kind === 'pack' ? 'Choose your start' : o.kind === 'dev' ? 'Choose your pick' : o.kind === 'leader' ? 'Pick your leader' : 'Choose your tower';
+    peek.textContent = peekText;
     const html = `<div class="ph"><span class="eyebrow">${o.eyebrow}</span><h2 id="pick-h">${o.title}</h2><span class="hint">${o.sub}</span></div>
+      <div class="pick-clock" id="pick-clock" role="timer" hidden><span class="n"></span><span class="lab"></span><span class="track"><i></i></span></div>
       <div class="opts" style="grid-template-columns:repeat(${o.kind === 'leader' ? Math.min(3, o.items.length) : Math.max(2, o.items.length)},1fr)">${o.items.map(x => `<button class="opt" data-opt="${x.key}"${o.kind === 'pack' ? ` data-pack="${x.key}"` : o.kind === 'leader' ? ` data-leader="${x.key}"` : ` data-ttype="${x.key}"`}${x.off ? ' disabled' : ''} aria-pressed="false">
         <span class="art">${x.art}</span><span class="nm">${x.name}</span>${x.who ? `<span class="who">${x.who}</span>` : ''}${x.sub ? `<span class="sub">${x.sub}</span>` : ''}
       </button>`).join('')}</div>
       <div class="det" id="pick-det" aria-live="polite"></div>
       <div class="row"><button class="btn small" id="pick-hide">Hide</button><button class="btn primary" id="pick-go" disabled>Choose</button></div>`;
     if (html !== pickHtml) { // only redraw when the options change, so the cards don't fly in again
-      pickHtml = html; el.innerHTML = html;
+      pickHtml = html; el.innerHTML = html; drawPickClock(now());
       el.querySelectorAll('[data-ticon]').forEach(c => Art.keep(c.getContext('2d'), 48, 54, 92, teamCol(me), null, c.dataset.ticon));
       el.querySelectorAll('[data-opt]').forEach(b => b.addEventListener('click', () => {
         const cur = pickOptions(); if (!cur) return;
@@ -25861,6 +25933,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     } finally { net.replaying = false; }
   }
   function srvClock(d) {
+    if (typeof d.pick === 'number') pickDue = d.pick > 0 ? now() + d.pick - 300 : 0; // the leader or tower pick's clock
     if (phase !== 'deploy') return;
     if (d.remaining > 0) {
       if (!timeUp) {

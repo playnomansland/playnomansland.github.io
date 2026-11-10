@@ -225,8 +225,22 @@
     R.draftDue = 0;
     draftClock(R, now); // the other player's turn
   }
+  // The tower pick (round Game.TOWER_PICK_ROUND, 2026-11-10): TOWER_PICK_MS from the round's start; a player who hasn't
+  // picked by then gets the first tower on offer (as Game.settleTowerPicks). R.towerDue = when it runs out (0: none pending).
+  const TOWER_PICK_MS = 30000;
+  function towerClock(R, now) {
+    const m = R.m, open = R.phase === 'deploy' && m && !m.over ? [0, 1].filter(sd => G.needsTowerPick(m, sd)) : [];
+    if (!open.length) { R.towerDue = 0; return; }
+    if (!R.towerDue) { R.towerDue = now + TOWER_PICK_MS; return; }
+    if (now < R.towerDue) return;
+    for (const sd of open) G.setTowerType(m, sd, G.towerChoices(m, sd)[0].id);
+    R.towerDue = 0;
+  }
+  // how long the pick on screen (the leader draft's current pick, or the tower pick) has left, in ms (0: none)
+  const pickLeft = (R, now) => R.phase !== 'deploy' ? 0 : R.draftDue ? Math.max(1, R.draftDue - now) : R.towerDue ? Math.max(1, R.towerDue - now) : 0;
   function clock(R, now) {
     draftClock(R, now);
+    towerClock(R, now);
     if (R.phase !== 'deploy') { R.deadline = 0; R.held = 0; return; }
     const stop = picksPending(R) || someoneAway(R, now);
     if (stop && R.deadline) { R.held = Math.max(MIN_LEFT_MS / 2, R.deadline - now); R.deadline = 0; }
@@ -312,6 +326,7 @@
     if (R.deadline) return R.deadline + GRACE_MS;
     const left = [0, 1].filter(sd => R.away[sd]).map(sd => R.away[sd] + AWAY_MAX_MS).filter(t => t > now);
     if (R.draftDue) left.push(R.draftDue - 50); // a leader pick running out
+    if (R.towerDue) left.push(R.towerDue - 50); // a tower pick running out
     return left.length ? Math.min(...left) + 50 : 0;
   }
   // the results screen: both moved on (or the clock for it ran out on their phones) -> the next round
@@ -346,7 +361,7 @@
   const api = {
     V, ACTIONS, cleanArgs, snapshot, withUnits, hide, view, viewOf, sideState, restoreSide, stable, fnv, sideHash, fight,
     cleanSettings, newMatch, create, start, act, setReady, runFight, tick, due, next, rematch, forfeit, setAway, clock,
-    canAct, save, load, DRAFT_PICK_MS, GRACE_MS, AWAY_MAX_MS, DEPLOY_SECONDS, FIRST_DEPLOY_SECONDS,
+    canAct, save, load, DRAFT_PICK_MS, TOWER_PICK_MS, pickLeft, GRACE_MS, AWAY_MAX_MS, DEPLOY_SECONDS, FIRST_DEPLOY_SECONDS,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Referee = api;
