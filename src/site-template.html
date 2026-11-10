@@ -928,7 +928,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const DEF = '/*UI_DEFAULT*/';
   const pcLike = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches && innerWidth >= 900; } catch (e) { return false; } };
   let pick = '';
-  try { const q = new URLSearchParams(location.search).get('ui'); if (q === 'diorama' || q === 'classic') localStorage.setItem('pb-ui', q); pick = localStorage.getItem('pb-ui') || ''; }
+  if (DEF === 'force') pick = 'diorama'; // the Diorama's own test page (design/diorama/game.html): always on, and it never changes this device's choice for the game
+  else try { const q = new URLSearchParams(location.search).get('ui'); if (q === 'diorama' || q === 'classic') localStorage.setItem('pb-ui', q); pick = localStorage.getItem('pb-ui') || ''; }
   catch (e) { pick = (location.search.match(/[?&]ui=(diorama|classic)\b/) || [])[1] || ''; }
   const on = pick ? pick === 'diorama' : DEF === 'diorama' || (DEF === 'pc' && pcLike());
   if (!on) return;
@@ -1067,6 +1068,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         <li><button class="item" data-q="2v2" disabled aria-disabled="true">2v2 <small><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 7V5a3.5 3.5 0 0 1 7 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="2.5" y="7" width="11" height="8" rx="1" fill="currentColor"/></svg>coming soon</small></button></li>
       </ul>
     </div>
+    <button class="create" id="play-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
   </section>
 
   <!-- Developer (devMode only): the game's extra modes and tools as rows of small words, top left on Play.
@@ -1469,7 +1471,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     eyesInTheFront2Battle: { title: 'Eyes in the front 2', file: 'audio/eyes-in-the-front-2.mp3', start: 22.15, end: 88.61 },
   };
   // deployment / battle music not given to a look yet: kept out of the menu playlist and played nowhere until it goes
-  // in PLAYLISTS or MUSIC_COMBOS (and then out of this list)
+  // in PLAYLISTS or MUSIC_COMBOS (and then out of this list). Developers hear them in the DEV playlist ('dev', devMusic);
+  // everyone else doesn't see them anywhere, not in All music or their own playlists either.
   const UNASSIGNED = ['evening', 's4knandet', 'eyesInTheFront2Battle'];
   const ARTIST = 'Snetänd'; // unless a song names its own
   const songName = (id) => `“${SONGS[id].title}” - ${SONGS[id].artist || ARTIST}`;
@@ -1608,13 +1611,27 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // songs) and 'all' (All music: every song once); in a match also 'map' (<look> Adaptive music: the map's deployment
   // and battle music, which follows the phase). The player's own: 'u:<id>' (myMusic.lists), made with the + tab from
   // All music. Outside a match the menu's player plays snd.src; in one, my music (mine.src) or the map's.
-  const ALL_SONGS = [...PLAYLISTS.menu, ...Object.keys(SONGS).filter(id => !PLAYLISTS.menu.includes(id) && !SONGS[id].start)]; // every song once (not the battle cut of one)
+  // Developers also get 'dev' (DEV: the UNASSIGNED songs), and can put those songs in their own playlists.
+  const ALL_SONGS = [...PLAYLISTS.menu, ...Object.keys(SONGS).filter(id => !PLAYLISTS.menu.includes(id) && !SONGS[id].start && !UNASSIGNED.includes(id))]; // every song once (not the battle cut of one, not the unassigned ones)
+  // a developer account (devMode; before the account code further down has run, the account kept on this device)
+  const devMusic = () => {
+    try { return devMode(); } catch (e) {}
+    try { const a = JSON.parse(localStorage.getItem('phonebellum.account.v1') || sessionStorage.getItem('phonebellum.account.v1') || 'null'); return !!(a && a.dev); } catch (e) { return false; }
+  };
+  const songOk = (id) => !!SONGS[id] && (!UNASSIGNED.includes(id) || devMusic());
+  const pickSongs = () => devMusic() ? [...ALL_SONGS, ...UNASSIGNED] : ALL_SONGS; // the songs a new playlist is made from
   const userList = (src) => typeof src === 'string' && src.startsWith('u:') ? myMusic.lists.find(x => 'u:' + x.id === src) || null : null;
   function srcSongs(src) {
     if (src === 'menu') return PLAYLISTS.menu;
     if (src === 'all') return ALL_SONGS;
+    if (src === 'dev') return devMusic() ? UNASSIGNED : [];
     const u = userList(src);
-    return u ? u.songs.filter(id => SONGS[id]) : [];
+    return u ? u.songs.filter(songOk) : [];
+  }
+  // the account became (or stopped being) a developer's: the DEV playlist comes or goes
+  function musicDevChanged() {
+    musicListsChanged();
+    if (mpui.open) mpDraw();
   }
   const srcOk = (src) => srcSongs(src).length > 0;
   const menuSrc = () => srcOk(snd.src) ? snd.src : 'menu';
@@ -1651,7 +1668,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     return name + ' Adaptive music';
   }
   const playingSrc = () => musicInMatch() ? (mine.on ? mine.src : 'map') : menuSrc();
-  const srcName = (src) => src === 'map' ? adaptiveName() : src === 'menu' ? 'Menu Playlist' : src === 'all' ? 'All music' : (userList(src) || {}).name || 'Playlist';
+  const srcName = (src) => src === 'map' ? adaptiveName() : src === 'menu' ? 'Menu Playlist' : src === 'all' ? 'All music' : src === 'dev' ? 'DEV' : (userList(src) || {}).name || 'Playlist';
   // the playlist the player shows and works: the menu's outside a match; in one, my music or the map's
   const ctlPl = () => !musicInMatch() ? music.menu : mine.on || !comboKey() ? music.mine : music[comboKey()];
   function syncMusic() {
@@ -1681,7 +1698,15 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     musicUnlocked = true;
   };
   const unlockMusic = () => { wakeAudio(); syncMusic(); };
-  ['touchend', 'click', 'keydown'].forEach(t => document.addEventListener(t, unlockMusic, { capture: true, passive: true }));
+  // pointerdown / mousedown: the press itself starts it on a computer (Chrome and Edge count it), not the release
+  ['pointerdown', 'mousedown', 'touchend', 'click', 'keydown'].forEach(t => document.addEventListener(t, unlockMusic, { capture: true, passive: true }));
+  // No tap needed where the browser allows it (2026-11-10, the owner): the music tries to start as soon as the page has
+  // loaded. It plays at once where the browser lets this site autoplay (Chrome / Edge on a site the player often plays
+  // sound on, the game installed as an app on a computer, the site's Sound set to Allow, Firefox with autoplay allowed).
+  // Elsewhere play() is refused (the song stays paused, pl.set tries again) and Web Audio waits suspended, so the
+  // first press, key or tap anywhere starts it, as before. Browsers don't let a page get round that.
+  const autoMusic = () => { if (!musicUnlocked && musicOn()) unlockMusic(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoMusic, { once: true }); else setTimeout(autoMusic, 0);
   const musicOn = () => !snd.muted && snd.vol > 0;
   // On or Off from a tap: iPhones only start sound inside one, so this wakes Web Audio and calls play() right here.
   // A volume left at 0 comes back up, or On would stay silent.
@@ -1742,6 +1767,38 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     document.querySelectorAll('.mplayer').forEach(x => x.classList.toggle('is-playing', menuPlaying()));
     mpMark();
     if (DIO && dio.api) dio.api.music(); // the Diorama's player and playlists
+    if (DIO) dioMusicLine();
+  }
+  // The Diorama's music line in a match (the owner, 2026-11-09: "where is the music player?"): always in the top line,
+  // under the round, as the home screen's player is always there: the song and its artist (a click opens the playlists,
+  // openPlaylist's dock), Back, Play / Pause, Next. Off the board, so it never covers a tile
+  function dioMusicLine() {
+    const r = document.querySelector('.hud .round'); if (!r) return;
+    let el = $('dmus');
+    if (!el) {
+      el = document.createElement('span'); el.id = 'dmus'; el.className = 'dmus';
+      el.innerHTML = '<button class="dm-t" id="dmus-t" aria-label="Music: open the playlists"></button><button class="dm-b" data-m="back" aria-label="Back"></button><button class="dm-b" data-m="play" aria-label="Play"></button><button class="dm-b" data-m="next" aria-label="Next"></button>';
+      r.appendChild(el);
+      el.querySelector('[data-m="back"]').innerHTML = ICONS.back; el.querySelector('[data-m="next"]').innerHTML = ICONS.next;
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest('button'); if (!b) return;
+        if (b.id === 'dmus-t') { openPlaylist(); return; }
+        const k = b.dataset.m;
+        if (k === 'next') ctlPl().next();
+        else if (k === 'back') ctlPl().back();
+        else if (k === 'play') {
+          if (musicInMatch()) { if (menuPlaying()) mine.paused = true; else { mine.paused = false; if (!comboKey()) mine.on = true; musicGo(ctlPl()); } }
+          else if (menuPlaying()) menuPaused = true; else { menuPaused = false; musicGo(music.menu); }
+          syncMusic();
+        }
+        showPlayer();
+      });
+    }
+    const id = ctlPl().song(), sg = id && SONGS[id], on = menuPlaying();
+    const t = sg ? `<span class="dm-n">♪</span><b>${esc(sg.title)}</b> <em>by ${esc(sg.artist || ARTIST)}</em>` : '<span class="dm-n">♪</span><b>Music</b>';
+    const tb = $('dmus-t'); if (tb.innerHTML !== t) tb.innerHTML = t;
+    const pb = el.querySelector('[data-m="play"]'), pi = on ? ICONS.pause : ICONS.play;
+    if (pb.dataset.on !== String(on)) { pb.dataset.on = String(on); pb.innerHTML = pi; pb.setAttribute('aria-label', on ? 'Pause' : 'Play'); }
   }
   for (const k in music) music[k].onChange = showPlayer;
   if (qs.has('test')) window.__music = () => ({ playing: Object.keys(music).filter(k => music[k].playing), song: ctlPl().song(), mine: { ...mine }, combo: comboKey(), menuPaused, src: playingSrc(), lists: JSON.parse(JSON.stringify(myMusic.lists)), dirty: myMusic.dirty }); // UI tests
@@ -1812,7 +1869,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // bottom of the screen with the panel on top of it ('dock'). Tabs, like a folder's: <look> Adaptive music (in a
   // match), Menu Playlist, All music, the player's own playlists, and + to make one from All music.
   const homePlayer = () => [...document.querySelectorAll('#home .mplayer')].find(x => x.getClientRects().length) || null;
-  const mpTabs = () => [...(musicInMatch() ? ['map'] : []), 'menu', 'all', ...myMusic.lists.map(x => 'u:' + x.id)];
+  const mpTabs = () => [...(musicInMatch() ? ['map'] : []), 'menu', 'all', ...(devMusic() ? ['dev'] : []), ...myMusic.lists.map(x => 'u:' + x.id)];
   const reduceMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
   function mpTabsHtml() {
     const cur = mpui.edit ? (mpui.edit.id ? 'u:' + mpui.edit.id : '+') : mpui.tab, on = playingSrc();
@@ -1825,7 +1882,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   function mpListHtml(t) {
     const on = playingSrc() === t, u = userList(t), cur = ctlPl().song(), map = t === 'map';
     const songs = map ? mapSongs() : srcSongs(t).map(id => ['', id]);
-    const sub = map ? 'Deploy music, then battle music: it follows the match' : `${songs.length} song${songs.length === 1 ? '' : 's'}${u ? '' : t === 'menu' ? ' · plays on the menu' : ' · every song in the game'}`;
+    const sub = map ? 'Deploy music, then battle music: it follows the match' : `${songs.length} song${songs.length === 1 ? '' : 's'}${u ? '' : t === 'menu' ? ' · plays on the menu' : t === 'dev' ? ' · not given to a map yet · developers only' : ' · every song in the game'}`;
     return `<div class="mp-head"><div class="mp-hd"><b>${esc(srcName(t))}</b><small>${sub}</small></div>
         <span class="mp-acts">${u ? `<button class="mp-ghost" id="mp-edit">Edit</button><button class="mp-ghost${mpui.sure === t ? ' sure' : ''}" id="mp-del">${mpui.sure === t ? 'Sure? Delete' : 'Delete'}</button>` : ''}
         <button class="mp-pill" id="mp-playlist" data-src="${esc(t)}" aria-pressed="${on && menuPlaying()}"${songs.length ? '' : ' disabled'}>${on && menuPlaying() ? EQ + 'Playing' : ICONS.play + 'Play'}</button></span></div>
@@ -1836,7 +1893,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     const e = mpui.edit;
     return `<div class="mp-head"><div class="mp-hd"><b>${e.id ? 'Edit playlist' : 'New playlist'}</b><small id="mp-picked">${mpPickedText()}</small></div></div>
       <input class="mp-name" id="mp-name" maxlength="24" placeholder="Name your playlist" value="${esc(e.name)}" aria-label="Playlist name" autocomplete="off" spellcheck="false">
-      <div class="mp-songs" id="mp-songs">${ALL_SONGS.map(id => { const k = e.songs.indexOf(id); return `<button class="mp-song mp-pick" data-pick="${id}" aria-pressed="${k >= 0}"><span class="mp-n">${k >= 0 ? k + 1 : ''}</span><span class="mp-st"><b>${esc(SONGS[id].title)}</b><small>${esc(SONGS[id].artist || ARTIST)}</small></span><span class="mp-check" aria-hidden="true"></span></button>`; }).join('')}</div>
+      <div class="mp-songs" id="mp-songs">${pickSongs().map(id => { const k = e.songs.indexOf(id); return `<button class="mp-song mp-pick" data-pick="${id}" aria-pressed="${k >= 0}"><span class="mp-n">${k >= 0 ? k + 1 : ''}</span><span class="mp-st"><b>${esc(SONGS[id].title)}</b><small>${esc(SONGS[id].artist || ARTIST)}</small></span><span class="mp-check" aria-hidden="true"></span></button>`; }).join('')}</div>
       <div class="mp-foot"><small class="mp-where">${acct ? 'Saved to your account' : 'Saved on this device. Log in to keep it on your account.'}</small>
         <span class="mp-acts"><button class="mp-ghost" id="mp-cancel">Cancel</button><button class="mp-pill" id="mp-save"${mpCanSave() ? '' : ' disabled'}>${e.id ? 'Save' : 'Create playlist'}</button></span></div>`;
   }
@@ -1880,7 +1937,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     $('mp-close').addEventListener('click', () => mpClose());
     p.querySelectorAll('.mp-song[data-src]').forEach(b => b.addEventListener('click', () => playFrom(b.dataset.src, b.dataset.src === 'map' ? '' : b.dataset.song)));
     if ($('mp-playlist')) $('mp-playlist').addEventListener('click', () => playList($('mp-playlist').dataset.src));
-    if ($('mp-edit')) $('mp-edit').addEventListener('click', () => { const u = userList(mpui.tab); if (!u) return; mpui.edit = { id: u.id, name: u.name, songs: u.songs.filter(id => SONGS[id]) }; mpDraw(true); });
+    if ($('mp-edit')) $('mp-edit').addEventListener('click', () => { const u = userList(mpui.tab); if (!u) return; mpui.edit = { id: u.id, name: u.name, songs: u.songs.filter(songOk) }; mpDraw(true); });
     if ($('mp-del')) $('mp-del').addEventListener('click', () => {
       if (mpui.sure !== mpui.tab) { mpui.sure = mpui.tab; return mpDraw(); }
       const u = userList(mpui.tab);
@@ -1928,7 +1985,42 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     return pop;
   }
   // Now playing (tap): the playlists roll up out of the player; tapped again, they roll back down
+  // The Diorama's match screen (html.pcwide): the player stays down in the bottom corner opposite the deploy panel for
+  // the whole match ('mini': the player only); the song or the music button opens the playlists above it, and their
+  // down arrow (or Esc) folds them back into the player instead of closing it (the owner, 2026-11-09)
+  const dioMini = () => DIO && document.documentElement.classList.contains('pcwide');
+  function dioMusicDock() {
+    const pop = $('mp-pop'), want = dioMini();
+    if (want && !mpui.open) { openPlaylist(); const p2 = $('mp-pop'); if (p2) p2.classList.add('mini'); }
+    else if (!want && mpui.open && pop && pop.classList.contains('dmini')) mpClose(true);
+    const p3 = $('mp-pop'); if (p3 && want && mpui.open) p3.classList.add('dmini');
+    dioMusicDecor();
+  }
+  // the player's own down arrow slides it away, leaving a small "♪ Music ⌃" that brings it back (the owner, 2026-11-09);
+  // kept on this device
+  let dmHid = true;
+  try { dmHid = localStorage.getItem('pb-dmusic') !== 'shown'; } catch (e) {} // (it starts down: the owner, 2026-11-10)
+  function dioMusicDecor() {
+    const pop = $('mp-pop'); if (!pop || !pop.classList.contains('dmini')) return;
+    const pl = pop.querySelector('.mplayer'), dk = pop.querySelector('.mp-dock');
+    if (pl && !pl.querySelector('.dm-hide')) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'dm-hide'; b.setAttribute('aria-label', 'Hide the music player'); b.title = 'Hide'; b.innerHTML = CHEV_DOWN;
+      b.addEventListener('click', () => dioMusicHide(true)); pl.appendChild(b);
+    }
+    if (dk && !dk.querySelector('.dm-show')) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'dm-show'; b.setAttribute('aria-label', 'Show the music player');
+      b.innerHTML = `${NOTE_SVG}<span>Music</span>${CHEV_UP}`; b.addEventListener('click', () => dioMusicHide(false)); dk.appendChild(b);
+    }
+    pop.classList.toggle('hid', dmHid);
+  }
+  function dioMusicHide(h) {
+    dmHid = h; try { localStorage.setItem('pb-dmusic', h ? 'hid' : 'shown'); } catch (e) {}
+    const pop = $('mp-pop'); if (!pop) return;
+    if (h) { pop.classList.add('mini'); mpui.edit = null; }
+    pop.classList.toggle('hid', h);
+  }
   function openPlaylist() {
+    if (mpui.open && dioMini() && $('mp-pop') && $('mp-pop').classList.contains('mini')) { $('mp-pop').classList.remove('mini'); mpDraw(true); showPlayer(); return; } // the playlists unfold
     if (mpui.open) return mpClose();
     const pop = mpPop(), a = homePlayer();
     clearTimeout(mpui.closeT);
@@ -1944,7 +2036,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     } else {
       mpui.anchor = null;
       // the menu's own player (under the dock) gives its ids to the dock's while it is open
-      document.querySelectorAll('.mplayer [id]').forEach(x => { x.dataset.keepId = x.id; x.removeAttribute('id'); });
+      document.querySelectorAll('.mplayer [id], #dio .music :is(#mp-play, #mp-next, #mp-back, #mp-bar, #mp-now, #mp-shuffle, #mp-repeat)').forEach(x => { x.dataset.keepId = x.id; x.removeAttribute('id'); }); // (the Diorama's home player too: its buttons have the same ids, and wirePlayer would wire those)
       pop.innerHTML = `<div class="mp-dock"><div class="mp-panel" id="mp-panel" role="dialog" aria-label="Playlists"></div>${playerHtml()}</div>`;
       pop.querySelector('.mplayer').classList.add('joined');
       wirePlayer();
@@ -1953,6 +2045,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   }
   function mpClose(instant) {
     if (!mpui.open) return;
+    if (!instant && dioMini() && $('mp-pop') && $('mp-pop').classList.contains('dmini')) { $('mp-pop').classList.add('mini'); mpui.edit = null; mpui.sure = ''; return; } // the Diorama's match: folds down into the player
     mpui.open = false; mpui.edit = null; mpui.sure = '';
     const pop = $('mp-pop');
     const done = () => {
@@ -2220,11 +2313,22 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   // the cog in a match opens it as Settings (music, the 2D / 3D board and Main menu), the menu's Music button as music only.
   // data-keep: phase changes leave this sheet open (closeSheet)
+  // the Diorama's speaker button (Settings, owner 2026-11-09): waves when the sound is on, a cross when it's off
+  const spkSvg = (on) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" stroke="none"/>${on ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg>`;
   function openSoundSheet() {
     const inMatch = !!m && phase !== 'start' && phase !== 'lobby';
+    // under the Diorama, Music and Sound effects are a speaker button before the slider (no On / Off rows)
+    const spk = DIO && document.documentElement.classList.contains('diorama');
     $('sheet').innerHTML = `
       <div class="bar" data-keep><h3 id="sheet-h">Settings</h3><button class="btn small" id="close">Close</button></div>
+      ${spk ? `<div class="bar">
+        <span class="hint">Music</span>
+        <span class="volrow"><button class="spk" id="spk-music"></button><input type="range" id="vol" min="0" max="100" step="5" value="${snd.vol}" aria-label="Music volume"><span class="num" id="vol-n">${snd.vol}</span></span>
+      </div>
       <div class="bar">
+        <span class="hint">Sound effects</span>
+        <span class="volrow"><button class="spk" id="spk-sfx"></button><input type="range" id="sfx-vol" min="0" max="100" step="5" value="${snd.sfxVol}" aria-label="Effects volume"><span class="num" id="sfx-vol-n">${snd.sfxVol}</span></span>
+      </div>` : `<div class="bar">
         <span class="hint">Music</span>
         <div class="seg" role="group" aria-label="Music">
           <button data-mute="0" aria-pressed="${musicOn()}">On</button><button data-mute="1" aria-pressed="${!musicOn()}">Off</button>
@@ -2243,7 +2347,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <div class="bar">
         <span class="hint">Effects volume</span>
         <span class="volrow"><input type="range" id="sfx-vol" min="0" max="100" step="5" value="${snd.sfxVol}" aria-label="Effects volume"><span class="num" id="sfx-vol-n">${snd.sfxVol}</span></span>
-      </div>
+      </div>`}
       ${navigator.audioSession ? `<div class="bar">
         <span class="hint">Other apps' sound</span>
         <div class="seg" role="group" aria-label="Other apps' sound">
@@ -2257,6 +2361,18 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
           <button data-board="2d" aria-pressed="${!want3d}">2D</button><button data-board="3d" aria-pressed="${want3d}">3D</button>
         </div>
       </div>
+      ${DIO && document.documentElement.classList.contains('pc') ? `<div class="bar">
+        <span class="hint">Side</span>
+        <div class="seg" role="group" aria-label="Deploy panel side">
+          <button data-dside="left" aria-pressed="${dSide === 'left'}">Left</button><button data-dside="right" aria-pressed="${dSide === 'right'}">Right</button>
+        </div>
+      </div>
+      <div class="bar">
+        <span class="hint">Slides away</span>
+        <div class="seg" role="group" aria-label="Deploy panel slides away">
+          <button data-dauto="1" aria-pressed="${dAuto}">On</button><button data-dauto="0" aria-pressed="${!dAuto}">Off</button>
+        </div>
+      </div>` : ''}
       ${document.documentElement.classList.contains('pc') ? '' : `<div class="bar">
         <span class="hint">Phone layout</span>
         <div class="seg" role="group" aria-label="Phone layout">
@@ -2285,7 +2401,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         </div>
       </div><p class="hint" id="rk-msg" style="margin:0" aria-live="polite"></p>` : ''}
       <div class="bar">
-        <span class="hint">Chat in online matches</span>
+        <span class="hint">${DIO && document.documentElement.classList.contains('pc') ? 'Chat' : 'Chat in online matches'}</span>
         <div class="seg" role="group" aria-label="Chat">
           <button data-chat="1" aria-pressed="${snd.chatOn !== false}">On</button><button data-chat="0" aria-pressed="${snd.chatOn === false}">Off</button>
         </div>
@@ -2312,7 +2428,23 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     $('sheet').querySelectorAll('[data-emo]').forEach(b => b.addEventListener('click', () => { snd.emotesOn = b.dataset.emo === '1'; saveSound(); $('sheet').querySelectorAll('[data-emo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     $('sheet').querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { send({ t: 'spectate', on: b.dataset.spec === '1' }); $('sheet').querySelectorAll('[data-spec]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     if ($('fr-open2')) { $('fr-open2').addEventListener('click', () => openFriends()); frBadge(); }
-    const showOn = () => $('sheet').querySelectorAll('[data-mute]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.mute === '0') === musicOn())));
+    const spkDraw = () => { // the Diorama's speakers follow the sound (a volume of 0 is off)
+      for (const [id, lab, on] of [['spk-music', 'Music', musicOn()], ['spk-sfx', 'Sound effects', !!snd.sfx && snd.sfxVol > 0]]) {
+        const b = $(id); if (!b) continue;
+        b.innerHTML = spkSvg(on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', `${lab}: ${on ? 'on (turn off)' : 'off (turn on)'}`); b.title = on ? 'Turn off' : 'Turn on';
+        b.parentElement.classList.toggle('off', !on);
+      }
+    };
+    const showOn = () => { $('sheet').querySelectorAll('[data-mute]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.mute === '0') === musicOn()))); spkDraw(); };
+    spkDraw();
+    if ($('spk-music')) $('spk-music').addEventListener('click', () => {
+      setMusic(!musicOn()); if (musicOn()) { menuPaused = false; mine.paused = false; syncMusic(); } showPlayer();
+      $('vol').value = snd.vol; $('vol-n').textContent = snd.vol; showOn();
+    });
+    if ($('spk-sfx')) $('spk-sfx').addEventListener('click', () => {
+      snd.sfx = !(snd.sfx && snd.sfxVol > 0); if (snd.sfx && !snd.sfxVol) { snd.sfxVol = DEFAULT_SFX_VOL; $('sfx-vol').value = snd.sfxVol; $('sfx-vol-n').textContent = snd.sfxVol; }
+      saveSound(); wakeAudio(true); spkDraw();
+    });
     $('vol').addEventListener('input', (e) => {
       snd.vol = +e.target.value; $('vol-n').textContent = snd.vol;
       if (snd.vol && snd.muted) { snd.muted = false; wakeAudio(true); } // turning the volume up turns music on
@@ -2329,7 +2461,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     $('sfx-vol').addEventListener('input', (e) => {
       snd.sfxVol = +e.target.value; $('sfx-vol-n').textContent = snd.sfxVol;
       if (snd.sfxVol && !snd.sfx) { snd.sfx = true; $('sheet').querySelectorAll('[data-sfx]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.sfx === '1'))); }
-      saveSound();
+      saveSound(); spkDraw();
     });
     $('sheet').querySelectorAll('[data-solo]').forEach(b => b.addEventListener('click', () => {
       snd.solo = b.dataset.solo === '1'; saveSound(); setAudioSession(); wakeAudio(true);
@@ -2351,6 +2483,14 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       if (r.status !== 200) { $('rk-msg').textContent = r.status === 403 ? 'Only a developer can do that.' : acctFail(r); return; }
       home.rankedOn = !!r.on; $('rk-msg').textContent = r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).';
       $('sheet').querySelectorAll('[data-rk]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.rk === '1') === !!r.on)));
+    }));
+    $('sheet').querySelectorAll('[data-dauto]').forEach(b => b.addEventListener('click', () => {
+      setDeployAuto(b.dataset.dauto === '1');
+      $('sheet').querySelectorAll('[data-dauto]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    }));
+    $('sheet').querySelectorAll('[data-dside]').forEach(b => b.addEventListener('click', () => { // the Diorama: the deploy panel's side
+      setDeploySide(b.dataset.dside, true);
+      $('sheet').querySelectorAll('[data-dside]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     }));
     $('sheet').querySelectorAll('[data-board]').forEach(b => b.addEventListener('click', () => {
       set3d(b.dataset.board === '3d');
@@ -2568,7 +2708,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // bigger grid shows as Standard in that map's look, so the board keeps its size). A match made once per pick, never played.
   let menuPreKey = '', menuPreM = null;
   const menuPre = () => {
-    if (phase !== 'start' || m) return null;
+    if ((phase !== 'start' && !(DIO && phase === 'lobby')) || m) return null; // (the Diorama's room is on the battlefield too)
     const mp = Game.MAPS.find(x => x.id === mapPick), id = mp && !mp.grid ? mapPick : 'standard';
     const sk = skinPick && skinPick !== 'random' ? skinPick : mp && mp.grid ? Game.MAP_LOOK[mapPick] : null;
     const key = id + '|' + sk;
@@ -2590,6 +2730,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // boards draw it (render2d drawFoeStart, render3d collectDeploy): [{ unit, x, y }] in board metres, or null
   function foeStart() {
     if (phase !== 'deploy' || !m || m.round !== 1 || mode === 'spec' || mode === 'tutorial' || mode === 'sandbox' || duoOn()) return null;
+    if (Game.needsPack(m, me)) return null; // not before you've chosen your own start (the owner, 2026-11-10)
     const list = Game.startSeen(m, foe());
     if (!list || !list.length) return null;
     const n = list.length, back = Game.zoneRows(foe()).slice(-1)[0], tw = (m.towers && m.towers[foe()]) || Game.towerSpot(m, foe());
@@ -2652,10 +2793,13 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       taskEl.setAttribute('aria-label', dockTask.x ? `${taskEl.querySelector('#task-text').textContent} Tap to cancel.` : taskEl.querySelector('#task-text').textContent);
     }
     // a PC in a match on the 3D board: the board takes the rest of the window beside the side panel, deploy and fights alike
-    const wide = root.classList.contains('pc') && !!board3d && !!m && ['deploy', 'battle', 'result', 'end'].includes(phase), wasWide = root.classList.contains('pcwide');
+    const wide = root.classList.contains('pc') && !!board3d && ((!!m && ['deploy', 'battle', 'result', 'end'].includes(phase)) || dioRoomOn()), wasWide = root.classList.contains('pcwide');
+    root.classList.toggle('droom-on', wide && dioRoomOn()); // the Diorama's room (dioRoom)
     root.classList.toggle('pcwide', wide);
     const fight = wide && ['battle', 'result'].includes(phase), wasFight = root.classList.contains('pcfight');
     root.classList.toggle('pcfight', fight);
+    if (DIO && fight !== wasFight) dioFightTuck(fight); // the deploy panel slides away for the fight, back out for the next deploy
+    if (DIO && wide && !wasWide && board3d && board3d.camera.level() === 0) board3d.camera.setLevel(1); // the Diorama: the match opens in the tilted view (the prototype's)
     // and, from the strategic view, it goes to the tilted one for the fight (the wide board shows bigger that way), back after
     if (fight !== wasFight && board3d) {
       const cam = board3d.camera;
@@ -2671,6 +2815,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       root.style.setProperty('--board-h', h + 'px');
     }
     if (on !== was || h !== boardH || fight !== wasFight || wide !== wasWide) { boardH = h; size(); render(); } // the board changed size: draw it again (3D too)
+    if (DIO && wide !== wasWide) setTimeout(dioMusicDock, 0); // the Diorama's player comes up with the match screen and goes with it
     boardMarks();
     fitOverlay();
   }
@@ -2881,12 +3026,14 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (rk && phase !== 'battle') chip.textContent = `Bo${rk.best} · ${rk.wins[me]}–${rk.wins[foe()]}${rk.ties ? ` · ${rk.ties} draw${rk.ties > 1 ? 's' : ''}` : ''}`;
     if ($('foe-name').innerHTML !== fh) $('foe-name').innerHTML = fh;
     if ($('you-name').innerHTML !== yh) $('you-name').innerHTML = yh;
-    document.querySelector('.hud').hidden = phase === 'start' || phase === 'lobby' || phase === 'draft'; // no match yet: nothing to show
+    document.querySelector('.hud').hidden = (phase === 'start' || phase === 'lobby' || phase === 'draft') && !dioRoomOn(); // no match yet: nothing to show (the Diorama's room: you and the open seat)
     syncMusicBtn();
     if ((mode !== 'tutorial' && !(tutHint && phase === 'deploy')) || phase === 'battle') coach(null); // the fight speaks for itself
     syncPick(); syncMusic();
     if (typeof talk === 'object' && talk) talkSync(); // chat and emotes (server matches)
     $('foe-name').classList.toggle('np-tap', typeof talk === 'object' && !!talk && talkOn() && mode === 'net' && !net.duo);
+    dioHud();
+    if (DIO) dioMusicLine();
   }
 
   function setNet(text, state) {
@@ -2908,7 +3055,48 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     else if (phase === 'lobby') setNet('');
     else if (phase === 'draft' && mode === 'guest') setNet('Connection lost. Reconnecting…', 'bad');
     else setNet(mode === 'host' ? `Opponent disconnected. Waiting for them to come back…` : 'Connection lost. Reconnecting…', 'bad');
+    dioHud();
     dock(); // the line above the board moves it
+  }
+  // The Diorama's top line (html.diorama): the match's map and look above the round, the opponent's state under their
+  // health (Deploying… / Ready), and, online, "disconnected" beside the name of whoever dropped (the owner, 2026-11-08:
+  // that and nothing more; the old status line above the board is hidden under the Diorama)
+  function dioHud() {
+    if (!DIO) return;
+    const r = document.querySelector('.hud .round'), mp = m && Game.mapOf(m), sk = m && Game.SKINS.find(x => x.id === m.skin);
+    let st = $('foe-state');
+    if (!st) { st = document.createElement('span'); st.id = 'foe-state'; st.className = 'foe-state'; document.querySelector('.hud .side.foe').appendChild(st); }
+    if (!$('dfs') && document.fullscreenEnabled) { // Full screen in the match's top line (the owner, 2026-11-09)
+      const b = document.createElement('button'); b.className = 'cog dfs'; b.id = 'dfs'; b.type = 'button';
+      const sync = () => { const on = !!document.fullscreenElement; b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Leave full screen' : 'Full screen'); b.title = on ? 'Leave full screen' : 'Full screen';
+        b.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${on ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'}</svg>`; };
+      b.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch (e) {} });
+      document.addEventListener('fullscreenchange', sync); sync();
+      r.querySelector('.round-sub').appendChild(b);
+    }
+    const roomOn = dioRoomOn(), host = me === 0, rk = mode === 'net' && net.ranked;
+    const dl = roomOn ? lookShown() : m ? Game.lookOf(m) : ''; // the battlefield's look: the unit cards' colour follows it (src/diorama.css --dcard)
+    if (document.documentElement.dataset.dlook !== dl) document.documentElement.dataset.dlook = dl;
+    const kick = roomOn ? ['Play · Rooms', host ? 'your room' : 'their room', (Game.SKINS.find(x => x.id === lookShown()) || {}).name].filter(Boolean).join(' · ') : [mp && mp.name, sk && sk.name].filter(Boolean).join(' · ');
+    if (r.dataset.kick !== kick) r.dataset.kick = kick;
+    const seat = roomOn && host && !(mode === 'net' ? net.foeHere : net.connected); // the room's other seat is open
+    document.querySelector('.hud .side.foe').classList.toggle('open', seat);
+    if (roomOn) {
+      $('phase').textContent = rk ? '1v1 Ranked · Bo3' : '1v1 Standard';
+      if (seat) $('foe-name').textContent = 'Open seat';
+      let st0 = $('foe-state');
+      if (st0) { const t0 = seat ? 'Waiting for a player…' : 'Here'; if (st0.textContent !== t0) st0.textContent = t0; st0.classList.toggle('on', !seat); st0.hidden = false; }
+      $('foe-name').dataset.dc = ''; $('you-name').dataset.dc = '';
+      return;
+    }
+    const live = !!m && !solo() && mode !== 'spec' && mode !== 'replay' && !m.over;
+    const foeAway = live && ((mode === 'host' && !net.connected) || ((mode === 'net' || mode === 'guest') && net.connected && net.foeHere === false));
+    const meAway = live && (mode === 'net' || mode === 'guest') && !net.connected;
+    $('foe-name').dataset.dc = foeAway ? 'disconnected' : '';
+    $('you-name').dataset.dc = meAway ? 'reconnecting…' : '';
+    const t = phase === 'deploy' && m && mode !== 'spec' && mode !== 'tutorial' ? (foeAway ? '' : ready[foe()] ? 'Ready' : solo() ? '' : 'Deploying…') : '';
+    if (st.textContent !== t) st.textContent = t;
+    st.classList.toggle('on', t === 'Ready'); st.hidden = !t;
   }
 
   // ---------- countdown ----------
@@ -3197,6 +3385,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   // ---------- panel ----------
   // the picked tower's skill, not bought yet: offered as a button in the deploy panel
+  // a gold coin (the Diorama's +1 deployment: "+1 deployment, the coin, the cost"; the owner, 2026-11-09)
+  const GOLD_ICON = '<svg class="coin" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#F2B23A"/><circle cx="8" cy="8" r="4.6" fill="none" stroke="#9A6A12" stroke-width="1.4"/><path d="M8 5.3v5.4" stroke="#9A6A12" stroke-width="1.4" stroke-linecap="round"/></svg>';
   const MORE = (id) => `<button class="linkbtn" id="${id}">More</button>`; // opens the full rules in a sheet
   // the "More" links in hints, on the panel or in the Help sheet
   function wireMore() {
@@ -3326,7 +3516,11 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (!sq || (!drag.moved && !over)) { if (z) z.remove(); return; }
     if (!z) { z = document.createElement('div'); z.className = 'drop2'; pn.appendChild(z); }
     const text = sq.round === m.round ? `Drop here to take back${sq.cost ? ` +${sq.cost}` : ''}` : `Drop here to sell +${Game.sellValue(m, sq)}`;
-    if (z.textContent !== text) z.textContent = text;
+    if (DIO && pcLayout()) { // the Diorama: the word, the gold back, and what to do (src/diorama.css .drop2)
+      const back = sq.round === m.round, g = back ? sq.cost : Game.sellValue(m, sq);
+      const html = `<span class="dz"><b>${back ? 'Take back' : 'Sell'}</b>${g ? `<span class="g">+${g} gold</span>` : ''}<small>${back ? 'Drop it here' : 'Drop it here to sell it'}</small></span>`;
+      if (z.dataset.h !== html) { z.dataset.h = html; z.innerHTML = html; z.setAttribute('aria-label', text); }
+    } else if (z.textContent !== text) z.textContent = text;
     z.classList.toggle('hot', over);
   }
   // dragging a card up onto the board (a tap picks it, a hold opens its sheet, a sideways swipe scrolls the tray)
@@ -3426,6 +3620,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   function panelDeploy() {
     foeSlotNews();
     if (phase !== 'deploy') return;
+    dioHud();
     if (mode === 'tutorial') { panelTutorial(); return; }
     const g = m.gold[me];
     const fresh = m.armies[me].filter(s => s.round === m.round).length;
@@ -3540,7 +3735,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <div class="trow">
         <span class="g2 num">${g}<small>gold</small></span>
         <span class="pips" aria-label="${Math.max(0, left)} of ${allowed} deployments left">${pips}</span>
-        ${Game.deployBuyable(m, me) ? `<button class="chip2" id="buy-deploy" ${can && Game.canBuyDeploy(m, me) ? '' : 'disabled'} aria-label="One more deployment for ${Game.deployCost(m, me)} gold">+1 <span class="num">${Game.deployCost(m, me)}</span></button>` : ''}
+        ${Game.deployBuyable(m, me) ? `<button class="chip2" id="buy-deploy" ${can && Game.canBuyDeploy(m, me) ? '' : 'disabled'} aria-label="One more deployment for ${Game.deployCost(m, me)} gold">${DIO ? `+1 deployment ${GOLD_ICON}` : '+1 '}<span class="num">${Game.deployCost(m, me)}</span></button>` : ''}
         <span class="sp"></span>
         <span class="timer" id="timer">${deadline ? fmtClock(deadline - now()) : ''}</span>
         ${talkBtn()}
@@ -4968,7 +5163,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // server checks its own flag; this copy is for the page.
   const devMode = () => !!(acct && acct.dev);
   function acctSave(a) {
+    const dev0 = devMode();
     acct = a;
+    if (devMode() !== dev0) musicDevChanged(); // the DEV playlist comes or goes
     try {
       localStorage.removeItem(ACCT_STORE); sessionStorage.removeItem(ACCT_STORE);
       if (a) acctStore().setItem(ACCT_STORE, JSON.stringify(a));
@@ -7301,11 +7498,153 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const busy = phase === 'battle' || !board3d.still() || performance.now() < wakeUntil, alive = board3d.alive && board3d.alive();
     if (busy || !alive || ts - lastIdle >= 30) {
       if (!busy) lastIdle = ts;
+      dioFit(ts);
       board3d.draw();
       boardMarks();
+      if (DIO) { dioRoomNotes(); dioPatterns(); }
       meterFrame(ts);
     }
-    if (board3d && (busy || alive)) raf3d = requestAnimationFrame(frame3d);
+    if (board3d && (busy || alive || (dpat.want && dpat.key !== dpat.want))) raf3d = requestAnimationFrame(frame3d); // (the Diorama's panels: keep drawing until the scenery's patches are taken)
+  }
+  // The Diorama on a PC (html.diorama.pcwide): the 3D board's canvas is the whole window (the scenery under the words)
+  // and THREE's view offset moves and scales the picture so the board sits in what the words leave free: right of the
+  // left column, under the top line (design/diorama/src/battle.js fitView, the battle screen prototype). In the
+  // strategic and tilted views the board's corners are measured and fitted; between tilted and angled the fit blends to
+  // none, so no view switch jumps; closer in, the camera's own framing. Off: the plain picture again.
+  const dfit = { k: 1, ox: 0, oy: 0, held: null, on: false, ts: 0 };
+  // the deploy panel's side (the owner, 2026-11-09: an option in Settings, right by default for now), kept on this device;
+  // ?side=left / ?side=right set it too. html.dright mirrors the column (src/diorama.css), dioSafe frames the board
+  const DSIDE_STORE = 'pb-deploy-side2'; // (a new key, 2026-11-10: everyone starts on the left, the owner; a choice made in Settings is kept from then on)
+  let dSide = 'left'; // (left by default again: the owner, 2026-11-09)
+  try { const q = (location.search.match(/[?&]side=(left|right)\b/) || [])[1]; if (q) localStorage.setItem(DSIDE_STORE, q); dSide = localStorage.getItem(DSIDE_STORE) === 'right' ? 'right' : 'left'; } catch (e) {}
+  function setDeploySide(side, save) {
+    dSide = side === 'right' ? 'right' : 'left';
+    if (save) { try { localStorage.setItem(DSIDE_STORE, dSide); } catch (e) {} }
+    document.documentElement.classList.toggle('dright', DIO && dSide === 'right');
+    if (board3d) wake3d();
+  }
+  setDeploySide(dSide);
+  // The deploy panel tucks away to its side when the pointer leaves it and slides back out when the pointer comes to that
+  // side of the screen (the owner, 2026-11-09). A mouse only; never while a button is held (a card or a squad dragged),
+  // a sheet is open, in the room, or with Settings' "Deploy panel: Always shown". READY and the clock stay where they
+  // are (they're fixed, the column only moves its left / right). The board keeps its framing, so it never moves under
+  // the pointer while aiming. A thin tab at the edge shows where it went
+  const DAUTO_STORE = 'pb-deploy-auto2'; // (a new key: always out by default from 2026-11-10, the owner; earlier choices don't carry over)
+  let dAuto = false, dOut = true, dOutT = 0;
+  try { dAuto = localStorage.getItem(DAUTO_STORE) === 'on'; } catch (e) {}
+  function dioPanelOut(out) {
+    if (dOut === out) return;
+    dOut = out; document.documentElement.classList.toggle('dtuck', !out);
+  }
+  function setDeployAuto(on) { dAuto = !!on; try { localStorage.setItem(DAUTO_STORE, on ? 'on' : 'off'); } catch (e) {} if (!on && !document.documentElement.classList.contains('pcfight')) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); } if (board3d) wake3d(); }
+  // the fight (the owner, 2026-11-10): the panel slides away when the battle starts, whatever the setting, and comes
+  // back from its edge as with "Slides away"; the next deploy brings it out again
+  // (READY / Fight is in that edge zone: the pointer has to leave it once before the edge calls the panel back)
+  let dFightHold = false;
+  function dioFightTuck(fight) { clearTimeout(dOutT); dOutT = 0; dFightHold = fight; dioPanelOut(!fight); }
+  addEventListener('pointermove', (e) => {
+    if (!DIO || e.pointerType !== 'mouse') return;
+    const wide = dioWide() && phase !== 'lobby' && !dioRoomOn();
+    if (!wide || !(dAuto || document.documentElement.classList.contains('pcfight'))) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); return; }
+    const pw = dioPw(), x = e.clientX, edge = dOut ? pw + 40 : 140; // (a wide zone to call it back, the owner, 2026-11-10)
+    const near = dSide === 'right' ? x >= innerWidth - edge : x <= edge;
+    if (dFightHold) { if (near) return; dFightHold = false; }
+    if (near || e.buttons || !$('sheet-back').hidden) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); }
+    else if (dOut && !dOutT) dOutT = setTimeout(() => { dOutT = 0; dioPanelOut(false); }, 1500); // (it stays out a while)
+  }, { passive: true });
+  try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
+  const dioWide = () => DIO && document.documentElement.classList.contains('pcwide');
+  const dioPw = () => Math.round(Math.min(400, Math.max(318, innerWidth * 0.25))); // the left column's width (--dpw), as the prototype's clamp(318px, 25vw, 400px)
+  function dioSafe() {
+    const hb = document.querySelector('.hud').getBoundingClientRect(), pw = dioPw();
+    // the board a bit more central (the owner, 2026-11-10): with the panel sliding away it frames past about half the
+    // column (the panel covers that edge only while it's out, and tucks when the pointer goes to the board); always
+    // shown, the board stays clear of it
+    const res = Math.round(pw * 0.5) + 16; // (both options: the panel may overlap the board's outer edge a little, the owner, 2026-11-10)
+    // the board in the middle of the screen either way (the owner, 2026-11-10: "keep it centered for both options", and
+    // as big as while sliding: the same margin on both sides, half the column; an always-out column overlaps its edge)
+    const r = { x0: res, x1: innerWidth - res, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
+    const st = document.documentElement.style, vs = [pw, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
+    if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); } // (the column, the pick and the result cards follow these)
+    return r;
+  }
+  function dioFit(ts) {
+    const b = board3d, c3 = b && b.cam3; if (!c3) return;
+    if (!dioWide()) { if (dfit.on) { c3.clearViewOffset(); Object.assign(dfit, { k: 1, ox: 0, oy: 0, held: null, on: false }); } return; }
+    const dt = dfit.on && dfit.ts ? Math.min(0.1, (ts - dfit.ts) / 1000) : null; dfit.ts = ts;
+    const W = innerWidth, H = innerHeight, R = dioSafe(), z = b.camera.zoom();
+    const base = (p) => [(p[0]) / dfit.k + dfit.ox, (p[1]) / dfit.k + dfit.oy];
+    let k, cx, cy;
+    if (z <= 1.001 || !dfit.held) {
+      const C = Game.COLS - 1, Rw = Game.ROWS - 1;
+      const pts = [[0, 0, 0], [C, 0, 0], [0, Rw, 0], [C, Rw, 0], [0, 0, 5], [C, 0, 5]].map(([c, r, h]) => base(b.screenAt(c, r, h)));
+      let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0])), y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
+      const px = (x1 - x0) / C * 0.6, py = (y1 - y0) / Rw * 0.6; x0 -= px; x1 += px; y0 -= py; y1 += py;
+      k = Math.min(1.08, (R.x1 - R.x0) / (x1 - x0), (R.y1 - R.y0) / (y1 - y0));
+      cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
+      if (z <= 1.001) dfit.held = { k, dx: cx - W / 2, dy: cy - H / 2 };
+    } else {
+      const w = Math.min(1, z - 1), h = dfit.held;
+      k = h.k + (1 - h.k) * w; cx = W / 2 + h.dx * (1 - w); cy = H / 2 + h.dy * (1 - w);
+    }
+    if (!isFinite(k) || k <= 0) return;
+    const tox = cx - (R.x0 + R.x1) / 2 / k, toy = cy - (R.y0 + R.y1) / 2 / k;
+    const a = dt == null ? 1 : 1 - Math.exp(-dt * 9);
+    dfit.k += (k - dfit.k) * a; dfit.ox += (tox - dfit.ox) * a; dfit.oy += (toy - dfit.oy) * a; dfit.on = true;
+    c3.setViewOffset(W, H, dfit.ox, dfit.oy, W / dfit.k, H / dfit.k);
+    dfit.to = [k, tox, toy];
+    if (Math.abs(k - dfit.k) > 0.002 || Math.abs(tox - dfit.ox) > 0.5 || Math.abs(toy - dfit.oy) > 0.5) wakeUntil = Math.max(wakeUntil, performance.now() + 120); // still gliding: keep drawing
+  }
+  addEventListener('resize', () => { if (dioWide()) wake3d(); });
+  // The Diorama's panels in a match (the picks' options and details, the coach line, the sheets; never the shop's unit
+  // cards, the owner, 2026-11-09) are cut from the battlefield's own
+  // scenery instead of a flat ink (the owner, 2026-11-09: "using the colours or patterns from the scenery to the left of
+  // the battlefield"). Once the board's scenery has loaded, a few patches of the rendered picture left of the board are
+  // copied into images (--dpat0..5 on <html>), each from a different spot, and the panels take one each, darkened as
+  // the scrim darkens the scenery. A trial on Forest Glade first (DPAT_LOOKS); other looks keep the ink panels.
+  const DPAT_LOOKS = /[?&]dpat=all\b/.test(location.search) ? Game.SKINS.map(x => x.id) : [], DPAT_N = 6; // (off: the picks take the unit cards' colour, the owner, 2026-11-10; ?dpat=all still tries it)
+  const dpat = { key: '', want: '', at: 0, ready: false };
+  function dioPatterns() {
+    const root = document.documentElement, v = dioWide() && boardView().m, look = v ? Game.lookOf(v) : '';
+    const want = v && DPAT_LOOKS.includes(look) ? look + '|' + ((v.map && v.map.id) || '') : '';
+    if (!want) { if (dpat.key) { dpat.key = ''; root.classList.remove('dpat'); } dpat.want = ''; return; }
+    if (dpat.key === want) return;
+    if (dpat.want !== want) { // a new battlefield: wait for its scenery, then a moment for the camera to settle
+      dpat.want = want; dpat.ready = false; dpat.at = performance.now() + 1800;
+      const sc = board3d && board3d.scenery; Promise.resolve(sc && sc.ready).catch(() => {}).then(() => { if (dpat.want === want) { dpat.ready = true; dpat.at = Math.max(dpat.at, performance.now() + 600); } });
+    }
+    wakeUntil = Math.max(wakeUntil, performance.now() + 200); // keep drawing until the patches are taken
+    if (!dpat.ready || performance.now() < dpat.at) return;
+    const cv3 = $('wrap').querySelector('.board3d canvas'); if (!cv3 || !cv3.width) return;
+    const r = cv3.getBoundingClientRect(), sx = cv3.width / r.width, sy = cv3.height / r.height, pw = dioPw();
+    const W = 360, Hh = 360, c = document.createElement('canvas'); c.width = W; c.height = Hh;
+    const g = c.getContext('2d');
+    // spots spread over the scenery under the column (left of the board, below the top line, above READY)
+    const xs = [0.06, 0.42, 0.2, 0.55, 0.1, 0.36], ys = [0.22, 0.3, 0.45, 0.52, 0.66, 0.74];
+    try {
+      for (let i = 0; i < DPAT_N; i++) {
+        const x = Math.max(0, Math.min(pw + 80 - W, xs[i] * pw)), y = Math.max(0, Math.min(innerHeight - Hh, ys[i] * innerHeight));
+        g.clearRect(0, 0, W, Hh); g.drawImage(cv3, x * sx, y * sy, W * sx, Hh * sy, 0, 0, W, Hh);
+        root.style.setProperty('--dpat' + i, `url(${c.toDataURL('image/jpeg', 0.82)})`);
+      }
+    } catch (e) { dpat.key = want; return; } // (a tainted or lost canvas: the ink panels stay)
+    dpat.key = want; root.classList.add('dpat');
+  }
+  // the way in (src/diorama.js flyStart): Create room, Join and Vs computer on a PC fly the menu's island into the board.
+  // The board camera's pose in island units (its position / TILE, the same angle, lens and view offset), the keeps' spots
+  // (the board's towers) and the middle of the free space, where the field opens from; null until the board is framed
+  const dioFlyWanted = () => pcLayout() && !!board3d && !matchMedia('(prefers-reduced-motion: reduce)').matches && !/[?&]fly=off\b/.test(location.search)
+    && (dioRoomOn() || ((phase === 'deploy' || phase === 'start') && !!m && m.round === 1 && (mode === 'ai' || mode === 'net'))); // (start: the match is made a moment before its deploy begins, and the home hides then)
+  function dioBoardPose() {
+    const b = board3d, c = b && b.cam3; if (!c) return null;
+    wake3d();
+    if (!dioWide() || !dfit.on) return null;
+    const T = Game.TILE, bk = new c.position.constructor(0, 0, 1).applyQuaternion(c.quaternion);
+    const p = c.position.clone().divideScalar(T), dist = p.y / Math.max(0.05, bk.y), at = p.clone().addScaledVector(bk, -dist);
+    const v = boardView().m, f = me === 1 ? -1 : 1, R = dioSafe();
+    const keeps = v && v.towers ? [me, 1 - me].filter(sd => v.towers[sd]).map(sd => [sd === me, f * (v.towers[sd].col - (Game.COLS - 1) / 2), f * (v.towers[sd].row - (Game.ROWS - 1) / 2)]) : null;
+    return { at: [at.x, at.y, at.z], az: Math.atan2(bk.x, bk.z), el: Math.asin(Math.max(-1, Math.min(1, bk.y))), h: dist * Math.tan(c.fov * Math.PI / 360), fov: c.fov,
+      ox: dfit.ox / innerWidth, oy: dfit.oy / innerHeight, k: dfit.k, keeps, cx: (R.x0 + R.x1) / 2, cy: (R.y0 + R.y1) / 2 };
   }
   // The speed meter counts frames and sums up each fight for the too-slow rule. When 3D is forced for testing, it
   // shows top right on the 3D board: frames drawn in the last second (0 while the board idles), the slowest frame among
@@ -8121,6 +8460,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function closeSheet(byPlayer) {
     if (byPlayer !== true && !$('sheet-back').hidden && $('sheet').querySelector('[data-keep]')) return;
     $('sheet-back').hidden = true; loaderRun++; unlockAsk = null;
+    if (typeof dioDropOff === 'function') dioDropOff('sheet');
   }
 
   // ---------- load units from Counter Lab ----------
@@ -8216,7 +8556,51 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     });
   }
   $('sheet-back').addEventListener('click', (e) => { if (e.target.id === 'sheet-back') closeSheet(true); });
-  $('cog').addEventListener('click', openSoundSheet);
+  // the Diorama's match screen: the cog drops Settings down from itself, as the menu's dropdowns, a line from the cog
+  // to the panel; the cog again, a click anywhere but the panel, or Esc puts it away (the owner, 2026-11-10)
+  $('cog').addEventListener('click', () => {
+    if (DIO && dioWide()) {
+      if (!$('sheet-back').hidden && $('sheet').querySelector('#spk-music, [data-board]')) { closeSheet(true); return; }
+      openStats(false); openSoundSheet(); dioDropOn('sheet', $('cog')); return;
+    }
+    openSoundSheet();
+  });
+  // A Diorama dropdown in a match: the panel hangs under its button (Settings: #sheet in #sheet-back.ddrop; Damage:
+  // #stats-dd), and a cream line with a dot on the button runs down to the panel, as the menu's notes
+  const ddrop = { which: '', btn: null };
+  // version B of the match's Settings (the owner, 2026-11-10: "another version that uses the main menu design language
+  // more"): ?settings=menu turns it on (kept on this device), ?settings=a goes back; html.dsetmenu in src/diorama.css
+  // (version B is the default from 2026-11-10, the owner; a new key so the trial's choice doesn't carry over)
+  { let setB = true; try { const q = (location.search.match(/[?&]settings=(menu|a)\b/) || [])[1]; if (q) localStorage.setItem('pb-dset2', q); setB = localStorage.getItem('pb-dset2') !== 'a'; } catch (e) {} if (setB) document.documentElement.classList.add('dsetmenu'); }
+  function dioDropOn(which, btn) {
+    ddrop.which = which; ddrop.btn = btn;
+    const back = $('sheet-back');
+    if (which === 'sheet') {
+      back.classList.add('ddrop');
+      const fill = (el) => el.style.setProperty('--v', ((+el.value - +el.min) / ((+el.max - +el.min) || 1) * 100) + '%'); // (version B's sliders fill up to the knob)
+      $('sheet').querySelectorAll('input[type="range"]').forEach(el => { fill(el); el.addEventListener('input', () => fill(el)); });
+    }
+    dioDropPlace();
+  }
+  function dioDropOff(which) {
+    if (which && ddrop.which !== which) return;
+    ddrop.which = ''; ddrop.btn = null;
+    $('sheet-back').classList.remove('ddrop');
+    const l = $('ddline'); if (l) l.innerHTML = '';
+  }
+  function dioDropPlace() {
+    if (!ddrop.which || !ddrop.btn) return;
+    const panel = ddrop.which === 'sheet' ? $('sheet') : $('stats-dd'); if (!panel) return;
+    const b = ddrop.btn.getBoundingClientRect(), cx = b.left + b.width / 2, top = b.bottom + 46;
+    const w = panel.offsetWidth || 560, left = Math.max(16, Math.min(innerWidth - w - 16, cx - w / 2));
+    if (ddrop.which === 'sheet') { panel.style.setProperty('--ddx', left + 'px'); panel.style.setProperty('--ddy', top + 'px'); }
+    else { panel.style.left = left + 'px'; panel.style.top = top + 'px'; panel.style.transform = 'none'; }
+    let svg = $('ddline');
+    if (!svg) { document.body.insertAdjacentHTML('beforeend', '<svg id="ddline" class="ddline" aria-hidden="true"></svg>'); svg = $('ddline'); }
+    const y0 = b.bottom + 5, x = Math.max(left + 14, Math.min(left + w - 14, cx));
+    svg.innerHTML = `<circle cx="${cx}" cy="${y0}" r="3.5"/><polyline points="${cx},${y0} ${cx},${top - 12} ${x},${top - 12} ${x},${top}"/>`;
+  }
+  addEventListener('resize', () => { if (ddrop.which) dioDropPlace(); });
   for (const id of ['music-btn', 'music-fab']) $(id).addEventListener('click', (e) => { e.stopPropagation(); openPlaylist(); });
   $('foe-name').addEventListener('click', () => { if (talkOn() && mode === 'net') return; const p = foePlayer(); if (p && p.tag && !net.duo) frPlayerMenu({ tag: p.tag, title: p.title }); }); // friends: Add friend / Message (with chat on, from the chat's name menu)
   // ---------- damage stats: a dropdown under the HUD with what each unit dealt in the last fight, as a share of its team's total ----------
@@ -8294,15 +8678,16 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function openStats(open) {
     const dd = $('stats-dd');
     dd.hidden = !open; $('stats').setAttribute('aria-expanded', String(open));
-    if (!open) return;
+    if (!open) { if (typeof dioDropOff === 'function') dioDropOff('stats'); return; }
     dd.innerHTML = statsHtml();
     dd.style.top = ($('stats').getBoundingClientRect().bottom + 8) + 'px';
+    if (DIO && dioWide()) dioDropOn('stats', $('stats')); // the Diorama: it hangs from the icon on a line
     dd.querySelectorAll('[data-st]').forEach(c => c.addEventListener('change', () => { statsShow[c.dataset.st] = c.checked; openStats(true); }));
     dd.querySelectorAll('[data-stm]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); statsTeam = b.dataset.stm === 'team'; try { sessionStorage.setItem(STATS_TEAM_STORE, statsTeam ? '1' : '0'); } catch (err) {} openStats(true); }));
   }
   $('stats').addEventListener('click', (e) => { e.stopPropagation(); openStats($('stats-dd').hidden); });
   document.addEventListener('click', (e) => { if (!$('stats-dd').hidden && !$('stats-dd').contains(e.target)) openStats(false); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !typingIn(e.target)) { if (mpui.open) { mpClose(); return; } closeSheet(true); openStats(false); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !typingIn(e.target)) { if (mpui.open) { mpClose(); return; } if (endLook && phase === 'end' && $('sheet-back').hidden) { lookAtBoard(false); return; } /* Look at board: Esc shows the result again */ closeSheet(true); openStats(false); } });
 
   // =====================================================================
   // Live matches: PeerJS (WebRTC). The host runs the match and decides results;
@@ -8406,6 +8791,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
   function drawLobby(problem) {
     if (tourLive()) { drawTourLobby(tourLive(), problem); return; } // a tournament match starts by itself
+    if (dioRoomOn()) { dioRoom(problem); return; } // the Diorama on a PC: the room is the battlefield
     const srv = mode === 'net';
     const link = srv ? playLink() : shareLink();
     const here = srv ? net.foeHere : net.connected;
@@ -8459,6 +8845,109 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     $('panel').querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); drawLobby(); }));
     $('panel').querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); drawLobby(); }));
     if (rk) wireLookSeg(); else { wireMapSeg(); wireCharSeg(); wirePackSeg(); wireSettings(); }
+  }
+  // ---------- the Diorama's room (a PC): the room you wait in is the battlefield you're about to fight on ----------
+  // (design/diorama/battle.html, the room prototype, 2026-11-08) The board shows the room's map in its look, edge to edge;
+  // the top line has you top left and the other seat top right (open until someone takes it); the keeps say who is in
+  // the game ("Wren · connected" / "Waiting for opponent…", the owner, 2026-11-08); the left column has the room's
+  // settings as rows of words (Who can find it, Spectators, Units, Battlefield), + Invite a friend, and START MATCH on the
+  // saffron shard, the deploy panel's place. No match code or link (the owner, 2026-11-07: everything goes through
+  // Rooms and friends' invites), except for a developer's phone-to-phone room, which can't be found any other way.
+  const dioRoomOn = () => DIO && pcLayout() && phase === 'lobby' && !m && mode !== 'spec' && !net.duo && !tourLive();
+  let dioClosing = false, dioGuestText = '';
+  function dioRoom(problem, guestText) {
+    if (guestText != null) dioGuestText = guestText;
+    const o = $('overlay'); if (!o.hidden) { o.hidden = true; o.innerHTML = ''; }
+    const srv = mode === 'net', host = me === 0, rk = srv && net.ranked;
+    const here = host ? !!(srv ? net.foeHere : net.connected) : !!net.connected;
+    const nm0 = foeName(), nm = nm0 && nm0 !== 'Opponent' && nm0 !== 'Enemy' ? nm0 : '';
+    const whose = host ? 'Your room' : nm ? `${esc(nm)}’s room` : 'Their room';
+    const pub = srv && !net.tourCode ? talk.pub : false, watch = srv && !net.tourCode ? talk.spectate : false;
+    const skins = Game.SKINS, k = Math.max(0, skins.findIndex(x => x.id === (lookShown() || 'meadow'))), bf = skins[k] || skins[0];
+    const word = (key, v, label, cur) => `<button class="w" data-${key}="${v}" aria-pressed="${String(cur)}">${label}</button>`;
+    const row = (label, ws, note, id) => `<div class="rrow"${id ? ` id="${id}"` : ''}><span class="lab">${label}</span><div class="ws">${ws}</div>${note ? `<span class="note"${id ? ` id="${id}-note"` : ''}>${note}</span>` : ''}</div>`;
+    const lead = problem ? esc(problem) : !host ? esc(dioGuestText || `${nm || 'The host'} starts the match.`)
+      : here ? `<b>${esc(nm || 'Your opponent')}</b> is here. Start when you’re ready.`
+      : srv && !net.connected ? 'Setting up the room…'
+      : !srv ? 'Phone to phone: send the link below to a friend and keep this page open.'
+      : pub ? 'Listed in Rooms: anyone can join. Friends you invite get a message.' : 'Not listed. Only friends you invite can join.';
+    const rows = !host ? row('Battlefield', `<span class="w" aria-pressed="true">${esc(bf.name)}</span>`, `The match is played on ${nm ? esc(nm) + '’s' : 'the host’s'} pick.`)
+      : `${srv && !net.tourCode ? row('Who can find it', word('pub', 1, 'Public', pub) + word('pub', 0, 'Private', !pub), pub ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.')
+          + row('Spectators', word('spec', 1, 'On', watch) + word('spec', 0, 'Off', !watch), watch ? 'Anyone can watch once it starts.' : 'Just the two of you.') : ''}
+        ${rk ? row('Units', '<span class="w" aria-pressed="true">Standard</span>', 'Ranked: the Standard map and pack, the same 5 leaders and 3 towers for you both. Win 2 games to take the series; only ranked series count on the leaderboard.')
+          : customSet ? row('Units', `<span class="w" aria-pressed="true">Your ${units.length}</span>`, 'Your Counter Lab units, on this device.')
+          : row('Units', word('pack', 'learn', 'Learn the game', packNow() === 'learn') + word('pack', 'standard', 'Standard', packNow() === 'standard') + (devMode() ? word('pack', 'custom', 'Custom', packNow() === 'custom') : ''), packNote(), 'pack-row')}
+        ${row('Battlefield', `<button class="arrow" data-bf="-1" aria-label="Previous battlefield">‹</button><span class="w" aria-pressed="true">${esc(bf.name)}</span><button class="arrow" data-bf="1" aria-label="Next battlefield">›</button>`, `${k + 1} of ${skins.length}. The match is played here.`)}`;
+    const dev = host && devMode() && !rk ? `<div class="ddev"><span class="lab">Developer</span>
+        ${factionsReady() ? `<div class="seg" role="group" aria-label="Gamemode"><button data-kind="standard" aria-pressed="${matchKind !== 'factions'}">Standard</button><button data-kind="factions" aria-pressed="${matchKind === 'factions'}">Factions</button></div>` : ''}
+        ${settingsBox(`${mapSeg()}${charSeg()}`)}
+        ${srv ? '<button class="help" id="use-peer">Phone to phone instead (for Factions)</button>' : ''}</div>` : '';
+    const link = !srv && host ? `<div class="rlink"><span class="linkbox" id="link">${esc(shareLink())}</span><button class="help" id="copy">Copy link</button></div>` : '';
+    $('panel').innerHTML = `<div class="droom">
+      <div class="rhead"><span class="k">${whose} · ${pub ? 'public' : 'private'}${watch ? ' · watchable' : ''}${rk ? ' · ranked' : ''}</span>
+        <h2>${whose}</h2><p class="rlead" id="lobby-status">${lead}</p></div>
+      ${link}
+      <div class="rrows">${rows}</div>
+      ${dev}
+      <div class="rgo">
+        ${host ? `<button class="btn primary" id="start" ${here ? '' : 'disabled'}>Start match</button>
+          <div class="say"><span class="big">${here ? `${esc(nm || 'Your opponent')} is here` : 'Open seat'}</span>
+            <small>${here ? 'The match starts for you both.' : 'Nobody yet.'}</small>
+            ${srv && !net.tourCode && frOk() && !here ? '<div class="xrow invite"><button class="w" id="fr-room">+ Invite a friend</button></div>' : ''}
+            <button class="help" id="cancel">${dioClosing ? 'Sure? Close it' : 'Close room'}</button></div>`
+        : `<div class="say"><span class="big">Waiting for ${esc(nm || 'the host')}</span><small>${esc(nm || 'The host')} starts the match.</small>
+            <button class="help" id="leave">Leave room</button></div>`}
+      </div></div>`;
+    const P = $('panel'), on = (id, f) => { const b = $(id); if (b) b.addEventListener('click', f); };
+    const rgo = P.querySelector('.rgo'); if (rgo) document.documentElement.style.setProperty('--drgo', `${rgo.offsetHeight}px`); // the column ends above its foot (src/diorama.css)
+    P.querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); dioRoom(); }));
+    P.querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); dioRoom(); }));
+    P.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {
+      const v = b.dataset.pack; unitPack = v === 'custom' && devMode() ? 'custom' : v === 'standard' ? 'standard' : 'learn';
+      try { localStorage.setItem(PACK_STORE, unitPack); } catch (e) {}
+      dioRoom();
+    }));
+    P.querySelectorAll('[data-bf]').forEach(b => b.addEventListener('click', () => { // the battlefield: the room's look, saved as the menu's (pb-skin); the board changes at once
+      const nx = skins[(k + +b.dataset.bf + skins.length) % skins.length].id;
+      skinPick = nx === (Game.MAP_LOOK[curMap() || 'standard'] || '') ? '' : nx;
+      try { localStorage.setItem('pb-skin', skinPick); } catch (e) {}
+      render(); dioRoom();
+    }));
+    on('fr-room', () => openFriends('friends')); // friends: Invite sends this room's code
+    on('start', hostStartMatch);
+    on('cancel', () => { if (!dioClosing) { dioClosing = true; dioRoom(); setTimeout(() => { if (dioClosing) { dioClosing = false; if (dioRoomOn()) dioRoom(); } }, 3000); return; } dioClosing = false; clearHost(); showStart(); }); // tap twice
+    on('leave', showStart);
+    on('use-peer', () => hostLobby(true));
+    on('copy', () => { const l = shareLink(), done = () => { if ($('copy')) $('copy').textContent = 'Copied'; }; if (navigator.clipboard) navigator.clipboard.writeText(l).then(done, () => selectLink()); else selectLink(); });
+    P.querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => { matchKind = b.dataset.kind; if (srv && matchKind === 'factions') hostLobby(true); else dioRoom(); }));
+    if (dev) { wireMapSeg(); wireCharSeg(); wireSettings(); }
+    hud(); dock(); render();
+  }
+  // the keeps' notes: a dot on each keep, a line, and who is there (drawn with the board's frames)
+  function dioRoomNotes() {
+    const show = dioRoomOn() && !!board3d && dioWide();
+    let svg = $('dlines');
+    if (!svg) {
+      document.querySelector('.app').insertAdjacentHTML('beforeend', '<svg id="dlines" class="dlines" aria-hidden="true"></svg><div class="knote" id="dkn0" hidden></div><div class="knote" id="dkn1" hidden></div>');
+      svg = $('dlines');
+    }
+    svg.style.display = show ? '' : 'none';
+    const v = boardView().m, lines = [];
+    for (const sd of [0, 1]) {
+      const n = $('dkn' + sd), t = show && v && v.towers && v.towers[sd];
+      n.hidden = !t; if (!t) continue;
+      const mine = sd === me, host = me === 0, srv = mode === 'net';
+      const there = mine ? (host || !!net.connected) : host ? !!(srv ? net.foeHere : net.connected) : !!net.connected;
+      const nm = mine ? (acct ? acct.tag : 'You') : (foeName() !== 'Opponent' ? foeName() : 'Opponent');
+      const html = there ? `<b>${esc(nm)}</b> · connected` : mine ? `<b>${esc(nm)}</b> · connecting…` : '<span class="wait">Waiting for opponent…</span>';
+      if (n.innerHTML !== html) n.innerHTML = html;
+      const [x, y] = board3d.screenAt(t.col, t.row, mine ? 2.4 : 2.6), w = n.offsetWidth, left = !mine, gap = 70;
+      const lx = Math.max(8, Math.min(innerWidth - w - 8, left ? x - gap - w : x + gap)), ly = y - 34;
+      n.style.left = lx + 'px'; n.style.top = ly + 'px';
+      const near = Math.abs(lx + w - x) < Math.abs(lx - x) ? lx + w : lx, far = near === lx ? lx + w : lx;
+      lines.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5"/><polyline points="${x.toFixed(1)},${y.toFixed(1)} ${near.toFixed(1)},${(ly + 26).toFixed(1)} ${far.toFixed(1)},${(ly + 26).toFixed(1)}"/>`);
+    }
+    const h = lines.join(''); if (svg.innerHTML !== h) svg.innerHTML = h;
   }
   function selectLink() { const r = document.createRange(); r.selectNodeContents($('link')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
 
@@ -8838,6 +9327,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
 
   function guestWaiting(text) {
+    if (dioRoomOn()) { dioRoom('', text); return; }
     overlay(`<div class="card">
       <span class="eyebrow">Live match</span>
       <span class="code">${esc(net.code)}</span>

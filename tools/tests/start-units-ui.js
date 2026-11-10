@@ -22,6 +22,7 @@ const look = (pg) => pg.evaluate(() => {
   const p = await mk('ai');
   await p.goto('http://127.0.0.1:8766/?test&aiready=60000'); await sleep(500);
   await p.click('#go'); await sleep(1000);
+  ok(await p.evaluate(() => Game.needsPack(window.__pb().m, window.__pb().me) && !window.__pbView().foeStart), 'AI: nothing shown while you still choose your start');
   await p.dblclick('[data-pack="0"]'); await sleep(400);
   let s = await p.evaluate(() => { const { m } = window.__pb(); return { seen: Game.startSeen(m, 1), pack: Game.packOf(m, 1).squads, army: m.armies[1].map(q => q.unit), hidden: Game.foeSeen(m, 1).length }; });
   ok(JSON.stringify(s.seen) === JSON.stringify(s.pack), `AI: its package squads are seen (${s.seen})`);

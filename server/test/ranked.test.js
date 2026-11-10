@@ -100,13 +100,21 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 9 * 60 *
     assert.strictEqual((await call('me', {}, dev.session)).player.tagNext, 0);
 
     // ----- titles -----
-    assert.deepStrictEqual([A.player.titles, A.player.title], [['day1'], 'day1'], 'a first-week account has Day 1');
-    assert.deepStrictEqual([dev.player.titles, dev.player.title], [['dev', 'day1'], 'dev'], 'a developer has DEV too, shown first');
+    // Day 1 only goes to accounts made in the first week (src/accounts.js DAY1_END); a run after it makes accounts without
+    // it (every server deploy failed here from 2026-11-09 until this check followed the date)
+    const DAY1 = Date.now() < Date.UTC(2026, 10, 8, 23, 0, 0), d1 = DAY1 ? ['day1'] : [];
+    assert.deepStrictEqual([A.player.titles, A.player.title], [d1, DAY1 ? 'day1' : ''], DAY1 ? 'a first-week account has Day 1' : 'an account made after the first week has no Day 1');
+    assert.deepStrictEqual([dev.player.titles, dev.player.title], [['dev', ...d1], 'dev'], 'a developer has DEV too, shown first');
     assert.strictEqual((await call('title', { title: 'dev' }, A.session)).status, 400, 'not someone else\'s title');
     assert.strictEqual((await call('title', { title: '' }, A.session)).player.title, '', 'no title shown');
     assert.strictEqual((await call('me', {}, A.session)).player.title, '', 'and it stays that way');
-    assert.strictEqual((await call('title', { title: 'day1' }, A.session)).player.title, 'day1');
-    assert.strictEqual((await call('title', { title: 'day1' }, dev.session)).player.title, 'day1', 'a developer can pick Day 1');
+    if (DAY1) {
+      assert.strictEqual((await call('title', { title: 'day1' }, A.session)).player.title, 'day1');
+      assert.strictEqual((await call('title', { title: 'day1' }, dev.session)).player.title, 'day1', 'a developer can pick Day 1');
+    } else {
+      assert.strictEqual((await call('title', { title: 'day1' }, A.session)).status, 400, 'no Day 1 to pick after the first week');
+      assert.strictEqual((await call('title', { title: 'dev' }, dev.session)).player.title, 'dev', 'a developer picks DEV');
+    }
 
     // ----- accounts are needed -----
     let ws = await phone(newCode(), { create: true, ranked: true });
@@ -190,8 +198,8 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 9 * 60 *
     assert.strictEqual(row(A.player.id)[want[0]], 1, 'Alpha\'s result');
     assert.strictEqual(row(B.player.id)[want[1]], 1, 'Bravo\'s result');
     assert.strictEqual(row(A.player.id).tag, 'Alpha');
-    assert.strictEqual(row(A.player.id).title, 'day1', 'the leaderboard shows titles');
-    assert.deepStrictEqual(f.ranked.titles, ['day1', 'day1'], 'so does the series');
+    assert.strictEqual(row(A.player.id).title, DAY1 ? 'day1' : '', 'the leaderboard shows titles');
+    assert.deepStrictEqual(f.ranked.titles, DAY1 ? ['day1', 'day1'] : ['', ''], 'so does the series');
 
     // a rematch after a decided series starts a new one; leaving loses it
     mark(a, b);
@@ -226,7 +234,7 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 9 * 60 *
     const cron = await fetch(`${srv.base}/__scheduled?cron=7+*+*+*+*`);
     assert.ok(cron.ok, 'the cron runs');
     const meA = await waitFor(async () => { const x = await call('me', {}, A.session); return x.player.titles.includes('legend') && x; }, 8000);
-    assert.deepStrictEqual(meA.player.titles, ['legend', 'day1'], 'Alpha is a Legend');
+    assert.deepStrictEqual(meA.player.titles, ['legend', ...d1], 'Alpha is a Legend');
     assert.ok((await call('me', {}, B.session)).player.titles.includes('legend'), 'so is Bravo (top 5 of 2)');
     assert.ok(!(await call('me', {}, C.session)).player.titles.includes('legend'), 'not someone off the board');
     assert.strictEqual((await call('title', { title: 'legend' }, A.session)).player.title, 'legend', 'Legend can be picked');

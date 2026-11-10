@@ -4,6 +4,16 @@
   // under #dio (src/diorama.css); sample data is replaced by the game's own screen by screen (INTEGRATION.md).
   // syncHome: the home screen shows (on) or a match / another screen takes over. Idempotent (hud() calls it often).
   function dioSync(on) {
+    if (on && dio.api && dio.api.flying && dio.api.flying()) { dio.api.flyStop(); document.documentElement.classList.remove('dfly'); } // back home mid-flight
+    if (!on && dio.shown && dio.api && dio.api.fly && dioFlyWanted()) { // the way in: the island flies into the board, then the home hides
+      dio.shown = false;
+      document.documentElement.classList.add('dfly');
+      dio.api.fly({ end: dioBoardPose, ready: board3d.scenery && board3d.scenery.ready,
+        shown: () => document.documentElement.classList.remove('dfly'),
+        done: () => { if (dio.shown) return; $('dio').hidden = true; dio.api.pause(); } });
+      return;
+    }
+    if (!on && dio.api && dio.api.flying && dio.api.flying()) return; // the island is flying in: it hides when it lands
     $('dio').hidden = !on;
     if (on === dio.shown) return;
     dio.shown = on;
@@ -314,8 +324,7 @@
       list.forEach((u, i) => {
         const x = (i - (n - 1) / 2) * gap, g = new THREE.Group(); g.position.set(x, 0, -0.5); roster.add(g);
         const b = tile(gap - 0.14, 0.16, 2.3, (c, w, hh) => { c.fillStyle = '#F4ECD8'; c.fillRect(0, 0, w, hh); c.strokeStyle = 'rgba(23,20,15,.2)'; c.lineWidth = 6; c.setLineDash([18, 14]); c.strokeRect(20, 20, w - 40, hh - 40);
-            c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.8);
-            c.font = '500 40px "Bricolage Grotesque"'; c.globalAlpha = .75; c.fillText(`${u.cost} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
+            c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.85); }, null, '#CDBF9F'); // (the name only, no price: owner, 2026-11-10)
         b.position.set(0, 0.08, 0.35); g.add(b);
         const w = wornOf(u.name), kind = w ? SKIN[w.id].model : M.kindOf(u), ht = M.height(kind) || 2, sc = Math.min(0.66, 2.0 / ht), copies = Math.min(u.bodies || 1, 3);
         const spots = copies === 1 ? [[0, 0]] : copies === 2 ? [[-0.28, 0.05], [0.28, -0.05]] : [[-0.32, 0.12], [0.32, 0.12], [0, -0.25]];
@@ -347,6 +356,10 @@
       history: { az: 0.62, el: 0.6, zoom: 13.2, at: [0, 0.2, 0.4], off: [0.29, -0.03] },
     };
     const phone = () => innerWidth <= 700;
+    // the Play side (Play, Rooms, New room) sees the island from above (VIEWS.orders) or at the menu's angle (VIEWS.play):
+    // a click on the island switches (owner, 2026-11-10: from above is the default). Remembered on this device
+    let playTilt = false; try { playTilt = localStorage.getItem('pb-dio-tilt') === '1'; } catch (er) {}
+    const playView = () => playTilt ? VIEWS.play : VIEWS.orders;
     let want = VIEWS.play, now = { ...VIEWS.play, at: [...VIEWS.play.at], off: [...VIEWS.play.off] };
     const lerp = (a, b, t) => a + (b - a) * t;
     function place() {
@@ -372,6 +385,7 @@
     const bfMenu = new THREE.Object3D(); bfMenu.position.set(7, 0, -9); island.add(bfMenu);
     const bfPlan = new THREE.Object3D(); bfPlan.position.set(0, 0, 9); island.add(bfPlan);
     // the battlefield note stays in one place (bottom right); its line runs up to the nearest corner or edge of the island
+    let bfPick = null, bfFor = null, bfKey = ''; // the battlefield line's point on the island, and the view it was picked for
     const bfDots = [[7, -9], [7, 9], [-7, 9], [-7, -9], [7, 0], [0, 9], [-7, 0], [0, -9]].map(([x, z]) => { const o = new THREE.Object3D(); o.position.set(x, 0, z); island.add(o); return o; });
     let viewName = 'play', hovered = null, pinnedHover = false, picked = null;
     const svg = document.getElementById('lines');
@@ -425,10 +439,19 @@
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
           if (on && !phone() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf')) {
-            const r = el.getBoundingClientRect(), ty = r.top - 4; let best = null, bd = 1e9;
-            for (const o of bfDots) { const [x, y] = proj(o, 0), d = Math.hypot(x - r.right, y - ty);
-              if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd && !(menuR && crosses(`M${x} ${y} L${r.right} ${ty}`, menuR))) { bd = d; best = [x, y]; } } // (never across the menu's words)
-            if (best && !under(r)) { const [x, y] = best, right = x > (r.left + r.right) / 2;
+            const r = el.getBoundingClientRect(), ty = r.top - 4;
+            // the point is picked where the camera is heading and kept while it moves, so the line glides with the island
+            // instead of hopping between corners mid-move (owner, 2026-11-10)
+            const key = innerWidth + 'x' + innerHeight + (menuR ? ' ' + [menuR.left, menuR.top, menuR.right, menuR.bottom].map(Math.round).join() : '');
+            if (bfFor !== want || bfKey !== key) {
+              bfFor = want; bfKey = key; bfPick = null; let bd = 1e9; const keep = now;
+              now = { ...want, at: [...want.at], off: [...want.off] }; place(); cam.updateMatrixWorld();
+              for (const o of bfDots) { const [x, y] = proj(o, 0), d = Math.hypot(x - r.right, y - ty);
+                if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd && !(menuR && crosses(`M${x} ${y} L${r.right} ${ty}`, menuR))) { bd = d; bfPick = o; } } // (never across the menu's words)
+              now = keep; place(); cam.updateMatrixWorld();
+            }
+            const best = bfPick && proj(bfPick, 0);
+            if (best && best[1] < ty - 8 && !under(r)) { const [x, y] = best, right = x > (r.left + r.right) / 2;
               html += `<path d="M${x} ${y} L${right ? r.right : r.left} ${ty} L${right ? r.left : r.right} ${ty}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`; }
           }
           continue;
@@ -465,7 +488,7 @@
           }
           continue;
         }
-        const [o, hh, [dx, dy]] = bf ? (inPlay ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
+        const [o, hh, [dx, dy]] = bf ? (inPlay && !playTilt ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
         let ddy = dy; if (el.dataset.anchor === 'golemW') { const lb = body.querySelector('.logo').getBoundingClientRect().bottom; ddy = Math.max(dy, lb + 16 + el.offsetHeight - y); } // clear of the big logo
         let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the right, in the sky over the far towers; else up and left, above the golem's note
           const gn = body.querySelector('.rw-note:not(.pnote)'), gr = gn && gn.style.display !== 'none' ? gn.getBoundingClientRect() : null, lg = body.querySelector('.logo').getBoundingClientRect();
@@ -516,7 +539,7 @@
       if (hovered && hovered.startsWith('u:') && body.classList.contains('units') && (!picked || picked.userData.i !== +hovered.slice(2))) {
         const g = rosterHot[+hovered.slice(2)], [x, y] = proj(g, 1.5), w = hn.offsetWidth;
         const ns = skinsOf(g.userData.u.name).filter(k => k.own).length;
-        hn.style.display = ''; hn.innerHTML = `${g.userData.u.name}.<small>Tier ${g.userData.t} · ${g.userData.u.cost} gold${ns ? ` · ${ns} skin${ns > 1 ? 's' : ''}` : ''} · click for its sheet</small>`;
+        hn.style.display = ''; hn.innerHTML = `${g.userData.u.name}.<small>Tier ${g.userData.t}${ns ? ` · ${ns} skin${ns > 1 ? 's' : ''}` : ''} · click for its sheet</small>`;
         const hy = y + 210; hn.style.left = (x + 16) + 'px'; hn.style.top = hy + 'px';
         html += `<path d="M${x} ${y} L${x + 16} ${hy} L${x + 16 + w} ${hy}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
       } else hn.style.display = 'none';
@@ -540,7 +563,13 @@
         if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
         else if (viewName === 'play' && !body.classList.contains('profile')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; else if (!body.classList.contains('welcome') && hitOf(e, UNIT_MODELS) >= 0) unitHot = true; }
       }
+      if (e.target === cv && body.classList.contains('play') && !body.classList.contains('profile') && hitOf(e, [island]) >= 0) unitHot = true; // Play: the island switches its view
       setHover(key); cv.classList.toggle('world-hot', !!key || unitHot);
+    });
+    body.addEventListener('click', (e) => { // Play: a click on the island switches between from above and the menu's angle
+      if (e.target !== cv || !body.classList.contains('play') || body.classList.contains('profile') || hitOf(e, [island]) < 0) return;
+      playTilt = !playTilt; try { localStorage.setItem('pb-dio-tilt', playTilt ? '1' : '0'); } catch (er) {}
+      want = playView(); notes();
     });
     // what's pointed at shows its note at once (owner, 2026-11-08: no delay); notes no longer wanted fade out over a
     // second (in notes()), so a sweep over the island doesn't flicker
@@ -559,7 +588,7 @@
       picked = g; const sh = document.getElementById('usheet');
       if (!g) return;
       const u = g.userData.u, dps = Math.round(u.hit * u.aps * (u.bodies || 1)), sk = (u.skills || []).map(id => ROSTER.skills[id] || id);
-      sh.querySelector('.tag').textContent = `Tier ${g.userData.t} · ${u.cost} gold`;
+      sh.querySelector('.tag').textContent = `Tier ${g.userData.t}`;
       sh.querySelector('h3').textContent = u.name;
       sh.querySelector('.st').innerHTML = [`<b>${u.hp}</b> health`, `<b>${dps}</b> damage a second`, `<b>${u.range} m</b> range`, `<b>${u.speed}</b> speed`,
         (u.bodies || 1) > 1 ? `<b>${u.bodies}</b> bodies` : '', u.splash ? `<b>${u.splash} m</b> splash` : '', u.defense && u.defense !== 'none' ? `<b>${u.defVal}</b> ${u.defense}` : ''].filter(Boolean).map(t => `<span>${t}</span>`).join('');
@@ -599,6 +628,7 @@
     const clock = new THREE.Clock();
     function frame() {
       raf = 0; if (!running) return;
+      if (fly) { flyFrame(); raf = requestAnimationFrame(frame); return; }
       const t = still ? 1.3 : clock.getElapsedTime(), k = still ? 1 : 0.08, kk = still ? 1 : 0.12;
       now.az = lerp(now.az, want.az, k); now.el = lerp(now.el, want.el, k); now.zoom = lerp(now.zoom, want.zoom, k);
       for (let i = 0; i < 3; i++) now.at[i] = lerp(now.at[i], want.at[i], k);
@@ -624,6 +654,70 @@
       place(); if (renderer) renderer.render(scene, cam); notes();
       raf = requestAnimationFrame(frame);
     }
+    // ── the way in (the battle prototype's fly-in, 2026-11-08; the owner's wish): Create room, Join and Vs computer zoom
+    // in on the island, move it over and fade it into the real board under it. The island and the board are the same
+    // map at two scales (a tile is 1 here, Game.TILE metres on the board, both centred), so the flight ends on the board
+    // camera's exact pose (its position / TILE, the same angle, lens and view offset: end() from the page). It starts
+    // from this screen's view (the orthographic camera taken as a 5° lens far away, which looks the same). On the way
+    // the words go, the miniatures sink (the keeps last, where the board has its towers), the soil drops away, the
+    // field opens from the board's middle outward onto the battlefield's scenery, and the island fades into the board.
+    const flyCam = new THREE.PerspectiveCamera(5, 1, 0.05, 4000), FLY_MS = 1900;
+    let fly = null;
+    const clamp01 = (x) => Math.max(0, Math.min(1, x)), ease = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    function flyPose(P) {
+      const w = cv.clientWidth || innerWidth, h = cv.clientHeight || innerHeight, d = P.h / Math.tan(P.fov * Math.PI / 360);
+      flyCam.fov = P.fov; flyCam.aspect = w / h; flyCam.near = Math.max(0.05, d * 0.02); flyCam.far = d * 6 + 100;
+      flyCam.position.set(P.at[0] + d * Math.cos(P.el) * Math.sin(P.az), P.at[1] + d * Math.sin(P.el), P.at[2] + d * Math.cos(P.el) * Math.cos(P.az));
+      flyCam.up.set(0, 1, 0); flyCam.lookAt(P.at[0], P.at[1], P.at[2]);
+      flyCam.setViewOffset(w, h, P.ox * w, P.oy * h, w / P.k, h / P.k);
+    }
+    function flyMix(A, B, e) {
+      const L = (a, b) => a + (b - a) * e; let daz = B.az - A.az; daz = Math.atan2(Math.sin(daz), Math.cos(daz));
+      return { at: A.at.map((v, i) => L(v, B.at[i])), az: A.az + daz * e, el: L(A.el, B.el), h: Math.exp(L(Math.log(A.h), Math.log(B.h))), fov: L(A.fov, B.fov), ox: L(A.ox, B.ox), oy: L(A.oy, B.oy), k: L(A.k, B.k) };
+    }
+    // o: { end() -> the board's pose or null (not framed yet), ready: a promise (the board's scenery), shown() (the
+    // match's words may come in), done() (the island's part is over: hide the home) }
+    function flyStart(o) {
+      if (fly || flat || !renderer) { o.shown(); o.done(); return; }
+      const z = phone() ? now.zoom * 0.86 : now.zoom;
+      fly = { ...o, t0: 0, ready: false, wait: performance.now() + (window.__flyWait || 4000), shownYet: false, keepsSet: false,
+        start: { at: [...now.at], az: now.az, el: now.el, h: z, fov: 5, ox: -(phone() ? 0 : now.off[0]), oy: phone() ? 0.02 : now.off[1], k: 1 },
+        save: { pieces: pieces.children.map(c => [c, c.scale.x]), low: [...soil, root].map(c => [c, c.position.y]), keeps: [[keepYou, keepYou.position.clone()], [keepFoe, keepFoe.position.clone()]], iy: island.position.y, ir: island.rotation.y } };
+      Promise.resolve(o.ready).catch(() => {}).then(() => { if (fly) fly.ready = true; });
+      body.classList.add('flying');
+      if (!running) resume();
+    }
+    function flyEnd(skip) {
+      const F = fly; if (!F) return;
+      fly = null;
+      for (const [c, s0] of F.save.pieces) c.scale.setScalar(s0);
+      for (const [c, y0] of F.save.low) c.position.y = y0;
+      for (const [c, p0] of F.save.keeps) c.position.copy(p0);
+      cv.style.opacity = ''; const fl = body.querySelector('.field'); fl.style.webkitMaskImage = fl.style.maskImage = '';
+      body.classList.remove('flying');
+      if (!skip) { if (!F.shownYet) F.shown(); F.done(); }
+    }
+    function flyFrame() {
+      const F = fly, T = performance.now(), E = F.end();
+      if (!F.t0) { // the press waits (up to 4 s) for the board underneath: framed, and its scenery loaded
+        if ((!E || !F.ready) && T < F.wait) { flyPose(F.start); renderer.render(scene, flyCam); return; }
+        if (!E) { flyEnd(); return; }
+        F.t0 = T;
+      }
+      if (!F.keepsSet && E.keeps) { F.keepsSet = true; E.keeps.forEach(([o, x, z]) => (o ? keepYou : keepFoe).position.set(x, keepYou.position.y, z)); }
+      const t = window.__flyT != null ? window.__flyT : clamp01((T - F.t0) / FLY_MS); // (__flyT: checks pin a moment)
+      island.position.y = F.save.iy * (1 - clamp01(t / 0.3)); island.rotation.y = F.save.ir * (1 - clamp01(t / 0.3)); // (the bob settles: the board doesn't float)
+      flyPose(flyMix(F.start, E, ease(clamp01(t / 0.92))));
+      const sink = ease(clamp01((t - 0.4) / 0.35)), ksink = ease(clamp01((t - 0.55) / 0.25));
+      for (const [c, s0] of F.save.pieces) c.scale.setScalar(Math.max(0.0001, s0 * (1 - (c === keepYou || c === keepFoe ? ksink : sink))));
+      for (const [c, y0] of F.save.low) c.position.y = y0 - sink * 6;
+      const f = ease(clamp01((t - 0.5) / 0.4)), far = Math.hypot(innerWidth, innerHeight), fl = body.querySelector('.field');
+      fl.style.webkitMaskImage = fl.style.maskImage = f > 0 ? `radial-gradient(circle at ${E.cx}px ${E.cy}px, transparent ${f * far}px, #000 ${f * far + 220}px)` : '';
+      cv.style.opacity = String(1 - ease(clamp01((t - 0.72) / 0.28)));
+      if (t >= 0.78 && !F.shownYet) { F.shownYet = true; F.shown(); }
+      renderer.render(scene, flyCam);
+      if (t >= 1) flyEnd();
+    }
     // the home shows: a renderer and the loop; it hides (a match): both go, the scene stays in memory for next time
     function resume() { if (running) return; if (!flat && !renderer) makeRenderer(); running = true; size(); if (flat) paintFlat(); else frame(); }
     function pause() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0; freeRenderer(); }
@@ -644,7 +738,8 @@
       const go = () => { if (body.classList.contains('pinned') && b.dataset.cam !== viewName) return; items.forEach(x => x.classList.toggle('on', x === b)); viewName = b.dataset.cam; want = VIEWS[viewName]; setMode(viewName); };
       b.addEventListener('mouseenter', go); b.addEventListener('focus', go);
     }
-    body.querySelector('.menu').addEventListener('mouseleave', () => { if (body.classList.contains('pinned')) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
+    // (the menu hides under the pointer when Play or Profile opens: that leave keeps their view; owner's bug, 2026-11-10)
+    body.querySelector('.menu').addEventListener('mouseleave', () => { if (body.classList.contains('pinned') || body.classList.contains('play') || body.classList.contains('profile')) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
     for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
     // Puzzles and How to play open the game's sheets (until they're designed); the camera move on pointing stays
     $('puzzles-open').addEventListener('click', openPuzzles);
@@ -653,9 +748,10 @@
     { const rn = body.querySelector('.rw-note'); rn.addEventListener('click', () => openRewardsSheet()); rn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRewardsSheet(); } }); }
     const unpin = () => { body.classList.remove('pinned'); setMode('play'); picked = null; items.forEach(x => x.classList.toggle('on', x.id === 'play')); viewName = 'play'; want = VIEWS.play; };
     // the Play screen is the old PLAY popup: home.pop says it's open (it stays open across a match, and ?test opens it at once)
-    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = VIEWS.orders; home.pop = true; };
+    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = playView(); home.pop = true; };
     const closePlay = () => { body.classList.remove('play', 'mp-open'); setMp(false); unpin(); home.pop = false; };
     document.getElementById('play').addEventListener('click', openPlay);
+    document.getElementById('play-back').addEventListener('click', () => { leavePlay(); unpin(); }); // Play's Back: the menu (owner, 2026-11-10)
     const backBtn = body.querySelector('.back');
     // the logo: the main menu from anywhere (not from the welcome screens). Nothing else needs a back link
     function goMenu() {
@@ -780,7 +876,7 @@
     // the game's state: home.screen 'lobby' is Rooms (openLobby); this only shows it
     function openRooms(q) { roomQ = q; home.pop = false; home.screen = 'lobby'; lob.msg = ''; drawHome(); }
     function showRooms() {
-      if (!body.classList.contains('play')) { if (typeof openDrop === 'function') openDrop(''); unpin(); body.classList.add('play'); want = VIEWS.orders; }
+      if (!body.classList.contains('play')) { if (typeof openDrop === 'function') openDrop(''); unpin(); body.classList.add('play'); want = playView(); }
       if (!body.classList.contains('in-rooms')) { body.classList.add('in-rooms'); tokMenu(false); }
       backBtn.textContent = body.classList.contains('in-create') ? '← Rooms' : '← Play';
       setRoomQ(roomQ); lobbyOpen();
@@ -1187,14 +1283,16 @@
 
     // Settings: the game's sound and match settings (snd, saveSound), rows of words
     const onoff = (key, lab, on, note = '') => `<span class="lab">${lab}</span><span class="seg"><button class="w" data-set="${key}|1" aria-pressed="${!!on}">On</button><button class="w" data-set="${key}|0" aria-pressed="${!on}">Off</button></span>${note ? `<p class="sn">${note}</p>` : ''}`;
-    const vol = (key, v, enabled, lab) => `<span class="lab">${lab}</span><span class="vol"><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}" style="--v:${v}%" aria-label="${lab}" ${enabled ? '' : 'disabled'}><b>${v}</b></span>`;
+    // Music and Sound effects: a speaker before the slider turns it on or off (owner, 2026-11-09: no On / Off words)
+    const spkVol = (key, set, on, v, lab) => `<span class="lab">${lab}</span><span class="vol${on ? '' : ' off'}"><button class="spk" data-set="${set}|${on ? 0 : 1}" aria-pressed="${on}" aria-label="${lab}: ${on ? 'on (turn off)' : 'off (turn on)'}" title="${on ? 'Turn off' : 'Turn on'}">${spkSvg(on)}</button><input type="range" min="0" max="100" step="5" value="${v}" data-vol="${key}" style="--v:${v}%" aria-label="${lab} volume"><b>${v}</b></span>`;
     function drawSettings() {
       if (dd.open !== 'settings') return;
       const fs = !!document.fullscreenElement, fsIco = fs ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
       $('dd-settings').innerHTML = `<h3>Settings</h3>
         ${document.fullscreenEnabled ? `<button class="fs-big" data-set="fs|${fs ? 0 : 1}" aria-pressed="${fs}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6">${fsIco}</svg>${fs ? 'Leave full screen' : 'Full screen'}</button>` : ''}
-        <span class="k">Sound</span><div class="set">${onoff('music', 'Music', musicOn())}${vol('vol', snd.vol, true, 'Music volume')}${onoff('sfx', 'Sound effects', snd.sfx)}${vol('sfxVol', snd.sfxVol, true, 'Effects volume')}
+        <span class="k">Sound</span><div class="set">${spkVol('vol', 'music', musicOn(), snd.vol, 'Music')}${spkVol('sfxVol', 'sfx', !!snd.sfx && snd.sfxVol > 0, snd.sfxVol, 'Sound effects')}
           ${navigator.audioSession ? `<span class="lab">Other apps</span><span class="seg"><button class="w" data-set="solo|0" aria-pressed="${!snd.solo}">Keep playing</button><button class="w" data-set="solo|1" aria-pressed="${!!snd.solo}">Pause them</button></span><p class="sn">Pause them: plays even on silent.</p>` : ''}</div>
+        ${PC() ? `<span class="k">Match screen</span><div class="set"><span class="lab">Deploy panel</span><span class="seg"><button class="w" data-set="dside|0" aria-pressed="${dSide === 'left'}">Left</button><button class="w" data-set="dside|1" aria-pressed="${dSide === 'right'}">Right</button></span><p class="sn">Where your gold, the shop and READY sit in a match.</p>${onoff('dauto', 'Slides away', dAuto, dAuto ? 'It tucks to its side when your pointer leaves it, and comes back when you point at that side.' : 'Always shown.')}</div>` : ''}
         <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}</div>
         <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
         <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', staying(), staying() ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${acct && !acct.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
@@ -1215,6 +1313,8 @@
       else if (k === 'emo') { snd.emotesOn = on; saveSound(); }
       else if (k === 'stay') setStay(on);
       else if (k === 'fs') { try { if (on && !document.fullscreenElement) await document.documentElement.requestFullscreen(); else if (!on && document.fullscreenElement) await document.exitFullscreen(); } catch (er) {} }
+      else if (k === 'dside') setDeploySide(on ? 'right' : 'left', true);
+      else if (k === 'dauto') setDeployAuto(on);
       else if (k === 'tm') timerOn = on; // the old PLAY popup's Deploy timer vs AI (for this visit, as there)
       else if (k === 'rk') { const r = await acctCall('ranked', { on }, true); if (r.status === 200) home.rankedOn = !!r.on; drawSettings();
         if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }
@@ -1232,7 +1332,7 @@
       if (k === 'vol') { snd.vol = v; if (v && snd.muted) { snd.muted = false; wakeAudio(true); } saveSound(); Object.values(music).forEach(pl => { if (pl.playing) pl.ramp(musicLevel(), 0.05); }); syncMusic(); }
       else { snd.sfxVol = v; if (v && !snd.sfx) snd.sfx = true; saveSound(); }
     });
-    $('dd-settings').addEventListener('change', (e) => { if (e.target.dataset.vol === 'sfxVol') sfx('button'); else if (e.target.dataset.vol === 'vol') drawSettings(); }); // a sample at the new volume
+    $('dd-settings').addEventListener('change', (e) => { if (e.target.dataset.vol === 'sfxVol') sfx('button'); if (e.target.dataset.vol) drawSettings(); }); // a sample at the new volume; the speaker follows (0 is off)
     function openDrop(which) {
       for (const k of ['friends', 'settings']) { const on = k === which; $('dd-' + k).hidden = !on; ddBtn[k].setAttribute('aria-expanded', on); }
       dd.open = which || ''; dio.frOpen = which === 'friends';
@@ -1266,7 +1366,7 @@
         const e = pl.edit, n = e.songs.length;
         h += `<input class="pl-name" id="pl-name" maxlength="24" placeholder="Name your playlist" value="${esc(e.name)}" aria-label="Playlist name" autocomplete="off" spellcheck="false">
           <p class="pl-note" id="pl-note">${n ? `${n} song${n === 1 ? '' : 's'}, in the order you tap them.` : 'Tap songs to add them.'} ${acct ? 'Kept on your account.' : 'Kept on this device.'}</p>
-          <ol class="pl-list">${ALL_SONGS.map(id => { const k = e.songs.indexOf(id); return `<li><button class="pl-row" data-pick="${id}" aria-pressed="${k >= 0}"><span class="eq"></span><span>${songOf(id)}</span><span class="n">${k >= 0 ? String(k + 1).padStart(2, '0') : ''}</span></button></li>`; }).join('')}</ol>
+          <ol class="pl-list">${pickSongs().map(id => { const k = e.songs.indexOf(id); return `<li><button class="pl-row" data-pick="${id}" aria-pressed="${k >= 0}"><span class="eq"></span><span>${songOf(id)}</span><span class="n">${k >= 0 ? String(k + 1).padStart(2, '0') : ''}</span></button></li>`; }).join('')}</ol>
           <div class="pl-modes"><button data-cancel>Cancel</button><button data-save ${n && e.name.trim() ? '' : 'disabled'}>${e.id ? 'Save' : 'Create'}</button></div>`;
       } else {
         const songs = srcSongs(pl.tab), u = userList(pl.tab);
@@ -1293,7 +1393,7 @@
       if (d.tab === '+') { if (!pl.edit) pl.edit = { id: '', name: `My playlist ${myMusic.lists.length + 1}`, songs: [] }; pl.sure = ''; drawList(); return; }
       if (d.tab) { pl.tab = d.tab; pl.edit = null; pl.sure = ''; drawList(); return; }
       if (d.song) { playFrom(pl.tab, d.song); return; }
-      if ('edit' in d) { const u = userList(pl.tab); if (u) { pl.edit = { id: u.id, name: u.name, songs: u.songs.filter(id => SONGS[id]) }; drawList(); } return; }
+      if ('edit' in d) { const u = userList(pl.tab); if (u) { pl.edit = { id: u.id, name: u.name, songs: u.songs.filter(songOk) }; drawList(); } return; }
       if ('del' in d) { if (pl.sure !== pl.tab) { pl.sure = pl.tab; return drawList(); } const u = userList(pl.tab); pl.sure = '';
         if (u) { myMusic.lists = myMusic.lists.filter(x => x !== u); myMusic.gone.push(u.id); musicChanged(); pl.tab = 'all'; musicListsChanged(); } drawList(); return; }
       if (d.pick) { const k = pl.edit.songs.indexOf(d.pick); if (k >= 0) pl.edit.songs.splice(k, 1); else pl.edit.songs.push(d.pick); drawList(); return; }
@@ -1315,9 +1415,9 @@
     addEventListener('pointerdown', e => { if (dio.shown && !e.target.closest('.rsearch')) tokMenu(false); });
     addEventListener('pointerdown', e => { if (dio.shown && body.classList.contains('music-open') && !e.target.closest('.music')) closeMusic(); });
     // states for screenshots: #play, #music, #view=<word>, #pin, #tier=<n>, #unit=<n>, #hover=<piece>
-    if (H.includes('play')) { openPlay(); now = { ...VIEWS.orders, at: [...VIEWS.orders.at], off: [...VIEWS.orders.off] }; }
+    if (H.includes('play')) { openPlay(); { const v = playView(); now = { ...v, at: [...v.at], off: [...v.off] }; } }
     if (H.includes('multi')) setMp(true);
-    const rq = (H.match(/rooms=(\w+)/) || [])[1]; if (rq) { if (!H.includes('play')) { openPlay(); now = { ...VIEWS.orders, at: [...VIEWS.orders.at], off: [...VIEWS.orders.off] }; } openRooms(rq); }
+    const rq = (H.match(/rooms=(\w+)/) || [])[1]; if (rq) { if (!H.includes('play')) { openPlay(); { const v = playView(); now = { ...v, at: [...v.at], off: [...v.off] }; } } openRooms(rq); }
     if (H.includes('filter')) tokMenu(true);
     if (H.includes('create')) openCreate();
     const bq = (H.match(/roombf=(\w+)/) || [])[1]; if (bq) setRoomLook(LOOKS.findIndex(l => l.id === bq));
@@ -1400,8 +1500,8 @@
       skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
       homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
     }
-    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { restoreLook(); resume(); }, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
+    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
     dioPaint();
     if (dio.shown) resume();
-    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); } // the tests: the roster standing; show / hide the home by hand
+    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); window.__dio.cam = () => ({ want: Object.keys(VIEWS).find(k => VIEWS[k] === want) || 'other', el: +now.el.toFixed(2) }); } // the tests: the roster standing; show / hide the home by hand
   }

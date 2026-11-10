@@ -4,6 +4,9 @@ Written 2026-11-07 at the end of the session that finished the mockup. Read `des
 design language and every screen), then this file. Work on a branch (`claude/nice-mendel-scnrpy` has the mockup and
 is level with `main` as of 2026-11-07; merge `main` in again before starting, the game moves fast).
 
+**2026-11-10: launch-ready.** The branch `claude/practical-hopper-qdgau9` carries the PC launch build (`index.html` with
+`PB_UI_DEFAULT=pc`, item 3 below) and waits for the owner's word to go to `main`. See `HANDOFF.md`, "Launch-ready".
+
 ## Next session: start here (handoff, 2026-11-08)
 
 **State.** The Diorama is in the game behind the switch and live on `main` as a trial: every player gets the old UI;
@@ -71,6 +74,26 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
 - Tenth round: the small text is Bricolage Grotesque (the owner's pick of eight, 2026-11-08): `--type` in
   `src/diorama.css`, the sheets' `--font-data`, the friend banners, and the names painted on the roster tiles and the
   podium; Courier Prime is no longer loaded. A unit sheet over Change battlefield hides the button and its line.
+- Twelfth round (2026-11-09, the owner's PC trial): Settings' Music and Sound effects have no On / Off words; a
+  speaker button before each slider turns it on or off (`spkVol`, `.vol .spk`: waves when on, an ✕ when off, the slider
+  dimmed). The same calls as before (`setMusic`, `snd.sfx`); a slider at 0 shows the speaker off, moving it up turns
+  the sound on. The in-match Settings sheet (`openSoundSheet`, the cog) does the same under the Diorama (`#spk-music`,
+  `#spk-sfx`, `spkDraw`; the icon is the game's `spkSvg`, shared with the menu's); the old UI keeps its On / Off rows
+  (`data-mute`, `data-sfx`) and their tests (music-ui, sfx-ui pass with the old UI; with the Diorama they stop at the
+  same old controls as on `main`).
+- Thirteenth round (2026-11-10): **Back** on the Play screen (`#play-back`, an ink `.create` under the choices; to the
+  menu: `leavePlay()`). The owner's island bug: clicking PLAY hid the menu under the pointer, and its `mouseleave`
+  swung the camera back to the menu's view, so Play showed the island at an angle; after Profile → Back it was seen
+  from above (`VIEWS.orders`, the designed Play view). `mouseleave` now leaves Play's and Profile's view alone. From
+  above is the default on the Play side (Play, Rooms, New room); a click on the island switches to the menu's angle
+  and back (`playTilt`, `playView()`, kept as localStorage `pb-dio-tilt`; the pointer shows it's clickable; the
+  battlefield note's dot follows the view). Under `?test`, `window.__dio.cam()` says which view the camera is heading to.
+- Fourteenth round (2026-11-10): Change battlefield's line no longer hops between island corners while the camera
+  moves (switching Play's view, or any view change): its point (`bfPick`) is chosen where the camera is heading (`want`,
+  projected with the camera put there for a moment) and kept until the view or window changes, so the line glides with
+  the island. Units' tiles, a unit's hover note and its sheet showed the unit's raw `cost` (1, 2, 3, 5: the number the
+  tiers come from) as "1 gold"; they showed the game's price for a squad (`Game.unitCostOf`) for a moment, then the owner asked for no price at all
+  (2026-11-10): the tiles show the name only, the note and the sheet's tag "Tier N".
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 - Eleventh round (2026-11-09): the golem's note (menu and Profile) has a small saffron button, INVITE A FRIEND
