@@ -315,7 +315,7 @@
         const x = (i - (n - 1) / 2) * gap, g = new THREE.Group(); g.position.set(x, 0, -0.5); roster.add(g);
         const b = tile(gap - 0.14, 0.16, 2.3, (c, w, hh) => { c.fillStyle = '#F4ECD8'; c.fillRect(0, 0, w, hh); c.strokeStyle = 'rgba(23,20,15,.2)'; c.lineWidth = 6; c.setLineDash([18, 14]); c.strokeRect(20, 20, w - 40, hh - 40);
             c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.8);
-            c.font = '500 40px "Bricolage Grotesque"'; c.globalAlpha = .75; c.fillText(`${u.cost} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
+            c.font = '500 40px "Bricolage Grotesque"'; c.globalAlpha = .75; c.fillText(`${Game.unitCostOf(u)} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
         b.position.set(0, 0.08, 0.35); g.add(b);
         const w = wornOf(u.name), kind = w ? SKIN[w.id].model : M.kindOf(u), ht = M.height(kind) || 2, sc = Math.min(0.66, 2.0 / ht), copies = Math.min(u.bodies || 1, 3);
         const spots = copies === 1 ? [[0, 0]] : copies === 2 ? [[-0.28, 0.05], [0.28, -0.05]] : [[-0.32, 0.12], [0.32, 0.12], [0, -0.25]];
@@ -376,6 +376,7 @@
     const bfMenu = new THREE.Object3D(); bfMenu.position.set(7, 0, -9); island.add(bfMenu);
     const bfPlan = new THREE.Object3D(); bfPlan.position.set(0, 0, 9); island.add(bfPlan);
     // the battlefield note stays in one place (bottom right); its line runs up to the nearest corner or edge of the island
+    let bfPick = null, bfFor = null, bfKey = ''; // the battlefield line's point on the island, and the view it was picked for
     const bfDots = [[7, -9], [7, 9], [-7, 9], [-7, -9], [7, 0], [0, 9], [-7, 0], [0, -9]].map(([x, z]) => { const o = new THREE.Object3D(); o.position.set(x, 0, z); island.add(o); return o; });
     let viewName = 'play', hovered = null, pinnedHover = false, picked = null;
     const svg = document.getElementById('lines');
@@ -429,10 +430,19 @@
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
           if (on && !phone() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf')) {
-            const r = el.getBoundingClientRect(), ty = r.top - 4; let best = null, bd = 1e9;
-            for (const o of bfDots) { const [x, y] = proj(o, 0), d = Math.hypot(x - r.right, y - ty);
-              if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd && !(menuR && crosses(`M${x} ${y} L${r.right} ${ty}`, menuR))) { bd = d; best = [x, y]; } } // (never across the menu's words)
-            if (best && !under(r)) { const [x, y] = best, right = x > (r.left + r.right) / 2;
+            const r = el.getBoundingClientRect(), ty = r.top - 4;
+            // the point is picked where the camera is heading and kept while it moves, so the line glides with the island
+            // instead of hopping between corners mid-move (owner, 2026-11-10)
+            const key = innerWidth + 'x' + innerHeight + (menuR ? ' ' + [menuR.left, menuR.top, menuR.right, menuR.bottom].map(Math.round).join() : '');
+            if (bfFor !== want || bfKey !== key) {
+              bfFor = want; bfKey = key; bfPick = null; let bd = 1e9; const keep = now;
+              now = { ...want, at: [...want.at], off: [...want.off] }; place(); cam.updateMatrixWorld();
+              for (const o of bfDots) { const [x, y] = proj(o, 0), d = Math.hypot(x - r.right, y - ty);
+                if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd && !(menuR && crosses(`M${x} ${y} L${r.right} ${ty}`, menuR))) { bd = d; bfPick = o; } } // (never across the menu's words)
+              now = keep; place(); cam.updateMatrixWorld();
+            }
+            const best = bfPick && proj(bfPick, 0);
+            if (best && best[1] < ty - 8 && !under(r)) { const [x, y] = best, right = x > (r.left + r.right) / 2;
               html += `<path d="M${x} ${y} L${right ? r.right : r.left} ${ty} L${right ? r.left : r.right} ${ty}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`; }
           }
           continue;
@@ -520,7 +530,7 @@
       if (hovered && hovered.startsWith('u:') && body.classList.contains('units') && (!picked || picked.userData.i !== +hovered.slice(2))) {
         const g = rosterHot[+hovered.slice(2)], [x, y] = proj(g, 1.5), w = hn.offsetWidth;
         const ns = skinsOf(g.userData.u.name).filter(k => k.own).length;
-        hn.style.display = ''; hn.innerHTML = `${g.userData.u.name}.<small>Tier ${g.userData.t} · ${g.userData.u.cost} gold${ns ? ` · ${ns} skin${ns > 1 ? 's' : ''}` : ''} · click for its sheet</small>`;
+        hn.style.display = ''; hn.innerHTML = `${g.userData.u.name}.<small>Tier ${g.userData.t} · ${Game.unitCostOf(g.userData.u)} gold${ns ? ` · ${ns} skin${ns > 1 ? 's' : ''}` : ''} · click for its sheet</small>`;
         const hy = y + 210; hn.style.left = (x + 16) + 'px'; hn.style.top = hy + 'px';
         html += `<path d="M${x} ${y} L${x + 16} ${hy} L${x + 16 + w} ${hy}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
       } else hn.style.display = 'none';
@@ -569,7 +579,7 @@
       picked = g; const sh = document.getElementById('usheet');
       if (!g) return;
       const u = g.userData.u, dps = Math.round(u.hit * u.aps * (u.bodies || 1)), sk = (u.skills || []).map(id => ROSTER.skills[id] || id);
-      sh.querySelector('.tag').textContent = `Tier ${g.userData.t} · ${u.cost} gold`;
+      sh.querySelector('.tag').textContent = `Tier ${g.userData.t} · ${Game.unitCostOf(u)} gold`;
       sh.querySelector('h3').textContent = u.name;
       sh.querySelector('.st').innerHTML = [`<b>${u.hp}</b> health`, `<b>${dps}</b> damage a second`, `<b>${u.range} m</b> range`, `<b>${u.speed}</b> speed`,
         (u.bodies || 1) > 1 ? `<b>${u.bodies}</b> bodies` : '', u.splash ? `<b>${u.splash} m</b> splash` : '', u.defense && u.defense !== 'none' ? `<b>${u.defVal}</b> ${u.defense}` : ''].filter(Boolean).map(t => `<span>${t}</span>`).join('');

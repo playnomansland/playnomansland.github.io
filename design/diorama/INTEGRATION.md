@@ -85,6 +85,11 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   above is the default on the Play side (Play, Rooms, New room); a click on the island switches to the menu's angle
   and back (`playTilt`, `playView()`, kept as localStorage `pb-dio-tilt`; the pointer shows it's clickable; the
   battlefield note's dot follows the view). Under `?test`, `window.__dio.cam()` says which view the camera is heading to.
+- Fourteenth round (2026-11-10): Change battlefield's line no longer hops between island corners while the camera
+  moves (switching Play's view, or any view change): its point (`bfPick`) is chosen where the camera is heading (`want`,
+  projected with the camera put there for a moment) and kept until the view or window changes, so the line glides with
+  the island. Units' tiles, a unit's hover note and its sheet showed the unit's raw `cost` (1, 2, 3, 5: the number the
+  tiers come from) as "1 gold"; they now show the game's price for a squad, `Game.unitCostOf` (×100: 100 to 500 gold).
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 - Eleventh round (2026-11-09): the golem's note (menu and Profile) has a small saffron button, INVITE A FRIEND
