@@ -895,11 +895,11 @@
       const open = all.filter(l => l.phase === 'waiting').length;
       $('r-count').textContent = lob.ok ? `${open} open · ${all.length - open} playing` : '';
       $('lob-list').innerHTML = rows.length ? rows.map(l => {
-        const canJoin = l.phase === 'waiting' && l.players < l.seats, canWatch = l.phase === 'playing' && l.spectate && l.kind === 'match';
+        const canJoin = l.phase === 'waiting' && l.players < l.seats, canWatch = l.phase === 'playing' && l.kind === 'match'; // every match can be watched (the owner, 2026-11-10)
         const age = Math.max(0, Math.round((Date.now() - l.at) / 60000)), sc = l.mode === 'ranked' ? boardScore(l.host.tag) : null;
-        const facts = [lookName(l.look) || l.map || 'Standard', `${l.players}/${l.seats} players`, l.phase === 'playing' ? `round ${l.round}` : age < 1 ? 'just now' : `${age} min ago`, l.spectate && l.kind === 'match' && l.watchers ? `${l.watchers} watching` : ''].filter(Boolean).join(' · ');
+        const facts = [lookName(l.look) || l.map || 'Standard', `${l.players}/${l.seats} players`, l.phase === 'playing' ? `round ${l.round}` : age < 1 ? 'just now' : `${age} min ago`, l.kind === 'match' && l.watchers ? `${l.watchers} watching` : ''].filter(Boolean).join(' · ');
         const act = canJoin ? `<button class="go" data-join="${esc(l.code)}">Join</button>` : canWatch ? `<button class="go watch" data-watch="${esc(l.code)}">Watch</button>` : '<span class="full">full</span>';
-        return `<li data-code="${esc(l.code)}"><span><b>${esc(l.host.tag)}’s room</b>${sc != null ? `<span class="sc">★ ${esc(Math.round(sc))}</span>` : ''}${l.kind === 'duo' && l.dev ? '<i class="dvt">Dev</i>' : ''}${!l.spectate ? '<span class="tg">No watchers</span>' : ''}<small>${esc(facts)}</small></span>${act}</li>`;
+        return `<li data-code="${esc(l.code)}"><span><b>${esc(l.host.tag)}’s room</b>${sc != null ? `<span class="sc">★ ${esc(Math.round(sc))}</span>` : ''}${l.kind === 'duo' && l.dev ? '<i class="dvt">Dev</i>' : ''}<small>${esc(facts)}</small></span>${act}</li>`;
       }).join('') : `<li class="empty">${lob.ok === false ? 'Can’t reach the game server. Retrying…' : lob.ok == null ? 'Loading rooms…' : text ? `No ${KIND[roomQ]} rooms match “${esc(text)}”.` : `No ${KIND[roomQ]} rooms right now. Make one, and others can join you.`}</li>`;
       $('lob-msg').textContent = lob.msg || '';
     }
@@ -942,19 +942,17 @@
     function setKind(k) {
       if (k === 'ranked' && !rankedAllowed()) k = 'standard'; if (k === '2v2' && !duoOk()) k = 'standard';
       create.mode = k; press('.newroom [data-kind]', b => b.dataset.kind === k); $('nr-note').textContent = NOTE[k];
-      body.querySelector('.newroom').classList.toggle('duo', k === '2v2'); // 2v2 has no Spectators row
+      body.querySelector('.newroom').classList.toggle('duo', k === '2v2');
     }
     body.querySelectorAll('.newroom [data-kind]').forEach(b => b.addEventListener('click', () => { if (!b.disabled) setKind(b.dataset.kind); }));
     const drawPub = () => { press('.newroom [data-pub]', x => (x.dataset.pub === '1') === create.pub); $('nr-pub').textContent = create.pub ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.'; };
-    const drawSpec = () => { press('.newroom [data-spec]', x => (x.dataset.spec === '1') === create.spectate); $('nr-spec').textContent = create.spectate ? 'Anyone can watch once it starts.' : 'No one can watch.'; };
     body.querySelectorAll('.newroom [data-pub]').forEach(b => b.addEventListener('click', () => { create.pub = b.dataset.pub === '1'; drawPub(); }));
-    body.querySelectorAll('.newroom [data-spec]').forEach(b => b.addEventListener('click', () => { create.spectate = b.dataset.spec === '1'; drawSpec(); }));
     // the room's battlefield: the host picks it here and the match is played on it; the island shows it while you pick
     let roomLook = 0;
     function setRoomLook(i) { roomLook = (i + LOOKS.length) % LOOKS.length; $('nr-bf').textContent = LOOKS[roomLook].name;
       $('nr-bfn').textContent = `${roomLook + 1} of ${LOOKS.length}. The match is played here. Everyone else keeps their own at home.`; if (lookI !== roomLook) setLook(roomLook, !still); }
     body.querySelectorAll('.newroom [data-bfs]').forEach(b => b.addEventListener('click', () => setRoomLook(roomLook + +b.dataset.bfs)));
-    function openCreate() { setKind(roomQ); drawPub(); drawSpec(); tokMenu(false); body.classList.add('in-create'); backBtn.textContent = '← Rooms'; setRoomLook(homeLook); $('nr-msg').textContent = ''; }
+    function openCreate() { setKind(roomQ); drawPub(); tokMenu(false); body.classList.add('in-create'); backBtn.textContent = '← Rooms'; setRoomLook(homeLook); $('nr-msg').textContent = ''; }
     function closeCreate() { body.classList.remove('in-create'); backBtn.textContent = '← Play'; if (lookI !== homeLook) setLook(homeLook, !still); }
     // CREATE ROOM: the room opens and waits for a second player (srvHost, or duoHost for 2v2), as the game's create sheet
     function createRoom() {
@@ -1172,7 +1170,7 @@
     const TAG_RULE = 'Letters, digits, spaces, _ . or -. You can change it once a week.', TAG_BAD = 'Usernames are 2–16 letters, digits, spaces, _ . or -.';
     function drawSignin() {
       const up = door.screen === 'signup';
-      $('si-k').innerHTML = `<button class="crumb" data-crumb="welcome">Welcome</button> · ${up ? 'sign up' : 'log in'}`;
+      $('si-k').innerHTML = `<button class="crumb" data-crumb="welcome">Welcome</button><i class="sep" aria-hidden="true">›</i><span class="here">${up ? 'sign up' : 'log in'}</span>`;
       $('si-h').textContent = up ? 'Sign up' : 'Log in';
       $('si-lead').textContent = up ? 'Pick your username. Sign up with Google to keep your account on any phone or computer, or just make a guest on this one.'
         : 'Log in with the Google account you signed up with. You get your username, match history and ranked results back on this device.';
@@ -1406,7 +1404,7 @@
     $('dd-settings').addEventListener('input', (e) => {
       const k = e.target.dataset.vol; if (!k) return;
       const v = +e.target.value; e.target.style.setProperty('--v', v + '%'); e.target.nextElementSibling.textContent = v;
-      if (k === 'vol') { snd.vol = v; if (v && snd.muted) { snd.muted = false; wakeAudio(true); } saveSound(); Object.values(music).forEach(pl => { if (pl.playing) pl.ramp(musicLevel(), 0.05); }); syncMusic(); }
+      if (k === 'vol') { setMusicVol(v); volSync(); }
       else { snd.sfxVol = v; if (v && !snd.sfx) snd.sfx = true; saveSound(); }
     });
     $('dd-settings').addEventListener('change', (e) => { if (e.target.dataset.vol === 'sfxVol') sfx('button'); if (e.target.dataset.vol) drawSettings(); }); // a sample at the new volume; the speaker follows (0 is off)
@@ -1429,6 +1427,7 @@
     const songOf = (id) => SONGS[id] ? `${esc(SONGS[id].title)} <em>by ${esc(SONGS[id].artist || ARTIST)}</em>` : '';
     const eqH = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>';
     function drawPlayer() {
+      volSync(); // the music's volume (a speaker and a slider) under the controls
       $('dmp-label').textContent = nowLabel().replace('Menu Playlist', 'Menu playlist');
       $('dmp-title').innerHTML = songOf(ctlPl().song()) || 'Music';
       $('mp-now').setAttribute('aria-expanded', String(body.classList.contains('music-open')));

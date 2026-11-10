@@ -804,6 +804,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .mp-up { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--mp-dim); border: 1px solid var(--mp-hair); transition: transform 0.3s ease, color 0.15s ease, border-color 0.15s ease; }
 .mp-now:hover .mp-up { color: var(--mp-gold); border-color: var(--mp-line); }
 .mp-now[aria-expanded="true"] .mp-up { transform: rotate(180deg); }
+.mplayer .mp-vol { display: none; } /* the music's volume: the Diorama's players only (volSync) */
 .mp-prog { position: relative; display: block; height: 3px; margin: 0 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
 .mp-prog i { position: absolute; inset: 0; transform-origin: left center; transform: scaleX(0); background: linear-gradient(90deg, var(--mp-gold-dk), var(--mp-gold-hi)); box-shadow: 0 0 8px rgba(111, 211, 222, 0.35); transition: transform 0.25s linear; }
 .mp-row { display: flex; align-items: center; justify-content: center; gap: 16px; }
@@ -1066,6 +1067,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <button id="mp-next" aria-label="Next"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 3h2v10h-2zM2 3v10l8-5z" fill="currentColor"/></svg></button>
       <button class="open" data-open id="mp-now" aria-expanded="false" aria-label="Show the playlists">Playlist <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 7.5L6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
     </span>
+    <span class="mp-vol"></span>
   </div>
 
   <section class="standings" aria-label="Rankings">
@@ -1110,7 +1112,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <!-- Rooms: the open matches of one kind. One button above the list -->
   <section class="rooms" aria-label="Rooms">
-    <span class="k"><button class="crumb" data-crumb="play">Play</button> · Rooms</span>
+    <span class="k"><button class="crumb" data-crumb="play">Play</button><i class="sep" aria-hidden="true">›</i><span class="here">Rooms</span></span>
     <h2>Rooms <small id="r-count"></small></h2>
     <div class="rsearch">
       <svg class="mag" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.8"/></svg>
@@ -1127,9 +1129,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <ol class="rlist" id="lob-list"></ol>
   </section>
 
-  <!-- Create room: the game's three settings (kind, who can find it, spectators) as rows of words, then one button -->
+  <!-- Create room: the game's settings (kind, battlefield, who can find it) as rows of words, then one button -->
   <section class="newroom" aria-label="Create room">
-    <span class="k"><button class="crumb" data-crumb="play">Play</button> · <button class="crumb" data-crumb="rooms">Rooms</button> · New room</span>
+    <span class="k"><button class="crumb" data-crumb="play">Play</button><i class="sep" aria-hidden="true">›</i><button class="crumb" data-crumb="rooms">Rooms</button><i class="sep" aria-hidden="true">›</i><span class="here">New room</span></span>
     <h2>New room</h2>
     <div class="nr-opts">
       <span class="lab">Kind</span>
@@ -1141,9 +1143,6 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <span class="lab">Who can find it</span>
       <span class="seg" role="group" aria-label="Who can find it"><button data-pub="1" aria-pressed="true">Public</button><button data-pub="0" aria-pressed="false">Private</button></span>
       <span></span><p class="nr-note" id="nr-pub">Listed in Rooms for anyone to join.</p>
-      <span class="lab spec-row">Spectators</span>
-      <span class="seg spec-row" role="group" aria-label="Spectators"><button data-spec="1" aria-pressed="true">On</button><button data-spec="0" aria-pressed="false">Off</button></span>
-      <span class="spec-row"></span><p class="nr-note spec-row" id="nr-spec">Anyone can watch once it starts.</p>
     </div>
     <button class="create go" id="nr-go">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
     <p class="nr-msg" id="nr-msg" aria-live="polite"></p>
@@ -1195,7 +1194,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <!-- Match history: your online matches, newest first; a match folds out its rounds, each with a replay -->
   <section class="history" aria-label="Match history">
-    <span class="k"><button class="crumb" data-crumb="profile">Profile</button> · Match history</span>
+    <span class="k"><button class="crumb" data-crumb="profile">Profile</button><i class="sep" aria-hidden="true">›</i><span class="here">Match history</span></span>
     <h2>Matches <small id="h-count"></small></h2>
     <div class="h-tabs" role="group" aria-label="Whose matches"><button data-h="mine" aria-pressed="true">My matches</button><button data-h="all" aria-pressed="false">All online</button></div>
     <p class="r-msg" id="h-msg" aria-live="polite"></p>
@@ -1790,7 +1789,34 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         <button class="mp-btn" id="mp-next" aria-label="Next">${ICONS.next}</button>
         <button class="mp-btn mp-mode" id="mp-repeat" aria-label="Repeat this song" aria-pressed="${!!snd.repeat}" title="Repeat this song">${ICONS.repeat}</button>
       </span>
+      <span class="mp-vol"></span>
     </div>`;
+  // the Diorama's speaker button (Settings, owner 2026-11-09): waves when the sound is on, a cross when it's off
+  const spkSvg = (on) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" stroke="none"/>${on ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg>`;
+  // the music's volume in the player (the owner, 2026-11-10: "add a volume slider to the music area"): a speaker that
+  // turns the music on or off and a slider, the same as Settings' Music row (snd.vol, snd.muted). Every .mp-vol on the
+  // page is drawn by volSync (the Diorama's menu player and the match's dock; the old UI hides it)
+  function volSync(from) {
+    const on = musicOn(), v = snd.vol;
+    document.querySelectorAll('.mp-vol').forEach(el => {
+      if (!el.firstChild) el.innerHTML = '<button class="mp-spk" type="button"></button><input class="mp-volr" type="range" min="0" max="100" step="5" aria-label="Music volume">';
+      const b = el.querySelector('.mp-spk'), r = el.querySelector('.mp-volr');
+      el.classList.toggle('off', !on);
+      if (b.dataset.on !== String(on)) { b.dataset.on = String(on); b.innerHTML = spkSvg(on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Music on (turn off)' : 'Music off (turn on)'); b.title = on ? 'Turn the music off' : 'Turn the music on'; }
+      if (r !== from && +r.value !== v) r.value = v;
+      r.style.setProperty('--v', v + '%');
+    });
+  }
+  function setMusicVol(v) {
+    snd.vol = v; if (v && snd.muted) { snd.muted = false; wakeAudio(true); }
+    saveSound(); Object.values(music).forEach(pl => { if (pl.playing) pl.ramp(musicLevel(), 0.05); }); syncMusic();
+  }
+  document.addEventListener('input', (e) => { const r = e.target; if (!r.classList || !r.classList.contains('mp-volr')) return; setMusicVol(+r.value); volSync(r); });
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('.mp-spk'); if (!b) return;
+    setMusic(!musicOn()); if (musicOn()) { menuPaused = false; mine.paused = false; syncMusic(); }
+    showPlayer();
+  });
   function showPlayer() {
     const t = $('mp-title'), pb = $('mp-play');
     if (t) t.textContent = songName(ctlPl().song());
@@ -1803,6 +1829,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     mpMark();
     if (DIO && dio.api) dio.api.music(); // the Diorama's player and playlists
     if (DIO) dioMusicLine();
+    volSync();
   }
   // The Diorama's music line in a match (the owner, 2026-11-09: "where is the music player?"): always in the top line,
   // under the round, as the home screen's player is always there: the song and its artist (a click opens the playlists,
@@ -2348,8 +2375,6 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   // the cog in a match opens it as Settings (music, the 2D / 3D board and Main menu), the menu's Music button as music only.
   // data-keep: phase changes leave this sheet open (closeSheet)
-  // the Diorama's speaker button (Settings, owner 2026-11-09): waves when the sound is on, a cross when it's off
-  const spkSvg = (on) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" stroke="none"/>${on ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg>`;
   function openSoundSheet() {
     const inMatch = !!m && phase !== 'start' && phase !== 'lobby';
     // under the Diorama, Music and Sound effects are a speaker button before the slider (no On / Off rows)
@@ -2447,12 +2472,6 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
           <button data-emo="1" aria-pressed="${snd.emotesOn !== false}">On</button><button data-emo="0" aria-pressed="${snd.emotesOn === false}">Off</button>
         </div>
       </div>
-      ${inMatch && mode === 'net' && net.srv && me === 0 && !net.tourCode && !net.duo ? `<div class="bar">
-        <span class="hint">Spectators</span>
-        <div class="seg" role="group" aria-label="Spectators">
-          <button data-spec="1" aria-pressed="${talk.spectate}">On</button><button data-spec="0" aria-pressed="${!talk.spectate}">Off</button>
-        </div>
-      </div>` : ''}
       <div class="bar"><span class="hint">Something broken?</span><button class="btn small" id="bug-open">Report a bug</button></div>
       <div class="bar"><span class="hint">Playlists</span><button class="btn small" id="mp-open2">Open playlists</button></div>
       `;
@@ -2461,7 +2480,6 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     $('bug-open').addEventListener('click', openBugSheet);
     $('sheet').querySelectorAll('[data-chat]').forEach(b => b.addEventListener('click', () => { snd.chatOn = b.dataset.chat === '1'; saveSound(); $('sheet').querySelectorAll('[data-chat]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (!snd.chatOn) { talk.tick = []; tickDraw(); } }));
     $('sheet').querySelectorAll('[data-emo]').forEach(b => b.addEventListener('click', () => { snd.emotesOn = b.dataset.emo === '1'; saveSound(); $('sheet').querySelectorAll('[data-emo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
-    $('sheet').querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { send({ t: 'spectate', on: b.dataset.spec === '1' }); $('sheet').querySelectorAll('[data-spec]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     if ($('fr-open2')) { $('fr-open2').addEventListener('click', () => openFriends()); frBadge(); }
     const spkDraw = () => { // the Diorama's speakers follow the sound (a volume of 0 is off)
       for (const [id, lab, on] of [['spk-music', 'Music', musicOn()], ['spk-sfx', 'Sound effects', !!snd.sfx && snd.sfxVol > 0]]) {
@@ -2485,7 +2503,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       if (snd.vol && snd.muted) { snd.muted = false; wakeAudio(true); } // turning the volume up turns music on
       saveSound();
       Object.values(music).forEach(pl => { if (pl.playing) pl.ramp(musicLevel(), 0.05); });
-      syncMusic(); showOn();
+      syncMusic(); showOn(); volSync();
     });
     $('sheet').querySelectorAll('[data-sfx]').forEach(b => b.addEventListener('click', () => {
       snd.sfx = b.dataset.sfx === '1'; if (snd.sfx && !snd.sfxVol) { snd.sfxVol = DEFAULT_SFX_VOL; $('sfx-vol').value = snd.sfxVol; $('sfx-vol-n').textContent = snd.sfxVol; }
@@ -3105,7 +3123,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     const roomOn = dioRoomOn(), host = me === 0, rk = mode === 'net' && net.ranked;
     const dl = roomOn ? lookShown() : m ? Game.lookOf(m) : ''; // the battlefield's look: the unit cards' colour follows it (src/diorama.css --dcard)
     if (document.documentElement.dataset.dlook !== dl) document.documentElement.dataset.dlook = dl;
-    const kick = roomOn ? ['Play · Rooms', host ? 'your room' : 'their room', (Game.SKINS.find(x => x.id === lookShown()) || {}).name].filter(Boolean).join(' · ') : [mp && mp.name, sk && sk.name].filter(Boolean).join(' · ');
+    const kick = roomOn ? (Game.SKINS.find(x => x.id === lookShown()) || {}).name || '' : [mp && mp.name, sk && sk.name].filter(Boolean).join(' · ');
     if (r.dataset.kick !== kick) r.dataset.kick = kick;
     const seat = roomOn && host && !(mode === 'net' ? net.foeHere : net.connected); // the room's other seat is open
     document.querySelector('.hud .side.foe').classList.toggle('open', seat);
@@ -3113,7 +3131,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       $('phase').textContent = rk ? '1v1 Ranked · Bo3' : '1v1 Standard';
       if (seat) $('foe-name').textContent = 'Open seat';
       let st0 = $('foe-state');
-      if (st0) { const t0 = seat ? 'Waiting for a player…' : 'Here'; if (st0.textContent !== t0) st0.textContent = t0; st0.classList.toggle('on', !seat); st0.hidden = false; }
+      if (st0) { const t0 = seat ? 'Waiting for a player…' : ''; if (st0.textContent !== t0) st0.textContent = t0; st0.classList.remove('on'); st0.hidden = !t0; } // (no HERE tag once they're in: their name says it, the owner, 2026-11-10)
       $('foe-name').dataset.dc = ''; $('you-name').dataset.dc = '';
       return;
     }
@@ -8953,10 +8971,6 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       ${srv && !net.tourCode ? `<div class="bar">
         <span class="hint">Rooms list</span>
         <div class="seg" role="group" aria-label="Listed in Rooms"><button data-pub="1" aria-pressed="${talk.pub}">Public</button><button data-pub="0" aria-pressed="${!talk.pub}">Private</button></div>
-      </div>
-      <div class="bar">
-        <span class="hint">Spectators</span>
-        <div class="seg" role="group" aria-label="Spectators"><button data-spec="1" aria-pressed="${talk.spectate}">On</button><button data-spec="0" aria-pressed="${!talk.spectate}">Off</button></div>
       </div>` : ''}
       ${srv && frOk() ? '<span class="btnrow"><button class="btn" id="fr-room">Invite friend</button></span>' : ''}
       ${rk ? `<p class="ranked-note">Ranked: the Standard map and pack, the same 5 leaders and 3 towers for you both. Win 2 games to take the series; only ranked series count on the leaderboard. Your friend needs to be logged in with Google too (guests are asked to log in when they join).</p>${lookSeg()}`
@@ -8978,14 +8992,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     $('overlay').querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => { matchKind = b.dataset.kind; if (srv && matchKind === 'factions') hostLobby(true); else drawLobby(); }));
     if ($('use-peer')) $('use-peer').addEventListener('click', () => hostLobby(true));
     $('panel').querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); drawLobby(); }));
-    $('panel').querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); drawLobby(); }));
     if (rk) wireLookSeg(); else { wireMapSeg(); wireCharSeg(); wirePackSeg(); wireSettings(); }
   }
   // ---------- the Diorama's room (a PC): the room you wait in is the battlefield you're about to fight on ----------
   // (design/diorama/battle.html, the room prototype, 2026-11-08) The board shows the room's map in its look, edge to edge;
   // the top line has you top left and the other seat top right (open until someone takes it); the keeps say who is in
   // the game ("Wren · connected" / "Waiting for opponent…", the owner, 2026-11-08); the left column has the room's
-  // settings as rows of words (Who can find it, Spectators, Units, Battlefield), + Invite a friend, and START MATCH on the
+  // settings as rows of words (Who can find it, Units, Battlefield), + Invite a friend, and START MATCH on the
   // saffron shard, the deploy panel's place. No match code or link (the owner, 2026-11-07: everything goes through
   // Rooms and friends' invites), except for a developer's phone-to-phone room, which can't be found any other way.
   const dioRoomOn = () => DIO && pcLayout() && phase === 'lobby' && !m && mode !== 'spec' && !net.duo && !tourLive();
@@ -8997,7 +9010,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const here = host ? !!(srv ? net.foeHere : net.connected) : !!net.connected;
     const nm0 = foeName(), nm = nm0 && nm0 !== 'Opponent' && nm0 !== 'Enemy' ? nm0 : '';
     const whose = host ? 'Your room' : nm ? `${esc(nm)}’s room` : 'Their room';
-    const pub = srv && !net.tourCode ? talk.pub : false, watch = srv && !net.tourCode ? talk.spectate : false;
+    const pub = srv && !net.tourCode ? talk.pub : false;
     const skins = Game.SKINS, k = Math.max(0, skins.findIndex(x => x.id === (lookShown() || 'meadow'))), bf = skins[k] || skins[0];
     const word = (key, v, label, cur) => `<button class="w" data-${key}="${v}" aria-pressed="${String(cur)}">${label}</button>`;
     const row = (label, ws, note, id) => `<div class="rrow"${id ? ` id="${id}"` : ''}><span class="lab">${label}</span><div class="ws">${ws}</div>${note ? `<span class="note"${id ? ` id="${id}-note"` : ''}>${note}</span>` : ''}</div>`;
@@ -9007,8 +9020,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       : !srv ? 'Phone to phone: send the link below to a friend and keep this page open.'
       : pub ? 'Listed in Rooms: anyone can join. Friends you invite get a message.' : 'Not listed. Only friends you invite can join.';
     const rows = !host ? row('Battlefield', `<span class="w" aria-pressed="true">${esc(bf.name)}</span>`, `The match is played on ${nm ? esc(nm) + '’s' : 'the host’s'} pick.`)
-      : `${srv && !net.tourCode ? row('Who can find it', word('pub', 1, 'Public', pub) + word('pub', 0, 'Private', !pub), pub ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.')
-          + row('Spectators', word('spec', 1, 'On', watch) + word('spec', 0, 'Off', !watch), watch ? 'Anyone can watch once it starts.' : 'Just the two of you.') : ''}
+      : `${srv && !net.tourCode ? row('Who can find it', word('pub', 1, 'Public', pub) + word('pub', 0, 'Private', !pub), pub ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.') : ''}
         ${rk ? row('Units', '<span class="w" aria-pressed="true">Standard</span>', 'Ranked: the Standard map and pack, the same 5 leaders and 3 towers for you both. Win 2 games to take the series; only ranked series count on the leaderboard.')
           : customSet ? row('Units', `<span class="w" aria-pressed="true">Your ${units.length}</span>`, 'Your Counter Lab units, on this device.')
           : row('Units', devMode() ? word('pack', 'standard', 'Standard', packNow() === 'standard') + word('pack', 'custom', 'Custom', packNow() === 'custom') : '<span class="w" aria-pressed="true">Standard</span>', packNote(), 'pack-row')}
@@ -9019,7 +9031,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         ${srv ? '<button class="help" id="use-peer">Phone to phone instead (for Factions)</button>' : ''}</div>` : '';
     const link = !srv && host ? `<div class="rlink"><span class="linkbox" id="link">${esc(shareLink())}</span><button class="help" id="copy">Copy link</button></div>` : '';
     $('panel').innerHTML = `<div class="droom">
-      <div class="rhead"><span class="k">${whose} · ${pub ? 'public' : 'private'}${watch ? ' · watchable' : ''}${rk ? ' · ranked' : ''}</span>
+      <div class="rhead"><span class="k">${whose} · ${pub ? 'public' : 'private'}${rk ? ' · ranked' : ''}</span>
         <h2>${whose}</h2><p class="rlead" id="lobby-status">${lead}</p></div>
       ${link}
       <div class="rrows">${rows}</div>
@@ -9034,9 +9046,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
             <button class="help" id="leave">Leave room</button></div>`}
       </div></div>`;
     const P = $('panel'), on = (id, f) => { const b = $(id); if (b) b.addEventListener('click', f); };
+    { const h = P.querySelector('.rhead h2'); h.style.fontSize = ''; let fs = parseFloat(getComputedStyle(h).fontSize); // a long name's room (“AnitaDunder’s room”): smaller until it fits the column
+      while (h.scrollWidth > h.clientWidth + 1 && fs > 22) { fs -= 2; h.style.fontSize = fs + 'px'; } }
     const rgo = P.querySelector('.rgo'); if (rgo) document.documentElement.style.setProperty('--drgo', `${rgo.offsetHeight}px`); // the column ends above its foot (src/diorama.css)
     P.querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); dioRoom(); }));
-    P.querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); dioRoom(); }));
     P.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {
       const v = b.dataset.pack; unitPack = v === 'custom' && devMode() ? 'custom' : 'standard';
       try { localStorage.setItem(PACK_STORE, unitPack); } catch (e) {}
@@ -9599,7 +9612,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     mode = 'net'; me = 0; m = null; phase = 'lobby'; bt = null; matchKind = 'standard';
     net.players = null; net.wantRanked = !!o.ranked; net.ranked = o.ranked ? { tags: [acct ? acct.tag : 'You', ''], wins: [0, 0], ties: 0, games: 0, best: 3, done: false } : null;
     net.srv = true; net.create = true; net.key = ''; net.tourCode = ''; net.code = newCode();
-    net.pub = !!o.pub; net.spectate = o.spectate !== false; // the lobby: listed in Rooms, spectators on or off
+    net.pub = !!o.pub; net.spectate = true; // the lobby: listed in Rooms or not; every match can be watched (the owner, 2026-11-10)
     hud(); netStatus(); render();
     drawLobby();
     srvOpen();
@@ -9628,7 +9641,6 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const hello = net.watch ? { watch: true } : net.tourCode ? { id: tour.myId, tkey: tour.key } : net.key ? { key: net.key } : net.create ? { create: true, ...(net.wantRanked ? { ranked: true } : {}) } : {};
       if (net.duo) { delete hello.ranked; hello.v = Duo.V; } // (2v2: the server turns another version away, its board may differ, 2026-11-07)
       if (net.create && !net.key && net.pub) Object.assign(hello, { public: true, ...(net.duo ? {} : { map: playMap() || '', skin: skinPick || '' }) }); // a public room (the lobby)
-      if (net.create && !net.key && !net.duo && net.spectate === false) hello.spectate = false;
       if (acct && !net.tourCode) hello.session = acct.session; // who this is: ranked needs it, the other phone shows the username, and chat needs it (never in the URL)
       ws.send(JSON.stringify({ t: 'hello', ...hello }));
       clearInterval(net.ping); net.ping = setInterval(() => { if (net.ws === ws && ws.readyState === 1) ws.send('{"t":"ping"}'); }, 30000);
@@ -9878,17 +9890,16 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function boardScore(tag) { const r = home.board && home.board.rows ? home.board.rows.find(x => x.tag === tag) : null; return r ? r.score : null; }
   function roomCard(l) {
     const open = l.phase === 'waiting' && l.players < l.seats;
-    const watch = l.phase === 'playing' && l.spectate && l.kind === 'match';
+    const watch = l.phase === 'playing' && l.kind === 'match'; // every match can be watched (the owner, 2026-11-10)
     const tags = [l.mode === 'ranked' ? '<i class="rtag ranked">Ranked</i>' : l.kind === 'duo' ? '<i class="rtag duo">2v2</i>' : '<i class="rtag">Standard</i>'];
     if (l.kind === 'duo' && l.dev) tags.push('<i class="rtag dev">DEV</i>');
-    if (!l.spectate) tags.push('<i class="rtag off">No watchers</i>');
     const sc = l.mode === 'ranked' ? boardScore(l.host.tag) : null;
     const age = Math.max(0, Math.round((Date.now() - l.at) / 60000));
     return `<li class="room-card" data-code="${esc(l.code)}">
       <div class="rc-top">${nameplate(l.host.tag, l.host.title, 'rc-np')}${sc != null ? `<span class="rc-score" title="Leaderboard score">★ ${esc(sc)}</span>` : ''}</div>
       <div class="rc-name">${esc(roomName(l))}</div>
       <div class="rc-tags">${tags.join('')}</div>
-      <div class="rc-facts"><span>${esc(l.map || 'Random')}</span><span>${l.players}/${l.seats} players</span>${l.phase === 'playing' ? `<span>Round ${l.round}</span>` : `<span>${age < 1 ? 'just now' : age + ' min ago'}</span>`}${l.spectate && l.kind === 'match' ? `<span title="Watching">👁 ${l.watchers}</span>` : ''}</div>
+      <div class="rc-facts"><span>${esc(l.map || 'Random')}</span><span>${l.players}/${l.seats} players</span>${l.phase === 'playing' ? `<span>Round ${l.round}</span>` : `<span>${age < 1 ? 'just now' : age + ' min ago'}</span>`}${l.kind === 'match' ? `<span title="Watching">👁 ${l.watchers}</span>` : ''}</div>
       <div class="rc-btns">${open ? `<button class="btn primary small" data-join="${esc(l.code)}">Join</button>` : ''}${watch ? `<button class="btn small" data-watch="${esc(l.code)}">Watch</button>` : ''}${!open && !watch ? '<span class="hint">Full</span>' : ''}</div>
     </li>`;
   }
@@ -9966,19 +9977,17 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const rkOk = rankedAllowed(), duoOk = lob.dev || devMode();
     if (create.mode === 'ranked' && !rkOk) create.mode = 'standard';
     if (create.mode === '2v2' && !duoOk) create.mode = 'standard';
-    const seg = (name, key, opts) => `<div class="bar"><span class="hint">${name}</span><div class="seg" role="group" aria-label="${name}">${opts.map(([v, t, off]) => `<button data-${key}="${v}" aria-pressed="${String(create[key === 'cm' ? 'mode' : key === 'cp' ? 'pub' : 'spectate']) === String(v)}" ${off ? 'disabled' : ''}>${t}</button>`).join('')}</div></div>`;
+    const seg = (name, key, opts) => `<div class="bar"><span class="hint">${name}</span><div class="seg" role="group" aria-label="${name}">${opts.map(([v, t, off]) => `<button data-${key}="${v}" aria-pressed="${String(create[key === 'cm' ? 'mode' : 'pub']) === String(v)}" ${off ? 'disabled' : ''}>${t}</button>`).join('')}</div></div>`;
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Create room</h3><button class="btn small" id="close">Close</button></div>
       ${seg('Mode', 'cm', [['standard', 'Standard'], ['ranked', 'Ranked', !rkOk], ...(duoOk ? [['2v2', '2v2']] : [])])}
       ${create.mode === 'ranked' ? '<p class="ranked-note">Ranked: a best of 3 on the Standard map and pack. You and whoever joins both need to be logged in with Google; only ranked series count on the leaderboard.</p>' : create.mode === '2v2' ? '<p class="hint" style="margin:0">2v2 (developers only for now): seats left empty when you start are played by the AI.</p>' : '<p class="hint" style="margin:0">Pick the map, look and leaders in the room before you start.</p>'}
       ${seg('Who can find it', 'cp', [[true, 'Public: in Rooms'], [false, 'Private: code only']])}
-      ${create.mode === '2v2' ? '' : seg('Spectators', 'cs', [[true, 'On'], [false, 'Off']])}
       <button class="btn primary" id="create-go">Create room</button>
       <span class="hint" id="create-msg" aria-live="polite"></span>`;
     $('sheet-back').hidden = false;
     $('close').addEventListener('click', closeSheet);
     $('sheet').querySelectorAll('[data-cm]').forEach(b => b.addEventListener('click', () => { create.mode = b.dataset.cm; openCreateSheet(); }));
     $('sheet').querySelectorAll('[data-cp]').forEach(b => b.addEventListener('click', () => { create.pub = b.dataset.cp === 'true'; openCreateSheet(); }));
-    $('sheet').querySelectorAll('[data-cs]').forEach(b => b.addEventListener('click', () => { create.spectate = b.dataset.cs === 'true'; openCreateSheet(); }));
     $('create-go').addEventListener('click', async () => {
       const o = { pub: create.pub, spectate: create.spectate };
       home.back = 'lobby';
@@ -10016,7 +10025,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function talkReset() { Object.assign(talk, { lines: [], can: false, pub: false, spectate: true, team: false, unread: 0, wheel: false, tick: [] }); clearTimeout(talk.tickTimer); talkSync(); }
   // the messages a match room sends about chat (true: handled)
   function chatRecv(d) {
-    if (d.t === 'roomset') { talk.can = !!d.chat; talk.pub = !!d.pub; talk.spectate = d.spectate !== false; talkSync(); if (phase === 'lobby' && !m && mode === 'net' && me === 0 && !net.duo && !net.tourCode) drawLobby(); return true; }
+    if (d.t === 'roomset') { talk.can = !!d.chat; talk.pub = !!d.pub; talk.spectate = d.spectate !== false; talkSync(); if (phase === 'lobby' && !m && mode === 'net' && (me === 0 || dioRoomOn()) && !net.duo && !net.tourCode) drawLobby(); return true; } // (the Diorama's room says public / private to the guest too)
     if (d.t === 'chat') { chatAdd(d); return true; }
     if (d.t === 'chatLog') { talk.lines = (d.lines || []).slice(-50); talkSync(); return true; }
     if (d.t === 'chatMerge') { // the match is over: the watchers' lines from it, in time order
