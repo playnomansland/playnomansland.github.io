@@ -93,18 +93,12 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 6 * 60 *
   h0.json({ t: 'start', settings: { map: 'testgrid' } });
   await waitFor(() => listOf(L).get(pub) && listOf(L).get(pub).phase === 'playing', 8000);
   assert.strictEqual(listOf(L).get(pub).round, 1);
-  // spectating off: the watcher is turned away, new ones too, and the card says so
+  // every match can be watched (the owner, 2026-11-10): an old phone's Spectators off does nothing
   h0.json({ t: 'spectate', on: false });
-  const den = await w1.next('denied', 8000);
-  assert.strictEqual(den.why, 'no watchers');
-  const w2 = await phone(pub, { watch: true });
-  assert.strictEqual(w2.first.t, 'denied'); assert.strictEqual(w2.first.why, 'no watchers');
-  await waitFor(() => listOf(L).get(pub) && listOf(L).get(pub).spectate === false, 8000);
-  j2.json({ t: 'spectate', on: true }); // only the host may
   await sleep(500);
-  assert.strictEqual(listOf(L).get(pub).spectate, false);
-  h0.json({ t: 'spectate', on: true });
-  await waitFor(() => listOf(L).get(pub).spectate === true, 8000);
+  assert.strictEqual(listOf(L).get(pub).spectate, true);
+  const w2 = await phone(pub, { watch: true });
+  assert.strictEqual(w2.first.side, -1, 'a second watcher still gets in');
   // the match is over (a forfeit): off the list
   j2.json({ t: 'forfeit' });
   await waitFor(() => !listOf(L).has(pub), 8000);
@@ -251,6 +245,6 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 6 * 60 *
   step('limits');
 
   srv.stop();
-  console.log('lobby ok (listings, join, watch, spectate toggle, quick play, ranked, 2v2 for developers, heartbeat, limits)');
+  console.log('lobby ok (listings, join, watch, every match watchable, quick play, ranked, 2v2 for developers, heartbeat, limits)');
   process.exit(0);
 })().catch((e) => { console.error(e); if (process.env.VERBOSE && global.srv) console.error(global.srv.log().slice(-4000)); process.exit(1); });

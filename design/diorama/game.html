@@ -451,6 +451,10 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio #usheet .sk b { display: block; font: 700 14px var(--sans); opacity: 1; margin-top: 2px; }
 #dio #usheet .x { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; display: grid; place-items: center; opacity: .8; }
 #dio #usheet .x:hover { opacity: 1; }
+/* Unit sheet: every unit's card opens the game's full sheet for it; a saffron button, ink stencil words */
+#dio #usheet .usb { display: inline-flex; align-items: center; margin-top: 16px; height: 34px; padding: 2px 16px 0 13px; font: 700 21px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em;
+  color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; opacity: 1; cursor: pointer; transition: transform .15s ease; }
+#dio #usheet .usb:hover, #dio #usheet .usb:focus-visible { transform: rotate(-1.5deg) scale(1.04); outline: none; }
 
 /* ── Welcome: the title screen. The logo grows, the island is seen low and wide, three words to get in ── */
 #dio .door, #dio .signin { display: none; }
@@ -1882,6 +1886,34 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
   html.diorama #dio .pz .create { font-size: clamp(26px, 8vw, 32px); }
 }
 
+/* ── phones, the owner's notes (2026-11-10, on an iPhone) ── */
+@media (max-width: 700px) {
+  /* Units and Rankings: no PLAY or menu words under the island, the pinned Back instead; Units: the tier tabs under the
+     island and the tier's units as a list (#ulist, a tap opens the card) */
+  html.diorama #dio.pinned .menu { display: none; }
+  html.diorama #dio.pinned .back { display: inline-block; }
+  html.diorama #dio .tiers { position: relative !important; left: auto !important; top: auto !important; transform: none; order: 1; display: none; flex-wrap: nowrap; justify-content: space-between; gap: 0; margin: 0 16px 8px; white-space: normal; text-shadow: none; }
+  html.diorama #dio.units .tiers { display: flex; }
+  html.diorama #dio .tiers button { font-size: clamp(17px, 5.2vw, 24px); padding: 8px 8px 5px; min-height: 42px; white-space: nowrap; }
+  html.diorama #dio .ulist { position: relative; order: 2; display: none; margin: 4px 16px 0; } /* (positioned, as every column: the field's grain, fixed, paints over static text) */
+  html.diorama #dio.units .ulist { display: grid; }
+  html.diorama #dio .ulist .k { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .85; margin-bottom: 4px; }
+  html.diorama #dio .ulist .ur { display: flex; align-items: center; gap: 12px; border-bottom: 1px dashed color-mix(in srgb, var(--cream) 28%, transparent); }
+  html.diorama #dio .ulist .ur:last-child { border-bottom: 0; }
+  html.diorama #dio .ulist button[data-ui] { flex: 1; min-width: 0; color: var(--cream); opacity: 1; display: grid; justify-items: start; gap: 2px; padding: 11px 0 10px; text-align: left; }
+  /* every unit's row: Unit sheet, the game's full sheet for it (saffron, as on the card, 2026-11-10) */
+  html.diorama #dio .ulist .usb { flex: none; display: inline-flex; align-items: center; height: 34px; padding: 2px 13px 0 11px; font: 700 18px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em;
+    color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; opacity: 1; }
+  html.diorama #dio .ulist b { color: var(--cream); opacity: 1; -webkit-text-fill-color: currentColor; background: none; font: 700 22px/1.05 var(--stencil); text-transform: uppercase; letter-spacing: -.005em; }
+  html.diorama #dio .ulist small { font: 700 13px var(--type); opacity: .82; }
+  /* the match's shop strip: no line breaks between the tiers (the PC's rows), so tier after tier sits close */
+  html.diorama.pcwide:not(.pc) .panel .shop2 .br2 { display: none !important; }
+  html.diorama.pcwide:not(.pc) .panel .tier2.gap { margin-left: 10px; }
+  /* board mode: the SHOP tab steps aside while a card is dragged (html.dcard) */
+  html.dcard .dshop { display: none !important; }
+}
+@media (min-width: 701px) { #dio .ulist { display: none; } }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -2914,7 +2946,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <div class="note bf-note" data-anchor="bf" role="button" tabindex="0" aria-label="Change battlefield"><span class="bf-sub" id="bf-sub"></span><span class="bf-btn">Change battlefield</span></div>
   <div id="unote" style="display:none"></div>
   <nav class="tiers" aria-label="Unit tiers"><span class="k">Units by tier</span><button data-t="1" aria-pressed="true">Tier 1</button><button data-t="2" aria-pressed="false">Tier 2</button><button data-t="3" aria-pressed="false">Tier 3</button><button data-t="4" aria-pressed="false">Tier 4</button></nav>
-  <section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><div class="skn" hidden></div><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
+  <section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><div class="skn" hidden></div><button class="usb" type="button">Unit sheet</button><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
   <div class="zz" id="zz">z<span style="font-size:.7em">z</span></div>
 
   <div class="pl-scrim" aria-hidden="true"></div>
@@ -18423,7 +18455,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · cb42680'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 25baa78'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19768,7 +19800,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     const l = f.querySelector('.l'); l.textContent = label; l.style.color = bad ? 'var(--foe)' : '';
   }
   function cardEnd(ok) {
-    const p = cpress, d = cdrag; cpress = null; cdrag = null; flyShow(null);
+    const p = cpress, d = cdrag; cpress = null; cdrag = null; flyShow(null); document.documentElement.classList.remove('dcard');
     if (p) { clearTimeout(p.t); if (p.el) p.el.classList.remove('lift'); if (p.pan) cardDone = performance.now(); } // a sideways mouse drag ends without a tap
     if (!d) return;
     cardDone = performance.now(); hoverTile = null;
@@ -19798,7 +19830,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       if (cpress.el.getAttribute('aria-disabled') === 'true' || !editable()) { cpress.scroll = true; return; }
       cdrag = { i: cpress.i, prev: selected, touch: e.pointerType !== 'mouse', t: null };
       selected = cpress.i; rangeOf = null; cpress.el.classList.add('lift');
-      if (DIO) dioBoardMode(true); // a phone: the drawer drops and the board comes up from above to aim at
+      if (DIO) { dioBoardMode(true); document.documentElement.classList.add('dcard'); } // a phone: the drawer drops and the board comes up from above to aim at
       try { cpress.el.setPointerCapture(e.pointerId); } catch (err) {}
       render();
     }
@@ -23960,7 +23992,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (dioPhone()) {
       const st = document.documentElement.style, pk = !$('pick').hidden; // (a pick takes the whole screen: the drawer steps aside)
       const pr = $('panel').getBoundingClientRect(), top = pk ? innerHeight : Math.min(innerHeight, Math.max(pr.top, innerHeight * 0.4));
-      const r = { x0: 4, x1: innerWidth - 4, y0: Math.max(48, hb.bottom + 2), y1: top - 2 };
+      const r = { x0: 4, x1: innerWidth - 4, y0: Math.max(48, hb.bottom + 2), y1: top - (dBoard && !pk ? 46 : 2) }; // (board mode: above the SHOP tab)
       const vs = [innerWidth, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
       if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); st.setProperty('--dph', Math.round(innerHeight - pr.top) + 'px'); }
       return r;
@@ -28334,6 +28366,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
           if (i === pop && !still) { f.userData.s = f.scale.x; f.userData.pop = performance.now() / 1000; f.scale.setScalar(0.001); } }
         g.userData = { u, t, i }; rosterHot.push(g);
       });
+      // a phone (diorama.css: shown only there, on Units): the tier's units as a list under the tabs, a tap opens the card
+      let ul = document.getElementById('ulist');
+      if (!ul) { ul = Object.assign(document.createElement('section'), { id: 'ulist', className: 'ulist' }); ul.setAttribute('aria-label', 'Units in this tier'); body.appendChild(ul);
+        ul.addEventListener('click', (e) => { const us = e.target.closest('[data-us]'); if (us) { const g = rosterHot[+us.dataset.us]; const k = g ? ROSTER.units.indexOf(g.userData.u) : -1; if (k >= 0) openSheet(k); return; }
+          const b = e.target.closest('[data-ui]'); if (b) pickUnit(rosterHot[+b.dataset.ui] || null); }); }
+      ul.innerHTML = `<span class="k">Tier ${t} · ${n} units · tap one for its card</span>` + list.map((u, i) => `<div class="ur"><button data-ui="${i}"><b>${esc(u.name)}</b><small>${[(u.bodies || 1) > 1 ? `${u.bodies} bodies` : 'one body', `${u.range} m range`, `${u.hp} health`].join(' · ')}</small></button><button class="usb" type="button" data-us="${i}">Unit sheet</button></div>`).join('');
     }
     buildTier(1);
 
@@ -28666,6 +28704,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     }
     body.querySelector('#usheet').addEventListener('click', (e) => { const b = e.target.closest('[data-wear]'); if (b && picked) wear(picked.userData.u.name, b.dataset.wear); });
     body.querySelector('#usheet .x').addEventListener('click', () => pickUnit(null));
+    // Unit sheet (2026-11-10): the game's full sheet for that unit (openSheet, as the shop's), over the island
+    body.querySelector('#usheet .usb').addEventListener('click', () => { const i = picked ? ROSTER.units.indexOf(picked.userData.u) : -1; if (i >= 0) openSheet(i); });
     body.querySelectorAll('.tiers button').forEach(b => b.addEventListener('click', () => setTier(+b.dataset.t)));
     function setTier(t) { tier = t; picked = null; body.querySelectorAll('.tiers button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.t === t)); roster.position.y = still ? 0 : -1.6; buildTier(t); }
 
@@ -28787,7 +28827,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     }
     // (the menu hides under the pointer when Play or Profile opens: that leave keeps their view; owner's bug, 2026-11-10)
     body.querySelector('.menu').addEventListener('mouseleave', () => { if (['pinned', 'play', 'profile', 'puz'].some(c => body.classList.contains(c))) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
-    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
+    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); body.querySelector('.back').textContent = '← Menu'; });
     // Puzzles and How to play open the game's sheets (until they're designed); the camera move on pointing stays
     $('puzzles-open').addEventListener('click', openPuzzles);
     $('how').addEventListener('click', openHowTo);
@@ -28820,6 +28860,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       else if (w === 'welcome') goScreen('welcome'); });
     const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
       if (body.classList.contains('puz')) return closePuz();
+      if (body.classList.contains('pinned')) return unpin(); // (a phone: Units and Rankings have the Back)
       if (body.classList.contains('in-rooms')) return closeRooms(); closePlay(); };
     backBtn.addEventListener('click', goBack);
 

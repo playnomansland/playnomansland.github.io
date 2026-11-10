@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: "Chakra"; src: url("../../design/diorama/fonts/ChakraPetch-Bold.ttf"); font-weight: 700; }
+:root { --ink: #17140F; --cream: #F4ECD8; --saffron: #F2B23A; --night: #161C45; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 100%; height: 100%; background: var(--night); overflow: hidden; }
+.card { position: relative; width: 100vw; height: 100vh; overflow: hidden; font-family: "Chakra", "Arial Narrow", sans-serif; color: var(--cream); }
+.bg { position: absolute; inset: 0; background: url("../../showcase/img/hero.jpg") 62% 40% / cover; }
+.shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(22,28,69,.94) 0%, rgba(22,28,69,.84) 40%, rgba(22,28,69,.35) 56%, rgba(22,28,69,0) 70%), linear-gradient(0deg, rgba(22,28,69,.6) 0%, rgba(22,28,69,0) 30%); }
+.copy { position: absolute; left: 6vw; top: 0; bottom: 0; width: 52vw; display: flex; flex-direction: column; justify-content: center; gap: 3.2vh; }
+.logo { width: 34vw; height: auto; filter: drop-shadow(0 .4vh 1.4vh rgba(0,0,0,.35)); }
+h1 { font-weight: 700; text-transform: uppercase; font-size: 8.4vh; line-height: .95; }
+h1 span { display: block; }
+h1 .hot { color: var(--saffron); }
+.shard { align-self: flex-start; background: var(--saffron); color: var(--ink); clip-path: polygon(0 10%, 96% 0, 100% 86%, 3% 100%); padding: 1.6vh 3.2vw 1.9vh 2.4vw; font-size: 4.2vh; text-transform: uppercase; }
+.shard small { font-size: 2.5vh; margin-left: 1vw; opacity: .85; }
+.url { font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 2.3vh; letter-spacing: .04em; opacity: .85; font-weight: 400; }
+.tag { position: absolute; right: 2.4vw; bottom: 3vh; font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 1.9vh; text-shadow: 0 0 2px #17140F, 0 0 8px #17140F; opacity: .9; }
+</style></head>
+<body><div class="card">
+  <div class="bg"></div><div class="shade"></div>
+  <div class="copy">
+    <img class="logo" src="../../showcase/img/logo.png" alt="">
+    <h1><span>Buy squads.</span><span>Watch them fight.</span><span class="hot">Upgrade.</span></h1>
+    <div class="shard">Play now<small>in your browser</small></div>
+    <div class="url">playnomansland.github.io · PC and phone</div>
+  </div>
+  <div class="tag">Round 7 · Snow · captured in game</div>
+</div></body></html>

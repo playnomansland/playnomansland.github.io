@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>No Mans Land Discord Kit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../img/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working kit. Each post is one row: the text to copy on the left, how it lands in a chat on the right, the
+   files to attach under it. The game's ink panels and ultramarine field; saffron only on Copy. One look. */
+:root {
+  --field: #2E3E9C; --field-lo: #24317F; --night: #161C45;
+  --ink: #17140F; --ink-2: #221E17; --ink-3: #2C271F;
+  --cream: #F4ECD8; --cream-2: rgba(244, 236, 216, .72); --cream-3: rgba(244, 236, 216, .18);
+  --saffron: #F2B23A; --you: #6FB3E0; --foe: #E5674B;
+  --chat: #1E2029; --chat-2: #2A2D38; --chat-text: #DCDEE3; --chat-link: #6FB3E0;
+  --display: "Chakra Petch", "Arial Narrow", Impact, sans-serif;
+  --body: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --shard: polygon(0 10%, 96% 0, 100% 86%, 3% 100%);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+img, video { max-width: 100%; display: block; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--saffron); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-transform: uppercase; line-height: 1.02; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+header { background: var(--field); padding-block: calc(env(safe-area-inset-top, 0px) + 28px) 40px; }
+header .wrap { display: grid; gap: 18px; }
+header .row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; }
+header img { height: 26px; width: auto; }
+header nav { display: flex; gap: 20px; font-family: var(--display); font-weight: 600; }
+header nav a { text-decoration: none; border-bottom: 2px solid var(--cream-3); }
+header nav a:hover { border-color: var(--saffron); }
+header h1 { font-size: clamp(38px, 5.5vw, 72px); }
+header h1 em { font-style: normal; color: var(--saffron); }
+header p { max-width: 46em; color: var(--cream-2); font-size: 18px; }
+.steps { display: flex; flex-wrap: wrap; gap: 8px 22px; font-family: var(--mono); font-size: 13px; color: var(--cream); list-style: none; padding: 0; margin: 4px 0 0; counter-reset: s; }
+.steps li { counter-increment: s; }
+.steps li::before { content: counter(s) "  "; color: var(--saffron); }
+
+.post { padding-block: 56px; border-bottom: 1px solid var(--cream-3); }
+.post-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 22px; }
+.post-head h2 { font-size: clamp(28px, 3.4vw, 42px); }
+.post-head h2 small { font-family: var(--mono); font-size: 13px; font-weight: 400; color: var(--cream-2); text-transform: none; margin-left: 10px; letter-spacing: .02em; }
+.post-head p { color: var(--cream-2); max-width: 40em; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+
+/* the text to copy */
+.src { background: var(--ink-2); border: 1px solid var(--cream-3); display: grid; }
+.src-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; border-bottom: 1px solid var(--cream-3); }
+.count { font-family: var(--mono); font-size: 12.5px; color: var(--cream-2); font-variant-numeric: tabular-nums; }
+.count.over { color: var(--foe); }
+.copy { all: unset; cursor: pointer; background: var(--saffron); color: var(--ink); font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 16px; padding: 7px 20px 8px 16px; clip-path: var(--shard); }
+.copy:focus-visible { outline: 3px solid var(--cream); outline-offset: 2px; }
+textarea { width: 100%; min-height: 120px; resize: vertical; overflow: hidden; border: 0; background: transparent; color: var(--cream); font-family: var(--mono); font-size: 13.5px; line-height: 1.6; padding: 16px; }
+textarea:focus { outline: none; }
+
+/* how it lands in a chat (an approximation of a dark chat client) */
+.chat { background: var(--chat); border-radius: 6px; padding: 18px 18px 20px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--chat-text); font-size: 15px; line-height: 1.375; }
+.chat .label { font-family: var(--mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: rgba(220,222,227,.5); margin-bottom: 14px; }
+.msg { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; }
+.msg .av { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; }
+.msg .who { font-weight: 600; color: #fff; }
+.msg .who time { font-weight: 400; font-size: 12px; color: rgba(220,222,227,.5); margin-left: 6px; }
+.md { display: grid; gap: 2px; margin-top: 2px; overflow-wrap: anywhere; }
+.md h1 { font-family: inherit; text-transform: none; font-size: 24px; font-weight: 700; margin: 6px 0 4px; color: #fff; }
+.md h2 { font-family: inherit; text-transform: none; font-size: 20px; font-weight: 700; margin: 6px 0 2px; color: #fff; }
+.md ul { margin: 0; padding-left: 22px; }
+.md .sub { font-size: 12.5px; color: rgba(220,222,227,.6); }
+.md a { color: var(--chat-link); text-decoration: none; }
+.md strong { color: #fff; }
+.md .gap { height: 10px; }
+.att { display: grid; gap: 4px; margin-top: 10px; max-width: 520px; }
+.att.n2 { grid-template-columns: 1fr 1fr; }
+.att.n4 { grid-template-columns: 1fr 1fr; }
+.att img, .att video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; background: var(--chat-2); }
+.att.n1 img, .att.n1 video { aspect-ratio: auto; }
+.embed { margin-top: 10px; max-width: 432px; background: var(--chat-2); border-left: 4px solid var(--saffron); border-radius: 4px; padding: 10px 14px 14px; display: grid; gap: 6px; }
+.embed .site { font-size: 12px; color: rgba(220,222,227,.6); }
+.embed .title { color: var(--chat-link); font-weight: 600; }
+.embed .desc { font-size: 14px; }
+.embed img { border-radius: 4px; margin-top: 6px; }
+
+/* the files to attach */
+.files { margin-top: 24px; display: grid; gap: 12px; }
+.files h3 { font-size: 16px; letter-spacing: .04em; }
+.files ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.files a { display: grid; gap: 6px; text-decoration: none; }
+.files .th { aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--cream-3); background: var(--night); transition: border-color .15s; }
+.files a:hover .th { border-color: var(--saffron); }
+.files .th img, .files .th video { width: 100%; height: 100%; object-fit: cover; }
+.files span { font-family: var(--mono); font-size: 12px; color: var(--cream-2); }
+.files span b { color: var(--cream); font-weight: 500; display: block; }
+
+.notes { background: var(--field-lo); padding-block: 56px calc(56px + env(safe-area-inset-bottom, 0px)); }
+.notes h2 { font-size: clamp(26px, 3vw, 38px); margin-bottom: 20px; }
+.notes ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; border-top: 1px solid var(--cream-3); }
+.notes li { padding: 14px 0; border-bottom: 1px solid var(--cream-3); color: var(--cream-2); }
+.notes li b { color: var(--cream); font-weight: 600; }
+.notes code { font-family: var(--mono); font-size: 13px; color: var(--saffron); }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px); background: var(--saffron); color: var(--ink); font-family: var(--display); font-weight: 700; text-transform: uppercase; padding: 10px 22px; clip-path: var(--shard); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+.toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 860px) {
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .files ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .notes ul { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="row">
+      <img src="../img/logo.png" alt="No Mans Land" width="1290" height="138">
+      <nav aria-label="Posts"><a href="#announce">Announcement</a><a href="#quick">Quick share</a><a href="#clip">Clip</a><a href="../">Full showcase</a></nav>
+    </div>
+    <h1>Discord <em>kit</em></h1>
+    <p>Three posts sized for Discord, from a full announcement to a one-line share. Each is under Discord's 2,000 character limit and uses only formatting Discord understands.</p>
+    <ol class="steps"><li>Copy the text</li><li>Attach the files in the order shown</li><li>Paste and send</li></ol>
+  </div>
+</header>
+
+<main>
+<section class="post" id="announce" aria-labelledby="h-announce">
+  <div class="wrap">
+    <div class="post-head">
+      <h2 id="h-announce">Announcement <small>for #announcements or a server you're introducing it to</small></h2>
+      <p>The full pitch with four images. The link is wrapped in &lt; &gt; so Discord doesn't add a second big preview under the pictures.</p>
+    </div>
+    <div class="cols">
+      <div class="src">
+        <div class="src-bar"><span class="count" data-for="t-announce"></span><button class="copy" data-for="t-announce" type="button">Copy</button></div>
+        <textarea id="t-announce" spellcheck="false" aria-label="Announcement text"># No Mans Land
+**Buy squads. Watch them fight. Upgrade.**
+
+A tactical auto-battler for two players. Every round you spend your gold and place squads on your half of the field, while your opponent does the same out of sight. Then the armies clash on their own. No orders, no micro, just the plan you made.
+
+**What's inside**
+- 28 units in four tiers, from 12-goblin swarms to War Mammoths
+- Hidden deploys: you never see what your opponent adds this round
+- Towers, leaders, loans and streak bounties to play with
+- 8 battlefields and an original soundtrack by Snetänd and Emil Helleday
+- Play the computer, send a friend a link, or climb the ranked ladder
+
+**Play in your browser, on PC or phone:** <https://playnomansland.github.io>
+-# Nothing to install. Bug reports, balance takes and good comebacks welcome below.</textarea>
+      </div>
+      <div class="chat" aria-label="Preview">
+        <div class="label">Preview</div>
+        <div class="msg"><img class="av" src="../img/icon.png" alt=""><div><div class="who">No Mans Land <time>Today at 18:00</time></div><div class="md" data-from="t-announce"></div>
+          <div class="att n4"><img src="01-card.jpg" alt=""><img src="02-autumn.jpg" alt=""><img src="03-deploy.jpg" alt=""><img src="04-units.jpg" alt=""></div></div></div>
+      </div>
+    </div>
+    <div class="files">
+      <h3>Attach, in this order</h3>
+      <ol>
+        <li><a href="01-card.jpg" download><span class="th"><img src="01-card.jpg" alt="" loading="lazy"></span><span><b>01-card.jpg</b>Title card · 1600 × 900</span></a></li>
+        <li><a href="02-autumn.jpg" download><span class="th"><img src="02-autumn.jpg" alt="" loading="lazy"></span><span><b>02-autumn.jpg</b>Battle on Autumn</span></a></li>
+        <li><a href="03-deploy.jpg" download><span class="th"><img src="03-deploy.jpg" alt="" loading="lazy"></span><span><b>03-deploy.jpg</b>Deploying on Snow</span></a></li>
+        <li><a href="04-units.jpg" download><span class="th"><img src="04-units.jpg" alt="" loading="lazy"></span><span><b>04-units.jpg</b>The Units screen</span></a></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="post" id="quick" aria-labelledby="h-quick">
+  <div class="wrap">
+    <div class="post-head">
+      <h2 id="h-quick">Quick share <small>for #self-promo, a DM, or a reply</small></h2>
+      <p>Two lines and a link. No attachments: Discord builds the preview card from the showcase page by itself.</p>
+    </div>
+    <div class="cols">
+      <div class="src">
+        <div class="src-bar"><span class="count" data-for="t-quick"></span><button class="copy" data-for="t-quick" type="button">Copy</button></div>
+        <textarea id="t-quick" spellcheck="false" aria-label="Quick share text">**No Mans Land** is a tactical auto-battler for two: buy squads, place them in secret, then watch the armies collide. Plays in your browser on PC and phone.
+https://playnomansland.github.io/showcase/</textarea>
+      </div>
+      <div class="chat" aria-label="Preview">
+        <div class="label">Preview</div>
+        <div class="msg"><img class="av" src="../img/icon.png" alt=""><div><div class="who">No Mans Land <time>Today at 18:00</time></div><div class="md" data-from="t-quick"></div>
+          <div class="embed"><span class="site">No Mans Land</span><span class="title">No Mans Land: buy squads, watch them fight, upgrade</span><span class="desc">A tactical auto-battler for two. Build your army in secret, then watch the armies collide. Plays in your browser on PC and phone.</span><img src="../img/og-card.jpg" alt=""></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="post" id="clip" aria-labelledby="h-clip">
+  <div class="wrap">
+    <div class="post-head">
+      <h2 id="h-clip">Clip <small>for #media, #clips, or to keep a channel lively</small></h2>
+      <p>Six seconds of a real fight and a question. Attach the MP4 for full quality, or the GIF when you want it to play by itself in the channel.</p>
+    </div>
+    <div class="cols">
+      <div class="src">
+        <div class="src-bar"><span class="count" data-for="t-clip"></span><button class="copy" data-for="t-clip" type="button">Copy</button></div>
+        <textarea id="t-clip" spellcheck="false" aria-label="Clip text">Round 7 on Meadow. The Brutes charge, the wizards hold, and nobody can give an order now.
+Who takes this one, 🔵 or 🔴?
+-# Captured in No Mans Land · <https://playnomansland.github.io></textarea>
+      </div>
+      <div class="chat" aria-label="Preview">
+        <div class="label">Preview</div>
+        <div class="msg"><img class="av" src="../img/icon.png" alt=""><div><div class="who">No Mans Land <time>Today at 18:00</time></div><div class="md" data-from="t-clip"></div>
+          <div class="att n1"><video src="../media/battle-clip.mp4" poster="../img/battle-clip-poster.jpg" muted loop playsinline autoplay preload="metadata"></video></div></div></div>
+      </div>
+    </div>
+    <div class="files">
+      <h3>Attach one</h3>
+      <ol>
+        <li><a href="../media/battle-clip.mp4" download><span class="th"><img src="../img/battle-clip-poster.jpg" alt="" loading="lazy"></span><span><b>battle-clip.mp4</b>6 s · 1280 × 720 · plays on tap</span></a></li>
+        <li><a href="../media/battle-clip.gif" download><span class="th"><img src="../media/battle-clip.gif" alt="" loading="lazy"></span><span><b>battle-clip.gif</b>640 wide · plays by itself</span></a></li>
+      </ol>
+    </div>
+  </div>
+</section>
+</main>
+
+<section class="notes" aria-labelledby="h-notes">
+  <div class="wrap">
+    <h2 id="h-notes">Before you post</h2>
+    <ul>
+      <li><b>Limits.</b> 2,000 characters a message and up to 10 files. Without Nitro each file must be 10 MB or less; everything here is well under that.</li>
+      <li><b>Links.</b> A bare link gets a preview card. Wrap it as <code>&lt;https://…&gt;</code> to keep the message clean when you've attached pictures.</li>
+      <li><b>Order.</b> Discord shows files in the order you attach them. Four pictures make a neat 2 × 2 grid; three leave a gap.</li>
+      <li><b>Headings.</b> <code>#</code> headings and <code>-#</code> small print only render in messages, not in embeds or channel topics.</li>
+      <li><b>Spoilers.</b> In a server that discusses balance, consider <code>||spoiler bars||</code> around strategy tips.</li>
+      <li><b>The preview card</b> comes from the showcase page's link tags, so it appears once the showcase is live on the site.</li>
+    </ul>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const esc = (s) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // the few bits of Discord markdown these posts use: # / ## headings, -# small print, - lists, **bold**, *italic*,
+  // <link> (no preview) and bare links
+  const inline = (s) => esc(s)
+    .replace(/&lt;(https?:\/\/[^\s&]+)&gt;/g, '<a href="$1">$1</a>')
+    .replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g, '$1<a href="$2">$2</a>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*(?!\s)(.+?)\*/g, '$1<em>$2</em>');
+  function render(text) {
+    const out = []; let list = null;
+    for (const line of text.split('\n')) {
+      if (/^- /.test(line)) { if (!list) { list = []; } list.push('<li>' + inline(line.slice(2)) + '</li>'); continue; }
+      if (list) { out.push('<ul>' + list.join('') + '</ul>'); list = null; }
+      if (/^# /.test(line)) out.push('<h1>' + inline(line.slice(2)) + '</h1>');
+      else if (/^## /.test(line)) out.push('<h2>' + inline(line.slice(3)) + '</h2>');
+      else if (/^-# /.test(line)) out.push('<div class="sub">' + inline(line.slice(3)) + '</div>');
+      else if (!line.trim()) out.push('<div class="gap"></div>');
+      else out.push('<div>' + inline(line) + '</div>');
+    }
+    if (list) out.push('<ul>' + list.join('') + '</ul>');
+    return out.join('');
+  }
+  const LIMIT = 2000;
+  const update = (ta) => {
+    ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 4) + 'px'; // the whole post shows, no inner scroll
+    document.querySelectorAll(`[data-from="${ta.id}"]`).forEach(el => { el.innerHTML = render(ta.value); });
+    document.querySelectorAll(`.count[data-for="${ta.id}"]`).forEach(el => { const n = [...ta.value].length; el.textContent = `${n.toLocaleString('en')} / 2,000 characters`; el.classList.toggle('over', n > LIMIT); });
+  };
+  document.querySelectorAll('textarea').forEach(ta => { update(ta); ta.addEventListener('input', () => update(ta)); });
+
+  const toast = document.getElementById('toast'); let tt = 0;
+  const say = (t) => { toast.textContent = t; toast.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => toast.classList.remove('on'), 1800); };
+  document.querySelectorAll('.copy').forEach(b => b.addEventListener('click', () => {
+    const ta = document.getElementById(b.dataset.for);
+    const fallback = () => { ta.focus(); ta.select(); say('Selected. Press Ctrl+C or ⌘C'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(() => say('Copied'), fallback);
+    else fallback();
+  }));
+})();
+</script>
+</body>
+</html>

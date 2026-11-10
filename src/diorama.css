@@ -236,6 +236,23 @@
 #dio .music .open { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; align-items: center; gap: 6px; opacity: .92; }
 #dio .music .open:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
 #dio .music .open svg { width: 12px; height: 12px; transition: transform .2s ease; }
+/* the music's volume (the owner, 2026-11-10): a speaker (music on / off) and a thin slider under the controls, here and
+   in a match's music dock (volSync draws them) */
+#dio .music .mp-vol, html.diorama.pcwide #mp-pop.dock .mplayer .mp-vol { display: flex; align-items: center; justify-content: flex-end; gap: 8px; --vl: var(--cream); --vt: var(--saffron); }
+html.diorama.pcwide #mp-pop.dock .mplayer .mp-vol { --vl: #F4ECD8; --vt: #F2B23A; color: #F4ECD8; }
+#dio.play .music .mp-vol { --vt: #17140F; }
+:is(#dio .music, #mp-pop.dock) .mp-spk { width: 26px; height: 26px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; opacity: .85; }
+:is(#dio .music, #mp-pop.dock) .mp-spk:hover { opacity: 1; }
+:is(#dio .music, #mp-pop.dock) .mp-spk svg { width: 17px; height: 17px; }
+:is(#dio .music, #mp-pop.dock) .mp-volr { -webkit-appearance: none; appearance: none; width: 120px; height: 18px; margin: 0; background: none; cursor: pointer; }
+:is(#dio .music, #mp-pop.dock) .mp-volr:focus-visible { outline: 2px solid var(--vl); outline-offset: 3px; }
+:is(#dio .music, #mp-pop.dock) .mp-volr::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(90deg, var(--vl) var(--v, 50%), color-mix(in srgb, var(--vl) 28%, transparent) var(--v, 50%)); }
+:is(#dio .music, #mp-pop.dock) .mp-volr::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 16px; margin-top: -7px; border: 0; border-radius: 0; background: var(--vt); clip-path: polygon(0 6%, 100% 0, 92% 100%, 6% 94%); transition: transform .12s ease; }
+:is(#dio .music, #mp-pop.dock) .mp-volr:hover::-webkit-slider-thumb { transform: scale(1.15); }
+:is(#dio .music, #mp-pop.dock) .mp-volr::-moz-range-track { height: 2px; background: color-mix(in srgb, var(--vl) 28%, transparent); }
+:is(#dio .music, #mp-pop.dock) .mp-volr::-moz-range-progress { height: 2px; background: var(--vl); }
+:is(#dio .music, #mp-pop.dock) .mp-volr::-moz-range-thumb { width: 10px; height: 16px; border: 0; border-radius: 0; background: var(--vt); }
+:is(#dio .music, #mp-pop.dock) .mp-vol.off .mp-volr { opacity: .45; }
 #dio.music-open .music .open svg { transform: rotate(180deg); }
 #dio .pl-scrim { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s ease; background: radial-gradient(42% 75% at 100% 100%, color-mix(in srgb, var(--field) 92%, transparent), transparent 75%); z-index: 2; }
 #dio.music-open .pl-scrim { opacity: 1; }
@@ -314,6 +331,10 @@
 #dio #usheet .sk b { display: block; font: 700 14px var(--sans); opacity: 1; margin-top: 2px; }
 #dio #usheet .x { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; display: grid; place-items: center; opacity: .8; }
 #dio #usheet .x:hover { opacity: 1; }
+/* Unit sheet: every unit's card opens the game's full sheet for it; a saffron button, ink stencil words */
+#dio #usheet .usb { display: inline-flex; align-items: center; margin-top: 16px; height: 34px; padding: 2px 16px 0 13px; font: 700 21px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em;
+  color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; opacity: 1; cursor: pointer; transition: transform .15s ease; }
+#dio #usheet .usb:hover, #dio #usheet .usb:focus-visible { transform: rotate(-1.5deg) scale(1.04); outline: none; }
 
 /* ── Welcome: the title screen. The logo grows, the island is seen low and wide, three words to get in ── */
 #dio .door, #dio .signin { display: none; }
@@ -574,7 +595,6 @@
 #dio .rooms { grid-template-rows: auto auto auto auto auto minmax(0, 1fr); }
 #dio .r-msg, #dio .nr-msg { margin: 0; font: 700 14px/1.4 var(--type); }
 #dio .r-msg:not(:empty) { margin: 0 0 10px; } #dio .nr-msg:not(:empty) { margin-top: 12px; }
-#dio .newroom.duo .spec-row { display: none; }
 #dio .rlist .dvt { margin-left: 10px; }
 #dio .orders .mp .item[disabled] small { opacity: 1; }
 
@@ -668,8 +688,12 @@ html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35) !impo
 #dio .back, #dio.play .back, #dio.pinned .back, #dio.profile .back, #dio.welcome.in-signin .back { display: none; }
 #dio .logo { cursor: pointer; } #dio.welcome .logo { cursor: default; }
 /* a sub-screen's heading is its trail: Play · Rooms · New room, Profile · Match history; the earlier ones are links */
-#dio .crumb { font: inherit; letter-spacing: inherit; text-transform: inherit; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 4px; opacity: .9; }
-#dio .crumb:hover { opacity: 1; text-decoration-thickness: 2.5px; }
+/* (the owner, 2026-11-10: "Play · Rooms" read as a Play / Rooms switch, Play underlined as the picked one) a path:
+   the earlier steps dimmed, a › between, the screen you're on in full; an earlier step underlines when you point at it */
+#dio .crumb { font: inherit; letter-spacing: inherit; text-transform: inherit; text-decoration: none; opacity: .62; }
+#dio .crumb:hover, #dio .crumb:focus-visible { opacity: 1; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+#dio .k .sep { margin: 0 .55em; font-style: normal; opacity: .62; }
+#dio .k .here { opacity: 1; }
 /* Change battlefield: always in the same place, bottom right beside the music player */
 #dio .note.bf-note { position: fixed; left: auto !important; top: auto !important; right: 340px; bottom: 36px; transform: none; text-align: right !important; padding-bottom: 0; }
 #dio.welcome .bf-note { display: none !important; }
@@ -939,6 +963,7 @@ html.diorama.pcwide .hud .side.foe.open #foe-name { opacity: .8; }
 html.droom-on .panel { top: 104px; }
 html.diorama.pcwide .droom { display: grid; gap: 16px; align-content: start; }
 html.diorama.pcwide .droom .rhead .k { font: 700 12px var(--dtype); letter-spacing: .14em; text-transform: uppercase; color: #F2B23A; text-shadow: var(--dhalo); }
+html.diorama.pcwide .droom .rhead { min-width: 0; } /* (a long word can't widen the column: dioRoom shrinks the title to fit instead) */
 html.diorama.pcwide .droom .rhead h2 { margin: 4px 0 8px; font: 700 clamp(44px, 7vh, 62px)/.9 var(--dstencil); text-transform: uppercase; letter-spacing: -.015em; color: #F4ECD8; text-shadow: var(--dhalo); text-wrap: balance; }
 html.diorama.pcwide .droom .rlead { margin: 0; font: 700 14px/1.42 var(--dtype); color: #F4ECD8; opacity: .92; text-shadow: var(--dhalo); }
 html.diorama.pcwide .droom .rlead b { color: #F2B23A; }
@@ -957,6 +982,7 @@ html.diorama.pcwide .droom .invite { margin-left: -9px; }
 html.diorama.pcwide .droom .invite .w { opacity: 1; font-size: 20px; text-decoration: underline dashed; text-underline-offset: 5px; text-decoration-thickness: 1.5px; }
 html.diorama.pcwide .droom .help, html.diorama.pcwide .droom .say .help { justify-self: start; padding: 0; border: 0; background: none; color: #F4ECD8; font: 700 13px var(--dtype); text-decoration: underline; text-underline-offset: 4px; opacity: .8; text-shadow: var(--dhalo); }
 html.diorama.pcwide .droom .help:hover { opacity: 1; }
+html.diorama.pcwide .droom :is(#leave, #cancel):hover, html.diorama.pcwide .droom :is(#leave, #cancel):focus-visible { color: #E5674B; opacity: 1; } /* leaving or closing the room: red when you point at it (the owner, 2026-11-10) */
 html.diorama.pcwide .droom .rlink { display: grid; gap: 6px; }
 html.diorama.pcwide .droom .linkbox { font: 700 12px var(--dtype); color: #F4ECD8; word-break: break-all; user-select: all; opacity: .9; }
 html.diorama.pcwide .droom .ddev { display: grid; gap: 8px; padding-top: 10px; border-top: 1px dashed rgba(255,95,196,.5); }
@@ -1087,32 +1113,29 @@ html.diorama.pcwide .sheet .seg button { text-transform: none; font: 700 14px va
    Fight / Not ready, the same button) keeps the skewed shard. Undoes the shard, the tile slab and the stencil words on
    every other button over the match: the column's extra moves and fight speeds, the picks, the results, the room's
    START MATCH, the sheets */
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close) {
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close) {
   position: relative; isolation: auto; margin: 0; transform: none; width: auto; min-width: 0; border: 1px solid #27393D; border-radius: 4px; background: rgba(13, 19, 21, .72); box-shadow: none;
   padding: 10px 16px; color: #E5ECE9; opacity: 1; text-shadow: none; text-decoration: none; text-transform: none; letter-spacing: 0; white-space: nowrap;
   font: 600 15px/1.2 "IBM Plex Sans", system-ui, sans-serif; transition: background-color .12s ease, border-color .12s ease; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close)::before,
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close)::after { content: none; display: none; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):hover:not(:disabled) { transform: none; border-color: #3A5257; background: rgba(21, 33, 37, .9); }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):active:not(:disabled) { transform: none; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn):is(.primary, [aria-pressed="true"], #pick-peek, #start) { background: #E6B84A; border-color: #E6B84A; color: #0D1315; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn):is(.primary, [aria-pressed="true"], #pick-peek, #start):hover:not(:disabled) { background: #F0C55C; border-color: #F0C55C; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):disabled { opacity: .4; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .sheet .btn, .sheet #close).small, html.diorama.pcwide .panel .xrow .btn { padding: 6px 12px; font-size: 13px; }
-html.diorama.pcwide .panel #skip { padding: 6px 12px; font-size: 13px; }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close)::before,
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close)::after { content: none; display: none; }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):hover:not(:disabled) { transform: none; border-color: #3A5257; background: rgba(21, 33, 37, .9); }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):active:not(:disabled) { transform: none; }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn):is(.primary, [aria-pressed="true"], #pick-peek, #start) { background: #E6B84A; border-color: #E6B84A; color: #0D1315; }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn):is(.primary, [aria-pressed="true"], #pick-peek, #start):hover:not(:disabled) { background: #F0C55C; border-color: #F0C55C; }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):disabled { opacity: .4; }
+html.diorama.pcwide :is(.panel .xrow .btn, .sheet .btn, .sheet #close).small, html.diorama.pcwide .panel .xrow .btn { padding: 6px 12px; font-size: 13px; }
 html.diorama.pcwide .overlay > .card .btn.primary { order: 0; font-size: 15px; padding: 10px 20px; }
 html.diorama.pcwide .droom #start { font-size: 17px; padding: 12px 24px; }
 html.diorama.pcwide .pick .row #pick-hide::after { content: none; }
 html.diorama.pcwide .pick .row #pick-hide { font-size: 15px; }
-/* the fight's speeds: the old segmented row */
-html.diorama.pcwide .panel .speeds { display: inline-flex; gap: 0; border: 1px solid #27393D; border-radius: 4px; overflow: hidden; background: rgba(13, 19, 21, .72); }
-html.diorama.pcwide .panel .speeds button { padding: 7px 12px; border: 0; border-radius: 0; background: transparent; color: #E5ECE9; opacity: 1; text-shadow: none; font: 13px "IBM Plex Mono", ui-monospace, monospace; }
-html.diorama.pcwide .panel .speeds button::before { content: none; }
-html.diorama.pcwide .panel .speeds button[aria-pressed="true"] { background: #27393D; color: #E6B84A; }
-html.diorama.pcwide .panel .speeds button[aria-pressed="true"], html.diorama.pcwide .panel .speeds button[aria-pressed="true"]:hover { background: #27393D; color: #E6B84A; }
-html.diorama.pcwide .panel .speeds button.offer { text-decoration: none; box-shadow: inset 0 0 0 1px #E6B84A; }
-html.diorama.pcwide .panel #skip.primary { background: #E6B84A; border-color: #E6B84A; color: #0D1315; }
-html.diorama.pcwide .panel #skip.primary::before { content: none; }
+/* the fight's speeds and Skip (the owner, 2026-11-10: not the old hairline boxes): words, as the Diorama's, the picked
+   speed on the saffron shard (in a fight: the speeds and Skip, as words, above); pointing lifts a word to full */
+html.diorama.pcwide .panel .speeds button:hover:not([aria-pressed="true"]), html.diorama.pcwide .panel #skip:hover { opacity: 1; }
+html.diorama.pcwide .panel .speeds button { transition: opacity .12s ease, transform .15s ease; }
+html.diorama.pcwide .panel .speeds button[aria-pressed="true"] { transform: rotate(-1.5deg); }
+html.diorama.pcwide .panel #skip { font-size: 20px; padding: 5px 10px 2px; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+html.diorama.pcwide .panel #skip.primary { text-decoration: none; }
 /* the sheets' switches (On / Off, 2D / 3D...): the old segmented row */
 html.diorama.pcwide .sheet .seg { display: inline-flex; gap: 0; border: 1px solid #27393D; border-radius: 4px; overflow: hidden; }
 html.diorama.pcwide .sheet .seg button { padding: 6px 11px; border: 0; background: transparent; color: #E5ECE9; opacity: 1; font: 13px "IBM Plex Mono", ui-monospace, monospace; }
@@ -1198,7 +1221,6 @@ html.diorama.pcwide #mp-pop.dock .mp-empty { font: 500 14px "Bricolage Grotesque
 html.diorama.pcwide #mp-pop.dock .mp-name { align-self: flex-end; width: 260px; border: 0; border-bottom: 1px dashed rgba(244,236,216,.5); border-radius: 0; background: none; color: #F4ECD8; text-align: right; font: 700 18px "Bricolage Grotesque", system-ui, sans-serif; }
 html.diorama.pcwide #mp-pop.dock .mp-foot { display: flex; flex-direction: row-reverse; justify-content: space-between; gap: 12px; align-items: center; }
 html.diorama.pcwide #mp-pop.dock .mp-where { font: 500 12px "Bricolage Grotesque", system-ui, sans-serif; opacity: .75; }
-html.diorama.pcwide .panel .speeds button[aria-pressed="true"]::before, html.diorama.pcwide .panel .speeds button.offer::before { content: none; display: none; }
 
 /* the column never squeezes its rows (on a short window they collapsed onto the gold, the owner's screenshot,
    2026-11-09): it scrolls instead, and ends above READY so nothing runs under it; */
@@ -1514,11 +1536,11 @@ html.dsetmenu.diorama.pcwide #sheet .btn#to-menu:hover:not(:disabled) { backgrou
    are buttons"): a light fill and a clear cream outline, brighter under the pointer; still the old game's shape (round
    corners, sentence case). Sheets (Take back, Set direction, Sell, Close...), the column (Loan, Undo all...), the picks'
    Hide, the results' Main menu, Skip */
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not([aria-pressed="true"]):not(#to-menu) {
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not([aria-pressed="true"]):not(#to-menu) {
   background: rgba(244, 236, 216, .09); border: 1px solid rgba(244, 236, 216, .38); color: #F4ECD8; box-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not([aria-pressed="true"]):not(#to-menu):hover:not(:disabled) {
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not([aria-pressed="true"]):not(#to-menu):hover:not(:disabled) {
   background: rgba(244, 236, 216, .17); border-color: rgba(244, 236, 216, .7); }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not(#to-menu):active:not(:disabled) { background: rgba(244, 236, 216, .24); }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not(#to-menu):active:not(:disabled) { background: rgba(244, 236, 216, .24); }
 html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: none; width: auto; } /* (a squad's sheet put it in a grid cell, where it stretched) */
 
 /* ── Puzzles (2026-11-10): its own field colour, a deep teal (the fourth: ultramarine menu, saffron Play, ink Profile).
