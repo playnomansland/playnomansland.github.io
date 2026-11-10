@@ -1170,6 +1170,18 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button class="create" id="pf-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
   </section>
 
+  <!-- Puzzles (2026-11-10): the game's tutorial puzzles as rows of words, by level. The island shows the pointed-at one:
+       their squads on their tiles, your shop on tiles along your side. One click on a row starts it -->
+  <section class="pz" aria-label="Puzzles">
+    <span class="k">Puzzles · one fight each</span>
+    <h2>Puzzles</h2>
+    <p class="pz-lede">You see their whole army. Win it with the gold you have.</p>
+    <p class="pz-title" id="pz-title"></p>
+    <div class="pz-list" id="pz-list"></div>
+    <button class="create" id="pz-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
+  </section>
+  <div class="note qnote" data-q="foe" style="display:none"></div>
+
   <!-- Match history: your online matches, newest first; a match folds out its rounds, each with a replay -->
   <section class="history" aria-label="Match history">
     <span class="k"><button class="crumb" data-crumb="profile">Profile</button> · Match history</span>
@@ -3969,6 +3981,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     home.ctx = { resume, netBack, newcomer };
     if (!home.screen || home.screen === 'menu' || !home.welcomeNeeded()) home.screen = home.welcomeNeeded() ? 'welcome' : 'menu';
     if (home.back === 'lobby' && home.screen === 'menu') { home.screen = 'lobby'; home.pop = false; } // a match from the lobby: back to the Rooms list
+    if (home.back === 'puzzles' && home.screen === 'menu') { home.pop = false; home.puz = true; } // a puzzle: back to the Diorama's Puzzles
     home.back = '';
     drawHome();
     size(); render();
@@ -6327,11 +6340,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     m.gold[1] = 0;
     m.gold = [P.gold, 0];
     tut = { intro: 2, wrong: false, tskillSeen: true, sheetSeen: true, puzzle: k, hint: false };
+    if (DIO) home.back = 'puzzles'; // the Diorama: the end of a puzzle comes back to its Puzzles screen
     nextReady = [false, false]; rematch = [false, false];
     enterDeploy(0);
   }
   // the menu's list of puzzles
   function openPuzzles() {
+    if (DIO && typeof dio !== 'undefined' && dio.api && dio.api.puzzles && phase === 'start' && !m) { closeSheet(true); dio.api.puzzles(); return; } // the Diorama's Puzzles screen
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Tutorial puzzles</h3><button class="btn small" id="close">Close</button></div>
       <p class="hint" style="margin:0">One fight each. You see the whole enemy army; win with the gold you have.</p>
       <p class="hint" style="margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${hasInitiate() ? 'The title is yours.' : `Solve the ${PUZ_TITLE.length} Easy puzzles for the title`} ${titleHtml('initiate')}</p>

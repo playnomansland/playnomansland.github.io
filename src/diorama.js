@@ -335,6 +335,37 @@
     }
     buildTier(1);
 
+    // ── Puzzles (2026-11-10): the pointed-at puzzle stands on the island, as the game will set it: their squads on their
+    // tiles, both keeps, and your shop on tiles along your side. It rises as the menu's pieces sink (as Units' roster) ──
+    const puzArmy = new THREE.Group(); island.add(puzArmy); puzArmy.position.y = -4; puzArmy.visible = false;
+    const puzFoeDot = new THREE.Object3D();
+    let puzShown = -1;
+    const puzUnit = (n) => (DATA.units || []).find(u => u.name === n) || ROSTER.units.find(u => u.name === n); // (the puzzles' own set)
+    const squad = (u, team, x, z, ry, into, big = 1) => { // a squad on its tile: up to three bodies
+      const kind = M.kindOf(u), ht = M.height(kind) || 2, copies = Math.min(u.bodies || 1, 3), sc = Math.min(0.46, 1.5 / ht) * big;
+      const spots = copies === 1 ? [[0, 0]] : copies === 2 ? [[-0.22, 0.04], [0.22, -0.04]] : [[-0.26, 0.14], [0.26, 0.14], [0, -0.2]];
+      for (const [dx, dz] of spots) unit(kind, u.color, team, x + dx, z + dz, copies > 1 ? sc * 0.78 : sc, ry, into);
+    };
+    function buildPuz(k) {
+      if (k === puzShown) return; puzShown = k;
+      for (const c of [...puzArmy.children]) { puzArmy.remove(c); c.traverse(o => { if (o.material) [].concat(o.material).forEach(mt => { if (mt.map && mt.map.isTexture) mt.map.dispose(); }); }); }
+      const P = PUZZLES[k]; if (!P) return;
+      puzArmy.add(puzFoeDot);
+      unit('tower:keep', '#D8CFBE', YOU, tx(8), tz(16), 0.36, 0, puzArmy); unit('tower:keep', '#C9BFAE', FOE, tx(5), tz(1), 0.36, Y, puzArmy);
+      let fx = 0, fz = 0;
+      for (const [n, c, r] of P.foe) { const u = puzUnit(n); if (u) squad(u, FOE, tx(c), tz(r), Y, puzArmy, 1.3); fx += tx(c); fz += tz(r); }
+      puzFoeDot.position.set(fx / P.foe.length, 0, fz / P.foe.length);
+      // your shop: a tile per unit you may buy, in a row across your half
+      const n = P.shop.length, gap = Math.min(2.05, 12.6 / n), z = tz(11.6);
+      P.shop.forEach((name, i) => { const u = puzUnit(name); if (!u) return;
+        const g = new THREE.Group(); g.position.set((i - (n - 1) / 2) * gap, 0, z); puzArmy.add(g);
+        const b = tile(gap - 0.16, 0.14, 1.9, (c, w, hh) => { c.fillStyle = '#F4ECD8'; c.fillRect(0, 0, w, hh); c.strokeStyle = 'rgba(23,20,15,.2)'; c.lineWidth = 6; c.setLineDash([18, 14]); c.strokeRect(20, 20, w - 40, hh - 40);
+            c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.84); }, null, '#CDBF9F');
+        b.position.set(0, 0.07, 0.3); g.add(b);
+        squad(u, YOU, 0, -0.3, 0.25, g, 1.15); for (const f of g.children) if (f !== b) f.position.y = 0.14;
+      });
+    }
+
 
     // ── light: a warm low sun and a cool sky ──
     scene.add(new THREE.HemisphereLight('#EFE6D2', '#3B3A4E', 1.15));
@@ -354,6 +385,7 @@
       welcome: { az: 0.98, el: 0.4, zoom: 12.8, at: [0, -0.6, 0], off: [0.19, 0.0] },
       signin:  { az: 0.98, el: 0.4, zoom: 13.6, at: [0, -0.6, 0], off: [0.27, 0.02] },
       history: { az: 0.62, el: 0.6, zoom: 13.2, at: [0, 0.2, 0.4], off: [0.29, -0.03] },
+      puz:     { az: 0.3, el: 0.82, zoom: 12.8, at: [0, 0, 0.2], off: [0.21, 0.02] }, // Puzzles: the whole board from your side
     };
     const phone = () => innerWidth <= 700;
     // the Play side (Play, Rooms, New room) sees the island from above (VIEWS.orders) or at the menu's angle (VIEWS.play):
@@ -434,7 +466,7 @@
       const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
       let lbOn = false;
       const rank = (n) => n.hasAttribute('data-home') ? 2 : n._off ? 1 : 0;
-      for (const el of [...body.querySelectorAll('.note:not(.pnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
+      for (const el of [...body.querySelectorAll('.note:not(.pnote):not(.qnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
@@ -456,7 +488,7 @@
           }
           continue;
         }
-        let show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el, hovered) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
+        let show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el, hovered) && !inPlay && !inProf && !body.classList.contains('puz') && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
         // every island note on the menu fades out over a second once it isn't wanted (owner, 2026-11-08: a quick sweep
         // over the island leaves each note readable for a second); a pointed-at piece's note shows at once, the menu's
         // own notes (the golem's, the skeleton's) come back in a quarter of a second
@@ -516,6 +548,13 @@
         el.style.display = show ? '' : 'none'; if (!show) continue;
         const [x, y] = proj(golem, 1.35), ln = pin(el, x, y, 170, -200); if (clear(el, x, y)) html += ln; else el.style.display = 'none';
       }
+      // Puzzles: the note on their army (what they have, and your gold)
+      for (const el of body.querySelectorAll('.qnote')) {
+        const show = !phone() && body.classList.contains('puz') && puzShown >= 0 && !!el.innerHTML;
+        el.style.display = show ? '' : 'none'; if (!show) continue;
+        const [x, y] = proj(puzFoeDot, 1.0), ln = pin(el, x, y, -220, -90);
+        if (clear(el, x, y)) html += ln; else el.style.display = 'none';
+      }
       // the unit sheet, attached to the picked unit
       const sh = document.getElementById('usheet'), tabs = body.querySelector('.tiers');
       // the tier tabs sit above the island's far edge; on Profile clear of your name, or under the Units row if they can't be
@@ -564,7 +603,7 @@
       let key = null, unitHot = false;
       if (e.target === cv && !body.classList.contains('play')) {
         if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
-        else if (viewName === 'play' && !body.classList.contains('profile')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; else if (!body.classList.contains('welcome') && hitOf(e, UNIT_MODELS) >= 0) unitHot = true; }
+        else if (viewName === 'play' && !body.classList.contains('profile') && !body.classList.contains('puz')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; else if (!body.classList.contains('welcome') && hitOf(e, UNIT_MODELS) >= 0) unitHot = true; }
       }
       if (e.target === cv && body.classList.contains('play') && !body.classList.contains('profile') && hitOf(e, [island]) >= 0) unitHot = true; // Play: the island switches its view
       setHover(key); cv.classList.toggle('world-hot', !!key || unitHot);
@@ -582,7 +621,7 @@
       if (!key || !key.startsWith('u:')) notes();
     }
     body.addEventListener('click', (e) => { // the main menu: a unit model opens Units (its note doesn't: notes are their own elements)
-      if (e.target !== cv || viewName !== 'play' || ['play', 'profile', 'welcome', 'units', 'ranks', 'pinned'].some(c => body.classList.contains(c))) return;
+      if (e.target !== cv || viewName !== 'play' || ['play', 'profile', 'welcome', 'units', 'ranks', 'pinned', 'puz'].some(c => body.classList.contains(c))) return;
       if (hitOf(e, UNIT_MODELS) < 0) return;
       items.forEach(x => x.classList.toggle('on', x.dataset.cam === 'units')); viewName = 'units'; want = VIEWS.units; setMode('units'); body.classList.add('pinned'); setHover(null); cv.classList.remove('world-hot');
     });
@@ -645,8 +684,9 @@
       sniper.rotation.y = -0.35 + Math.sin(t * 0.4) * 0.06;
       ent.scale.y = 0.441 * (1 + Math.sin(t * 1.2) * 0.03);
       champ.rotation.y = -0.3 + Math.sin(t * 0.6) * 0.1;
-      const rk = body.classList.contains('ranks'), un = body.classList.contains('units');
-      pieces.position.y = lerp(pieces.position.y, rk || un ? -2.6 : 0, kk); pieces.visible = pieces.position.y > -2.4;
+      const rk = body.classList.contains('ranks'), un = body.classList.contains('units'), pz = body.classList.contains('puz');
+      puzArmy.position.y = lerp(puzArmy.position.y, pz ? 0 : -4, kk); puzArmy.visible = puzArmy.position.y > -3.6;
+      pieces.position.y = lerp(pieces.position.y, rk || un || pz ? -2.6 : 0, kk); pieces.visible = pieces.position.y > -2.4;
       const tn = performance.now() / 1000;
       for (const g of rosterHot) for (const f of g.children) if (f.userData.pop) { const p = Math.min(1, (tn - f.userData.pop) / 0.34), e = 1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2);
         f.scale.setScalar(Math.max(0.001, f.userData.s * (p >= 1 ? 1 : e))); if (p >= 1) f.userData.pop = 0; }
@@ -742,7 +782,7 @@
       b.addEventListener('mouseenter', go); b.addEventListener('focus', go);
     }
     // (the menu hides under the pointer when Play or Profile opens: that leave keeps their view; owner's bug, 2026-11-10)
-    body.querySelector('.menu').addEventListener('mouseleave', () => { if (body.classList.contains('pinned') || body.classList.contains('play') || body.classList.contains('profile')) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
+    body.querySelector('.menu').addEventListener('mouseleave', () => { if (['pinned', 'play', 'profile', 'puz'].some(c => body.classList.contains(c))) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
     for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
     // Puzzles and How to play open the game's sheets (until they're designed); the camera move on pointing stays
     $('puzzles-open').addEventListener('click', openPuzzles);
@@ -751,7 +791,7 @@
     { const rn = body.querySelector('.rw-note'); rn.addEventListener('click', () => openRewardsSheet()); rn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRewardsSheet(); } }); }
     const unpin = () => { body.classList.remove('pinned'); setMode('play'); picked = null; items.forEach(x => x.classList.toggle('on', x.id === 'play')); viewName = 'play'; want = VIEWS.play; };
     // the Play screen is the old PLAY popup: home.pop says it's open (it stays open across a match, and ?test opens it at once)
-    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = playView(); home.pop = true; };
+    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); if (typeof closePuz === 'function') closePuz(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = playView(); home.pop = true; };
     const closePlay = () => { body.classList.remove('play', 'mp-open'); setMp(false); unpin(); home.pop = false; };
     document.getElementById('play').addEventListener('click', openPlay);
     document.getElementById('play-back').addEventListener('click', () => { leavePlay(); unpin(); }); // Play's Back: the menu (owner, 2026-11-10)
@@ -761,7 +801,7 @@
       if (body.classList.contains('welcome')) return;
       openDrop(''); closeMusic();
       if (body.classList.contains('profile')) closeProfile();
-      leavePlay(); unpin();
+      closePuz(); leavePlay(); unpin();
     }
     // off the Play side (Play, Rooms, New room) to the plain menu: the logo and Profile, which opens over the menu only
     function leavePlay() {
@@ -775,6 +815,7 @@
       else if (w === 'profile') closeHistory();
       else if (w === 'welcome') goScreen('welcome'); });
     const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
+      if (body.classList.contains('puz')) return closePuz();
       if (body.classList.contains('in-rooms')) return closeRooms(); closePlay(); };
     backBtn.addEventListener('click', goBack);
 
@@ -1020,10 +1061,41 @@
     // where Profile was opened from, for its Back: the Play screen, Rooms (and New room), or the menu
     let pfFrom = null;
     function openProfile() { if (!body.classList.contains('profile')) pfFrom = body.classList.contains('in-create') ? 'create' : home.screen === 'lobby' ? 'rooms' : body.classList.contains('play') || home.pop ? 'play' : null;
-      openDrop(''); leavePlay(); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
+      openDrop(''); closePuz(); leavePlay(); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
       if (acct && !sampleAcct) acctCall('me', {}, true).then(r => { if (r.status === 200) { acctTake(r); A = acct; buildTier(tier); drawProfile(); } else if (r.status === 401) { acctFail(r); A = acct; drawProfile(); } }); }
     function closeProfile() { body.classList.remove('profile', 'in-history', 'units'); picked = null; hovered = null; want = VIEWS.play; backBtn.textContent = '← Menu'; acctUi.after = null; drawProfile(); }
     acctBtn.addEventListener('click', openProfile);
+
+    // ── Puzzles (2026-11-10): the game's puzzles (PUZZLES, by level) as rows of words; pointing at one shows it on the
+    // island, a click starts it (startPuzzle). The end of a puzzle comes back here (home.back 'puzzles' → home.puz) ──
+    let puzPick = -1;
+    const firstOpen = () => { const done = puzSolvedAll(); const k = PUZZLES.findIndex((P, i) => !done.includes(i)); return k >= 0 ? k : 0; };
+    function puzShow(k) {
+      if (!PUZZLES[k]) return; puzPick = k; buildPuz(k);
+      body.querySelectorAll('#pz-list .item').forEach(b => b.classList.toggle('on', +b.dataset.puz === k));
+      const P = PUZZLES[k]; // (its goal ends with your gold: "You have 300 gold.")
+      body.querySelector('.qnote[data-q="foe"]').innerHTML = `${esc(P.name)}.<small>${esc(P.goal || '')}</small>`;
+      body.querySelectorAll('.qnote').forEach(n => { n._off = null; }); notes();
+    }
+    function drawPuz() {
+      const done = puzSolvedAll(), tchip = TITLES.initiate ? `<span class="ptitle" style="--tc:${TITLES.initiate.col}"><i></i>${esc(TITLES.initiate.name)}<i></i></span>` : '';
+      $('pz-title').innerHTML = hasInitiate() ? `The title is yours. ${tchip}` : `Solve the ${PUZ_TITLE.length} Easy ones for the title ${tchip}`;
+      const shards = ['0,12 92,0 100,84 7,100', '3,0 100,10 96,100 0,88', '0,8 97,0 100,92 3,100', '2,0 100,12 97,96 0,100'];
+      let n = 0;
+      $('pz-list').innerHTML = PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), got = ks.filter(k => done.includes(k)).length;
+        return `<div class="pz-lv"><span class="k">${esc(L)}</span><span class="pz-n">${got} of ${ks.length} solved</span></div>` + ks.map(k => { n++;
+          return `<button class="item${done.includes(k) ? ' done' : ''}${k === puzPick ? ' on' : ''}" data-puz="${k}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[k % 4]}"/></svg><span class="n">${String(n).padStart(2, '0')}</span>${esc(PUZZLES[k].name)}${done.includes(k) ? '<small>✓ solved</small>' : ''}</button>`; }).join(''); }).join('');
+    }
+    function openPuz() {
+      openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); leavePlay(); unpin();
+      body.classList.add('puz'); home.puz = true; hovered = null; setHover(null);
+      drawPuz(); puzShow(puzPick >= 0 ? puzPick : firstOpen()); want = VIEWS.puz;
+    }
+    function closePuz() { if (!body.classList.contains('puz')) return; body.classList.remove('puz'); home.puz = false; want = VIEWS.play; body.querySelectorAll('.qnote').forEach(n => { n.style.display = 'none'; n._off = null; }); }
+    $('pz-list').addEventListener('mouseover', (e) => { const b = e.target.closest('[data-puz]'); if (b && +b.dataset.puz !== puzPick) puzShow(+b.dataset.puz); });
+    $('pz-list').addEventListener('focusin', (e) => { const b = e.target.closest('[data-puz]'); if (b && +b.dataset.puz !== puzPick) puzShow(+b.dataset.puz); });
+    $('pz-list').addEventListener('click', (e) => { const b = e.target.closest('[data-puz]'); if (b) startPuzzle(+b.dataset.puz); });
+    $('pz-back').addEventListener('click', closePuz);
     $('pf-back').addEventListener('click', () => { const from = pfFrom; pfFrom = null; closeProfile();
       if (from === 'rooms' || from === 'create') { openRooms(roomQ); if (from === 'create') openCreate(); }
       else if (from === 'play') { home.screen = 'menu'; home.pop = true; drawHome(); } });
@@ -1475,6 +1547,8 @@
       const onMenu = s === 'menu' || !s;
       if (onMenu && home.pop && !body.classList.contains('play') && !body.classList.contains('profile')) openPlay();
       else if ((!onMenu || !home.pop) && body.classList.contains('play') && !body.classList.contains('in-rooms')) closePlay();
+      if (onMenu && home.puz && !body.classList.contains('puz') && !body.classList.contains('profile') && !home.pop) openPuz();
+      else if (body.classList.contains('puz')) { if (!onMenu || home.pop) closePuz(); else drawPuz(); }
       drawBackTo();
       if (onMenu) { // what the old drawMenu did quietly on the menu: ranked's switch (and the leaderboard), a fresh account, Discord's answer
         if (!home.asked) rankedCheck();
@@ -1503,7 +1577,7 @@
       skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
       homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
     }
-    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
+    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms, puzzles: openPuz };
     dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); window.__dio.cam = () => ({ want: Object.keys(VIEWS).find(k => VIEWS[k] === want) || 'other', el: +now.el.toFixed(2) }); } // the tests: the roster standing; show / hide the home by hand

@@ -1511,3 +1511,27 @@ html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overl
   background: rgba(244, 236, 216, .17); border-color: rgba(244, 236, 216, .7); }
 html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not(#to-menu):active:not(:disabled) { background: rgba(244, 236, 216, .24); }
 html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: none; width: auto; } /* (a squad's sheet put it in a grid cell, where it stretched) */
+
+/* ── Puzzles (2026-11-10): its own field colour, a deep teal (the fourth: ultramarine menu, saffron Play, ink Profile).
+   The left column as Profile's: the title, a line, the title to earn, the puzzles by level as stencil words (the saffron
+   shard on the pointed-at one), Back. The island shows the pointed-at puzzle ── */
+#dio.puz { --field: #1F5A57; --field-lo: #143C3A; }
+#dio.puz .menu, #dio.puz .zz, #dio.puz .standings, #dio.puz #dio-backto, #dio.puz .tiers { display: none; }
+#dio .pz { position: fixed; left: 48px; top: clamp(100px, 14.2vh, 128px); width: min(600px, 42vw); display: none; align-content: start; justify-items: start; }
+#dio.puz .pz { display: grid; }
+#dio .pz .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
+#dio .pz h2 { margin: 2px 0 0; font: 700 clamp(60px, 11.6vh, 104px)/.86 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+#dio .pz .pz-lede { margin: clamp(8px, 1.6vh, 14px) 0 0; font: 700 15px/1.35 var(--type); opacity: .92; }
+#dio .pz .pz-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0 0; font: 700 15px/1.35 var(--type); opacity: .92; }
+#dio .pz .pz-title .ptitle { margin: 0; font-size: 20px; }
+#dio .pz .pz-list { display: grid; justify-items: start; margin: clamp(10px, 2.4vh, 22px) 0 clamp(12px, 2.6vh, 24px); }
+#dio .pz .pz-lv { display: flex; align-items: baseline; gap: 14px; margin: clamp(6px, 1.4vh, 12px) 0 clamp(2px, .6vh, 6px); }
+#dio .pz .pz-lv:first-child { margin-top: 0; }
+#dio .pz .pz-n { font: 700 13px var(--type); opacity: .75; }
+#dio .pz .item { font-size: clamp(28px, 4.6vh, 42px); margin: clamp(1px, .45vh, 4px) 0 clamp(1px, .45vh, 4px) 4px; padding: 3px 4px 0; }
+#dio .pz .item small { margin-left: 4px; font: 700 13px var(--type); text-transform: none; letter-spacing: 0; color: #9FE0B0; transform: translateY(-3px); }
+#dio .pz .item.on small, #dio .pz .item:hover small { color: var(--ink); }
+#dio .pz .create { background: var(--saffron); color: var(--ink); font-size: clamp(28px, 4vh, 36.4px); padding: clamp(6px, 1.1vh, 10px) 22px clamp(5px, .9vh, 8px) 18px; }
+#dio .pz .create svg { margin-right: -2px; }
+#dio .note.qnote { max-width: 260px; cursor: default; }
+#dio.puz .acct { display: flex; }

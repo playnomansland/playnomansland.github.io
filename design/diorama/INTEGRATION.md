@@ -100,6 +100,17 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
 - Fifteenth round (2026-11-10): the skeleton's hint ("Hover over stuff on the island with your mouse!") goes up and to
   the left of the skeleton, beside the golem's note (or above it when it would sit over it); to the right only when
   there's no room (small windows: 1280×720, 1024×768).
+- **Puzzles screen (designed 2026-11-10, on the branch only until the owner says go; PC players would see it at once on
+  `main`).** The menu's PUZZLES opens it instead of the game's sheet (`openPuzzles` hands over to `dio.api.puzzles` on
+  the home; the old UI keeps the sheet). Its own field colour, a deep teal `#1F5A57` (the fourth after ultramarine,
+  saffron and ink). Left column as Profile's: "Puzzles · one fight each", PUZZLES, "You see their whole army. Win it
+  with the gold you have.", "Solve the 3 Easy ones for the title INITIATE" (or "The title is yours."), then each level
+  (`PUZ_LEVELS`) with "n of m solved" and its puzzles as numbered stencil words (✓ solved in green), Back. Pointing at a
+  row puts that puzzle on the island (`buildPuz`): the menu's pieces sink, both keeps, their squads on their real tiles
+  (`P.foe`, facing you) and your shop as name tiles with the unit across your half (`P.shop`); one note on their army:
+  the puzzle's name and its goal line (which ends "You have N gold."). Camera `VIEWS.puz`. A click starts it
+  (`startPuzzle`); leaving or finishing it comes back to Puzzles (`home.back = 'puzzles'` → `home.puz`). Back, Esc and
+  the logo go to the menu; Profile and Play close it. Checked at 1920×1080, 1440×900, 1366×768, 1280×720.
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 - Eleventh round (2026-11-09): the golem's note (menu and Profile) has a small saffron button, INVITE A FRIEND
