@@ -1425,6 +1425,32 @@ html.diorama.pcwide #mp-pop.dock.hid .dm-show { opacity: 1; transform: none; poi
 html.diorama.pcwide #mp-pop.dock.hid::before { opacity: 0; }
 html.diorama.pcwide #mp-pop.dock::before { transition: opacity .3s ease; }
 
+/* Full screen in the top line, after Settings */
+html.diorama.pcwide .hud .round #dfs::after { content: "Full screen"; }
+html.diorama.pcwide .hud .round #dfs[aria-pressed="true"]::after { content: "Leave full screen"; }
+/* the drop zone to take a squad back (or sell it): no box; the column darkens a little, a saffron edge on the board's
+   side, and the word in stencil with the gold back (the owner, 2026-11-09: "ugly") */
+html.diorama.pcwide .panel .drop2 { position: fixed; top: 0; bottom: 0; left: 0; width: var(--dpw, 340px); inset-inline: auto; z-index: 5; border: 0; border-radius: 0; display: grid; place-items: center;
+  background: linear-gradient(90deg, rgba(23,20,15,.72), rgba(23,20,15,.55)); box-shadow: inset -3px 0 0 rgba(242,178,58,.45); color: #F4ECD8; transition: box-shadow .15s ease, background .15s ease; }
+html.dright.diorama.pcwide .panel .drop2 { left: auto; right: 0; box-shadow: inset 3px 0 0 rgba(242,178,58,.45); background: linear-gradient(270deg, rgba(23,20,15,.72), rgba(23,20,15,.55)); }
+html.diorama.pcwide .panel .drop2.hot { background: linear-gradient(90deg, rgba(23,20,15,.82), rgba(23,20,15,.7)); box-shadow: inset -5px 0 0 #F2B23A; }
+html.dright.diorama.pcwide .panel .drop2.hot { box-shadow: inset 5px 0 0 #F2B23A; }
+html.diorama.pcwide .drop2 .dz { display: grid; justify-items: center; gap: 6px; text-align: center; text-shadow: var(--dhalo); }
+html.diorama.pcwide .drop2 .dz b { font: 700 46px/.9 var(--dstencil); text-transform: uppercase; letter-spacing: -.01em; }
+html.diorama.pcwide .drop2 .dz .g { font: 700 22px var(--dstencil); color: #F2B23A; }
+html.diorama.pcwide .drop2 .dz small { font: 700 13px var(--dtype); opacity: .8; }
+html.diorama.pcwide .drop2.hot .dz b { color: #F2B23A; }
+/* the deploy panel slides away (html.dtuck): its left / right moves, READY and the clock stay; the scrim lightens; a
+   thin tab at the edge */
+html.diorama.pcwide .panel { transition: left .32s cubic-bezier(.2, .9, .25, 1), right .32s cubic-bezier(.2, .9, .25, 1); }
+html.dtuck.diorama.pcwide .panel { left: calc(-1 * var(--dpw, 340px) - 12px); }
+html.dtuck.dright.diorama.pcwide .panel { left: auto; right: calc(-1 * var(--dpw, 340px) - 12px); }
+html.diorama.pcwide #wrap::before { transition: opacity .32s ease; }
+html.dtuck.diorama.pcwide #wrap::before { opacity: .35; }
+html.diorama.pcwide .app::after { content: ""; position: fixed; z-index: 5; top: 50%; left: 0; width: 5px; height: 96px; margin-top: -48px; background: rgba(242, 178, 58, .75); clip-path: polygon(0 0, 100% 8%, 100% 92%, 0 100%); opacity: 0; transform: translateX(-6px); transition: opacity .25s ease, transform .25s ease; pointer-events: none; }
+html.dright.diorama.pcwide .app::after { left: auto; right: 0; clip-path: polygon(0 8%, 100% 0, 100% 100%, 0 92%); transform: translateX(6px); }
+html.dtuck.diorama.pcwide .app::after { opacity: 1; transform: none; }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -17879,7 +17905,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 22b466e'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 7f047c6'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -18008,6 +18034,12 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         <div class="seg" role="group" aria-label="Deploy panel">
           <button data-dside="left" aria-pressed="${dSide === 'left'}">Left</button><button data-dside="right" aria-pressed="${dSide === 'right'}">Right</button>
         </div>
+      </div>
+      <div class="bar">
+        <span class="hint">Deploy panel slides away</span>
+        <div class="seg" role="group" aria-label="Deploy panel slides away">
+          <button data-dauto="1" aria-pressed="${dAuto}">On</button><button data-dauto="0" aria-pressed="${!dAuto}">Off</button>
+        </div>
       </div>` : ''}
       ${document.documentElement.classList.contains('pc') ? '' : `<div class="bar">
         <span class="hint">Phone layout</span>
@@ -18119,6 +18151,10 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       if (r.status !== 200) { $('rk-msg').textContent = r.status === 403 ? 'Only a developer can do that.' : acctFail(r); return; }
       home.rankedOn = !!r.on; $('rk-msg').textContent = r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).';
       $('sheet').querySelectorAll('[data-rk]').forEach(x => x.setAttribute('aria-pressed', String((x.dataset.rk === '1') === !!r.on)));
+    }));
+    $('sheet').querySelectorAll('[data-dauto]').forEach(b => b.addEventListener('click', () => {
+      setDeployAuto(b.dataset.dauto === '1');
+      $('sheet').querySelectorAll('[data-dauto]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     }));
     $('sheet').querySelectorAll('[data-dside]').forEach(b => b.addEventListener('click', () => { // the Diorama: the deploy panel's side
       setDeploySide(b.dataset.dside, true);
@@ -18696,6 +18732,13 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     const r = document.querySelector('.hud .round'), mp = m && Game.mapOf(m), sk = m && Game.SKINS.find(x => x.id === m.skin);
     let st = $('foe-state');
     if (!st) { st = document.createElement('span'); st.id = 'foe-state'; st.className = 'foe-state'; document.querySelector('.hud .side.foe').appendChild(st); }
+    if (!$('dfs') && document.fullscreenEnabled) { // Full screen in the match's top line (the owner, 2026-11-09)
+      const b = document.createElement('button'); b.className = 'cog dfs'; b.id = 'dfs'; b.type = 'button';
+      const sync = () => { const on = !!document.fullscreenElement; b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Leave full screen' : 'Full screen'); };
+      b.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch (e) {} });
+      document.addEventListener('fullscreenchange', sync); sync();
+      r.querySelector('.round-sub').appendChild(b);
+    }
     const roomOn = dioRoomOn(), host = me === 0, rk = mode === 'net' && net.ranked;
     const dl = roomOn ? lookShown() : m ? Game.lookOf(m) : ''; // the battlefield's look: the unit cards' colour follows it (src/diorama.css --dcard)
     if (document.documentElement.dataset.dlook !== dl) document.documentElement.dataset.dlook = dl;
@@ -19138,7 +19181,11 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (!sq || (!drag.moved && !over)) { if (z) z.remove(); return; }
     if (!z) { z = document.createElement('div'); z.className = 'drop2'; pn.appendChild(z); }
     const text = sq.round === m.round ? `Drop here to take back${sq.cost ? ` +${sq.cost}` : ''}` : `Drop here to sell +${Game.sellValue(m, sq)}`;
-    if (z.textContent !== text) z.textContent = text;
+    if (DIO && pcLayout()) { // the Diorama: the word, the gold back, and what to do (src/diorama.css .drop2)
+      const back = sq.round === m.round, g = back ? sq.cost : Game.sellValue(m, sq);
+      const html = `<span class="dz"><b>${back ? 'Take back' : 'Sell'}</b>${g ? `<span class="g">+${g} gold</span>` : ''}<small>${back ? 'Drop it here' : 'Drop it here to sell it'}</small></span>`;
+      if (z.dataset.h !== html) { z.dataset.h = html; z.innerHTML = html; z.setAttribute('aria-label', text); }
+    } else if (z.textContent !== text) z.textContent = text;
     z.classList.toggle('hot', over);
   }
   // dragging a card up onto the board (a tap picks it, a hold opens its sheet, a sideways swipe scrolls the tray)
@@ -23190,15 +23237,37 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // the deploy panel's side (the owner, 2026-11-09: an option in Settings, right by default for now), kept on this device;
   // ?side=left / ?side=right set it too. html.dright mirrors the column (src/diorama.css), dioSafe frames the board
   const DSIDE_STORE = 'pb-deploy-side';
-  let dSide = 'right';
-  try { const q = (location.search.match(/[?&]side=(left|right)\b/) || [])[1]; if (q) localStorage.setItem(DSIDE_STORE, q); dSide = localStorage.getItem(DSIDE_STORE) === 'left' ? 'left' : 'right'; } catch (e) {}
+  let dSide = 'left'; // (left by default again: the owner, 2026-11-09)
+  try { const q = (location.search.match(/[?&]side=(left|right)\b/) || [])[1]; if (q) localStorage.setItem(DSIDE_STORE, q); dSide = localStorage.getItem(DSIDE_STORE) === 'right' ? 'right' : 'left'; } catch (e) {}
   function setDeploySide(side, save) {
-    dSide = side === 'left' ? 'left' : 'right';
+    dSide = side === 'right' ? 'right' : 'left';
     if (save) { try { localStorage.setItem(DSIDE_STORE, dSide); } catch (e) {} }
     document.documentElement.classList.toggle('dright', DIO && dSide === 'right');
     if (board3d) wake3d();
   }
   setDeploySide(dSide);
+  // The deploy panel tucks away to its side when the pointer leaves it and slides back out when the pointer comes to that
+  // side of the screen (the owner, 2026-11-09). A mouse only; never while a button is held (a card or a squad dragged),
+  // a sheet is open, in the room, or with Settings' "Deploy panel: Always shown". READY and the clock stay where they
+  // are (they're fixed, the column only moves its left / right). The board keeps its framing, so it never moves under
+  // the pointer while aiming. A thin tab at the edge shows where it went
+  const DAUTO_STORE = 'pb-deploy-auto';
+  let dAuto = true, dOut = true, dOutT = 0;
+  try { dAuto = localStorage.getItem(DAUTO_STORE) !== 'off'; } catch (e) {}
+  function dioPanelOut(out) {
+    if (dOut === out) return;
+    dOut = out; document.documentElement.classList.toggle('dtuck', !out);
+  }
+  function setDeployAuto(on) { dAuto = !!on; try { localStorage.setItem(DAUTO_STORE, on ? 'on' : 'off'); } catch (e) {} if (!on) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); } }
+  addEventListener('pointermove', (e) => {
+    if (!DIO || e.pointerType !== 'mouse') return;
+    const wide = dioWide() && phase !== 'lobby' && !dioRoomOn();
+    if (!wide || !dAuto) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); return; }
+    const pw = dioPw(), x = e.clientX, edge = dOut ? pw + 16 : 60;
+    const near = dSide === 'right' ? x >= innerWidth - edge : x <= edge;
+    if (near || e.buttons || !$('sheet-back').hidden) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); }
+    else if (dOut && !dOutT) dOutT = setTimeout(() => { dOutT = 0; dioPanelOut(false); }, 450);
+  }, { passive: true });
   try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
   const dioWide = () => DIO && document.documentElement.classList.contains('pcwide');
   const dioPw = () => Math.round(Math.min(400, Math.max(318, innerWidth * 0.25))); // the left column's width (--dpw), as the prototype's clamp(318px, 25vw, 400px)
@@ -28449,7 +28518,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         ${document.fullscreenEnabled ? `<button class="fs-big" data-set="fs|${fs ? 0 : 1}" aria-pressed="${fs}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6">${fsIco}</svg>${fs ? 'Leave full screen' : 'Full screen'}</button>` : ''}
         <span class="k">Sound</span><div class="set">${spkVol('vol', 'music', musicOn(), snd.vol, 'Music')}${spkVol('sfxVol', 'sfx', !!snd.sfx && snd.sfxVol > 0, snd.sfxVol, 'Sound effects')}
           ${navigator.audioSession ? `<span class="lab">Other apps</span><span class="seg"><button class="w" data-set="solo|0" aria-pressed="${!snd.solo}">Keep playing</button><button class="w" data-set="solo|1" aria-pressed="${!!snd.solo}">Pause them</button></span><p class="sn">Pause them: plays even on silent.</p>` : ''}</div>
-        ${PC() ? `<span class="k">Match screen</span><div class="set"><span class="lab">Deploy panel</span><span class="seg"><button class="w" data-set="dside|0" aria-pressed="${dSide === 'left'}">Left</button><button class="w" data-set="dside|1" aria-pressed="${dSide === 'right'}">Right</button></span><p class="sn">Where your gold, the shop and READY sit in a match.</p></div>` : ''}
+        ${PC() ? `<span class="k">Match screen</span><div class="set"><span class="lab">Deploy panel</span><span class="seg"><button class="w" data-set="dside|0" aria-pressed="${dSide === 'left'}">Left</button><button class="w" data-set="dside|1" aria-pressed="${dSide === 'right'}">Right</button></span><p class="sn">Where your gold, the shop and READY sit in a match.</p>${onoff('dauto', 'Slides away', dAuto, dAuto ? 'It tucks to its side when your pointer leaves it, and comes back when you point at that side.' : 'Always shown.')}</div>` : ''}
         <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}</div>
         <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
         <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', staying(), staying() ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${acct && !acct.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
@@ -28471,6 +28540,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       else if (k === 'stay') setStay(on);
       else if (k === 'fs') { try { if (on && !document.fullscreenElement) await document.documentElement.requestFullscreen(); else if (!on && document.fullscreenElement) await document.exitFullscreen(); } catch (er) {} }
       else if (k === 'dside') setDeploySide(on ? 'right' : 'left', true);
+      else if (k === 'dauto') setDeployAuto(on);
       else if (k === 'tm') timerOn = on; // the old PLAY popup's Deploy timer vs AI (for this visit, as there)
       else if (k === 'rk') { const r = await acctCall('ranked', { on }, true); if (r.status === 200) home.rankedOn = !!r.on; drawSettings();
         if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }

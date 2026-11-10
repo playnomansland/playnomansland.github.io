@@ -455,3 +455,10 @@ under 860 px high.
   panel sits closer to the edge.
   The player itself hides too (the owner): its down arrow (`.dm-hide`) slides it away, leaving a small "♪ Music ⌃"
   (`.dm-show`) that slides it back up; kept on the device (`pb-dmusic`). Three steps down: playlists → player → Music.
+- **2026-11-10 (owner):** the deploy panel is on the **left by default again** (Settings still has Left / Right).
+  **It slides away:** when the mouse leaves the column it tucks to its side after 0.45 s and comes back when the pointer
+  reaches that side (the column, or the 60 px edge while tucked); never while a button is held (dragging), a sheet is
+  open, or in the room; READY and the clock stay; the board keeps its framing so nothing moves under the pointer; a
+  thin saffron tab marks the edge. Settings: "Slides away" On / Off (`pb-deploy-auto`, on by default). **Full screen**
+  in the match's top line (`#dfs`). **Take back / Sell drop zone** restyled: no box, the column darkens with a saffron
+  edge toward the board, TAKE BACK (or SELL) in stencil with the gold back in saffron.
