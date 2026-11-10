@@ -207,6 +207,23 @@ const Engine = (() => {
   const CONVERT_HP = 50;
   const CONVERT_SQUAD = -200;  // squad id of bodies that switched sides (not a squad in either army)
   const TURN = 6;              // how fast a walking body swings to a new heading (share of the turn per second)
+  // A body's heading (b.hx, b.hy) swings toward the way it wants to go (wx, wy, a unit vector) by share k of the turn.
+  // Mixing the two straight would never turn a heading that points (all but) exactly away from where it wants to go:
+  // the mix stays on that one line and, with k under 1/2, points the old way again once it is scaled back to length 1.
+  // An Assassin put right behind an enemy (same column) set off on its march heading, away from its target, and
+  // walked off the back of the board for the rest of the fight (2026-11-10). So a wanted way within BACK_SIN of
+  // straight behind (sine of the angle) is turned toward through the side first: toward the heading's left or right,
+  // whichever side it lies on. Dead behind, side 0 turns left and side 1 right: side 1 stands as side 0's reflection, so
+  // mirrored armies still fight as exact mirrors (tools/tests/fairness.js).
+  const BACK_SIN = 0.25;
+  function turnHeading(b, wx, wy, k) {
+    let tx = wx, ty = wy;
+    const cross = b.hx * wy - b.hy * wx;
+    if (b.hx * wx + b.hy * wy < 0 && cross * cross < BACK_SIN * BACK_SIN) { const s = cross > 0 ? 1 : cross < 0 ? -1 : b.side === 1 ? -1 : 1; tx = -b.hy * s; ty = b.hx * s; }
+    let hx = b.hx + (tx - b.hx) * k, hy = b.hy + (ty - b.hy) * k, hl = hyp(hx, hy);
+    if (hl < 1e-6) { hx = wx; hy = wy; hl = 1; }
+    b.hx = hx / hl; b.hy = hy / hl;
+  }
   const SIGHT = 15;            // metres beyond its own range at which a unit notices an enemy and turns toward it
   const MIN_SIGHT = 18;        // ...but never less than this many metres from the unit (3 tiles), however short its range
   const DRIFT = 15;            // metres beyond that at which a marching unit starts to lean toward the nearest enemy
@@ -1307,10 +1324,7 @@ const Engine = (() => {
       const step = spd(b) * moveMul(b) * dt;
       const [ux, uy] = steer(b, sp.x, sp.y, gx / gd, gy / gd);
       if (b.hx === undefined) { b.hx = ux; b.hy = uy; }
-      const k = Math.min(1, TURN * dt);
-      let hx = b.hx + (ux - b.hx) * k, hy = b.hy + (uy - b.hy) * k, hl = hyp(hx, hy);
-      if (hl < 1e-6) { hx = ux; hy = uy; hl = 1; }
-      b.hx = hx / hl; b.hy = hy / hl;
+      turnHeading(b, ux, uy, Math.min(1, TURN * dt));
       const mv = Math.min(step, gd);
       b.x += b.hx * mv; b.y += b.hy * mv; b.moved += mv;
       if (b.u.windUp > 0 && mv > 0) { b.setUp = false; if (b.windTarget) { b.windTarget = null; stats[b.side].windLost++; } }
@@ -2320,12 +2334,7 @@ const Engine = (() => {
         if (terBlock) [wx, wy] = steer(b, tgt ? tgt.x : b.x + wx * 400, tgt ? tgt.y : b.y + wy * 400, wx, wy); // round walls and water
         // standing still it can set off any way; rolling, it swings round like a walking body
         if (b.hx === undefined || b.rollV <= start) { b.hx = wx; b.hy = wy; }
-        else {
-          const k = Math.min(1, TURN * dt);
-          let hx = b.hx + (wx - b.hx) * k, hy = b.hy + (wy - b.hy) * k, hl = hyp(hx, hy);
-          if (hl < 1e-6) { hx = wx; hy = wy; hl = 1; }
-          b.hx = hx / hl; b.hy = hy / hl;
-        }
+        else turnHeading(b, wx, wy, Math.min(1, TURN * dt));
         // about to reach the target: from here it runs straight on, through it and past it
         if (tgt) {
           const d = dist(tgt, b);
@@ -2707,10 +2716,7 @@ const Engine = (() => {
           const step = spd(b) * (b.slowT > 0 ? 1 - b.slowMove / 100 : 1) * (cripple[ck(b)] > 0 ? 1 - towerDown.move / 100 : 1) * dt;
           const [ux, uy] = steer(b, p.x, p.y, gx / gd, gy / gd);
           if (b.hx === undefined) { b.hx = ux; b.hy = uy; }
-          const k = Math.min(1, TURN * dt);
-          let hx = b.hx + (ux - b.hx) * k, hy = b.hy + (uy - b.hy) * k, hl = hyp(hx, hy);
-          if (hl < 1e-6) { hx = ux; hy = uy; hl = 1; }
-          b.hx = hx / hl; b.hy = hy / hl;
+          turnHeading(b, ux, uy, Math.min(1, TURN * dt));
           const mv = Math.min(step, gd);
           b.x += b.hx * mv; b.y += b.hy * mv; b.moved += mv;
           if (b.u.windUp > 0 && mv > 0) { b.setUp = false; if (b.windTarget) { b.windTarget = null; stats[b.side].windLost++; } }
@@ -2743,10 +2749,7 @@ const Engine = (() => {
           const step = spd(b) * (b.slowT > 0 ? 1 - b.slowMove / 100 : 1) * (cripple[ck(b)] > 0 ? 1 - towerDown.move / 100 : 1) * dt;
           const [ux, uy] = steer(b, p.x, p.y, gx / gd, gy / gd);
           if (b.hx === undefined) { b.hx = ux; b.hy = uy; }
-          const k = Math.min(1, TURN * dt);
-          let hx = b.hx + (ux - b.hx) * k, hy = b.hy + (uy - b.hy) * k, hl = hyp(hx, hy);
-          if (hl < 1e-6) { hx = ux; hy = uy; hl = 1; }
-          b.hx = hx / hl; b.hy = hy / hl;
+          turnHeading(b, ux, uy, Math.min(1, TURN * dt));
           const mv = Math.min(step, gd);
           b.x += b.hx * mv; b.y += b.hy * mv; b.moved += mv;
           if (b.u.windUp > 0 && mv > 0) { b.setUp = false; if (b.windTarget) { b.windTarget = null; stats[b.side].windLost++; } }
@@ -2801,10 +2804,7 @@ const Engine = (() => {
           }
           // turn smoothly instead of snapping: the heading swings toward the wanted direction
           if (b.hx === undefined) { b.hx = mx; b.hy = my; }
-          const k = Math.min(1, TURN * dt);
-          let hx = b.hx + (wx - b.hx) * k, hy = b.hy + (wy - b.hy) * k, hl = hyp(hx, hy);
-          if (hl < 1e-6) { hx = wx; hy = wy; hl = 1; }
-          b.hx = hx / hl; b.hy = hy / hl;
+          turnHeading(b, wx, wy, Math.min(1, TURN * dt));
           // walk a little inside max range, so being nudged by allies doesn't leave the unit just out of reach
           mv = b.engaged && !blind ? Math.min(step, nd - stopAt(rgN)) : step;
           b.x += b.hx * mv;

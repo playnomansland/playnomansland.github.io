@@ -20,6 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 10 November 2026 – Assassin no longer runs off
+
+- **Fix:** an **Assassin** placed right behind an enemy squad (the enemy between it and your side, in the same column, such as next to a Meteor Caller) used to walk the wrong way, off the back of the board, for the whole fight. It now turns round and goes for its target. Any unit with a target straight behind it turns round properly too.
+
+---
+
 ## 9 November 2026 – New UI sounds
 
 - **Ready** now has its own sound when you're waiting for your opponent.
