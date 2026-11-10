@@ -23,10 +23,15 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 4 * 60 *
     const r = await fetch(`${srv.base}/games`, { method: 'POST', headers: { 'content-type': 'text/plain', ...(origin ? { Origin: origin } : {}) }, body: JSON.stringify(body) });
     return { status: r.status, ...(await r.json().catch(() => ({}))) };
   };
-  const today = async () => {
+  const raw = async () => {
     const r = await fetch(`${srv.base}/games?days=1`); assert.strictEqual(r.status, 200);
-    const j = await r.json(); return j.days[0] || { total: 0, ai: 0, peer: 0, online: 0, puzzle: 0 };
+    const j = await r.json(); const d = j.days[0] || {};
+    return Object.fromEntries(['total', 'ai', 'peer', 'online', 'puzzle'].map((k) => [k, d[k] | 0]));
   };
+  // the tests before this one in npm test share the local storage and play online matches (counted too), so every
+  // check is against the counts as they were when this test started
+  const base = await raw();
+  const today = async () => { const d = await raw(); return Object.fromEntries(Object.keys(d).map((k) => [k, d[k] - base[k]])); };
   try {
     // who may count, and what
     const d = dev();
@@ -84,7 +89,7 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 4 * 60 *
     // reading
     const day = new Date().toISOString().slice(0, 10);
     const one = await (await fetch(`${srv.base}/games?day=${day}`)).json();
-    assert.deepStrictEqual(one.days[0], { day, total: 6, ai: 3, peer: 1, online: 1, puzzle: 1 });
+    assert.deepStrictEqual(one.days[0], { day, total: base.total + 6, ai: base.ai + 3, peer: base.peer + 1, online: base.online + 1, puzzle: base.puzzle + 1 });
     const none = await (await fetch(`${srv.base}/games?day=2000-01-01`)).json();
     assert.strictEqual(none.days[0].total, 0, 'a day with no games');
     assert.strictEqual((await fetch(`${srv.base}/games?day=yesterday`)).status, 400);
