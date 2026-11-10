@@ -1688,7 +1688,15 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     musicUnlocked = true;
   };
   const unlockMusic = () => { wakeAudio(); syncMusic(); };
-  ['touchend', 'click', 'keydown'].forEach(t => document.addEventListener(t, unlockMusic, { capture: true, passive: true }));
+  // pointerdown / mousedown: the press itself starts it on a computer (Chrome and Edge count it), not the release
+  ['pointerdown', 'mousedown', 'touchend', 'click', 'keydown'].forEach(t => document.addEventListener(t, unlockMusic, { capture: true, passive: true }));
+  // No tap needed where the browser allows it (2026-11-10, the owner): the music tries to start as soon as the page has
+  // loaded. It plays at once where the browser lets this site autoplay (Chrome / Edge on a site the player often plays
+  // sound on, the game installed as an app on a computer, the site's Sound set to Allow, Firefox with autoplay allowed).
+  // Elsewhere play() is refused (the song stays paused, pl.set tries again) and Web Audio waits suspended, so the
+  // first press, key or tap anywhere starts it, as before. Browsers don't let a page get round that.
+  const autoMusic = () => { if (!musicUnlocked && musicOn()) unlockMusic(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoMusic, { once: true }); else setTimeout(autoMusic, 0);
   const musicOn = () => !snd.muted && snd.vol > 0;
   // On or Off from a tap: iPhones only start sound inside one, so this wakes Web Audio and calls play() right here.
   // A volume left at 0 comes back up, or On would stay silent.
