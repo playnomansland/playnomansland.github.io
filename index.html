@@ -17991,7 +17991,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 4f808e9'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · b4e6714'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -23360,14 +23360,14 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   const dioPw = () => Math.round(Math.min(400, Math.max(318, innerWidth * 0.25))); // the left column's width (--dpw), as the prototype's clamp(318px, 25vw, 400px)
   function dioSafe() {
     const hb = document.querySelector('.hud').getBoundingClientRect(), pw = dioPw();
-    const right = document.documentElement.classList.contains('dright'); // the deploy panel on the right (?side=right)
     // the board a bit more central (the owner, 2026-11-10): with the panel sliding away it frames past about half the
     // column (the panel covers that edge only while it's out, and tucks when the pointer goes to the board); always
     // shown, the board stays clear of it
     const res = typeof dAuto !== 'undefined' && dAuto ? Math.round(pw * 0.5) + 16 : pw + 28;
-    const auto = typeof dAuto !== 'undefined' && dAuto; // sliding away: the board in the middle of the screen, the same margin both sides
-    const r = auto ? { x0: res, x1: innerWidth - res, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 }
-      : right ? { x0: 24, x1: innerWidth - res, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 } : { x0: res, x1: innerWidth - 24, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
+    // the board in the middle of the screen either way (the owner, 2026-11-10: "keep it centered for both options"): the
+    // same margin on both sides, half the column while it slides away, the whole column while it's always out (so the
+    // column never covers the board's tiles)
+    const r = { x0: res, x1: innerWidth - res, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
     const st = document.documentElement.style, vs = [pw, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
     if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); } // (the column, the pick and the result cards follow these)
     return r;
