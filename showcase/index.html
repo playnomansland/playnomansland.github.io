@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>No Mans Land</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="A tactical auto-battler for two. Buy squads, place them in secret, and watch the armies fight. Plays in your browser on PC and phone.">
+<meta name="theme-color" content="#F2B23A">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="No Mans Land">
+<meta property="og:title" content="No Mans Land: buy squads, place them, watch them fight">
+<meta property="og:description" content="A tactical auto-battler for two. Build your army in secret, then watch the armies collide. Plays in your browser on PC and phone.">
+<meta property="og:url" content="https://playnomansland.github.io/showcase/">
+<meta property="og:image" content="https://playnomansland.github.io/showcase/img/og-card.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="img/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a battle report. Full-bleed screenshots alternate with the game's own bands (ultramarine field, ink panels);
+   saffron is kept for the one thing to press, as in the game's Diorama menu. One look, no light/dark switch. */
+:root {
+  --field: #2E3E9C;      /* the menu's ultramarine */
+  --field-lo: #24317F;
+  --night: #161C45;
+  --ink: #17140F;        /* the in-match panels */
+  --ink-2: #221E17;
+  --cream: #F4ECD8;
+  --cream-2: rgba(244, 236, 216, .74);
+  --cream-3: rgba(244, 236, 216, .22);
+  --saffron: #F2B23A;
+  --you: #6FB3E0;
+  --foe: #E5674B;
+  --display: "Chakra Petch", "Arial Narrow", Impact, sans-serif;
+  --body: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --shard: polygon(0 10%, 96% 0, 100% 86%, 3% 100%);
+  --gut: max(16px, env(safe-area-inset-left, 0px));
+  --gut-r: max(16px, env(safe-area-inset-right, 0px));
+  --wrap: 1180px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+body { margin: 0; background: var(--field); color: var(--cream); font-family: var(--body); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+img, video { max-width: 100%; display: block; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--saffron); outline-offset: 3px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.02; text-wrap: balance; margin: 0; text-transform: uppercase; letter-spacing: .005em; }
+p { margin: 0; }
+.wrap { max-width: var(--wrap); margin: 0 auto; padding-left: var(--gut); padding-right: var(--gut-r); }
+.band { padding-block: clamp(64px, 9vw, 120px); }
+.mono { font-family: var(--mono); font-size: 13px; letter-spacing: .02em; }
+.label { font-family: var(--mono); font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--cream-2); }
+
+/* the game's saffron shard: the thing to press, and small tags */
+.shard { display: inline-flex; align-items: center; gap: 10px; background: var(--saffron); color: var(--ink); font-family: var(--display); font-weight: 700; text-transform: uppercase; text-decoration: none; clip-path: var(--shard); }
+.btn { font-size: clamp(22px, 2.4vw, 30px); padding: 14px 34px 16px 28px; transition: transform .15s ease, filter .15s ease; }
+.btn:hover { transform: translateY(-2px) rotate(-.6deg); filter: brightness(1.06); }
+.btn small { font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: none; }
+.tag { font-family: var(--mono); font-weight: 500; font-size: 11.5px; letter-spacing: .14em; padding: 5px 16px 5px 12px; }
+.link { font-family: var(--display); font-weight: 600; text-transform: uppercase; font-size: 19px; letter-spacing: .02em; text-decoration: none; border-bottom: 2px solid var(--cream-3); padding-bottom: 2px; transition: border-color .15s; }
+.link:hover { border-color: var(--saffron); }
+
+/* ---------- top bar ---------- */
+.top { position: absolute; inset: 0 0 auto; z-index: 5; padding-top: calc(env(safe-area-inset-top, 0px) + 22px); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.top img { height: clamp(22px, 2.6vw, 34px); width: auto; filter: drop-shadow(0 2px 10px rgba(0,0,0,.35)); }
+.top nav { display: flex; gap: 22px; align-items: center; }
+.top nav a { font-family: var(--display); font-weight: 600; font-size: 16px; text-decoration: none; text-shadow: 0 1px 8px rgba(0,0,0,.5); }
+.top nav a:hover { color: var(--saffron); }
+
+/* ---------- hero: the snow battle, with the menu's leader-line callouts ---------- */
+.hero { position: relative; background: var(--night); overflow: hidden; }
+.hero-pic { position: relative; aspect-ratio: 16 / 9; max-height: 100svh; width: 100%; }
+.hero-pic img { width: 100%; height: 100%; object-fit: cover; }
+.hero-pic::after { content: ""; position: absolute; inset: 0; background:
+  linear-gradient(180deg, rgba(22,28,69,.55) 0%, rgba(22,28,69,0) 22%),
+  linear-gradient(90deg, rgba(22,28,69,.92) 0%, rgba(22,28,69,.72) 30%, rgba(22,28,69,0) 56%); }
+.hero-copy { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; }
+.hero-copy .wrap { width: 100%; }
+.hero-copy .inner { max-width: 560px; display: grid; gap: 22px; justify-items: start; }
+.hero h1 { font-size: clamp(42px, 5.6vw, 84px); line-height: .94; }
+.hero h1 span { display: block; }
+.hero h1 .hot { color: var(--saffron); }
+.hero .lede { font-size: clamp(17px, 1.45vw, 20px); color: var(--cream); max-width: 34em; text-shadow: 0 1px 12px rgba(0,0,0,.4); }
+.hero .ctas { display: flex; flex-wrap: wrap; align-items: center; gap: 18px 28px; margin-top: 4px; }
+.hero .fine { color: var(--cream-2); }
+.callouts { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.callouts svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.callouts line { stroke: var(--cream); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.callouts circle.dot { fill: var(--cream); }
+.callouts circle.ring { fill: none; stroke: var(--cream); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.call { position: absolute; font-family: var(--mono); font-size: 13px; line-height: 1.45; color: var(--cream); text-shadow: 0 0 2px var(--ink), 0 0 6px var(--ink), 0 0 14px rgba(23,20,15,.9); white-space: nowrap; }
+.call b { display: block; font-weight: 500; font-size: 14px; }
+.call span { color: var(--cream-2); }
+.call.r { text-align: right; transform: translateX(-100%); }
+.hero-in .inner > * { animation: rise .7s cubic-bezier(.2,.8,.2,1) both; }
+.hero-in .inner > *:nth-child(2) { animation-delay: .08s; } .hero-in .inner > *:nth-child(3) { animation-delay: .16s; } .hero-in .inner > *:nth-child(4) { animation-delay: .24s; }
+@keyframes rise { from { opacity: .001; transform: translateY(14px); } }
+
+/* ---------- battle clip ---------- */
+.clip { background: var(--ink); }
+.hud { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.hud .kicker { width: 100%; font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: .32em; color: var(--cream-2); }
+.hud h2 { font-size: clamp(34px, 4.4vw, 60px); }
+.hud h2 em { font-style: normal; color: var(--saffron); }
+.clip-grid { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: end; margin-top: 32px; }
+.screen { position: relative; background: var(--ink-2); border: 1px solid var(--cream-3); }
+.screen video, .screen img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.clip-note { display: grid; gap: 16px; color: var(--cream-2); }
+.clip-note p:first-child { color: var(--cream); font-size: 19px; }
+.bars { display: grid; gap: 10px; margin-top: 8px; font-family: var(--display); font-weight: 600; }
+.bar { display: grid; grid-template-columns: 54px 1fr 40px; gap: 10px; align-items: center; font-size: 14px; letter-spacing: .04em; }
+.bar i { height: 6px; background: var(--cream-3); position: relative; }
+.bar i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--w); background: var(--c); }
+.bar b { font-variant-numeric: tabular-nums; text-align: right; }
+
+/* ---------- about ---------- */
+.about .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: clamp(28px, 6vw, 88px); align-items: start; }
+.about h2 { font-size: clamp(36px, 4.6vw, 66px); }
+.about h2 .hot { color: var(--saffron); }
+.about .prose { display: grid; gap: 18px; font-size: 19px; max-width: 36em; }
+.about .prose p:first-child { font-size: 22px; line-height: 1.5; }
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: clamp(48px, 6vw, 80px); border-top: 1px solid var(--cream-3); }
+.facts div { padding: 22px 18px 4px 0; }
+.facts div + div { padding-left: 18px; border-left: 1px solid var(--cream-3); }
+.facts b { display: block; font-family: var(--display); font-weight: 700; font-size: clamp(40px, 5vw, 64px); line-height: 1; font-variant-numeric: tabular-nums; }
+.facts span { color: var(--cream-2); font-size: 15px; }
+
+/* ---------- a round: deploy, battle, result ---------- */
+.round { background: var(--ink); }
+.round .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px 40px; }
+.round .head h2 { font-size: clamp(34px, 4.4vw, 60px); }
+.round .head p { max-width: 30em; color: var(--cream-2); }
+.phases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2.4vw, 32px); margin-top: 44px; }
+.phase { display: grid; gap: 16px; align-content: start; }
+.phase .ph { font-family: var(--display); font-weight: 700; font-size: 26px; text-transform: uppercase; display: flex; gap: 10px; align-items: baseline; }
+.phase .ph small { font-size: 13px; letter-spacing: .3em; color: var(--cream-2); font-weight: 600; }
+.phase .ph em { font-style: normal; color: var(--saffron); }
+.phase img { aspect-ratio: 16 / 9; object-fit: cover; width: 100%; border: 1px solid var(--cream-3); cursor: zoom-in; }
+.phase p { color: var(--cream-2); font-size: 16px; }
+.phase p strong { color: var(--cream); font-weight: 600; }
+
+/* ---------- why it plays differently ---------- */
+.why h2 { font-size: clamp(34px, 4.4vw, 60px); max-width: 14em; }
+.points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 48px; border-top: 1px solid var(--cream-3); }
+.point { padding: 26px 26px 30px 0; border-bottom: 1px solid var(--cream-3); display: grid; gap: 10px; align-content: start; }
+.point:not(:nth-child(3n+1)) { padding-left: 26px; border-left: 1px solid var(--cream-3); }
+.point h3 { font-size: 23px; letter-spacing: .01em; }
+.point p { color: var(--cream-2); font-size: 16px; }
+
+/* ---------- the cast ---------- */
+.cast { background: var(--field-lo); }
+.cast .cols { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
+.cast .shot img { width: 100%; border: 1px solid var(--cream-3); cursor: zoom-in; }
+.cast h2 { font-size: clamp(34px, 4.2vw, 58px); }
+.cast .intro { display: grid; gap: 16px; }
+.cast .intro p { color: var(--cream-2); }
+.chars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(16px, 2vw, 28px); margin-top: clamp(40px, 5vw, 64px); }
+.char { background: var(--ink); padding: 22px 22px 24px; display: grid; gap: 10px; align-content: start; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%); }
+.char img { width: 96px; height: 96px; }
+.char h3 { font-size: 24px; }
+.char .mood { font-family: var(--mono); font-size: 13px; color: var(--saffron); }
+.char p { color: var(--cream-2); font-size: 15.5px; }
+.char dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 6px 0 0; font-family: var(--mono); font-size: 12.5px; }
+.char dt { color: var(--cream-2); }
+.char dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* ---------- battlefields ---------- */
+.fields .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px 40px; }
+.fields h2 { font-size: clamp(34px, 4.4vw, 60px); }
+.fields .head p { color: var(--cream-2); max-width: 28em; }
+.looks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 1.6vw, 22px); margin-top: 40px; }
+.look { margin: 0; display: grid; gap: 8px; }
+.look img { width: 100%; aspect-ratio: 550 / 674; object-fit: cover; background: var(--field-lo); }
+.look figcaption { font-family: var(--display); font-weight: 600; font-size: 17px; text-transform: uppercase; display: flex; justify-content: space-between; }
+.look figcaption span { font-family: var(--mono); font-weight: 400; font-size: 12px; color: var(--cream-2); text-transform: none; }
+
+/* ---------- gallery ---------- */
+.gallery { background: var(--ink); }
+.gallery h2 { font-size: clamp(34px, 4.4vw, 60px); }
+.shots { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-top: 36px; }
+.shots button { all: unset; cursor: zoom-in; display: block; position: relative; grid-column: span 2; }
+.shots button.wide { grid-column: span 3; }
+.shots img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; transition: transform .25s ease, filter .25s ease; }
+.shots button:hover img { filter: brightness(1.08); }
+.shots button:focus-visible { outline: 3px solid var(--saffron); outline-offset: 3px; }
+.shots .cap { position: absolute; left: 10px; bottom: 8px; font-family: var(--mono); font-size: 12px; text-shadow: 0 0 2px var(--ink), 0 0 8px var(--ink); }
+
+/* ---------- soundtrack ---------- */
+.music .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
+.music h2 { font-size: clamp(34px, 4.4vw, 60px); }
+.music .intro { display: grid; gap: 16px; color: var(--cream-2); }
+.tracks { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--cream-3); }
+.tracks li { border-bottom: 1px solid var(--cream-3); }
+.tracks button { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; grid-template-columns: 44px 1fr auto; gap: 16px; align-items: center; padding: 16px 4px; }
+.tracks button:focus-visible { outline: 3px solid var(--saffron); outline-offset: -3px; }
+.tracks .orb { width: 40px; height: 40px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFE19A, var(--saffron) 55%, #B9801E); display: grid; place-items: center; color: var(--ink); }
+.tracks .orb svg { width: 14px; height: 14px; }
+.tracks .t { font-family: var(--display); font-weight: 600; font-size: 21px; text-transform: uppercase; line-height: 1.1; }
+.tracks .t span { display: block; font-family: var(--body); font-weight: 400; font-size: 15px; text-transform: none; color: var(--cream-2); }
+.tracks .where { font-family: var(--mono); font-size: 12px; color: var(--cream-2); text-align: right; }
+.tracks .prog { height: 2px; background: var(--saffron); width: 0; transition: width .2s linear; }
+
+/* ---------- press ---------- */
+.press { background: var(--field-lo); }
+.press .cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px); }
+.press h2 { font-size: clamp(30px, 3.6vw, 48px); margin-bottom: 26px; }
+.sheet { display: grid; grid-template-columns: minmax(110px, auto) 1fr; margin: 0; border-top: 1px solid var(--cream-3); }
+.sheet dt, .sheet dd { padding: 12px 0; border-bottom: 1px solid var(--cream-3); margin: 0; }
+.sheet dt { font-family: var(--mono); font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--cream-2); padding-right: 18px; padding-top: 15px; }
+.sheet dd { font-size: 16px; min-width: 0; overflow-wrap: anywhere; }
+.tbc { font-family: var(--mono); font-size: 12.5px; color: var(--saffron); border: 1px dashed var(--saffron); padding: 1px 8px; }
+.assets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.asset { display: grid; gap: 8px; text-decoration: none; }
+.asset .thumb { aspect-ratio: 16 / 10; background: var(--night); display: grid; place-items: center; overflow: hidden; border: 1px solid var(--cream-3); transition: border-color .15s; }
+.asset:hover .thumb { border-color: var(--saffron); }
+.asset .thumb img { max-height: 100%; object-fit: cover; }
+.asset .thumb img.contain { object-fit: contain; padding: 18%; }
+.asset span { font-family: var(--mono); font-size: 12.5px; }
+.asset span b { font-family: var(--display); font-size: 16px; font-weight: 600; display: block; text-transform: uppercase; }
+
+/* ---------- last call ---------- */
+.final { background: var(--night); position: relative; overflow: hidden; }
+.final .bg { position: absolute; inset: 0; background: url("img/battle-autumn.jpg") center 40% / cover; opacity: .32; }
+.final .wrap { position: relative; display: grid; gap: 26px; justify-items: start; }
+.final h2 { font-size: clamp(48px, 8vw, 120px); line-height: .9; }
+.final h2 em { font-style: normal; color: var(--saffron); }
+.final .row { display: flex; flex-wrap: wrap; gap: 18px 30px; align-items: center; }
+footer { background: var(--ink); color: var(--cream-2); padding-block: 26px calc(26px + env(safe-area-inset-bottom, 0px)); font-size: 14px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 28px; justify-content: space-between; }
+
+/* ---------- lightbox ---------- */
+dialog.lb { padding: 0; border: 0; background: transparent; max-width: min(96vw, 1800px); width: 100%; }
+dialog.lb::backdrop { background: rgba(10, 12, 28, .9); }
+dialog.lb img { width: 100%; height: auto; max-height: 86vh; object-fit: contain; }
+dialog.lb .bar2 { display: flex; justify-content: space-between; gap: 16px; padding: 10px 2px; color: var(--cream); font-family: var(--mono); font-size: 13px; }
+dialog.lb button { all: unset; cursor: pointer; font-family: var(--display); font-weight: 600; text-transform: uppercase; }
+dialog.lb button:focus-visible { outline: 2px solid var(--saffron); }
+
+/* ---------- narrower screens ---------- */
+@media (max-width: 1080px) {
+  .callouts { display: none; }
+}
+@media (max-width: 900px) {
+  .hero-pic { aspect-ratio: auto; height: auto; max-height: none; }
+  .hero-pic img { aspect-ratio: 16 / 9; height: auto; }
+  .hero-pic::after { background: linear-gradient(180deg, rgba(22,28,69,.55) 0%, rgba(22,28,69,0) 30%, rgba(22,28,69,0) 70%, var(--night) 100%); }
+  .hero-copy { position: relative; padding-block: 8px 56px; }
+  .top nav a:not(.keep) { display: none; }
+  .clip-grid, .about .cols, .cast .cols, .music .cols, .press .cols { grid-template-columns: minmax(0, 1fr); }
+  .phases { grid-template-columns: minmax(0, 1fr); }
+  .points { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .point, .point:not(:nth-child(3n+1)) { padding: 22px 18px 24px 0; border-left: 0; }
+  .point:nth-child(2n) { padding-left: 18px; border-left: 1px solid var(--cream-3); }
+  .chars { grid-template-columns: minmax(0, 1fr); }
+  .looks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shots button, .shots button.wide { grid-column: span 1; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .facts div:nth-child(3) { border-left: 0; padding-left: 0; }
+}
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  .points { grid-template-columns: minmax(0, 1fr); }
+  .point:nth-child(2n) { padding-left: 0; border-left: 0; }
+  .shots { grid-template-columns: minmax(0, 1fr); }
+  .assets { grid-template-columns: minmax(0, 1fr); }
+  .sheet { grid-template-columns: minmax(0, 1fr); }
+  .sheet dt { border-bottom: 0; padding-bottom: 0; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a href="https://playnomansland.github.io/" aria-label="No Mans Land, play the game"><img src="img/logo.png" alt="No Mans Land" width="1290" height="138"></a>
+    <nav aria-label="Sections">
+      <a href="#battle">Gameplay</a>
+      <a href="#cast">Units</a>
+      <a href="#music">Soundtrack</a>
+      <a href="#press">Press</a>
+      <a class="keep" href="https://discord.gg/TBpDKSBWsY">Discord</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="hero hero-in" aria-label="No Mans Land">
+  <div class="hero-pic">
+    <img src="img/hero.jpg" alt="A late-round battle on the Snow battlefield: a War Mammoth leads goblins and wizards into the blue army's lines across the ice." width="1920" height="1080" fetchpriority="high">
+    <div class="callouts" aria-hidden="true">
+      <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+        <line x1="1122" y1="262" x2="1250" y2="196" /><line x1="1250" y1="196" x2="1660" y2="196" />
+        <circle class="ring" cx="1122" cy="262" r="9" /><circle class="dot" cx="1122" cy="262" r="4" />
+        <line x1="1300" y1="468" x2="1440" y2="400" /><line x1="1440" y1="400" x2="1820" y2="400" />
+        <circle class="ring" cx="1300" cy="468" r="9" /><circle class="dot" cx="1300" cy="468" r="4" />
+        <line x1="1468" y1="790" x2="1600" y2="900" /><line x1="1600" y1="900" x2="1860" y2="900" />
+        <circle class="ring" cx="1468" cy="790" r="9" /><circle class="dot" cx="1468" cy="790" r="4" />
+      </svg>
+      <div class="call r" style="left: 86.46%; top: 12.6%;"><b>War Mammoth.</b><span>Tier 4 · Charges in · Knocks enemies back</span></div>
+      <div class="call r" style="left: 94.8%; top: 31.6%;"><b>Goblin Swarm.</b><span>Twelve goblins for 100 gold</span></div>
+      <div class="call r" style="left: 96.9%; top: 77.4%;"><b>Your tower.</b><span>Lose it and lose health</span></div>
+    </div>
+  </div>
+  <div class="hero-copy">
+    <div class="wrap">
+      <div class="inner">
+        <span class="shard tag">Tactical auto-battler · 1 v 1</span>
+        <h1><span>Buy squads.</span><span>Place them.</span><span class="hot">Watch them fight.</span></h1>
+        <p class="lede">Build your army in secret while your opponent does the same. When both of you are ready, the armies clash on their own, and all you have is the plan you made.</p>
+        <div class="ctas">
+          <a class="shard btn" href="https://playnomansland.github.io/">Play now <small>in your browser</small></a>
+          <a class="link" href="#battle">Watch a battle</a>
+        </div>
+        <p class="fine mono">PC, Mac and phone browsers · Nothing to install · vs Computer or a friend</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="clip band" id="battle" aria-labelledby="battle-h">
+  <div class="wrap">
+    <div class="hud">
+      <span class="kicker">STANDARD · MEADOW</span>
+      <h2 id="battle-h">Round 7 · <em>Battle</em></h2>
+    </div>
+    <div class="clip-grid">
+      <div class="screen">
+        <video src="media/battle-clip.mp4" poster="img/battle-clip-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Six seconds of a late-round battle on the Meadow battlefield, captured in the game: Brutes charge into a line of wizards."></video>
+      </div>
+      <div class="clip-note">
+        <p>A real round, captured in the game. Nobody is giving orders here.</p>
+        <p>Every squad picks its own targets and walks its own lane. The engine is deterministic, so both players watch exactly the same fight, frame for frame.</p>
+        <div class="bars" aria-label="Health after six rounds">
+          <div class="bar"><span>YOU</span><i style="--w: 62%; --c: var(--you);"></i><b>62</b></div>
+          <div class="bar"><span>ENEMY</span><i style="--w: 57%; --c: var(--foe);"></i><b>57</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="about band" aria-labelledby="about-h">
+  <div class="wrap">
+    <div class="cols">
+      <h2 id="about-h">Strategy you play <span class="hot">before</span> the fight.</h2>
+      <div class="prose">
+        <p>No Mans Land is a strategy auto-battler for two players. Each round you get gold, buy squads from a shop of four tiers, and place them on your half of the field.</p>
+        <p>Your opponent does the same, out of sight. You can see the army they had last round, but not what they add this round. When the clock runs out, the fight plays itself: Fire Mages lob fireballs into crowds, Snipers pick off big targets from across the field, goblins swarm the front line, and a War Mammoth charges through the middle of it.</p>
+        <p>Then the board stays. Your surviving squads carry into the next round, you see what beat you, and you adapt. Counter their giants with a horde, out-range their horde with mages, level up the squad that carried you, or take a loan and gamble. Each squad left standing costs the losing side health. Last commander standing wins.</p>
+      </div>
+    </div>
+    <div class="facts" aria-label="The game in numbers">
+      <div><b>28</b><span>units across four tiers</span></div>
+      <div><b>8</b><span>battlefield looks to fight on</span></div>
+      <div><b>90 s</b><span>to deploy each round</span></div>
+      <div><b>100</b><span>health each. Make it last.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="round band" aria-labelledby="round-h">
+  <div class="wrap">
+    <div class="head">
+      <h2 id="round-h">How a round works</h2>
+      <p>Three phases, with the same names the game shows at the top of the screen. The match goes on, round after round, until one commander runs out of health.</p>
+    </div>
+    <div class="phases">
+      <article class="phase">
+        <div class="ph"><small>1</small>Round · <em>Deploy</em></div>
+        <img src="img/deploy.jpg" alt="Deploy phase: the shop by tier on the left, the board with both armies on Snow." loading="lazy" data-zoom>
+        <p><strong>Spend and place.</strong> Buy squads, unlock stronger tiers and drop them on your side. Move an old squad, level one up, or point a melee squad down a lane. Ninety seconds on the clock.</p>
+      </article>
+      <article class="phase">
+        <div class="ph"><small>2</small>Round · <em>Battle</em></div>
+        <img src="img/battle-snow-hud.jpg" alt="Battle phase: the armies meet on the ice while both health bars hold." loading="lazy" data-zoom>
+        <p><strong>Hands off.</strong> Everything you couldn't see is revealed and the armies collide. Watch it from straight above, or pinch in and follow the fight at ground level.</p>
+      </article>
+      <article class="phase">
+        <div class="ph"><small>3</small>Round · <em>Result</em></div>
+        <img src="img/result.jpg" alt="Result screen: Round 7 lost, you take 35 damage, and the gold for next round." loading="lazy" data-zoom>
+        <p><strong>Pay up, then adapt.</strong> The loser takes damage for every enemy squad still standing. Gold comes in, survivors stay put, and the next round starts from what you just learned.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="why band" aria-labelledby="why-h">
+  <div class="wrap">
+    <h2 id="why-h">Outthink them. You can't outclick them.</h2>
+    <div class="points">
+      <div class="point"><h3>Blind bets</h3><p>Your opponent's new squads stay hidden until the battle starts. You plan against the army you saw last round, and against the one you think is coming.</p></div>
+      <div class="point"><h3>Counters everywhere</h3><p>Fire Mages melt swarms. Snipers punish giants. Earth Wizard stones go straight through the front line. There is always an answer, if you can afford it.</p></div>
+      <div class="point"><h3>Towers and leaders</h3><p>Pick a Keep, a Bastion, a Sniper tower or a Bank, and draft a leader with a rule of their own, from Friggo's tougher troops to Otto the Gambler's slot machine.</p></div>
+      <div class="point"><h3>Money is a weapon</h3><p>Take a loan now and pay it back later, make one big investment per match, or break an opponent's winning streak to collect the bounty on it.</p></div>
+      <div class="point"><h3>Learn with puzzles</h3><p>Short one-fight puzzles teach the counters against an army you can see, with a budget and a small shop. Solve the easy three to earn your first title.</p></div>
+      <div class="point"><h3>Play anywhere</h3><p>It runs in the browser on PC and phone. Play the computer, send a friend a link, join a public room, or climb the ranked ladder.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="cast band" id="cast" aria-labelledby="cast-h">
+  <div class="wrap">
+    <div class="cols">
+      <div class="shot"><img src="img/units.jpg" alt="The Units screen: the tier 4 units on their cards, with the Ether Golem's sheet open and its Aquamarine skin." loading="lazy" data-zoom></div>
+      <div class="intro">
+        <span class="label">The cast</span>
+        <h2 id="cast-h">Characters, not game pieces.</h2>
+        <p>Every unit has one clear mood and one small detail from its life outside the fight, readable at a glance from above. A sleepy teenage tree walks slowly because he's half asleep. A giddy hedge wizard flicks leaves plucked from his own beard. When the personality and the mechanics agree, the unit is easier to remember.</p>
+        <p>Chunky low-poly shapes, dusty colours and soft painted light: closer to a storybook than a shiny mobile game.</p>
+      </div>
+    </div>
+    <div class="chars">
+      <article class="char">
+        <img src="img/bababa.svg" alt="" width="96" height="96">
+        <h3>Flame Wizard</h3>
+        <span class="mood">Mood: BABABABA</span>
+        <p>Can't stop shouting, can't stop burning. A flamethrower in a robe, tough enough to stand at the front and keep yelling.</p>
+        <dl><dt>Tier</dt><dd>3 · 300 gold</dd><dt>Health</dt><dd>1530</dd><dt>Range</dt><dd>12 m flame</dd></dl>
+      </article>
+      <article class="char">
+        <img src="img/golem.svg" alt="" width="96" height="96">
+        <h3>Ether Golem</h3>
+        <span class="mood">Mood: delighted to be here</span>
+        <p>A crystal giant with thick armour that smashes everything around it, and can learn to regenerate. Very happy about all of this.</p>
+        <dl><dt>Tier</dt><dd>4 · 500 gold</dd><dt>Health</dt><dd>3450</dd><dt>Splash</dt><dd>3 m</dd></dl>
+      </article>
+      <article class="char">
+        <img src="img/shock.svg" alt="" width="96" height="96">
+        <h3>Sniper</h3>
+        <span class="mood">Mood: has seen too much</span>
+        <p>One shot every four seconds from across the field, and each one hurts. Good against single big targets, bad against a crowd.</p>
+        <dl><dt>Tier</dt><dd>1 · 100 gold</dd><dt>Hit</dt><dd>210 damage</dd><dt>Range</dt><dd>29 m</dd></dl>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="fields band" aria-labelledby="fields-h">
+  <div class="wrap">
+    <div class="head">
+      <h2 id="fields-h">Eight battlefields</h2>
+      <p>Each look brings its own scenery and light, and several bring their own deploy and battle music. Same rules, different mood.</p>
+    </div>
+    <div class="looks">
+      <figure class="look"><img src="img/looks/meadow.jpg" alt="Meadow battlefield" loading="lazy"><figcaption>Meadow</figcaption></figure>
+      <figure class="look"><img src="img/looks/autumn.jpg" alt="Autumn battlefield" loading="lazy"><figcaption>Autumn</figcaption></figure>
+      <figure class="look"><img src="img/looks/snow.jpg" alt="Snow battlefield" loading="lazy"><figcaption>Snow</figcaption></figure>
+      <figure class="look"><img src="img/looks/forest-glade.jpg" alt="Forest Glade battlefield" loading="lazy"><figcaption>Forest Glade</figcaption></figure>
+      <figure class="look"><img src="img/looks/desert.jpg" alt="Desert battlefield" loading="lazy"><figcaption>Desert</figcaption></figure>
+      <figure class="look"><img src="img/looks/ashlands.jpg" alt="Ashlands battlefield" loading="lazy"><figcaption>Ashlands</figcaption></figure>
+      <figure class="look"><img src="img/looks/moonlit-snow.jpg" alt="Moonlit Snow battlefield" loading="lazy"><figcaption>Moonlit Snow</figcaption></figure>
+      <figure class="look"><img src="img/looks/savanna.jpg" alt="Savanna battlefield" loading="lazy"><figcaption>Savanna</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section class="gallery band" aria-labelledby="gal-h">
+  <div class="wrap">
+    <h2 id="gal-h">Screenshots</h2>
+    <div class="shots">
+      <button class="wide" data-src="img/battle-autumn.jpg" data-cap="Autumn · the armies meet in no man's land"><img src="img/battle-autumn.jpg" alt="Autumn: the armies meet in no man's land" loading="lazy"><span class="cap">Autumn</span></button>
+      <button class="wide" data-src="img/battle-ashlands.jpg" data-cap="Ashlands · the enemy army advances under a burning sky"><img src="img/battle-ashlands.jpg" alt="Ashlands: the enemy army advances under a burning sky" loading="lazy"><span class="cap">Ashlands</span></button>
+      <button data-src="img/closeup-meadow.jpg" data-cap="Meadow · ground level, behind your own Snipers"><img src="img/closeup-meadow.jpg" alt="Meadow at ground level, behind two Snipers" loading="lazy"><span class="cap">Meadow · ground level</span></button>
+      <button data-src="img/battle-meadow.jpg" data-cap="Meadow · round 7 battle"><img src="img/battle-meadow.jpg" alt="Meadow: a round 7 battle seen from the angled view" loading="lazy"><span class="cap">Meadow</span></button>
+      <button data-src="img/battle-darkwoods.jpg" data-cap="A night battle by the old gate"><img src="img/battle-darkwoods.jpg" alt="A night battle in the forest, by the old gate" loading="lazy"><span class="cap">Night forest</span></button>
+      <button class="wide" data-src="img/menu.jpg" data-cap="The main menu: your battlefield floats on the page"><img src="img/menu.jpg" alt="The main menu with the floating battlefield" loading="lazy"><span class="cap">Main menu</span></button>
+      <button class="wide" data-src="img/deploy.jpg" data-cap="Deploying on Snow, round 7"><img src="img/deploy.jpg" alt="Deploying on Snow in round 7" loading="lazy"><span class="cap">Deploy</span></button>
+    </div>
+  </div>
+</section>
+
+<section class="music band" id="music" aria-labelledby="music-h">
+  <div class="wrap">
+    <div class="cols">
+      <div class="intro">
+        <span class="label">Original soundtrack</span>
+        <h2 id="music-h">Music by Snetänd and Emil Helleday</h2>
+        <p>The deploy and battle music follows the battlefield you fight on, and the menu has a playlist of its own. You can make your own playlists in the game too.</p>
+      </div>
+      <ul class="tracks" id="tracks">
+        <li><button data-src="../audio/reveal.mp3"><span class="orb" aria-hidden="true"></span><span class="t">Reveal<span>Snetänd</span></span><span class="where">Menu</span></button><div class="prog"></div></li>
+        <li><button data-src="../audio/super-coffee.mp3"><span class="orb" aria-hidden="true"></span><span class="t">Super coffee<span>Snetänd</span></span><span class="where">Menu</span></button><div class="prog"></div></li>
+        <li><button data-src="../audio/salig.mp3"><span class="orb" aria-hidden="true"></span><span class="t">Salig<span>Emil Helleday</span></span><span class="where">Menu</span></button><div class="prog"></div></li>
+        <li><button data-src="../audio/icy-one.mp3"><span class="orb" aria-hidden="true"></span><span class="t">Icy one<span>Snetänd</span></span><span class="where">Menu</span></button><div class="prog"></div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="press band" id="press" aria-labelledby="press-h">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h2 id="press-h">Fact sheet</h2>
+        <dl class="sheet">
+          <dt>Title</dt><dd>No Mans Land</dd>
+          <dt>Genre</dt><dd>Tactical auto-battler, one against one</dd>
+          <dt>Platforms</dt><dd>Web browser: Windows, Mac, Linux, iPhone, Android, tablets</dd>
+          <dt>Modes</dt><dd>vs Computer · Challenge a friend · Public rooms · Ranked · Tutorial puzzles · Tournaments (invite only)</dd>
+          <dt>Status</dt><dd>Playable now, in active development</dd>
+          <dt>Price</dt><dd><span class="tbc">to confirm</span></dd>
+          <dt>Developer</dt><dd><span class="tbc">studio or team name</span></dd>
+          <dt>Music</dt><dd>Snetänd, Emil Helleday</dd>
+          <dt>Website</dt><dd><a href="https://playnomansland.github.io/">playnomansland.github.io</a></dd>
+          <dt>Community</dt><dd><a href="https://discord.gg/TBpDKSBWsY">discord.gg/TBpDKSBWsY</a></dd>
+          <dt>Press contact</dt><dd><span class="tbc">email address</span></dd>
+        </dl>
+      </div>
+      <div>
+        <h2>Press assets</h2>
+        <div class="assets">
+          <a class="asset" href="img/logo.png" download><span class="thumb"><img class="contain" src="img/logo.png" alt=""></span><span><b>Logo</b>PNG · white on transparent · 1290 × 138</span></a>
+          <a class="asset" href="img/icon.png" download><span class="thumb"><img class="contain" src="img/icon.png" alt=""></span><span><b>App icon</b>PNG · 512 × 512</span></a>
+          <a class="asset" href="img/hero.jpg" download><span class="thumb"><img src="img/hero.jpg" alt="" loading="lazy"></span><span><b>Key art</b>JPG · 1920 × 1080</span></a>
+          <a class="asset" href="media/battle-clip.mp4" download><span class="thumb"><img src="img/battle-clip-poster.jpg" alt="" loading="lazy"></span><span><b>Battle clip</b>MP4 · 6 s · 1280 × 720 · no sound</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final band" aria-labelledby="final-h">
+  <div class="bg" aria-hidden="true"></div>
+  <div class="wrap">
+    <span class="label">Round 1 · Deploy</span>
+    <h2 id="final-h">Your <em>move.</em></h2>
+    <div class="row">
+      <a class="shard btn" href="https://playnomansland.github.io/">Play now <small>in your browser</small></a>
+      <a class="link" href="https://discord.gg/TBpDKSBWsY">Join the Discord</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>No Mans Land · Build 2026.11</span>
+    <span>Music: Snetänd, Emil Helleday</span>
+  </div>
+</footer>
+
+<dialog class="lb" id="lb" aria-label="Screenshot">
+  <img id="lb-img" alt="">
+  <div class="bar2"><span id="lb-cap"></span><button id="lb-x" type="button">Close</button></div>
+</dialog>
+
+<script>
+(() => {
+  // the lightbox: gallery buttons and any image marked data-zoom
+  const lb = document.getElementById('lb'), lbImg = document.getElementById('lb-img'), lbCap = document.getElementById('lb-cap');
+  const open = (src, cap) => { lbImg.src = src; lbImg.alt = cap || ''; lbCap.textContent = cap || ''; if (lb.showModal) lb.showModal(); };
+  document.querySelectorAll('.shots button').forEach(b => b.addEventListener('click', () => open(b.dataset.src, b.dataset.cap)));
+  document.querySelectorAll('img[data-zoom]').forEach(i => i.addEventListener('click', () => open(i.currentSrc || i.src, i.alt)));
+  document.getElementById('lb-x').addEventListener('click', () => lb.close());
+  lb.addEventListener('click', (e) => { if (e.target === lb) lb.close(); });
+
+  // the soundtrack: one song at a time, from a button
+  const PLAY = '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9-5.5z" fill="currentColor"/></svg>';
+  const PAUSE = '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5h3v11H3zM8 1.5h3v11H8z" fill="currentColor"/></svg>';
+  const audio = new Audio(); audio.preload = 'none';
+  let cur = null;
+  const btns = [...document.querySelectorAll('#tracks button')];
+  const draw = () => btns.forEach(b => {
+    const on = b === cur && !audio.paused;
+    b.querySelector('.orb').innerHTML = on ? PAUSE : PLAY;
+    b.setAttribute('aria-label', (on ? 'Pause ' : 'Play ') + b.querySelector('.t').firstChild.textContent.trim());
+    if (b !== cur) b.parentElement.querySelector('.prog').style.width = '0';
+  });
+  btns.forEach(b => b.addEventListener('click', () => {
+    if (cur === b) { audio.paused ? audio.play().catch(() => {}) : audio.pause(); return draw(); }
+    cur = b; audio.src = b.dataset.src; audio.play().catch(() => {}); draw();
+  }));
+  audio.addEventListener('timeupdate', () => { if (cur && audio.duration) cur.parentElement.querySelector('.prog').style.width = (audio.currentTime / audio.duration * 100) + '%'; });
+  audio.addEventListener('play', draw); audio.addEventListener('pause', draw); audio.addEventListener('ended', draw);
+  draw();
+})();
+</script>
+</body>
+</html>
