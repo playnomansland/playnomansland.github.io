@@ -37,6 +37,16 @@
   function dioBoot() {
     return dio.boot || (dio.boot = dioStart().catch((e) => {
       console.warn('No Mans Land: the Diorama UI could not start; showing the old home.', e);
+      // the Diorama's test page (design/diorama/game.html): say so on screen, with the error, instead of quietly
+      // showing the old home (a phone has no console to look in)
+      if (/\/design\/diorama\//.test(location.pathname)) try {
+        const b = document.createElement('div'), msg = (e && (e.stack || e.message)) || String(e);
+        b.setAttribute('role', 'alert');
+        b.style.cssText = 'position:fixed;z-index:99;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top));padding:12px 14px;background:#7A1F17;color:#F4ECD8;font:600 13px/1.4 system-ui,sans-serif;border-radius:6px;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow:auto';
+        b.textContent = 'Test page: the new UI could not start on this device, so this is the old home. Send Claude a screenshot of this box.\n\n' + String(msg).slice(0, 900) + '\n\n' + navigator.userAgent;
+        b.addEventListener('click', () => b.remove());
+        document.body.appendChild(b);
+      } catch (er) {}
       DIO = false; document.documentElement.classList.remove('diorama'); $('dio').remove(); dio.shown = false; drawHome();
     }));
   }
