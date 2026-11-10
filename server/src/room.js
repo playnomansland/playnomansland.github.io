@@ -164,7 +164,11 @@ export class Room extends DurableObject {
     // only the watcher count moved, and it was sent a moment ago: the next change or heartbeat brings it
     if (!opts.force && l && last && last.l && now - last.at < LOBBY.watcherEveryMs && JSON.stringify({ ...last.l, watchers: 0 }) === JSON.stringify({ ...l, watchers: 0 })) return;
     this.listed = { key, at: now, l };
+    const was = !!this.meta.listed;
     this.meta.listed = !!l;
+    // kept in storage: a room that slept (hibernation) while its host waited forgot it was listed, so leaving never took
+    // the card down and the host stayed in Rooms until the lobby's stale timeout (the owner, 2026-11-10)
+    if (was !== this.meta.listed) { try { this.ctx.waitUntil(this.ctx.storage.put('meta', this.meta)); } catch {} }
     const lobby = this.env.LOBBY.getByName('all');
     const run = (l ? lobby.upsert(l, this.meta.owner || '') : lobby.drop(this.meta.code || this.code || '')).catch((e) => console.warn('lobby report', e && e.message));
     try { this.ctx.waitUntil(run); } catch {}

@@ -111,7 +111,9 @@ export class DuoRoom extends DurableObject {
     const l = this.listing(opts.gone), key = l ? JSON.stringify(l) : '';
     if (!l && !this.meta.listed) return;
     if (!opts.force && this.listed === key) return;
+    const was = !!this.meta.listed;
     this.listed = key; this.meta.listed = !!l;
+    if (was !== this.meta.listed) { try { this.ctx.waitUntil(this.ctx.storage.put('meta', this.meta)); } catch {} } // (kept across hibernation: room.js report)
     const lobby = this.env.LOBBY.getByName('all');
     const run = (l ? lobby.upsert(l, this.meta.owner || '') : lobby.drop(this.meta.code)).catch((e) => console.warn('lobby report', e && e.message));
     try { this.ctx.waitUntil(run); } catch {}
