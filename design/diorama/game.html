@@ -1467,6 +1467,15 @@ html.dright.diorama.pcwide .hud .side.foe .num, html.dright.diorama.pcwide .hud 
 html.dright.diorama.pcwide .hud .side.foe .hp { grid-column: 2; }
 html.dright.diorama.pcwide .hud .side.foe .hp i { margin-left: 0; }
 html.dright.diorama.pcwide .hud .side.foe .foe-state { justify-self: start; }
+/* the player's whole top row (the music's name and the arrow) is the down arrow (the owner, 2026-11-10) */
+html.diorama.pcwide #mp-pop.dock .dm-hide { left: -30px; right: 0; top: -3px; width: auto; height: 24px; display: flex; align-items: center; justify-content: flex-start; padding: 0 2px; cursor: pointer; z-index: 2; }
+html.dright.diorama.pcwide #mp-pop.dock .dm-hide { left: 0; right: -30px; justify-content: flex-end; }
+html.diorama.pcwide #mp-pop.dock .dm-hide:hover { transform: none; opacity: 1; }
+html.diorama.pcwide #mp-pop.dock .dm-hide svg { transition: transform .15s ease; }
+html.diorama.pcwide #mp-pop.dock .dm-hide:hover svg { transform: translateY(2px); }
+html.diorama.pcwide #mp-pop.dock .mplayer:has(.dm-hide:hover) .mp-label { text-decoration: underline; text-underline-offset: 3px; }
+html.diorama.pcwide #mp-pop.dock .mp-now .mp-label { pointer-events: none; }
+html.diorama.pcwide #mp-pop.dock .dm-hide { left: 0; right: -28px; justify-content: flex-end; } /* the arrow right after the name, as in the owner's picture */
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -17922,7 +17931,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 80e5f58'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 912bb8b'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
