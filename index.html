@@ -183,6 +183,12 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .acct button { display: inline-flex; align-items: center; gap: 8px; opacity: .9; }
 #dio .acct button:hover { opacity: 1; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
 #dio .acct svg { width: 18px; height: 18px; }
+/* players online (2026-11-10, developers only): first in the top bar, the DEV tag (.dvt), a live dot and the count */
+#dio .acct .online { display: inline-flex; align-items: center; gap: 9px; opacity: .9; cursor: default; white-space: nowrap; }
+#dio .acct .online[hidden] { display: none; }
+#dio .acct .online .dvt { padding: 2px 7px 1px; font-size: 10px; }
+#dio .acct .online .live { background: #1F8F4E; box-shadow: none; } #dio .acct .online .live::after { border-color: #1F8F4E; }
+#dio .acct .online b { font-variant-numeric: tabular-nums; }
 
 /* ── the menu: words, not boxes ── */
 #dio .menu { position: fixed; left: 48px; bottom: 96px; display: grid; justify-items: start; }
@@ -195,13 +201,20 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .item.play { font-size: calc(168px * var(--k, 1)); line-height: .8; margin-bottom: 18px; padding: 10px 26px 2px 14px; }
 #dio .item.play .shard { left: -6px; top: -10px; width: calc(100% + 24px); height: calc(100% + 24px); }
 #dio .item.play .n { display: none; }
-#dio .item.play .go { font: 700 15px/1.25 var(--type); text-transform: none; letter-spacing: 0; max-width: 240px; align-self: center; text-align: left; transform: translateY(-14px); }
+#dio .item.play .go { font: 700 15px/1.25 var(--type); text-transform: none; letter-spacing: 0; max-width: 240px; align-self: center; text-align: left; transform: translateY(-14px); transition: transform .25s cubic-bezier(.3,1.4,.5,1); }
+/* PLAY's hover (owner, 2026-11-10): its shard is always up, so on hover the shard breathes (a slow tilt and swell) and
+   the word and its lines lean in a little */
+@keyframes dioPlayShard { 0%, 100% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(-1.2deg) scale(1.025); } }
+#dio .item.play:hover:not(:active), #dio .item.play:focus-visible { transform: translateX(6px); }
+#dio .item.play:hover .shard, #dio .item.play:focus-visible .shard { animation: dioPlayShard 1.8s ease-in-out infinite; }
+#dio .item.play:hover .go, #dio .item.play:focus-visible .go { transform: translate(4px, -14px); }
+@media (prefers-reduced-motion: reduce) { #dio .item.play:hover .shard, #dio .item.play:focus-visible .shard { animation: none; } }
 #dio .menu .sub { display: grid; grid-template-columns: auto auto; gap: 2px 28px; }
 
 /* ── annotations: a dot on the thing, a line, a typed label. The UI's way of saying anything ── */
 #dio .note { position: fixed; transform: translate(0, -100%); padding-bottom: 8px; pointer-events: auto; max-width: 250px; font: 700 15px/1.3 var(--type); color: var(--cream); text-shadow: 0 0 3px var(--field), 0 0 6px var(--field), 0 0 10px var(--field), 0 0 14px var(--field); cursor: pointer; }
 #dio .note b { font-weight: 700; }
-#dio .note .tag { display: inline-block; margin-bottom: 6px; padding: 3px 7px 2px; font: 700 11px var(--type); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: var(--saffron); clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
+#dio .note .tag { display: inline-block; margin-bottom: 6px; padding: 3px 7px 2px; font: 700 11px var(--type); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: var(--saffron); clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); text-shadow: none; } /* no field halo on the ink type (owner, 2026-11-10) */
 #dio .note small { display: block; margin-top: 4px; font-size: 13px; opacity: .88; }
 #dio .note:hover { color: #fff; }
 #dio .zz { position: fixed; font: 700 22px var(--type); color: var(--cream); pointer-events: none; transform: translate(-50%, -50%); }
@@ -328,7 +341,7 @@ canvas { display: block; width: 100%; height: 100%; }
   #dio #world { position: absolute; height: 350px; } #dio .scrim { display: none; }
   #dio .field { position: fixed; }
   #dio .logo { top: 20px; left: 16px; width: 170px; }
-  #dio .acct { top: 22px; right: 16px; gap: 16px; } #dio .acct span { display: none; } #dio .acct svg { width: 22px; height: 22px; }
+  #dio .acct { top: 22px; right: 16px; gap: 16px; } #dio .acct button span { display: none; } #dio .acct .online .dvt { display: none; } #dio .acct .online .n { display: inline; } #dio .acct svg { width: 22px; height: 22px; }
   #dio .notes, #dio .note { display: none !important; }
   #dio .note { position: absolute; max-width: 160px; font-size: 13px; } #dio .note small { font-size: 12px; }
   #dio .zz { position: absolute; }
@@ -358,6 +371,23 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .music .open { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; align-items: center; gap: 6px; opacity: .92; }
 #dio .music .open:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
 #dio .music .open svg { width: 12px; height: 12px; transition: transform .2s ease; }
+/* the music's volume (the owner, 2026-11-10): a speaker (music on / off) and a thin slider under the controls, here and
+   in a match's music dock (volSync draws them) */
+#dio .music .mp-vol, html.diorama.pcwide #mp-pop.dock .mplayer .mp-vol { display: flex; align-items: center; justify-content: flex-end; gap: 8px; --vl: var(--cream); --vt: var(--saffron); }
+html.diorama.pcwide #mp-pop.dock .mplayer .mp-vol { --vl: #F4ECD8; --vt: #F2B23A; color: #F4ECD8; }
+#dio.play .music .mp-vol { --vt: #17140F; }
+:is(#dio .music, #mp-pop.dock) .mp-spk { width: 26px; height: 26px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; opacity: .85; }
+:is(#dio .music, #mp-pop.dock) .mp-spk:hover { opacity: 1; }
+:is(#dio .music, #mp-pop.dock) .mp-spk svg { width: 17px; height: 17px; }
+:is(#dio .music, #mp-pop.dock) .mp-volr { -webkit-appearance: none; appearance: none; width: 120px; height: 18px; margin: 0; background: none; cursor: pointer; }
+:is(#dio .music, #mp-pop.dock) .mp-volr:focus-visible { outline: 2px solid var(--vl); outline-offset: 3px; }
+:is(#dio .music, #mp-pop.dock) .mp-volr::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(90deg, var(--vl) var(--v, 50%), color-mix(in srgb, var(--vl) 28%, transparent) var(--v, 50%)); }
+:is(#dio .music, #mp-pop.dock) .mp-volr::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 16px; margin-top: -7px; border: 0; border-radius: 0; background: var(--vt); clip-path: polygon(0 6%, 100% 0, 92% 100%, 6% 94%); transition: transform .12s ease; }
+:is(#dio .music, #mp-pop.dock) .mp-volr:hover::-webkit-slider-thumb { transform: scale(1.15); }
+:is(#dio .music, #mp-pop.dock) .mp-volr::-moz-range-track { height: 2px; background: color-mix(in srgb, var(--vl) 28%, transparent); }
+:is(#dio .music, #mp-pop.dock) .mp-volr::-moz-range-progress { height: 2px; background: var(--vl); }
+:is(#dio .music, #mp-pop.dock) .mp-volr::-moz-range-thumb { width: 10px; height: 16px; border: 0; border-radius: 0; background: var(--vt); }
+:is(#dio .music, #mp-pop.dock) .mp-vol.off .mp-volr { opacity: .45; }
 #dio.music-open .music .open svg { transform: rotate(180deg); }
 #dio .pl-scrim { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s ease; background: radial-gradient(42% 75% at 100% 100%, color-mix(in srgb, var(--field) 92%, transparent), transparent 75%); z-index: 2; }
 #dio.music-open .pl-scrim { opacity: 1; }
@@ -436,6 +466,10 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio #usheet .sk b { display: block; font: 700 14px var(--sans); opacity: 1; margin-top: 2px; }
 #dio #usheet .x { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; display: grid; place-items: center; opacity: .8; }
 #dio #usheet .x:hover { opacity: 1; }
+/* Unit sheet: every unit's card opens the game's full sheet for it; a saffron button, ink stencil words */
+#dio #usheet .usb { display: inline-flex; align-items: center; margin-top: 16px; height: 34px; padding: 2px 16px 0 13px; font: 700 21px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em;
+  color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; opacity: 1; cursor: pointer; transition: transform .15s ease; }
+#dio #usheet .usb:hover, #dio #usheet .usb:focus-visible { transform: rotate(-1.5deg) scale(1.04); outline: none; }
 
 /* ── Welcome: the title screen. The logo grows, the island is seen low and wide, three words to get in ── */
 #dio .door, #dio .signin { display: none; }
@@ -472,6 +506,8 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .acct button[aria-expanded="true"] { opacity: 1; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
 #dio .badge { position: absolute; top: -10px; right: -16px; min-width: 18px; height: 17px; padding: 2px 5px 0; font: 700 11px/15px var(--type); text-align: center; color: var(--ink); background: var(--saffron); clip-path: polygon(0 8%, 94% 0, 100% 90%, 5% 100%); }
 #dio .badge[hidden] { display: none; }
+#dio .badge.fr-badge { border-radius: 0; box-shadow: none; } /* the old UI's .fr-badge round corners and dark ring showed as dark corners in the clip (owner, 2026-11-10) */
+#dio.play .badge { color: #F2B23A; } /* on Play the badge is ink: its number in saffron, not ink on ink */
 #dio .drop { position: fixed; top: 80px; right: 36px; z-index: 6; width: 410px; max-height: calc(100vh - 104px); overflow-y: auto; scrollbar-width: thin; padding: 22px 24px 20px; color: #F4ECD8; isolation: isolate; filter: drop-shadow(0 14px 26px rgba(0,0,0,.38)); animation: dropin .2s cubic-bezier(.16,.9,.24,1) both; }
 #dio .drop[hidden] { display: none; }
 #dio .drop::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #17140F; clip-path: polygon(0 0, 100% 0, 100% 100%, 7% 100%, 0 calc(100% - 22px)); }
@@ -694,7 +730,6 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .rooms { grid-template-rows: auto auto auto auto auto minmax(0, 1fr); }
 #dio .r-msg, #dio .nr-msg { margin: 0; font: 700 14px/1.4 var(--type); }
 #dio .r-msg:not(:empty) { margin: 0 0 10px; } #dio .nr-msg:not(:empty) { margin-top: 12px; }
-#dio .newroom.duo .spec-row { display: none; }
 #dio .rlist .dvt { margin-left: 10px; }
 #dio .orders .mp .item[disabled] small { opacity: 1; }
 
@@ -788,8 +823,12 @@ html.diorama .sheet textarea { border: 1px dashed rgba(244, 236, 216, .35) !impo
 #dio .back, #dio.play .back, #dio.pinned .back, #dio.profile .back, #dio.welcome.in-signin .back { display: none; }
 #dio .logo { cursor: pointer; } #dio.welcome .logo { cursor: default; }
 /* a sub-screen's heading is its trail: Play · Rooms · New room, Profile · Match history; the earlier ones are links */
-#dio .crumb { font: inherit; letter-spacing: inherit; text-transform: inherit; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 4px; opacity: .9; }
-#dio .crumb:hover { opacity: 1; text-decoration-thickness: 2.5px; }
+/* (the owner, 2026-11-10: "Play · Rooms" read as a Play / Rooms switch, Play underlined as the picked one) a path:
+   the earlier steps dimmed, a › between, the screen you're on in full; an earlier step underlines when you point at it */
+#dio .crumb { font: inherit; letter-spacing: inherit; text-transform: inherit; text-decoration: none; opacity: .62; }
+#dio .crumb:hover, #dio .crumb:focus-visible { opacity: 1; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+#dio .k .sep { margin: 0 .55em; font-style: normal; opacity: .62; }
+#dio .k .here { opacity: 1; }
 /* Change battlefield: always in the same place, bottom right beside the music player */
 #dio .note.bf-note { position: fixed; left: auto !important; top: auto !important; right: 340px; bottom: 36px; transform: none; text-align: right !important; padding-bottom: 0; }
 #dio.welcome .bf-note { display: none !important; }
@@ -1059,6 +1098,7 @@ html.diorama.pcwide .hud .side.foe.open #foe-name { opacity: .8; }
 html.droom-on .panel { top: 104px; }
 html.diorama.pcwide .droom { display: grid; gap: 16px; align-content: start; }
 html.diorama.pcwide .droom .rhead .k { font: 700 12px var(--dtype); letter-spacing: .14em; text-transform: uppercase; color: #F2B23A; text-shadow: var(--dhalo); }
+html.diorama.pcwide .droom .rhead { min-width: 0; } /* (a long word can't widen the column: dioRoom shrinks the title to fit instead) */
 html.diorama.pcwide .droom .rhead h2 { margin: 4px 0 8px; font: 700 clamp(44px, 7vh, 62px)/.9 var(--dstencil); text-transform: uppercase; letter-spacing: -.015em; color: #F4ECD8; text-shadow: var(--dhalo); text-wrap: balance; }
 html.diorama.pcwide .droom .rlead { margin: 0; font: 700 14px/1.42 var(--dtype); color: #F4ECD8; opacity: .92; text-shadow: var(--dhalo); }
 html.diorama.pcwide .droom .rlead b { color: #F2B23A; }
@@ -1077,6 +1117,7 @@ html.diorama.pcwide .droom .invite { margin-left: -9px; }
 html.diorama.pcwide .droom .invite .w { opacity: 1; font-size: 20px; text-decoration: underline dashed; text-underline-offset: 5px; text-decoration-thickness: 1.5px; }
 html.diorama.pcwide .droom .help, html.diorama.pcwide .droom .say .help { justify-self: start; padding: 0; border: 0; background: none; color: #F4ECD8; font: 700 13px var(--dtype); text-decoration: underline; text-underline-offset: 4px; opacity: .8; text-shadow: var(--dhalo); }
 html.diorama.pcwide .droom .help:hover { opacity: 1; }
+html.diorama.pcwide .droom :is(#leave, #cancel):hover, html.diorama.pcwide .droom :is(#leave, #cancel):focus-visible { color: #E5674B; opacity: 1; } /* leaving or closing the room: red when you point at it (the owner, 2026-11-10) */
 html.diorama.pcwide .droom .rlink { display: grid; gap: 6px; }
 html.diorama.pcwide .droom .linkbox { font: 700 12px var(--dtype); color: #F4ECD8; word-break: break-all; user-select: all; opacity: .9; }
 html.diorama.pcwide .droom .ddev { display: grid; gap: 8px; padding-top: 10px; border-top: 1px dashed rgba(255,95,196,.5); }
@@ -1207,32 +1248,29 @@ html.diorama.pcwide .sheet .seg button { text-transform: none; font: 700 14px va
    Fight / Not ready, the same button) keeps the skewed shard. Undoes the shard, the tile slab and the stencil words on
    every other button over the match: the column's extra moves and fight speeds, the picks, the results, the room's
    START MATCH, the sheets */
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close) {
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close) {
   position: relative; isolation: auto; margin: 0; transform: none; width: auto; min-width: 0; border: 1px solid #27393D; border-radius: 4px; background: rgba(13, 19, 21, .72); box-shadow: none;
   padding: 10px 16px; color: #E5ECE9; opacity: 1; text-shadow: none; text-decoration: none; text-transform: none; letter-spacing: 0; white-space: nowrap;
   font: 600 15px/1.2 "IBM Plex Sans", system-ui, sans-serif; transition: background-color .12s ease, border-color .12s ease; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close)::before,
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close)::after { content: none; display: none; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):hover:not(:disabled) { transform: none; border-color: #3A5257; background: rgba(21, 33, 37, .9); }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):active:not(:disabled) { transform: none; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn):is(.primary, [aria-pressed="true"], #pick-peek, #start) { background: #E6B84A; border-color: #E6B84A; color: #0D1315; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn):is(.primary, [aria-pressed="true"], #pick-peek, #start):hover:not(:disabled) { background: #F0C55C; border-color: #F0C55C; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):disabled { opacity: .4; }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .sheet .btn, .sheet #close).small, html.diorama.pcwide .panel .xrow .btn { padding: 6px 12px; font-size: 13px; }
-html.diorama.pcwide .panel #skip { padding: 6px 12px; font-size: 13px; }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close)::before,
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close)::after { content: none; display: none; }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):hover:not(:disabled) { transform: none; border-color: #3A5257; background: rgba(21, 33, 37, .9); }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):active:not(:disabled) { transform: none; }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn):is(.primary, [aria-pressed="true"], #pick-peek, #start) { background: #E6B84A; border-color: #E6B84A; color: #0D1315; }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .pick-peek, .overlay .card .btn, .droom #start, .sheet .btn):is(.primary, [aria-pressed="true"], #pick-peek, #start):hover:not(:disabled) { background: #F0C55C; border-color: #F0C55C; }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .overlay .card .btn, .droom #start, .sheet .btn, .sheet #close):disabled { opacity: .4; }
+html.diorama.pcwide :is(.panel .xrow .btn, .sheet .btn, .sheet #close).small, html.diorama.pcwide .panel .xrow .btn { padding: 6px 12px; font-size: 13px; }
 html.diorama.pcwide .overlay > .card .btn.primary { order: 0; font-size: 15px; padding: 10px 20px; }
 html.diorama.pcwide .droom #start { font-size: 17px; padding: 12px 24px; }
 html.diorama.pcwide .pick .row #pick-hide::after { content: none; }
 html.diorama.pcwide .pick .row #pick-hide { font-size: 15px; }
-/* the fight's speeds: the old segmented row */
-html.diorama.pcwide .panel .speeds { display: inline-flex; gap: 0; border: 1px solid #27393D; border-radius: 4px; overflow: hidden; background: rgba(13, 19, 21, .72); }
-html.diorama.pcwide .panel .speeds button { padding: 7px 12px; border: 0; border-radius: 0; background: transparent; color: #E5ECE9; opacity: 1; text-shadow: none; font: 13px "IBM Plex Mono", ui-monospace, monospace; }
-html.diorama.pcwide .panel .speeds button::before { content: none; }
-html.diorama.pcwide .panel .speeds button[aria-pressed="true"] { background: #27393D; color: #E6B84A; }
-html.diorama.pcwide .panel .speeds button[aria-pressed="true"], html.diorama.pcwide .panel .speeds button[aria-pressed="true"]:hover { background: #27393D; color: #E6B84A; }
-html.diorama.pcwide .panel .speeds button.offer { text-decoration: none; box-shadow: inset 0 0 0 1px #E6B84A; }
-html.diorama.pcwide .panel #skip.primary { background: #E6B84A; border-color: #E6B84A; color: #0D1315; }
-html.diorama.pcwide .panel #skip.primary::before { content: none; }
+/* the fight's speeds and Skip (the owner, 2026-11-10: not the old hairline boxes): words, as the Diorama's, the picked
+   speed on the saffron shard (in a fight: the speeds and Skip, as words, above); pointing lifts a word to full */
+html.diorama.pcwide .panel .speeds button:hover:not([aria-pressed="true"]), html.diorama.pcwide .panel #skip:hover { opacity: 1; }
+html.diorama.pcwide .panel .speeds button { transition: opacity .12s ease, transform .15s ease; }
+html.diorama.pcwide .panel .speeds button[aria-pressed="true"] { transform: rotate(-1.5deg); }
+html.diorama.pcwide .panel #skip { font-size: 20px; padding: 5px 10px 2px; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+html.diorama.pcwide .panel #skip.primary { text-decoration: none; }
 /* the sheets' switches (On / Off, 2D / 3D...): the old segmented row */
 html.diorama.pcwide .sheet .seg { display: inline-flex; gap: 0; border: 1px solid #27393D; border-radius: 4px; overflow: hidden; }
 html.diorama.pcwide .sheet .seg button { padding: 6px 11px; border: 0; background: transparent; color: #E5ECE9; opacity: 1; font: 13px "IBM Plex Mono", ui-monospace, monospace; }
@@ -1318,7 +1356,6 @@ html.diorama.pcwide #mp-pop.dock .mp-empty { font: 500 14px "Bricolage Grotesque
 html.diorama.pcwide #mp-pop.dock .mp-name { align-self: flex-end; width: 260px; border: 0; border-bottom: 1px dashed rgba(244,236,216,.5); border-radius: 0; background: none; color: #F4ECD8; text-align: right; font: 700 18px "Bricolage Grotesque", system-ui, sans-serif; }
 html.diorama.pcwide #mp-pop.dock .mp-foot { display: flex; flex-direction: row-reverse; justify-content: space-between; gap: 12px; align-items: center; }
 html.diorama.pcwide #mp-pop.dock .mp-where { font: 500 12px "Bricolage Grotesque", system-ui, sans-serif; opacity: .75; }
-html.diorama.pcwide .panel .speeds button[aria-pressed="true"]::before, html.diorama.pcwide .panel .speeds button.offer::before { content: none; display: none; }
 
 /* the column never squeezes its rows (on a short window they collapsed onto the gold, the owner's screenshot,
    2026-11-09): it scrolls instead, and ends above READY so nothing runs under it; */
@@ -1634,12 +1671,36 @@ html.dsetmenu.diorama.pcwide #sheet .btn#to-menu:hover:not(:disabled) { backgrou
    are buttons"): a light fill and a clear cream outline, brighter under the pointer; still the old game's shape (round
    corners, sentence case). Sheets (Take back, Set direction, Sell, Close...), the column (Loan, Undo all...), the picks'
    Hide, the results' Main menu, Skip */
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not([aria-pressed="true"]):not(#to-menu) {
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not([aria-pressed="true"]):not(#to-menu) {
   background: rgba(244, 236, 216, .09); border: 1px solid rgba(244, 236, 216, .38); color: #F4ECD8; box-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not([aria-pressed="true"]):not(#to-menu):hover:not(:disabled) {
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not([aria-pressed="true"]):not(#to-menu):hover:not(:disabled) {
   background: rgba(244, 236, 216, .17); border-color: rgba(244, 236, 216, .7); }
-html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not(#to-menu):active:not(:disabled) { background: rgba(244, 236, 216, .24); }
+html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not(#to-menu):active:not(:disabled) { background: rgba(244, 236, 216, .24); }
 html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: none; width: auto; } /* (a squad's sheet put it in a grid cell, where it stretched) */
+
+/* ── Puzzles (2026-11-10): its own field colour, a deep teal (the fourth: ultramarine menu, saffron Play, ink Profile).
+   The left column as Profile's: the title, a line, the title to earn, the puzzles by level as stencil words (the saffron
+   shard on the pointed-at one), Back. The island shows the pointed-at puzzle ── */
+#dio.puz { --field: #1F5A57; --field-lo: #143C3A; }
+#dio.puz .menu, #dio.puz .zz, #dio.puz .standings, #dio.puz #dio-backto, #dio.puz .tiers { display: none; }
+#dio .pz { position: fixed; left: 48px; top: clamp(100px, 14.2vh, 128px); width: min(600px, 42vw); display: none; align-content: start; justify-items: start; }
+#dio.puz .pz { display: grid; }
+#dio .pz .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
+#dio .pz h2 { margin: 2px 0 0; font: 700 clamp(60px, 11.6vh, 104px)/.86 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+#dio .pz .pz-lede { margin: clamp(8px, 1.6vh, 14px) 0 0; font: 700 15px/1.35 var(--type); opacity: .92; }
+#dio .pz .pz-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0 0; font: 700 15px/1.35 var(--type); opacity: .92; }
+#dio .pz .pz-title .ptitle { margin: 0; font-size: 20px; }
+#dio .pz .pz-list { display: grid; justify-items: start; margin: clamp(10px, 2.4vh, 22px) 0 clamp(12px, 2.6vh, 24px); }
+#dio .pz .pz-lv { display: flex; align-items: baseline; gap: 14px; margin: clamp(6px, 1.4vh, 12px) 0 clamp(2px, .6vh, 6px); }
+#dio .pz .pz-lv:first-child { margin-top: 0; }
+#dio .pz .pz-n { font: 700 13px var(--type); opacity: .75; }
+#dio .pz .item { font-size: clamp(28px, 4.6vh, 42px); margin: clamp(1px, .45vh, 4px) 0 clamp(1px, .45vh, 4px) 4px; padding: 3px 4px 0; }
+#dio .pz .item small { margin-left: 4px; font: 700 13px var(--type); text-transform: none; letter-spacing: 0; color: #9FE0B0; transform: translateY(-3px); }
+#dio .pz .item.on small, #dio .pz .item:hover small { color: var(--ink); }
+#dio .pz .create { background: var(--saffron); color: var(--ink); font-size: clamp(28px, 4vh, 36.4px); padding: clamp(6px, 1.1vh, 10px) 22px clamp(5px, .9vh, 8px) 18px; }
+#dio .pz .create svg { margin-right: -2px; }
+#dio .note.qnote { max-width: 260px; cursor: default; }
+#dio.puz .acct { display: flex; }
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -1857,6 +1918,17 @@ html.pc .panel > .bar:last-child { margin: -6px -12px -12px; padding: 6px 12px 1
 .pick .det { min-height: 3.6em; font-size: 12px; line-height: 1.4; color: var(--muted); text-align: left; background: rgba(21, 33, 37, 0.85); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
 .pick .det b { color: var(--ink); }
 .pick .row { display: flex; gap: 8px; justify-content: center; }
+/* the pick clock (leader and tower picks): a big countdown and a bar that runs down; red and pulsing for the last 10 s */
+.pick-clock { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 12px; width: 100%; max-width: 520px; margin-inline: auto;
+  padding: 8px 14px; border-radius: 12px; background: rgba(0, 0, 0, 0.45); border: 2px solid var(--gold); color: var(--gold); }
+.pick-clock[hidden] { display: none; }
+.pick-clock .n { grid-row: span 2; font: 800 clamp(34px, 10vw, 52px)/1 system-ui, sans-serif; font-variant-numeric: tabular-nums; min-width: 2.2ch; text-align: center; }
+.pick-clock .lab { font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; }
+.pick-clock .track { display: block; height: 10px; border-radius: 5px; background: rgba(255, 255, 255, 0.15); overflow: hidden; }
+.pick-clock .track i { display: block; height: 100%; background: currentColor; transform-origin: left; transition: transform .2s linear; }
+.pick-clock.low { color: #FF5A4E; border-color: #FF5A4E; animation: pickpulse 1s ease-in-out infinite; }
+@keyframes pickpulse { 50% { transform: scale(1.04); box-shadow: 0 0 22px rgba(255, 90, 78, 0.6); } }
+@media (prefers-reduced-motion: reduce) { .pick-clock.low { animation: none; } }
 .pick-peek { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 2; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); }
 .pick-peek[hidden] { display: none; }
 @keyframes pick-in { from { opacity: 0; transform: translateY(18px) scale(0.94); } to { opacity: 1; transform: none; } }
@@ -2344,6 +2416,15 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .nameplate.big .np-tag { font-size: 22px; }
 .nameplate.row { justify-items: start; }
 .nameplate.menu-np .np-tag { font-size: 20px; color: #fff; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6); }
+/* players online (2026-11-10, developers only): a small pill in the DEV title's pink under the name, with a live dot */
+.online-np { display: inline-flex; align-items: center; gap: 7px; margin-top: 6px; padding: 3px 11px 3px 9px; border-radius: 999px; font: 700 11px var(--font-display); letter-spacing: 0.16em; text-transform: uppercase; color: #FF5FC4;
+  background: linear-gradient(90deg, transparent, rgba(255, 95, 196, 0.16) 18%, rgba(255, 95, 196, 0.16) 82%, transparent); text-shadow: 0 0 8px rgba(255, 95, 196, 0.45); }
+.online-np[hidden] { display: none; }
+.online-np b { font: 700 13px var(--font-data, var(--font-display)); letter-spacing: 0.02em; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+.online-np .live, #dio .online .live { position: relative; width: 7px; height: 7px; border-radius: 50%; background: #4BE38A; box-shadow: 0 0 6px rgba(75, 227, 138, 0.8); flex: none; }
+.online-np .live::after, #dio .online .live::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid #4BE38A; opacity: 0; animation: onlPulse 2.4s ease-out infinite; }
+@keyframes onlPulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(1.9); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .online-np .live::after, #dio .online .live::after { animation: none; } }
 .ptitle { --tc: #B67CFF; --tg: rgba(182, 124, 255, 0.5); display: inline-flex; align-items: center; gap: 6px; font: 700 10px var(--font-display); letter-spacing: 0.22em; text-transform: uppercase; color: var(--tc); padding: 2px 9px 2px 11px; border-radius: 999px;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tc) 22%, transparent) 25%, color-mix(in srgb, var(--tc) 22%, transparent) 75%, transparent);
   text-shadow: 0 0 8px var(--tg), 0 0 2px var(--tg); animation: tglow 2.6s ease-in-out infinite; }
@@ -2407,6 +2488,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .mp-up { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--mp-dim); border: 1px solid var(--mp-hair); transition: transform 0.3s ease, color 0.15s ease, border-color 0.15s ease; }
 .mp-now:hover .mp-up { color: var(--mp-gold); border-color: var(--mp-line); }
 .mp-now[aria-expanded="true"] .mp-up { transform: rotate(180deg); }
+.mplayer .mp-vol { display: none; } /* the music's volume: the Diorama's players only (volSync) */
 .mp-prog { position: relative; display: block; height: 3px; margin: 0 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
 .mp-prog i { position: absolute; inset: 0; transform-origin: left center; transform: scaleX(0); background: linear-gradient(90deg, var(--mp-gold-dk), var(--mp-gold-hi)); box-shadow: 0 0 8px rgba(111, 211, 222, 0.35); transition: transform 0.25s linear; }
 .mp-row { display: flex; align-items: center; justify-content: center; gap: 16px; }
@@ -2608,6 +2690,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <img class="logo" src="img/title.png" alt="No Mans Land: main menu" role="button" tabindex="0">
   <nav class="acct" aria-label="Account">
+    <span class="online" id="dio-online" data-online hidden title="Players with the game open right now. Only developers see this."><span class="dvt">DEV</span><i class="live" aria-hidden="true"></i><span class="n"><b></b> online</span></span>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="currentColor"/><path d="M2 20c0-3.9 3.1-6 7-6s7 2.1 7 6" fill="currentColor"/><circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".7"/><path d="M17 13.5c2.9.2 5 1.9 5 5.5h-4.4c0-2-.6-3.7-1.8-5" fill="currentColor" opacity=".7"/></svg><span>Friends</span><b class="badge" id="fr-badge" hidden></b></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>Guest</span></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg><span>Settings</span></button>
@@ -2632,7 +2715,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   </nav>
 
   <!-- notes. data-home: shown on the menu; data-hover: shown while that thing is pointed at; data-btn: shown while that menu word is -->
-  <div class="note rw-note" data-anchor="golem" data-home role="button" tabindex="0" aria-label="Rewards: invite a friend"><span class="tag">Reward · Limited</span><br>This golem’s skin is yours<br>when a friend joins. <span class="rw-row"><span class="rw-btn">Invite a friend</span></span></div>
+  <div class="note rw-note" data-anchor="golem" data-home role="button" tabindex="0" aria-label="Rewards: invite a friend"><span class="tag">Limited reward</span><br>This golem’s skin is yours<br>when a friend joins. <span class="rw-row"><span class="rw-btn">Invite a friend</span></span></div>
   <div class="note" data-anchor="skeleton" data-home>Hover over stuff on the island with your mouse!</div>
   <div class="note" data-anchor="sniper" data-hover="sniper">Sniper.<small>Unit · Long range · Good against single targets</small></div>
   <div class="note" data-anchor="mage" data-hover="mage">Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
@@ -2652,7 +2735,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <div class="note bf-note" data-anchor="bf" role="button" tabindex="0" aria-label="Change battlefield"><span class="bf-sub" id="bf-sub"></span><span class="bf-btn">Change battlefield</span></div>
   <div id="unote" style="display:none"></div>
   <nav class="tiers" aria-label="Unit tiers"><span class="k">Units by tier</span><button data-t="1" aria-pressed="true">Tier 1</button><button data-t="2" aria-pressed="false">Tier 2</button><button data-t="3" aria-pressed="false">Tier 3</button><button data-t="4" aria-pressed="false">Tier 4</button></nav>
-  <section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><div class="skn" hidden></div><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
+  <section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><div class="skn" hidden></div><button class="usb" type="button">Unit sheet</button><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
   <div class="zz" id="zz">z<span style="font-size:.7em">z</span></div>
 
   <div class="pl-scrim" aria-hidden="true"></div>
@@ -2668,6 +2751,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <button id="mp-next" aria-label="Next"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 3h2v10h-2zM2 3v10l8-5z" fill="currentColor"/></svg></button>
       <button class="open" data-open id="mp-now" aria-expanded="false" aria-label="Show the playlists">Playlist <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 7.5L6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
     </span>
+    <span class="mp-vol"></span>
   </div>
 
   <section class="standings" aria-label="Rankings">
@@ -2677,7 +2761,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button class="lb-all" id="lb-open">Full leaderboard →</button>
   </section>
 
-  <p class="phone-reward" style="display:none;position:relative;margin:22px 16px 0;font:400 14px/1.4 var(--type)"><span class="tag" style="display:inline-block;padding:3px 7px 2px;font:700 11px var(--type);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--saffron)">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></p>
+  <p class="phone-reward" style="display:none;position:relative;margin:22px 16px 0;font:400 14px/1.4 var(--type)"><span class="tag" style="display:inline-block;padding:3px 7px 2px;font:700 11px var(--type);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--saffron)">Limited reward</span><br>Invite a friend. <b>This golem skin is yours.</b></p>
   <div class="build">Music: Snetänd, Emil Helleday · Build 2026.11</div>
 
   <!-- Play: one click on a choice starts it. Multiplayer folds out its kinds; a kind opens Rooms, filtered to it -->
@@ -2712,7 +2796,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <!-- Rooms: the open matches of one kind. One button above the list -->
   <section class="rooms" aria-label="Rooms">
-    <span class="k"><button class="crumb" data-crumb="play">Play</button> · Rooms</span>
+    <span class="k"><button class="crumb" data-crumb="play">Play</button><i class="sep" aria-hidden="true">›</i><span class="here">Rooms</span></span>
     <h2>Rooms <small id="r-count"></small></h2>
     <div class="rsearch">
       <svg class="mag" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.8"/></svg>
@@ -2729,9 +2813,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <ol class="rlist" id="lob-list"></ol>
   </section>
 
-  <!-- Create room: the game's three settings (kind, who can find it, spectators) as rows of words, then one button -->
+  <!-- Create room: the game's settings (kind, battlefield, who can find it) as rows of words, then one button -->
   <section class="newroom" aria-label="Create room">
-    <span class="k"><button class="crumb" data-crumb="play">Play</button> · <button class="crumb" data-crumb="rooms">Rooms</button> · New room</span>
+    <span class="k"><button class="crumb" data-crumb="play">Play</button><i class="sep" aria-hidden="true">›</i><button class="crumb" data-crumb="rooms">Rooms</button><i class="sep" aria-hidden="true">›</i><span class="here">New room</span></span>
     <h2>New room</h2>
     <div class="nr-opts">
       <span class="lab">Kind</span>
@@ -2743,9 +2827,6 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <span class="lab">Who can find it</span>
       <span class="seg" role="group" aria-label="Who can find it"><button data-pub="1" aria-pressed="true">Public</button><button data-pub="0" aria-pressed="false">Private</button></span>
       <span></span><p class="nr-note" id="nr-pub">Listed in Rooms for anyone to join.</p>
-      <span class="lab spec-row">Spectators</span>
-      <span class="seg spec-row" role="group" aria-label="Spectators"><button data-spec="1" aria-pressed="true">On</button><button data-spec="0" aria-pressed="false">Off</button></span>
-      <span class="spec-row"></span><p class="nr-note spec-row" id="nr-spec">Anyone can watch once it starts.</p>
     </div>
     <button class="create go" id="nr-go">Create room <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
     <p class="nr-msg" id="nr-msg" aria-live="polite"></p>
@@ -2783,9 +2864,21 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button class="create" id="pf-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
   </section>
 
+  <!-- Puzzles (2026-11-10): the game's tutorial puzzles as rows of words, by level. The island shows the pointed-at one:
+       their squads on their tiles, your shop on tiles along your side. One click on a row starts it -->
+  <section class="pz" aria-label="Puzzles">
+    <span class="k">Puzzles · one fight each</span>
+    <h2>Puzzles</h2>
+    <p class="pz-lede">You see their whole army. Win it with the gold you have.</p>
+    <p class="pz-title" id="pz-title"></p>
+    <div class="pz-list" id="pz-list"></div>
+    <button class="create" id="pz-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
+  </section>
+  <div class="note qnote" data-q="foe" style="display:none"></div>
+
   <!-- Match history: your online matches, newest first; a match folds out its rounds, each with a replay -->
   <section class="history" aria-label="Match history">
-    <span class="k"><button class="crumb" data-crumb="profile">Profile</button> · Match history</span>
+    <span class="k"><button class="crumb" data-crumb="profile">Profile</button><i class="sep" aria-hidden="true">›</i><span class="here">Match history</span></span>
     <h2>Matches <small id="h-count"></small></h2>
     <div class="h-tabs" role="group" aria-label="Whose matches"><button data-h="mine" aria-pressed="true">My matches</button><button data-h="all" aria-pressed="false">All online</button></div>
     <p class="r-msg" id="h-msg" aria-live="polite"></p>
@@ -6960,7 +7053,8 @@ const Game = (() => {
   ];
   const CHARACTERS = ALL_CHARACTERS.filter(c => !RETIRED_CHARS.includes(c.id));
   // ---------- the Standard pack ----------
-  // A smaller match for new players, picked on the menu: fewer units with clear jobs (one or two of each kind per tier),
+  // No longer offered on the menu (2026-11-10: every match plays with the whole pool); kept for tools/tests/standard-pack.js.
+  // A smaller match for new players: fewer units with clear jobs (one or two of each kind per tier),
   // the leaders with simple abilities, and no mage or slime tower. Units by name, so a Counter Lab roster just keeps
   // the ones it has (with none of them, the pack leaves nothing out).
   const STANDARD_PACK = {
@@ -7135,7 +7229,7 @@ const Game = (() => {
   const findMap = (id) => MAPS.find(x => x.id === id) || TEAM_MAPS.find(x => x.id === id) || VIEW_MAPS.find(x => x.id === id);
   // Looks (skins) for the 3D board: a map with skins (the Standard and the Test Grid) can be played in any of them; the
   // others have their own look. Only how the board looks: the rules stay the map's. The match keeps the host's pick (m.skin).
-  const SKINS = [{ id: 'meadow', name: 'Meadow' }, { id: 'autumn', name: 'Autumn' }, { id: 'snow', name: 'Snow' }, { id: 'frost', name: 'Forest Glade' }, { id: 'desert', name: 'Desert' }, { id: 'ash', name: 'Ashlands' }, { id: 'moonlit', name: 'Moonlit Snow' }, { id: 'savanna', name: 'Savanna' }];
+  const SKINS = [{ id: 'meadow', name: 'Meadow' }, { id: 'autumn', name: 'Autumn' }, { id: 'snow', name: 'Mountain Pass' }, { id: 'frost', name: 'Forest Glade' }, { id: 'desert', name: 'Desert' }, { id: 'ash', name: 'Ashlands' }, { id: 'moonlit', name: 'Moonlit Snow' }, { id: 'savanna', name: 'Savanna' }];
   // each map's own look (the rest: meadow), and the look a match is drawn in: the host's pick on a map with skins, else
   // the map's own. The deployment and battle music follow the look too (LOOK_MUSIC in the page).
   const MAP_LOOK = { standard: 'meadow', testgrid: 'frost', ice: 'snow', forest: 'forest', cavern: 'cavern' };
@@ -10305,7 +10399,7 @@ if (typeof module !== 'undefined') module.exports = Game;
   // the clock: runs unless tower picks are pending or a player is away (then held keeps what is left)
   // The leader draft (Game.DRAFT): each pick has DRAFT_PICK_MS; a player who doesn't pick in time gets the first leader
   // left in the pool, and the other player's turn starts. R.draftDue = when the current pick runs out (0: none pending).
-  const DRAFT_PICK_MS = 30000;
+  const DRAFT_PICK_MS = 20000; // 20 s since 2026-11-10 (was 30)
   function draftClock(R, now) {
     const m = R.m, turn = R.phase === 'deploy' && m && !m.over ? [0, 1].find(sd => G.leaderTurn(m, sd)) : undefined;
     if (turn == null) { R.draftDue = 0; R.draftTurn = null; return; }
@@ -10315,8 +10409,22 @@ if (typeof module !== 'undefined') module.exports = Game;
     R.draftDue = 0;
     draftClock(R, now); // the other player's turn
   }
+  // The tower pick (round Game.TOWER_PICK_ROUND, 2026-11-10): TOWER_PICK_MS from the round's start; a player who hasn't
+  // picked by then gets the first tower on offer (as Game.settleTowerPicks). R.towerDue = when it runs out (0: none pending).
+  const TOWER_PICK_MS = 20000; // as DRAFT_PICK_MS
+  function towerClock(R, now) {
+    const m = R.m, open = R.phase === 'deploy' && m && !m.over ? [0, 1].filter(sd => G.needsTowerPick(m, sd)) : [];
+    if (!open.length) { R.towerDue = 0; return; }
+    if (!R.towerDue) { R.towerDue = now + TOWER_PICK_MS; return; }
+    if (now < R.towerDue) return;
+    for (const sd of open) G.setTowerType(m, sd, G.towerChoices(m, sd)[0].id);
+    R.towerDue = 0;
+  }
+  // how long the pick on screen (the leader draft's current pick, or the tower pick) has left, in ms (0: none)
+  const pickLeft = (R, now) => R.phase !== 'deploy' ? 0 : R.draftDue ? Math.max(1, R.draftDue - now) : R.towerDue ? Math.max(1, R.towerDue - now) : 0;
   function clock(R, now) {
     draftClock(R, now);
+    towerClock(R, now);
     if (R.phase !== 'deploy') { R.deadline = 0; R.held = 0; return; }
     const stop = picksPending(R) || someoneAway(R, now);
     if (stop && R.deadline) { R.held = Math.max(MIN_LEFT_MS / 2, R.deadline - now); R.deadline = 0; }
@@ -10402,6 +10510,7 @@ if (typeof module !== 'undefined') module.exports = Game;
     if (R.deadline) return R.deadline + GRACE_MS;
     const left = [0, 1].filter(sd => R.away[sd]).map(sd => R.away[sd] + AWAY_MAX_MS).filter(t => t > now);
     if (R.draftDue) left.push(R.draftDue - 50); // a leader pick running out
+    if (R.towerDue) left.push(R.towerDue - 50); // a tower pick running out
     return left.length ? Math.min(...left) + 50 : 0;
   }
   // the results screen: both moved on (or the clock for it ran out on their phones) -> the next round
@@ -10436,7 +10545,7 @@ if (typeof module !== 'undefined') module.exports = Game;
   const api = {
     V, ACTIONS, cleanArgs, snapshot, withUnits, hide, view, viewOf, sideState, restoreSide, stable, fnv, sideHash, fight,
     cleanSettings, newMatch, create, start, act, setReady, runFight, tick, due, next, rematch, forfeit, setAway, clock,
-    canAct, save, load, DRAFT_PICK_MS, GRACE_MS, AWAY_MAX_MS, DEPLOY_SECONDS, FIRST_DEPLOY_SECONDS,
+    canAct, save, load, DRAFT_PICK_MS, TOWER_PICK_MS, pickLeft, GRACE_MS, AWAY_MAX_MS, DEPLOY_SECONDS, FIRST_DEPLOY_SECONDS,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Referee = api;
@@ -17344,11 +17453,11 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // results. Each fades out when its phase ends and fades back in where it stopped when the phase comes round again.
   // Volume goes through Web Audio because iPhones ignore audio.volume.
   const SOUND_STORE = 'phonebellum.sound.v1';
-  const SONGS = { // all mastered to the same loudness
+  const SONGS = { // all mastered to the same loudness; this order is the playlists' order
+    superCoffee: { title: 'Super coffee', file: 'audio/super-coffee.mp3' }, // no. 1, and a new player's first song (FIRST_SONG)
     sisi: { title: 'sisi', file: 'audio/sisi.mp3' },
     jonah: { title: 'Jonah', file: 'audio/jonah.mp3' },
     long: { title: 'Long', file: 'audio/long.mp3' },
-    superCoffee: { title: 'Super coffee', file: 'audio/super-coffee.mp3' },
     reveal: { title: 'Reveal', file: 'audio/reveal.mp3' },
     salig: { title: 'Salig', file: 'audio/salig.mp3', artist: 'Emil Helleday' },
     bulgaria: { title: 'Bulgaria', file: 'audio/bulgaria.mp3' },
@@ -17362,12 +17471,14 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     eyesInTheFront2: { title: 'Eyes in the front 2', file: 'audio/eyes-in-the-front-2.mp3' }, // the whole song (menu)
     // the same song as battle music: plays from start to end (seconds), then loops back to start
     joeBiden: { title: 'Joe biden', file: 'audio/joe-biden.mp3' },
+    broski: { title: 'Broski', file: 'audio/broski.mp3' },
+    dawnOnU: { title: 'DawnOnU', file: 'audio/dawn-on-u.mp3' },
     eyesInTheFront2Battle: { title: 'Eyes in the front 2', file: 'audio/eyes-in-the-front-2.mp3', start: 22.15, end: 88.61 },
   };
   // deployment / battle music not given to a look yet: kept out of the menu playlist and played nowhere until it goes
   // in PLAYLISTS or MUSIC_COMBOS (and then out of this list). Developers hear them in the DEV playlist ('dev', devMusic);
   // everyone else doesn't see them anywhere, not in All music or their own playlists either.
-  const UNASSIGNED = ['evening', 's4knandet', 'eyesInTheFront2Battle'];
+  const UNASSIGNED = ['evening', 's4knandet', 'eyesInTheFront2Battle', 'broski', 'dawnOnU'];
   const ARTIST = 'Snetänd'; // unless a song names its own
   const songName = (id) => `“${SONGS[id].title}” - ${SONGS[id].artist || ARTIST}`;
   const PLAYLISTS = { deploy: ['bulgaria'], battle: ['habbyourmam'] };
@@ -17388,8 +17499,13 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const DEFAULT_VOL = 10;
   // song: the one menu song the player picked ('' = the menu playlist); solo: on an iPhone, take over the phone's sound (see setAudioSession)
   let snd = { vol: DEFAULT_VOL, muted: false, song: '', solo: false };
+  // what the menu plays first for a new player: no sound settings saved, and the menu music has never played on this
+  // device (FIRST_SEEN, set the first time it does)
+  const FIRST_SONG = 'superCoffee', FIRST_SEEN = 'pb-first-song';
+  let soundNew = true;
   try {
     const p = JSON.parse(localStorage.getItem(SOUND_STORE) || 'null');
+    soundNew = !p && !localStorage.getItem('phonebellum.music.v1') && !localStorage.getItem(FIRST_SEEN); // (the old On/Off switch: not new)
     if (p && isFinite(p.vol)) snd = { vol: Math.max(0, Math.min(100, +p.vol)), muted: !!p.muted, song: SONGS[p.song] ? p.song : '', solo: !!p.solo, shuffle: !!p.shuffle, repeat: !!p.repeat, chatOn: p.chatOn !== false, emotesOn: p.emotesOn !== false, src: typeof p.src === 'string' ? p.src : 'menu' }; // chatOn, emotesOn: online matches (the lobby)
     else if (localStorage.getItem('phonebellum.music.v1') === 'off') snd.muted = true; // the old On/Off switch
   } catch (e) {}
@@ -17438,6 +17554,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     el.addEventListener('ended', () => { if (cur().end != null && (tracks.length < 2 || pl.repeat)) { rewind(); el.play().catch(() => {}); } else pl.next(); });
     pl.song = () => tracks[track];
     pl.list = () => tracks.slice();
+    pl.first = (id) => { const t = tracks.indexOf(id); if (t >= 0 && t !== track) load(t); }; // start on this one (no Back to the one before)
     pl.play = (id) => { const t = tracks.indexOf(id); if (t < 0) return; if (t !== track) { past.push(tracks[track]); if (past.length > 20) past.shift(); load(t); } else rewind(); };
     pl.setRepeat = (on) => { pl.repeat = !!on; el.loop = pl.repeat; };
     pl.next = () => { past.push(tracks[track]); if (past.length > 20) past.shift(); load(pickNext(track)); };
@@ -17527,6 +17644,10 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   for (const id in MUSIC_COMBOS) for (const k in MUSIC_COMBOS[id]) music[k + '-' + id] = playlist(MUSIC_COMBOS[id][k]);
   music.menu.setRepeat(!!snd.repeat); music.mine.setRepeat(!!snd.repeat);
   if (snd.song && srcSongs(menuSrc()).includes(snd.song)) music.menu.play(snd.song); // the song picked last time starts the list
+  else if (soundNew) { // a new player: Super coffee first
+    music.menu.first(FIRST_SONG);
+    music.menu.el.addEventListener('playing', () => { try { localStorage.setItem(FIRST_SEEN, '1'); } catch (e) {} }, { once: true });
+  }
   let mine = { key: '', on: false, paused: false, src: 'all' };
   const musicInMatch = () => !!m && (phase === 'deploy' || phase === 'battle' || phase === 'result' || phase === 'end');
   const matchKey = () => (m && musicInMatch() ? `${mode}:${m.seed}:${(net && net.code) || ''}` : '');
@@ -17639,7 +17760,34 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         <button class="mp-btn" id="mp-next" aria-label="Next">${ICONS.next}</button>
         <button class="mp-btn mp-mode" id="mp-repeat" aria-label="Repeat this song" aria-pressed="${!!snd.repeat}" title="Repeat this song">${ICONS.repeat}</button>
       </span>
+      <span class="mp-vol"></span>
     </div>`;
+  // the Diorama's speaker button (Settings, owner 2026-11-09): waves when the sound is on, a cross when it's off
+  const spkSvg = (on) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" stroke="none"/>${on ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg>`;
+  // the music's volume in the player (the owner, 2026-11-10: "add a volume slider to the music area"): a speaker that
+  // turns the music on or off and a slider, the same as Settings' Music row (snd.vol, snd.muted). Every .mp-vol on the
+  // page is drawn by volSync (the Diorama's menu player and the match's dock; the old UI hides it)
+  function volSync(from) {
+    const on = musicOn(), v = snd.vol;
+    document.querySelectorAll('.mp-vol').forEach(el => {
+      if (!el.firstChild) el.innerHTML = '<button class="mp-spk" type="button"></button><input class="mp-volr" type="range" min="0" max="100" step="5" aria-label="Music volume">';
+      const b = el.querySelector('.mp-spk'), r = el.querySelector('.mp-volr');
+      el.classList.toggle('off', !on);
+      if (b.dataset.on !== String(on)) { b.dataset.on = String(on); b.innerHTML = spkSvg(on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Music on (turn off)' : 'Music off (turn on)'); b.title = on ? 'Turn the music off' : 'Turn the music on'; }
+      if (r !== from && +r.value !== v) r.value = v;
+      r.style.setProperty('--v', v + '%');
+    });
+  }
+  function setMusicVol(v) {
+    snd.vol = v; if (v && snd.muted) { snd.muted = false; wakeAudio(true); }
+    saveSound(); Object.values(music).forEach(pl => { if (pl.playing) pl.ramp(musicLevel(), 0.05); }); syncMusic();
+  }
+  document.addEventListener('input', (e) => { const r = e.target; if (!r.classList || !r.classList.contains('mp-volr')) return; setMusicVol(+r.value); volSync(r); });
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('.mp-spk'); if (!b) return;
+    setMusic(!musicOn()); if (musicOn()) { menuPaused = false; mine.paused = false; syncMusic(); }
+    showPlayer();
+  });
   function showPlayer() {
     const t = $('mp-title'), pb = $('mp-play');
     if (t) t.textContent = songName(ctlPl().song());
@@ -17652,6 +17800,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     mpMark();
     if (DIO && dio.api) dio.api.music(); // the Diorama's player and playlists
     if (DIO) dioMusicLine();
+    volSync();
   }
   // The Diorama's music line in a match (the owner, 2026-11-09: "where is the music player?"): always in the top line,
   // under the round, as the home screen's player is always there: the song and its artist (a click opens the playlists,
@@ -18044,15 +18193,15 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       got.then(ab => new Promise((ok, no) => actx.decodeAudioData(ab, ok, no))).then(b => { sfxBuf[k] = b; }).catch(() => {});
     }
   }
-  function sfx(k) {
+  function sfx(k, vol = 1) { // vol: this play only (a quick run of hovers)
     sfxAt = performance.now();
-    if (window.__sfxLog) window.__sfxLog.push(k + (sfxBuf[k] ? '' : '?')); // tests (? = not loaded)
+    if (window.__sfxLog) window.__sfxLog.push(k + (vol !== 1 ? '@' + vol : '') + (sfxBuf[k] ? '' : '?')); // tests (? = not loaded)
     if (!snd.sfx || !snd.sfxVol || !actx || actx.state !== 'running' || !sfxBuf[k]) return;
     try {
       const src = actx.createBufferSource(), g = actx.createGain();
       src.buffer = sfxBuf[k];
       if (SFX_VARY.has(k)) src.playbackRate.value = 0.96 + Math.random() * 0.08;
-      g.gain.value = snd.sfxVol / 100 * (SFX_GAIN[k] || 1);
+      g.gain.value = snd.sfxVol / 100 * (SFX_GAIN[k] || 1) * vol;
       src.connect(g).connect(actx.destination); src.start();
     } catch (e) {}
   }
@@ -18105,6 +18254,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const ROOM_BTNS = '#lob-create, #nr-go, #create-go, #lob-quick, #join, #lob-join, #fr-join, [data-join]';
   // a mouse over a button outside a match: the soft hover tick (once per button, not while a match is on screen)
   let hoverBtn = null, hoverAt = -1e9;
+  const HOVER_RUN_MS = 500, HOVER_RUN_VOL = 0.7; // a hover soon after the last one: 70% (owner, 2026-11-09)
   document.addEventListener('pointerover', (e) => {
     if (e.pointerType !== 'mouse') return;
     const b = e.target.closest && e.target.closest('button, .btn, [role="button"]');
@@ -18113,13 +18263,14 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (!b || b.disabled || b.closest('.uc2') || (m && ['deploy', 'battle', 'result'].includes(phase))) return;
     const t = performance.now();
     if (t - hoverAt < 60 || t - sfxAt < 150) return; // a sweep across a row ticks, it doesn't buzz; a click's own sound goes first
-    hoverAt = t; sfx('hover'); sfxAt = -1e9; // a hover doesn't hold back the next click's sound
+    const run = t - hoverAt < HOVER_RUN_MS;
+    hoverAt = t; sfx('hover', run ? HOVER_RUN_VOL : 1); sfxAt = -1e9; // a hover doesn't hold back the next click's sound
   }, { passive: true });
 
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · 95b23e5'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 869fd0d'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -18195,8 +18346,6 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
 
   // the cog in a match opens it as Settings (music, the 2D / 3D board and Main menu), the menu's Music button as music only.
   // data-keep: phase changes leave this sheet open (closeSheet)
-  // the Diorama's speaker button (Settings, owner 2026-11-09): waves when the sound is on, a cross when it's off
-  const spkSvg = (on) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" stroke="none"/>${on ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>' : '<path d="M16 9.5l5 5M21 9.5l-5 5"/>'}</svg>`;
   function openSoundSheet() {
     const inMatch = !!m && phase !== 'start' && phase !== 'lobby';
     // under the Diorama, Music and Sound effects are a speaker button before the slider (no On / Off rows)
@@ -18294,12 +18443,6 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
           <button data-emo="1" aria-pressed="${snd.emotesOn !== false}">On</button><button data-emo="0" aria-pressed="${snd.emotesOn === false}">Off</button>
         </div>
       </div>
-      ${inMatch && mode === 'net' && net.srv && me === 0 && !net.tourCode && !net.duo ? `<div class="bar">
-        <span class="hint">Spectators</span>
-        <div class="seg" role="group" aria-label="Spectators">
-          <button data-spec="1" aria-pressed="${talk.spectate}">On</button><button data-spec="0" aria-pressed="${!talk.spectate}">Off</button>
-        </div>
-      </div>` : ''}
       <div class="bar"><span class="hint">Something broken?</span><button class="btn small" id="bug-open">Report a bug</button></div>
       <div class="bar"><span class="hint">Playlists</span><button class="btn small" id="mp-open2">Open playlists</button></div>
       `;
@@ -18308,7 +18451,6 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     $('bug-open').addEventListener('click', openBugSheet);
     $('sheet').querySelectorAll('[data-chat]').forEach(b => b.addEventListener('click', () => { snd.chatOn = b.dataset.chat === '1'; saveSound(); $('sheet').querySelectorAll('[data-chat]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (!snd.chatOn) { talk.tick = []; tickDraw(); } }));
     $('sheet').querySelectorAll('[data-emo]').forEach(b => b.addEventListener('click', () => { snd.emotesOn = b.dataset.emo === '1'; saveSound(); $('sheet').querySelectorAll('[data-emo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
-    $('sheet').querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { send({ t: 'spectate', on: b.dataset.spec === '1' }); $('sheet').querySelectorAll('[data-spec]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
     if ($('fr-open2')) { $('fr-open2').addEventListener('click', () => openFriends()); frBadge(); }
     const spkDraw = () => { // the Diorama's speakers follow the sound (a volume of 0 is off)
       for (const [id, lab, on] of [['spk-music', 'Music', musicOn()], ['spk-sfx', 'Sound effects', !!snd.sfx && snd.sfxVol > 0]]) {
@@ -18332,7 +18474,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       if (snd.vol && snd.muted) { snd.muted = false; wakeAudio(true); } // turning the volume up turns music on
       saveSound();
       Object.values(music).forEach(pl => { if (pl.playing) pl.ramp(musicLevel(), 0.05); });
-      syncMusic(); showOn();
+      syncMusic(); showOn(); volSync();
     });
     $('sheet').querySelectorAll('[data-sfx]').forEach(b => b.addEventListener('click', () => {
       snd.sfx = b.dataset.sfx === '1'; if (snd.sfx && !snd.sfxVol) { snd.sfxVol = DEFAULT_SFX_VOL; $('sfx-vol').value = snd.sfxVol; $('sfx-vol-n').textContent = snd.sfxVol; }
@@ -18473,41 +18615,34 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const offIdx = () => units.map((u, i) => offUnits.includes(u.name) ? i : -1).filter(i => i >= 0);
   const unitsOn = () => units.length - offIdx().length;
   // The unit pack (2026-11-02), saved on this device; the host's counts with a friend:
-  //  'learn'    Learn the game: Game.STANDARD_PACK (fewer units, leaders and towers, for new players)
   //  'standard' Standard: every unit, leader and tower (Blixten is retired from every pool, see Game.RETIRED_CHARS)
   //  'custom'   developers only: every unit, leader and tower, minus what Leaders and Units leave out (the old All units)
   // A Counter Lab roster always plays as 'custom'. Nobody but a developer can change what a pack holds.
+  // The smaller Learn the game pack (Game.STANDARD_PACK) is gone from the menu since 2026-11-10: every match, against the
+  // computer too, plays with the whole pool; a device that had it saved plays Standard.
   const PACK_STORE = 'pb-unit-pack2';
   const STD_OFF_CHARS = [];
-  let unitPack = 'learn';
-  try {
-    const v = localStorage.getItem(PACK_STORE), old = localStorage.getItem('pb-unit-pack'); // the old values: 'standard' = the small pack, 'all'
-    if (['learn', 'standard', 'custom'].includes(v)) unitPack = v; else if (old === 'all') unitPack = 'standard';
-  } catch (e) {}
+  let unitPack = 'standard';
+  try { if (localStorage.getItem(PACK_STORE) === 'custom') unitPack = 'custom'; } catch (e) {}
   const packNow = () => customSet ? 'custom' : unitPack === 'custom' && !devMode() ? 'standard' : unitPack;
-  const packOn = () => packNow() === 'learn';
-  const SP = Game.STANDARD_PACK;
-  const packUnits = () => units.filter(u => SP.units.includes(u.name)).length;
-  const packTowers = () => Game.TOWER_TYPES.filter(x => !SP.offTowers.includes(x.id));
   // what a new match takes from the menu: units, leaders and towers left out, and the rules of a Counter Lab roster
-  const matchOff = () => packOn() && packUnits() >= 2 ? units.map((u, i) => SP.units.includes(u.name) ? -1 : i).filter(i => i >= 0) : packNow() === 'standard' ? [] : offIdx();
-  const matchChars = () => packOn() ? Game.CHARACTERS.map(c => c.id).filter(id => !SP.chars.includes(id)) : packNow() === 'standard' ? STD_OFF_CHARS.slice() : offChars;
+  const matchOff = () => packNow() === 'standard' ? [] : offIdx();
+  const matchChars = () => packNow() === 'standard' ? STD_OFF_CHARS.slice() : offChars;
   let lateGame = false; // DEVTESTLATEGAME (developer menu): the next match gets more health and the tier 3+ squad cap (Game.LATE)
-  const matchOpts = () => ({ late: lateGame, skin: skinPick || null, lastSkin: (m && m.skin) || null, offUnits: matchOff(), offTowers: packOn() ? SP.offTowers : [], rules: customSet && rawSet.rules && typeof rawSet.rules === 'object' ? rawSet.rules : null });
-  const packNote = () => packOn()
-    ? `${packUnits()} units, ${SP.chars.length} leaders, ${packTowers().length} towers. The best way to start.`
-    : packNow() === 'standard' ? `All ${units.length} units, ${Game.CHARACTERS.length - STD_OFF_CHARS.length} leaders and ${Game.TOWER_TYPES.length} towers. What ranked is played with.`
+  const matchOpts = () => ({ late: lateGame, skin: skinPick || null, lastSkin: (m && m.skin) || null, offUnits: matchOff(), offTowers: [], rules: customSet && rawSet.rules && typeof rawSet.rules === 'object' ? rawSet.rules : null });
+  const packNote = () => packNow() === 'standard' ? `All ${units.length} units, ${Game.CHARACTERS.length - STD_OFF_CHARS.length} leaders and ${Game.TOWER_TYPES.length} towers. What ranked is played with.`
     : `${unitsOn() === units.length ? 'All ' + units.length : `${unitsOn()} of ${units.length}`} units, ${charsOn()} leaders, ${Game.TOWER_TYPES.length} towers. Pick which below (developer).`;
-  const packSeg = () => customSet ? '' : `<div class="bar">
+  // the Units choice is for developers only now (Standard or Custom); everyone else always plays Standard
+  const packSeg = () => customSet || !devMode() ? '' : `<div class="bar">
         <span class="hint">Units</span>
         <div class="seg" role="group" aria-label="Unit pack">
-          <button data-pack="learn" aria-pressed="${packNow() === 'learn'}">Learn the game</button><button data-pack="standard" aria-pressed="${packNow() === 'standard'}">Standard</button>${devMode() ? `<button data-pack="custom" aria-pressed="${packNow() === 'custom'}">Custom</button>` : ''}
+          <button data-pack="standard" aria-pressed="${packNow() === 'standard'}">Standard</button><button data-pack="custom" aria-pressed="${packNow() === 'custom'}">Custom</button>
         </div>
       </div>
       <span class="hint" id="pack-note" style="margin-top:-6px">${packNote()}</span>`;
   const wirePackSeg = () => { const root = setRoot(); root.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {
     const v = b.dataset.pack;
-    unitPack = v === 'custom' && devMode() ? 'custom' : v === 'standard' ? 'standard' : 'learn';
+    unitPack = v === 'custom' && devMode() ? 'custom' : 'standard';
     try { localStorage.setItem(PACK_STORE, unitPack); } catch (e) {}
     root.querySelectorAll('[data-pack]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     root.querySelector('#pack-note').textContent = packNote();
@@ -18959,7 +19094,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     const roomOn = dioRoomOn(), host = me === 0, rk = mode === 'net' && net.ranked;
     const dl = roomOn ? lookShown() : m ? Game.lookOf(m) : ''; // the battlefield's look: the unit cards' colour follows it (src/diorama.css --dcard)
     if (document.documentElement.dataset.dlook !== dl) document.documentElement.dataset.dlook = dl;
-    const kick = roomOn ? ['Play · Rooms', host ? 'your room' : 'their room', (Game.SKINS.find(x => x.id === lookShown()) || {}).name].filter(Boolean).join(' · ') : [mp && mp.name, sk && sk.name].filter(Boolean).join(' · ');
+    const kick = roomOn ? (Game.SKINS.find(x => x.id === lookShown()) || {}).name || '' : [mp && mp.name, sk && sk.name].filter(Boolean).join(' · ');
     if (r.dataset.kick !== kick) r.dataset.kick = kick;
     const seat = roomOn && host && !(mode === 'net' ? net.foeHere : net.connected); // the room's other seat is open
     document.querySelector('.hud .side.foe').classList.toggle('open', seat);
@@ -18967,7 +19102,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       $('phase').textContent = rk ? '1v1 Ranked · Bo3' : '1v1 Standard';
       if (seat) $('foe-name').textContent = 'Open seat';
       let st0 = $('foe-state');
-      if (st0) { const t0 = seat ? 'Waiting for a player…' : 'Here'; if (st0.textContent !== t0) st0.textContent = t0; st0.classList.toggle('on', !seat); st0.hidden = false; }
+      if (st0) { const t0 = seat ? 'Waiting for a player…' : ''; if (st0.textContent !== t0) st0.textContent = t0; st0.classList.remove('on'); st0.hidden = !t0; } // (no HERE tag once they're in: their name says it, the owner, 2026-11-10)
       $('foe-name').dataset.dc = ''; $('you-name').dataset.dc = '';
       return;
     }
@@ -19002,6 +19137,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
 
   function tick() {
     const t = now();
+    pickTick(t);
     if (aiReadyTick(t)) return;
     if (phase === 'deploy') {
       // host: the countdown waits while the opponent is away
@@ -19228,6 +19364,49 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     while (out.length > Game.DEV.guidePoints) out.splice(Math.floor(out.length / 2) - 1, 1); // too many turns: drop some from the middle
     return out.filter((p, i) => !i || p.col !== out[i - 1].col || p.row !== out[i - 1].row);
   }
+  // ---------- the pick clock (2026-11-10): the round 2 leader pick and the round 3 tower pick count down ----------
+  // Online (mode 'net') the game server keeps it (Referee.pickLeft, sent as d.pick) and picks for a player whose time
+  // runs out (the first leader left, the first tower on offer); this page sends the card its player tapped just before.
+  // Vs the computer and phone to phone each page keeps its own player's clock and picks for them the same way.
+  // Off where there's no deploy clock (vs the computer with the timer off, the tutorial and puzzles) and in 2v2.
+  const PICK_MS = Referee.TOWER_PICK_MS; // 20 s, as Referee.DRAFT_PICK_MS for each leader pick
+  let pickDue = 0, pickClockKey = '', peekText = '';
+  const pickTimed = () => phase === 'deploy' && !!m && !m.over && !m.duoTowers && !net.duo && ['ai', 'claude', 'host', 'guest', 'net'].includes(mode)
+    && (mode === 'host' || mode === 'guest' || mode === 'net' || timerOn || tourSet());
+  // the pick the clock is for: 'tower:<round>', 'leader:<round>:<side whose turn it is>', or '' (none)
+  function pickClockFor() {
+    if (!pickTimed() || Game.needsPack(m, me)) return '';
+    if (Game.needsTowerPick(m, me)) return `tower:${m.round}`;
+    if (!Game.needsLeaderPick(m, me)) return '';
+    const turn = [0, 1].find(sd => Game.leaderTurn(m, sd));
+    return turn == null ? '' : `leader:${m.round}:${turn}`;
+  }
+  const pickMine = (k) => k.startsWith('tower') || +k.split(':')[2] === me;
+  function pickTick(t) {
+    const k = pickClockFor();
+    if (k !== pickClockKey) { pickClockKey = k; if (mode !== 'net') pickDue = k && pickMine(k) ? t + PICK_MS : 0; }
+    if (k && pickDue && t >= pickDue && pickMine(k) && editable()) {
+      pickDue = 0;
+      commitPick(); // the card they tapped
+      const o = mode !== 'net' && pickClockFor() === k ? pickOptions() : null; // nothing tapped: the first one
+      if (o) choosePick(o, o.kind === 'leader' ? Game.draftLeft(m)[0] : o.items[0].key);
+    }
+    drawPickClock(t);
+  }
+  function drawPickClock(t) {
+    const el = $('pick-clock'), on = !!pickClockKey && pickDue > 0, left = on ? Math.max(0, pickDue - t) : 0;
+    if (el) {
+      el.hidden = !on;
+      if (on) {
+        el.querySelector('.n').textContent = String(Math.ceil(left / 1000));
+        el.querySelector('.lab').textContent = pickMine(pickClockKey) ? (left > 0 ? 'seconds to pick' : 'Time’s up') : `${foeName() === 'Enemy' ? 'The AI' : foeName()} is picking`;
+        el.querySelector('i').style.transform = `scaleX(${Math.min(1, left / PICK_MS)})`;
+        el.classList.toggle('low', left <= 10000);
+      }
+    }
+    const pk = $('pick-peek');
+    if (pk && !pk.hidden && peekText) pk.textContent = on ? `${peekText} · ${Math.ceil(left / 1000)}` : peekText;
+  }
   // a card tapped once (shown, not chosen yet) counts as chosen once the player is ready or time runs out,
   // instead of falling back to the first card
   function commitPick() {
@@ -19240,15 +19419,17 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (id !== pickFor) { pickFor = id; pickSel = null; pickPeek = false; }
     if (!o) { el.hidden = true; peek.hidden = true; pickHtml = ''; return; }
     el.hidden = pickPeek; peek.hidden = !pickPeek;
-    peek.textContent = o.kind === 'pack' ? 'Choose your start' : o.kind === 'dev' ? 'Choose your pick' : o.kind === 'leader' ? 'Pick your leader' : 'Choose your tower';
+    peekText = o.kind === 'pack' ? 'Choose your start' : o.kind === 'dev' ? 'Choose your pick' : o.kind === 'leader' ? 'Pick your leader' : 'Choose your tower';
+    peek.textContent = peekText;
     const html = `<div class="ph"><span class="eyebrow">${o.eyebrow}</span><h2 id="pick-h">${o.title}</h2><span class="hint">${o.sub}</span></div>
+      <div class="pick-clock" id="pick-clock" role="timer" hidden><span class="n"></span><span class="lab"></span><span class="track"><i></i></span></div>
       <div class="opts" style="grid-template-columns:repeat(${o.kind === 'leader' ? Math.min(3, o.items.length) : Math.max(2, o.items.length)},1fr)">${o.items.map(x => `<button class="opt" data-opt="${x.key}"${o.kind === 'pack' ? ` data-pack="${x.key}"` : o.kind === 'leader' ? ` data-leader="${x.key}"` : ` data-ttype="${x.key}"`}${x.off ? ' disabled' : ''} aria-pressed="false">
         <span class="art">${x.art}</span><span class="nm">${x.name}</span>${x.who ? `<span class="who">${x.who}</span>` : ''}${x.sub ? `<span class="sub">${x.sub}</span>` : ''}
       </button>`).join('')}</div>
       <div class="det" id="pick-det" aria-live="polite"></div>
       <div class="row"><button class="btn small" id="pick-hide">Hide</button><button class="btn primary" id="pick-go" disabled>Choose</button></div>`;
     if (html !== pickHtml) { // only redraw when the options change, so the cards don't fly in again
-      pickHtml = html; el.innerHTML = html;
+      pickHtml = html; el.innerHTML = html; drawPickClock(now());
       el.querySelectorAll('[data-ticon]').forEach(c => Art.keep(c.getContext('2d'), 48, 54, 92, teamCol(me), null, c.dataset.ticon));
       el.querySelectorAll('[data-opt]').forEach(b => b.addEventListener('click', () => {
         const cur = pickOptions(); if (!cur) return;
@@ -19715,6 +19896,9 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (mode === 'host') saveHost();
   }
 
+  // the opponent pressed Ready (their status or side came in): the same sound on this screen, unless this player is
+  // ready too (the fight starts now and plays its own)
+  function foeReadySfx(was) { if (!was && phase === 'deploy' && ready[foe()] && !ready[me]) sfx('ready'); }
   function toggleReady() {
     if (phase !== 'deploy' || timeUp) return;
     if (!ready[me]) commitPick();
@@ -19836,6 +20020,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     home.ctx = { resume, netBack, newcomer };
     if (!home.screen || home.screen === 'menu' || !home.welcomeNeeded()) home.screen = home.welcomeNeeded() ? 'welcome' : 'menu';
     if (home.back === 'lobby' && home.screen === 'menu') { home.screen = 'lobby'; home.pop = false; } // a match from the lobby: back to the Rooms list
+    if (home.back === 'puzzles' && home.screen === 'menu') { home.pop = false; home.puz = true; } // a puzzle: back to the Diorama's Puzzles
     home.back = '';
     drawHome();
     size(); render();
@@ -20120,6 +20305,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       </div>
       <div class="home-mid">
         ${acct ? nameplate(acct.tag, acct.title, 'menu-np') : ''}
+        ${devMode() ? onlineChip() : ''}
         <button class="hbtn gold play-big" id="play">Play</button>
         <div class="home-more">
           ${inTour ? `<button class="btn primary" id="tour-back">Back to tournament ${esc(tour.code)}</button>` : ''}
@@ -20166,6 +20352,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if ($('skin-ok')) $('skin-ok').addEventListener('click', () => { skinsSeen(); drawHome(); });
     if (acct && !home.refreshed) { home.refreshed = true; acctCall('me', {}, true).then(r => { if (r.status === 200) { acctTake(r); if (phase === 'start' && home.screen === 'menu' && !home.pop) drawHome(); } }); } // titles for accounts made before them
     if ($('stay-yes')) { $('stay-yes').addEventListener('click', () => { setStay(true); drawHome(); }); $('stay-no').addEventListener('click', () => { setStay(false); drawHome(); }); }
+    if (typeof onl !== 'undefined' && onl) onlShow(); // players online (developers): the chip drawn just now gets the count
     $('play').addEventListener('click', () => { home.pop = true; drawHome(); });
     $('music-open').addEventListener('click', openSoundSheet);
     $('acct-open').addEventListener('click', openAccountSheet);
@@ -20456,7 +20643,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (mode === 'sandbox') { sbxResult(sum); return; }
     if (mode === 'replay') { replayDone(sum); return; }
     const iWon = sum.winner === me && !sum.timeout, iLost = sum.winner === foe() && !sum.timeout;
-    const head = sum.timeout ? 'Time ran out' : iWon ? `Round ${sum.round} won` : iLost ? `Round ${sum.round} lost` : 'Draw';
+    const head = sum.timeout ? 'Time ran out' : iWon ? `Round&nbsp;${sum.round}<br>won` : iLost ? `Round&nbsp;${sum.round}<br>lost` : 'Draw'; // ROUND 7 on one line, WON / LOST under it (owner, 2026-11-10)
     const cls = iWon ? 'you' : iLost ? 'foe' : '';
     const duo = net.duo && mode === 'net' && sum.duo; // 2v2: the damage is the team's
     const them = duo ? 'Their team' : foeName();
@@ -21044,7 +21231,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   function acctSave(a) {
     const dev0 = devMode();
     acct = a;
-    if (devMode() !== dev0) musicDevChanged(); // the DEV playlist comes or goes
+    if (devMode() !== dev0) { musicDevChanged(); if (onl) onlLoad(); } // the DEV playlist and the players-online count come or go
     try {
       localStorage.removeItem(ACCT_STORE); sessionStorage.removeItem(ACCT_STORE);
       if (a) acctStore().setItem(ACCT_STORE, JSON.stringify(a));
@@ -21290,6 +21477,62 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     frBadge(); frBanner();
   }
   setInterval(frTick, 2000);
+
+  // ---------- players online (2026-11-10): every open page keeps one socket to the server's OnlineRoom (/online?d=,
+  // server/src/online.js) as one device (pb-device, a random id kept on this browser, so tabs count once), pinging every
+  // 30 s so a sleeping phone drops out. Developers see how many are online now ([data-online]: under the name on the
+  // phone menu, in the Diorama's top bar), from POST /account/online every 20 s while the page is in view.
+  var onl = { ws: null, tries: 0, timer: 0, ping: 0, n: null, busy: false, device: '' };
+  function onlDevice() {
+    if (onl.device) return onl.device;
+    let d = ''; try { d = localStorage.getItem('pb-device') || ''; } catch (e) {}
+    if (!/^[a-z0-9]{8,32}$/.test(d)) {
+      try { d = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => (b % 36).toString(36)).join(''); } catch (e) { d = (Math.random().toString(36) + Math.random().toString(36)).replace(/[^a-z0-9]/g, '').slice(0, 16); }
+      try { localStorage.setItem('pb-device', d); } catch (e) {}
+    }
+    return (onl.device = d);
+  }
+  function onlOpen() {
+    if (onl.ws || onl.timer || typeof WebSocket !== 'function') return;
+    let ws;
+    try { ws = new WebSocket(`${SERVER_URL.replace(/^http/, 'ws')}/online?d=${onlDevice()}`); } catch (e) { onlRetry(); return; }
+    onl.ws = ws;
+    ws.onopen = () => { if (onl.ws === ws) onl.tries = 0; };
+    ws.onclose = () => { if (onl.ws !== ws) return; onl.ws = null; onlRetry(); };
+    clearInterval(onl.ping); onl.ping = setInterval(() => { if (onl.ws === ws && ws.readyState === 1) ws.send('{"t":"ping"}'); }, 30000);
+  }
+  // after a failure: 4 s, 8 s ... up to 5 minutes (a page where the server isn't allowed, like a preview, stops trying hard)
+  function onlRetry() { clearTimeout(onl.timer); onl.tries++; onl.timer = setTimeout(() => { onl.timer = 0; onlOpen(); }, Math.min(300e3, 2000 * 2 ** Math.min(8, onl.tries))); }
+  async function onlLoad() {
+    if (!devMode()) { if (onl.n != null) { onl.n = null; onlShow(); } return; }
+    if (onl.busy || document.hidden) return;
+    onl.busy = true;
+    const r = await acctCall('online', {}, true);
+    onl.busy = false;
+    if (r.status === 200 && Number.isFinite(r.online)) onl.n = Math.max(0, r.online | 0);
+    else if (r.status === 403 || r.status === 401) onl.n = null;
+    onlShow();
+  }
+  // the count wherever the page shows it ([data-online] with a <b> for the number), developers only
+  function onlShow() {
+    const on = devMode() && onl.n != null, n = on ? String(onl.n) : '';
+    document.querySelectorAll('[data-online]').forEach(el => {
+      el.hidden = !on;
+      const b = el.querySelector('b'); if (b && b.textContent !== n) b.textContent = n;
+      if (on) el.setAttribute('aria-label', `${n} ${n === '1' ? 'player' : 'players'} online now (developers only)`);
+    });
+  }
+  const onlineChip = () => '<span class="online-np" data-online hidden title="Players with the game open right now. Only developers see this."><i class="live" aria-hidden="true"></i><b></b> online</span>';
+  if (qs.has('test')) window.__online = () => ({ open: !!(onl.ws && onl.ws.readyState === 1), state: onl.ws ? onl.ws.readyState : -1, retry: !!onl.timer, tries: onl.tries, device: onl.device, n: onl.n }); // UI tests
+  setTimeout(onlOpen, 0); // once the whole script has run (SERVER_URL is further down)
+  setInterval(onlLoad, 20000);
+  setTimeout(onlLoad, 1200);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    if (onl.ws && onl.ws.readyState === 1) { try { onl.ws.send('{"t":"ping"}'); } catch (e) {} } // back in view: counted again at once
+    else if (!onl.ws) { clearTimeout(onl.timer); onl.timer = 0; onl.tries = 0; onlOpen(); }
+    onlLoad();
+  });
   async function frLoad() {
     if (!frOk()) return;
     const r = await acctCall('friends', {}, true);
@@ -22198,11 +22441,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     m.gold[1] = 0;
     m.gold = [P.gold, 0];
     tut = { intro: 2, wrong: false, tskillSeen: true, sheetSeen: true, puzzle: k, hint: false };
+    if (DIO) home.back = 'puzzles'; // the Diorama: the end of a puzzle comes back to its Puzzles screen
     nextReady = [false, false]; rematch = [false, false];
     enterDeploy(0);
   }
   // the menu's list of puzzles
   function openPuzzles() {
+    if (DIO && typeof dio !== 'undefined' && dio.api && dio.api.puzzles && phase === 'start' && !m) { closeSheet(true); dio.api.puzzles(); return; } // the Diorama's Puzzles screen
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Tutorial puzzles</h3><button class="btn small" id="close">Close</button></div>
       <p class="hint" style="margin:0">One fight each. You see the whole enemy army; win with the gold you have.</p>
       <p class="hint" style="margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${hasInitiate() ? 'The title is yours.' : `Solve the ${PUZ_TITLE.length} Easy puzzles for the title`} ${titleHtml('initiate')}</p>
@@ -23334,7 +23579,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
-  const V3D = '98619b0c61'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '11cac48cf5'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
@@ -24759,10 +25004,6 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       ${srv && !net.tourCode ? `<div class="bar">
         <span class="hint">Rooms list</span>
         <div class="seg" role="group" aria-label="Listed in Rooms"><button data-pub="1" aria-pressed="${talk.pub}">Public</button><button data-pub="0" aria-pressed="${!talk.pub}">Private</button></div>
-      </div>
-      <div class="bar">
-        <span class="hint">Spectators</span>
-        <div class="seg" role="group" aria-label="Spectators"><button data-spec="1" aria-pressed="${talk.spectate}">On</button><button data-spec="0" aria-pressed="${!talk.spectate}">Off</button></div>
       </div>` : ''}
       ${srv && frOk() ? '<span class="btnrow"><button class="btn" id="fr-room">Invite friend</button></span>' : ''}
       ${rk ? `<p class="ranked-note">Ranked: the Standard map and pack, the same 5 leaders and 3 towers for you both. Win 2 games to take the series; only ranked series count on the leaderboard. Your friend needs to be logged in with Google too (guests are asked to log in when they join).</p>${lookSeg()}`
@@ -24771,7 +25012,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       ${settingsBox(`
         ${mapSeg()}
         ${charSeg()}
-        <span class="hint">You both play with the units on this device: ${customSet ? `your ${units.length} Counter Lab units` : packOn() ? `the Learn the game pack (${packUnits()} of the ${units.length} built-in units)` : `the ${units.length} built-in units`}.</span>`)}`}`;
+        <span class="hint">You both play with the units on this device: ${customSet ? `your ${units.length} Counter Lab units` : `the ${units.length} built-in units`}.</span>`)}`}`;
     if ($('share')) $('share').addEventListener('click', () => { navigator.share({ title: 'No Mans Land', text: `Fight me in No Mans Land! Code ${net.code}`, url: link }).catch(() => {}); });
     $('copy').addEventListener('click', () => {
       const done = () => { $('copy').textContent = 'Copied'; setTimeout(() => { if ($('copy')) $('copy').textContent = 'Copy link'; }, 1500); };
@@ -24784,14 +25025,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     $('overlay').querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => { matchKind = b.dataset.kind; if (srv && matchKind === 'factions') hostLobby(true); else drawLobby(); }));
     if ($('use-peer')) $('use-peer').addEventListener('click', () => hostLobby(true));
     $('panel').querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); drawLobby(); }));
-    $('panel').querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); drawLobby(); }));
     if (rk) wireLookSeg(); else { wireMapSeg(); wireCharSeg(); wirePackSeg(); wireSettings(); }
   }
   // ---------- the Diorama's room (a PC): the room you wait in is the battlefield you're about to fight on ----------
   // (design/diorama/battle.html, the room prototype, 2026-11-08) The board shows the room's map in its look, edge to edge;
   // the top line has you top left and the other seat top right (open until someone takes it); the keeps say who is in
   // the game ("Wren · connected" / "Waiting for opponent…", the owner, 2026-11-08); the left column has the room's
-  // settings as rows of words (Who can find it, Spectators, Units, Battlefield), + Invite a friend, and START MATCH on the
+  // settings as rows of words (Who can find it, Units, Battlefield), + Invite a friend, and START MATCH on the
   // saffron shard, the deploy panel's place. No match code or link (the owner, 2026-11-07: everything goes through
   // Rooms and friends' invites), except for a developer's phone-to-phone room, which can't be found any other way.
   const dioRoomOn = () => DIO && pcLayout() && phase === 'lobby' && !m && mode !== 'spec' && !net.duo && !tourLive();
@@ -24803,7 +25043,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const here = host ? !!(srv ? net.foeHere : net.connected) : !!net.connected;
     const nm0 = foeName(), nm = nm0 && nm0 !== 'Opponent' && nm0 !== 'Enemy' ? nm0 : '';
     const whose = host ? 'Your room' : nm ? `${esc(nm)}’s room` : 'Their room';
-    const pub = srv && !net.tourCode ? talk.pub : false, watch = srv && !net.tourCode ? talk.spectate : false;
+    const pub = srv && !net.tourCode ? talk.pub : false;
     const skins = Game.SKINS, k = Math.max(0, skins.findIndex(x => x.id === (lookShown() || 'meadow'))), bf = skins[k] || skins[0];
     const word = (key, v, label, cur) => `<button class="w" data-${key}="${v}" aria-pressed="${String(cur)}">${label}</button>`;
     const row = (label, ws, note, id) => `<div class="rrow"${id ? ` id="${id}"` : ''}><span class="lab">${label}</span><div class="ws">${ws}</div>${note ? `<span class="note"${id ? ` id="${id}-note"` : ''}>${note}</span>` : ''}</div>`;
@@ -24813,11 +25053,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       : !srv ? 'Phone to phone: send the link below to a friend and keep this page open.'
       : pub ? 'Listed in Rooms: anyone can join. Friends you invite get a message.' : 'Not listed. Only friends you invite can join.';
     const rows = !host ? row('Battlefield', `<span class="w" aria-pressed="true">${esc(bf.name)}</span>`, `The match is played on ${nm ? esc(nm) + '’s' : 'the host’s'} pick.`)
-      : `${srv && !net.tourCode ? row('Who can find it', word('pub', 1, 'Public', pub) + word('pub', 0, 'Private', !pub), pub ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.')
-          + row('Spectators', word('spec', 1, 'On', watch) + word('spec', 0, 'Off', !watch), watch ? 'Anyone can watch once it starts.' : 'Just the two of you.') : ''}
+      : `${srv && !net.tourCode ? row('Who can find it', word('pub', 1, 'Public', pub) + word('pub', 0, 'Private', !pub), pub ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.') : ''}
         ${rk ? row('Units', '<span class="w" aria-pressed="true">Standard</span>', 'Ranked: the Standard map and pack, the same 5 leaders and 3 towers for you both. Win 2 games to take the series; only ranked series count on the leaderboard.')
           : customSet ? row('Units', `<span class="w" aria-pressed="true">Your ${units.length}</span>`, 'Your Counter Lab units, on this device.')
-          : row('Units', word('pack', 'learn', 'Learn the game', packNow() === 'learn') + word('pack', 'standard', 'Standard', packNow() === 'standard') + (devMode() ? word('pack', 'custom', 'Custom', packNow() === 'custom') : ''), packNote(), 'pack-row')}
+          : row('Units', devMode() ? word('pack', 'standard', 'Standard', packNow() === 'standard') + word('pack', 'custom', 'Custom', packNow() === 'custom') : '<span class="w" aria-pressed="true">Standard</span>', packNote(), 'pack-row')}
         ${row('Battlefield', `<button class="arrow" data-bf="-1" aria-label="Previous battlefield">‹</button><span class="w" aria-pressed="true">${esc(bf.name)}</span><button class="arrow" data-bf="1" aria-label="Next battlefield">›</button>`, `${k + 1} of ${skins.length}. The match is played here.`)}`;
     const dev = host && devMode() && !rk ? `<div class="ddev"><span class="lab">Developer</span>
         ${factionsReady() ? `<div class="seg" role="group" aria-label="Gamemode"><button data-kind="standard" aria-pressed="${matchKind !== 'factions'}">Standard</button><button data-kind="factions" aria-pressed="${matchKind === 'factions'}">Factions</button></div>` : ''}
@@ -24825,7 +25064,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         ${srv ? '<button class="help" id="use-peer">Phone to phone instead (for Factions)</button>' : ''}</div>` : '';
     const link = !srv && host ? `<div class="rlink"><span class="linkbox" id="link">${esc(shareLink())}</span><button class="help" id="copy">Copy link</button></div>` : '';
     $('panel').innerHTML = `<div class="droom">
-      <div class="rhead"><span class="k">${whose} · ${pub ? 'public' : 'private'}${watch ? ' · watchable' : ''}${rk ? ' · ranked' : ''}</span>
+      <div class="rhead"><span class="k">${whose} · ${pub ? 'public' : 'private'}${rk ? ' · ranked' : ''}</span>
         <h2>${whose}</h2><p class="rlead" id="lobby-status">${lead}</p></div>
       ${link}
       <div class="rrows">${rows}</div>
@@ -24840,11 +25079,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
             <button class="help" id="leave">Leave room</button></div>`}
       </div></div>`;
     const P = $('panel'), on = (id, f) => { const b = $(id); if (b) b.addEventListener('click', f); };
+    { const h = P.querySelector('.rhead h2'); h.style.fontSize = ''; let fs = parseFloat(getComputedStyle(h).fontSize); // a long name's room (“AnitaDunder’s room”): smaller until it fits the column
+      while (h.scrollWidth > h.clientWidth + 1 && fs > 22) { fs -= 2; h.style.fontSize = fs + 'px'; } }
     const rgo = P.querySelector('.rgo'); if (rgo) document.documentElement.style.setProperty('--drgo', `${rgo.offsetHeight}px`); // the column ends above its foot (src/diorama.css)
     P.querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); dioRoom(); }));
-    P.querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); dioRoom(); }));
     P.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {
-      const v = b.dataset.pack; unitPack = v === 'custom' && devMode() ? 'custom' : v === 'standard' ? 'standard' : 'learn';
+      const v = b.dataset.pack; unitPack = v === 'custom' && devMode() ? 'custom' : 'standard';
       try { localStorage.setItem(PACK_STORE, unitPack); } catch (e) {}
       dioRoom();
     }));
@@ -25070,7 +25310,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     m.gold[1] = Math.max(0, +d.gold || 0);
     m.extraDeploys[1] = Math.max(0, Math.min(Game.CONFIG.maxExtraDeploys, d.extra | 0));
     m.nextId[1] = Math.max(m.nextId[1], d.nextId | 0);
-    ready[1] = !!d.ready;
+    { const was = ready[1]; ready[1] = !!d.ready; foeReadySfx(was); }
     // the guest's package: picked once in round 1; package squads beyond what it holds are dropped
     if (m.round === 1 && m.pack && m.pack[1] == null && Number.isInteger(d.pack)) Game.choosePack(m, 1, d.pack);
     if (typeof d.leader === 'string' && Game.canPickLeader(m, 1, d.leader)) Game.pickLeader(m, 1, d.leader); // the leader draft: only in turn and from what's left
@@ -25367,7 +25607,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       nextReady = [false, false]; rematch = [false, false];
       playBattle(d.pre);
     } else if (d.t === 'status') {
-      if (d.ready) ready[0] = !!d.ready[0];
+      if (d.ready) { const was = ready[0]; ready[0] = !!d.ready[0]; foeReadySfx(was); }
       if (d.nextReady) nextReady[0] = !!d.nextReady[0];
       if (d.rematch) rematch[0] = !!d.rematch[0];
       if (phase === 'deploy' && m && m.round === 1 && Array.isArray(d.start) && d.start.every(Number.isInteger)) { m.packSeen = { 0: d.start.slice() }; render(); } // the host's starting units
@@ -25405,7 +25645,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     mode = 'net'; me = 0; m = null; phase = 'lobby'; bt = null; matchKind = 'standard';
     net.players = null; net.wantRanked = !!o.ranked; net.ranked = o.ranked ? { tags: [acct ? acct.tag : 'You', ''], wins: [0, 0], ties: 0, games: 0, best: 3, done: false } : null;
     net.srv = true; net.create = true; net.key = ''; net.tourCode = ''; net.code = newCode();
-    net.pub = !!o.pub; net.spectate = o.spectate !== false; // the lobby: listed in Rooms, spectators on or off
+    net.pub = !!o.pub; net.spectate = true; // the lobby: listed in Rooms or not; every match can be watched (the owner, 2026-11-10)
     hud(); netStatus(); render();
     drawLobby();
     srvOpen();
@@ -25434,7 +25674,6 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const hello = net.watch ? { watch: true } : net.tourCode ? { id: tour.myId, tkey: tour.key } : net.key ? { key: net.key } : net.create ? { create: true, ...(net.wantRanked ? { ranked: true } : {}) } : {};
       if (net.duo) { delete hello.ranked; hello.v = Duo.V; } // (2v2: the server turns another version away, its board may differ, 2026-11-07)
       if (net.create && !net.key && net.pub) Object.assign(hello, { public: true, ...(net.duo ? {} : { map: playMap() || '', skin: skinPick || '' }) }); // a public room (the lobby)
-      if (net.create && !net.key && !net.duo && net.spectate === false) hello.spectate = false;
       if (acct && !net.tourCode) hello.session = acct.session; // who this is: ranked needs it, the other phone shows the username, and chat needs it (never in the URL)
       ws.send(JSON.stringify({ t: 'hello', ...hello }));
       clearInterval(net.ping); net.ping = setInterval(() => { if (net.ws === ws && ws.readyState === 1) ws.send('{"t":"ping"}'); }, 30000);
@@ -25460,7 +25699,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   function srvRetry() { clearTimeout(net.retryTimer); net.tries++; net.retryTimer = setTimeout(() => { if (net.alive && !net.ws) srvOpen(); }, Math.min(8000, 600 * net.tries)); }
   // the match settings from this phone's menu (map, look, units, leaders and towers left out)
-  const srvSettings = () => ({ map: playMap() || '', skin: skinPick || '', offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: packOn() ? SP.offTowers.slice() : [], late: lateGame });
+  const srvSettings = () => ({ map: playMap() || '', skin: skinPick || '', offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: [], late: lateGame });
   // one of this phone's own actions (a Game call that worked): to the server, and kept until it says it has it
   function srvAct(fn, a) {
     net.seq++;
@@ -25478,6 +25717,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     } finally { net.replaying = false; }
   }
   function srvClock(d) {
+    if (typeof d.pick === 'number') pickDue = d.pick > 0 ? now() + d.pick - 300 : 0; // the leader or tower pick's clock
     if (phase !== 'deploy') return;
     if (d.remaining > 0) {
       if (!timeUp) {
@@ -25559,7 +25799,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (mode === 'spec') { srvSpec(d); return; }
     if (d.t === 'status') {
       if (d.here) net.foeHere = !!d.here[foe()];
-      if (d.ready) { ready[foe()] = !!d.ready[foe()]; if (!timeUp) ready[me] = !!d.ready[me]; }
+      if (d.ready) { const was = ready[foe()]; ready[foe()] = !!d.ready[foe()]; if (!timeUp) ready[me] = !!d.ready[me]; foeReadySfx(was); }
       if (d.nextReady) nextReady = d.nextReady.slice();
       if (d.rematch) rematch = d.rematch.slice();
       srvClock(d); netStatus();
@@ -25683,17 +25923,16 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function boardScore(tag) { const r = home.board && home.board.rows ? home.board.rows.find(x => x.tag === tag) : null; return r ? r.score : null; }
   function roomCard(l) {
     const open = l.phase === 'waiting' && l.players < l.seats;
-    const watch = l.phase === 'playing' && l.spectate && l.kind === 'match';
+    const watch = l.phase === 'playing' && l.kind === 'match'; // every match can be watched (the owner, 2026-11-10)
     const tags = [l.mode === 'ranked' ? '<i class="rtag ranked">Ranked</i>' : l.kind === 'duo' ? '<i class="rtag duo">2v2</i>' : '<i class="rtag">Standard</i>'];
     if (l.kind === 'duo' && l.dev) tags.push('<i class="rtag dev">DEV</i>');
-    if (!l.spectate) tags.push('<i class="rtag off">No watchers</i>');
     const sc = l.mode === 'ranked' ? boardScore(l.host.tag) : null;
     const age = Math.max(0, Math.round((Date.now() - l.at) / 60000));
     return `<li class="room-card" data-code="${esc(l.code)}">
       <div class="rc-top">${nameplate(l.host.tag, l.host.title, 'rc-np')}${sc != null ? `<span class="rc-score" title="Leaderboard score">★ ${esc(sc)}</span>` : ''}</div>
       <div class="rc-name">${esc(roomName(l))}</div>
       <div class="rc-tags">${tags.join('')}</div>
-      <div class="rc-facts"><span>${esc(l.map || 'Random')}</span><span>${l.players}/${l.seats} players</span>${l.phase === 'playing' ? `<span>Round ${l.round}</span>` : `<span>${age < 1 ? 'just now' : age + ' min ago'}</span>`}${l.spectate && l.kind === 'match' ? `<span title="Watching">👁 ${l.watchers}</span>` : ''}</div>
+      <div class="rc-facts"><span>${esc(l.map || 'Random')}</span><span>${l.players}/${l.seats} players</span>${l.phase === 'playing' ? `<span>Round ${l.round}</span>` : `<span>${age < 1 ? 'just now' : age + ' min ago'}</span>`}${l.kind === 'match' ? `<span title="Watching">👁 ${l.watchers}</span>` : ''}</div>
       <div class="rc-btns">${open ? `<button class="btn primary small" data-join="${esc(l.code)}">Join</button>` : ''}${watch ? `<button class="btn small" data-watch="${esc(l.code)}">Watch</button>` : ''}${!open && !watch ? '<span class="hint">Full</span>' : ''}</div>
     </li>`;
   }
@@ -25771,19 +26010,17 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const rkOk = rankedAllowed(), duoOk = lob.dev || devMode();
     if (create.mode === 'ranked' && !rkOk) create.mode = 'standard';
     if (create.mode === '2v2' && !duoOk) create.mode = 'standard';
-    const seg = (name, key, opts) => `<div class="bar"><span class="hint">${name}</span><div class="seg" role="group" aria-label="${name}">${opts.map(([v, t, off]) => `<button data-${key}="${v}" aria-pressed="${String(create[key === 'cm' ? 'mode' : key === 'cp' ? 'pub' : 'spectate']) === String(v)}" ${off ? 'disabled' : ''}>${t}</button>`).join('')}</div></div>`;
+    const seg = (name, key, opts) => `<div class="bar"><span class="hint">${name}</span><div class="seg" role="group" aria-label="${name}">${opts.map(([v, t, off]) => `<button data-${key}="${v}" aria-pressed="${String(create[key === 'cm' ? 'mode' : 'pub']) === String(v)}" ${off ? 'disabled' : ''}>${t}</button>`).join('')}</div></div>`;
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Create room</h3><button class="btn small" id="close">Close</button></div>
       ${seg('Mode', 'cm', [['standard', 'Standard'], ['ranked', 'Ranked', !rkOk], ...(duoOk ? [['2v2', '2v2']] : [])])}
       ${create.mode === 'ranked' ? '<p class="ranked-note">Ranked: a best of 3 on the Standard map and pack. You and whoever joins both need to be logged in with Google; only ranked series count on the leaderboard.</p>' : create.mode === '2v2' ? '<p class="hint" style="margin:0">2v2 (developers only for now): seats left empty when you start are played by the AI.</p>' : '<p class="hint" style="margin:0">Pick the map, look and leaders in the room before you start.</p>'}
       ${seg('Who can find it', 'cp', [[true, 'Public: in Rooms'], [false, 'Private: code only']])}
-      ${create.mode === '2v2' ? '' : seg('Spectators', 'cs', [[true, 'On'], [false, 'Off']])}
       <button class="btn primary" id="create-go">Create room</button>
       <span class="hint" id="create-msg" aria-live="polite"></span>`;
     $('sheet-back').hidden = false;
     $('close').addEventListener('click', closeSheet);
     $('sheet').querySelectorAll('[data-cm]').forEach(b => b.addEventListener('click', () => { create.mode = b.dataset.cm; openCreateSheet(); }));
     $('sheet').querySelectorAll('[data-cp]').forEach(b => b.addEventListener('click', () => { create.pub = b.dataset.cp === 'true'; openCreateSheet(); }));
-    $('sheet').querySelectorAll('[data-cs]').forEach(b => b.addEventListener('click', () => { create.spectate = b.dataset.cs === 'true'; openCreateSheet(); }));
     $('create-go').addEventListener('click', async () => {
       const o = { pub: create.pub, spectate: create.spectate };
       home.back = 'lobby';
@@ -25821,7 +26058,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function talkReset() { Object.assign(talk, { lines: [], can: false, pub: false, spectate: true, team: false, unread: 0, wheel: false, tick: [] }); clearTimeout(talk.tickTimer); talkSync(); }
   // the messages a match room sends about chat (true: handled)
   function chatRecv(d) {
-    if (d.t === 'roomset') { talk.can = !!d.chat; talk.pub = !!d.pub; talk.spectate = d.spectate !== false; talkSync(); if (phase === 'lobby' && !m && mode === 'net' && me === 0 && !net.duo && !net.tourCode) drawLobby(); return true; }
+    if (d.t === 'roomset') { talk.can = !!d.chat; talk.pub = !!d.pub; talk.spectate = d.spectate !== false; talkSync(); if (phase === 'lobby' && !m && mode === 'net' && (me === 0 || dioRoomOn()) && !net.duo && !net.tourCode) drawLobby(); return true; } // (the Diorama's room says public / private to the guest too)
     if (d.t === 'chat') { chatAdd(d); return true; }
     if (d.t === 'chatLog') { talk.lines = (d.lines || []).slice(-50); talkSync(); return true; }
     if (d.t === 'chatMerge') { // the match is over: the watchers' lines from it, in time order
@@ -26843,8 +27080,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   // the match settings from the menu's own pickers (map, look, unit pack, leaders and units left out)
   function tourCaptured() {
-    return { map: curMap() || '', skin: skinPick || '', pack: packOn() ? 'standard' : 'all',
-      offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: packOn() ? SP.offTowers.slice() : [] };
+    return { map: curMap() || '', skin: skinPick || '', pack: 'all',
+      offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: [] };
   }
   const tourCapture = () => tourDo('settings', tourCaptured());
 
@@ -27859,6 +28096,37 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     }
     buildTier(1);
 
+    // ── Puzzles (2026-11-10): the pointed-at puzzle stands on the island, as the game will set it: their squads on their
+    // tiles, both keeps, and your shop on tiles along your side. It rises as the menu's pieces sink (as Units' roster) ──
+    const puzArmy = new THREE.Group(); island.add(puzArmy); puzArmy.position.y = -4; puzArmy.visible = false;
+    const puzFoeDot = new THREE.Object3D();
+    let puzShown = -1;
+    const puzUnit = (n) => (DATA.units || []).find(u => u.name === n) || ROSTER.units.find(u => u.name === n); // (the puzzles' own set)
+    const squad = (u, team, x, z, ry, into, big = 1) => { // a squad on its tile: up to three bodies
+      const kind = M.kindOf(u), ht = M.height(kind) || 2, copies = Math.min(u.bodies || 1, 3), sc = Math.min(0.46, 1.5 / ht) * big;
+      const spots = copies === 1 ? [[0, 0]] : copies === 2 ? [[-0.22, 0.04], [0.22, -0.04]] : [[-0.26, 0.14], [0.26, 0.14], [0, -0.2]];
+      for (const [dx, dz] of spots) unit(kind, u.color, team, x + dx, z + dz, copies > 1 ? sc * 0.78 : sc, ry, into);
+    };
+    function buildPuz(k) {
+      if (k === puzShown) return; puzShown = k;
+      for (const c of [...puzArmy.children]) { puzArmy.remove(c); c.traverse(o => { if (o.material) [].concat(o.material).forEach(mt => { if (mt.map && mt.map.isTexture) mt.map.dispose(); }); }); }
+      const P = PUZZLES[k]; if (!P) return;
+      puzArmy.add(puzFoeDot);
+      unit('tower:keep', '#D8CFBE', YOU, tx(8), tz(16), 0.36, 0, puzArmy); unit('tower:keep', '#C9BFAE', FOE, tx(5), tz(1), 0.36, Y, puzArmy);
+      let fx = 0, fz = 0;
+      for (const [n, c, r] of P.foe) { const u = puzUnit(n); if (u) squad(u, FOE, tx(c), tz(r), Y, puzArmy, 1.3); fx += tx(c); fz += tz(r); }
+      puzFoeDot.position.set(fx / P.foe.length, 0, fz / P.foe.length);
+      // your shop: a tile per unit you may buy, in a row across your half
+      const n = P.shop.length, gap = Math.min(2.05, 12.6 / n), z = tz(11.6);
+      P.shop.forEach((name, i) => { const u = puzUnit(name); if (!u) return;
+        const g = new THREE.Group(); g.position.set((i - (n - 1) / 2) * gap, 0, z); puzArmy.add(g);
+        const b = tile(gap - 0.16, 0.14, 1.9, (c, w, hh) => { c.fillStyle = '#F4ECD8'; c.fillRect(0, 0, w, hh); c.strokeStyle = 'rgba(23,20,15,.2)'; c.lineWidth = 6; c.setLineDash([18, 14]); c.strokeRect(20, 20, w - 40, hh - 40);
+            c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.84); }, null, '#CDBF9F');
+        b.position.set(0, 0.07, 0.3); g.add(b);
+        squad(u, YOU, 0, -0.3, 0.25, g, 1.15); for (const f of g.children) if (f !== b) f.position.y = 0.14;
+      });
+    }
+
 
     // ── light: a warm low sun and a cool sky ──
     scene.add(new THREE.HemisphereLight('#EFE6D2', '#3B3A4E', 1.15));
@@ -27878,6 +28146,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       welcome: { az: 0.98, el: 0.4, zoom: 12.8, at: [0, -0.6, 0], off: [0.19, 0.0] },
       signin:  { az: 0.98, el: 0.4, zoom: 13.6, at: [0, -0.6, 0], off: [0.27, 0.02] },
       history: { az: 0.62, el: 0.6, zoom: 13.2, at: [0, 0.2, 0.4], off: [0.29, -0.03] },
+      puz:     { az: 0.3, el: 0.82, zoom: 12.8, at: [0, 0, 0.2], off: [0.21, 0.02] }, // Puzzles: the whole board from your side
     };
     const phone = () => innerWidth <= 700;
     // the Play side (Play, Rooms, New room) sees the island from above (VIEWS.orders) or at the menu's angle (VIEWS.play):
@@ -27958,7 +28227,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
       let lbOn = false;
       const rank = (n) => n.hasAttribute('data-home') ? 2 : n._off ? 1 : 0;
-      for (const el of [...body.querySelectorAll('.note:not(.pnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
+      for (const el of [...body.querySelectorAll('.note:not(.pnote):not(.qnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
@@ -27980,7 +28249,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
           }
           continue;
         }
-        let show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el, hovered) && !inPlay && !inProf && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
+        let show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el, hovered) && !inPlay && !inProf && !body.classList.contains('puz') && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
         // every island note on the menu fades out over a second once it isn't wanted (owner, 2026-11-08: a quick sweep
         // over the island leaves each note readable for a second); a pointed-at piece's note shows at once, the menu's
         // own notes (the golem's, the skeleton's) come back in a quarter of a second
@@ -28014,10 +28283,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         }
         const [o, hh, [dx, dy]] = bf ? (inPlay && !playTilt ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
         let ddy = dy; if (el.dataset.anchor === 'golemW') { const lb = body.querySelector('.logo').getBoundingClientRect().bottom; ddy = Math.max(dy, lb + 16 + el.offsetHeight - y); } // clear of the big logo
-        let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the right, in the sky over the far towers; else up and left, above the golem's note
+        let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the left, above the golem's note (owner, 2026-11-10); right only without room
           const gn = body.querySelector('.rw-note:not(.pnote)'), gr = gn && gn.style.display !== 'none' ? gn.getBoundingClientRect() : null, lg = body.querySelector('.logo').getBoundingClientRect();
-          let ly = Math.max(y - 110, lg.bottom + 20 + h); sdx = Math.min(80, innerWidth - 32 - w - x);
-          if (sdx < 4) { sdx = -120; ly = Math.max(gr ? Math.min(y - 110, gr.top - 14) : y - 110, h + 12); }
+          // over the golem's note it must fit above it, under the header; beside it, it only stays under the header.
+          // To the right when there's no room left of the island or above the golem's note
+          const L = x - 120 - w, overG = gr && L < gr.right + 16 && x - 120 > gr.left - 16;
+          let ly = Math.max(overG ? Math.min(y - 110, gr.top - 14) : y - 110, h + 76); sdx = -120;
+          if (L < Math.max(32, lg.right + 24) || (overG && ly > gr.top - 14)) { ly = Math.max(y - 110, lg.bottom + 20 + h); sdx = Math.min(80, innerWidth - 32 - w - x); }
           ddy = ly - y; }
         // a pointed-at piece's note tries other spots before giving up (on a small window the first can land on PLAY)
         const tries = el.hasAttribute('data-hover') ? [[sdx, ddy], [-sdx, ddy], [sdx, -150], [-sdx, -150], [sdx, 150], [-sdx, 150]] : [[sdx, ddy]];
@@ -28036,6 +28308,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         const show = !phone() && inProf && !body.classList.contains('in-history') && !body.classList.contains('units');
         el.style.display = show ? '' : 'none'; if (!show) continue;
         const [x, y] = proj(golem, 1.35), ln = pin(el, x, y, 170, -200); if (clear(el, x, y)) html += ln; else el.style.display = 'none';
+      }
+      // Puzzles: the note on their army (what they have, and your gold)
+      for (const el of body.querySelectorAll('.qnote')) {
+        const show = !phone() && body.classList.contains('puz') && puzShown >= 0 && !!el.innerHTML;
+        el.style.display = show ? '' : 'none'; if (!show) continue;
+        const [x, y] = proj(puzFoeDot, 1.0), ln = pin(el, x, y, -220, -90);
+        if (clear(el, x, y)) html += ln; else el.style.display = 'none';
       }
       // the unit sheet, attached to the picked unit
       const sh = document.getElementById('usheet'), tabs = body.querySelector('.tiers');
@@ -28085,7 +28364,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       let key = null, unitHot = false;
       if (e.target === cv && !body.classList.contains('play')) {
         if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
-        else if (viewName === 'play' && !body.classList.contains('profile')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; else if (!body.classList.contains('welcome') && hitOf(e, UNIT_MODELS) >= 0) unitHot = true; }
+        else if (viewName === 'play' && !body.classList.contains('profile') && !body.classList.contains('puz')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; else if (!body.classList.contains('welcome') && hitOf(e, UNIT_MODELS) >= 0) unitHot = true; }
       }
       if (e.target === cv && body.classList.contains('play') && !body.classList.contains('profile') && hitOf(e, [island]) >= 0) unitHot = true; // Play: the island switches its view
       setHover(key); cv.classList.toggle('world-hot', !!key || unitHot);
@@ -28103,7 +28382,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (!key || !key.startsWith('u:')) notes();
     }
     body.addEventListener('click', (e) => { // the main menu: a unit model opens Units (its note doesn't: notes are their own elements)
-      if (e.target !== cv || viewName !== 'play' || ['play', 'profile', 'welcome', 'units', 'ranks', 'pinned'].some(c => body.classList.contains(c))) return;
+      if (e.target !== cv || viewName !== 'play' || ['play', 'profile', 'welcome', 'units', 'ranks', 'pinned', 'puz'].some(c => body.classList.contains(c))) return;
       if (hitOf(e, UNIT_MODELS) < 0) return;
       items.forEach(x => x.classList.toggle('on', x.dataset.cam === 'units')); viewName = 'units'; want = VIEWS.units; setMode('units'); body.classList.add('pinned'); setHover(null); cv.classList.remove('world-hot');
     });
@@ -28145,6 +28424,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     }
     body.querySelector('#usheet').addEventListener('click', (e) => { const b = e.target.closest('[data-wear]'); if (b && picked) wear(picked.userData.u.name, b.dataset.wear); });
     body.querySelector('#usheet .x').addEventListener('click', () => pickUnit(null));
+    // Unit sheet (2026-11-10): the game's full sheet for that unit (openSheet, as the shop's), over the island
+    body.querySelector('#usheet .usb').addEventListener('click', () => { const i = picked ? ROSTER.units.indexOf(picked.userData.u) : -1; if (i >= 0) openSheet(i); });
     body.querySelectorAll('.tiers button').forEach(b => b.addEventListener('click', () => setTier(+b.dataset.t)));
     function setTier(t) { tier = t; picked = null; body.querySelectorAll('.tiers button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.t === t)); roster.position.y = still ? 0 : -1.6; buildTier(t); }
 
@@ -28166,8 +28447,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       sniper.rotation.y = -0.35 + Math.sin(t * 0.4) * 0.06;
       ent.scale.y = 0.441 * (1 + Math.sin(t * 1.2) * 0.03);
       champ.rotation.y = -0.3 + Math.sin(t * 0.6) * 0.1;
-      const rk = body.classList.contains('ranks'), un = body.classList.contains('units');
-      pieces.position.y = lerp(pieces.position.y, rk || un ? -2.6 : 0, kk); pieces.visible = pieces.position.y > -2.4;
+      const rk = body.classList.contains('ranks'), un = body.classList.contains('units'), pz = body.classList.contains('puz');
+      puzArmy.position.y = lerp(puzArmy.position.y, pz ? 0 : -4, kk); puzArmy.visible = puzArmy.position.y > -3.6;
+      pieces.position.y = lerp(pieces.position.y, rk || un || pz ? -2.6 : 0, kk); pieces.visible = pieces.position.y > -2.4;
       const tn = performance.now() / 1000;
       for (const g of rosterHot) for (const f of g.children) if (f.userData.pop) { const p = Math.min(1, (tn - f.userData.pop) / 0.34), e = 1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2);
         f.scale.setScalar(Math.max(0.001, f.userData.s * (p >= 1 ? 1 : e))); if (p >= 1) f.userData.pop = 0; }
@@ -28263,7 +28545,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       b.addEventListener('mouseenter', go); b.addEventListener('focus', go);
     }
     // (the menu hides under the pointer when Play or Profile opens: that leave keeps their view; owner's bug, 2026-11-10)
-    body.querySelector('.menu').addEventListener('mouseleave', () => { if (body.classList.contains('pinned') || body.classList.contains('play') || body.classList.contains('profile')) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
+    body.querySelector('.menu').addEventListener('mouseleave', () => { if (['pinned', 'play', 'profile', 'puz'].some(c => body.classList.contains(c))) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
     for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
     // Puzzles and How to play open the game's sheets (until they're designed); the camera move on pointing stays
     $('puzzles-open').addEventListener('click', openPuzzles);
@@ -28272,7 +28554,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     { const rn = body.querySelector('.rw-note'); rn.addEventListener('click', () => openRewardsSheet()); rn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRewardsSheet(); } }); }
     const unpin = () => { body.classList.remove('pinned'); setMode('play'); picked = null; items.forEach(x => x.classList.toggle('on', x.id === 'play')); viewName = 'play'; want = VIEWS.play; };
     // the Play screen is the old PLAY popup: home.pop says it's open (it stays open across a match, and ?test opens it at once)
-    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = playView(); home.pop = true; };
+    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); if (typeof closePuz === 'function') closePuz(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = playView(); home.pop = true; };
     const closePlay = () => { body.classList.remove('play', 'mp-open'); setMp(false); unpin(); home.pop = false; };
     document.getElementById('play').addEventListener('click', openPlay);
     document.getElementById('play-back').addEventListener('click', () => { leavePlay(); unpin(); }); // Play's Back: the menu (owner, 2026-11-10)
@@ -28282,7 +28564,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (body.classList.contains('welcome')) return;
       openDrop(''); closeMusic();
       if (body.classList.contains('profile')) closeProfile();
-      leavePlay(); unpin();
+      closePuz(); leavePlay(); unpin();
     }
     // off the Play side (Play, Rooms, New room) to the plain menu: the logo and Profile, which opens over the menu only
     function leavePlay() {
@@ -28296,6 +28578,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       else if (w === 'profile') closeHistory();
       else if (w === 'welcome') goScreen('welcome'); });
     const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
+      if (body.classList.contains('puz')) return closePuz();
       if (body.classList.contains('in-rooms')) return closeRooms(); closePlay(); };
     backBtn.addEventListener('click', goBack);
 
@@ -28373,11 +28656,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const open = all.filter(l => l.phase === 'waiting').length;
       $('r-count').textContent = lob.ok ? `${open} open · ${all.length - open} playing` : '';
       $('lob-list').innerHTML = rows.length ? rows.map(l => {
-        const canJoin = l.phase === 'waiting' && l.players < l.seats, canWatch = l.phase === 'playing' && l.spectate && l.kind === 'match';
+        const canJoin = l.phase === 'waiting' && l.players < l.seats, canWatch = l.phase === 'playing' && l.kind === 'match'; // every match can be watched (the owner, 2026-11-10)
         const age = Math.max(0, Math.round((Date.now() - l.at) / 60000)), sc = l.mode === 'ranked' ? boardScore(l.host.tag) : null;
-        const facts = [lookName(l.look) || l.map || 'Standard', `${l.players}/${l.seats} players`, l.phase === 'playing' ? `round ${l.round}` : age < 1 ? 'just now' : `${age} min ago`, l.spectate && l.kind === 'match' && l.watchers ? `${l.watchers} watching` : ''].filter(Boolean).join(' · ');
+        const facts = [lookName(l.look) || l.map || 'Standard', `${l.players}/${l.seats} players`, l.phase === 'playing' ? `round ${l.round}` : age < 1 ? 'just now' : `${age} min ago`, l.kind === 'match' && l.watchers ? `${l.watchers} watching` : ''].filter(Boolean).join(' · ');
         const act = canJoin ? `<button class="go" data-join="${esc(l.code)}">Join</button>` : canWatch ? `<button class="go watch" data-watch="${esc(l.code)}">Watch</button>` : '<span class="full">full</span>';
-        return `<li data-code="${esc(l.code)}"><span><b>${esc(l.host.tag)}’s room</b>${sc != null ? `<span class="sc">★ ${esc(Math.round(sc))}</span>` : ''}${l.kind === 'duo' && l.dev ? '<i class="dvt">Dev</i>' : ''}${!l.spectate ? '<span class="tg">No watchers</span>' : ''}<small>${esc(facts)}</small></span>${act}</li>`;
+        return `<li data-code="${esc(l.code)}"><span><b>${esc(l.host.tag)}’s room</b>${sc != null ? `<span class="sc">★ ${esc(Math.round(sc))}</span>` : ''}${l.kind === 'duo' && l.dev ? '<i class="dvt">Dev</i>' : ''}<small>${esc(facts)}</small></span>${act}</li>`;
       }).join('') : `<li class="empty">${lob.ok === false ? 'Can’t reach the game server. Retrying…' : lob.ok == null ? 'Loading rooms…' : text ? `No ${KIND[roomQ]} rooms match “${esc(text)}”.` : `No ${KIND[roomQ]} rooms right now. Make one, and others can join you.`}</li>`;
       $('lob-msg').textContent = lob.msg || '';
     }
@@ -28420,19 +28703,17 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     function setKind(k) {
       if (k === 'ranked' && !rankedAllowed()) k = 'standard'; if (k === '2v2' && !duoOk()) k = 'standard';
       create.mode = k; press('.newroom [data-kind]', b => b.dataset.kind === k); $('nr-note').textContent = NOTE[k];
-      body.querySelector('.newroom').classList.toggle('duo', k === '2v2'); // 2v2 has no Spectators row
+      body.querySelector('.newroom').classList.toggle('duo', k === '2v2');
     }
     body.querySelectorAll('.newroom [data-kind]').forEach(b => b.addEventListener('click', () => { if (!b.disabled) setKind(b.dataset.kind); }));
     const drawPub = () => { press('.newroom [data-pub]', x => (x.dataset.pub === '1') === create.pub); $('nr-pub').textContent = create.pub ? 'Listed in Rooms for anyone to join.' : 'Not listed. Invite friends to it from Friends.'; };
-    const drawSpec = () => { press('.newroom [data-spec]', x => (x.dataset.spec === '1') === create.spectate); $('nr-spec').textContent = create.spectate ? 'Anyone can watch once it starts.' : 'No one can watch.'; };
     body.querySelectorAll('.newroom [data-pub]').forEach(b => b.addEventListener('click', () => { create.pub = b.dataset.pub === '1'; drawPub(); }));
-    body.querySelectorAll('.newroom [data-spec]').forEach(b => b.addEventListener('click', () => { create.spectate = b.dataset.spec === '1'; drawSpec(); }));
     // the room's battlefield: the host picks it here and the match is played on it; the island shows it while you pick
     let roomLook = 0;
     function setRoomLook(i) { roomLook = (i + LOOKS.length) % LOOKS.length; $('nr-bf').textContent = LOOKS[roomLook].name;
       $('nr-bfn').textContent = `${roomLook + 1} of ${LOOKS.length}. The match is played here. Everyone else keeps their own at home.`; if (lookI !== roomLook) setLook(roomLook, !still); }
     body.querySelectorAll('.newroom [data-bfs]').forEach(b => b.addEventListener('click', () => setRoomLook(roomLook + +b.dataset.bfs)));
-    function openCreate() { setKind(roomQ); drawPub(); drawSpec(); tokMenu(false); body.classList.add('in-create'); backBtn.textContent = '← Rooms'; setRoomLook(homeLook); $('nr-msg').textContent = ''; }
+    function openCreate() { setKind(roomQ); drawPub(); tokMenu(false); body.classList.add('in-create'); backBtn.textContent = '← Rooms'; setRoomLook(homeLook); $('nr-msg').textContent = ''; }
     function closeCreate() { body.classList.remove('in-create'); backBtn.textContent = '← Play'; if (lookI !== homeLook) setLook(homeLook, !still); }
     // CREATE ROOM: the room opens and waits for a second player (srvHost, or duoHost for 2v2), as the game's create sheet
     function createRoom() {
@@ -28501,7 +28782,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       // the island's note: the golem, while you can still earn its skin
       body.querySelectorAll('.pnote').forEach(n => n.remove());
       if (!(A && (A.skins || []).some(k => k.id === 'golem-aquamarine'))) { const n = document.createElement('div'); n.className = 'note pnote rw-note'; n.style.display = 'none'; n.setAttribute('role', 'button'); n.tabIndex = 0;
-        n.innerHTML = `<span class="tag">Reward · Limited</span><br>${A && (A.skins || []).length ? '' : 'No skins yet. '}This golem’s skin is yours when a friend joins. <span class="rw-row"><span class="rw-btn">Invite a friend</span></span>`; n.addEventListener('click', () => openRewardsSheet()); n.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRewardsSheet(); } }); body.querySelector('.notes').after(n); }
+        n.innerHTML = `<span class="tag">Limited reward</span><br>${A && (A.skins || []).length ? '' : 'No skins yet. '}This golem’s skin is yours when a friend joins. <span class="rw-row"><span class="rw-btn">Invite a friend</span></span>`; n.addEventListener('click', () => openRewardsSheet()); n.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRewardsSheet(); } }); body.querySelector('.notes').after(n); }
       if (body.classList.contains('profile') && !body.classList.contains('in-history')) want = body.classList.contains('units') ? VIEWS.units : VIEWS.play;
     }
     // Profile's Units: the roster comes up on the island, as from the menu; a unit's sheet changes its skin. ← Profile goes back
@@ -28541,10 +28822,41 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     // where Profile was opened from, for its Back: the Play screen, Rooms (and New room), or the menu
     let pfFrom = null;
     function openProfile() { if (!body.classList.contains('profile')) pfFrom = body.classList.contains('in-create') ? 'create' : home.screen === 'lobby' ? 'rooms' : body.classList.contains('play') || home.pop ? 'play' : null;
-      openDrop(''); leavePlay(); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
+      openDrop(''); closePuz(); leavePlay(); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
       if (acct && !sampleAcct) acctCall('me', {}, true).then(r => { if (r.status === 200) { acctTake(r); A = acct; buildTier(tier); drawProfile(); } else if (r.status === 401) { acctFail(r); A = acct; drawProfile(); } }); }
     function closeProfile() { body.classList.remove('profile', 'in-history', 'units'); picked = null; hovered = null; want = VIEWS.play; backBtn.textContent = '← Menu'; acctUi.after = null; drawProfile(); }
     acctBtn.addEventListener('click', openProfile);
+
+    // ── Puzzles (2026-11-10): the game's puzzles (PUZZLES, by level) as rows of words; pointing at one shows it on the
+    // island, a click starts it (startPuzzle). The end of a puzzle comes back here (home.back 'puzzles' → home.puz) ──
+    let puzPick = -1;
+    const firstOpen = () => { const done = puzSolvedAll(); const k = PUZZLES.findIndex((P, i) => !done.includes(i)); return k >= 0 ? k : 0; };
+    function puzShow(k) {
+      if (!PUZZLES[k]) return; puzPick = k; buildPuz(k);
+      body.querySelectorAll('#pz-list .item').forEach(b => b.classList.toggle('on', +b.dataset.puz === k));
+      const P = PUZZLES[k]; // (its goal ends with your gold: "You have 300 gold.")
+      body.querySelector('.qnote[data-q="foe"]').innerHTML = `${esc(P.name)}.<small>${esc(P.goal || '')}</small>`;
+      body.querySelectorAll('.qnote').forEach(n => { n._off = null; }); notes();
+    }
+    function drawPuz() {
+      const done = puzSolvedAll(), tchip = TITLES.initiate ? `<span class="ptitle" style="--tc:${TITLES.initiate.col}"><i></i>${esc(TITLES.initiate.name)}<i></i></span>` : '';
+      $('pz-title').innerHTML = hasInitiate() ? `The title is yours. ${tchip}` : `Solve the ${PUZ_TITLE.length} Easy ones for the title ${tchip}`;
+      const shards = ['0,12 92,0 100,84 7,100', '3,0 100,10 96,100 0,88', '0,8 97,0 100,92 3,100', '2,0 100,12 97,96 0,100'];
+      let n = 0;
+      $('pz-list').innerHTML = PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), got = ks.filter(k => done.includes(k)).length;
+        return `<div class="pz-lv"><span class="k">${esc(L)}</span><span class="pz-n">${got} of ${ks.length} solved</span></div>` + ks.map(k => { n++;
+          return `<button class="item${done.includes(k) ? ' done' : ''}${k === puzPick ? ' on' : ''}" data-puz="${k}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[k % 4]}"/></svg><span class="n">${String(n).padStart(2, '0')}</span>${esc(PUZZLES[k].name)}${done.includes(k) ? '<small>✓ solved</small>' : ''}</button>`; }).join(''); }).join('');
+    }
+    function openPuz() {
+      openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); leavePlay(); unpin();
+      body.classList.add('puz'); home.puz = true; hovered = null; setHover(null);
+      drawPuz(); puzShow(puzPick >= 0 ? puzPick : firstOpen()); want = VIEWS.puz;
+    }
+    function closePuz() { if (!body.classList.contains('puz')) return; body.classList.remove('puz'); home.puz = false; want = VIEWS.play; body.querySelectorAll('.qnote').forEach(n => { n.style.display = 'none'; n._off = null; }); }
+    $('pz-list').addEventListener('mouseover', (e) => { const b = e.target.closest('[data-puz]'); if (b && +b.dataset.puz !== puzPick) puzShow(+b.dataset.puz); });
+    $('pz-list').addEventListener('focusin', (e) => { const b = e.target.closest('[data-puz]'); if (b && +b.dataset.puz !== puzPick) puzShow(+b.dataset.puz); });
+    $('pz-list').addEventListener('click', (e) => { const b = e.target.closest('[data-puz]'); if (b) startPuzzle(+b.dataset.puz); });
+    $('pz-back').addEventListener('click', closePuz);
     $('pf-back').addEventListener('click', () => { const from = pfFrom; pfFrom = null; closeProfile();
       if (from === 'rooms' || from === 'create') { openRooms(roomQ); if (from === 'create') openCreate(); }
       else if (from === 'play') { home.screen = 'menu'; home.pop = true; drawHome(); } });
@@ -28619,7 +28931,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const TAG_RULE = 'Letters, digits, spaces, _ . or -. You can change it once a week.', TAG_BAD = 'Usernames are 2–16 letters, digits, spaces, _ . or -.';
     function drawSignin() {
       const up = door.screen === 'signup';
-      $('si-k').innerHTML = `<button class="crumb" data-crumb="welcome">Welcome</button> · ${up ? 'sign up' : 'log in'}`;
+      $('si-k').innerHTML = `<button class="crumb" data-crumb="welcome">Welcome</button><i class="sep" aria-hidden="true">›</i><span class="here">${up ? 'sign up' : 'log in'}</span>`;
       $('si-h').textContent = up ? 'Sign up' : 'Log in';
       $('si-lead').textContent = up ? 'Pick your username. Sign up with Google to keep your account on any phone or computer, or just make a guest on this one.'
         : 'Log in with the Google account you signed up with. You get your username, match history and ranked results back on this device.';
@@ -28853,7 +29165,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     $('dd-settings').addEventListener('input', (e) => {
       const k = e.target.dataset.vol; if (!k) return;
       const v = +e.target.value; e.target.style.setProperty('--v', v + '%'); e.target.nextElementSibling.textContent = v;
-      if (k === 'vol') { snd.vol = v; if (v && snd.muted) { snd.muted = false; wakeAudio(true); } saveSound(); Object.values(music).forEach(pl => { if (pl.playing) pl.ramp(musicLevel(), 0.05); }); syncMusic(); }
+      if (k === 'vol') { setMusicVol(v); volSync(); }
       else { snd.sfxVol = v; if (v && !snd.sfx) snd.sfx = true; saveSound(); }
     });
     $('dd-settings').addEventListener('change', (e) => { if (e.target.dataset.vol === 'sfxVol') sfx('button'); if (e.target.dataset.vol) drawSettings(); }); // a sample at the new volume; the speaker follows (0 is off)
@@ -28876,6 +29188,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const songOf = (id) => SONGS[id] ? `${esc(SONGS[id].title)} <em>by ${esc(SONGS[id].artist || ARTIST)}</em>` : '';
     const eqH = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>';
     function drawPlayer() {
+      volSync(); // the music's volume (a speaker and a slider) under the controls
       $('dmp-label').textContent = nowLabel().replace('Menu Playlist', 'Menu playlist');
       $('dmp-title').innerHTML = songOf(ctlPl().song()) || 'Music';
       $('mp-now').setAttribute('aria-expanded', String(body.classList.contains('music-open')));
@@ -28996,6 +29309,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const onMenu = s === 'menu' || !s;
       if (onMenu && home.pop && !body.classList.contains('play') && !body.classList.contains('profile')) openPlay();
       else if ((!onMenu || !home.pop) && body.classList.contains('play') && !body.classList.contains('in-rooms')) closePlay();
+      if (onMenu && home.puz && !body.classList.contains('puz') && !body.classList.contains('profile') && !home.pop) openPuz();
+      else if (body.classList.contains('puz')) { if (!onMenu || home.pop) closePuz(); else drawPuz(); }
       drawBackTo();
       if (onMenu) { // what the old drawMenu did quietly on the menu: ranked's switch (and the leaderboard), a fresh account, Discord's answer
         if (!home.asked) rankedCheck();
@@ -29024,7 +29339,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
       homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
     }
-    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
+    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms, puzzles: openPuz };
     dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); window.__dio.cam = () => ({ want: Object.keys(VIEWS).find(k => VIEWS[k] === want) || 'other', el: +now.el.toFixed(2) }); } // the tests: the roster standing; show / hide the home by hand

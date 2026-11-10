@@ -343,7 +343,7 @@ async function bugReport(db, request, body, env, cors) {
   return json({ ok: true, url: guild && thread ? `https://discord.com/channels/${guild}/${thread}` : '' }, 200, cors);
 }
 
-async function sha256(s) {
+export async function sha256(s) {
   const d = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(s)));
   return [...d].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
@@ -924,7 +924,7 @@ export async function handleAccount(request, env, cors) {
   const db = env.ACCOUNTS;
   if (!db) return json({ error: 'accounts off' }, 503, cors);
   const route = new URL(request.url).pathname.replace(/^\/account\/?/, '').replace(/\/$/, '');
-  if (!['guest', 'me', 'google', 'tag', 'signout', 'delete', 'ranked', 'title', 'skin', 'invite', 'discord', 'puzzle', 'bug', 'history', 'lobbyduo', 'music', ...FRIEND_ROUTES].includes(route)) return json({ error: 'not found' }, 404, cors);
+  if (!['guest', 'me', 'google', 'tag', 'signout', 'delete', 'ranked', 'title', 'skin', 'invite', 'discord', 'puzzle', 'bug', 'history', 'lobbyduo', 'music', 'online', ...FRIEND_ROUTES].includes(route)) return json({ error: 'not found' }, 404, cors);
   if (request.method !== 'POST') return json({ error: 'method' }, 405, cors);
 
   let body = {};
@@ -1018,6 +1018,14 @@ export async function handleAccount(request, env, cors) {
       if (!p || !p.dev) return json({ error: 'not a developer' }, 403, cors);
       if (body.v === 'all' || body.v === 'dev') await db.prepare(`INSERT OR REPLACE INTO config (k, v) VALUES ('lobby_duo', ?)`).bind(body.v).run();
       return json({ v: await lobbyDuo(env) }, 200, cors);
+    }
+    if (route === 'online') {
+      // players online right now (online.js OnlineRoom: open game pages, guests and signed-out visitors too), for
+      // developers only: the server's own dev flag, never the phone's word
+      const p = await db.prepare('SELECT dev FROM players WHERE id = ?').bind(me.player).first();
+      if (!p || !p.dev) return json({ error: 'not a developer' }, 403, cors);
+      if (!env.ONLINE) return json({ error: 'online off' }, 503, cors);
+      return json({ ...(await env.ONLINE.getByName('all').count()), at: now }, 200, cors);
     }
     if (route === 'invite') {
       if (!(await hasGoogle(db, me.player))) return json({ error: 'google needed' }, 403, cors);

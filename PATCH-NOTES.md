@@ -31,6 +31,9 @@ On a computer the game has a whole new look. Phones and tablets keep the one the
 - **Music:** the player sits in the corner opposite the deploy panel, folded down until you open it; Playlist opens the lists.
 - **Profile** (your name, top right): your title, your username, your skins on each unit's card, and **Match history** with replays. **Friends** and **Settings** drop down from the top right.
 - **Round 1:** the opponent's starting units now show only once you've picked your own start.
+- **Units:** every unit now has a **Unit sheet** button that opens its full sheet: stats, what it's strong and weak against, and its traits.
+- **Pick timer:** picking your leader in round 2 and your tower in round 3 now has a 20 second countdown, big on the pick screen (it turns red for the last 10 seconds). If time runs out you get the card you tapped, or else the first one. Your deploy time only starts once the picks are done.
+- **Every unit, every match:** the smaller *Learn the game* pack is gone. Games against the computer, a friend or in a tournament all use every unit, leader and tower.
 - **Fixed:** closing a public room could leave it in Rooms, with you in it, for up to three minutes.
 - Prefer the old look? Add `?ui=classic` to the address (`?ui=diorama` brings the new one back). This device remembers your choice.
 
@@ -38,10 +41,12 @@ On a computer the game has a whole new look. Phones and tablets keep the one the
 
 ## 9 November 2026 – New UI sounds
 
-- **Ready** now has its own sound when you're waiting for your opponent.
+- **Ready** now has its own sound when you're waiting for your opponent, and your opponent hears it when you press Ready.
 - **Create room**, **Join** and **Quick play** have their own sound.
 - Picking your **tower** or your **leader** has its own sound.
-- On a PC, moving the mouse onto a **menu button** makes a soft tick.
+- On a PC, moving the mouse onto a **menu button** makes a soft tick (a little quieter when you sweep across several).
+- The **Snow** battlefield is now called **Mountain Pass**.
+- **Super coffee** is now no. 1 in the playlists, and the first song new players hear.
 
 ---
 

@@ -451,7 +451,8 @@ const Game = (() => {
   ];
   const CHARACTERS = ALL_CHARACTERS.filter(c => !RETIRED_CHARS.includes(c.id));
   // ---------- the Standard pack ----------
-  // A smaller match for new players, picked on the menu: fewer units with clear jobs (one or two of each kind per tier),
+  // No longer offered on the menu (2026-11-10: every match plays with the whole pool); kept for tools/tests/standard-pack.js.
+  // A smaller match for new players: fewer units with clear jobs (one or two of each kind per tier),
   // the leaders with simple abilities, and no mage or slime tower. Units by name, so a Counter Lab roster just keeps
   // the ones it has (with none of them, the pack leaves nothing out).
   const STANDARD_PACK = {
@@ -626,7 +627,7 @@ const Game = (() => {
   const findMap = (id) => MAPS.find(x => x.id === id) || TEAM_MAPS.find(x => x.id === id) || VIEW_MAPS.find(x => x.id === id);
   // Looks (skins) for the 3D board: a map with skins (the Standard and the Test Grid) can be played in any of them; the
   // others have their own look. Only how the board looks: the rules stay the map's. The match keeps the host's pick (m.skin).
-  const SKINS = [{ id: 'meadow', name: 'Meadow' }, { id: 'autumn', name: 'Autumn' }, { id: 'snow', name: 'Snow' }, { id: 'frost', name: 'Forest Glade' }, { id: 'desert', name: 'Desert' }, { id: 'ash', name: 'Ashlands' }, { id: 'moonlit', name: 'Moonlit Snow' }, { id: 'savanna', name: 'Savanna' }];
+  const SKINS = [{ id: 'meadow', name: 'Meadow' }, { id: 'autumn', name: 'Autumn' }, { id: 'snow', name: 'Mountain Pass' }, { id: 'frost', name: 'Forest Glade' }, { id: 'desert', name: 'Desert' }, { id: 'ash', name: 'Ashlands' }, { id: 'moonlit', name: 'Moonlit Snow' }, { id: 'savanna', name: 'Savanna' }];
   // each map's own look (the rest: meadow), and the look a match is drawn in: the host's pick on a map with skins, else
   // the map's own. The deployment and battle music follow the look too (LOOK_MUSIC in the page).
   const MAP_LOOK = { standard: 'meadow', testgrid: 'frost', ice: 'snow', forest: 'forest', cavern: 'cavern' };

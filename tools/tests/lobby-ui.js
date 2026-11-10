@@ -3,7 +3,7 @@
 // card in another phone's list with the host's name, Join takes the second phone into the waiting room, the card
 // fills (2/2) and once the match starts a third phone gets Watch and spectates; Sort (Name, Date/time, Category, Mode)
 // is remembered (pb-lobby-sort) and flips on a second tap; the host's own account on a second phone can't join its own
-// room ("You're already in that room"); the host's Spectators switch in the waiting room; Quick play
+// room ("You're already in that room"); no Spectators switch (every match can be watched); Quick play
 // makes a room when none is open, and a second phone's Quick play joins it; a private room is never listed.
 // Needs: python3 -m http.server 8766 (repo root). Starts its own game server with accounts on 8781.
 // Run: node tools/tests/lobby-ui.js
@@ -49,7 +49,7 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 5 * 60 *
 
     // Create room: public by default
     await host.click('#lob-create');
-    ok(await host.getAttribute('[data-cp="true"]', 'aria-pressed') === 'true' && await host.getAttribute('[data-cs="true"]', 'aria-pressed') === 'true', 'Create room: public, spectators on');
+    ok(await host.getAttribute('[data-cp="true"]', 'aria-pressed') === 'true' && await host.locator('[data-cs]').count() === 0, 'Create room: public, no Spectators switch');
     await host.click('#create-go');
     await host.waitForSelector('#start', { timeout: 15000 });
     await host.waitForFunction(() => window.__talk().code && window.__talk().talk.pub, null, { timeout: 15000 });
@@ -87,12 +87,9 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 5 * 60 *
     await card(fan, code).waitFor({ timeout: 10000 });
     await fan.waitForFunction((c) => /2\/2 players/.test(document.querySelector(`.room-card[data-code="${c}"]`).textContent), code, { timeout: 10000 });
     ok(await card(fan, code).locator('[data-join]').count() === 0, 'full: no Join');
-    // the host's Spectators switch in the waiting room
-    await host.click('[data-spec="0"]');
-    await fan.waitForFunction((c) => /No watchers/.test(document.querySelector(`.room-card[data-code="${c}"]`).textContent), code, { timeout: 10000 });
-    ok(true, 'Spectators off: the card says No watchers');
-    await host.click('[data-spec="1"]');
-    await fan.waitForFunction((c) => !/No watchers/.test(document.querySelector(`.room-card[data-code="${c}"]`).textContent), code, { timeout: 10000 });
+    // every match can be watched (the owner, 2026-11-10): no Spectators switch, no "No watchers" on a card
+    ok(await host.locator('[data-spec]').count() === 0, 'no Spectators switch in the waiting room');
+    ok(!/No watchers/.test(await card(fan, code).textContent()), 'the card never says No watchers');
     // start: Watch
     await host.click('#start');
     await host.waitForFunction(() => document.getElementById('phase').textContent === 'Deploy', null, { timeout: 15000 });
