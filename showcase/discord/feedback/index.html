@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>No Mans Land Feedback Post</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../../img/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working kit. Each post is one row: the text to copy on the left, how it lands in a chat on the right, the
+   files to attach under it. The game's ink panels and ultramarine field; saffron only on Copy. One look. */
+:root {
+  --field: #2E3E9C; --field-lo: #24317F; --night: #161C45;
+  --ink: #17140F; --ink-2: #221E17; --ink-3: #2C271F;
+  --cream: #F4ECD8; --cream-2: rgba(244, 236, 216, .72); --cream-3: rgba(244, 236, 216, .18);
+  --saffron: #F2B23A; --you: #6FB3E0; --foe: #E5674B;
+  --chat: #1E2029; --chat-2: #2A2D38; --chat-text: #DCDEE3; --chat-link: #6FB3E0;
+  --display: "Chakra Petch", "Arial Narrow", Impact, sans-serif;
+  --body: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --shard: polygon(0 10%, 96% 0, 100% 86%, 3% 100%);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+img, video { max-width: 100%; display: block; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--saffron); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-transform: uppercase; line-height: 1.02; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+header { background: var(--field); padding-block: calc(env(safe-area-inset-top, 0px) + 28px) 40px; }
+header .wrap { display: grid; gap: 18px; }
+header .row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; }
+header img { height: 26px; width: auto; }
+header nav { display: flex; gap: 20px; font-family: var(--display); font-weight: 600; }
+header nav a { text-decoration: none; border-bottom: 2px solid var(--cream-3); }
+header nav a:hover { border-color: var(--saffron); }
+header h1 { font-size: clamp(38px, 5.5vw, 72px); }
+header h1 em { font-style: normal; color: var(--saffron); }
+header p { max-width: 46em; color: var(--cream-2); font-size: 18px; }
+.steps { display: flex; flex-wrap: wrap; gap: 8px 22px; font-family: var(--mono); font-size: 13px; color: var(--cream); list-style: none; padding: 0; margin: 4px 0 0; counter-reset: s; }
+.steps li { counter-increment: s; }
+.steps li::before { content: counter(s) "  "; color: var(--saffron); }
+
+.post { padding-block: 56px; border-bottom: 1px solid var(--cream-3); }
+.post-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-bottom: 22px; }
+.post-head h2 { font-size: clamp(28px, 3.4vw, 42px); }
+.post-head h2 small { font-family: var(--mono); font-size: 13px; font-weight: 400; color: var(--cream-2); text-transform: none; margin-left: 10px; letter-spacing: .02em; }
+.post-head p { color: var(--cream-2); max-width: 40em; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+
+/* the text to copy */
+.src { background: var(--ink-2); border: 1px solid var(--cream-3); display: grid; }
+.src-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; border-bottom: 1px solid var(--cream-3); }
+.count { font-family: var(--mono); font-size: 12.5px; color: var(--cream-2); font-variant-numeric: tabular-nums; }
+.count.over { color: var(--foe); }
+.copy { all: unset; cursor: pointer; background: var(--saffron); color: var(--ink); font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 16px; padding: 7px 20px 8px 16px; clip-path: var(--shard); }
+.copy:focus-visible { outline: 3px solid var(--cream); outline-offset: 2px; }
+textarea { width: 100%; min-height: 120px; resize: vertical; overflow: hidden; border: 0; background: transparent; color: var(--cream); font-family: var(--mono); font-size: 13.5px; line-height: 1.6; padding: 16px; }
+textarea:focus { outline: none; }
+
+/* how it lands in a chat (an approximation of a dark chat client) */
+.chat { background: var(--chat); border-radius: 6px; padding: 18px 18px 20px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--chat-text); font-size: 15px; line-height: 1.375; }
+.chat .label { font-family: var(--mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: rgba(220,222,227,.5); margin-bottom: 14px; }
+.msg { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; }
+.msg .av { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; }
+.msg .who { font-weight: 600; color: #fff; }
+.msg .who time { font-weight: 400; font-size: 12px; color: rgba(220,222,227,.5); margin-left: 6px; }
+.md { display: grid; gap: 2px; margin-top: 2px; overflow-wrap: anywhere; }
+.md h1 { font-family: inherit; text-transform: none; font-size: 24px; font-weight: 700; margin: 6px 0 4px; color: #fff; }
+.md h2 { font-family: inherit; text-transform: none; font-size: 20px; font-weight: 700; margin: 6px 0 2px; color: #fff; }
+.md ul { margin: 0; padding-left: 22px; }
+.md .sub { font-size: 12.5px; color: rgba(220,222,227,.6); }
+.md a { color: var(--chat-link); text-decoration: none; }
+.md strong { color: #fff; }
+.md .gap { height: 10px; }
+.att { display: grid; gap: 4px; margin-top: 10px; max-width: 520px; }
+.att.n2 { grid-template-columns: 1fr 1fr; }
+.att.n4 { grid-template-columns: 1fr 1fr; }
+.att img, .att video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; background: var(--chat-2); }
+.att.n1 img, .att.n1 video { aspect-ratio: auto; }
+.embed { margin-top: 10px; max-width: 432px; background: var(--chat-2); border-left: 4px solid var(--saffron); border-radius: 4px; padding: 10px 14px 14px; display: grid; gap: 6px; }
+.embed .site { font-size: 12px; color: rgba(220,222,227,.6); }
+.embed .title { color: var(--chat-link); font-weight: 600; }
+.embed .desc { font-size: 14px; }
+.embed img { border-radius: 4px; margin-top: 6px; }
+
+/* the files to attach */
+.files { margin-top: 24px; display: grid; gap: 12px; }
+.files h3 { font-size: 16px; letter-spacing: .04em; }
+.files ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.files a { display: grid; gap: 6px; text-decoration: none; }
+.files .th { aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--cream-3); background: var(--night); transition: border-color .15s; }
+.files a:hover .th { border-color: var(--saffron); }
+.files .th img, .files .th video { width: 100%; height: 100%; object-fit: cover; }
+.files span { font-family: var(--mono); font-size: 12px; color: var(--cream-2); }
+.files span b { color: var(--cream); font-weight: 500; display: block; }
+
+.notes { background: var(--field-lo); padding-block: 56px calc(56px + env(safe-area-inset-bottom, 0px)); }
+.notes h2 { font-size: clamp(26px, 3vw, 38px); margin-bottom: 20px; }
+.notes ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; border-top: 1px solid var(--cream-3); }
+.notes li { padding: 14px 0; border-bottom: 1px solid var(--cream-3); color: var(--cream-2); }
+.notes li b { color: var(--cream); font-weight: 600; }
+.notes code { font-family: var(--mono); font-size: 13px; color: var(--saffron); }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px); background: var(--saffron); color: var(--ink); font-family: var(--display); font-weight: 700; text-transform: uppercase; padding: 10px 22px; clip-path: var(--shard); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+.toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 860px) {
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .files ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .notes ul { grid-template-columns: minmax(0, 1fr); }
+}
+.md .ch { background: rgba(111, 179, 224, .18); color: var(--chat-link); padding: 0 3px; border-radius: 3px; font-weight: 500; }
+.reply-to { display: flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(220,222,227,.6); margin: 0 0 4px 20px; }
+.reply-to::before { content: ""; width: 26px; height: 10px; border: 2px solid rgba(220,222,227,.3); border-right: 0; border-bottom: 0; border-radius: 6px 0 0 0; margin-top: 8px; }
+.reply-to b { color: #57A85C; font-weight: 600; }
+.chan { font-family: var(--mono); font-size: 12.5px; color: rgba(220,222,227,.55); margin-bottom: 12px; }
+.qs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--cream-3); margin-top: 22px; }
+.qs li { padding: 16px 18px 18px 0; display: grid; gap: 4px; align-content: start; }
+.qs li + li { padding-left: 18px; border-left: 1px solid var(--cream-3); }
+.qs b { font-family: var(--display); text-transform: uppercase; font-size: 18px; }
+.qs span { color: var(--cream-2); font-size: 14.5px; }
+@media (max-width: 860px) { .qs { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .qs li:nth-child(3) { border-left: 0; padding-left: 0; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="row">
+      <img src="../../img/logo.png" alt="No Mans Land" width="1290" height="138">
+      <nav aria-label="Inlägg"><a href="#post">Inlägget</a><a href="#svar">Svaret</a><a href="../">Discord kit</a></nav>
+    </div>
+    <h1>Feedback <em>post</em></h1>
+    <p>A post for #visa-vad-du-gjort that asks for feedback on the new interface, plus a short reply to Badankan's welcome. Both in Swedish, to match the server.</p>
+    <ol class="qs" aria-label="What the post asks">
+      <li><b>1 · First impressions</b><span>Does it feel inviting? What do you think straight away?</span></li>
+      <li><b>2 · Visual style</b><span>Do the colours, shapes and fonts work together?</span></li>
+      <li><b>3 · Navigation</b><span>Is it easy to tell where things are and get around?</span></li>
+      <li><b>4 · Clarity</b><span>Are buttons, menus and options easy to understand?</span></li>
+    </ol>
+  </div>
+</header>
+
+<main>
+<section class="post" id="post" aria-labelledby="h-post">
+  <div class="wrap">
+    <div class="post-head">
+      <h2 id="h-post">Inlägget <small>in #visa-vad-du-gjort</small></h2>
+      <p>Four screens in the order a new player meets them, so people can comment on the whole path. The numbered questions make answers easy to sort.</p>
+    </div>
+    <div class="cols">
+      <div class="src">
+        <div class="src-bar"><span class="count" data-for="t-post"></span><button class="copy" data-for="t-post" type="button">Kopiera</button></div>
+        <textarea id="t-post" spellcheck="false" lang="sv" aria-label="Inläggets text">Hej igen! 👋 Badankan tipsade om att visa upp lite här, så här kommer mitt hobbyprojekt.
+
+**No Mans Land** är ett taktiskt auto-battler för två spelare som körs direkt i webbläsaren. Varje runda köper du trupper och placerar dem på din planhalva, medan motståndaren gör samma sak i hemlighet. Sen drabbar arméerna samman helt av sig själva.
+**Köp trupper. Se dem slåss. Uppgradera.**
+
+Jag har precis gjort om hela gränssnittet och skulle verkligen uppskatta fräscha ögon på det. Bilderna går i ordning: huvudmenyn → spela → mitt i en match → enheterna.
+
+**1. Första intrycket** – Känns det inbjudande? Vad tänker du direkt?
+**2. Visuell stil** – Funkar färgerna, formerna, typsnitten och helheten ihop?
+**3. Navigering** – Är det lätt att förstå var saker finns och hur man tar sig runt?
+**4. Tydlighet** – Är knappar, menyer och val lätta att förstå?
+
+Kort eller långt, allt hjälper! Skriv gärna siffran framför det du svarar på. Och var ärliga, det är därför jag frågar 🙏
+
+**Testa själv:** <https://playnomansland.github.io>
+-# Bäst på dator just nu, en ny mobilversion är på gång. Inget konto behövs. Musiken är gjord av mig och Emil Helleday, så tankar om ljudet tas också emot med glädje 🎧</textarea>
+      </div>
+      <div class="chat" aria-label="Förhandsvisning">
+        <div class="label">Preview</div>
+        <div class="chan"># visa-vad-du-gjort</div>
+        <div class="msg"><img class="av" src="../../img/icon.png" alt=""><div><div class="who">Snetänd <time>Idag 15:20</time></div><div class="md" lang="sv" data-from="t-post"></div>
+          <div class="att n4"><img src="1-meny.jpg" alt=""><img src="2-spela.jpg" alt=""><img src="3-match.jpg" alt=""><img src="4-enheter.jpg" alt=""></div></div></div>
+      </div>
+    </div>
+    <div class="files">
+      <h3>Attach, in this order</h3>
+      <ol>
+        <li><a href="1-meny.jpg" download><span class="th"><img src="1-meny.jpg" alt="" loading="lazy"></span><span><b>1-meny.jpg</b>Main menu</span></a></li>
+        <li><a href="2-spela.jpg" download><span class="th"><img src="2-spela.jpg" alt="" loading="lazy"></span><span><b>2-spela.jpg</b>Play, Multiplayer open</span></a></li>
+        <li><a href="3-match.jpg" download><span class="th"><img src="3-match.jpg" alt="" loading="lazy"></span><span><b>3-match.jpg</b>Deploying in a match</span></a></li>
+        <li><a href="4-enheter.jpg" download><span class="th"><img src="4-enheter.jpg" alt="" loading="lazy"></span><span><b>4-enheter.jpg</b>Units, with a unit's sheet</span></a></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="post" id="svar" aria-labelledby="h-svar">
+  <div class="wrap">
+    <div class="post-head">
+      <h2 id="h-svar">Svaret <small>a reply to Badankan, under your intro</small></h2>
+      <p>Thanks them, points to the post, and picks up that they work with web, JavaScript and Node, since that's what the game is built with.</p>
+    </div>
+    <div class="cols">
+      <div class="src">
+        <div class="src-bar"><span class="count" data-for="t-svar"></span><button class="copy" data-for="t-svar" type="button">Kopiera</button></div>
+        <textarea id="t-svar" spellcheck="false" lang="sv" aria-label="Svarets text">Tack för det varma välkomnandet! 🙌 Har lagt upp lite bilder i #visa-vad-du-gjort nu, säg gärna vad du tycker.
+Kul att du kör webb förresten! Spelet är JavaScript rakt igenom, servern också, så har du tankar på den sidan tar jag gärna emot dem.</textarea>
+      </div>
+      <div class="chat" aria-label="Förhandsvisning">
+        <div class="label">Preview</div>
+        <div class="reply-to"><b>@Badankan</b> Hej och välkommen 👋 Kul att du hittade hit…</div>
+        <div class="msg"><img class="av" src="../../img/icon.png" alt=""><div><div class="who">Snetänd <time>Idag 15:21</time></div><div class="md" lang="sv" data-from="t-svar"></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<section class="notes" aria-labelledby="h-notes">
+  <div class="wrap">
+    <h2 id="h-notes">Before you post</h2>
+    <ul>
+      <li><b>Post first, then reply.</b> The reply points to the post, so it should already be there.</li>
+      <li><b>The channel link.</b> Pasted text doesn't turn <code>#visa-vad-du-gjort</code> into a link. Delete it in the reply, type <code>#visa</code> and pick the channel from the list.</li>
+      <li><b>Answer the answers.</b> Thank people and ask a follow-up ("what would you change first?"). A thread on the post keeps the channel tidy: right-click the message, Create Thread.</li>
+      <li><b>What's in the pictures.</b> The menu and Units shots come from the design mockup; the match shot is from the live game. A sharp eye may notice the placeholder name Wren on the menu.</li>
+      <li><b>Return the favour.</b> Your intro offers to playtest other people's games. Trying a couple of projects in the channel and leaving the same kind of feedback is the quickest way to get answers back.</li>
+    </ul>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const esc = (s) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // the few bits of Discord markdown these posts use: # / ## headings, -# small print, - lists, **bold**, *italic*,
+  // <link> (no preview) and bare links
+  const inline = (s) => esc(s)
+    .replace(/&lt;(https?:\/\/[^\s&]+)&gt;/g, '<a href="$1">$1</a>')
+    .replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g, '$1<a href="$2">$2</a>')
+    .replace(/(^|\s)#([a-z0-9åäö-]+)/g, '$1<span class="ch"># $2</span>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*(?!\s)(.+?)\*/g, '$1<em>$2</em>');
+  function render(text) {
+    const out = []; let list = null;
+    for (const line of text.split('\n')) {
+      if (/^- /.test(line)) { if (!list) { list = []; } list.push('<li>' + inline(line.slice(2)) + '</li>'); continue; }
+      if (list) { out.push('<ul>' + list.join('') + '</ul>'); list = null; }
+      if (/^# /.test(line)) out.push('<h1>' + inline(line.slice(2)) + '</h1>');
+      else if (/^## /.test(line)) out.push('<h2>' + inline(line.slice(3)) + '</h2>');
+      else if (/^-# /.test(line)) out.push('<div class="sub">' + inline(line.slice(3)) + '</div>');
+      else if (!line.trim()) out.push('<div class="gap"></div>');
+      else out.push('<div>' + inline(line) + '</div>');
+    }
+    if (list) out.push('<ul>' + list.join('') + '</ul>');
+    return out.join('');
+  }
+  const LIMIT = 2000;
+  const update = (ta) => {
+    ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 4) + 'px'; // the whole post shows, no inner scroll
+    document.querySelectorAll(`[data-from="${ta.id}"]`).forEach(el => { el.innerHTML = render(ta.value); });
+    document.querySelectorAll(`.count[data-for="${ta.id}"]`).forEach(el => { const n = [...ta.value].length; el.textContent = `${n.toLocaleString('en')} / 2,000 characters`; el.classList.toggle('over', n > LIMIT); });
+  };
+  document.querySelectorAll('textarea').forEach(ta => { update(ta); ta.addEventListener('input', () => update(ta)); });
+
+  const toast = document.getElementById('toast'); let tt = 0;
+  const say = (t) => { toast.textContent = t; toast.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => toast.classList.remove('on'), 1800); };
+  document.querySelectorAll('.copy').forEach(b => b.addEventListener('click', () => {
+    const ta = document.getElementById(b.dataset.for);
+    const fallback = () => { ta.focus(); ta.select(); say('Markerat. Tryck Ctrl+C eller ⌘C'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(() => say('Kopierat'), fallback);
+    else fallback();
+  }));
+})();
+</script>
+</body>
+</html>
