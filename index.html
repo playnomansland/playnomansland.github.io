@@ -522,8 +522,12 @@ html.diorama.pcwide #mp-pop.dock .mplayer .mp-vol { --vl: #F4ECD8; --vt: #F2B23A
 #dio.play .badge { color: #F2B23A; } /* on Play the badge is ink: its number in saffron, not ink on ink */
 #dio .drop { position: fixed; top: 80px; right: 36px; z-index: 6; width: 410px; max-height: calc(100vh - 104px); overflow-y: auto; scrollbar-width: thin; padding: 22px 24px 20px; color: #F4ECD8; isolation: isolate; filter: drop-shadow(0 14px 26px rgba(0,0,0,.38)); animation: dropin .2s cubic-bezier(.16,.9,.24,1) both; }
 #dio .drop[hidden] { display: none; }
-#dio .drop::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #17140F; clip-path: polygon(0 0, 100% 0, 100% 100%, 7% 100%, 0 calc(100% - 22px)); }
-#dio.profile .drop::before { background: #2C2820; }
+/* the backing scrolls with the words (background-attachment: local), so a long dropdown (Settings on a short window)
+   stays dark to its end; the cut corner at its bottom left is the first gradient. An absolute ::before only covered the
+   first screenful of the scroll */
+#dio .drop { --dbg: #17140F; background: linear-gradient(to top right, transparent 50%, var(--dbg) calc(50% + .5px)) left bottom / 7% 22px no-repeat local,
+  linear-gradient(var(--dbg), var(--dbg)) right bottom / 93% 22px no-repeat local, linear-gradient(var(--dbg), var(--dbg)) left top / 100% calc(100% - 21.5px) no-repeat local; }
+#dio.profile .drop { --dbg: #2C2820; }
 @keyframes dropin { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 #dio .drop h3 { margin: 0; font: 700 34px/.95 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
 #dio .drop h3 small { margin-left: 10px; font: 700 13px var(--type); text-transform: none; letter-spacing: 0; opacity: .88; }
@@ -18364,7 +18368,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · e180ef9'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 9ec0caf'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19557,7 +19561,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Help</h3><button class="btn small" id="close">Close</button></div>
       ${helpTip ? `<p style="margin:0">${helpTip}</p>` : ''}
       <ul class="helplist">
-        <li>Pick a unit card, then tap a highlighted tile in your zone, the bottom six rows. Each squad costs its gold and one deployment.</li>
+        <li>Pick a unit card, then tap a highlighted tile in your zone, the bottom ${Game.ZONE} rows. Each squad costs its gold and one deployment.</li>
         <li>Drag a squad you placed this round to move it, or tap the ✕ on its top right corner to take it back. Your round 1 package squads are free.</li>
         <li>A squad with a gold badge can level up: tap it. Tap an older squad, a tower or an enemy squad to see what it does.</li>
         ${document.documentElement.classList.contains('dock') ? '<li>Hold the blue tab on the deploy panel and slide it up or down (or tap it). Picking a unit puts it down so you can see every tile; the ✕ on the board stops placing.</li>' : ''}
@@ -20692,14 +20696,16 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   }
   function openHowTo() {
     if (DIO && typeof dio !== 'undefined' && dio.api && dio.api.howto && phase === 'start' && !m && innerWidth >= 900) { closeSheet(true); dio.api.howto(); return; } // the Diorama's How to play screen (PC only for now; in a match and on a narrow window: this sheet)
+    // the Standard map everyone plays (curMap), and the live roster's squad prices: as the Diorama's How to play says them
+    const zone = ((Game.findMap(STD_MAP) || {}).grid || Game.GRID).zone, prices = units.map(Game.unitCostOf), lo = Math.min(...prices), hi = Math.max(...prices);
     $('sheet').innerHTML = `
       <div class="bar"><h3 id="sheet-h">How to play</h3><button class="btn small" id="close">Close</button></div>
       <div class="card" style="max-width:none;justify-items:stretch">
       <ul>
-        <li>Each round you buy squads with gold and place them in your bottom six rows. Then the armies fight on their own.</li>
+        <li>Each round you buy squads with gold and place them in your zone: the ${zone} rows on your side of the board. Then the armies fight on their own.</li>
         <li>Squads stay all match, and you see the enemy’s earlier ones while you deploy. Build counters.</li>
         <li>The loser of a fight takes damage from every enemy squad still standing, at most ${Game.MAX_ROUND_DMG} a round. Run out of health and you lose.</li>
-        <li>A squad costs ${Game.SQUAD_COST}, income grows by ${Game.CONFIG.incomeStep} a round, and you have ${DEPLOY_SECONDS} s and 2 deployments a round (3 in round 1).</li>
+        <li>A squad costs ${lo === hi ? lo : lo + ' to ' + hi} gold by its unit’s tier, income grows by ${Game.CONFIG.incomeStep} a round, and you have ${DEPLOY_SECONDS} s and 2 deployments a round (3 in round 1).</li>
         <li>At most ${Game.CARRY_CAP} unspent gold carries over to the next round. Break an enemy streak of ${Game.SHUTDOWN.from} or more wins (🔥 by their health) for +${Game.SHUTDOWN.gold} gold, and +${Game.SHUTDOWN.step} more for each win past ${Game.SHUTDOWN.from}.</li>
       </ul>
       <div class="learn">
@@ -20711,9 +20717,9 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
           ['Towers', `If yours falls, your army is crippled for a few seconds. Pick your real one in round ${Game.TOWER_PICK_ROUND}.`, `
             <li>Your tower stands in the back of your zone. Until round ${Game.TOWER_PICK_ROUND} it is a small outpost; then, before the clock runs, you pick one for the rest of the match.</li>
             ${Game.TOWER_TYPES.map(x => `<li><b>${esc(x.name)}</b>: ${esc(x.text)} ${x.skill ? `Skill: <i>${esc(x.skill.name)}</i> (${Game.TOWER_SKILL.cost} gold, tap your tower). ${esc(x.skill.text)} ` : ''}${x.skill2 ? `Skill: <i>${esc(x.skill2.name)}</i> (${x.skill2.cost ? x.skill2.cost + ' gold' : 'free'}, tap your tower). ${esc(x.skill2.text)} ` : ''}${x.loan ? `Loan, every round (tap your tower): ${esc(loanText())} ` : ''}${x.passive ? `<i>${esc(x.passive.name)}</i> (always on): ${esc(x.passive.text)} ` : ''}${x.generals ? `Every round you may call one mage general (tap your tower); it changes the attack for that round's fight only. ${Game.MAGE_GENERALS.map(g => `<i>${esc(g.name)}</i> (${g.cost} gold): ${esc(g.text)}`).join(' ')}` : ''}</li>`).join('')}`],
-          ['Maps', 'Every map changes the rules of the fight.', `
-            <li>The host picks the map before the packages, or leaves it random (never Standard, and never the same map twice in a row).</li>
-            ${Game.MAPS.map(mp => `<li><b>${esc(mp.name)}</b>: ${esc(mp.text)}</li>`).join('')}`],
+          ...(devMode() ? [['Maps', 'Every map changes the rules of the fight.', `
+            <li>Everyone plays the Standard map. Only developers pick another one, before the packages, or leave it random.</li>
+            ${Game.MAPS.map(mp => `<li><b>${esc(mp.name)}</b>: ${esc(mp.text)}</li>`).join('')}`]] : []), // only developers pick a map (curMap)
           ['Lanes and flanks', `Columns are lanes. From round ${Game.FLANK.round} you can deploy on the enemy’s edges.`, `
             <li>Squads march straight ahead and fight what they meet, curving toward any enemy within a few tiles, so an empty lane lets a squad walk around the side.</li>
             <li>From round ${Game.FLANK.round}, the blue edge columns on the enemy’s half open up for you. The red ones on your half are theirs, never yours.</li>
