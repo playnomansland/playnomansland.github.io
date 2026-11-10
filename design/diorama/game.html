@@ -1614,6 +1614,16 @@ html.dsetmenu.diorama.pcwide #sheet .bar:is(:has(#fr-open2), :has(#mp-open2), :h
 html.dsetmenu.diorama.pcwide #sheet .btn:is(#fr-open2, #mp-open2, #bug-open) { flex: none; padding: 0; border: 0; background: none; font: 700 13px var(--dtype); text-decoration: underline; text-underline-offset: 4px; opacity: .88; }
 html.dsetmenu.diorama.pcwide #sheet .btn:is(#fr-open2, #mp-open2, #bug-open):hover:not(:disabled) { background: none; border: 0; opacity: 1; }
 html.dsetmenu.diorama.pcwide #sheet .btn#to-menu { justify-self: start; width: auto; margin-top: 10px; margin-left: -9px; padding: 4px 9px 1px; border: 0; background: none; color: #FF8F78; font: 700 20px/1 var(--dstencil); text-transform: uppercase; }
+/* never a scroll for Main menu (the owner, 2026-11-10: online, the sheet scrolled on a 800 px window): Main menu sits
+   beside the title, and the rows are tighter so the whole sheet fits on most windows */
+html.dsetmenu.diorama.pcwide .sheet-back.ddrop #sheet { padding: 20px 24px 16px; row-gap: 2px; }
+html.dsetmenu.diorama.pcwide #sheet h3 { font-size: 32px; margin-bottom: 2px; }
+html.dsetmenu.diorama.pcwide #sheet .btn#to-menu { position: absolute; top: 24px; right: 22px; margin: 0; font-size: 18px; }
+html.dsetmenu.diorama.pcwide #sheet > .bar { min-height: 25px; }
+html.dsetmenu.diorama.pcwide #sheet .seg button { font-size: 18px; padding: 3px 8px 1px; }
+html.dsetmenu.diorama.pcwide #sheet .bar:is(:has(#spk-music), :has([data-board]), :has([data-dside]), :has([data-chat]))::before { margin: 9px 0 1px; }
+html.dsetmenu.diorama.pcwide #sheet .bar:has(#spk-music)::before { margin-top: 0; }
+html.dsetmenu.diorama.pcwide #sheet .bar:is(:has(#fr-open2), :has(#mp-open2), :has(#bug-open)) { margin-top: 8px; padding-top: 8px; }
 html.dsetmenu.diorama.pcwide #sheet .btn#to-menu:hover:not(:disabled) { background: none; border: 0; text-decoration: underline; text-underline-offset: 4px; }
 
 /* the plain (not gold) buttons in a match read as buttons (the owner, 2026-11-10: "impossible to understand that they
@@ -18082,7 +18092,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · e1c2c40'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 7c43da4'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
