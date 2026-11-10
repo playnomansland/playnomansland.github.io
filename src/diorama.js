@@ -324,8 +324,7 @@
       list.forEach((u, i) => {
         const x = (i - (n - 1) / 2) * gap, g = new THREE.Group(); g.position.set(x, 0, -0.5); roster.add(g);
         const b = tile(gap - 0.14, 0.16, 2.3, (c, w, hh) => { c.fillStyle = '#F4ECD8'; c.fillRect(0, 0, w, hh); c.strokeStyle = 'rgba(23,20,15,.2)'; c.lineWidth = 6; c.setLineDash([18, 14]); c.strokeRect(20, 20, w - 40, hh - 40);
-            c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.8);
-            c.font = '500 40px "Bricolage Grotesque"'; c.globalAlpha = .75; c.fillText(`${u.cost} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
+            c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.85); }, null, '#CDBF9F'); // (the name only, no price: owner, 2026-11-10)
         b.position.set(0, 0.08, 0.35); g.add(b);
         const w = wornOf(u.name), kind = w ? SKIN[w.id].model : M.kindOf(u), ht = M.height(kind) || 2, sc = Math.min(0.66, 2.0 / ht), copies = Math.min(u.bodies || 1, 3);
         const spots = copies === 1 ? [[0, 0]] : copies === 2 ? [[-0.28, 0.05], [0.28, -0.05]] : [[-0.32, 0.12], [0.32, 0.12], [0, -0.25]];
@@ -357,6 +356,10 @@
       history: { az: 0.62, el: 0.6, zoom: 13.2, at: [0, 0.2, 0.4], off: [0.29, -0.03] },
     };
     const phone = () => innerWidth <= 700;
+    // the Play side (Play, Rooms, New room) sees the island from above (VIEWS.orders) or at the menu's angle (VIEWS.play):
+    // a click on the island switches (owner, 2026-11-10: from above is the default). Remembered on this device
+    let playTilt = false; try { playTilt = localStorage.getItem('pb-dio-tilt') === '1'; } catch (er) {}
+    const playView = () => playTilt ? VIEWS.play : VIEWS.orders;
     let want = VIEWS.play, now = { ...VIEWS.play, at: [...VIEWS.play.at], off: [...VIEWS.play.off] };
     const lerp = (a, b, t) => a + (b - a) * t;
     function place() {
@@ -382,6 +385,7 @@
     const bfMenu = new THREE.Object3D(); bfMenu.position.set(7, 0, -9); island.add(bfMenu);
     const bfPlan = new THREE.Object3D(); bfPlan.position.set(0, 0, 9); island.add(bfPlan);
     // the battlefield note stays in one place (bottom right); its line runs up to the nearest corner or edge of the island
+    let bfPick = null, bfFor = null, bfKey = ''; // the battlefield line's point on the island, and the view it was picked for
     const bfDots = [[7, -9], [7, 9], [-7, 9], [-7, -9], [7, 0], [0, 9], [-7, 0], [0, -9]].map(([x, z]) => { const o = new THREE.Object3D(); o.position.set(x, 0, z); island.add(o); return o; });
     let viewName = 'play', hovered = null, pinnedHover = false, picked = null;
     const svg = document.getElementById('lines');
@@ -435,10 +439,19 @@
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
           if (on && !phone() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf')) {
-            const r = el.getBoundingClientRect(), ty = r.top - 4; let best = null, bd = 1e9;
-            for (const o of bfDots) { const [x, y] = proj(o, 0), d = Math.hypot(x - r.right, y - ty);
-              if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd && !(menuR && crosses(`M${x} ${y} L${r.right} ${ty}`, menuR))) { bd = d; best = [x, y]; } } // (never across the menu's words)
-            if (best && !under(r)) { const [x, y] = best, right = x > (r.left + r.right) / 2;
+            const r = el.getBoundingClientRect(), ty = r.top - 4;
+            // the point is picked where the camera is heading and kept while it moves, so the line glides with the island
+            // instead of hopping between corners mid-move (owner, 2026-11-10)
+            const key = innerWidth + 'x' + innerHeight + (menuR ? ' ' + [menuR.left, menuR.top, menuR.right, menuR.bottom].map(Math.round).join() : '');
+            if (bfFor !== want || bfKey !== key) {
+              bfFor = want; bfKey = key; bfPick = null; let bd = 1e9; const keep = now;
+              now = { ...want, at: [...want.at], off: [...want.off] }; place(); cam.updateMatrixWorld();
+              for (const o of bfDots) { const [x, y] = proj(o, 0), d = Math.hypot(x - r.right, y - ty);
+                if (x > 24 && x < innerWidth - 24 && y > 24 && y < ty - 40 && d < bd && !(menuR && crosses(`M${x} ${y} L${r.right} ${ty}`, menuR))) { bd = d; bfPick = o; } } // (never across the menu's words)
+              now = keep; place(); cam.updateMatrixWorld();
+            }
+            const best = bfPick && proj(bfPick, 0);
+            if (best && best[1] < ty - 8 && !under(r)) { const [x, y] = best, right = x > (r.left + r.right) / 2;
               html += `<path d="M${x} ${y} L${right ? r.right : r.left} ${ty} L${right ? r.left : r.right} ${ty}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`; }
           }
           continue;
@@ -475,7 +488,7 @@
           }
           continue;
         }
-        const [o, hh, [dx, dy]] = bf ? (inPlay ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
+        const [o, hh, [dx, dy]] = bf ? (inPlay && !playTilt ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
         let ddy = dy; if (el.dataset.anchor === 'golemW') { const lb = body.querySelector('.logo').getBoundingClientRect().bottom; ddy = Math.max(dy, lb + 16 + el.offsetHeight - y); } // clear of the big logo
         let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the right, in the sky over the far towers; else up and left, above the golem's note
           const gn = body.querySelector('.rw-note:not(.pnote)'), gr = gn && gn.style.display !== 'none' ? gn.getBoundingClientRect() : null, lg = body.querySelector('.logo').getBoundingClientRect();
@@ -526,7 +539,7 @@
       if (hovered && hovered.startsWith('u:') && body.classList.contains('units') && (!picked || picked.userData.i !== +hovered.slice(2))) {
         const g = rosterHot[+hovered.slice(2)], [x, y] = proj(g, 1.5), w = hn.offsetWidth;
         const ns = skinsOf(g.userData.u.name).filter(k => k.own).length;
-        hn.style.display = ''; hn.innerHTML = `${g.userData.u.name}.<small>Tier ${g.userData.t} · ${g.userData.u.cost} gold${ns ? ` · ${ns} skin${ns > 1 ? 's' : ''}` : ''} · click for its sheet</small>`;
+        hn.style.display = ''; hn.innerHTML = `${g.userData.u.name}.<small>Tier ${g.userData.t}${ns ? ` · ${ns} skin${ns > 1 ? 's' : ''}` : ''} · click for its sheet</small>`;
         const hy = y + 210; hn.style.left = (x + 16) + 'px'; hn.style.top = hy + 'px';
         html += `<path d="M${x} ${y} L${x + 16} ${hy} L${x + 16 + w} ${hy}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
       } else hn.style.display = 'none';
@@ -550,7 +563,13 @@
         if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
         else if (viewName === 'play' && !body.classList.contains('profile')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; else if (!body.classList.contains('welcome') && hitOf(e, UNIT_MODELS) >= 0) unitHot = true; }
       }
+      if (e.target === cv && body.classList.contains('play') && !body.classList.contains('profile') && hitOf(e, [island]) >= 0) unitHot = true; // Play: the island switches its view
       setHover(key); cv.classList.toggle('world-hot', !!key || unitHot);
+    });
+    body.addEventListener('click', (e) => { // Play: a click on the island switches between from above and the menu's angle
+      if (e.target !== cv || !body.classList.contains('play') || body.classList.contains('profile') || hitOf(e, [island]) < 0) return;
+      playTilt = !playTilt; try { localStorage.setItem('pb-dio-tilt', playTilt ? '1' : '0'); } catch (er) {}
+      want = playView(); notes();
     });
     // what's pointed at shows its note at once (owner, 2026-11-08: no delay); notes no longer wanted fade out over a
     // second (in notes()), so a sweep over the island doesn't flicker
@@ -569,7 +588,7 @@
       picked = g; const sh = document.getElementById('usheet');
       if (!g) return;
       const u = g.userData.u, dps = Math.round(u.hit * u.aps * (u.bodies || 1)), sk = (u.skills || []).map(id => ROSTER.skills[id] || id);
-      sh.querySelector('.tag').textContent = `Tier ${g.userData.t} · ${u.cost} gold`;
+      sh.querySelector('.tag').textContent = `Tier ${g.userData.t}`;
       sh.querySelector('h3').textContent = u.name;
       sh.querySelector('.st').innerHTML = [`<b>${u.hp}</b> health`, `<b>${dps}</b> damage a second`, `<b>${u.range} m</b> range`, `<b>${u.speed}</b> speed`,
         (u.bodies || 1) > 1 ? `<b>${u.bodies}</b> bodies` : '', u.splash ? `<b>${u.splash} m</b> splash` : '', u.defense && u.defense !== 'none' ? `<b>${u.defVal}</b> ${u.defense}` : ''].filter(Boolean).map(t => `<span>${t}</span>`).join('');
@@ -719,7 +738,8 @@
       const go = () => { if (body.classList.contains('pinned') && b.dataset.cam !== viewName) return; items.forEach(x => x.classList.toggle('on', x === b)); viewName = b.dataset.cam; want = VIEWS[viewName]; setMode(viewName); };
       b.addEventListener('mouseenter', go); b.addEventListener('focus', go);
     }
-    body.querySelector('.menu').addEventListener('mouseleave', () => { if (body.classList.contains('pinned')) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
+    // (the menu hides under the pointer when Play or Profile opens: that leave keeps their view; owner's bug, 2026-11-10)
+    body.querySelector('.menu').addEventListener('mouseleave', () => { if (body.classList.contains('pinned') || body.classList.contains('play') || body.classList.contains('profile')) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
     for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
     // Puzzles and How to play open the game's sheets (until they're designed); the camera move on pointing stays
     $('puzzles-open').addEventListener('click', openPuzzles);
@@ -728,9 +748,10 @@
     { const rn = body.querySelector('.rw-note'); rn.addEventListener('click', () => openRewardsSheet()); rn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRewardsSheet(); } }); }
     const unpin = () => { body.classList.remove('pinned'); setMode('play'); picked = null; items.forEach(x => x.classList.toggle('on', x.id === 'play')); viewName = 'play'; want = VIEWS.play; };
     // the Play screen is the old PLAY popup: home.pop says it's open (it stays open across a match, and ?test opens it at once)
-    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = VIEWS.orders; home.pop = true; };
+    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = playView(); home.pop = true; };
     const closePlay = () => { body.classList.remove('play', 'mp-open'); setMp(false); unpin(); home.pop = false; };
     document.getElementById('play').addEventListener('click', openPlay);
+    document.getElementById('play-back').addEventListener('click', () => { leavePlay(); unpin(); }); // Play's Back: the menu (owner, 2026-11-10)
     const backBtn = body.querySelector('.back');
     // the logo: the main menu from anywhere (not from the welcome screens). Nothing else needs a back link
     function goMenu() {
@@ -855,7 +876,7 @@
     // the game's state: home.screen 'lobby' is Rooms (openLobby); this only shows it
     function openRooms(q) { roomQ = q; home.pop = false; home.screen = 'lobby'; lob.msg = ''; drawHome(); }
     function showRooms() {
-      if (!body.classList.contains('play')) { if (typeof openDrop === 'function') openDrop(''); unpin(); body.classList.add('play'); want = VIEWS.orders; }
+      if (!body.classList.contains('play')) { if (typeof openDrop === 'function') openDrop(''); unpin(); body.classList.add('play'); want = playView(); }
       if (!body.classList.contains('in-rooms')) { body.classList.add('in-rooms'); tokMenu(false); }
       backBtn.textContent = body.classList.contains('in-create') ? '← Rooms' : '← Play';
       setRoomQ(roomQ); lobbyOpen();
@@ -1394,9 +1415,9 @@
     addEventListener('pointerdown', e => { if (dio.shown && !e.target.closest('.rsearch')) tokMenu(false); });
     addEventListener('pointerdown', e => { if (dio.shown && body.classList.contains('music-open') && !e.target.closest('.music')) closeMusic(); });
     // states for screenshots: #play, #music, #view=<word>, #pin, #tier=<n>, #unit=<n>, #hover=<piece>
-    if (H.includes('play')) { openPlay(); now = { ...VIEWS.orders, at: [...VIEWS.orders.at], off: [...VIEWS.orders.off] }; }
+    if (H.includes('play')) { openPlay(); { const v = playView(); now = { ...v, at: [...v.at], off: [...v.off] }; } }
     if (H.includes('multi')) setMp(true);
-    const rq = (H.match(/rooms=(\w+)/) || [])[1]; if (rq) { if (!H.includes('play')) { openPlay(); now = { ...VIEWS.orders, at: [...VIEWS.orders.at], off: [...VIEWS.orders.off] }; } openRooms(rq); }
+    const rq = (H.match(/rooms=(\w+)/) || [])[1]; if (rq) { if (!H.includes('play')) { openPlay(); { const v = playView(); now = { ...v, at: [...v.at], off: [...v.off] }; } } openRooms(rq); }
     if (H.includes('filter')) tokMenu(true);
     if (H.includes('create')) openCreate();
     const bq = (H.match(/roombf=(\w+)/) || [])[1]; if (bq) setRoomLook(LOOKS.findIndex(l => l.id === bq));
@@ -1482,5 +1503,5 @@
     dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms };
     dioPaint();
     if (dio.shown) resume();
-    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); } // the tests: the roster standing; show / hide the home by hand
+    window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); window.__dio.cam = () => ({ want: Object.keys(VIEWS).find(k => VIEWS[k] === want) || 'other', el: +now.el.toFixed(2) }); } // the tests: the roster standing; show / hide the home by hand
   }
