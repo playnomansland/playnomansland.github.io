@@ -1245,6 +1245,10 @@ html.diorama.pcwide #mp-pop.dock::before { content: ""; position: fixed; inset: 
 html.diorama.pcwide #mp-pop.dock .mp-dock { left: auto; right: 40px; bottom: 30px; transform: none; width: min(460px, calc(100vw - var(--dpw, 340px) - 80px)); height: auto; max-height: min(620px, calc(100vh - 170px));
   display: flex; flex-direction: column; align-items: stretch; pointer-events: auto; color: #F4ECD8; text-align: right;
   text-shadow: 0 0 3px rgba(10,13,12,.95), 0 0 9px rgba(10,13,12,.8); font: 700 14px "Bricolage Grotesque", system-ui, sans-serif; }
+/* the dock's box is only a frame: the board under it keeps the pointer (the owner, 2026-11-10: the bottom right tiles
+   didn't take a hover under the empty box); the player and the lists take it (.hid's player, .dm-show: their own rules) */
+html.diorama.pcwide #mp-pop.dock .mp-dock { pointer-events: none; }
+html.diorama.pcwide #mp-pop.dock .mp-dock > :is(.mp-panel, .mplayer) { pointer-events: auto; }
 /* the player */
 html.diorama.pcwide #mp-pop.dock .mplayer { width: 100%; padding: 0; gap: 7px; justify-items: end; border: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; text-align: right; animation: none; }
 html.diorama.pcwide #mp-pop.dock .mp-now { display: grid; grid-template-columns: auto; justify-items: end; gap: 3px; width: auto; padding: 0; border: 0; background: none; text-align: right; cursor: pointer; }
@@ -18073,7 +18077,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 0be8837'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 20b595a'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -18633,6 +18637,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     root.classList.toggle('pcwide', wide);
     const fight = wide && ['battle', 'result'].includes(phase), wasFight = root.classList.contains('pcfight');
     root.classList.toggle('pcfight', fight);
+    if (DIO && fight !== wasFight) dioFightTuck(fight); // the deploy panel slides away for the fight, back out for the next deploy
     if (DIO && wide && !wasWide && board3d && board3d.camera.level() === 0) board3d.camera.setLevel(1); // the Diorama: the match opens in the tilted view (the prototype's)
     // and, from the strategic view, it goes to the tilted one for the fight (the wide board shows bigger that way), back after
     if (fight !== wasFight && board3d) {
@@ -23427,13 +23432,19 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (dOut === out) return;
     dOut = out; document.documentElement.classList.toggle('dtuck', !out);
   }
-  function setDeployAuto(on) { dAuto = !!on; try { localStorage.setItem(DAUTO_STORE, on ? 'on' : 'off'); } catch (e) {} if (!on) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); } if (board3d) wake3d(); }
+  function setDeployAuto(on) { dAuto = !!on; try { localStorage.setItem(DAUTO_STORE, on ? 'on' : 'off'); } catch (e) {} if (!on && !document.documentElement.classList.contains('pcfight')) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); } if (board3d) wake3d(); }
+  // the fight (the owner, 2026-11-10): the panel slides away when the battle starts, whatever the setting, and comes
+  // back from its edge as with "Slides away"; the next deploy brings it out again
+  // (READY / Fight is in that edge zone: the pointer has to leave it once before the edge calls the panel back)
+  let dFightHold = false;
+  function dioFightTuck(fight) { clearTimeout(dOutT); dOutT = 0; dFightHold = fight; dioPanelOut(!fight); }
   addEventListener('pointermove', (e) => {
     if (!DIO || e.pointerType !== 'mouse') return;
     const wide = dioWide() && phase !== 'lobby' && !dioRoomOn();
-    if (!wide || !dAuto) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); return; }
+    if (!wide || !(dAuto || document.documentElement.classList.contains('pcfight'))) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); return; }
     const pw = dioPw(), x = e.clientX, edge = dOut ? pw + 40 : 140; // (a wide zone to call it back, the owner, 2026-11-10)
     const near = dSide === 'right' ? x >= innerWidth - edge : x <= edge;
+    if (dFightHold) { if (near) return; dFightHold = false; }
     if (near || e.buttons || !$('sheet-back').hidden) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); }
     else if (dOut && !dOutT) dOutT = setTimeout(() => { dOutT = 0; dioPanelOut(false); }, 1500); // (it stays out a while)
   }, { passive: true });
