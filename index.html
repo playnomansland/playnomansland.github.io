@@ -1451,6 +1451,21 @@ html.diorama.pcwide .app::after { content: ""; position: fixed; z-index: 5; top:
 html.dright.diorama.pcwide .app::after { left: auto; right: 0; clip-path: polygon(0 8%, 100% 0, 100% 100%, 0 92%); transform: translateX(6px); }
 html.dtuck.diorama.pcwide .app::after { opacity: 1; transform: none; }
 
+/* the deploy panel on the right: you (name, health) move to the right with it, the opponent to the left, both mirrored
+   (the owner, 2026-11-10) */
+html.dright.diorama.pcwide .hud .side.you { grid-column: 3; grid-row: 1; grid-template-columns: minmax(60px, 260px) auto; justify-content: end; text-align: right; }
+html.dright.diorama.pcwide .hud .round { grid-column: 2; grid-row: 1; }
+html.dright.diorama.pcwide .hud .side.foe { grid-column: 1; grid-row: 1; grid-template-columns: auto minmax(60px, 260px); justify-content: start; text-align: left; }
+html.dright.diorama.pcwide .hud .side.you #you-name { justify-content: flex-end; }
+html.dright.diorama.pcwide .hud .side.foe #foe-name { justify-content: flex-start; }
+html.dright.diorama.pcwide .hud .side.you .num, html.dright.diorama.pcwide .hud .side.you .streak { grid-column: 2; }
+html.dright.diorama.pcwide .hud .side.you .hp { grid-column: 1; }
+html.dright.diorama.pcwide .hud .side.you .hp i { margin-left: auto; }
+html.dright.diorama.pcwide .hud .side.foe .num, html.dright.diorama.pcwide .hud .side.foe .streak { grid-column: 1; }
+html.dright.diorama.pcwide .hud .side.foe .hp { grid-column: 2; }
+html.dright.diorama.pcwide .hud .side.foe .hp i { margin-left: 0; }
+html.dright.diorama.pcwide .hud .side.foe .foe-state { justify-self: start; }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -17668,8 +17683,8 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   }
   // the player's own down arrow slides it away, leaving a small "♪ Music ⌃" that brings it back (the owner, 2026-11-09);
   // kept on this device
-  let dmHid = false;
-  try { dmHid = localStorage.getItem('pb-dmusic') === 'hid'; } catch (e) {}
+  let dmHid = true;
+  try { dmHid = localStorage.getItem('pb-dmusic') !== 'shown'; } catch (e) {} // (it starts down: the owner, 2026-11-10)
   function dioMusicDecor() {
     const pop = $('mp-pop'); if (!pop || !pop.classList.contains('dmini')) return;
     const pl = pop.querySelector('.mplayer'), dk = pop.querySelector('.mp-dock');
@@ -17684,7 +17699,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     pop.classList.toggle('hid', dmHid);
   }
   function dioMusicHide(h) {
-    dmHid = h; try { localStorage.setItem('pb-dmusic', h ? 'hid' : ''); } catch (e) {}
+    dmHid = h; try { localStorage.setItem('pb-dmusic', h ? 'hid' : 'shown'); } catch (e) {}
     const pop = $('mp-pop'); if (!pop) return;
     if (h) { pop.classList.add('mini'); mpui.edit = null; }
     pop.classList.toggle('hid', h);
@@ -17905,7 +17920,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 7f047c6'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 80e5f58'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches

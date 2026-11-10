@@ -462,3 +462,6 @@ under 860 px high.
   thin saffron tab marks the edge. Settings: "Slides away" On / Off (`pb-deploy-auto`, on by default). **Full screen**
   in the match's top line (`#dfs`). **Take back / Sell drop zone** restyled: no box, the column darkens with a saffron
   edge toward the board, TAKE BACK (or SELL) in stencil with the gold back in saffron.
+- **2026-11-10 (owner):** the music player **starts down** (just "♪ Music ⌃"; `pb-dmusic` = 'shown' once opened). With
+  the panel on the **right**, the top line swaps too: your name and health on the right above the panel, the
+  opponent's on the left, both mirrored (`html.dright .hud`).

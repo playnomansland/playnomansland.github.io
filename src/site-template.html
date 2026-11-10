@@ -1964,8 +1964,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   }
   // the player's own down arrow slides it away, leaving a small "♪ Music ⌃" that brings it back (the owner, 2026-11-09);
   // kept on this device
-  let dmHid = false;
-  try { dmHid = localStorage.getItem('pb-dmusic') === 'hid'; } catch (e) {}
+  let dmHid = true;
+  try { dmHid = localStorage.getItem('pb-dmusic') !== 'shown'; } catch (e) {} // (it starts down: the owner, 2026-11-10)
   function dioMusicDecor() {
     const pop = $('mp-pop'); if (!pop || !pop.classList.contains('dmini')) return;
     const pl = pop.querySelector('.mplayer'), dk = pop.querySelector('.mp-dock');
@@ -1980,7 +1980,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     pop.classList.toggle('hid', dmHid);
   }
   function dioMusicHide(h) {
-    dmHid = h; try { localStorage.setItem('pb-dmusic', h ? 'hid' : ''); } catch (e) {}
+    dmHid = h; try { localStorage.setItem('pb-dmusic', h ? 'hid' : 'shown'); } catch (e) {}
     const pop = $('mp-pop'); if (!pop) return;
     if (h) { pop.classList.add('mini'); mpui.edit = null; }
     pop.classList.toggle('hid', h);
