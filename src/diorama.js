@@ -342,6 +342,11 @@
           if (i === pop && !still) { f.userData.s = f.scale.x; f.userData.pop = performance.now() / 1000; f.scale.setScalar(0.001); } }
         g.userData = { u, t, i }; rosterHot.push(g);
       });
+      // a phone (diorama.css: shown only there, on Units): the tier's units as a list under the tabs, a tap opens the card
+      let ul = document.getElementById('ulist');
+      if (!ul) { ul = Object.assign(document.createElement('section'), { id: 'ulist', className: 'ulist' }); ul.setAttribute('aria-label', 'Units in this tier'); body.appendChild(ul);
+        ul.addEventListener('click', (e) => { const b = e.target.closest('[data-ui]'); if (b) pickUnit(rosterHot[+b.dataset.ui] || null); }); }
+      ul.innerHTML = `<span class="k">Tier ${t} · ${n} units · tap one for its card</span>` + list.map((u, i) => `<button data-ui="${i}"><b>${esc(u.name)}</b><small>${[(u.bodies || 1) > 1 ? `${u.bodies} bodies` : 'one body', `${u.range} m range`, `${u.hp} health`].join(' · ')}</small></button>`).join('');
     }
     buildTier(1);
 
@@ -795,7 +800,7 @@
     }
     // (the menu hides under the pointer when Play or Profile opens: that leave keeps their view; owner's bug, 2026-11-10)
     body.querySelector('.menu').addEventListener('mouseleave', () => { if (['pinned', 'play', 'profile', 'puz'].some(c => body.classList.contains(c))) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
-    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
+    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); body.querySelector('.back').textContent = '← Menu'; });
     // Puzzles and How to play open the game's sheets (until they're designed); the camera move on pointing stays
     $('puzzles-open').addEventListener('click', openPuzzles);
     $('how').addEventListener('click', openHowTo);
@@ -828,6 +833,7 @@
       else if (w === 'welcome') goScreen('welcome'); });
     const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
       if (body.classList.contains('puz')) return closePuz();
+      if (body.classList.contains('pinned')) return unpin(); // (a phone: Units and Rankings have the Back)
       if (body.classList.contains('in-rooms')) return closeRooms(); closePlay(); };
     backBtn.addEventListener('click', goBack);
 

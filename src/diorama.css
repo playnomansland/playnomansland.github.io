@@ -1744,3 +1744,27 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
   html.diorama #dio .pz .item { font-size: clamp(24px, 7.4vw, 32px); min-height: 40px; white-space: normal; }
   html.diorama #dio .pz .create { font-size: clamp(26px, 8vw, 32px); }
 }
+
+/* ── phones, the owner's notes (2026-11-10, on an iPhone) ── */
+@media (max-width: 700px) {
+  /* Units and Rankings: no PLAY or menu words under the island, the pinned Back instead; Units: the tier tabs under the
+     island and the tier's units as a list (#ulist, a tap opens the card) */
+  html.diorama #dio.pinned .menu { display: none; }
+  html.diorama #dio.pinned .back { display: inline-block; }
+  html.diorama #dio .tiers { position: relative !important; left: auto !important; top: auto !important; transform: none; order: 1; display: none; flex-wrap: nowrap; justify-content: space-between; gap: 0; margin: 0 16px 8px; white-space: normal; text-shadow: none; }
+  html.diorama #dio.units .tiers { display: flex; }
+  html.diorama #dio .tiers button { font-size: clamp(17px, 5.2vw, 24px); padding: 8px 8px 5px; min-height: 42px; white-space: nowrap; }
+  html.diorama #dio .ulist { position: relative; order: 2; display: none; margin: 4px 16px 0; } /* (positioned, as every column: the field's grain, fixed, paints over static text) */
+  html.diorama #dio.units .ulist { display: grid; }
+  html.diorama #dio .ulist .k { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .85; margin-bottom: 4px; }
+  html.diorama #dio .ulist button { color: var(--cream); opacity: 1; display: grid; justify-items: start; gap: 2px; padding: 11px 0 10px; text-align: left; border-bottom: 1px dashed color-mix(in srgb, var(--cream) 28%, transparent); }
+  html.diorama #dio .ulist button:last-child { border-bottom: 0; }
+  html.diorama #dio .ulist b { color: var(--cream); opacity: 1; -webkit-text-fill-color: currentColor; background: none; font: 700 22px/1.05 var(--stencil); text-transform: uppercase; letter-spacing: -.005em; }
+  html.diorama #dio .ulist small { font: 700 13px var(--type); opacity: .82; }
+  /* the match's shop strip: no line breaks between the tiers (the PC's rows), so tier after tier sits close */
+  html.diorama.pcwide:not(.pc) .panel .shop2 .br2 { display: none !important; }
+  html.diorama.pcwide:not(.pc) .panel .tier2.gap { margin-left: 10px; }
+  /* board mode: the SHOP tab steps aside while a card is dragged (html.dcard) */
+  html.dcard .dshop { display: none !important; }
+}
+@media (min-width: 701px) { #dio .ulist { display: none; } }

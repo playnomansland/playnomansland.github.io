@@ -3617,7 +3617,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     const l = f.querySelector('.l'); l.textContent = label; l.style.color = bad ? 'var(--foe)' : '';
   }
   function cardEnd(ok) {
-    const p = cpress, d = cdrag; cpress = null; cdrag = null; flyShow(null);
+    const p = cpress, d = cdrag; cpress = null; cdrag = null; flyShow(null); document.documentElement.classList.remove('dcard');
     if (p) { clearTimeout(p.t); if (p.el) p.el.classList.remove('lift'); if (p.pan) cardDone = performance.now(); } // a sideways mouse drag ends without a tap
     if (!d) return;
     cardDone = performance.now(); hoverTile = null;
@@ -3647,7 +3647,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       if (cpress.el.getAttribute('aria-disabled') === 'true' || !editable()) { cpress.scroll = true; return; }
       cdrag = { i: cpress.i, prev: selected, touch: e.pointerType !== 'mouse', t: null };
       selected = cpress.i; rangeOf = null; cpress.el.classList.add('lift');
-      if (DIO) dioBoardMode(true); // a phone: the drawer drops and the board comes up from above to aim at
+      if (DIO) { dioBoardMode(true); document.documentElement.classList.add('dcard'); } // a phone: the drawer drops and the board comes up from above to aim at
       try { cpress.el.setPointerCapture(e.pointerId); } catch (err) {}
       render();
     }
@@ -7747,7 +7747,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (dioPhone()) {
       const st = document.documentElement.style, pk = !$('pick').hidden; // (a pick takes the whole screen: the drawer steps aside)
       const pr = $('panel').getBoundingClientRect(), top = pk ? innerHeight : Math.min(innerHeight, Math.max(pr.top, innerHeight * 0.4));
-      const r = { x0: 4, x1: innerWidth - 4, y0: Math.max(48, hb.bottom + 2), y1: top - 2 };
+      const r = { x0: 4, x1: innerWidth - 4, y0: Math.max(48, hb.bottom + 2), y1: top - (dBoard && !pk ? 46 : 2) }; // (board mode: above the SHOP tab)
       const vs = [innerWidth, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
       if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); st.setProperty('--dph', Math.round(innerHeight - pr.top) + 'px'); }
       return r;
