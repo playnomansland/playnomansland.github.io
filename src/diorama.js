@@ -663,6 +663,8 @@
     }
     body.querySelector('#usheet').addEventListener('click', (e) => { const b = e.target.closest('[data-wear]'); if (b && picked) wear(picked.userData.u.name, b.dataset.wear); });
     body.querySelector('#usheet .x').addEventListener('click', () => pickUnit(null));
+    // Unit sheet (2026-11-10): the game's full sheet for that unit (openSheet, as the shop's), over the island
+    body.querySelector('#usheet .usb').addEventListener('click', () => { const i = picked ? ROSTER.units.indexOf(picked.userData.u) : -1; if (i >= 0) openSheet(i); });
     body.querySelectorAll('.tiers button').forEach(b => b.addEventListener('click', () => setTier(+b.dataset.t)));
     function setTier(t) { tier = t; picked = null; body.querySelectorAll('.tiers button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.t === t)); roster.position.y = still ? 0 : -1.6; buildTier(t); }
 

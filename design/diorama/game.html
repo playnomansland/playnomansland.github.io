@@ -451,6 +451,10 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio #usheet .sk b { display: block; font: 700 14px var(--sans); opacity: 1; margin-top: 2px; }
 #dio #usheet .x { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; display: grid; place-items: center; opacity: .8; }
 #dio #usheet .x:hover { opacity: 1; }
+/* Unit sheet: every unit's card opens the game's full sheet for it; a saffron button, ink stencil words */
+#dio #usheet .usb { display: inline-flex; align-items: center; margin-top: 16px; height: 34px; padding: 2px 16px 0 13px; font: 700 21px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em;
+  color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; opacity: 1; cursor: pointer; transition: transform .15s ease; }
+#dio #usheet .usb:hover, #dio #usheet .usb:focus-visible { transform: rotate(-1.5deg) scale(1.04); outline: none; }
 
 /* ── Welcome: the title screen. The logo grows, the island is seen low and wide, three words to get in ── */
 #dio .door, #dio .signin { display: none; }
@@ -1894,8 +1898,12 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
   html.diorama #dio .ulist { position: relative; order: 2; display: none; margin: 4px 16px 0; } /* (positioned, as every column: the field's grain, fixed, paints over static text) */
   html.diorama #dio.units .ulist { display: grid; }
   html.diorama #dio .ulist .k { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .85; margin-bottom: 4px; }
-  html.diorama #dio .ulist button { color: var(--cream); opacity: 1; display: grid; justify-items: start; gap: 2px; padding: 11px 0 10px; text-align: left; border-bottom: 1px dashed color-mix(in srgb, var(--cream) 28%, transparent); }
-  html.diorama #dio .ulist button:last-child { border-bottom: 0; }
+  html.diorama #dio .ulist .ur { display: flex; align-items: center; gap: 12px; border-bottom: 1px dashed color-mix(in srgb, var(--cream) 28%, transparent); }
+  html.diorama #dio .ulist .ur:last-child { border-bottom: 0; }
+  html.diorama #dio .ulist button[data-ui] { flex: 1; min-width: 0; color: var(--cream); opacity: 1; display: grid; justify-items: start; gap: 2px; padding: 11px 0 10px; text-align: left; }
+  /* every unit's row: Unit sheet, the game's full sheet for it (saffron, as on the card, 2026-11-10) */
+  html.diorama #dio .ulist .usb { flex: none; display: inline-flex; align-items: center; height: 34px; padding: 2px 13px 0 11px; font: 700 18px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em;
+    color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; opacity: 1; }
   html.diorama #dio .ulist b { color: var(--cream); opacity: 1; -webkit-text-fill-color: currentColor; background: none; font: 700 22px/1.05 var(--stencil); text-transform: uppercase; letter-spacing: -.005em; }
   html.diorama #dio .ulist small { font: 700 13px var(--type); opacity: .82; }
   /* the match's shop strip: no line breaks between the tiers (the PC's rows), so tier after tier sits close */
@@ -2938,7 +2946,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <div class="note bf-note" data-anchor="bf" role="button" tabindex="0" aria-label="Change battlefield"><span class="bf-sub" id="bf-sub"></span><span class="bf-btn">Change battlefield</span></div>
   <div id="unote" style="display:none"></div>
   <nav class="tiers" aria-label="Unit tiers"><span class="k">Units by tier</span><button data-t="1" aria-pressed="true">Tier 1</button><button data-t="2" aria-pressed="false">Tier 2</button><button data-t="3" aria-pressed="false">Tier 3</button><button data-t="4" aria-pressed="false">Tier 4</button></nav>
-  <section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><div class="skn" hidden></div><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
+  <section id="usheet" hidden aria-live="polite"><span class="tag"></span><h3></h3><div class="st"></div><div class="sk"></div><div class="skn" hidden></div><button class="usb" type="button">Unit sheet</button><button class="x" aria-label="Close the sheet"><svg viewBox="0 0 12 12" width="13" height="13" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></section>
   <div class="zz" id="zz">z<span style="font-size:.7em">z</span></div>
 
   <div class="pl-scrim" aria-hidden="true"></div>
@@ -28361,8 +28369,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       // a phone (diorama.css: shown only there, on Units): the tier's units as a list under the tabs, a tap opens the card
       let ul = document.getElementById('ulist');
       if (!ul) { ul = Object.assign(document.createElement('section'), { id: 'ulist', className: 'ulist' }); ul.setAttribute('aria-label', 'Units in this tier'); body.appendChild(ul);
-        ul.addEventListener('click', (e) => { const b = e.target.closest('[data-ui]'); if (b) pickUnit(rosterHot[+b.dataset.ui] || null); }); }
-      ul.innerHTML = `<span class="k">Tier ${t} · ${n} units · tap one for its card</span>` + list.map((u, i) => `<button data-ui="${i}"><b>${esc(u.name)}</b><small>${[(u.bodies || 1) > 1 ? `${u.bodies} bodies` : 'one body', `${u.range} m range`, `${u.hp} health`].join(' · ')}</small></button>`).join('');
+        ul.addEventListener('click', (e) => { const us = e.target.closest('[data-us]'); if (us) { const g = rosterHot[+us.dataset.us]; const k = g ? ROSTER.units.indexOf(g.userData.u) : -1; if (k >= 0) openSheet(k); return; }
+          const b = e.target.closest('[data-ui]'); if (b) pickUnit(rosterHot[+b.dataset.ui] || null); }); }
+      ul.innerHTML = `<span class="k">Tier ${t} · ${n} units · tap one for its card</span>` + list.map((u, i) => `<div class="ur"><button data-ui="${i}"><b>${esc(u.name)}</b><small>${[(u.bodies || 1) > 1 ? `${u.bodies} bodies` : 'one body', `${u.range} m range`, `${u.hp} health`].join(' · ')}</small></button><button class="usb" type="button" data-us="${i}">Unit sheet</button></div>`).join('');
     }
     buildTier(1);
 
@@ -28695,6 +28704,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     }
     body.querySelector('#usheet').addEventListener('click', (e) => { const b = e.target.closest('[data-wear]'); if (b && picked) wear(picked.userData.u.name, b.dataset.wear); });
     body.querySelector('#usheet .x').addEventListener('click', () => pickUnit(null));
+    // Unit sheet (2026-11-10): the game's full sheet for that unit (openSheet, as the shop's), over the island
+    body.querySelector('#usheet .usb').addEventListener('click', () => { const i = picked ? ROSTER.units.indexOf(picked.userData.u) : -1; if (i >= 0) openSheet(i); });
     body.querySelectorAll('.tiers button').forEach(b => b.addEventListener('click', () => setTier(+b.dataset.t)));
     function setTier(t) { tier = t; picked = null; body.querySelectorAll('.tiers button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.t === t)); roster.position.y = still ? 0 : -1.6; buildTier(t); }
 

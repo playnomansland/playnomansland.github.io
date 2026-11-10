@@ -314,6 +314,10 @@
 #dio #usheet .sk b { display: block; font: 700 14px var(--sans); opacity: 1; margin-top: 2px; }
 #dio #usheet .x { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; display: grid; place-items: center; opacity: .8; }
 #dio #usheet .x:hover { opacity: 1; }
+/* Unit sheet: every unit's card opens the game's full sheet for it; a saffron button, ink stencil words */
+#dio #usheet .usb { display: inline-flex; align-items: center; margin-top: 16px; height: 34px; padding: 2px 16px 0 13px; font: 700 21px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em;
+  color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; opacity: 1; cursor: pointer; transition: transform .15s ease; }
+#dio #usheet .usb:hover, #dio #usheet .usb:focus-visible { transform: rotate(-1.5deg) scale(1.04); outline: none; }
 
 /* ── Welcome: the title screen. The logo grows, the island is seen low and wide, three words to get in ── */
 #dio .door, #dio .signin { display: none; }
