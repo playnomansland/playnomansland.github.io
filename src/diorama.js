@@ -1366,7 +1366,7 @@
         const e = pl.edit, n = e.songs.length;
         h += `<input class="pl-name" id="pl-name" maxlength="24" placeholder="Name your playlist" value="${esc(e.name)}" aria-label="Playlist name" autocomplete="off" spellcheck="false">
           <p class="pl-note" id="pl-note">${n ? `${n} song${n === 1 ? '' : 's'}, in the order you tap them.` : 'Tap songs to add them.'} ${acct ? 'Kept on your account.' : 'Kept on this device.'}</p>
-          <ol class="pl-list">${ALL_SONGS.map(id => { const k = e.songs.indexOf(id); return `<li><button class="pl-row" data-pick="${id}" aria-pressed="${k >= 0}"><span class="eq"></span><span>${songOf(id)}</span><span class="n">${k >= 0 ? String(k + 1).padStart(2, '0') : ''}</span></button></li>`; }).join('')}</ol>
+          <ol class="pl-list">${pickSongs().map(id => { const k = e.songs.indexOf(id); return `<li><button class="pl-row" data-pick="${id}" aria-pressed="${k >= 0}"><span class="eq"></span><span>${songOf(id)}</span><span class="n">${k >= 0 ? String(k + 1).padStart(2, '0') : ''}</span></button></li>`; }).join('')}</ol>
           <div class="pl-modes"><button data-cancel>Cancel</button><button data-save ${n && e.name.trim() ? '' : 'disabled'}>${e.id ? 'Save' : 'Create'}</button></div>`;
       } else {
         const songs = srcSongs(pl.tab), u = userList(pl.tab);
@@ -1393,7 +1393,7 @@
       if (d.tab === '+') { if (!pl.edit) pl.edit = { id: '', name: `My playlist ${myMusic.lists.length + 1}`, songs: [] }; pl.sure = ''; drawList(); return; }
       if (d.tab) { pl.tab = d.tab; pl.edit = null; pl.sure = ''; drawList(); return; }
       if (d.song) { playFrom(pl.tab, d.song); return; }
-      if ('edit' in d) { const u = userList(pl.tab); if (u) { pl.edit = { id: u.id, name: u.name, songs: u.songs.filter(id => SONGS[id]) }; drawList(); } return; }
+      if ('edit' in d) { const u = userList(pl.tab); if (u) { pl.edit = { id: u.id, name: u.name, songs: u.songs.filter(songOk) }; drawList(); } return; }
       if ('del' in d) { if (pl.sure !== pl.tab) { pl.sure = pl.tab; return drawList(); } const u = userList(pl.tab); pl.sure = '';
         if (u) { myMusic.lists = myMusic.lists.filter(x => x !== u); myMusic.gone.push(u.id); musicChanged(); pl.tab = 'all'; musicListsChanged(); } drawList(); return; }
       if (d.pick) { const k = pl.edit.songs.indexOf(d.pick); if (k >= 0) pl.edit.songs.splice(k, 1); else pl.edit.songs.push(d.pick); drawList(); return; }

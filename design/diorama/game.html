@@ -17361,7 +17361,8 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     eyesInTheFront2Battle: { title: 'Eyes in the front 2', file: 'audio/eyes-in-the-front-2.mp3', start: 22.15, end: 88.61 },
   };
   // deployment / battle music not given to a look yet: kept out of the menu playlist and played nowhere until it goes
-  // in PLAYLISTS or MUSIC_COMBOS (and then out of this list)
+  // in PLAYLISTS or MUSIC_COMBOS (and then out of this list). Developers hear them in the DEV playlist ('dev', devMusic);
+  // everyone else doesn't see them anywhere, not in All music or their own playlists either.
   const UNASSIGNED = ['evening', 's4knandet', 'eyesInTheFront2Battle'];
   const ARTIST = 'Snetänd'; // unless a song names its own
   const songName = (id) => `“${SONGS[id].title}” - ${SONGS[id].artist || ARTIST}`;
@@ -17494,13 +17495,27 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // songs) and 'all' (All music: every song once); in a match also 'map' (<look> Adaptive music: the map's deployment
   // and battle music, which follows the phase). The player's own: 'u:<id>' (myMusic.lists), made with the + tab from
   // All music. Outside a match the menu's player plays snd.src; in one, my music (mine.src) or the map's.
-  const ALL_SONGS = [...PLAYLISTS.menu, ...Object.keys(SONGS).filter(id => !PLAYLISTS.menu.includes(id) && !SONGS[id].start)]; // every song once (not the battle cut of one)
+  // Developers also get 'dev' (DEV: the UNASSIGNED songs), and can put those songs in their own playlists.
+  const ALL_SONGS = [...PLAYLISTS.menu, ...Object.keys(SONGS).filter(id => !PLAYLISTS.menu.includes(id) && !SONGS[id].start && !UNASSIGNED.includes(id))]; // every song once (not the battle cut of one, not the unassigned ones)
+  // a developer account (devMode; before the account code further down has run, the account kept on this device)
+  const devMusic = () => {
+    try { return devMode(); } catch (e) {}
+    try { const a = JSON.parse(localStorage.getItem('phonebellum.account.v1') || sessionStorage.getItem('phonebellum.account.v1') || 'null'); return !!(a && a.dev); } catch (e) { return false; }
+  };
+  const songOk = (id) => !!SONGS[id] && (!UNASSIGNED.includes(id) || devMusic());
+  const pickSongs = () => devMusic() ? [...ALL_SONGS, ...UNASSIGNED] : ALL_SONGS; // the songs a new playlist is made from
   const userList = (src) => typeof src === 'string' && src.startsWith('u:') ? myMusic.lists.find(x => 'u:' + x.id === src) || null : null;
   function srcSongs(src) {
     if (src === 'menu') return PLAYLISTS.menu;
     if (src === 'all') return ALL_SONGS;
+    if (src === 'dev') return devMusic() ? UNASSIGNED : [];
     const u = userList(src);
-    return u ? u.songs.filter(id => SONGS[id]) : [];
+    return u ? u.songs.filter(songOk) : [];
+  }
+  // the account became (or stopped being) a developer's: the DEV playlist comes or goes
+  function musicDevChanged() {
+    musicListsChanged();
+    if (mpui.open) mpDraw();
   }
   const srcOk = (src) => srcSongs(src).length > 0;
   const menuSrc = () => srcOk(snd.src) ? snd.src : 'menu';
@@ -17533,7 +17548,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     return name + ' Adaptive music';
   }
   const playingSrc = () => musicInMatch() ? (mine.on ? mine.src : 'map') : menuSrc();
-  const srcName = (src) => src === 'map' ? adaptiveName() : src === 'menu' ? 'Menu Playlist' : src === 'all' ? 'All music' : (userList(src) || {}).name || 'Playlist';
+  const srcName = (src) => src === 'map' ? adaptiveName() : src === 'menu' ? 'Menu Playlist' : src === 'all' ? 'All music' : src === 'dev' ? 'DEV' : (userList(src) || {}).name || 'Playlist';
   // the playlist the player shows and works: the menu's outside a match; in one, my music or the map's
   const ctlPl = () => !musicInMatch() ? music.menu : mine.on || !comboKey() ? music.mine : music[comboKey()];
   function syncMusic() {
@@ -17726,7 +17741,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // bottom of the screen with the panel on top of it ('dock'). Tabs, like a folder's: <look> Adaptive music (in a
   // match), Menu Playlist, All music, the player's own playlists, and + to make one from All music.
   const homePlayer = () => [...document.querySelectorAll('#home .mplayer')].find(x => x.getClientRects().length) || null;
-  const mpTabs = () => [...(musicInMatch() ? ['map'] : []), 'menu', 'all', ...myMusic.lists.map(x => 'u:' + x.id)];
+  const mpTabs = () => [...(musicInMatch() ? ['map'] : []), 'menu', 'all', ...(devMusic() ? ['dev'] : []), ...myMusic.lists.map(x => 'u:' + x.id)];
   const reduceMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
   function mpTabsHtml() {
     const cur = mpui.edit ? (mpui.edit.id ? 'u:' + mpui.edit.id : '+') : mpui.tab, on = playingSrc();
@@ -17739,7 +17754,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   function mpListHtml(t) {
     const on = playingSrc() === t, u = userList(t), cur = ctlPl().song(), map = t === 'map';
     const songs = map ? mapSongs() : srcSongs(t).map(id => ['', id]);
-    const sub = map ? 'Deploy music, then battle music: it follows the match' : `${songs.length} song${songs.length === 1 ? '' : 's'}${u ? '' : t === 'menu' ? ' · plays on the menu' : ' · every song in the game'}`;
+    const sub = map ? 'Deploy music, then battle music: it follows the match' : `${songs.length} song${songs.length === 1 ? '' : 's'}${u ? '' : t === 'menu' ? ' · plays on the menu' : t === 'dev' ? ' · not given to a map yet · developers only' : ' · every song in the game'}`;
     return `<div class="mp-head"><div class="mp-hd"><b>${esc(srcName(t))}</b><small>${sub}</small></div>
         <span class="mp-acts">${u ? `<button class="mp-ghost" id="mp-edit">Edit</button><button class="mp-ghost${mpui.sure === t ? ' sure' : ''}" id="mp-del">${mpui.sure === t ? 'Sure? Delete' : 'Delete'}</button>` : ''}
         <button class="mp-pill" id="mp-playlist" data-src="${esc(t)}" aria-pressed="${on && menuPlaying()}"${songs.length ? '' : ' disabled'}>${on && menuPlaying() ? EQ + 'Playing' : ICONS.play + 'Play'}</button></span></div>
@@ -17750,7 +17765,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     const e = mpui.edit;
     return `<div class="mp-head"><div class="mp-hd"><b>${e.id ? 'Edit playlist' : 'New playlist'}</b><small id="mp-picked">${mpPickedText()}</small></div></div>
       <input class="mp-name" id="mp-name" maxlength="24" placeholder="Name your playlist" value="${esc(e.name)}" aria-label="Playlist name" autocomplete="off" spellcheck="false">
-      <div class="mp-songs" id="mp-songs">${ALL_SONGS.map(id => { const k = e.songs.indexOf(id); return `<button class="mp-song mp-pick" data-pick="${id}" aria-pressed="${k >= 0}"><span class="mp-n">${k >= 0 ? k + 1 : ''}</span><span class="mp-st"><b>${esc(SONGS[id].title)}</b><small>${esc(SONGS[id].artist || ARTIST)}</small></span><span class="mp-check" aria-hidden="true"></span></button>`; }).join('')}</div>
+      <div class="mp-songs" id="mp-songs">${pickSongs().map(id => { const k = e.songs.indexOf(id); return `<button class="mp-song mp-pick" data-pick="${id}" aria-pressed="${k >= 0}"><span class="mp-n">${k >= 0 ? k + 1 : ''}</span><span class="mp-st"><b>${esc(SONGS[id].title)}</b><small>${esc(SONGS[id].artist || ARTIST)}</small></span><span class="mp-check" aria-hidden="true"></span></button>`; }).join('')}</div>
       <div class="mp-foot"><small class="mp-where">${acct ? 'Saved to your account' : 'Saved on this device. Log in to keep it on your account.'}</small>
         <span class="mp-acts"><button class="mp-ghost" id="mp-cancel">Cancel</button><button class="mp-pill" id="mp-save"${mpCanSave() ? '' : ' disabled'}>${e.id ? 'Save' : 'Create playlist'}</button></span></div>`;
   }
@@ -17794,7 +17809,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     $('mp-close').addEventListener('click', () => mpClose());
     p.querySelectorAll('.mp-song[data-src]').forEach(b => b.addEventListener('click', () => playFrom(b.dataset.src, b.dataset.src === 'map' ? '' : b.dataset.song)));
     if ($('mp-playlist')) $('mp-playlist').addEventListener('click', () => playList($('mp-playlist').dataset.src));
-    if ($('mp-edit')) $('mp-edit').addEventListener('click', () => { const u = userList(mpui.tab); if (!u) return; mpui.edit = { id: u.id, name: u.name, songs: u.songs.filter(id => SONGS[id]) }; mpDraw(true); });
+    if ($('mp-edit')) $('mp-edit').addEventListener('click', () => { const u = userList(mpui.tab); if (!u) return; mpui.edit = { id: u.id, name: u.name, songs: u.songs.filter(songOk) }; mpDraw(true); });
     if ($('mp-del')) $('mp-del').addEventListener('click', () => {
       if (mpui.sure !== mpui.tab) { mpui.sure = mpui.tab; return mpDraw(); }
       const u = userList(mpui.tab);
@@ -18092,7 +18107,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · 7c43da4'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 81b4b65'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -21015,7 +21030,9 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // server checks its own flag; this copy is for the page.
   const devMode = () => !!(acct && acct.dev);
   function acctSave(a) {
+    const dev0 = devMode();
     acct = a;
+    if (devMode() !== dev0) musicDevChanged(); // the DEV playlist comes or goes
     try {
       localStorage.removeItem(ACCT_STORE); sessionStorage.removeItem(ACCT_STORE);
       if (a) acctStore().setItem(ACCT_STORE, JSON.stringify(a));
@@ -28861,7 +28878,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         const e = pl.edit, n = e.songs.length;
         h += `<input class="pl-name" id="pl-name" maxlength="24" placeholder="Name your playlist" value="${esc(e.name)}" aria-label="Playlist name" autocomplete="off" spellcheck="false">
           <p class="pl-note" id="pl-note">${n ? `${n} song${n === 1 ? '' : 's'}, in the order you tap them.` : 'Tap songs to add them.'} ${acct ? 'Kept on your account.' : 'Kept on this device.'}</p>
-          <ol class="pl-list">${ALL_SONGS.map(id => { const k = e.songs.indexOf(id); return `<li><button class="pl-row" data-pick="${id}" aria-pressed="${k >= 0}"><span class="eq"></span><span>${songOf(id)}</span><span class="n">${k >= 0 ? String(k + 1).padStart(2, '0') : ''}</span></button></li>`; }).join('')}</ol>
+          <ol class="pl-list">${pickSongs().map(id => { const k = e.songs.indexOf(id); return `<li><button class="pl-row" data-pick="${id}" aria-pressed="${k >= 0}"><span class="eq"></span><span>${songOf(id)}</span><span class="n">${k >= 0 ? String(k + 1).padStart(2, '0') : ''}</span></button></li>`; }).join('')}</ol>
           <div class="pl-modes"><button data-cancel>Cancel</button><button data-save ${n && e.name.trim() ? '' : 'disabled'}>${e.id ? 'Save' : 'Create'}</button></div>`;
       } else {
         const songs = srcSongs(pl.tab), u = userList(pl.tab);
@@ -28888,7 +28905,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (d.tab === '+') { if (!pl.edit) pl.edit = { id: '', name: `My playlist ${myMusic.lists.length + 1}`, songs: [] }; pl.sure = ''; drawList(); return; }
       if (d.tab) { pl.tab = d.tab; pl.edit = null; pl.sure = ''; drawList(); return; }
       if (d.song) { playFrom(pl.tab, d.song); return; }
-      if ('edit' in d) { const u = userList(pl.tab); if (u) { pl.edit = { id: u.id, name: u.name, songs: u.songs.filter(id => SONGS[id]) }; drawList(); } return; }
+      if ('edit' in d) { const u = userList(pl.tab); if (u) { pl.edit = { id: u.id, name: u.name, songs: u.songs.filter(songOk) }; drawList(); } return; }
       if ('del' in d) { if (pl.sure !== pl.tab) { pl.sure = pl.tab; return drawList(); } const u = userList(pl.tab); pl.sure = '';
         if (u) { myMusic.lists = myMusic.lists.filter(x => x !== u); myMusic.gone.push(u.id); musicChanged(); pl.tab = 'all'; musicListsChanged(); } drawList(); return; }
       if (d.pick) { const k = pl.edit.songs.indexOf(d.pick); if (k >= 0) pl.edit.songs.splice(k, 1); else pl.edit.songs.push(d.pick); drawList(); return; }

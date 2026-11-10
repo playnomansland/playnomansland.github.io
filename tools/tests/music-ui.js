@@ -57,7 +57,8 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
     await shot('menu-panel');
     await p.click('[data-tab="all"]');
     const all = await p.$$eval('#mp-pop [data-song]', (x) => x.map(e => e.dataset.song));
-    ok(all.length >= 15 && all.includes('bulgaria') && all.includes('jonah') && all.includes('knarkkungn'), `All music: every song (${all.length}), the map songs too`);
+    ok(all.length >= 14 && all.includes('bulgaria') && all.includes('jonah') && all.includes('knarkkungn'), `All music: every song (${all.length}), the map songs too`);
+    ok(!all.includes('evening') && !all.includes('s4knandet') && !(await p.$('#mp-pop [data-tab="dev"]')), 'no unassigned songs and no DEV tab without a developer account (tools/tests/music-dev-ui.js)');
     await p.click('[data-src="all"][data-song="long"]'); await sleep(300);
     s = await M(); ok(s.src === 'all' && s.song === 'long' && s.playing.join() === 'menu', 'a song in All music plays from that list ' + JSON.stringify(s));
     ok(await p.getAttribute('[data-tab="all"]', 'class').then(c => / on/.test(c)), 'its tab is marked as playing');
