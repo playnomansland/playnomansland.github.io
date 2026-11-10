@@ -477,3 +477,4 @@ under 860 px high.
 - **2026-11-10 (owner): the deploy panel is always out by default** ("Slides away" is off; `pb-deploy-auto2`, a new
   key so earlier choices don't carry over). With it off, the board frames beside the column (no overlap); the central
   framing only applies while sliding is on.
+- **2026-11-10 (owner):** the match's Settings sheet sits **in the exact middle of the screen** (not risen from the bottom, not beside the column); the other sheets still rise from the bottom.

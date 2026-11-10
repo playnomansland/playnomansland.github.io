@@ -1524,6 +1524,11 @@ html.diorama.pcwide .sheet:has(#spk-music, [data-board]) { row-gap: 6px; }
 html.diorama.pcwide .sheet:has(#spk-music, [data-board]) > .bar { min-height: 30px; }
 html.diorama.pcwide .sheet .bar:is(:has([data-board]), :has([data-dside]), :has([data-chat]))::before { margin-top: 4px; padding-top: 8px; }
 html.diorama.pcwide .sheet .seg button { padding: 4px 12px; }
+/* the Settings sheet in a match sits in the middle of the screen (the owner, 2026-11-10: "keep perfectly centered"):
+   not risen from the bottom, not shifted beside the column; all four corners clipped, its whole edge drawn */
+html.diorama.pcwide .sheet-back:has(#spk-music, [data-board]) { align-items: center; justify-items: center; padding: 16px; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); margin: 0; border-bottom: 1px solid rgba(244, 236, 216, .16);
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px); }
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -17979,7 +17984,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · df89518'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · c5d5a9f'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
