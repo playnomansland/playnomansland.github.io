@@ -7486,9 +7486,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // a sheet is open, in the room, or with Settings' "Deploy panel: Always shown". READY and the clock stay where they
   // are (they're fixed, the column only moves its left / right). The board keeps its framing, so it never moves under
   // the pointer while aiming. A thin tab at the edge shows where it went
-  const DAUTO_STORE = 'pb-deploy-auto';
-  let dAuto = true, dOut = true, dOutT = 0;
-  try { dAuto = localStorage.getItem(DAUTO_STORE) !== 'off'; } catch (e) {}
+  const DAUTO_STORE = 'pb-deploy-auto2'; // (a new key: always out by default from 2026-11-10, the owner; earlier choices don't carry over)
+  let dAuto = false, dOut = true, dOutT = 0;
+  try { dAuto = localStorage.getItem(DAUTO_STORE) === 'on'; } catch (e) {}
   function dioPanelOut(out) {
     if (dOut === out) return;
     dOut = out; document.documentElement.classList.toggle('dtuck', !out);

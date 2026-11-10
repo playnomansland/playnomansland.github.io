@@ -474,3 +474,6 @@ under 860 px high.
   pills in Bricolage with the picked one gold; Friends, Report a bug and Open playlists as a row of buttons, Main menu
   last in red. Done in CSS (`order`, `:has`, `::before` headings) over the game's own rows, so every control is the
   game's.
+- **2026-11-10 (owner): the deploy panel is always out by default** ("Slides away" is off; `pb-deploy-auto2`, a new
+  key so earlier choices don't carry over). With it off, the board frames beside the column (no overlap); the central
+  framing only applies while sliding is on.
