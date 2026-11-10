@@ -4,8 +4,11 @@ Written 2026-11-07 at the end of the session that finished the mockup. Read `des
 design language and every screen), then this file. Work on a branch (`claude/nice-mendel-scnrpy` has the mockup and
 is level with `main` as of 2026-11-07; merge `main` in again before starting, the game moves fast).
 
-**2026-11-10: launch-ready.** The branch `claude/practical-hopper-qdgau9` carries the PC launch build (`index.html` with
-`PB_UI_DEFAULT=pc`, item 3 below) and waits for the owner's word to go to `main`. See `HANDOFF.md`, "Launch-ready".
+**2026-11-10: LAUNCHED ON PC.** The Diorama is the default on computers (`57015d3`, on `main` since about 12:30 UTC
+2026-11-10); phones and tablets keep the old UI; `?ui=classic` / `?ui=diorama` still choose per device.
+**Every build from now on: `PB_UI_DEFAULT=pc node src/build.js`.** A plain `node src/build.js` builds `'classic'` and
+takes the Diorama away from computers: that happened once (`181209e`, 13:17 UTC, the hover hint), and was put back in
+the next commit. Check `grep "const DEF = " index.html` says `'pc'` before every commit of `index.html`.
 
 ## Next session: start here (handoff, 2026-11-08)
 
@@ -106,14 +109,14 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   its way, as before).
 
 **Monday 2026-11-09 (owner):** the golem's note button is done (eleventh round above). Next: the owner's PC trial,
-then the PC launch if the owner says go (item 3). Everything under "Done from the owner's second trial notes" is live
+then the PC launch if the owner says go (item 3: done 2026-11-10). Everything under "Done from the owner's second trial notes" is live
 on `main` behind `?ui=diorama` (last commit of 2026-11-08: the small text in Bricolage Grotesque).
 
 **Open, in order:**
 1. **Ask the owner to try again** at `?ui=diorama` (list below) and fix what they find.
 2. **The in-match music panel:** the owner designs it with the new Battle screen, in that separate session (answered
    2026-11-08). Leave the game's panel (`openPlaylist`, `mp-pop`) as it is here.
-3. **The PC launch** when the owner says so (planned for 2026-11-08 if all goes well, otherwise Monday 2026-11-09): `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`, push to `main`
+3. **The PC launch (done 2026-11-10, `57015d3`; build with `PB_UI_DEFAULT=pc` from now on)** when the owner says so (planned for 2026-11-08 if all goes well, otherwise Monday 2026-11-09): `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`, push to `main`
    (the Diorama on computers, the old UI on phones and tablets). Never commit a non-`classic` build otherwise.
 4. **Designs the owner wants before the full launch:** Puzzles, How to play, and the room you wait in (still the
    game's sheets / screens, restyled).
@@ -560,4 +563,4 @@ timeout leaves `wrangler dev` / `workerd` running and the next run's accounts fa
 
 ## Still to ask the owner
 
-- After the live trial: make the Diorama the PC default (`PB_UI_DEFAULT=pc`)?
+- ~~After the live trial: make the Diorama the PC default (`PB_UI_DEFAULT=pc`)?~~ Done 2026-11-10.
