@@ -1401,3 +1401,8 @@ html.diorama.pcwide .pick .opt::before { background: var(--dcard, #0D1315); filt
 html.diorama.pcwide .pick .opt:hover:not(:disabled):not([aria-pressed="true"])::before { background: color-mix(in srgb, var(--dcard, #0D1315), #F4ECD8 8%); filter: none; }
 html.diorama.pcwide .pick .opt[aria-pressed="true"]::before { background: #F2B23A; }
 html.diorama.pcwide .pick .det, html.diorama.pcwide #wrap > .coach, html.diorama.pcwide #wrap > .task { background: var(--dcard, #0D1315); }
+/* every sheet in a match sits in the exact middle of the screen (the owner, 2026-11-10: "check other menus as well"):
+   Main menu's question, Unlock, Help, a squad, Damage, Settings... not risen from the bottom, not beside the column */
+html.diorama.pcwide .sheet-back, html.dright.diorama.pcwide .sheet-back { align-items: center; justify-items: center; padding: 16px; }
+html.diorama.pcwide .sheet { margin: 0; max-height: calc(100vh - 32px); border-bottom: 1px solid rgba(244, 236, 216, .16);
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px); }

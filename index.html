@@ -1536,6 +1536,11 @@ html.diorama.pcwide .pick .opt::before { background: var(--dcard, #0D1315); filt
 html.diorama.pcwide .pick .opt:hover:not(:disabled):not([aria-pressed="true"])::before { background: color-mix(in srgb, var(--dcard, #0D1315), #F4ECD8 8%); filter: none; }
 html.diorama.pcwide .pick .opt[aria-pressed="true"]::before { background: #F2B23A; }
 html.diorama.pcwide .pick .det, html.diorama.pcwide #wrap > .coach, html.diorama.pcwide #wrap > .task { background: var(--dcard, #0D1315); }
+/* every sheet in a match sits in the exact middle of the screen (the owner, 2026-11-10: "check other menus as well"):
+   Main menu's question, Unlock, Help, a squad, Damage, Settings... not risen from the bottom, not beside the column */
+html.diorama.pcwide .sheet-back, html.dright.diorama.pcwide .sheet-back { align-items: center; justify-items: center; padding: 16px; }
+html.diorama.pcwide .sheet { margin: 0; max-height: calc(100vh - 32px); border-bottom: 1px solid rgba(244, 236, 216, .16);
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px); }
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -17991,7 +17996,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · b4e6714'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 874b25a'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -23363,10 +23368,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     // the board a bit more central (the owner, 2026-11-10): with the panel sliding away it frames past about half the
     // column (the panel covers that edge only while it's out, and tucks when the pointer goes to the board); always
     // shown, the board stays clear of it
-    const res = typeof dAuto !== 'undefined' && dAuto ? Math.round(pw * 0.5) + 16 : pw + 28;
-    // the board in the middle of the screen either way (the owner, 2026-11-10: "keep it centered for both options"): the
-    // same margin on both sides, half the column while it slides away, the whole column while it's always out (so the
-    // column never covers the board's tiles)
+    const res = Math.round(pw * 0.5) + 16; // (both options: the panel may overlap the board's outer edge a little, the owner, 2026-11-10)
+    // the board in the middle of the screen either way (the owner, 2026-11-10: "keep it centered for both options", and
+    // as big as while sliding: the same margin on both sides, half the column; an always-out column overlaps its edge)
     const r = { x0: res, x1: innerWidth - res, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
     const st = document.documentElement.style, vs = [pw, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
     if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); } // (the column, the pick and the result cards follow these)

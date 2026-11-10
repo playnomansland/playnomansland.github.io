@@ -479,4 +479,5 @@ under 860 px high.
   framing only applies while sliding is on.
 - **2026-11-10 (owner):** the match's Settings sheet sits **in the exact middle of the screen** (not risen from the bottom, not beside the column); the other sheets still rise from the bottom.
 - **2026-11-10 (owner):** the picks' options (start, leader, tower), their details box and the coach line take **the unit cards' colour for the battlefield** (`--dcard`), not the scenery patches (`DPAT_LOOKS` is empty; `?dpat=all` still tries them).
-- **2026-11-10 (owner):** the board stays **centred with either option**: the same margin both sides, half the column while sliding, the whole column while always out (so it never covers the board). At 1845×856 the board is the same size both ways; at 1366×768 always-out makes it about a fifth smaller.
+- **2026-11-10 (owner):** the board stays **centred with either option**: the same margin both sides, half the column in both cases (the owner preferred the bigger board, the always-out column overlapping its outer edge a little).
+- **2026-11-10 (owner):** **every sheet in a match is centred** on the screen (Main menu's question, Unlock, Help, a squad, Settings), all corners clipped. Damage stays a drop-down under its icon (already centred horizontally).
