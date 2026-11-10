@@ -20,6 +20,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!-- After the class / unit rework, update: the "28 units across four tiers" figure (About), the shop and tier wording
+     in How a round works (Deploy) and Why it plays differently (Counters everywhere), the War Mammoth and Goblin Swarm
+     callouts on the hero image, and the screenshots if units look different. A section on classes may belong after
+     "How a round works". -->
 <style>
 /* Layout: a battle report. Full-bleed screenshots alternate with the game's own bands (ultramarine field, ink panels);
    saffron is kept for the one thing to press, as in the game's Diorama menu. One look, no light/dark switch. */
@@ -155,23 +159,6 @@ p { margin: 0; }
 .point h3 { font-size: 23px; letter-spacing: .01em; }
 .point p { color: var(--cream-2); font-size: 16px; }
 
-/* ---------- the cast ---------- */
-.cast { background: var(--field-lo); }
-.cast .cols { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
-.cast .shot img { width: 100%; border: 1px solid var(--cream-3); cursor: zoom-in; }
-.cast h2 { font-size: clamp(34px, 4.2vw, 58px); }
-.cast .intro { display: grid; gap: 16px; }
-.cast .intro p { color: var(--cream-2); }
-.chars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(16px, 2vw, 28px); margin-top: clamp(40px, 5vw, 64px); }
-.char { background: var(--ink); padding: 22px 22px 24px; display: grid; gap: 10px; align-content: start; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%); }
-.char img { width: 96px; height: 96px; }
-.char h3 { font-size: 24px; }
-.char .mood { font-family: var(--mono); font-size: 13px; color: var(--saffron); }
-.char p { color: var(--cream-2); font-size: 15.5px; }
-.char dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 14px; margin: 6px 0 0; font-family: var(--mono); font-size: 12.5px; }
-.char dt { color: var(--cream-2); }
-.char dd { margin: 0; font-variant-numeric: tabular-nums; }
-
 /* ---------- battlefields ---------- */
 .fields .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px 40px; }
 .fields h2 { font-size: clamp(34px, 4.4vw, 60px); }
@@ -254,12 +241,11 @@ dialog.lb button:focus-visible { outline: 2px solid var(--saffron); }
   .hero-pic::after { background: linear-gradient(180deg, rgba(22,28,69,.55) 0%, rgba(22,28,69,0) 30%, rgba(22,28,69,0) 70%, var(--night) 100%); }
   .hero-copy { position: relative; padding-block: 8px 56px; }
   .top nav a:not(.keep) { display: none; }
-  .clip-grid, .about .cols, .cast .cols, .music .cols, .press .cols { grid-template-columns: minmax(0, 1fr); }
+  .clip-grid, .about .cols, .music .cols, .press .cols { grid-template-columns: minmax(0, 1fr); }
   .phases { grid-template-columns: minmax(0, 1fr); }
   .points { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .point, .point:not(:nth-child(3n+1)) { padding: 22px 18px 24px 0; border-left: 0; }
   .point:nth-child(2n) { padding-left: 18px; border-left: 1px solid var(--cream-3); }
-  .chars { grid-template-columns: minmax(0, 1fr); }
   .looks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .shots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .shots button, .shots button.wide { grid-column: span 1; }
@@ -284,7 +270,6 @@ dialog.lb button:focus-visible { outline: 2px solid var(--saffron); }
     <a href="https://playnomansland.github.io/" aria-label="No Mans Land, play the game"><img src="img/logo.png" alt="No Mans Land" width="1290" height="138"></a>
     <nav aria-label="Sections">
       <a href="#battle">Gameplay</a>
-      <a href="#cast">Units</a>
       <a href="#music">Soundtrack</a>
       <a href="#press">Press</a>
       <a class="keep" href="https://discord.gg/TBpDKSBWsY">Discord</a>
@@ -407,43 +392,6 @@ dialog.lb button:focus-visible { outline: 2px solid var(--saffron); }
   </div>
 </section>
 
-<section class="cast band" id="cast" aria-labelledby="cast-h">
-  <div class="wrap">
-    <div class="cols">
-      <div class="shot"><img src="img/units.jpg" alt="The Units screen: the tier 4 units on their cards, with the Ether Golem's sheet open and its Aquamarine skin." loading="lazy" data-zoom></div>
-      <div class="intro">
-        <span class="label">The cast</span>
-        <h2 id="cast-h">Characters, not game pieces.</h2>
-        <p>Every unit has one clear mood and one small detail from its life outside the fight, readable at a glance from above. A sleepy teenage tree walks slowly because he's half asleep. A giddy hedge wizard flicks leaves plucked from his own beard. When the personality and the mechanics agree, the unit is easier to remember.</p>
-        <p>Chunky low-poly shapes, dusty colours and soft painted light: closer to a storybook than a shiny mobile game.</p>
-      </div>
-    </div>
-    <div class="chars">
-      <article class="char">
-        <img src="img/bababa.svg" alt="" width="96" height="96">
-        <h3>Flame Wizard</h3>
-        <span class="mood">Mood: BABABABA</span>
-        <p>Can't stop shouting, can't stop burning. A flamethrower in a robe, tough enough to stand at the front and keep yelling.</p>
-        <dl><dt>Tier</dt><dd>3 · 300 gold</dd><dt>Health</dt><dd>1530</dd><dt>Range</dt><dd>12 m flame</dd></dl>
-      </article>
-      <article class="char">
-        <img src="img/golem.svg" alt="" width="96" height="96">
-        <h3>Ether Golem</h3>
-        <span class="mood">Mood: delighted to be here</span>
-        <p>A crystal giant with thick armour that smashes everything around it, and can learn to regenerate. Very happy about all of this.</p>
-        <dl><dt>Tier</dt><dd>4 · 500 gold</dd><dt>Health</dt><dd>3450</dd><dt>Splash</dt><dd>3 m</dd></dl>
-      </article>
-      <article class="char">
-        <img src="img/shock.svg" alt="" width="96" height="96">
-        <h3>Sniper</h3>
-        <span class="mood">Mood: has seen too much</span>
-        <p>One shot every four seconds from across the field, and each one hurts. Good against single big targets, bad against a crowd.</p>
-        <dl><dt>Tier</dt><dd>1 · 100 gold</dd><dt>Hit</dt><dd>210 damage</dd><dt>Range</dt><dd>29 m</dd></dl>
-      </article>
-    </div>
-  </div>
-</section>
-
 <section class="fields band" aria-labelledby="fields-h">
   <div class="wrap">
     <div class="head">
@@ -507,8 +455,7 @@ dialog.lb button:focus-visible { outline: 2px solid var(--saffron); }
           <dt>Platforms</dt><dd>Web browser: Windows, Mac, Linux, iPhone, Android, tablets</dd>
           <dt>Modes</dt><dd>vs Computer · Challenge a friend · Public rooms · Ranked · Tutorial puzzles · Tournaments (invite only)</dd>
           <dt>Status</dt><dd>Playable now, in active development</dd>
-          <dt>Price</dt><dd><span class="tbc">to confirm</span></dd>
-          <dt>Developer</dt><dd><span class="tbc">studio or team name</span></dd>
+          <dt>Developer</dt><dd>Snetland Games</dd>
           <dt>Music</dt><dd>Snetänd, Emil Helleday</dd>
           <dt>Website</dt><dd><a href="https://playnomansland.github.io/">playnomansland.github.io</a></dd>
           <dt>Community</dt><dd><a href="https://discord.gg/TBpDKSBWsY">discord.gg/TBpDKSBWsY</a></dd>
