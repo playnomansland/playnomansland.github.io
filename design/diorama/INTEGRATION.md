@@ -4,6 +4,9 @@ Written 2026-11-07 at the end of the session that finished the mockup. Read `des
 design language and every screen), then this file. Work on a branch (`claude/nice-mendel-scnrpy` has the mockup and
 is level with `main` as of 2026-11-07; merge `main` in again before starting, the game moves fast).
 
+**2026-11-10: launch-ready.** The branch `claude/practical-hopper-qdgau9` carries the PC launch build (`index.html` with
+`PB_UI_DEFAULT=pc`, item 3 below) and waits for the owner's word to go to `main`. See `HANDOFF.md`, "Launch-ready".
+
 ## Next session: start here (handoff, 2026-11-08)
 
 **State.** The Diorama is in the game behind the switch and live on `main` as a trial: every player gets the old UI;

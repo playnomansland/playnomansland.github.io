@@ -20,6 +20,22 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 10 November 2026 – A new look on PC
+
+On a computer the game has a whole new look. Phones and tablets keep the one they have for now.
+
+- **The menu is the battlefield.** A small floating island, built like the real Standard map, with the game's own pieces on it. Point at a keep, a treasury or a unit to learn what it does. **Change battlefield** steps through the eight looks: Meadow, Autumn, Snow, Forest Glade, Desert, Ashlands, Moonlit Snow and Savanna.
+- **Play:** *Vs computer*, or *Multiplayer* for 1v1 Standard and 1v1 Ranked. Every online match goes through **Rooms**: find one, or make your own with **Create room**.
+- **Your room is the battlefield** you're about to fight on. Its settings sit down the left side, the keeps say who's connected, and **Start match** begins it. The island flies in and becomes the board.
+- **The match screen:** the board takes the whole window, with the deploy panel down the left side (Settings can move it to the right, or make it slide away when you're not using it). It always slides away when the battle starts and comes back for the next deploy. The top line has the round, the Damage chart, Settings and full screen.
+- **Music:** the player sits in the corner opposite the deploy panel, folded down until you open it; Playlist opens the lists.
+- **Profile** (your name, top right): your title, your username, your skins on each unit's card, and **Match history** with replays. **Friends** and **Settings** drop down from the top right.
+- **Round 1:** the opponent's starting units now show only once you've picked your own start.
+- **Fixed:** closing a public room could leave it in Rooms, with you in it, for up to three minutes.
+- Prefer the old look? Add `?ui=classic` to the address (`?ui=diorama` brings the new one back). This device remembers your choice.
+
+---
+
 ## 9 November 2026 – New UI sounds
 
 - **Ready** now has its own sound when you're waiting for your opponent.

@@ -1,5 +1,31 @@
 # Handoff: the Diorama UI (mockup finished; next: putting it into the game, see INTEGRATION.md)
 
+## Launch-ready (2026-11-10, midday): read this first
+
+**Branch `claude/practical-hopper-qdgau9`** has everything for the PC launch: `claude/modest-babbage-jy65nc` (the match
+screen, below) with `main` merged in, the owner's fixes from their test on the test page, a 10 November patch note, and
+**`index.html` built with `PB_UI_DEFAULT=pc`** (the Diorama on computers, the old UI on phones and tablets). So the
+launch is: merge this branch into `main` and push, **only on the owner's word**. That push also changes `server/`, so
+the server deploys itself (`.github/workflows/server-deploy.yml`). If anything changes on the branch before then,
+rebuild with `PB_UI_DEFAULT=pc node src/build.js --diorama-page` (not a plain build, which goes back to `classic`).
+
+**Fixed from the owner's test (2026-11-10):**
+- The room: the column ends above its foot (`--drgo`, measured in `dioRoom`), so + Invite a friend no longer sits on
+  Open seat on a laptop; the invite is in the foot under "Nobody yet.".
+- The deploy panel slides away when the battle starts, whatever the setting (`dioFightTuck`; the pointer must leave the
+  edge once, READY being there), back out for the next deploy.
+- The music dock's empty box let the pointer through (it covered the bottom right tiles: no hover there).
+- The top line's sides let the pointer through (they covered the chat button); the foe's name still takes it.
+- Round 1: the opponent's starting units show only once you've chosen your own start (`foeStart`, both UIs;
+  `tools/tests/start-units-ui.js` checks it).
+- The match's Settings (version B): Main menu beside the title, tighter rows; never a scroll for it (437 px vs AI).
+- Server: a public room stores `meta.listed`, so one that hibernated while its host waited still takes its card off
+  Rooms when the host leaves (it stayed up to 3 min, with the host "in it"). Room and DuoRoom.
+
+**Checked:** the launch build on PC 1440×900 and 1366×768 (Diorama, new match screen), PC `?ui=classic`, iPhone 13 and
+iPad (old UI), no page errors; server tests lobby, room and duo pass. **Not checked here:** a real two-player online
+match (the owner was trying one on the test page).
+
 ## Next session: start here (handoff, 2026-11-10, end of the night)
 
 **Where it stands.** The new match screen, the room on the battlefield, the island's fly-in, the music player and the
