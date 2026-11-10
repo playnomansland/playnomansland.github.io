@@ -1108,6 +1108,10 @@ html.diorama.pcwide #mp-pop.dock::before { content: ""; position: fixed; inset: 
 html.diorama.pcwide #mp-pop.dock .mp-dock { left: auto; right: 40px; bottom: 30px; transform: none; width: min(460px, calc(100vw - var(--dpw, 340px) - 80px)); height: auto; max-height: min(620px, calc(100vh - 170px));
   display: flex; flex-direction: column; align-items: stretch; pointer-events: auto; color: #F4ECD8; text-align: right;
   text-shadow: 0 0 3px rgba(10,13,12,.95), 0 0 9px rgba(10,13,12,.8); font: 700 14px "Bricolage Grotesque", system-ui, sans-serif; }
+/* the dock's box is only a frame: the board under it keeps the pointer (the owner, 2026-11-10: the bottom right tiles
+   didn't take a hover under the empty box); the player and the lists take it (.hid's player, .dm-show: their own rules) */
+html.diorama.pcwide #mp-pop.dock .mp-dock { pointer-events: none; }
+html.diorama.pcwide #mp-pop.dock .mp-dock > :is(.mp-panel, .mplayer) { pointer-events: auto; }
 /* the player */
 html.diorama.pcwide #mp-pop.dock .mplayer { width: 100%; padding: 0; gap: 7px; justify-items: end; border: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; text-align: right; animation: none; }
 html.diorama.pcwide #mp-pop.dock .mp-now { display: grid; grid-template-columns: auto; justify-items: end; gap: 3px; width: auto; padding: 0; border: 0; background: none; text-align: right; cursor: pointer; }
