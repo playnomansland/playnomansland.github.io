@@ -1317,6 +1317,17 @@ html.diorama.pcwide .panel > * { flex-shrink: 0; }
 html.diorama.pcwide .panel { bottom: 104px; padding-bottom: 14px; } /* (no fade mask: it would clip READY, which is fixed inside the column) */
 html.diorama.pcwide.pcfight .panel, html.diorama.pcwide .panel:not(:has(#ready, #fight)) { bottom: 0; }
 html.droom-on .panel { bottom: 160px; padding-bottom: 14px; }
+/* the room's column ends above its fixed foot (Start match, Open seat, Close room: .rgo, 24px up) whatever its height
+   (--drgo, measured by dioRoom); the rule above lost to the no-READY rule, so the rows ran under the foot on a laptop
+   (the owner's screenshot, 2026-11-10: + Invite a friend over Open seat) */
+html.diorama.pcwide.droom-on #panel.panel { bottom: calc(var(--drgo, 118px) + 24px + 18px); padding-bottom: 6px; }
+html.diorama.pcwide .droom .say .invite { justify-self: start; margin: 3px 0 5px -9px; } /* + Invite a friend: in the foot, under "Nobody yet." */
+@media (max-height: 860px) {
+  html.diorama.pcwide.droom-on .droom { gap: 8px; }
+  html.diorama.pcwide.droom-on .droom .rhead h2 { font-size: 36px; margin: 2px 0 4px; }
+  html.diorama.pcwide.droom-on .droom .rrows { gap: 8px; }
+  html.diorama.pcwide.droom-on .droom .rrow { gap: 2px; }
+}
 /* short windows (a laptop): the same column, tighter, all four tiers in sight */
 @media (max-height: 860px) {
   html.diorama.pcwide .hud { padding-top: 12px; }
@@ -18060,7 +18071,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 0f22cf6'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 0be8837'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -24760,17 +24771,18 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         <h2>${whose}</h2><p class="rlead" id="lobby-status">${lead}</p></div>
       ${link}
       <div class="rrows">${rows}</div>
-      ${srv && !net.tourCode && frOk() ? '<div class="xrow invite"><button class="w" id="fr-room">+ Invite a friend</button></div>' : ''}
       ${dev}
       <div class="rgo">
         ${host ? `<button class="btn primary" id="start" ${here ? '' : 'disabled'}>Start match</button>
           <div class="say"><span class="big">${here ? `${esc(nm || 'Your opponent')} is here` : 'Open seat'}</span>
             <small>${here ? 'The match starts for you both.' : 'Nobody yet.'}</small>
+            ${srv && !net.tourCode && frOk() && !here ? '<div class="xrow invite"><button class="w" id="fr-room">+ Invite a friend</button></div>' : ''}
             <button class="help" id="cancel">${dioClosing ? 'Sure? Close it' : 'Close room'}</button></div>`
         : `<div class="say"><span class="big">Waiting for ${esc(nm || 'the host')}</span><small>${esc(nm || 'The host')} starts the match.</small>
             <button class="help" id="leave">Leave room</button></div>`}
       </div></div>`;
     const P = $('panel'), on = (id, f) => { const b = $(id); if (b) b.addEventListener('click', f); };
+    const rgo = P.querySelector('.rgo'); if (rgo) document.documentElement.style.setProperty('--drgo', `${rgo.offsetHeight}px`); // the column ends above its foot (src/diorama.css)
     P.querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); dioRoom(); }));
     P.querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); dioRoom(); }));
     P.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {

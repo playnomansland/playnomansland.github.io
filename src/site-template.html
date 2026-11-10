@@ -8840,17 +8840,18 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         <h2>${whose}</h2><p class="rlead" id="lobby-status">${lead}</p></div>
       ${link}
       <div class="rrows">${rows}</div>
-      ${srv && !net.tourCode && frOk() ? '<div class="xrow invite"><button class="w" id="fr-room">+ Invite a friend</button></div>' : ''}
       ${dev}
       <div class="rgo">
         ${host ? `<button class="btn primary" id="start" ${here ? '' : 'disabled'}>Start match</button>
           <div class="say"><span class="big">${here ? `${esc(nm || 'Your opponent')} is here` : 'Open seat'}</span>
             <small>${here ? 'The match starts for you both.' : 'Nobody yet.'}</small>
+            ${srv && !net.tourCode && frOk() && !here ? '<div class="xrow invite"><button class="w" id="fr-room">+ Invite a friend</button></div>' : ''}
             <button class="help" id="cancel">${dioClosing ? 'Sure? Close it' : 'Close room'}</button></div>`
         : `<div class="say"><span class="big">Waiting for ${esc(nm || 'the host')}</span><small>${esc(nm || 'The host')} starts the match.</small>
             <button class="help" id="leave">Leave room</button></div>`}
       </div></div>`;
     const P = $('panel'), on = (id, f) => { const b = $(id); if (b) b.addEventListener('click', f); };
+    const rgo = P.querySelector('.rgo'); if (rgo) document.documentElement.style.setProperty('--drgo', `${rgo.offsetHeight}px`); // the column ends above its foot (src/diorama.css)
     P.querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); dioRoom(); }));
     P.querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); dioRoom(); }));
     P.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {
