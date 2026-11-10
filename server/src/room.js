@@ -19,8 +19,8 @@
 // The online lobby (2026-11-04, docs/LOBBY.md): hello { create, public: true } makes a public room, listed in the lobby
 // (LobbyRoom, server/src/lobby.js) while it is open: the room reports its card (listing()) on every change and every
 // LOBBY.heartbeatMs, and drops it when the match is over, the host leaves the waiting room or it sits idle. A public
-// waiting room lets a new player take side 1 when the one who had it left before the start. Spectating is on unless
-// the host turns it off (spectate { on }); off turns watchers away with denied { why: 'no watchers' }.
+// waiting room lets a new player take side 1 when the one who had it left before the start. Every match can be watched
+// (the owner, 2026-11-10: no Spectators on / off); an old phone's spectate { on: false } is ignored.
 // Nobody is in the same room twice (2026-11-04): the account that has side 0 is refused side 1 from another phone or
 // tab with denied { why: 'here' } (a ranked room says 'self' for the same thing); its own phone comes back by its key.
 // A room nobody is in at all closes by itself EMPTY_MS after the last phone went: it leaves the lobby, its storage is
@@ -32,7 +32,7 @@
 //
 // Messages in:  hello { create | key | (nothing: join) | tour id + tkey | watch, session?, public?, spectate?, map?, skin? }, start { settings },
 //               act { seq, fn, a }, ready { v }, next { round }, rematch, forfeit, speed { s }, sync, ping, gg (after the match: GG to the other player),
-//               chat { text }, emote { id }, spectate { on } (host), public { on } (host, before the start), report
+//               chat { text }, emote { id }, spectate { on } (ignored), public { on } (host, before the start), report
 // Messages out: welcome { side, key, seq }, taken, nomatch, lobby { here }, sync { phase, m (view), remaining, held, pick (ms left on the leader or tower pick, 0: none), ready, nextReady,
 //               rematch, summary, ack, here }, ack { seq, ok, h }, status {...}, fight { pre, post, summary },
 //               speed { s }, forfeit { side }, full, denied { why? }, pong. welcome, lobby, sync and fight carry ranked
@@ -40,7 +40,7 @@
 //               ([side 0, side 1]: { tag, title, skins } of a phone that sent its account session, or null).
 //               Lobby and chat: roomset { pub, spectate, chat (this phone may type) }, chat { from, tag, text, at, w? },
 //               chatLog { lines } (on hello), chatMerge { lines }, emote { from, id }, reported { ok, why? },
-//               denied { why: 'slow down' | 'sign in' | 'no watchers' } (the first two leave the phone in the room),
+//               denied { why: 'slow down' | 'sign in' } (the phone stays in the room),
 //               denied { why: 'here' } (you already have the other side of this room).
 import { DurableObject } from 'cloudflare:workers';
 import Game from '../../src/game.js';
@@ -152,7 +152,7 @@ export class Room extends DurableObject {
       host: { tag: rk ? rk.tags[0] : p0 ? p0.tag : 'Player', title: rk ? (rk.titles || [''])[0] : p0 ? p0.title : '' },
       map: rk ? 'Standard' : map ? map.name : 'Random', look: (R && R.settings && R.settings.skin) || M.look || '',
       players: playing ? 2 : here.filter(Boolean).length, phase: playing ? 'playing' : 'waiting', round: playing ? R.m.round : 0,
-      watchers: this.watchers(gone).length, spectate: M.spectate !== false, at: M.made || now,
+      watchers: this.watchers(gone).length, spectate: true, at: M.made || now,
     };
   }
   // tells the lobby about a change of the card (force: the heartbeat). Never awaited by the match; errors are logged.
@@ -176,7 +176,7 @@ export class Room extends DurableObject {
   roomset(ws) {
     const a = this.att(ws), side = a.role === 'p' ? a.side : -1;
     const chat = side >= 0 ? !!(this.meta && this.meta.chatOk && this.meta.chatOk[side]) : !!a.chat;
-    return { t: 'roomset', pub: this.isPub(), spectate: !this.meta || this.meta.spectate !== false, chat };
+    return { t: 'roomset', pub: this.isPub(), spectate: true, chat };
   }
   // ----- chat and emotes -----
   merged() { const R = this.R; return !R || !R.m || R.phase === 'lobby' || !!R.m.over; }
@@ -331,15 +331,7 @@ export class Room extends DurableObject {
         for (const s of this.sockets()) this.send(s, text);
         return;
       }
-      case 'spectate': { // the host lets watchers in or not (a tournament match always has them)
-        if (side !== 0 || !this.meta || this.meta.tour) return;
-        this.meta.spectate = d.on !== false;
-        if (!this.meta.spectate) for (const s of this.watchers()) { this.setAtt(s, { role: 'x' }); this.send(s, { t: 'denied', why: 'no watchers' }); try { s.close(1000, 'no watchers'); } catch {} }
-        await this.save();
-        for (const s of this.sockets()) this.send(s, this.roomset(s));
-        this.report();
-        return;
-      }
+      case 'spectate': return; // every match can be watched (the owner, 2026-11-10): an old phone's Off does nothing
       case 'public': { // the host lists the room in the lobby or takes it off (before the start)
         if (side !== 0 || !this.meta || this.meta.tour || (R && R.m && R.phase !== 'lobby')) return;
         this.meta.pub = d.on === true; this.meta.waitAt = now;
@@ -448,7 +440,6 @@ export class Room extends DurableObject {
   async hello(ws, a, d) {
     const now = Date.now();
     if (d.watch) {
-      if (this.meta && !this.meta.tour && this.meta.spectate === false) { this.send(ws, { t: 'denied', why: 'no watchers' }); try { ws.close(1000, 'no watchers'); } catch {} return; }
       let who = null; // a watcher signed in with Google may chat with the other watchers
       if (typeof d.session === 'string' && d.session) { try { who = await sessionPlayer(this.env, d.session); } catch (e) { who = null; } }
       this.setAtt(ws, { role: 'w', side: -1, chat: who && who.google ? who.tag : '' });
@@ -508,7 +499,7 @@ export class Room extends DurableObject {
         if (!this.meta) this.meta = { tour: null, keys: ['', ''], code: a.code || '' };
         if (side === 0 && d.create) { // the lobby's settings for this room
           const M = this.meta;
-          M.pub = d.public === true; M.spectate = d.spectate !== false; M.made = now; M.waitAt = now;
+          M.pub = d.public === true; M.spectate = true; M.made = now; M.waitAt = now; // (every match can be watched: the owner, 2026-11-10)
           M.map = typeof d.map === 'string' ? d.map.slice(0, 24) : ''; M.look = typeof d.skin === 'string' ? d.skin.slice(0, 24) : '';
           M.owner = who ? 'p:' + who.id : 'g:' + a.ip; // one listed room per player (lobby.js upsert)
         }
