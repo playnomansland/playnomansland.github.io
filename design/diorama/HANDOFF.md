@@ -1,5 +1,61 @@
 # Handoff: the Diorama UI (mockup finished; next: putting it into the game, see INTEGRATION.md)
 
+## Next session: start here (handoff, 2026-11-10, end of the night)
+
+**Where it stands.** The new match screen, the room on the battlefield, the island's fly-in, the music player and the
+in-match sheets are built **into the real game** (behind the Diorama switch, PC with the 3D board) and the owner has
+been trying them on the **test page**: **https://playnomansland.github.io/design/diorama/game.html** (add `?v=N` to dodge
+the browser's cache). The live game (`index.html` on `main`) is **not** changed; the owner wants it that way for now.
+
+**Branch:** `claude/modest-babbage-jy65nc` has all the source work (`src/site-template.html`, `src/diorama.css`,
+`src/diorama.js`, `src/render3d.js`, `src/build.js`) and is pushed. **`main` only has the built test page**
+(`design/diorama/game.html`) and the one-line `cam3` change in `src/render3d.js`, not the source changes. Other
+sessions keep changing `src/` on `main` (the menu, Units, sounds...): **merge `origin/main` into the branch first**
+(`index.html` conflicts: take theirs, then rebuild), then rebuild the test page from the merged source.
+
+**Update the test page (the routine used all night):**
+1. `node src/build.js --diorama-page` (writes `index.html`, still `classic` by default, and `design/diorama/game.html`).
+2. Commit and push the branch.
+3. A worktree of `origin/main`, copy **only** `design/diorama/game.html` into it, commit, `git push origin HEAD:main`.
+4. **Check the Pages deploy finished** (GitHub Actions, "pages build and deployment"). It has hung and timed out after
+   10 min several times tonight ("Deploy to GitHub Pages ... syncing_files ... Timeout reached"); rerun that run
+   (`rerun_workflow_run`) and it goes through. Only then tell the owner it's live.
+
+**What the owner settled tonight (all in the test page; details in the sections below):**
+- Deploy panel: **left by default** (`pb-deploy-side2`), Settings has Left / Right; your health and name follow its side.
+  **Always out by default**; "Slides away" (tuck when the pointer leaves, back from a 140 px edge zone, 1.5 s wait) is
+  an option (`pb-deploy-auto2`). The board is **centred** with either, the panel overlapping its outer edge a little.
+- Columns on short windows: rows never squeeze (they used to collapse onto the gold); tighter layout under 860 px high.
+- Unit cards and the picks' options (start, leader, tower): the **game's card colour tinted per battlefield** at the
+  same darkness (`--dcard`; the eight colours are under "The owner's calls"). Scenery-cut panels are off (`?dpat=all`).
+- Buttons: **READY / Fight / Not ready keep the skewed saffron shard**; every other button in a match is the **old
+  game's button** (rounded box, gold primary), and the plain ones have a **light fill and a cream outline** so they read
+  as buttons. "+1 DEPLOYMENT (coin) 50".
+- Top line: **symbols** (Damage bars, Settings cog, Full screen corners). **Settings and Damage drop from their icon on a
+  line** (as the menu's dropdowns); the icon again / a click elsewhere / Esc puts them away.
+- **Settings version B is the default** (the main menu's Settings style: ink, stencil title, stencil-word choices on the
+  shard, square saffron slider knobs, links; `pb-dset2`, `?settings=a` shows version A). Every other sheet in a match
+  sits in the **exact middle of the screen**, the old layout in the card colour (panel lighter than its rows).
+- Music: the home-style player **starts down** as "♪ Music ⌃" in the corner **opposite the panel**; its whole top row
+  tucks it down; "Playlist" opens the lists above it; their arrow folds them back. Next / Back fixed (the hidden home
+  player shared their ids).
+- Take back / Sell drop zone: TAKE BACK +gold in stencil, a saffron edge, no box.
+
+**Not done / to ask the owner:**
+- **A real online match** with two people (only a stand-in server could be used here): the room, START MATCH, the
+  keeps' "connected" labels, "disconnected" in the top line, chat.
+- **Phones and the 2D board** still get the old match layout (the Diorama match is PC + 3D only).
+- The room's choices (Public / Private, Units, Battlefield arrows) are still the new stencil words: ask.
+- The game's UI tests haven't been updated for the Diorama match screen (see INTEGRATION.md's test notes).
+- **The launch**: when the owner says so, merge the branch into `main` (source and all) and set the build default as
+  INTEGRATION.md describes. Never without the owner's word.
+
+**Checking work here:** serve the repo (`python3 -m http.server 8766 --bind 127.0.0.1`, run it in the background; it
+stops after its time limit), open `/design/diorama/game.html?test&board=3d&fly=off`. Software 3D runs at about 1 frame
+a second: set `localStorage['phone-bellum-3d-quality'] = 'low'` before load, turn the deploy timer off (menu Settings,
+`[data-set="tm|0"]`), and allow long timeouts. `window.__dfit` (the board's framing) and `window.__music()` help.
+Screenshots of tonight's states are in `screens/game-*.png`.
+
 A redesign of the game's UI, worked out as a standalone mockup in this folder, on sample data. **Nothing in the game
 itself (`src/`) has changed yet.** The mockup is finished and tested (2026-11-07): Welcome / Sign up / Log in, the
 main menu (Units with skins, Rankings), Play (Rooms, New room), the playlist, battlefields, Profile with Match history,
