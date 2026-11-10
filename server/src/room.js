@@ -33,7 +33,7 @@
 // Messages in:  hello { create | key | (nothing: join) | tour id + tkey | watch, session?, public?, spectate?, map?, skin? }, start { settings },
 //               act { seq, fn, a }, ready { v }, next { round }, rematch, forfeit, speed { s }, sync, ping, gg (after the match: GG to the other player),
 //               chat { text }, emote { id }, spectate { on } (host), public { on } (host, before the start), report
-// Messages out: welcome { side, key, seq }, taken, nomatch, lobby { here }, sync { phase, m (view), remaining, held, ready, nextReady,
+// Messages out: welcome { side, key, seq }, taken, nomatch, lobby { here }, sync { phase, m (view), remaining, held, pick (ms left on the leader or tower pick, 0: none), ready, nextReady,
 //               rematch, summary, ack, here }, ack { seq, ok, h }, status {...}, fight { pre, post, summary },
 //               speed { s }, forfeit { side }, full, denied { why? }, pong. welcome, lobby, sync and fight carry ranked
 //               (the series: { tags, wins, ties, games, best, done, result, forfeit }) in a ranked match, and players
@@ -217,7 +217,7 @@ export class Room extends DurableObject {
     const side = a.role === 'p' ? a.side : -1;
     if (!R || !R.m || R.phase === 'lobby') return { t: 'lobby', here: this.here(gone), names: this.meta && this.meta.tour ? this.meta.tour.names : null, ranked: this.rankedView(), players: this.playersView() };
     return {
-      t: 'sync', phase: R.phase, round: R.m.round, m: Ref.viewOf(R, side), remaining: R.deadline ? R.deadline - now : 0, held: R.held,
+      t: 'sync', phase: R.phase, round: R.m.round, m: Ref.viewOf(R, side), remaining: R.deadline ? R.deadline - now : 0, held: R.held, pick: Ref.pickLeft(R, now),
       ready: R.ready, nextReady: R.nextReady, rematch: R.rematch, summary: R.summary, fights: R.fights,
       ack: side >= 0 ? R.seq[side] : 0, here: this.here(gone), forfeit: R.forfeit != null ? R.forfeit : null,
       names: this.meta && this.meta.tour ? this.meta.tour.names : null, ranked: this.rankedView(), players: this.playersView(),
@@ -253,7 +253,7 @@ export class Room extends DurableObject {
   push(opts = {}) {
     for (const s of this.sockets(opts.gone)) {
       const msg = this.syncMsg(s, opts.gone);
-      const key = Ref.fnv(JSON.stringify({ ...msg, remaining: 0, ack: 0, held: 0 }));
+      const key = Ref.fnv(JSON.stringify({ ...msg, remaining: 0, ack: 0, held: 0, pick: 0 }));
       if (s === opts.skip) { this.sent.set(s, key); continue; }
       if (!opts.force && this.sent.get(s) === key) continue;
       this.sent.set(s, key);
@@ -262,7 +262,7 @@ export class Room extends DurableObject {
   }
   status(gone) {
     const R = this.R, now = Date.now();
-    const msg = R ? { t: 'status', ready: R.ready, nextReady: R.nextReady, rematch: R.rematch, here: this.here(gone), remaining: R.deadline ? R.deadline - now : 0, held: R.held, phase: R.phase }
+    const msg = R ? { t: 'status', ready: R.ready, nextReady: R.nextReady, rematch: R.rematch, here: this.here(gone), remaining: R.deadline ? R.deadline - now : 0, held: R.held, pick: Ref.pickLeft(R, now), phase: R.phase }
       : { t: 'lobby', here: this.here(gone) };
     const text = JSON.stringify(msg);
     for (const s of this.sockets(gone)) this.send(s, text);

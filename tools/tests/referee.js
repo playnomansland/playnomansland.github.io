@@ -199,7 +199,16 @@ assert.ok(refused <= acts * 0.02, 'almost every honest action goes through');
   assert.strictEqual(R.deadline, 0, 'tower picks pending: no clock');
   assert.ok(Ref.act(R, 0, { seq: 50, fn: 'setTowerType', a: [Game.towerChoices(R.m, 0)[0].id] }, t).ok);
   assert.strictEqual(R.deadline, 0, 'still one pick to go');
-  assert.ok(Ref.act(R, 1, { seq: 50, fn: 'setTowerType', a: [Game.towerChoices(R.m, 1)[0].id] }, t).ok);
+  // the tower pick has its own clock (2026-11-10): side 1 doesn't pick, and gets the first tower on offer when it runs out
+  assert.strictEqual(R.towerDue, t + Ref.TOWER_PICK_MS, 'the tower pick clock started with the round');
+  assert.strictEqual(Ref.pickLeft(R, t + 1000), Ref.TOWER_PICK_MS - 1000, 'the phones are told what is left');
+  assert.ok(Ref.due(R, t) <= R.towerDue, 'the room wakes up for it');
+  const first1 = Game.towerChoices(R.m, 1)[0].id;
+  assert.strictEqual(Ref.tick(R, R.towerDue - 1), null); assert.ok(Game.needsTowerPick(R.m, 1), 'not yet');
+  Ref.tick(R, R.towerDue);
+  assert.ok(!Game.needsTowerPick(R.m, 1) && R.m.towers[1].type === first1, 'time ran out: the first tower');
+  assert.strictEqual(R.towerDue, 0); assert.strictEqual(Ref.pickLeft(R, t), 0);
+  t += Ref.TOWER_PICK_MS;
   assert.ok(R.deadline > t, 'both picked: the clock runs');
   // the tower pick is hidden until the fight
   assert.ok(!Ref.viewOf(R, 1).towers[0].type, 'their tower pick hidden');
