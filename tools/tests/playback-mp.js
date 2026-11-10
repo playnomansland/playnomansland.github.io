@@ -1,5 +1,5 @@
-// Fight playback: switching away (tab or app) pauses the fight and coming back goes on from where it was, vs the AI and
-// in a live match; and in a live match a faster speed takes both players (one asks, the other agrees), a slower one
+// Fight playback: switching away (tab or app) pauses the fight and coming back goes on from where it was vs the AI; in a
+// live match the fight runs on with the clock in the background (you miss it, the opponent doesn't wait); and in a live match a faster speed takes both players (one asks, the other agrees), a slower one
 // takes hold on both at once, and both phones play at the same speed.
 // Needs the game on port 8766 and tools/peer-server.js on 9000 (PB_PORT and PB_PEER_PORT change them).
 const { chromium } = require('playwright-core');
@@ -76,20 +76,23 @@ const PORT = process.env.PB_PORT || 8766, PEER = process.env.PB_PEER_PORT || 900
   h = await st(host); g = await st(guest);
   check(h.speed === 1 && g.speed === 1, 'live: a slower pick slows both at once');
   check((await btn(host, 2)).asked && /Opponent wants 2×/.test(await ask(guest)), 'live: the host\'s 2x stays asked, the guest sees it again');
-  // the guest goes into the background: its replay waits, the host's goes on; back again it goes on from there
-  await setHidden(guest, true); const gt0 = (await st(guest)).t, ht0 = (await st(host)).t;
-  await sleep(1200);
+  // the guest goes into the background: its fight runs on with the clock (2026-11-10: tabbing out misses the fight, it
+  // doesn't hold it up), caught up every AWAY_TICK; back again it is where the host's is
+  await setHidden(guest, true); const gt0 = (await st(guest)).t;
+  await sleep(2300);
   g = await st(guest); h = await st(host);
-  check(g.phase === 'battle' && Math.abs(g.t - gt0) < 1e-9 && (h.t > ht0 || h.phase !== 'battle'), `live: the guest's fight waits in the background (${g.t.toFixed(2)} s), the host's goes on (${h.t != null ? h.t.toFixed(2) : h.phase})`);
-  await setHidden(guest, false); await sleep(600);
-  g = await st(guest);
-  check(g.phase === 'battle' && g.t > gt0 && g.t < gt0 + 2, `live: back again, the guest's fight goes on from there (${gt0.toFixed(2)} -> ${g.t.toFixed(2)} s)`);
-  // a long time away in a live match: the rest is played out on return, so the other player doesn't wait long
+  check(g.phase === 'battle' && g.t > gt0 + 0.5 && (h.phase !== 'battle' || Math.abs(g.t - h.t) < 1.6), `live: the guest's fight runs on in the background (${gt0.toFixed(2)} -> ${g.t.toFixed(2)} s, the host's ${h.t != null ? h.t.toFixed(2) : h.phase})`);
+  await setHidden(guest, false); await sleep(300);
+  g = await st(guest); h = await st(host);
+  check(g.phase === 'battle' && (h.phase !== 'battle' || Math.abs(g.t - h.t) < 0.6), `live: back again, the guest's fight is where the host's is (${g.t.toFixed(2)} / ${h.t != null ? h.t.toFixed(2) : h.phase} s)`);
+  // a long time away in a live match: the fight ends in the background and its result is up without coming back
   await setHidden(guest, true);
   await guest.evaluate(() => { window.__pb().away.at -= 60000; });
-  await setHidden(guest, false); await sleep(400);
+  await sleep(1300);
   g = await st(guest);
-  check(g.phase === 'result' || g.phase === 'end', `live: back after more than a while away, the guest's fight is played out (${g.phase})`);
+  check(g.phase === 'result' || g.phase === 'end', `live: away past the fight's end, the guest's result comes up in the background (${g.phase})`);
+  await setHidden(guest, false); await sleep(300);
+  check(['result', 'end'].includes((await st(guest)).phase), 'live: back again, the result stays up');
   // and the next round starts for both as usual (the host plays its fight out the same way)
   if ((await st(host)).phase === 'battle') { await setHidden(host, true); await host.evaluate(() => { window.__pb().away.at -= 60000; }); await setHidden(host, false); }
   await host.waitForFunction(() => window.__pb().phase === 'result', null, { timeout: 5000 });

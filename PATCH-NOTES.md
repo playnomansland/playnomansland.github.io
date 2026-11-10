@@ -20,8 +20,9 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
-## 10 November 2026 – Assassin no longer runs off
+## 10 November 2026 – Assassin no longer runs off; tabbing out no longer holds up the fight
 
+- **Online fights keep going when you tab out.** Switching to another tab or app during a fight no longer pauses it for your opponent: the fight carries on, and when you come back you're at the same moment as them (or on the results screen if it's over). Against the AI the fight still pauses while you're away.
 - **Fix:** an **Assassin** placed right behind an enemy squad (the enemy between it and your side, in the same column, such as next to a Meteor Caller) used to walk the wrong way, off the back of the board, for the whole fight. It now turns round and goes for its target. Any unit with a target straight behind it turns round properly too.
 
 ---

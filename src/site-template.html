@@ -1407,8 +1407,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const SPEEDS = [1, 1.5, 2];
   let liveSpeed = [1, 1];
   const playSpeed = () => solo() ? speed : Math.min(liveSpeed[0], liveSpeed[1]);
-  const LIVE_AWAY = 45;                 // seconds a live fight waits for a page in the background (see awayStart)
-  const away = { at: 0, timer: 0 };     // when this page went into the background mid-fight, and the timer for LIVE_AWAY
+  const AWAY_TICK = 1000;               // ms between catch-ups of a live fight while the page is in the background (see awayStart)
+  const away = { at: 0, timer: 0 };     // when a live fight in the background was last caught up to the clock, and its timer
   let fx = [];
   // battle cam: the last CAM.secs of a high-stakes fight play a little slower, zoomed in on the action.
   // High stakes: both sides still have units fighting then, and the fight ends the match, or a player went into it under
@@ -6373,7 +6373,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     cancelAnimationFrame(raf);
     if (reduced) { while (bt.step()) {} finishBattle(); return; }
     if (!solo() && mode !== 'replay') send({ t: 'speed', s: liveSpeed[me] }); // our pick, so both phones start the fight at the same speed
-    if (document.hidden) awayStart(); // (it began while this page is in the background: it waits for it, see awayStart)
+    if (document.hidden) awayStart(); // (it began while this page is in the background: a live one runs on the clock, see awayStart)
     raf = requestAnimationFrame(loop);
   }
 
@@ -6423,6 +6423,15 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function loop(ts) {
     if (phase !== 'battle') return;
     const dtReal = lastTs ? Math.min(0.1, (ts - lastTs) / 1000) : 0.016; lastTs = ts;
+    advance(dtReal);
+    $('clock').textContent = `${bt.time().toFixed(1)} s${cam && cam.on ? ' · final seconds' : bt.time() > 20 ? ' · speeding up' : ''}${objectiveLine()}`;
+    render();
+    if (bt.isOver()) { finishBattle(); return; }
+    raf = requestAnimationFrame(loop);
+  }
+  // the fight's playback clock: dtReal seconds of real time at the fight's pace (the speed, 2x after 20 s, the battle
+  // cam's slow end), drawing nothing. loop() calls it each frame; a live fight in the background calls it too (awayStart).
+  function advance(dtReal) {
     if (cam && !cam.decided && cam.end != null && bt.time() >= cam.end - CAM.secs) {
       cam.decided = true; cam.on = cam.end > CAM.secs + 1 && highStakes();
       if (cam.on) camFollow(dtReal, true);
@@ -6439,10 +6448,6 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     for (const e of fx) e.age += e.kind === 'gold' ? dtReal : dtReal * sp * boost; // the gold text stays up in real time, so it can be read at any speed
     Art.frostFollow(fx);
     fx = fx.filter(e => e.age < e.life);
-    $('clock').textContent = `${bt.time().toFixed(1)} s${cam && cam.on ? ' · final seconds' : boost > 1 ? ' · speeding up' : ''}${objectiveLine()}`;
-    render();
-    if (bt.isOver()) { finishBattle(); return; }
-    raf = requestAnimationFrame(loop);
   }
 
   // the map objective while a fight plays (the Bridge): who holds it, by how many, and for how long; or who won it
@@ -6456,7 +6461,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function finishBattle() {
     if (phase !== 'battle') return;
     cancelAnimationFrame(raf);
-    clearTimeout(away.timer); away.at = 0;
+    awayStop();
     fx = []; cam = null;
     const res = bt.result();
     $('clock').textContent = `${res.time.toFixed(1)} s`;
@@ -11071,29 +11076,39 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     }
   }
 
-  // The fight in the background: a hidden page gets no animation frames, so the replay simply stops where it is (the
-  // playback clock only moves in loop(), and each frame counts at most 0.1 s) and goes on from there when the page is
-  // back. Nothing in the match waits on it but the next round: in a live match the host starts that once both phones
-  // have seen the result (Next round on both, or NEXT_SECONDS on the results screen), so the other player waits on the
-  // results screen meanwhile and no deploy clock runs. So that they don't wait for long, a live fight left in the
-  // background for LIVE_AWAY seconds plays out to its result: at once on return, or then if the browser still runs timers.
+  // The fight in the background: a hidden page gets no animation frames. Against the computer (solo) the replay simply
+  // stops where it is and goes on from there when the page is back (nobody waits on it). A live fight runs on the
+  // clock for both players (2026-11-10, the owner: "if you tab out you just miss the battle"): before, it paused, and
+  // the other player waited on the results screen, since the next round needs both phones to have seen the result.
+  // While hidden it is caught up to the real time gone by every AWAY_TICK ms (browsers still run timers in the
+  // background, slowed), at the fight's own pace (advance), and its result comes up when it ends; back on the page it
+  // is caught up once more and plays on from there. A phone that freezes the page altogether is caught up on return.
   function awayStart() {
-    if (away.at) return;
+    if (away.at || solo()) return;
     away.at = now();
-    clearTimeout(away.timer);
-    if (!solo()) away.timer = setTimeout(() => { if (document.hidden && phase === 'battle' && bt) { while (bt.step()) {} finishBattle(); } }, LIVE_AWAY * 1000);
+    clearInterval(away.timer);
+    away.timer = setInterval(awayCatchUp, AWAY_TICK);
   }
+  // the live fight to where it is by now: the real time since the last catch-up, in frame-sized slices (the pace changes
+  // at 20 s and in the battle cam's last seconds); its result once it is over
+  function awayCatchUp() {
+    if (!away.at || phase !== 'battle' || !bt) return awayStop();
+    let left = Math.max(0, (now() - away.at) / 1000);
+    away.at = now();
+    while (left > 1e-9 && !bt.isOver()) { const d = Math.min(0.1, left); advance(d); left -= d; }
+    if (bt.isOver()) finishBattle();
+  }
+  function awayStop() { clearInterval(away.timer); away.timer = 0; away.at = 0; }
 
   // Phones pause pages in the background; reconnect when the page comes back
   document.addEventListener('visibilitychange', () => {
-    // the fight replay pauses with the page and goes on from where it was when it is back (see awayStart)
+    // a live fight runs on in the background, a solo one waits (see awayStart)
     if (phase === 'battle' && bt) {
       if (document.hidden) { cancelAnimationFrame(raf); awayStart(); }
       else {
-        const long = !solo() && away.at && now() - away.at >= LIVE_AWAY * 1000;
-        clearTimeout(away.timer); away.at = 0;
-        if (long) { while (bt.step()) {} finishBattle(); }
-        else { lastTs = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); } // lastTs: no catching up on the time away
+        if (away.at) awayCatchUp();
+        awayStop();
+        if (phase === 'battle') { lastTs = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); } // lastTs: the time away is already counted (live) or skipped (solo)
       }
     }
     if (!document.hidden && net.alive && net.srv && !net.ws) { srvOpen(); return; } // a server match: back at once
