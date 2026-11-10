@@ -1477,6 +1477,56 @@ html.diorama.pcwide #mp-pop.dock .mplayer:has(.dm-hide:hover) .mp-label { text-d
 html.diorama.pcwide #mp-pop.dock .mp-now .mp-label { pointer-events: none; }
 html.diorama.pcwide #mp-pop.dock .dm-hide { left: 0; right: -28px; justify-content: flex-end; } /* the arrow right after the name, as in the owner's picture */
 
+/* the top line's buttons are symbols again (the owner, 2026-11-10): Damage (bars), Settings (the cog), Full screen
+   (corners), as small cream icons with the ink halo; a tooltip names them */
+html.diorama.pcwide .hud .round .cog { width: 30px; height: 30px; display: inline-grid; place-items: center; padding: 0; text-decoration: none; opacity: .85; border-radius: 50%; }
+html.diorama.pcwide .hud .round .cog::after { content: none !important; }
+html.diorama.pcwide .hud .round .cog svg { display: block !important; width: 17px; height: 17px; filter: drop-shadow(0 0 3px rgba(23,20,15,.95)) drop-shadow(0 0 6px rgba(23,20,15,.8)); }
+html.diorama.pcwide .hud .round .cog:hover, html.diorama.pcwide .hud .round .cog[aria-expanded="true"] { opacity: 1; color: #F2B23A; }
+html.diorama.pcwide .hud .round #stats { order: 3; } html.diorama.pcwide .hud .round #cog { order: 3; } html.diorama.pcwide .hud .round #dfs { order: 3; }
+html.diorama.pcwide .hud .round { row-gap: 0; }
+
+/* the Settings sheet in a match, redesigned (the owner, 2026-11-10): grouped under small headings (Sound, Board,
+   Deploy panel, Online matches), each row a label and its control on one line, the switches as clean segmented pills
+   (the picked one in gold), and the extras (Friends, Playlists, Report a bug) as a row of buttons with Main menu last */
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 10px; row-gap: 10px; max-width: 560px; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) > * { grid-column: 1 / -1; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) > .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; margin: 0; min-height: 34px; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) > .bar > .hint { font: 600 14px "Bricolage Grotesque", system-ui, sans-serif; color: rgba(244, 236, 216, .88); }
+html.diorama.pcwide .sheet .bar[data-keep] { order: 0; padding-bottom: 4px; }
+html.diorama.pcwide .sheet .bar:has(#spk-music) { order: 1; } html.diorama.pcwide .sheet .bar:has(#spk-sfx) { order: 2; }
+html.diorama.pcwide .sheet .bar:has([data-solo]) { order: 2; }
+html.diorama.pcwide .sheet .bar:has([data-board]) { order: 3; } html.diorama.pcwide .sheet #q3d-bar { order: 4; }
+html.diorama.pcwide .sheet .bar:has([data-dside]) { order: 5; } html.diorama.pcwide .sheet .bar:has([data-dauto]) { order: 6; }
+html.diorama.pcwide .sheet .bar:has([data-chat]) { order: 7; } html.diorama.pcwide .sheet .bar:has([data-emo]) { order: 8; } html.diorama.pcwide .sheet .bar:has([data-spec]) { order: 9; }
+html.diorama.pcwide .sheet .bar:has(#fr-open2), html.diorama.pcwide .sheet .bar:has(#mp-open2), html.diorama.pcwide .sheet .bar:has(#bug-open) { order: 20; grid-column: auto; margin-top: 8px; }
+html.diorama.pcwide .sheet #to-menu { order: 30; }
+/* the headings: a small kicker above the first row of each group, with a hairline */
+html.diorama.pcwide .sheet .bar:is(:has(#spk-music), :has([data-board]), :has([data-dside]), :has([data-chat]))::before {
+  flex: 0 0 100%; margin: 8px 0 2px; padding-top: 10px; border-top: 1px solid rgba(244, 236, 216, .1);
+  font: 700 11px "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #F2B23A; }
+html.diorama.pcwide .sheet .bar:has(#spk-music)::before { content: "Sound"; border-top: 0; padding-top: 0; margin-top: 0; }
+html.diorama.pcwide .sheet .bar:has([data-board])::before { content: "Board"; }
+html.diorama.pcwide .sheet .bar:has([data-dside])::before { content: "Deploy panel"; }
+html.diorama.pcwide .sheet .bar:has([data-chat])::before { content: "Online matches"; }
+/* the switches: segmented pills in Bricolage, the picked one gold */
+html.diorama.pcwide .sheet .seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid rgba(244, 236, 216, .14); border-radius: 7px; background: rgba(0, 0, 0, .18); overflow: visible; }
+html.diorama.pcwide .sheet .seg button { min-width: 52px; padding: 5px 12px; border: 0; border-radius: 5px; background: transparent; color: rgba(244, 236, 216, .78); font: 600 13px "Bricolage Grotesque", system-ui, sans-serif; transition: background-color .12s ease, color .12s ease; }
+html.diorama.pcwide .sheet .seg button:hover:not([aria-pressed="true"]) { background: rgba(244, 236, 216, .07); color: #F4ECD8; }
+html.diorama.pcwide .sheet .seg button[aria-pressed="true"] { background: #E6B84A; color: #0D1315; }
+/* the extras: one row of three buttons, Main menu full width under them */
+html.diorama.pcwide .sheet .bar:is(:has(#fr-open2), :has(#mp-open2), :has(#bug-open)) > .hint { display: none; }
+html.diorama.pcwide .sheet .bar:is(:has(#fr-open2), :has(#mp-open2), :has(#bug-open)) > .btn { flex: 1; justify-content: center; }
+html.diorama.pcwide .sheet .btn:is(#fr-open2, #mp-open2, #bug-open, #to-menu) { border: 1px solid rgba(244, 236, 216, .2); border-radius: 5px; background: rgba(244, 236, 216, .05); color: #F4ECD8; font: 600 13px "Bricolage Grotesque", system-ui, sans-serif; padding: 8px 10px; }
+html.diorama.pcwide .sheet .btn:is(#fr-open2, #mp-open2, #bug-open, #to-menu):hover:not(:disabled) { border-color: rgba(244, 236, 216, .4); background: rgba(244, 236, 216, .1); }
+html.diorama.pcwide .sheet .btn#to-menu { margin-top: 4px; padding: 10px; color: #FF8F78; border-color: rgba(255, 143, 120, .35); }
+html.diorama.pcwide .sheet .btn#to-menu:hover:not(:disabled) { border-color: #FF8F78; background: rgba(255, 143, 120, .08); }
+html.diorama.pcwide .sheet .volrow { display: inline-flex; align-items: center; gap: 10px; flex: 1; max-width: 330px; justify-content: flex-end; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) { row-gap: 6px; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) > .bar { min-height: 30px; }
+html.diorama.pcwide .sheet .bar:is(:has([data-board]), :has([data-dside]), :has([data-chat]))::before { margin-top: 4px; padding-top: 8px; }
+html.diorama.pcwide .sheet .seg button { padding: 4px 12px; }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -17931,7 +17981,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 912bb8b'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 4faf5bd'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -18056,13 +18106,13 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         </div>
       </div>
       ${DIO && document.documentElement.classList.contains('pc') ? `<div class="bar">
-        <span class="hint">Deploy panel</span>
-        <div class="seg" role="group" aria-label="Deploy panel">
+        <span class="hint">Side</span>
+        <div class="seg" role="group" aria-label="Deploy panel side">
           <button data-dside="left" aria-pressed="${dSide === 'left'}">Left</button><button data-dside="right" aria-pressed="${dSide === 'right'}">Right</button>
         </div>
       </div>
       <div class="bar">
-        <span class="hint">Deploy panel slides away</span>
+        <span class="hint">Slides away</span>
         <div class="seg" role="group" aria-label="Deploy panel slides away">
           <button data-dauto="1" aria-pressed="${dAuto}">On</button><button data-dauto="0" aria-pressed="${!dAuto}">Off</button>
         </div>
@@ -18095,7 +18145,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         </div>
       </div><p class="hint" id="rk-msg" style="margin:0" aria-live="polite"></p>` : ''}
       <div class="bar">
-        <span class="hint">Chat in online matches</span>
+        <span class="hint">${DIO && document.documentElement.classList.contains('pc') ? 'Chat' : 'Chat in online matches'}</span>
         <div class="seg" role="group" aria-label="Chat">
           <button data-chat="1" aria-pressed="${snd.chatOn !== false}">On</button><button data-chat="0" aria-pressed="${snd.chatOn === false}">Off</button>
         </div>
@@ -18760,7 +18810,8 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (!st) { st = document.createElement('span'); st.id = 'foe-state'; st.className = 'foe-state'; document.querySelector('.hud .side.foe').appendChild(st); }
     if (!$('dfs') && document.fullscreenEnabled) { // Full screen in the match's top line (the owner, 2026-11-09)
       const b = document.createElement('button'); b.className = 'cog dfs'; b.id = 'dfs'; b.type = 'button';
-      const sync = () => { const on = !!document.fullscreenElement; b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Leave full screen' : 'Full screen'); };
+      const sync = () => { const on = !!document.fullscreenElement; b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', on ? 'Leave full screen' : 'Full screen'); b.title = on ? 'Leave full screen' : 'Full screen';
+        b.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${on ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'}</svg>`; };
       b.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch (e) {} });
       document.addEventListener('fullscreenchange', sync); sync();
       r.querySelector('.round-sub').appendChild(b);
@@ -23284,15 +23335,15 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (dOut === out) return;
     dOut = out; document.documentElement.classList.toggle('dtuck', !out);
   }
-  function setDeployAuto(on) { dAuto = !!on; try { localStorage.setItem(DAUTO_STORE, on ? 'on' : 'off'); } catch (e) {} if (!on) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); } }
+  function setDeployAuto(on) { dAuto = !!on; try { localStorage.setItem(DAUTO_STORE, on ? 'on' : 'off'); } catch (e) {} if (!on) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); } if (board3d) wake3d(); }
   addEventListener('pointermove', (e) => {
     if (!DIO || e.pointerType !== 'mouse') return;
     const wide = dioWide() && phase !== 'lobby' && !dioRoomOn();
     if (!wide || !dAuto) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); return; }
-    const pw = dioPw(), x = e.clientX, edge = dOut ? pw + 16 : 60;
+    const pw = dioPw(), x = e.clientX, edge = dOut ? pw + 40 : 140; // (a wide zone to call it back, the owner, 2026-11-10)
     const near = dSide === 'right' ? x >= innerWidth - edge : x <= edge;
     if (near || e.buttons || !$('sheet-back').hidden) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); }
-    else if (dOut && !dOutT) dOutT = setTimeout(() => { dOutT = 0; dioPanelOut(false); }, 450);
+    else if (dOut && !dOutT) dOutT = setTimeout(() => { dOutT = 0; dioPanelOut(false); }, 1500); // (it stays out a while)
   }, { passive: true });
   try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
   const dioWide = () => DIO && document.documentElement.classList.contains('pcwide');
@@ -23300,7 +23351,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function dioSafe() {
     const hb = document.querySelector('.hud').getBoundingClientRect(), pw = dioPw();
     const right = document.documentElement.classList.contains('dright'); // the deploy panel on the right (?side=right)
-    const r = right ? { x0: 24, x1: innerWidth - pw - 28, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 } : { x0: pw + 28, x1: innerWidth - 24, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
+    // the board a bit more central (the owner, 2026-11-10): with the panel sliding away it frames past about half the
+    // column (the panel covers that edge only while it's out, and tucks when the pointer goes to the board); always
+    // shown, the board stays clear of it
+    const res = typeof dAuto !== 'undefined' && dAuto ? Math.round(pw * 0.5) + 16 : pw + 28;
+    const auto = typeof dAuto !== 'undefined' && dAuto; // sliding away: the board in the middle of the screen, the same margin both sides
+    const r = auto ? { x0: res, x1: innerWidth - res, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 }
+      : right ? { x0: 24, x1: innerWidth - res, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 } : { x0: res, x1: innerWidth - 24, y0: Math.max(60, hb.bottom + 10), y1: innerHeight - 10 };
     const st = document.documentElement.style, vs = [pw, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
     if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); } // (the column, the pick and the result cards follow these)
     return r;

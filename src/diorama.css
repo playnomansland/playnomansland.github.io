@@ -1339,3 +1339,53 @@ html.diorama.pcwide #mp-pop.dock .dm-hide:hover svg { transform: translateY(2px)
 html.diorama.pcwide #mp-pop.dock .mplayer:has(.dm-hide:hover) .mp-label { text-decoration: underline; text-underline-offset: 3px; }
 html.diorama.pcwide #mp-pop.dock .mp-now .mp-label { pointer-events: none; }
 html.diorama.pcwide #mp-pop.dock .dm-hide { left: 0; right: -28px; justify-content: flex-end; } /* the arrow right after the name, as in the owner's picture */
+
+/* the top line's buttons are symbols again (the owner, 2026-11-10): Damage (bars), Settings (the cog), Full screen
+   (corners), as small cream icons with the ink halo; a tooltip names them */
+html.diorama.pcwide .hud .round .cog { width: 30px; height: 30px; display: inline-grid; place-items: center; padding: 0; text-decoration: none; opacity: .85; border-radius: 50%; }
+html.diorama.pcwide .hud .round .cog::after { content: none !important; }
+html.diorama.pcwide .hud .round .cog svg { display: block !important; width: 17px; height: 17px; filter: drop-shadow(0 0 3px rgba(23,20,15,.95)) drop-shadow(0 0 6px rgba(23,20,15,.8)); }
+html.diorama.pcwide .hud .round .cog:hover, html.diorama.pcwide .hud .round .cog[aria-expanded="true"] { opacity: 1; color: #F2B23A; }
+html.diorama.pcwide .hud .round #stats { order: 3; } html.diorama.pcwide .hud .round #cog { order: 3; } html.diorama.pcwide .hud .round #dfs { order: 3; }
+html.diorama.pcwide .hud .round { row-gap: 0; }
+
+/* the Settings sheet in a match, redesigned (the owner, 2026-11-10): grouped under small headings (Sound, Board,
+   Deploy panel, Online matches), each row a label and its control on one line, the switches as clean segmented pills
+   (the picked one in gold), and the extras (Friends, Playlists, Report a bug) as a row of buttons with Main menu last */
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 10px; row-gap: 10px; max-width: 560px; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) > * { grid-column: 1 / -1; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) > .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; margin: 0; min-height: 34px; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) > .bar > .hint { font: 600 14px "Bricolage Grotesque", system-ui, sans-serif; color: rgba(244, 236, 216, .88); }
+html.diorama.pcwide .sheet .bar[data-keep] { order: 0; padding-bottom: 4px; }
+html.diorama.pcwide .sheet .bar:has(#spk-music) { order: 1; } html.diorama.pcwide .sheet .bar:has(#spk-sfx) { order: 2; }
+html.diorama.pcwide .sheet .bar:has([data-solo]) { order: 2; }
+html.diorama.pcwide .sheet .bar:has([data-board]) { order: 3; } html.diorama.pcwide .sheet #q3d-bar { order: 4; }
+html.diorama.pcwide .sheet .bar:has([data-dside]) { order: 5; } html.diorama.pcwide .sheet .bar:has([data-dauto]) { order: 6; }
+html.diorama.pcwide .sheet .bar:has([data-chat]) { order: 7; } html.diorama.pcwide .sheet .bar:has([data-emo]) { order: 8; } html.diorama.pcwide .sheet .bar:has([data-spec]) { order: 9; }
+html.diorama.pcwide .sheet .bar:has(#fr-open2), html.diorama.pcwide .sheet .bar:has(#mp-open2), html.diorama.pcwide .sheet .bar:has(#bug-open) { order: 20; grid-column: auto; margin-top: 8px; }
+html.diorama.pcwide .sheet #to-menu { order: 30; }
+/* the headings: a small kicker above the first row of each group, with a hairline */
+html.diorama.pcwide .sheet .bar:is(:has(#spk-music), :has([data-board]), :has([data-dside]), :has([data-chat]))::before {
+  flex: 0 0 100%; margin: 8px 0 2px; padding-top: 10px; border-top: 1px solid rgba(244, 236, 216, .1);
+  font: 700 11px "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #F2B23A; }
+html.diorama.pcwide .sheet .bar:has(#spk-music)::before { content: "Sound"; border-top: 0; padding-top: 0; margin-top: 0; }
+html.diorama.pcwide .sheet .bar:has([data-board])::before { content: "Board"; }
+html.diorama.pcwide .sheet .bar:has([data-dside])::before { content: "Deploy panel"; }
+html.diorama.pcwide .sheet .bar:has([data-chat])::before { content: "Online matches"; }
+/* the switches: segmented pills in Bricolage, the picked one gold */
+html.diorama.pcwide .sheet .seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid rgba(244, 236, 216, .14); border-radius: 7px; background: rgba(0, 0, 0, .18); overflow: visible; }
+html.diorama.pcwide .sheet .seg button { min-width: 52px; padding: 5px 12px; border: 0; border-radius: 5px; background: transparent; color: rgba(244, 236, 216, .78); font: 600 13px "Bricolage Grotesque", system-ui, sans-serif; transition: background-color .12s ease, color .12s ease; }
+html.diorama.pcwide .sheet .seg button:hover:not([aria-pressed="true"]) { background: rgba(244, 236, 216, .07); color: #F4ECD8; }
+html.diorama.pcwide .sheet .seg button[aria-pressed="true"] { background: #E6B84A; color: #0D1315; }
+/* the extras: one row of three buttons, Main menu full width under them */
+html.diorama.pcwide .sheet .bar:is(:has(#fr-open2), :has(#mp-open2), :has(#bug-open)) > .hint { display: none; }
+html.diorama.pcwide .sheet .bar:is(:has(#fr-open2), :has(#mp-open2), :has(#bug-open)) > .btn { flex: 1; justify-content: center; }
+html.diorama.pcwide .sheet .btn:is(#fr-open2, #mp-open2, #bug-open, #to-menu) { border: 1px solid rgba(244, 236, 216, .2); border-radius: 5px; background: rgba(244, 236, 216, .05); color: #F4ECD8; font: 600 13px "Bricolage Grotesque", system-ui, sans-serif; padding: 8px 10px; }
+html.diorama.pcwide .sheet .btn:is(#fr-open2, #mp-open2, #bug-open, #to-menu):hover:not(:disabled) { border-color: rgba(244, 236, 216, .4); background: rgba(244, 236, 216, .1); }
+html.diorama.pcwide .sheet .btn#to-menu { margin-top: 4px; padding: 10px; color: #FF8F78; border-color: rgba(255, 143, 120, .35); }
+html.diorama.pcwide .sheet .btn#to-menu:hover:not(:disabled) { border-color: #FF8F78; background: rgba(255, 143, 120, .08); }
+html.diorama.pcwide .sheet .volrow { display: inline-flex; align-items: center; gap: 10px; flex: 1; max-width: 330px; justify-content: flex-end; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) { row-gap: 6px; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) > .bar { min-height: 30px; }
+html.diorama.pcwide .sheet .bar:is(:has([data-board]), :has([data-dside]), :has([data-chat]))::before { margin-top: 4px; padding-top: 8px; }
+html.diorama.pcwide .sheet .seg button { padding: 4px 12px; }

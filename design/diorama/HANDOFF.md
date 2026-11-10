@@ -465,3 +465,12 @@ under 860 px high.
 - **2026-11-10 (owner):** the music player **starts down** (just "♪ Music ⌃"; `pb-dmusic` = 'shown' once opened). With
   the panel on the **right**, the top line swaps too: your name and health on the right above the panel, the
   opponent's on the left, both mirrored (`html.dright .hud`).
+- **2026-11-10 (owner):** the slide-away panel comes back from a wider zone (140 px from the edge while tucked; the
+  column plus 40 px while out) and stays out 1.5 s after the pointer leaves. **The board is central:** with
+  slide-away on, `dioSafe` frames it in the middle of the screen with half the column's width as a margin on both
+  sides (the panel overlaps its outer edge only while out); with it off, the board stays clear of the column. **The
+  top line's buttons are symbols again** (bars, cog, full-screen corners; tooltips). **The match's Settings sheet is
+  redesigned:** grouped under Sound, Board, Deploy panel (Side, Slides away), Online matches (Chat, Emotes); segmented
+  pills in Bricolage with the picked one gold; Friends, Report a bug and Open playlists as a row of buttons, Main menu
+  last in red. Done in CSS (`order`, `:has`, `::before` headings) over the game's own rows, so every control is the
+  game's.
