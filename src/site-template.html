@@ -8672,7 +8672,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   $('stats').addEventListener('click', (e) => { e.stopPropagation(); openStats($('stats-dd').hidden); });
   document.addEventListener('click', (e) => { if (!$('stats-dd').hidden && !$('stats-dd').contains(e.target)) openStats(false); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !typingIn(e.target)) { if (mpui.open) { mpClose(); return; } closeSheet(true); openStats(false); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !typingIn(e.target)) { if (mpui.open) { mpClose(); return; } if (endLook && phase === 'end' && $('sheet-back').hidden) { lookAtBoard(false); return; } /* Look at board: Esc shows the result again */ closeSheet(true); openStats(false); } });
 
   // =====================================================================
   // Live matches: PeerJS (WebRTC). The host runs the match and decides results;

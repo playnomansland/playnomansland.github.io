@@ -1612,6 +1612,12 @@ html.dsetmenu.diorama.pcwide #sheet .bar:is(:has(#fr-open2), :has(#mp-open2), :h
 html.dsetmenu.diorama.pcwide #sheet .btn:is(#fr-open2, #mp-open2, #bug-open) { flex: none; padding: 0; border: 0; background: none; font: 700 13px var(--dtype); text-decoration: underline; text-underline-offset: 4px; opacity: .88; }
 html.dsetmenu.diorama.pcwide #sheet .btn:is(#fr-open2, #mp-open2, #bug-open):hover:not(:disabled) { background: none; border: 0; opacity: 1; }
 html.dsetmenu.diorama.pcwide #sheet .btn#to-menu { justify-self: start; width: auto; margin-top: 10px; margin-left: -9px; padding: 4px 9px 1px; border: 0; background: none; color: #FF8F78; font: 700 20px/1 var(--dstencil); text-transform: uppercase; }
+/* Look at board after a match: Show result at the bottom middle of the screen, whatever the panel does (it was in the
+   panel, out of sight with Slides away: the owner, 2026-11-10, "stuck"); the panel only moves its left / right, so
+   this fixed row stays put */
+html.diorama.pcwide .panel .bar:has(#end-back) { position: fixed; z-index: 9; left: 50%; bottom: 34px; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; width: max-content; max-width: calc(100vw - 48px); padding: 10px 12px 10px 20px; margin: 0; background: rgba(23, 20, 15, .82); border: 0; }
+html.diorama.pcwide .panel .bar:has(#end-back) .hint { font: 700 15px var(--dtype); color: #F4ECD8; opacity: 1; text-shadow: none; }
+html.diorama.pcwide .panel #end-back { font-size: 18px; padding: 12px 26px; }
 /* never a scroll for Main menu (the owner, 2026-11-10: online, the sheet scrolled on a 800 px window): Main menu sits
    beside the title, and the rows are tighter so the whole sheet fits on most windows */
 html.dsetmenu.diorama.pcwide .sheet-back.ddrop #sheet { padding: 20px 24px 16px; row-gap: 2px; }
@@ -18113,7 +18119,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · 8c56cbf'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 95b23e5'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -24622,7 +24628,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   $('stats').addEventListener('click', (e) => { e.stopPropagation(); openStats($('stats-dd').hidden); });
   document.addEventListener('click', (e) => { if (!$('stats-dd').hidden && !$('stats-dd').contains(e.target)) openStats(false); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !typingIn(e.target)) { if (mpui.open) { mpClose(); return; } closeSheet(true); openStats(false); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !typingIn(e.target)) { if (mpui.open) { mpClose(); return; } if (endLook && phase === 'end' && $('sheet-back').hidden) { lookAtBoard(false); return; } /* Look at board: Esc shows the result again */ closeSheet(true); openStats(false); } });
 
   // =====================================================================
   // Live matches: PeerJS (WebRTC). The host runs the match and decides results;

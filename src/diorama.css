@@ -1477,6 +1477,12 @@ html.dsetmenu.diorama.pcwide #sheet .bar:is(:has(#fr-open2), :has(#mp-open2), :h
 html.dsetmenu.diorama.pcwide #sheet .btn:is(#fr-open2, #mp-open2, #bug-open) { flex: none; padding: 0; border: 0; background: none; font: 700 13px var(--dtype); text-decoration: underline; text-underline-offset: 4px; opacity: .88; }
 html.dsetmenu.diorama.pcwide #sheet .btn:is(#fr-open2, #mp-open2, #bug-open):hover:not(:disabled) { background: none; border: 0; opacity: 1; }
 html.dsetmenu.diorama.pcwide #sheet .btn#to-menu { justify-self: start; width: auto; margin-top: 10px; margin-left: -9px; padding: 4px 9px 1px; border: 0; background: none; color: #FF8F78; font: 700 20px/1 var(--dstencil); text-transform: uppercase; }
+/* Look at board after a match: Show result at the bottom middle of the screen, whatever the panel does (it was in the
+   panel, out of sight with Slides away: the owner, 2026-11-10, "stuck"); the panel only moves its left / right, so
+   this fixed row stays put */
+html.diorama.pcwide .panel .bar:has(#end-back) { position: fixed; z-index: 9; left: 50%; bottom: 34px; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; width: max-content; max-width: calc(100vw - 48px); padding: 10px 12px 10px 20px; margin: 0; background: rgba(23, 20, 15, .82); border: 0; }
+html.diorama.pcwide .panel .bar:has(#end-back) .hint { font: 700 15px var(--dtype); color: #F4ECD8; opacity: 1; text-shadow: none; }
+html.diorama.pcwide .panel #end-back { font-size: 18px; padding: 12px 26px; }
 /* never a scroll for Main menu (the owner, 2026-11-10: online, the sheet scrolled on a 800 px window): Main menu sits
    beside the title, and the rows are tighter so the whole sheet fits on most windows */
 html.dsetmenu.diorama.pcwide .sheet-back.ddrop #sheet { padding: 20px 24px 16px; row-gap: 2px; }
