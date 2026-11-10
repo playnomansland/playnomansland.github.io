@@ -89,7 +89,8 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   moves (switching Play's view, or any view change): its point (`bfPick`) is chosen where the camera is heading (`want`,
   projected with the camera put there for a moment) and kept until the view or window changes, so the line glides with
   the island. Units' tiles, a unit's hover note and its sheet showed the unit's raw `cost` (1, 2, 3, 5: the number the
-  tiers come from) as "1 gold"; they now show the game's price for a squad, `Game.unitCostOf` (×100: 100 to 500 gold).
+  tiers come from) as "1 gold"; they showed the game's price for a squad (`Game.unitCostOf`) for a moment, then the owner asked for no price at all
+  (2026-11-10): the tiles show the name only, the note and the sheet's tag "Tier N".
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 - Eleventh round (2026-11-09): the golem's note (menu and Profile) has a small saffron button, INVITE A FRIEND

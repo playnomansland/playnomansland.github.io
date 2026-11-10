@@ -314,8 +314,7 @@
       list.forEach((u, i) => {
         const x = (i - (n - 1) / 2) * gap, g = new THREE.Group(); g.position.set(x, 0, -0.5); roster.add(g);
         const b = tile(gap - 0.14, 0.16, 2.3, (c, w, hh) => { c.fillStyle = '#F4ECD8'; c.fillRect(0, 0, w, hh); c.strokeStyle = 'rgba(23,20,15,.2)'; c.lineWidth = 6; c.setLineDash([18, 14]); c.strokeRect(20, 20, w - 40, hh - 40);
-            c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.8);
-            c.font = '500 40px "Bricolage Grotesque"'; c.globalAlpha = .75; c.fillText(`${Game.unitCostOf(u)} gold`, w / 2, hh * 0.9); }, null, '#CDBF9F');
+            c.fillStyle = '#17140F'; c.textAlign = 'center'; fitFont(c, u.name, 700, 64, '"Bricolage Grotesque"', w - 70); c.fillText(u.name, w / 2, hh * 0.85); }, null, '#CDBF9F'); // (the name only, no price: owner, 2026-11-10)
         b.position.set(0, 0.08, 0.35); g.add(b);
         const w = wornOf(u.name), kind = w ? SKIN[w.id].model : M.kindOf(u), ht = M.height(kind) || 2, sc = Math.min(0.66, 2.0 / ht), copies = Math.min(u.bodies || 1, 3);
         const spots = copies === 1 ? [[0, 0]] : copies === 2 ? [[-0.28, 0.05], [0.28, -0.05]] : [[-0.32, 0.12], [0.32, 0.12], [0, -0.25]];
@@ -530,7 +529,7 @@
       if (hovered && hovered.startsWith('u:') && body.classList.contains('units') && (!picked || picked.userData.i !== +hovered.slice(2))) {
         const g = rosterHot[+hovered.slice(2)], [x, y] = proj(g, 1.5), w = hn.offsetWidth;
         const ns = skinsOf(g.userData.u.name).filter(k => k.own).length;
-        hn.style.display = ''; hn.innerHTML = `${g.userData.u.name}.<small>Tier ${g.userData.t} · ${Game.unitCostOf(g.userData.u)} gold${ns ? ` · ${ns} skin${ns > 1 ? 's' : ''}` : ''} · click for its sheet</small>`;
+        hn.style.display = ''; hn.innerHTML = `${g.userData.u.name}.<small>Tier ${g.userData.t}${ns ? ` · ${ns} skin${ns > 1 ? 's' : ''}` : ''} · click for its sheet</small>`;
         const hy = y + 210; hn.style.left = (x + 16) + 'px'; hn.style.top = hy + 'px';
         html += `<path d="M${x} ${y} L${x + 16} ${hy} L${x + 16 + w} ${hy}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
       } else hn.style.display = 'none';
@@ -579,7 +578,7 @@
       picked = g; const sh = document.getElementById('usheet');
       if (!g) return;
       const u = g.userData.u, dps = Math.round(u.hit * u.aps * (u.bodies || 1)), sk = (u.skills || []).map(id => ROSTER.skills[id] || id);
-      sh.querySelector('.tag').textContent = `Tier ${g.userData.t} · ${Game.unitCostOf(u)} gold`;
+      sh.querySelector('.tag').textContent = `Tier ${g.userData.t}`;
       sh.querySelector('h3').textContent = u.name;
       sh.querySelector('.st').innerHTML = [`<b>${u.hp}</b> health`, `<b>${dps}</b> damage a second`, `<b>${u.range} m</b> range`, `<b>${u.speed}</b> speed`,
         (u.bodies || 1) > 1 ? `<b>${u.bodies}</b> bodies` : '', u.splash ? `<b>${u.splash} m</b> splash` : '', u.defense && u.defense !== 'none' ? `<b>${u.defVal}</b> ${u.defense}` : ''].filter(Boolean).map(t => `<span>${t}</span>`).join('');
