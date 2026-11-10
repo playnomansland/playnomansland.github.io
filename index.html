@@ -6976,7 +6976,8 @@ const Game = (() => {
   ];
   const CHARACTERS = ALL_CHARACTERS.filter(c => !RETIRED_CHARS.includes(c.id));
   // ---------- the Standard pack ----------
-  // A smaller match for new players, picked on the menu: fewer units with clear jobs (one or two of each kind per tier),
+  // No longer offered on the menu (2026-11-10: every match plays with the whole pool); kept for tools/tests/standard-pack.js.
+  // A smaller match for new players: fewer units with clear jobs (one or two of each kind per tier),
   // the leaders with simple abilities, and no mage or slime tower. Units by name, so a Counter Lab roster just keeps
   // the ones it has (with none of them, the pack leaves nothing out).
   const STANDARD_PACK = {
@@ -18149,7 +18150,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · 0878d8f'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 585a36c'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -18503,41 +18504,34 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const offIdx = () => units.map((u, i) => offUnits.includes(u.name) ? i : -1).filter(i => i >= 0);
   const unitsOn = () => units.length - offIdx().length;
   // The unit pack (2026-11-02), saved on this device; the host's counts with a friend:
-  //  'learn'    Learn the game: Game.STANDARD_PACK (fewer units, leaders and towers, for new players)
   //  'standard' Standard: every unit, leader and tower (Blixten is retired from every pool, see Game.RETIRED_CHARS)
   //  'custom'   developers only: every unit, leader and tower, minus what Leaders and Units leave out (the old All units)
   // A Counter Lab roster always plays as 'custom'. Nobody but a developer can change what a pack holds.
+  // The smaller Learn the game pack (Game.STANDARD_PACK) is gone from the menu since 2026-11-10: every match, against the
+  // computer too, plays with the whole pool; a device that had it saved plays Standard.
   const PACK_STORE = 'pb-unit-pack2';
   const STD_OFF_CHARS = [];
-  let unitPack = 'learn';
-  try {
-    const v = localStorage.getItem(PACK_STORE), old = localStorage.getItem('pb-unit-pack'); // the old values: 'standard' = the small pack, 'all'
-    if (['learn', 'standard', 'custom'].includes(v)) unitPack = v; else if (old === 'all') unitPack = 'standard';
-  } catch (e) {}
+  let unitPack = 'standard';
+  try { if (localStorage.getItem(PACK_STORE) === 'custom') unitPack = 'custom'; } catch (e) {}
   const packNow = () => customSet ? 'custom' : unitPack === 'custom' && !devMode() ? 'standard' : unitPack;
-  const packOn = () => packNow() === 'learn';
-  const SP = Game.STANDARD_PACK;
-  const packUnits = () => units.filter(u => SP.units.includes(u.name)).length;
-  const packTowers = () => Game.TOWER_TYPES.filter(x => !SP.offTowers.includes(x.id));
   // what a new match takes from the menu: units, leaders and towers left out, and the rules of a Counter Lab roster
-  const matchOff = () => packOn() && packUnits() >= 2 ? units.map((u, i) => SP.units.includes(u.name) ? -1 : i).filter(i => i >= 0) : packNow() === 'standard' ? [] : offIdx();
-  const matchChars = () => packOn() ? Game.CHARACTERS.map(c => c.id).filter(id => !SP.chars.includes(id)) : packNow() === 'standard' ? STD_OFF_CHARS.slice() : offChars;
+  const matchOff = () => packNow() === 'standard' ? [] : offIdx();
+  const matchChars = () => packNow() === 'standard' ? STD_OFF_CHARS.slice() : offChars;
   let lateGame = false; // DEVTESTLATEGAME (developer menu): the next match gets more health and the tier 3+ squad cap (Game.LATE)
-  const matchOpts = () => ({ late: lateGame, skin: skinPick || null, lastSkin: (m && m.skin) || null, offUnits: matchOff(), offTowers: packOn() ? SP.offTowers : [], rules: customSet && rawSet.rules && typeof rawSet.rules === 'object' ? rawSet.rules : null });
-  const packNote = () => packOn()
-    ? `${packUnits()} units, ${SP.chars.length} leaders, ${packTowers().length} towers. The best way to start.`
-    : packNow() === 'standard' ? `All ${units.length} units, ${Game.CHARACTERS.length - STD_OFF_CHARS.length} leaders and ${Game.TOWER_TYPES.length} towers. What ranked is played with.`
+  const matchOpts = () => ({ late: lateGame, skin: skinPick || null, lastSkin: (m && m.skin) || null, offUnits: matchOff(), offTowers: [], rules: customSet && rawSet.rules && typeof rawSet.rules === 'object' ? rawSet.rules : null });
+  const packNote = () => packNow() === 'standard' ? `All ${units.length} units, ${Game.CHARACTERS.length - STD_OFF_CHARS.length} leaders and ${Game.TOWER_TYPES.length} towers. What ranked is played with.`
     : `${unitsOn() === units.length ? 'All ' + units.length : `${unitsOn()} of ${units.length}`} units, ${charsOn()} leaders, ${Game.TOWER_TYPES.length} towers. Pick which below (developer).`;
-  const packSeg = () => customSet ? '' : `<div class="bar">
+  // the Units choice is for developers only now (Standard or Custom); everyone else always plays Standard
+  const packSeg = () => customSet || !devMode() ? '' : `<div class="bar">
         <span class="hint">Units</span>
         <div class="seg" role="group" aria-label="Unit pack">
-          <button data-pack="learn" aria-pressed="${packNow() === 'learn'}">Learn the game</button><button data-pack="standard" aria-pressed="${packNow() === 'standard'}">Standard</button>${devMode() ? `<button data-pack="custom" aria-pressed="${packNow() === 'custom'}">Custom</button>` : ''}
+          <button data-pack="standard" aria-pressed="${packNow() === 'standard'}">Standard</button><button data-pack="custom" aria-pressed="${packNow() === 'custom'}">Custom</button>
         </div>
       </div>
       <span class="hint" id="pack-note" style="margin-top:-6px">${packNote()}</span>`;
   const wirePackSeg = () => { const root = setRoot(); root.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {
     const v = b.dataset.pack;
-    unitPack = v === 'custom' && devMode() ? 'custom' : v === 'standard' ? 'standard' : 'learn';
+    unitPack = v === 'custom' && devMode() ? 'custom' : 'standard';
     try { localStorage.setItem(PACK_STORE, unitPack); } catch (e) {}
     root.querySelectorAll('[data-pack]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     root.querySelector('#pack-note').textContent = packNote();
@@ -23425,7 +23419,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
-  const V3D = '31bd4fc220'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '11cac48cf5'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
@@ -24862,7 +24856,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       ${settingsBox(`
         ${mapSeg()}
         ${charSeg()}
-        <span class="hint">You both play with the units on this device: ${customSet ? `your ${units.length} Counter Lab units` : packOn() ? `the Learn the game pack (${packUnits()} of the ${units.length} built-in units)` : `the ${units.length} built-in units`}.</span>`)}`}`;
+        <span class="hint">You both play with the units on this device: ${customSet ? `your ${units.length} Counter Lab units` : `the ${units.length} built-in units`}.</span>`)}`}`;
     if ($('share')) $('share').addEventListener('click', () => { navigator.share({ title: 'No Mans Land', text: `Fight me in No Mans Land! Code ${net.code}`, url: link }).catch(() => {}); });
     $('copy').addEventListener('click', () => {
       const done = () => { $('copy').textContent = 'Copied'; setTimeout(() => { if ($('copy')) $('copy').textContent = 'Copy link'; }, 1500); };
@@ -24908,7 +24902,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
           + row('Spectators', word('spec', 1, 'On', watch) + word('spec', 0, 'Off', !watch), watch ? 'Anyone can watch once it starts.' : 'Just the two of you.') : ''}
         ${rk ? row('Units', '<span class="w" aria-pressed="true">Standard</span>', 'Ranked: the Standard map and pack, the same 5 leaders and 3 towers for you both. Win 2 games to take the series; only ranked series count on the leaderboard.')
           : customSet ? row('Units', `<span class="w" aria-pressed="true">Your ${units.length}</span>`, 'Your Counter Lab units, on this device.')
-          : row('Units', word('pack', 'learn', 'Learn the game', packNow() === 'learn') + word('pack', 'standard', 'Standard', packNow() === 'standard') + (devMode() ? word('pack', 'custom', 'Custom', packNow() === 'custom') : ''), packNote(), 'pack-row')}
+          : row('Units', devMode() ? word('pack', 'standard', 'Standard', packNow() === 'standard') + word('pack', 'custom', 'Custom', packNow() === 'custom') : '<span class="w" aria-pressed="true">Standard</span>', packNote(), 'pack-row')}
         ${row('Battlefield', `<button class="arrow" data-bf="-1" aria-label="Previous battlefield">‹</button><span class="w" aria-pressed="true">${esc(bf.name)}</span><button class="arrow" data-bf="1" aria-label="Next battlefield">›</button>`, `${k + 1} of ${skins.length}. The match is played here.`)}`;
     const dev = host && devMode() && !rk ? `<div class="ddev"><span class="lab">Developer</span>
         ${factionsReady() ? `<div class="seg" role="group" aria-label="Gamemode"><button data-kind="standard" aria-pressed="${matchKind !== 'factions'}">Standard</button><button data-kind="factions" aria-pressed="${matchKind === 'factions'}">Factions</button></div>` : ''}
@@ -24935,7 +24929,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     P.querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); dioRoom(); }));
     P.querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); dioRoom(); }));
     P.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {
-      const v = b.dataset.pack; unitPack = v === 'custom' && devMode() ? 'custom' : v === 'standard' ? 'standard' : 'learn';
+      const v = b.dataset.pack; unitPack = v === 'custom' && devMode() ? 'custom' : 'standard';
       try { localStorage.setItem(PACK_STORE, unitPack); } catch (e) {}
       dioRoom();
     }));
@@ -25551,7 +25545,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   function srvRetry() { clearTimeout(net.retryTimer); net.tries++; net.retryTimer = setTimeout(() => { if (net.alive && !net.ws) srvOpen(); }, Math.min(8000, 600 * net.tries)); }
   // the match settings from this phone's menu (map, look, units, leaders and towers left out)
-  const srvSettings = () => ({ map: playMap() || '', skin: skinPick || '', offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: packOn() ? SP.offTowers.slice() : [], late: lateGame });
+  const srvSettings = () => ({ map: playMap() || '', skin: skinPick || '', offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: [], late: lateGame });
   // one of this phone's own actions (a Game call that worked): to the server, and kept until it says it has it
   function srvAct(fn, a) {
     net.seq++;
@@ -26934,8 +26928,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   // the match settings from the menu's own pickers (map, look, unit pack, leaders and units left out)
   function tourCaptured() {
-    return { map: curMap() || '', skin: skinPick || '', pack: packOn() ? 'standard' : 'all',
-      offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: packOn() ? SP.offTowers.slice() : [] };
+    return { map: curMap() || '', skin: skinPick || '', pack: 'all',
+      offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: [] };
   }
   const tourCapture = () => tourDo('settings', tourCaptured());
 
