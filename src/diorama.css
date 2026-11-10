@@ -1538,7 +1538,15 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
   html.diorama #dio .acct button { width: 44px; height: 40px; justify-content: center; }
   html.diorama #dio .acct span { display: none; }
   html.diorama #dio .acct svg { width: 22px; height: 22px; }
-  html.diorama #dio .back { position: absolute; top: calc(16px + env(safe-area-inset-top)); right: 16px; z-index: 3; padding: 8px 0; }
+  /* Back: always in the same place on every screen but the menu, top left under the logo, and it stays there while the
+     page scrolls (the owner, 2026-11-10: "I never want to have to scroll down for the Back button"). The shared .back
+     (goBack: its label says where it goes); the screens' own Back buttons further down are hidden on a phone */
+  html.diorama #dio .back { position: fixed; top: calc(46px + env(safe-area-inset-top)); left: 10px; right: auto; z-index: 6; display: none; min-height: 40px;
+    padding: 11px 16px 7px 12px; font: 700 19px/1 var(--stencil); letter-spacing: .01em; text-transform: uppercase; color: #17140F; background: #F2B23A;
+    clip-path: polygon(0 8%, 97% 0, 100% 88%, 2% 100%); filter: drop-shadow(0 2px 0 rgba(0,0,0,.25)); }
+  html.diorama #dio:is(.play, .profile, .puz, .in-rooms, .in-create, .in-signin) .back { display: inline-block; }
+  html.diorama #dio.play .back { color: #F2B23A; background: #17140F; }
+  html.diorama #dio :is(#play-back, #pf-back, #pz-back) { display: none; }
   html.diorama #dio .notes, html.diorama #dio .note, html.diorama #dio .zz { display: none !important; }
   /* every screen's column: back in the flow, the page's width less 16 px a side */
   html.diorama #dio :is(.menu, .orders, .devs, .rooms, .newroom, .pf, .history, .signin, .door, .standings, .music, .build, .phone-reward) {

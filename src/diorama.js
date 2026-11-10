@@ -1100,7 +1100,7 @@
     }
     function openPuz() {
       openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); leavePlay(); unpin();
-      body.classList.add('puz'); home.puz = true; hovered = null; setHover(null);
+      body.classList.add('puz'); home.puz = true; hovered = null; setHover(null); backBtn.textContent = '← Menu'; // (the phones' Back)
       drawPuz(); puzShow(puzPick >= 0 ? puzPick : firstOpen()); want = VIEWS.puz;
     }
     function closePuz() { if (!body.classList.contains('puz')) return; body.classList.remove('puz'); home.puz = false; want = VIEWS.play; body.querySelectorAll('.qnote').forEach(n => { n.style.display = 'none'; n._off = null; }); }
