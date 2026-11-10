@@ -8150,7 +8150,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // sq (optional): the squad whose sheet this is, to show the skill it came with (Enzo)
   function skillBlock(i, side, sq) {
     const defs = units[i].skillDefs || [];
-    if (!defs.some(Boolean) || !m) return '';
+    if (!defs.some(Boolean)) return '';
+    if (!m) return skillList(i);
     const mine = side === undefined || side === me, owner = mine ? me : side;
     const enzo = Game.charOf(m, owner) === 'enzo' && (mine || charVisible(owner)), ek = Game.enzoSkill(m, owner, sq || { unit: i }); // the same for every squad of the unit, all match
     const row = (k) => {
@@ -8199,6 +8200,32 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       parts.push(grp.length > 1 ? orGroup(grp.map(row), 'Pick one · either or') : row(k));
     }
     return `<div style="display:grid;gap:6px"><h4 style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Skills${enzo ? ` · free with ${Game.CHAR.enzoMin}+ squads` : ''}</h4>${parts.join('')}</div>`;
+  }
+  // Out of a match (the Diorama's Units screen, Unit sheet): the unit's skills as they read in one, with their prices and
+  // no buttons. Game's skill helpers only read the units (pm.units), so the roster stands in for a match
+  function skillList(i) {
+    const pm = { units }, defs = units[i].skillDefs || [];
+    const chip = (txt) => `<span class="chip" style="color:var(--ink);border:1px solid currentColor;border-radius:99px;padding:1px 8px;font-size:12px">${txt}</span>`;
+    const row = (k) => {
+      const d = defs[k], cost = Game.skillCost(pm, i, k), wake = Game.isAwaken(pm, i, k), evolve = Game.isEvolve(pm, i, k);
+      const act = Game.isInnate(pm, i, k) ? chip('Built in') : evolve ? '<span class="hint">Free</span>' : `<span class="hint">${cost} gold${wake ? ' a squad' : ''}</span>`;
+      const anyOf = Game.skillNeedsAny(pm, i, k).map(j => defs[j].name), needs = Game.skillNeeds(pm, i, k).map(j => defs[j].name);
+      const label = evolve ? 'Evolve' : wake ? 'Awaken' : Game.isMaster(pm, i, k) ? 'Master' : '';
+      const detail = d.text ? esc(Engine.describeSkill({ ...d, text: '' })) : '';
+      const more0 = evolve ? `Not bought: a squad evolves by itself, free, after the fight ${d.needs === 'glutMax' ? 'that fills its Glut' : 'it meets the need in'}, and keeps it all match.`
+        : [anyOf.length ? `<b style="color:var(--gold)">Needs</b> ${esc(anyOf.join(' or '))} first.` : needs.length ? `<b style="color:var(--gold)">Needs</b> ${esc(needs.join(' and '))} first.` : '',
+          wake ? 'Bought for one squad at a time, on its own sheet. You can awaken only one unit type a match.' : label ? 'For all your squads of this unit.' : '',
+          Game.isFlat(pm, i, k) || Game.isInnate(pm, i, k) ? '' : `Every skill you buy for this unit makes its other skills ${Game.SKILL_STEP} gold dearer.`].filter(Boolean).join(' ');
+      return upRow({ name: d.name, label, act, text: esc(Engine.describeSkill(d)), more: [detail, more0].filter(Boolean).join('<br>') });
+    };
+    const ks = Engine.SLOTS.filter(k => defs[k]), done = new Set(), parts = [];
+    for (const k of ks) {
+      if (done.has(k)) continue;
+      const grp = [k, ...Game.skillOr(pm, i, k)].filter(j => defs[j] && !done.has(j)).sort((a, b) => a - b);
+      grp.forEach(j => done.add(j));
+      parts.push(grp.length > 1 ? orGroup(grp.map(row), 'Pick one · either or') : row(k));
+    }
+    return `<div style="display:grid;gap:6px"><h4 style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Skills</h4>${parts.join('')}</div>`;
   }
   // an Awaken skill's row: this squad's (sq; from the shop, how many of yours have it). Buttons carry data-act, bound by bindPane.
   function awakenAct(i, k, side, sq) {
