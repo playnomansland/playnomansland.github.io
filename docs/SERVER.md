@@ -200,3 +200,14 @@ How many people have the game open right now, for developers only (the owner ask
 - The page (`onl*` in `src/site-template.html`): the socket opens on every page, retrying from 4 s up to every 5 minutes; a developer's page asks for the count every 20 s while in view and shows it in `[data-online]`: a pill under the name on the phone menu (`.online-np`), the first item of the Diorama's top bar (with the DEV tag). `window.__online()` with `?test`.
 - Test-only setting (never set in production): `ONLINE_STALE_MS`.
 - Tests: `server/test/online.test.js` (port 8784, in `npm test`); `node tools/tests/online-ui.js` (the page against a local server, ports 8766 and 8788).
+
+## Games played per day (2026-11-10)
+
+How many games were played each day, and nothing else about them (the owner asked for it: the match history only has online matches, games vs the computer were never sent anywhere).
+
+- GamesRoom (`server/src/games.js`, binding `GAMES`, migration `games-1`): one Durable Object (`'all'`) with a `counts (day, kind, n)` table. Days are UTC dates. A game counts once, when its first round is fought.
+- Kinds: `online` (server-refereed matches, tournaments included; counted by the Room itself in `record`, round 1, so a page can't send it), `ai` (vs the computer, tournament bot matches too), `peer` (phone to phone, sent by the host only) and `puzzle` (the tutorial and tutorial puzzles).
+- `POST /games` `{ kind, d, s }` (the game's origin only; text/plain, so no preflight): `d` the page's device id (`pb-device`, the one `/online` uses), `s` the match seed. A `(kind, device, seed)` is remembered for 2 days (`seen` table, daily alarm) and counts once, so reloads don't count twice. At most 300 games per IP (hashed) per UTC day (`GAMES.perIpDay`).
+- `GET /games?days=N` (default 7, at most 366) or `GET /games?day=YYYY-MM-DD`, no account or origin needed: `{ days: [{ day, total, ai, peer, online, puzzle }] }`, newest first.
+- The page (`countGame` in `src/site-template.html`, called from `runFight`): not from a local page (localhost) talking to the live server, so tests and local play don't count; with `?server=` it does.
+- Check: `server/test/games.test.js` (in `npm test`).

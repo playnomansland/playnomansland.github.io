@@ -57,7 +57,7 @@ Frozen Peak's hailstorm and altar of ice are switched off for now (`iceOff` on t
 
 ## Game server
 
-Online play runs on our own server (Cloudflare Workers + Durable Objects) in `server/`: tournaments (step 2), the referee of live matches (step 3) match history (step 4: every round of every server match, `server/src/history.js`, read with `GET /history`) and accounts (step 5: guests and Sign in with Google, `server/src/accounts.js`, a D1 database; switched off until the database is bound). Plan, security and accounts: [docs/SERVER.md](docs/SERVER.md). Local: `cd server && npm i && npm run dev`; test: `npm test`.
+Online play runs on our own server (Cloudflare Workers + Durable Objects) in `server/`: tournaments (step 2), the referee of live matches (step 3) match history (step 4: every round of every server match, `server/src/history.js`, read with `GET /history`) and accounts (step 5: guests and Sign in with Google, `server/src/accounts.js`, a D1 database; switched off until the database is bound). Plan, security and accounts: [docs/SERVER.md](docs/SERVER.md). Games played per day (2026-11-10, counts only, by kind: vs the computer, phone to phone, online, puzzles): `GET /games?days=7` on the game server ([docs/SERVER.md](docs/SERVER.md) "Games played per day"). Local: `cd server && npm i && npm run dev`; test: `npm test`.
 
 ## Online lobby, chat and emotes (2026-11-04)
 

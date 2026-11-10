@@ -5101,6 +5101,20 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     // text/plain keeps it a simple request (no CORS preflight, which Apps Script doesn't answer)
     try { fetch(HISTORY_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(row) }).catch(() => {}); } catch (e) {}
   }
+  // Games played per day (2026-11-10, server/src/games.js): one POST when round 1 of a game is fought, with only its kind,
+  // this device's id and the match seed (the server counts a device's match once). Online matches ('net') are counted by
+  // the server itself; a phone-to-phone match by its host only. Not from a local page talking to the live server (the
+  // tests and local play), so the live counts stay the players'.
+  function countGame(sum) {
+    if (!sum || sum.round !== 1 || !m) return;
+    const kind = mode === 'ai' ? 'ai' : mode === 'host' ? 'peer' : mode === 'tutorial' ? 'puzzle' : '';
+    if (!kind) return;
+    const local = /^(localhost|127\.0\.0\.1|\[::1\]|)$/.test(location.hostname);
+    if (local && !qs.has('server')) return;
+    const body = JSON.stringify({ kind, d: onlDevice(), s: (m.seed >>> 0).toString(36) });
+    // text/plain keeps it a simple request (no preflight); nothing waits on it
+    try { fetch(`${SERVER_URL}/games`, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body, keepalive: true }).catch(() => {}); } catch (e) {}
+  }
   const histTime = (iso) => { const when = new Date(iso); return isNaN(when) ? '' : when.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
   // one saved round from the server
   function histServerItem(r) {
@@ -6720,7 +6734,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const sim = Game.startBattle(m);
     while (sim.step()) {}
     const summary = Game.resolve(m, sim.result());
-    if (mode !== 'sandbox') { recordRound(pre, summary); saveHistory(pre, summary); } // Replay a round changes nothing
+    if (mode !== 'sandbox') { recordRound(pre, summary); saveHistory(pre, summary); countGame(summary); } // Replay a round changes nothing
     lastSummary = summary; nextReady = [false, false]; rematch = [false, false];
     if (mode === 'host') { send({ t: 'fight', pre, post: snapshot(m), summary }); specSend({ t: 'fight', pre, post: snapshot(m), summary }); saveHost(); }
     playBattle(pre);
