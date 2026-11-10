@@ -16,6 +16,8 @@
 //   POST /account/<route>  -> accounts (step 5; guest, me, google, tag, signout, delete, title, skin, ranked, invite, discord): see accounts.js
 //   GET /hub?p=<PLAYER>    -> WebSocket into that player's PlayerHub (friends: online status, invites, private messages; hub.js)
 //   GET /online?d=<DEVICE> -> WebSocket that counts this open page (OnlineRoom, online.js); the count: POST /account/online (developers)
+//   POST /games            -> a page counts one game { kind: ai|peer|puzzle, d: device, s: seed } (GamesRoom, games.js)
+//   GET /games?days=N | ?day=YYYY-MM-DD -> games played per UTC day, by kind (ai, peer, online, puzzle)
 // Cron (wrangler.toml [triggers], hourly): month end, the Legend title for the leaderboard's top 5 (accounts.js awardLegends),
 // and skins given to a gamertag (accounts.js grantSkins)
 import { json } from './limits.js';
@@ -29,6 +31,7 @@ export { DuoRoom } from './duo.js';
 export { LobbyRoom } from './lobby.js';
 export { PlayerHub } from './hub.js'; // friends (2026-11-04)
 export { OnlineRoom } from './online.js'; // players online (2026-11-10)
+export { GamesRoom } from './games.js'; // games played per day (2026-11-10)
 
 const CODE_RE = /^[A-Z0-9]{4,8}$/;
 
@@ -54,6 +57,20 @@ export default {
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors,
         'access-control-allow-methods': 'POST', 'access-control-allow-headers': 'authorization, content-type', 'access-control-max-age': '600' } });
       return handleAccount(request, env, cors);
+    }
+    // games played per day (2026-11-10, games.js): a page counts a game with a POST (the game's own pages only; sent as
+    // text/plain, so no preflight), anyone may read the counts
+    if (url.pathname === '/games') {
+      if (!env.GAMES) return json({ error: 'games off' }, 503, cors);
+      if (request.method !== 'GET' && request.method !== 'POST') return json({ error: 'method' }, 405);
+      if (request.method === 'POST' && !allowedOrigin(request, env)) return json({ error: 'origin' }, 403);
+      const headers = new Headers({ 'x-origin': cors['access-control-allow-origin'] || '' });
+      if (request.method === 'POST') headers.set('x-ip', (await sha256('nml-games:' + (request.headers.get('CF-Connecting-IP') || 'none'))).slice(0, 24));
+      try {
+        return await env.GAMES.getByName('all').fetch(new Request('https://games/' + url.search, {
+          method: request.method, headers, body: request.method === 'POST' ? await request.text() : undefined,
+        }));
+      } catch (e) { console.warn('games', e && e.message); return json({ error: 'games unavailable' }, 503, cors); }
     }
     if (request.method !== 'GET') return json({ error: 'method' }, 405);
 

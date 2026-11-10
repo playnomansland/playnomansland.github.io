@@ -287,6 +287,12 @@ export class Room extends DurableObject {
     return { room, tour: t ? t.code : null, match: t ? t.match : null, matchId: `${room}-${((R && R.seed) >>> 0).toString(36)}`, ranked: !!rk, names: t ? t.names : rk ? rk.tags : tags };
   }
   record(f, forfeitSide) {
+    // games played per day (games.js): a match counts once, when its first round has been fought (a rematch is a new game)
+    if (f && f.summary && f.summary.round === 1 && this.env.GAMES) {
+      const seed = ((this.R && this.R.seed) >>> 0).toString(36), room = (this.meta && this.meta.tour ? this.meta.tour.room : this.code) || '';
+      const run = this.env.GAMES.getByName('all').add('online', `online:${room}:${seed}`, '').catch((e) => console.warn('game not counted', e && e.message));
+      try { this.ctx.waitUntil(run); } catch {}
+    }
     if (!this.env.HISTORY) return;
     const R = this.R;
     const run = (async () => {

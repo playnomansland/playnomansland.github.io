@@ -52,6 +52,11 @@ class_name = "PlayerHub"
 name = "ONLINE"
 class_name = "OnlineRoom"
 
+# Games played (2026-11-10): one GamesRoom ('all') counts the games played each day, by kind (games.js). Counts only.
+[[durable_objects.bindings]]
+name = "GAMES"
+class_name = "GamesRoom"
+
 # Accounts (step 5): the D1 database nml-accounts (on since 2026-11-02). Without this block /account/* answers 503
 # 'accounts off' and nothing else changes. The tables are made by the Worker itself (accounts.js, ensureSchema).
 # Developer mode: the secret DEV_EMAILS (set by the deploy workflow from the GitHub secret of the same name).
@@ -94,6 +99,11 @@ new_sqlite_classes = ["PlayerHub"]
 [[migrations]]
 tag = "online-1"
 new_sqlite_classes = ["OnlineRoom"]
+
+# games played per day (2026-11-10)
+[[migrations]]
+tag = "games-1"
+new_sqlite_classes = ["GamesRoom"]
 
 [observability]
 enabled = true

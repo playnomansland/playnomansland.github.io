@@ -79,6 +79,33 @@ const ORIGIN = 'http://127.0.0.1:8766';
     c = await chip(pp);
     ok(c.length === 1 && /^DEV ?3 online$/.test(c[0]), 'PC: the top bar shows it with the DEV tag: ' + JSON.stringify(c));
     ok(await pp.evaluate(() => !!document.querySelector('#dio .acct [data-online]:not([hidden])')), 'PC: it sits in the top bar');
+
+    // who is online (2026-11-10): tapping the pill lists the players signed in, and the pages with no account
+    const rows = (p) => p.evaluate(() => [...document.querySelectorAll('#onl-sheet .onl-row')].map(r => r.textContent.replace(/\s+/g, ' ').trim()));
+    const nob2 = await browser(null), np2 = await nob2.tab(); // a page with no account again
+    await sleep(800);
+    await dp.click('.online-np');
+    await dp.waitForSelector('#onl-sheet .onl-row', { timeout: 10000 });
+    let list = await rows(dp), sum = await dp.textContent('#onl-sheet .onl-sum');
+    ok(list.length === 2 && list.some(r => r.includes(dev.tag) && /Google · 2 devices · you/.test(r)) && list.some(r => r.includes(g.tag) && /Guest/.test(r)),
+      'phone: the sheet lists the developer (two devices, you) and the guest: ' + JSON.stringify(list));
+    ok(/^4 devices with the game open: 2 players signed in, 1 without an account/.test(sum), 'phone: the summary: ' + sum);
+    ok(list.some(r => r.includes(g.tag) && /Menu/.test(r)), 'phone: the guest is on the menu: ' + JSON.stringify(list));
+    // the guest starts a game vs the computer: their row says so, with the round
+    if (!(await gp.locator('#go').count())) await gp.click('#play').catch(() => {});
+    await gp.click('#go'); await sleep(2500);
+    await dp.click('#onl-refresh');
+    await dp.waitForFunction((tag) => [...document.querySelectorAll('#onl-sheet .onl-row')].some(r => r.textContent.includes(tag) && /Vs computer · round 1/.test(r.textContent)), g.tag, { timeout: 10000 }).catch(() => {});
+    list = await rows(dp);
+    ok(list.some(r => r.includes(g.tag) && /Vs computer · round 1/.test(r)), 'phone: the guest is in a game vs the computer, round 1: ' + JSON.stringify(list));
+    await dp.screenshot({ path: path.join(process.env.SHOTS || '/tmp', 'online-who-phone.png') });
+    await dp.click('#close');
+    await pp.click('#dio-online');
+    await pp.waitForSelector('#onl-sheet .onl-row', { timeout: 10000 });
+    ok((await rows(pp)).length === 2, 'PC: the top bar item opens the same list');
+    await pp.screenshot({ path: path.join(process.env.SHOTS || '/tmp', 'online-who-pc.png') });
+    ok(await gp.evaluate(() => { document.querySelector('[data-online]') && document.querySelector('[data-online]').click(); return !document.getElementById('onl-sheet'); }), 'a guest has no pill and no sheet');
+    await nob2.close();
   } finally { await b.close(); srv.stop(); web.close(); }
   console.log(bad ? `${bad} online check(s) failed` : 'all online checks passed');
   process.exit(bad ? 1 : 0);

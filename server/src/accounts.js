@@ -456,6 +456,29 @@ export async function sessionPlayer(env, token) {
   try { google = await hasGoogle(db, s.player); } catch (e) { google = false; } // text chat in matches needs a Google login (lobby)
   return { id: s.player, tag: s.tag || 'Player', dev: !!s.dev, title: titleShown(p), skins, google };
 }
+// Players online (2026-11-10, online.js): only the player id behind a session token, or null (a page's hello)
+export async function sessionId(env, token) {
+  const db = env.ACCOUNTS;
+  if (!db || typeof token !== 'string' || !/^[0-9a-f]{64}$/.test(token)) return null;
+  await ensureSchema(db);
+  const s = await db.prepare('SELECT s.player, s.expires, p.deleted FROM sessions s JOIN players p ON p.id = s.player WHERE s.hash = ?').bind(await sha256(token)).first();
+  return s && s.expires >= Date.now() && !s.deleted ? s.player : null;
+}
+// Who is online (developers only, /account/online { list: true }): the OnlineRoom's player ids with their usernames
+// and titles, read now (so a changed username shows at once). players: [{ id, devices, where }] (where: { w, r? }, the game screen)
+async function onlinePlayers(db, players) {
+  const ids = players.map((p) => p.id).slice(0, 1000), rows = new Map();
+  for (let i = 0; i < ids.length; i += 90) {
+    const part = ids.slice(i, i + 90);
+    const r = await db.prepare(`SELECT p.id, p.tag, p.created, p.dev, p.title, p.legend, p.discord, p.initiate, p.goodsport, p.deleted,
+      EXISTS (SELECT 1 FROM logins l WHERE l.player = p.id AND l.provider = 'google') AS google
+      FROM players p WHERE p.id IN (${part.map(() => '?').join(',')})`).bind(...part).all();
+    for (const x of r.results) rows.set(x.id, x);
+  }
+  return players.map((p) => ({ p, x: rows.get(p.id) })).filter(({ x }) => x && !x.deleted)
+    .map(({ p, x }) => ({ id: x.id, tag: x.tag || 'Player', title: titleShown(x), google: !!x.google, dev: !!x.dev, devices: p.devices, where: p.where || null }))
+    .sort((a, b) => a.tag.localeCompare(b.tag, 'en', { sensitivity: 'base' }));
+}
 // The online lobby (2026-11-04, docs/LOBBY.md): config 'lobby_duo' = 'dev' (default: 2v2 rooms listed for developers
 // only, and only developers make them) or 'all'. Read by LobbyRoom and DuoRoom; flipped with POST /account/lobbyduo.
 export async function lobbyDuo(env) {
@@ -1025,6 +1048,11 @@ export async function handleAccount(request, env, cors) {
       const p = await db.prepare('SELECT dev FROM players WHERE id = ?').bind(me.player).first();
       if (!p || !p.dev) return json({ error: 'not a developer' }, 403, cors);
       if (!env.ONLINE) return json({ error: 'online off' }, 503, cors);
+      // { list: true } (2026-11-10): who, too: the players signed in on an open page, and how many pages have no account
+      if (body && body.list === true) {
+        const w = await env.ONLINE.getByName('all').who();
+        return json({ online: w.online, players: await onlinePlayers(db, w.players), anon: w.anon, at: now }, 200, cors);
+      }
       return json({ ...(await env.ONLINE.getByName('all').count()), at: now }, 200, cors);
     }
     if (route === 'invite') {
