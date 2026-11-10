@@ -185,6 +185,12 @@ canvas { display: block; width: 100%; height: 100%; }
 #dio .acct button { display: inline-flex; align-items: center; gap: 8px; opacity: .9; }
 #dio .acct button:hover { opacity: 1; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
 #dio .acct svg { width: 18px; height: 18px; }
+/* players online (2026-11-10, developers only): first in the top bar, the DEV tag (.dvt), a live dot and the count */
+#dio .acct .online { display: inline-flex; align-items: center; gap: 9px; opacity: .9; cursor: default; white-space: nowrap; }
+#dio .acct .online[hidden] { display: none; }
+#dio .acct .online .dvt { padding: 2px 7px 1px; font-size: 10px; }
+#dio .acct .online .live { background: #1F8F4E; box-shadow: none; } #dio .acct .online .live::after { border-color: #1F8F4E; }
+#dio .acct .online b { font-variant-numeric: tabular-nums; }
 
 /* ── the menu: words, not boxes ── */
 #dio .menu { position: fixed; left: 48px; bottom: 96px; display: grid; justify-items: start; }
@@ -330,7 +336,7 @@ canvas { display: block; width: 100%; height: 100%; }
   #dio #world { position: absolute; height: 350px; } #dio .scrim { display: none; }
   #dio .field { position: fixed; }
   #dio .logo { top: 20px; left: 16px; width: 170px; }
-  #dio .acct { top: 22px; right: 16px; gap: 16px; } #dio .acct span { display: none; } #dio .acct svg { width: 22px; height: 22px; }
+  #dio .acct { top: 22px; right: 16px; gap: 16px; } #dio .acct button span { display: none; } #dio .acct .online .dvt { display: none; } #dio .acct .online .n { display: inline; } #dio .acct svg { width: 22px; height: 22px; }
   #dio .notes, #dio .note { display: none !important; }
   #dio .note { position: absolute; max-width: 160px; font-size: 13px; } #dio .note small { font-size: 12px; }
   #dio .zz { position: absolute; }
@@ -2346,6 +2352,15 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .nameplate.big .np-tag { font-size: 22px; }
 .nameplate.row { justify-items: start; }
 .nameplate.menu-np .np-tag { font-size: 20px; color: #fff; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6); }
+/* players online (2026-11-10, developers only): a small pill in the DEV title's pink under the name, with a live dot */
+.online-np { display: inline-flex; align-items: center; gap: 7px; margin-top: 6px; padding: 3px 11px 3px 9px; border-radius: 999px; font: 700 11px var(--font-display); letter-spacing: 0.16em; text-transform: uppercase; color: #FF5FC4;
+  background: linear-gradient(90deg, transparent, rgba(255, 95, 196, 0.16) 18%, rgba(255, 95, 196, 0.16) 82%, transparent); text-shadow: 0 0 8px rgba(255, 95, 196, 0.45); }
+.online-np[hidden] { display: none; }
+.online-np b { font: 700 13px var(--font-data, var(--font-display)); letter-spacing: 0.02em; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+.online-np .live, #dio .online .live { position: relative; width: 7px; height: 7px; border-radius: 50%; background: #4BE38A; box-shadow: 0 0 6px rgba(75, 227, 138, 0.8); flex: none; }
+.online-np .live::after, #dio .online .live::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid #4BE38A; opacity: 0; animation: onlPulse 2.4s ease-out infinite; }
+@keyframes onlPulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(1.9); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .online-np .live::after, #dio .online .live::after { animation: none; } }
 .ptitle { --tc: #B67CFF; --tg: rgba(182, 124, 255, 0.5); display: inline-flex; align-items: center; gap: 6px; font: 700 10px var(--font-display); letter-spacing: 0.22em; text-transform: uppercase; color: var(--tc); padding: 2px 9px 2px 11px; border-radius: 999px;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tc) 22%, transparent) 25%, color-mix(in srgb, var(--tc) 22%, transparent) 75%, transparent);
   text-shadow: 0 0 8px var(--tg), 0 0 2px var(--tg); animation: tglow 2.6s ease-in-out infinite; }
@@ -2610,6 +2625,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <img class="logo" src="img/title.png" alt="No Mans Land: main menu" role="button" tabindex="0">
   <nav class="acct" aria-label="Account">
+    <span class="online" id="dio-online" data-online hidden title="Players with the game open right now. Only developers see this."><span class="dvt">DEV</span><i class="live" aria-hidden="true"></i><span class="n"><b></b> online</span></span>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="currentColor"/><path d="M2 20c0-3.9 3.1-6 7-6s7 2.1 7 6" fill="currentColor"/><circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".7"/><path d="M17 13.5c2.9.2 5 1.9 5 5.5h-4.4c0-2-.6-3.7-1.8-5" fill="currentColor" opacity=".7"/></svg><span>Friends</span><b class="badge" id="fr-badge" hidden></b></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>Guest</span></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg><span>Settings</span></button>
@@ -18135,7 +18151,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · 22cf052'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 390d32d'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -20139,6 +20155,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       </div>
       <div class="home-mid">
         ${acct ? nameplate(acct.tag, acct.title, 'menu-np') : ''}
+        ${devMode() ? onlineChip() : ''}
         <button class="hbtn gold play-big" id="play">Play</button>
         <div class="home-more">
           ${inTour ? `<button class="btn primary" id="tour-back">Back to tournament ${esc(tour.code)}</button>` : ''}
@@ -20185,6 +20202,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if ($('skin-ok')) $('skin-ok').addEventListener('click', () => { skinsSeen(); drawHome(); });
     if (acct && !home.refreshed) { home.refreshed = true; acctCall('me', {}, true).then(r => { if (r.status === 200) { acctTake(r); if (phase === 'start' && home.screen === 'menu' && !home.pop) drawHome(); } }); } // titles for accounts made before them
     if ($('stay-yes')) { $('stay-yes').addEventListener('click', () => { setStay(true); drawHome(); }); $('stay-no').addEventListener('click', () => { setStay(false); drawHome(); }); }
+    if (typeof onl !== 'undefined' && onl) onlShow(); // players online (developers): the chip drawn just now gets the count
     $('play').addEventListener('click', () => { home.pop = true; drawHome(); });
     $('music-open').addEventListener('click', openSoundSheet);
     $('acct-open').addEventListener('click', openAccountSheet);
@@ -21063,7 +21081,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   function acctSave(a) {
     const dev0 = devMode();
     acct = a;
-    if (devMode() !== dev0) musicDevChanged(); // the DEV playlist comes or goes
+    if (devMode() !== dev0) { musicDevChanged(); if (onl) onlLoad(); } // the DEV playlist and the players-online count come or go
     try {
       localStorage.removeItem(ACCT_STORE); sessionStorage.removeItem(ACCT_STORE);
       if (a) acctStore().setItem(ACCT_STORE, JSON.stringify(a));
@@ -21309,6 +21327,62 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     frBadge(); frBanner();
   }
   setInterval(frTick, 2000);
+
+  // ---------- players online (2026-11-10): every open page keeps one socket to the server's OnlineRoom (/online?d=,
+  // server/src/online.js) as one device (pb-device, a random id kept on this browser, so tabs count once), pinging every
+  // 30 s so a sleeping phone drops out. Developers see how many are online now ([data-online]: under the name on the
+  // phone menu, in the Diorama's top bar), from POST /account/online every 20 s while the page is in view.
+  var onl = { ws: null, tries: 0, timer: 0, ping: 0, n: null, busy: false, device: '' };
+  function onlDevice() {
+    if (onl.device) return onl.device;
+    let d = ''; try { d = localStorage.getItem('pb-device') || ''; } catch (e) {}
+    if (!/^[a-z0-9]{8,32}$/.test(d)) {
+      try { d = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => (b % 36).toString(36)).join(''); } catch (e) { d = (Math.random().toString(36) + Math.random().toString(36)).replace(/[^a-z0-9]/g, '').slice(0, 16); }
+      try { localStorage.setItem('pb-device', d); } catch (e) {}
+    }
+    return (onl.device = d);
+  }
+  function onlOpen() {
+    if (onl.ws || onl.timer || typeof WebSocket !== 'function') return;
+    let ws;
+    try { ws = new WebSocket(`${SERVER_URL.replace(/^http/, 'ws')}/online?d=${onlDevice()}`); } catch (e) { onlRetry(); return; }
+    onl.ws = ws;
+    ws.onopen = () => { if (onl.ws === ws) onl.tries = 0; };
+    ws.onclose = () => { if (onl.ws !== ws) return; onl.ws = null; onlRetry(); };
+    clearInterval(onl.ping); onl.ping = setInterval(() => { if (onl.ws === ws && ws.readyState === 1) ws.send('{"t":"ping"}'); }, 30000);
+  }
+  // after a failure: 4 s, 8 s ... up to 5 minutes (a page where the server isn't allowed, like a preview, stops trying hard)
+  function onlRetry() { clearTimeout(onl.timer); onl.tries++; onl.timer = setTimeout(() => { onl.timer = 0; onlOpen(); }, Math.min(300e3, 2000 * 2 ** Math.min(8, onl.tries))); }
+  async function onlLoad() {
+    if (!devMode()) { if (onl.n != null) { onl.n = null; onlShow(); } return; }
+    if (onl.busy || document.hidden) return;
+    onl.busy = true;
+    const r = await acctCall('online', {}, true);
+    onl.busy = false;
+    if (r.status === 200 && Number.isFinite(r.online)) onl.n = Math.max(0, r.online | 0);
+    else if (r.status === 403 || r.status === 401) onl.n = null;
+    onlShow();
+  }
+  // the count wherever the page shows it ([data-online] with a <b> for the number), developers only
+  function onlShow() {
+    const on = devMode() && onl.n != null, n = on ? String(onl.n) : '';
+    document.querySelectorAll('[data-online]').forEach(el => {
+      el.hidden = !on;
+      const b = el.querySelector('b'); if (b && b.textContent !== n) b.textContent = n;
+      if (on) el.setAttribute('aria-label', `${n} ${n === '1' ? 'player' : 'players'} online now (developers only)`);
+    });
+  }
+  const onlineChip = () => '<span class="online-np" data-online hidden title="Players with the game open right now. Only developers see this."><i class="live" aria-hidden="true"></i><b></b> online</span>';
+  if (qs.has('test')) window.__online = () => ({ open: !!(onl.ws && onl.ws.readyState === 1), state: onl.ws ? onl.ws.readyState : -1, retry: !!onl.timer, tries: onl.tries, device: onl.device, n: onl.n }); // UI tests
+  setTimeout(onlOpen, 0); // once the whole script has run (SERVER_URL is further down)
+  setInterval(onlLoad, 20000);
+  setTimeout(onlLoad, 1200);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    if (onl.ws && onl.ws.readyState === 1) { try { onl.ws.send('{"t":"ping"}'); } catch (e) {} } // back in view: counted again at once
+    else if (!onl.ws) { clearTimeout(onl.timer); onl.timer = 0; onl.tries = 0; onlOpen(); }
+    onlLoad();
+  });
   async function frLoad() {
     if (!frOk()) return;
     const r = await acctCall('friends', {}, true);

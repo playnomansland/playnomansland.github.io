@@ -15,10 +15,12 @@
 //   GET /leaderboard       -> ranked players with wins, ties and losses, and whether ranked play is on (accounts.js)
 //   POST /account/<route>  -> accounts (step 5; guest, me, google, tag, signout, delete, title, skin, ranked, invite, discord): see accounts.js
 //   GET /hub?p=<PLAYER>    -> WebSocket into that player's PlayerHub (friends: online status, invites, private messages; hub.js)
+//   GET /online?d=<DEVICE> -> WebSocket that counts this open page (OnlineRoom, online.js); the count: POST /account/online (developers)
 // Cron (wrangler.toml [triggers], hourly): month end, the Legend title for the leaderboard's top 5 (accounts.js awardLegends),
 // and skins given to a gamertag (accounts.js grantSkins)
 import { json } from './limits.js';
-import { handleAccount, leaderboard, awardLegends, grantSkins } from './accounts.js';
+import { handleAccount, leaderboard, awardLegends, grantSkins, sha256 } from './accounts.js';
+import { DEVICE_RE } from './online.js';
 import { VERSION } from './version.js';
 export { Room } from './room.js';
 export { TourRoom } from './tour.js';
@@ -26,6 +28,7 @@ export { HistoryRoom } from './history.js';
 export { DuoRoom } from './duo.js';
 export { LobbyRoom } from './lobby.js';
 export { PlayerHub } from './hub.js'; // friends (2026-11-04)
+export { OnlineRoom } from './online.js'; // players online (2026-11-10)
 
 const CODE_RE = /^[A-Z0-9]{4,8}$/;
 
@@ -101,6 +104,19 @@ export default {
       if (!env.HUB || !env.ACCOUNTS) return json({ error: 'friends off' }, 503);
       const headers = new Headers(request.headers); headers.set('x-player', p);
       return env.HUB.getByName(p).fetch(new Request(request, { headers }));
+    }
+
+    // players online (2026-11-10): every open page keeps one socket here; the IP goes on only as a hash, for its limit
+    if (url.pathname === '/online') {
+      const d = url.searchParams.get('d') || '';
+      if (!DEVICE_RE.test(d)) return json({ error: 'bad device' }, 400);
+      if (request.headers.get('Upgrade') !== 'websocket') return json({ error: 'websocket only' }, 426);
+      if (!allowedOrigin(request, env)) return json({ error: 'origin' }, 403);
+      if (!env.ONLINE) return json({ error: 'online off' }, 503);
+      const headers = new Headers(request.headers);
+      headers.set('x-device', d); headers.set('x-ip', (await sha256('nml-online:' + (request.headers.get('CF-Connecting-IP') || 'none'))).slice(0, 24));
+      try { return await env.ONLINE.getByName('all').fetch(new Request(request, { headers })); }
+      catch (e) { console.warn('online', e && e.message); return json({ error: 'online unavailable' }, 503); }
     }
 
     const m = url.pathname.match(/^\/(room|tour|duo)\/([^/]+)$/);

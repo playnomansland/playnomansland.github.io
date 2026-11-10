@@ -48,6 +48,12 @@
 #dio .acct button { display: inline-flex; align-items: center; gap: 8px; opacity: .9; }
 #dio .acct button:hover { opacity: 1; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
 #dio .acct svg { width: 18px; height: 18px; }
+/* players online (2026-11-10, developers only): first in the top bar, the DEV tag (.dvt), a live dot and the count */
+#dio .acct .online { display: inline-flex; align-items: center; gap: 9px; opacity: .9; cursor: default; white-space: nowrap; }
+#dio .acct .online[hidden] { display: none; }
+#dio .acct .online .dvt { padding: 2px 7px 1px; font-size: 10px; }
+#dio .acct .online .live { background: #1F8F4E; box-shadow: none; } #dio .acct .online .live::after { border-color: #1F8F4E; }
+#dio .acct .online b { font-variant-numeric: tabular-nums; }
 
 /* ── the menu: words, not boxes ── */
 #dio .menu { position: fixed; left: 48px; bottom: 96px; display: grid; justify-items: start; }
@@ -193,7 +199,7 @@
   #dio #world { position: absolute; height: 350px; } #dio .scrim { display: none; }
   #dio .field { position: fixed; }
   #dio .logo { top: 20px; left: 16px; width: 170px; }
-  #dio .acct { top: 22px; right: 16px; gap: 16px; } #dio .acct span { display: none; } #dio .acct svg { width: 22px; height: 22px; }
+  #dio .acct { top: 22px; right: 16px; gap: 16px; } #dio .acct button span { display: none; } #dio .acct .online .dvt { display: none; } #dio .acct .online .n { display: inline; } #dio .acct svg { width: 22px; height: 22px; }
   #dio .notes, #dio .note { display: none !important; }
   #dio .note { position: absolute; max-width: 160px; font-size: 13px; } #dio .note small { font-size: 12px; }
   #dio .zz { position: absolute; }
