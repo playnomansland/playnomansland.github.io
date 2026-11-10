@@ -1593,6 +1593,17 @@ html.dsetmenu.diorama.pcwide #sheet .btn:is(#fr-open2, #mp-open2, #bug-open):hov
 html.dsetmenu.diorama.pcwide #sheet .btn#to-menu { justify-self: start; width: auto; margin-top: 10px; margin-left: -9px; padding: 4px 9px 1px; border: 0; background: none; color: #FF8F78; font: 700 20px/1 var(--dstencil); text-transform: uppercase; }
 html.dsetmenu.diorama.pcwide #sheet .btn#to-menu:hover:not(:disabled) { background: none; border: 0; text-decoration: underline; text-underline-offset: 4px; }
 
+/* the plain (not gold) buttons in a match read as buttons (the owner, 2026-11-10: "impossible to understand that they
+   are buttons"): a light fill and a clear cream outline, brighter under the pointer; still the old game's shape (round
+   corners, sentence case). Sheets (Take back, Set direction, Sell, Close...), the column (Loan, Undo all...), the picks'
+   Hide, the results' Main menu, Skip */
+html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not([aria-pressed="true"]):not(#to-menu) {
+  background: rgba(244, 236, 216, .09); border: 1px solid rgba(244, 236, 216, .38); color: #F4ECD8; box-shadow: 0 1px 0 rgba(0, 0, 0, .35); }
+html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not([aria-pressed="true"]):not(#to-menu):hover:not(:disabled) {
+  background: rgba(244, 236, 216, .17); border-color: rgba(244, 236, 216, .7); }
+html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not(#to-menu):active:not(:disabled) { background: rgba(244, 236, 216, .24); }
+html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: none; width: auto; } /* (a squad's sheet put it in a grid cell, where it stretched) */
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -18047,7 +18058,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 822bbdc'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 9ea280e'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -24429,7 +24440,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   const ddrop = { which: '', btn: null };
   // version B of the match's Settings (the owner, 2026-11-10: "another version that uses the main menu design language
   // more"): ?settings=menu turns it on (kept on this device), ?settings=a goes back; html.dsetmenu in src/diorama.css
-  try { const q = (location.search.match(/[?&]settings=(menu|a)\b/) || [])[1]; if (q) localStorage.setItem('pb-dset', q); if (localStorage.getItem('pb-dset') === 'menu') document.documentElement.classList.add('dsetmenu'); } catch (e) {}
+  // (version B is the default from 2026-11-10, the owner; a new key so the trial's choice doesn't carry over)
+  { let setB = true; try { const q = (location.search.match(/[?&]settings=(menu|a)\b/) || [])[1]; if (q) localStorage.setItem('pb-dset2', q); setB = localStorage.getItem('pb-dset2') !== 'a'; } catch (e) {} if (setB) document.documentElement.classList.add('dsetmenu'); }
   function dioDropOn(which, btn) {
     ddrop.which = which; ddrop.btn = btn;
     const back = $('sheet-back');

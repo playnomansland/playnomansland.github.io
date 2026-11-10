@@ -8521,7 +8521,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   const ddrop = { which: '', btn: null };
   // version B of the match's Settings (the owner, 2026-11-10: "another version that uses the main menu design language
   // more"): ?settings=menu turns it on (kept on this device), ?settings=a goes back; html.dsetmenu in src/diorama.css
-  try { const q = (location.search.match(/[?&]settings=(menu|a)\b/) || [])[1]; if (q) localStorage.setItem('pb-dset', q); if (localStorage.getItem('pb-dset') === 'menu') document.documentElement.classList.add('dsetmenu'); } catch (e) {}
+  // (version B is the default from 2026-11-10, the owner; a new key so the trial's choice doesn't carry over)
+  { let setB = true; try { const q = (location.search.match(/[?&]settings=(menu|a)\b/) || [])[1]; if (q) localStorage.setItem('pb-dset2', q); setB = localStorage.getItem('pb-dset2') !== 'a'; } catch (e) {} if (setB) document.documentElement.classList.add('dsetmenu'); }
   function dioDropOn(which, btn) {
     ddrop.which = which; ddrop.btn = btn;
     const back = $('sheet-back');
