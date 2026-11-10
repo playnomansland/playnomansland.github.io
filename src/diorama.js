@@ -372,7 +372,8 @@
       const ox = phone() ? 0 : now.off[0];
       cam.setViewOffset(w, h, -ox * w, (phone() ? 0.02 : now.off[1]) * h, w, h);
     }
-    function size() { const w = cv.clientWidth, h = cv.clientHeight; if (renderer) renderer.setSize(w, h, false); place(); }
+    let szW = 0, szH = 0; // the canvas's size when last fitted (phones change its height per screen: --isle in diorama.css)
+    function size() { const w = cv.clientWidth, h = cv.clientHeight; szW = w; szH = h; if (renderer) renderer.setSize(w, h, false); place(); }
     addEventListener('resize', () => { if (dio.shown) { size(); if (flat) paintFlat(); } });
 
     // ── notes follow their thing: [object, height of the dot, label offset in px (negative x: label to the left)] ──
@@ -651,7 +652,8 @@
       roster.position.y = lerp(roster.position.y, un ? 0 : -4, kk); roster.visible = roster.position.y > -3.6;
       for (const [key, g] of Object.entries(HOT)) g.position.y = lerp(g.position.y, g.userData.y0 + ((typeof hoverNow !== 'undefined' ? hoverNow : hovered) === key ? 0.18 : 0), still ? 1 : 0.25);
       rosterHot.forEach((g, i) => { g.position.y = lerp(g.position.y, (hovered === 'u:' + i || picked === g) ? 0.22 : 0, still ? 1 : 0.25); });
-      place(); if (renderer) renderer.render(scene, cam); notes();
+      if (cv.clientWidth !== szW || cv.clientHeight !== szH) size(); else place();
+      if (renderer) renderer.render(scene, cam); notes();
       raf = requestAnimationFrame(frame);
     }
     // ── the way in (the battle prototype's fly-in, 2026-11-08; the owner's wish): Create room, Join and Vs computer zoom

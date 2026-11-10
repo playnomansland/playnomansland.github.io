@@ -1643,6 +1643,178 @@ html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overl
 html.diorama.pcwide :is(.panel .xrow .btn, .panel #skip, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not(#to-menu):active:not(:disabled) { background: rgba(244, 236, 216, .24); }
 html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: none; width: auto; } /* (a squad's sheet put it in a grid cell, where it stretched) */
 
+/* ── phones (prototype, 2026-11-10): every home screen held upright, 700 px wide or less. The page scrolls: the
+   island sits in the top part (--isle tall), the screen's words flow under it, the music and credits only on the
+   menu. The PC layout above places everything with position: fixed; here it all goes back into the page's flow,
+   in the order set with `order`. Checked at 390×844 and 360×740 (design/diorama/PHONES.md). ── */
+@media (max-width: 700px) {
+  html.diorama #dio { --isle: clamp(250px, 42svh, 360px); --k: 0.7; }
+  html.diorama #dio:not([hidden]) { display: flex; flex-direction: column; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: calc(var(--isle) - 18px) 0 calc(28px + env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+  html.diorama #dio > * { flex: none; }
+  html.diorama #dio #world { position: absolute; top: 0; left: 0; right: auto; bottom: auto; width: 100%; height: var(--isle); }
+  html.diorama #dio .scrim, html.diorama #dio .pl-scrim { display: none; }
+  /* the top line: the logo and the account's icons, scrolling away with the page */
+  html.diorama #dio .logo { position: absolute; top: calc(14px + env(safe-area-inset-top)); left: 16px; width: 156px; z-index: 3; }
+  html.diorama #dio .acct { position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 10px; gap: 2px; z-index: 3; }
+  html.diorama #dio .acct button { width: 44px; height: 40px; justify-content: center; }
+  html.diorama #dio .acct span { display: none; }
+  html.diorama #dio .acct svg { width: 22px; height: 22px; }
+  html.diorama #dio .back { position: absolute; top: calc(16px + env(safe-area-inset-top)); right: 16px; z-index: 3; padding: 8px 0; }
+  html.diorama #dio .notes, html.diorama #dio .note, html.diorama #dio .zz { display: none !important; }
+  /* every screen's column: back in the flow, the page's width less 16 px a side */
+  html.diorama #dio :is(.menu, .orders, .devs, .rooms, .newroom, .pf, .history, .signin, .door, .standings, .music, .build, .phone-reward) {
+    position: relative; left: auto; right: auto; top: auto; bottom: auto; width: auto; max-width: none; margin: 0 16px; transform: none; }
+  html.diorama #dio .menu { order: 1; } html.diorama #dio .standings { order: 2; }
+  html.diorama #dio :is(.orders, .door, .signin, .pf, .history) { order: 3; } html.diorama #dio .devs { order: 4; margin-top: 30px; }
+  html.diorama #dio :is(.rooms, .newroom) { order: 3; }
+  html.diorama #dio:is(.in-rooms, .in-create) { --isle: clamp(190px, 28svh, 250px); } /* a smaller island: the list is the point */
+  html.diorama #dio .phone-reward { order: 6; display: block !important; margin-top: 26px; }
+  html.diorama #dio .music { order: 7; margin-top: 30px; justify-items: start; text-align: left; text-shadow: none; }
+  html.diorama #dio .build { order: 8; margin-top: 14px; display: block; }
+  /* the music, the reward and the credits belong to the menu */
+  html.diorama #dio:is(.play, .profile, .welcome, .ranks, .units) :is(.music, .build, .phone-reward) { display: none !important; }
+
+  /* the menu: PLAY on its shard, the four words two by two */
+  html.diorama #dio .menu { justify-items: stretch; }
+  html.diorama #dio .menu .item.play { font-size: clamp(76px, 24vw, 96px); justify-self: start; margin: 0 0 16px 4px; }
+  html.diorama #dio .menu .item.play .go { display: none; }
+  html.diorama #dio .menu .sub .item { font-size: clamp(18px, 5.5vw, 24px); white-space: nowrap; gap: 6px; min-height: 46px; }
+  html.diorama #dio .menu .sub .item small { position: absolute; left: 24px; top: calc(100% - 10px); margin: 0; font-size: 12px; }
+  html.diorama #dio .menu .sub { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 8px; }
+  html.diorama #dio .backto { margin-bottom: 8px; }
+  /* Rankings and Units on a phone: the island shows them, the words under it */
+  html.diorama #dio.ranks .menu .sub, html.diorama #dio.units .menu .sub { margin-bottom: 22px; }
+  html.diorama #dio .standings { display: none; } html.diorama #dio.ranks .standings { display: grid; }
+  html.diorama #dio .standings h2 { font-size: 48px; }
+  html.diorama #dio .standings li { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; padding: 10px 8px 10px 4px; }
+  html.diorama #dio .standings .r { font-size: 28px; } html.diorama #dio .standings .s { font-size: 26px; }
+  html.diorama #dio .tiers { left: 50% !important; top: calc(var(--isle) - 64px) !important; gap: 0; font-size: 14px; }
+  html.diorama #dio .tiers .k, html.diorama #dio .tiers .hint { display: none; }
+  html.diorama #dio .tiers button { font-size: 22px; padding: 6px 10px 3px; }
+  /* a unit's sheet: a bottom sheet */
+  html.diorama #dio #usheet { position: fixed; left: 0 !important; right: 0; top: auto !important; bottom: 0; width: auto; z-index: 8; max-height: 62svh; overflow-y: auto;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom)); }
+  html.diorama #dio #usheet::before { clip-path: polygon(0 18px, 64% 0, 100% 12px, 100% 100%, 0 100%); }
+  html.diorama #dio #usheet .x { width: 44px; height: 44px; top: 10px; right: 8px; }
+
+  /* Play: two big words, Multiplayer's kinds under them */
+  html.diorama #dio .orders .who .item { font-size: clamp(34px, 10.6vw, 46px); }
+  html.diorama #dio .orders .item small { display: block; font-size: 13px; margin: 4px 0 0 2px; }
+  html.diorama #dio .orders .who > .item { flex-wrap: wrap; row-gap: 0; }
+  html.diorama #dio .orders .mp { margin: 6px 0 0 12px; padding-left: 22px; }
+  html.diorama #dio .orders .mp li::after, html.diorama #dio .orders .mp li::before { left: -22px; }
+  html.diorama #dio .orders .mp .item { font-size: clamp(26px, 7.6vw, 34px); flex-wrap: wrap; }
+  html.diorama #dio .orders #play-back { font-size: 24px; margin-top: 26px; }
+  html.diorama #dio .devs { max-width: none; }
+  html.diorama #dio .devs .dk { flex-wrap: wrap; gap: 4px 10px; }
+  html.diorama #dio .devs .dv { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  html.diorama #dio .devs .lab { margin-top: 10px; }
+  html.diorama #dio .devs .seg button { font-size: 18px; padding: 8px 9px 4px; }
+  html.diorama #dio .devs .dn { margin: 10px 0 0; }
+
+  /* Rooms: the list in the page (the page scrolls, not the list) */
+  html.diorama #dio .rooms { grid-template-rows: none; }
+  html.diorama #dio :is(.rooms, .newroom, .pf, .history, .standings, .signin) h2 { font-size: clamp(44px, 13.5vw, 56px); margin-bottom: 12px; }
+  html.diorama #dio .plate h2 { font-size: clamp(40px, 12.5vw, 56px) !important; max-width: 100%; }
+  html.diorama #dio .pf-name-in { max-width: calc(100vw - 40px); }
+  html.diorama #dio .pf-opts { grid-template-columns: minmax(0, 1fr) !important; }
+  html.diorama #dio :is(.pf, .history) { justify-items: stretch; }
+  html.diorama #dio .rooms h2 small { display: block; margin: 6px 0 0; }
+  html.diorama #dio .rsearch input { font-size: 16px; } /* (16 px: iOS doesn't zoom in on it) */
+  html.diorama #dio .create { font-size: clamp(28px, 8.4vw, 36px); padding: 10px 18px 8px 14px; max-width: 100%; }
+  html.diorama #dio .rlist { overflow: visible; padding: 0; }
+  html.diorama #dio .rlist li { gap: 4px 10px; padding: 12px 0; }
+  html.diorama #dio .rlist b { font-size: 18px; }
+  html.diorama #dio .rlist .go { font-size: 22px; padding: 10px 12px 6px; }
+
+  /* New room: each row's label over its words */
+  html.diorama #dio .nr-opts { grid-template-columns: minmax(0, 1fr); gap: 2px; margin-bottom: 18px; }
+  html.diorama #dio .nr-opts .lab { margin-top: 12px; }
+  html.diorama #dio .nr-opts .seg { margin-left: -10px; }
+  html.diorama #dio .nr-opts .seg button { font-size: 24px; padding: 8px 10px 5px; }
+  html.diorama #dio .nr-opts .bf-step b { font-size: 24px; min-width: 7.4em; }
+  html.diorama #dio .nr-opts .bf-step button { padding: 8px 12px 5px; }
+  html.diorama #dio .nr-note { margin: 0 0 18px; }
+
+  /* the dropdowns (Friends, Settings): full width from the top, the page under them held still */
+  html.diorama #dio .drop { position: fixed; top: 0; left: 0; right: 0; width: auto; max-height: 86svh; padding: calc(18px + env(safe-area-inset-top)) 16px 22px; z-index: 9; }
+  html.diorama #dio .drop::before { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 18px), 60% 100%, 0 calc(100% - 10px)); }
+  html.diorama #dio .stay { position: relative; top: auto; right: auto; width: auto; margin: 0 16px 18px; order: 0; text-align: left; }
+  html.diorama #dio .stay::before, html.diorama #dio .stay::after { display: none; }
+  html.diorama #dio .stay .nts { justify-content: flex-start; }
+
+  /* the playlist: it opens under the player, in the page */
+  html.diorama #dio .pl { justify-items: start; margin: 0 0 16px; }
+  html.diorama #dio .pl-list { justify-items: stretch; }
+  html.diorama #dio .pl-row { grid-template-columns: 16px minmax(0, 1fr) auto; text-align: left; padding: 8px 0; }
+  html.diorama #dio .pl-row .n { display: none; }
+}
+
+/* ── the match on a phone (prototype, 2026-11-10: html.diorama.pcwide without html.pc, a phone with the 3D board). From
+   the phone prototype (design/diorama/src/battle.html, HANDOFF.md "Phones"): the world edge to edge, the top line one
+   compact row, the left column a drawer along the bottom over an ink scrim, the shop one strip that scrolls sideways,
+   READY bottom left. The board is framed between the top line and the drawer (dioSafe, --dsy0 / --dsy1); --dph is the
+   drawer's height. A pick (start, leader, tower) takes the whole screen and the drawer steps aside. ── */
+@media (max-width: 700px) {
+  html.diorama.pcwide:not(.pc) #wrap::before { left: 0; right: 0; top: auto; bottom: 0; width: auto; height: calc(var(--dph, 300px) + 90px);
+    background: linear-gradient(0deg, rgba(23,20,15,.9) 0, rgba(23,20,15,.8) calc(var(--dph, 300px) - 20px), rgba(23,20,15,0) 100%); opacity: 1; }
+  html.diorama.pcwide:not(.pc) #wrap::after { height: 96px; }
+  /* the top line: you, the round, the opponent; the name small, the health big with its bar */
+  html.diorama.pcwide:not(.pc) .hud { gap: 6px; padding: calc(8px + env(safe-area-inset-top)) 12px 0; }
+  html.diorama.pcwide:not(.pc) .hud .side { grid-template-columns: auto minmax(30px, 1fr); column-gap: 8px; }
+  html.diorama.pcwide:not(.pc) .hud .side.foe { grid-template-columns: minmax(30px, 1fr) auto; }
+  html.diorama.pcwide:not(.pc) .hud .side :is(#you-name, #foe-name) { font-size: 13px; }
+  html.diorama.pcwide:not(.pc) .hud .side :is(#you-name, #foe-name) .hud-tag { max-width: 26vw; }
+  html.diorama.pcwide:not(.pc) .hud .side .ptitle, html.diorama.pcwide:not(.pc) .hud .side .streak { display: none !important; }
+  html.diorama.pcwide:not(.pc) .hud .side .num { font-size: 30px; }
+  html.diorama.pcwide:not(.pc) .hud .side .foe-state { font-size: 11px; }
+  html.diorama.pcwide:not(.pc) .hud .round { max-width: 46vw; column-gap: 6px; }
+  html.diorama.pcwide:not(.pc) .hud .round::before { display: none; } /* (the map's name: in Settings) */
+  html.diorama.pcwide:not(.pc) .hud .round #round, html.diorama.pcwide:not(.pc) .hud .round #phase { font-size: 22px; white-space: nowrap; }
+  html.diorama.pcwide:not(.pc) .hud .round #round::before { content: "R"; }
+  html.diorama.pcwide:not(.pc) .hud .round .series-chip { display: none !important; }
+  html.diorama.pcwide:not(.pc) .hud .round .cog { min-width: 36px; min-height: 32px; display: inline-grid; place-items: center; }
+
+  /* the drawer: full width along the bottom; READY and the clock in its last row */
+  html.diorama.pcwide:not(.pc) .panel, html.dtuck.diorama.pcwide:not(.pc) .panel { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 50svh;
+    padding: 6px 14px calc(78px + env(safe-area-inset-bottom)) 14px; gap: 6px; transform: none; transition: none; }
+  html.diorama.pcwide:not(.pc) .panel:not(:has(#ready, #fight)) { padding-bottom: calc(14px + env(safe-area-inset-bottom)); } /* (the fight: no READY under it) */
+  html.dtuck.diorama.pcwide:not(.pc) #wrap::before { opacity: 1; }
+  html.diorama.pcwide:not(.pc) .app::after { display: none; } /* (the PC's tab where the tucked column went) */
+  html.diorama.pcwide:not(.pc) .panel #ready, html.diorama.pcwide:not(.pc) .panel #fight { left: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); font-size: 40px; padding: 10px 20px 3px 16px; }
+  html.diorama.pcwide:not(.pc) .panel .trow .timer { left: auto; right: 16px; bottom: calc(26px + env(safe-area-inset-bottom)); width: auto; font-size: 24px; text-align: right; }
+  /* the shop: one strip that scrolls sideways, tier after tier */
+  html.diorama.pcwide:not(.pc) .panel .shop2::before { top: 0; }
+  html.diorama.pcwide:not(.pc) .panel .shop2 { padding-top: 22px; margin-top: 4px; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-right: -14px; padding-right: 14px; overscroll-behavior-x: contain; flex: none; }
+  html.diorama.pcwide:not(.pc) .panel .shop2::-webkit-scrollbar { display: none; }
+  html.diorama.pcwide:not(.pc) .panel .shop2 > * { flex-shrink: 0; }
+  html.diorama.pcwide:not(.pc) .panel .xrow { margin-left: -6px; }
+  /* the music: the top line's note opens it (no player in the corner on a phone) */
+  html.diorama.pcwide:not(.pc) #mp-pop.dock { display: none; }
+  /* a pick (start, leader, tower): the whole screen, two options a row */
+  html.diorama.pcwide:not(.pc) #wrap > .pick { padding: calc(var(--dsy0, 70px) + 6px) 12px calc(16px + env(safe-area-inset-bottom)); justify-content: start; gap: 10px; overflow-y: auto; z-index: 8;
+    background: rgba(23,20,15,.78); }
+  html.diorama.pcwide:not(.pc) .pick .ph h2 { font-size: clamp(34px, 11vw, 48px); }
+  html.diorama.pcwide:not(.pc) .pick .ph .hint { font-size: 13px; }
+  html.diorama.pcwide:not(.pc) .pick .opts { gap: 8px; }
+  html.diorama.pcwide:not(.pc) .pick .opt { padding: 12px 6px 12px; }
+  html.diorama.pcwide:not(.pc) .pick .opt .nm { font-size: 13px; overflow-wrap: normal; word-break: normal; hyphens: auto; }
+  html.diorama.pcwide:not(.pc):has(#pick:not([hidden])) .panel { display: none; } /* the drawer steps aside for a pick */
+  html.diorama.pcwide:not(.pc):has(#pick:not([hidden])) #wrap::before { opacity: 0; }
+  html.diorama.pcwide:not(.pc) .pick .row { flex-wrap: wrap; justify-content: center; gap: 10px 16px; }
+  html.diorama.pcwide:not(.pc) .pick .row .btn.primary { font-size: 30px; }
+  html.diorama.pcwide:not(.pc) #wrap > .pick-peek { left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom)); }
+  /* a round's end and the match's end: over the board, above the drawer */
+  html.diorama.pcwide:not(.pc) #wrap > .overlay { padding: var(--dsy0, 70px) 12px var(--dsy1, 300px); }
+  html.diorama.pcwide:not(.pc) .overlay > .card h2 { font-size: clamp(52px, 17vw, 76px); }
+  html.diorama.pcwide:not(.pc) .overlay > .card .btn.primary { font-size: 30px; }
+  /* sheets (Unlock, a squad, Settings, Damage, Help) rise from the bottom, full width */
+  html.diorama.pcwide:not(.pc) .sheet { left: 0 !important; right: 0 !important; top: auto !important; bottom: 0 !important; width: auto !important; max-width: none !important; max-height: 82svh;
+    transform: none !important; border-radius: 0; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+  html.diorama.pcwide:not(.pc) .board-banner, html.diorama.pcwide:not(.pc) #wrap > .coach, html.diorama.pcwide:not(.pc) #wrap > .task { left: 10px; right: 10px; }
+}
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -7137,7 +7309,7 @@ const Game = (() => {
   const findMap = (id) => MAPS.find(x => x.id === id) || TEAM_MAPS.find(x => x.id === id) || VIEW_MAPS.find(x => x.id === id);
   // Looks (skins) for the 3D board: a map with skins (the Standard and the Test Grid) can be played in any of them; the
   // others have their own look. Only how the board looks: the rules stay the map's. The match keeps the host's pick (m.skin).
-  const SKINS = [{ id: 'meadow', name: 'Meadow' }, { id: 'autumn', name: 'Autumn' }, { id: 'snow', name: 'Snow' }, { id: 'frost', name: 'Forest Glade' }, { id: 'desert', name: 'Desert' }, { id: 'ash', name: 'Ashlands' }, { id: 'moonlit', name: 'Moonlit Snow' }, { id: 'savanna', name: 'Savanna' }];
+  const SKINS = [{ id: 'meadow', name: 'Meadow' }, { id: 'autumn', name: 'Autumn' }, { id: 'snow', name: 'Mountain Pass' }, { id: 'frost', name: 'Forest Glade' }, { id: 'desert', name: 'Desert' }, { id: 'ash', name: 'Ashlands' }, { id: 'moonlit', name: 'Moonlit Snow' }, { id: 'savanna', name: 'Savanna' }];
   // each map's own look (the rest: meadow), and the look a match is drawn in: the host's pick on a map with skins, else
   // the map's own. The deployment and battle music follow the look too (LOOK_MUSIC in the page).
   const MAP_LOOK = { standard: 'meadow', testgrid: 'frost', ice: 'snow', forest: 'forest', cavern: 'cavern' };
@@ -17346,11 +17518,11 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // results. Each fades out when its phase ends and fades back in where it stopped when the phase comes round again.
   // Volume goes through Web Audio because iPhones ignore audio.volume.
   const SOUND_STORE = 'phonebellum.sound.v1';
-  const SONGS = { // all mastered to the same loudness
+  const SONGS = { // all mastered to the same loudness; this order is the playlists' order
+    superCoffee: { title: 'Super coffee', file: 'audio/super-coffee.mp3' }, // no. 1, and a new player's first song (FIRST_SONG)
     sisi: { title: 'sisi', file: 'audio/sisi.mp3' },
     jonah: { title: 'Jonah', file: 'audio/jonah.mp3' },
     long: { title: 'Long', file: 'audio/long.mp3' },
-    superCoffee: { title: 'Super coffee', file: 'audio/super-coffee.mp3' },
     reveal: { title: 'Reveal', file: 'audio/reveal.mp3' },
     salig: { title: 'Salig', file: 'audio/salig.mp3', artist: 'Emil Helleday' },
     bulgaria: { title: 'Bulgaria', file: 'audio/bulgaria.mp3' },
@@ -17390,8 +17562,13 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const DEFAULT_VOL = 10;
   // song: the one menu song the player picked ('' = the menu playlist); solo: on an iPhone, take over the phone's sound (see setAudioSession)
   let snd = { vol: DEFAULT_VOL, muted: false, song: '', solo: false };
+  // what the menu plays first for a new player: no sound settings saved, and the menu music has never played on this
+  // device (FIRST_SEEN, set the first time it does)
+  const FIRST_SONG = 'superCoffee', FIRST_SEEN = 'pb-first-song';
+  let soundNew = true;
   try {
     const p = JSON.parse(localStorage.getItem(SOUND_STORE) || 'null');
+    soundNew = !p && !localStorage.getItem('phonebellum.music.v1') && !localStorage.getItem(FIRST_SEEN); // (the old On/Off switch: not new)
     if (p && isFinite(p.vol)) snd = { vol: Math.max(0, Math.min(100, +p.vol)), muted: !!p.muted, song: SONGS[p.song] ? p.song : '', solo: !!p.solo, shuffle: !!p.shuffle, repeat: !!p.repeat, chatOn: p.chatOn !== false, emotesOn: p.emotesOn !== false, src: typeof p.src === 'string' ? p.src : 'menu' }; // chatOn, emotesOn: online matches (the lobby)
     else if (localStorage.getItem('phonebellum.music.v1') === 'off') snd.muted = true; // the old On/Off switch
   } catch (e) {}
@@ -17440,6 +17617,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     el.addEventListener('ended', () => { if (cur().end != null && (tracks.length < 2 || pl.repeat)) { rewind(); el.play().catch(() => {}); } else pl.next(); });
     pl.song = () => tracks[track];
     pl.list = () => tracks.slice();
+    pl.first = (id) => { const t = tracks.indexOf(id); if (t >= 0 && t !== track) load(t); }; // start on this one (no Back to the one before)
     pl.play = (id) => { const t = tracks.indexOf(id); if (t < 0) return; if (t !== track) { past.push(tracks[track]); if (past.length > 20) past.shift(); load(t); } else rewind(); };
     pl.setRepeat = (on) => { pl.repeat = !!on; el.loop = pl.repeat; };
     pl.next = () => { past.push(tracks[track]); if (past.length > 20) past.shift(); load(pickNext(track)); };
@@ -17529,6 +17707,10 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   for (const id in MUSIC_COMBOS) for (const k in MUSIC_COMBOS[id]) music[k + '-' + id] = playlist(MUSIC_COMBOS[id][k]);
   music.menu.setRepeat(!!snd.repeat); music.mine.setRepeat(!!snd.repeat);
   if (snd.song && srcSongs(menuSrc()).includes(snd.song)) music.menu.play(snd.song); // the song picked last time starts the list
+  else if (soundNew) { // a new player: Super coffee first
+    music.menu.first(FIRST_SONG);
+    music.menu.el.addEventListener('playing', () => { try { localStorage.setItem(FIRST_SEEN, '1'); } catch (e) {} }, { once: true });
+  }
   let mine = { key: '', on: false, paused: false, src: 'all' };
   const musicInMatch = () => !!m && (phase === 'deploy' || phase === 'battle' || phase === 'result' || phase === 'end');
   const matchKey = () => (m && musicInMatch() ? `${mode}:${m.seed}:${(net && net.code) || ''}` : '');
@@ -18046,15 +18228,15 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       got.then(ab => new Promise((ok, no) => actx.decodeAudioData(ab, ok, no))).then(b => { sfxBuf[k] = b; }).catch(() => {});
     }
   }
-  function sfx(k) {
+  function sfx(k, vol = 1) { // vol: this play only (a quick run of hovers)
     sfxAt = performance.now();
-    if (window.__sfxLog) window.__sfxLog.push(k + (sfxBuf[k] ? '' : '?')); // tests (? = not loaded)
+    if (window.__sfxLog) window.__sfxLog.push(k + (vol !== 1 ? '@' + vol : '') + (sfxBuf[k] ? '' : '?')); // tests (? = not loaded)
     if (!snd.sfx || !snd.sfxVol || !actx || actx.state !== 'running' || !sfxBuf[k]) return;
     try {
       const src = actx.createBufferSource(), g = actx.createGain();
       src.buffer = sfxBuf[k];
       if (SFX_VARY.has(k)) src.playbackRate.value = 0.96 + Math.random() * 0.08;
-      g.gain.value = snd.sfxVol / 100 * (SFX_GAIN[k] || 1);
+      g.gain.value = snd.sfxVol / 100 * (SFX_GAIN[k] || 1) * vol;
       src.connect(g).connect(actx.destination); src.start();
     } catch (e) {}
   }
@@ -18107,6 +18289,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const ROOM_BTNS = '#lob-create, #nr-go, #create-go, #lob-quick, #join, #lob-join, #fr-join, [data-join]';
   // a mouse over a button outside a match: the soft hover tick (once per button, not while a match is on screen)
   let hoverBtn = null, hoverAt = -1e9;
+  const HOVER_RUN_MS = 500, HOVER_RUN_VOL = 0.7; // a hover soon after the last one: 70% (owner, 2026-11-09)
   document.addEventListener('pointerover', (e) => {
     if (e.pointerType !== 'mouse') return;
     const b = e.target.closest && e.target.closest('button, .btn, [role="button"]');
@@ -18115,13 +18298,14 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (!b || b.disabled || b.closest('.uc2') || (m && ['deploy', 'battle', 'result'].includes(phase))) return;
     const t = performance.now();
     if (t - hoverAt < 60 || t - sfxAt < 150) return; // a sweep across a row ticks, it doesn't buzz; a click's own sound goes first
-    hoverAt = t; sfx('hover'); sfxAt = -1e9; // a hover doesn't hold back the next click's sound
+    const run = t - hoverAt < HOVER_RUN_MS;
+    hoverAt = t; sfx('hover', run ? HOVER_RUN_VOL : 1); sfxAt = -1e9; // a hover doesn't hold back the next click's sound
   }, { passive: true });
 
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · 95b23e5'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 1e2d7d6'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -18648,7 +18832,10 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   function dock() {
     if (dockDrag) return; // the tab is being slid: dock() runs again when it lets go
     const root = document.documentElement, panel = $('panel');
-    const on = !root.classList.contains('pc') && phoneLayout === 'drawer' && ['deploy', 'battle', 'result', 'end'].includes(phase) && !!m;
+    // the Diorama on a phone with the 3D board (prototype, 2026-11-10): the Diorama's match screen (html.pcwide) with its
+    // column as a drawer along the bottom (src/diorama.css, "phones"), instead of the old UI's drawer (html.dock)
+    const dioPh = DIO && !root.classList.contains('pc') && !!board3d;
+    const on = !root.classList.contains('pc') && !dioPh && phoneLayout === 'drawer' && ['deploy', 'battle', 'result', 'end'].includes(phase) && !!m;
     const was = root.classList.contains('dock');
     root.classList.toggle('dock', on);
     const deploying = on && phase === 'deploy', picking = deploying && (choosingPack() || choosingTower());
@@ -18677,7 +18864,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       taskEl.setAttribute('aria-label', dockTask.x ? `${taskEl.querySelector('#task-text').textContent} Tap to cancel.` : taskEl.querySelector('#task-text').textContent);
     }
     // a PC in a match on the 3D board: the board takes the rest of the window beside the side panel, deploy and fights alike
-    const wide = root.classList.contains('pc') && !!board3d && ((!!m && ['deploy', 'battle', 'result', 'end'].includes(phase)) || dioRoomOn()), wasWide = root.classList.contains('pcwide');
+    const wide = (root.classList.contains('pc') || dioPh) && !!board3d && ((!!m && ['deploy', 'battle', 'result', 'end'].includes(phase)) || dioRoomOn()), wasWide = root.classList.contains('pcwide');
     root.classList.toggle('droom-on', wide && dioRoomOn()); // the Diorama's room (dioRoom)
     root.classList.toggle('pcwide', wide);
     const fight = wide && ['battle', 'result'].includes(phase), wasFight = root.classList.contains('pcfight');
@@ -19717,6 +19904,9 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (mode === 'host') saveHost();
   }
 
+  // the opponent pressed Ready (their status or side came in): the same sound on this screen, unless this player is
+  // ready too (the fight starts now and plays its own)
+  function foeReadySfx(was) { if (!was && phase === 'deploy' && ready[foe()] && !ready[me]) sfx('ready'); }
   function toggleReady() {
     if (phase !== 'deploy' || timeUp) return;
     if (!ready[me]) commitPick();
@@ -23336,7 +23526,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
-  const V3D = '98619b0c61'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '31bd4fc220'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
@@ -23498,8 +23688,19 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
   const dioWide = () => DIO && document.documentElement.classList.contains('pcwide');
   const dioPw = () => Math.round(Math.min(400, Math.max(318, innerWidth * 0.25))); // the left column's width (--dpw), as the prototype's clamp(318px, 25vw, 400px)
+  // a phone held upright (no html.pc, prototype 2026-11-10): the column is a drawer along the bottom, the board fits
+  // between the top line and the drawer's top (design/diorama/src/battle.js safeRect, the phone prototype)
+  const dioPhone = () => dioWide() && !document.documentElement.classList.contains('pc');
   function dioSafe() {
     const hb = document.querySelector('.hud').getBoundingClientRect(), pw = dioPw();
+    if (dioPhone()) {
+      const st = document.documentElement.style, pk = !$('pick').hidden; // (a pick takes the whole screen: the drawer steps aside)
+      const pr = $('panel').getBoundingClientRect(), top = pk ? innerHeight : Math.min(innerHeight, Math.max(pr.top, innerHeight * 0.4));
+      const r = { x0: 4, x1: innerWidth - 4, y0: Math.max(48, hb.bottom + 2), y1: top - 2 };
+      const vs = [innerWidth, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
+      if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); st.setProperty('--dph', Math.round(innerHeight - pr.top) + 'px'); }
+      return r;
+    }
     // the board a bit more central (the owner, 2026-11-10): with the panel sliding away it frames past about half the
     // column (the panel covers that edge only while it's out, and tucks when the pointer goes to the board); always
     // shown, the board stays clear of it
@@ -25072,7 +25273,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     m.gold[1] = Math.max(0, +d.gold || 0);
     m.extraDeploys[1] = Math.max(0, Math.min(Game.CONFIG.maxExtraDeploys, d.extra | 0));
     m.nextId[1] = Math.max(m.nextId[1], d.nextId | 0);
-    ready[1] = !!d.ready;
+    { const was = ready[1]; ready[1] = !!d.ready; foeReadySfx(was); }
     // the guest's package: picked once in round 1; package squads beyond what it holds are dropped
     if (m.round === 1 && m.pack && m.pack[1] == null && Number.isInteger(d.pack)) Game.choosePack(m, 1, d.pack);
     if (typeof d.leader === 'string' && Game.canPickLeader(m, 1, d.leader)) Game.pickLeader(m, 1, d.leader); // the leader draft: only in turn and from what's left
@@ -25369,7 +25570,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       nextReady = [false, false]; rematch = [false, false];
       playBattle(d.pre);
     } else if (d.t === 'status') {
-      if (d.ready) ready[0] = !!d.ready[0];
+      if (d.ready) { const was = ready[0]; ready[0] = !!d.ready[0]; foeReadySfx(was); }
       if (d.nextReady) nextReady[0] = !!d.nextReady[0];
       if (d.rematch) rematch[0] = !!d.rematch[0];
       if (phase === 'deploy' && m && m.round === 1 && Array.isArray(d.start) && d.start.every(Number.isInteger)) { m.packSeen = { 0: d.start.slice() }; render(); } // the host's starting units
@@ -25561,7 +25762,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (mode === 'spec') { srvSpec(d); return; }
     if (d.t === 'status') {
       if (d.here) net.foeHere = !!d.here[foe()];
-      if (d.ready) { ready[foe()] = !!d.ready[foe()]; if (!timeUp) ready[me] = !!d.ready[me]; }
+      if (d.ready) { const was = ready[foe()]; ready[foe()] = !!d.ready[foe()]; if (!timeUp) ready[me] = !!d.ready[me]; foeReadySfx(was); }
       if (d.nextReady) nextReady = d.nextReady.slice();
       if (d.rematch) rematch = d.rematch.slice();
       srvClock(d); netStatus();
@@ -27898,7 +28099,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const ox = phone() ? 0 : now.off[0];
       cam.setViewOffset(w, h, -ox * w, (phone() ? 0.02 : now.off[1]) * h, w, h);
     }
-    function size() { const w = cv.clientWidth, h = cv.clientHeight; if (renderer) renderer.setSize(w, h, false); place(); }
+    let szW = 0, szH = 0; // the canvas's size when last fitted (phones change its height per screen: --isle in diorama.css)
+    function size() { const w = cv.clientWidth, h = cv.clientHeight; szW = w; szH = h; if (renderer) renderer.setSize(w, h, false); place(); }
     addEventListener('resize', () => { if (dio.shown) { size(); if (flat) paintFlat(); } });
 
     // ── notes follow their thing: [object, height of the dot, label offset in px (negative x: label to the left)] ──
@@ -28177,7 +28379,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       roster.position.y = lerp(roster.position.y, un ? 0 : -4, kk); roster.visible = roster.position.y > -3.6;
       for (const [key, g] of Object.entries(HOT)) g.position.y = lerp(g.position.y, g.userData.y0 + ((typeof hoverNow !== 'undefined' ? hoverNow : hovered) === key ? 0.18 : 0), still ? 1 : 0.25);
       rosterHot.forEach((g, i) => { g.position.y = lerp(g.position.y, (hovered === 'u:' + i || picked === g) ? 0.22 : 0, still ? 1 : 0.25); });
-      place(); if (renderer) renderer.render(scene, cam); notes();
+      if (cv.clientWidth !== szW || cv.clientHeight !== szH) size(); else place();
+      if (renderer) renderer.render(scene, cam); notes();
       raf = requestAnimationFrame(frame);
     }
     // ── the way in (the battle prototype's fly-in, 2026-11-08; the owner's wish): Create room, Join and Vs computer zoom
