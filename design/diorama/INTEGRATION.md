@@ -100,8 +100,7 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
 - Fifteenth round (2026-11-10): the skeleton's hint ("Hover over stuff on the island with your mouse!") goes up and to
   the left of the skeleton, beside the golem's note (or above it when it would sit over it); to the right only when
   there's no room (small windows: 1280×720, 1024×768).
-- **Puzzles screen (designed 2026-11-10, on the branch only until the owner says go; PC players would see it at once on
-  `main`).** The menu's PUZZLES opens it instead of the game's sheet (`openPuzzles` hands over to `dio.api.puzzles` on
+- **Puzzles screen (2026-11-10, live on `main` on the owner's word the same day).** The menu's PUZZLES opens it instead of the game's sheet (`openPuzzles` hands over to `dio.api.puzzles` on
   the home; the old UI keeps the sheet). Its own field colour, a deep teal `#1F5A57` (the fourth after ultramarine,
   saffron and ink). Left column as Profile's: "Puzzles · one fight each", PUZZLES, "You see their whole army. Win it
   with the gold you have.", "Solve the 3 Easy ones for the title INITIATE" (or "The title is yours."), then each level
