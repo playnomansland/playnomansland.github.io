@@ -110,7 +110,7 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   the puzzle's name and its goal line (which ends "You have N gold."). Camera `VIEWS.puz`. A click starts it
   (`startPuzzle`); leaving or finishing it comes back to Puzzles (`home.back = 'puzzles'` → `home.puz`). Back, Esc and
   the logo go to the menu; Profile and Play close it. Checked at 1920×1080, 1440×900, 1366×768, 1280×720.
-- **How to play screen (2026-11-10, on the branch `claude/nifty-cerf-z6lrxm` for the owner to see first; PC only).** The
+- **How to play screen (2026-11-10, live on `main` on the owner's word the same day; PC only).** The
   menu's HOW TO PLAY opens it instead of the game's sheet (`openHowTo` hands over to `dio.api.howto` on the home; in a
   match, and in the old UI, the sheet stays). Its own field colour, a deep plum `#4B2A5E` (the fifth). Left column: "The
   rules, explained simply", HOW TO / PLAY, then the chapters as numbered stencil words in two groups: **The basics**
@@ -155,8 +155,7 @@ on `main` behind `?ui=diorama` (last commit of 2026-11-08: the small text in Bri
    2026-11-08). Leave the game's panel (`openPlaylist`, `mp-pop`) as it is here.
 3. **The PC launch (done 2026-11-10, `57015d3`; build with `PB_UI_DEFAULT=pc` from now on)** when the owner says so (planned for 2026-11-08 if all goes well, otherwise Monday 2026-11-09): `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`, push to `main`
    (the Diorama on computers, the old UI on phones and tablets). Never commit a non-`classic` build otherwise.
-4. **Designs the owner wants before the full launch:** Puzzles (live), How to play (built 2026-11-10, on its branch
-   for the owner to see), and the room you wait in (done with the match screen).
+4. **Designs the owner wants before the full launch:** Puzzles (live), How to play (live 2026-11-10), and the room you wait in (done with the match screen).
 5. **Own sessions (owner's call):** step 8, phone layouts for every screen; the test rewrite (tests that click Play vs
    Friend `#friend`, `#online`, Quick play, join by code, the old Create-room sheet, the old playlist panel,
    `#tutorial-new`, `[data-tm]` / `#settings` in the old popup must go through the Diorama's screens: Vs computer
