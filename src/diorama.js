@@ -1021,7 +1021,7 @@
       // the island's note: the golem, while you can still earn its skin
       body.querySelectorAll('.pnote').forEach(n => n.remove());
       if (!(A && (A.skins || []).some(k => k.id === 'golem-aquamarine'))) { const n = document.createElement('div'); n.className = 'note pnote rw-note'; n.style.display = 'none'; n.setAttribute('role', 'button'); n.tabIndex = 0;
-        n.innerHTML = `<span class="tag">Reward · Limited</span><br>${A && (A.skins || []).length ? '' : 'No skins yet. '}This golem’s skin is yours when a friend joins. <span class="rw-row"><span class="rw-btn">Invite a friend</span></span>`; n.addEventListener('click', () => openRewardsSheet()); n.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRewardsSheet(); } }); body.querySelector('.notes').after(n); }
+        n.innerHTML = `<span class="tag">Limited reward</span><br>${A && (A.skins || []).length ? '' : 'No skins yet. '}This golem’s skin is yours when a friend joins. <span class="rw-row"><span class="rw-btn">Invite a friend</span></span>`; n.addEventListener('click', () => openRewardsSheet()); n.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRewardsSheet(); } }); body.querySelector('.notes').after(n); }
       if (body.classList.contains('profile') && !body.classList.contains('in-history')) want = body.classList.contains('units') ? VIEWS.units : VIEWS.play;
     }
     // Profile's Units: the roster comes up on the island, as from the menu; a unit's sheet changes its skin. ← Profile goes back

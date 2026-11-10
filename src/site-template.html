@@ -1019,7 +1019,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   </nav>
 
   <!-- notes. data-home: shown on the menu; data-hover: shown while that thing is pointed at; data-btn: shown while that menu word is -->
-  <div class="note rw-note" data-anchor="golem" data-home role="button" tabindex="0" aria-label="Rewards: invite a friend"><span class="tag">Reward · Limited</span><br>This golem’s skin is yours<br>when a friend joins. <span class="rw-row"><span class="rw-btn">Invite a friend</span></span></div>
+  <div class="note rw-note" data-anchor="golem" data-home role="button" tabindex="0" aria-label="Rewards: invite a friend"><span class="tag">Limited reward</span><br>This golem’s skin is yours<br>when a friend joins. <span class="rw-row"><span class="rw-btn">Invite a friend</span></span></div>
   <div class="note" data-anchor="skeleton" data-home>Hover over stuff on the island with your mouse!</div>
   <div class="note" data-anchor="sniper" data-hover="sniper">Sniper.<small>Unit · Long range · Good against single targets</small></div>
   <div class="note" data-anchor="mage" data-hover="mage">Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
@@ -1064,7 +1064,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button class="lb-all" id="lb-open">Full leaderboard →</button>
   </section>
 
-  <p class="phone-reward" style="display:none;position:relative;margin:22px 16px 0;font:400 14px/1.4 var(--type)"><span class="tag" style="display:inline-block;padding:3px 7px 2px;font:700 11px var(--type);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--saffron)">Reward · Limited</span><br>Invite a friend. <b>This golem skin is yours.</b></p>
+  <p class="phone-reward" style="display:none;position:relative;margin:22px 16px 0;font:400 14px/1.4 var(--type)"><span class="tag" style="display:inline-block;padding:3px 7px 2px;font:700 11px var(--type);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--saffron)">Limited reward</span><br>Invite a friend. <b>This golem skin is yours.</b></p>
   <div class="build">Music: Snetänd, Emil Helleday · Build 2026.11</div>
 
   <!-- Play: one click on a choice starts it. Multiplayer folds out its kinds; a kind opens Rooms, filtered to it -->
@@ -4597,7 +4597,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (mode === 'sandbox') { sbxResult(sum); return; }
     if (mode === 'replay') { replayDone(sum); return; }
     const iWon = sum.winner === me && !sum.timeout, iLost = sum.winner === foe() && !sum.timeout;
-    const head = sum.timeout ? 'Time ran out' : iWon ? `Round ${sum.round} won` : iLost ? `Round ${sum.round} lost` : 'Draw';
+    const head = sum.timeout ? 'Time ran out' : iWon ? `Round&nbsp;${sum.round}<br>won` : iLost ? `Round&nbsp;${sum.round}<br>lost` : 'Draw'; // ROUND 7 on one line, WON / LOST under it (owner, 2026-11-10)
     const cls = iWon ? 'you' : iLost ? 'foe' : '';
     const duo = net.duo && mode === 'net' && sum.duo; // 2v2: the damage is the team's
     const them = duo ? 'Their team' : foeName();
