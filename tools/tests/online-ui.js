@@ -90,6 +90,14 @@ const ORIGIN = 'http://127.0.0.1:8766';
     ok(list.length === 2 && list.some(r => r.includes(dev.tag) && /Google · 2 devices · you/.test(r)) && list.some(r => r.includes(g.tag) && /Guest/.test(r)),
       'phone: the sheet lists the developer (two devices, you) and the guest: ' + JSON.stringify(list));
     ok(/^4 devices with the game open: 2 players signed in, 1 without an account/.test(sum), 'phone: the summary: ' + sum);
+    ok(list.some(r => r.includes(g.tag) && /Menu/.test(r)), 'phone: the guest is on the menu: ' + JSON.stringify(list));
+    // the guest starts a game vs the computer: their row says so, with the round
+    if (!(await gp.locator('#go').count())) await gp.click('#play').catch(() => {});
+    await gp.click('#go'); await sleep(2500);
+    await dp.click('#onl-refresh');
+    await dp.waitForFunction((tag) => [...document.querySelectorAll('#onl-sheet .onl-row')].some(r => r.textContent.includes(tag) && /Vs computer · round 1/.test(r.textContent)), g.tag, { timeout: 10000 }).catch(() => {});
+    list = await rows(dp);
+    ok(list.some(r => r.includes(g.tag) && /Vs computer · round 1/.test(r)), 'phone: the guest is in a game vs the computer, round 1: ' + JSON.stringify(list));
     await dp.screenshot({ path: path.join(process.env.SHOTS || '/tmp', 'online-who-phone.png') });
     await dp.click('#close');
     await pp.click('#dio-online');

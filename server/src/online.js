@@ -6,6 +6,9 @@
 //        hello { session } (2026-11-10): who this page is signed in as (session token or null, sent on connect and
 //        when the page signs in or out). The server looks the session up itself and keeps only the player id on
 //        the socket, so a page can't pass for someone else. At most ONLINE.hellos a minute per socket.
+//        where { w, r? } (2026-11-10): which screen of the game the page is on (ONLINE.where: menu, a waiting room, a
+//        match vs the computer, online, phone to phone, the tutorial puzzles, watching, a replay) and the match round.
+//        Sent when it changes; at most ONLINE.wheres a minute per socket. Only the game's own screens, nothing else.
 //   out: pong
 //
 // The sockets hibernate, so an open page costs nothing between pings. A page counts while its last ping (or, before the
@@ -23,6 +26,9 @@ export const ONLINE = {
   perIp: 30,          // open sockets from one IP (a household, a school: several devices behind one address)
   max: 20000,         // sockets in all; past this new pages are turned away (they retry, the count stays a floor)
   hellos: 6,          // hello messages per socket per minute (signing in and out); more are ignored
+  wheres: 30,         // where messages per socket per minute; more are ignored
+  where: ['menu', 'room', 'ai', 'online', 'peer', 'puzzle', 'watch', 'replay'],
+  rank: { menu: 0, replay: 1, room: 2, watch: 3, puzzle: 4, ai: 5, peer: 6, online: 7 }, // a player on two devices: the busier one
 };
 export const DEVICE_RE = /^[a-z0-9]{8,32}$/;
 
@@ -48,7 +54,9 @@ export class OnlineRoom extends DurableObject {
   async webSocketMessage(ws, message) {
     if (typeof message !== 'string' || message.length > 200) return;
     let d = null; try { d = JSON.parse(message); } catch (e) { return; }
-    if (!d || d.t !== 'hello') return;
+    if (!d) return;
+    if (d.t === 'where') return this.where(ws, d);
+    if (d.t !== 'hello') return;
     const att = ws.deserializeAttachment() || {}, now = Date.now();
     if (!att.hw || now - att.hw > 60e3) { att.hw = now; att.hn = 0; }
     if (++att.hn > ONLINE.hellos) { ws.serializeAttachment(att); return; }
@@ -63,6 +71,17 @@ export class OnlineRoom extends DurableObject {
   webSocketClose(ws, code) { try { ws.close(code === 1005 ? 1000 : code, ''); } catch (e) { /* already closed */ } }
   webSocketError() {}
 
+  // which screen the page is on: { w, r? }, checked against ONLINE.where
+  where(ws, d) {
+    if (!ONLINE.where.includes(d.w)) return;
+    const att = ws.deserializeAttachment() || {}, now = Date.now();
+    if (!att.ww || now - att.ww > 60e3) { att.ww = now; att.wn = 0; }
+    if (++att.wn > ONLINE.wheres) { ws.serializeAttachment(att); return; }
+    att.at = now;
+    att.wh = Number.isInteger(d.r) && d.r > 0 && d.r < 100 && !['menu', 'room'].includes(d.w) ? { w: d.w, r: d.r } : { w: d.w };
+    ws.serializeAttachment(att);
+  }
+
   // the devices with a page open now
   count(now = Date.now()) { return { online: this.live(now).size }; }
 
@@ -70,14 +89,19 @@ export class OnlineRoom extends DurableObject {
   who(now = Date.now()) {
     const live = this.live(now), players = new Map();
     let anon = 0;
-    for (const pids of live.values()) {
-      if (!pids.size) { anon++; continue; }
-      for (const id of pids) players.set(id, (players.get(id) || 0) + 1);
+    for (const dv of live.values()) {
+      if (!dv.pids.size) { anon++; continue; }
+      for (const [id, wh] of dv.pids) {
+        const p = players.get(id) || { id, devices: 0, where: null };
+        p.devices++;
+        if (wh && (!p.where || ONLINE.rank[wh.w] > ONLINE.rank[p.where.w])) p.where = wh;
+        players.set(id, p);
+      }
     }
-    return { online: live.size, players: [...players].map(([id, devices]) => ({ id, devices })), anon };
+    return { online: live.size, players: [...players.values()], anon };
   }
 
-  // device -> the player ids signed in on its open pages (empty: no account), for pages that pinged lately
+  // device -> { pids: player id -> where (the busiest of that player's pages on it) }, for pages that pinged lately
   live(now) {
     const devices = new Map();
     for (const ws of this.ctx.getWebSockets()) {
@@ -86,8 +110,11 @@ export class OnlineRoom extends DurableObject {
       if (now - at > (+this.env.ONLINE_STALE_MS || ONLINE.staleMs)) continue; // ONLINE_STALE_MS: tests only
       const d = this.ctx.getTags(ws).find((t) => t.startsWith('d:'));
       if (!d) continue;
-      if (!devices.has(d)) devices.set(d, new Set());
-      if (att.pid) devices.get(d).add(att.pid);
+      if (!devices.has(d)) devices.set(d, { pids: new Map() });
+      if (att.pid) {
+        const pids = devices.get(d).pids, had = pids.get(att.pid), wh = att.wh || null;
+        if (!pids.has(att.pid) || (wh && (!had || ONLINE.rank[wh.w] > ONLINE.rank[had.w]))) pids.set(att.pid, wh || had || null);
+      }
     }
     return devices;
   }

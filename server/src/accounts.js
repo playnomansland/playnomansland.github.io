@@ -465,7 +465,7 @@ export async function sessionId(env, token) {
   return s && s.expires >= Date.now() && !s.deleted ? s.player : null;
 }
 // Who is online (developers only, /account/online { list: true }): the OnlineRoom's player ids with their usernames
-// and titles, read now (so a changed username shows at once). players: [{ id, devices }]
+// and titles, read now (so a changed username shows at once). players: [{ id, devices, where }] (where: { w, r? }, the game screen)
 async function onlinePlayers(db, players) {
   const ids = players.map((p) => p.id).slice(0, 1000), rows = new Map();
   for (let i = 0; i < ids.length; i += 90) {
@@ -476,7 +476,7 @@ async function onlinePlayers(db, players) {
     for (const x of r.results) rows.set(x.id, x);
   }
   return players.map((p) => ({ p, x: rows.get(p.id) })).filter(({ x }) => x && !x.deleted)
-    .map(({ p, x }) => ({ id: x.id, tag: x.tag || 'Player', title: titleShown(x), google: !!x.google, dev: !!x.dev, devices: p.devices }))
+    .map(({ p, x }) => ({ id: x.id, tag: x.tag || 'Player', title: titleShown(x), google: !!x.google, dev: !!x.dev, devices: p.devices, where: p.where || null }))
     .sort((a, b) => a.tag.localeCompare(b.tag, 'en', { sensitivity: 'base' }));
 }
 // The online lobby (2026-11-04, docs/LOBBY.md): config 'lobby_duo' = 'dev' (default: 2v2 rooms listed for developers

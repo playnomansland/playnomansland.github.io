@@ -2513,6 +2513,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .onl-row .nameplate { min-width: 0; }
 .onl-row .np-tag { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .onl-meta { flex: none; font-size: 12px; opacity: 0.75; }
+.onl-who { display: grid; gap: 3px; min-width: 0; justify-items: start; }
+.onl-where { font-size: 12px; color: #9fd8ff; }
+.onl-where.onl-w-menu, .onl-where.onl-w-replay { color: inherit; opacity: 0.6; }
 .online-np b { font: 700 13px var(--font-data, var(--font-display)); letter-spacing: 0.02em; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
 .online-np .live, #dio .online .live { position: relative; width: 7px; height: 7px; border-radius: 50%; background: #4BE38A; box-shadow: 0 0 6px rgba(75, 227, 138, 0.8); flex: none; }
 .online-np .live::after, #dio .online .live::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid #4BE38A; opacity: 0; animation: onlPulse 2.4s ease-out infinite; }
@@ -18377,7 +18380,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · d0a8c02'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · f82015d'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -21607,7 +21610,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // server/src/online.js) as one device (pb-device, a random id kept on this browser, so tabs count once), pinging every
   // 30 s so a sleeping phone drops out. Developers see how many are online now ([data-online]: under the name on the
   // phone menu, in the Diorama's top bar), from POST /account/online every 20 s while the page is in view.
-  var onl = { ws: null, tries: 0, timer: 0, ping: 0, n: null, busy: false, device: '', said: undefined, list: null, listBusy: false };
+  var onl = { ws: null, tries: 0, timer: 0, ping: 0, n: null, busy: false, device: '', said: undefined, list: null, listBusy: false, whereSent: '' };
   function onlDevice() {
     if (onl.device) return onl.device;
     let d = ''; try { d = localStorage.getItem('pb-device') || ''; } catch (e) {}
@@ -21622,7 +21625,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     let ws;
     try { ws = new WebSocket(`${SERVER_URL.replace(/^http/, 'ws')}/online?d=${onlDevice()}`); } catch (e) { onlRetry(); return; }
     onl.ws = ws;
-    ws.onopen = () => { if (onl.ws !== ws) return; onl.tries = 0; onl.said = undefined; onlHello(); };
+    ws.onopen = () => { if (onl.ws !== ws) return; onl.tries = 0; onl.said = undefined; onl.whereSent = ''; onlHello(); onlWhereTick(); };
     ws.onclose = () => { if (onl.ws !== ws) return; onl.ws = null; onlRetry(); };
     clearInterval(onl.ping); onl.ping = setInterval(() => { if (onl.ws === ws && ws.readyState === 1) ws.send('{"t":"ping"}'); }, 30000);
   }
@@ -21633,6 +21636,26 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (!onl.ws || onl.ws.readyState !== 1 || onl.said === s) return;
     try { onl.ws.send(JSON.stringify({ t: 'hello', session: s })); onl.said = s; } catch (e) {}
   }
+  // which screen of the game this page is on (2026-11-10), for developers' Online now list: { w, r? } (ONLINE.where in
+  // server/src/online.js). Only the game's own screens; checked every 2 s and sent when it changes.
+  function onlWhere() {
+    if (m && phase !== 'start' && phase !== 'lobby') {
+      const w = mode === 'net' ? 'online' : mode === 'host' || mode === 'guest' ? 'peer' : mode === 'tutorial' ? 'puzzle' : mode === 'spec' ? 'watch'
+        : mode === 'replay' || mode === 'sandbox' ? 'replay' : 'ai';
+      return m.round > 0 && w !== 'replay' ? { w, r: m.round } : { w };
+    }
+    if (phase === 'lobby') return { w: 'room' };
+    return { w: 'menu' };
+  }
+  function onlWhereTick() {
+    if (!onl.ws || onl.ws.readyState !== 1) return;
+    const st = onlWhere(), key = JSON.stringify(st);
+    if (key === onl.whereSent) return;
+    try { onl.ws.send(JSON.stringify({ t: 'where', ...st })); onl.whereSent = key; } catch (e) {}
+  }
+  setInterval(onlWhereTick, 2000);
+  const ONL_WHERE = { menu: 'Menu', room: 'Waiting room', ai: 'Vs computer', online: 'Online match', peer: 'Phone to phone', puzzle: 'Tutorial puzzles', watch: 'Watching a match', replay: 'Replay' };
+  const onlWhereText = (wh) => wh && ONL_WHERE[wh.w] ? ONL_WHERE[wh.w] + (wh.r ? ` · round ${wh.r}` : '') : '';
   // after a failure: 4 s, 8 s ... up to 5 minutes (a page where the server isn't allowed, like a preview, stops trying hard)
   function onlRetry() { clearTimeout(onl.timer); onl.tries++; onl.timer = setTimeout(() => { onl.timer = 0; onlOpen(); }, Math.min(300e3, 2000 * 2 ** Math.min(8, onl.tries))); }
   async function onlLoad() {
@@ -21673,7 +21696,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (!L) { el.innerHTML = '<p class="hint" style="margin:0">Loading…</p>'; return; }
     if (L.error) { el.innerHTML = `<p class="hint" style="margin:0">${esc(L.error)}</p>`; return; }
     const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
-    const rows = L.players.map(p => `<li class="onl-row">${nameplate(p.tag, p.title, 'row')}<span class="onl-meta">${p.google ? 'Google' : 'Guest'}${p.devices > 1 ? ` · ${p.devices} devices` : ''}${acct && p.id === acct.id ? ' · <b>you</b>' : ''}</span></li>`).join('');
+    const rows = L.players.map(p => `<li class="onl-row"><span class="onl-who">${nameplate(p.tag, p.title, 'row')}${onlWhereText(p.where) ? `<span class="onl-where onl-w-${esc(p.where.w)}">${esc(onlWhereText(p.where))}</span>` : ''}</span><span class="onl-meta">${p.google ? 'Google' : 'Guest'}${p.devices > 1 ? ` · ${p.devices} devices` : ''}${acct && p.id === acct.id ? ' · <b>you</b>' : ''}</span></li>`).join('');
     el.innerHTML = `<p class="hint onl-sum">${n(L.online, 'device', 'devices')} with the game open: ${n(L.players.length, 'player', 'players')} signed in, ${n(L.anon, 'without an account', 'without an account')}. Only developers see this.</p>`
       + (rows ? `<ul class="onl-list">${rows}</ul>` : '<p class="hint" style="margin:0">Nobody signed in right now.</p>');
   }

@@ -80,6 +80,20 @@ const dev = () => Math.random().toString(36).slice(2, 12).padEnd(10, 'x');
     assert.ok(!('session' in byId[D.player.id]), 'no sessions in the list');
     console.log('ok   who: signed-in players by account (devices counted), the rest as no account; a made-up session is no account');
 
+    // where (2026-11-10): the game screen; a player on two devices shows the busier one; junk is ignored
+    assert.strictEqual(byId[D.player.id].where, null, 'nothing said yet');
+    pg.send(JSON.stringify({ t: 'where', w: 'ai', r: 3 }));
+    pd1.send(JSON.stringify({ t: 'where', w: 'menu', r: 5 })); pd2.send(JSON.stringify({ t: 'where', w: 'online', r: 2 }));
+    pn.send(JSON.stringify({ t: 'where', w: 'online' }));
+    w = await waitFor(async () => { const x = await who(); const g1 = x.players.find((p) => p.id === guest.player.id), d1 = x.players.find((p) => p.id === D.player.id); return g1.where && d1.where && d1.where.w === 'online' ? x : null; }, 5000);
+    assert.deepStrictEqual(w.players.find((p) => p.id === guest.player.id).where, { w: 'ai', r: 3 }, 'the guest: vs the computer, round 3');
+    assert.deepStrictEqual(w.players.find((p) => p.id === D.player.id).where, { w: 'online', r: 2 }, 'the developer: the online match beats the menu');
+    assert.ok(!('where' in w) && w.anon === 2, 'pages with no account: counted only');
+    pg.send(JSON.stringify({ t: 'where', w: 'the moon', r: 1 })); pg.send(JSON.stringify({ t: 'where', w: 'room', r: 4 }));
+    w = await waitFor(async () => { const x = await who(); const g1 = x.players.find((p) => p.id === guest.player.id); return g1.where.w === 'room' ? x : null; }, 5000);
+    assert.deepStrictEqual(w.players.find((p) => p.id === guest.player.id).where, { w: 'room' }, 'an unknown screen is ignored; no round outside a match');
+    console.log('ok   where: the game screen and round, the busier device wins, junk ignored');
+
     // signing out (hello null) and in again; a closed page leaves the list
     await hello(pg, null);
     w = await waitFor(async () => { const x = await who(); return x.players.length === 1 && x.anon === 3 ? x : null; }, 5000);
