@@ -215,7 +215,7 @@
   // the clock: runs unless tower picks are pending or a player is away (then held keeps what is left)
   // The leader draft (Game.DRAFT): each pick has DRAFT_PICK_MS; a player who doesn't pick in time gets the first leader
   // left in the pool, and the other player's turn starts. R.draftDue = when the current pick runs out (0: none pending).
-  const DRAFT_PICK_MS = 30000;
+  const DRAFT_PICK_MS = 20000; // 20 s since 2026-11-10 (was 30)
   function draftClock(R, now) {
     const m = R.m, turn = R.phase === 'deploy' && m && !m.over ? [0, 1].find(sd => G.leaderTurn(m, sd)) : undefined;
     if (turn == null) { R.draftDue = 0; R.draftTurn = null; return; }
@@ -227,7 +227,7 @@
   }
   // The tower pick (round Game.TOWER_PICK_ROUND, 2026-11-10): TOWER_PICK_MS from the round's start; a player who hasn't
   // picked by then gets the first tower on offer (as Game.settleTowerPicks). R.towerDue = when it runs out (0: none pending).
-  const TOWER_PICK_MS = 30000;
+  const TOWER_PICK_MS = 20000; // as DRAFT_PICK_MS
   function towerClock(R, now) {
     const m = R.m, open = R.phase === 'deploy' && m && !m.over ? [0, 1].filter(sd => G.needsTowerPick(m, sd)) : [];
     if (!open.length) { R.towerDue = 0; return; }

@@ -10572,7 +10572,7 @@ if (typeof module !== 'undefined') module.exports = Game;
   // the clock: runs unless tower picks are pending or a player is away (then held keeps what is left)
   // The leader draft (Game.DRAFT): each pick has DRAFT_PICK_MS; a player who doesn't pick in time gets the first leader
   // left in the pool, and the other player's turn starts. R.draftDue = when the current pick runs out (0: none pending).
-  const DRAFT_PICK_MS = 30000;
+  const DRAFT_PICK_MS = 20000; // 20 s since 2026-11-10 (was 30)
   function draftClock(R, now) {
     const m = R.m, turn = R.phase === 'deploy' && m && !m.over ? [0, 1].find(sd => G.leaderTurn(m, sd)) : undefined;
     if (turn == null) { R.draftDue = 0; R.draftTurn = null; return; }
@@ -10584,7 +10584,7 @@ if (typeof module !== 'undefined') module.exports = Game;
   }
   // The tower pick (round Game.TOWER_PICK_ROUND, 2026-11-10): TOWER_PICK_MS from the round's start; a player who hasn't
   // picked by then gets the first tower on offer (as Game.settleTowerPicks). R.towerDue = when it runs out (0: none pending).
-  const TOWER_PICK_MS = 30000;
+  const TOWER_PICK_MS = 20000; // as DRAFT_PICK_MS
   function towerClock(R, now) {
     const m = R.m, open = R.phase === 'deploy' && m && !m.over ? [0, 1].filter(sd => G.needsTowerPick(m, sd)) : [];
     if (!open.length) { R.towerDue = 0; return; }
@@ -19528,7 +19528,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // runs out (the first leader left, the first tower on offer); this page sends the card its player tapped just before.
   // Vs the computer and phone to phone each page keeps its own player's clock and picks for them the same way.
   // Off where there's no deploy clock (vs the computer with the timer off, the tutorial and puzzles) and in 2v2.
-  const PICK_MS = Referee.TOWER_PICK_MS; // 30 s, as Referee.DRAFT_PICK_MS for each leader pick
+  const PICK_MS = Referee.TOWER_PICK_MS; // 20 s, as Referee.DRAFT_PICK_MS for each leader pick
   let pickDue = 0, pickClockKey = '', peekText = '';
   const pickTimed = () => phase === 'deploy' && !!m && !m.over && !m.duoTowers && !net.duo && ['ai', 'claude', 'host', 'guest', 'net'].includes(mode)
     && (mode === 'host' || mode === 'guest' || mode === 'net' || timerOn || tourSet());
