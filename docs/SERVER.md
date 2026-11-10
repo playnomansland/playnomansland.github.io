@@ -189,3 +189,14 @@ Design: [FRIENDS.md](FRIENDS.md). For signed-in players only (a Google login; a 
 - Test-only settings (never set in production): `HUB_INVITE_MS`, `HUB_DM_BURST` (`n,ms`), `HUB_DM_HOUR`.
 - Tests: `server/test/friends.test.js` (port 8782) and `server/test/hub.test.js` (port 8783), both in `npm test`; `node tools/tests/friends-ui.js` (two browsers, port 8782).
 
+
+## Players online (2026-11-10)
+
+How many people have the game open right now, for developers only (the owner asked for it). The friends hubs only see Google accounts, so this is separate and counts every open page: guests and visitors with no account too.
+
+- OnlineRoom (`server/src/online.js`, binding `ONLINE`, migration `online-1`): one Durable Object (`'all'`). Every page keeps one socket to `GET /online?d=<device>` (WebSocket, origin-checked; `device` is a random id the page keeps in localStorage as `pb-device`, so several tabs of one browser count once). The sockets hibernate and pings are answered without waking the object, so an open page costs nothing between pings. Each socket is tagged with its device and a hash of its IP (never the IP); at most 30 sockets per IP and 20,000 in all (`ONLINE`).
+- Counting: a device counts while one of its sockets pinged (or connected) within the last 90 s (`ONLINE.staleMs`; pages ping every 30 s), so a phone that went to sleep without closing drops out by itself.
+- Route (POST, session in the Authorization header): `/account/online` -> `{ online, at }`, developers only (the server's own `dev` column; 403 `not a developer` otherwise).
+- The page (`onl*` in `src/site-template.html`): the socket opens on every page, retrying from 4 s up to every 5 minutes; a developer's page asks for the count every 20 s while in view and shows it in `[data-online]`: a pill under the name on the phone menu (`.online-np`), the first item of the Diorama's top bar (with the DEV tag). `window.__online()` with `?test`.
+- Test-only setting (never set in production): `ONLINE_STALE_MS`.
+- Tests: `server/test/online.test.js` (port 8784, in `npm test`); `node tools/tests/online-ui.js` (the page against a local server, ports 8766 and 8788).

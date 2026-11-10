@@ -4329,7 +4329,8 @@ const Game = (() => {
   ];
   const CHARACTERS = ALL_CHARACTERS.filter(c => !RETIRED_CHARS.includes(c.id));
   // ---------- the Standard pack ----------
-  // A smaller match for new players, picked on the menu: fewer units with clear jobs (one or two of each kind per tier),
+  // No longer offered on the menu (2026-11-10: every match plays with the whole pool); kept for tools/tests/standard-pack.js.
+  // A smaller match for new players: fewer units with clear jobs (one or two of each kind per tier),
   // the leaders with simple abilities, and no mage or slime tower. Units by name, so a Counter Lab roster just keeps
   // the ones it has (with none of them, the pack leaves nothing out).
   const STANDARD_PACK = {

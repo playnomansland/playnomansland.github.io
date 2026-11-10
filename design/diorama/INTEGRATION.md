@@ -4,8 +4,11 @@ Written 2026-11-07 at the end of the session that finished the mockup. Read `des
 design language and every screen), then this file. Work on a branch (`claude/nice-mendel-scnrpy` has the mockup and
 is level with `main` as of 2026-11-07; merge `main` in again before starting, the game moves fast).
 
-**2026-11-10: launch-ready.** The branch `claude/practical-hopper-qdgau9` carries the PC launch build (`index.html` with
-`PB_UI_DEFAULT=pc`, item 3 below) and waits for the owner's word to go to `main`. See `HANDOFF.md`, "Launch-ready".
+**2026-11-10: LAUNCHED ON PC.** The Diorama is the default on computers (`57015d3`, on `main` since about 12:30 UTC
+2026-11-10); phones and tablets keep the old UI; `?ui=classic` / `?ui=diorama` still choose per device.
+**Every build from now on: `PB_UI_DEFAULT=pc node src/build.js`.** A plain `node src/build.js` builds `'classic'` and
+takes the Diorama away from computers: that happened once (`181209e`, 13:17 UTC, the hover hint), and was put back in
+the next commit. Check `grep "const DEF = " index.html` says `'pc'` before every commit of `index.html`.
 
 ## Next session: start here (handoff, 2026-11-08)
 
@@ -94,6 +97,19 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   the island. Units' tiles, a unit's hover note and its sheet showed the unit's raw `cost` (1, 2, 3, 5: the number the
   tiers come from) as "1 gold"; they showed the game's price for a squad (`Game.unitCostOf`) for a moment, then the owner asked for no price at all
   (2026-11-10): the tiles show the name only, the note and the sheet's tag "Tier N".
+- Fifteenth round (2026-11-10): the skeleton's hint ("Hover over stuff on the island with your mouse!") goes up and to
+  the left of the skeleton, beside the golem's note (or above it when it would sit over it); to the right only when
+  there's no room (small windows: 1280×720, 1024×768).
+- **Puzzles screen (2026-11-10, live on `main` on the owner's word the same day).** The menu's PUZZLES opens it instead of the game's sheet (`openPuzzles` hands over to `dio.api.puzzles` on
+  the home; the old UI keeps the sheet). Its own field colour, a deep teal `#1F5A57` (the fourth after ultramarine,
+  saffron and ink). Left column as Profile's: "Puzzles · one fight each", PUZZLES, "You see their whole army. Win it
+  with the gold you have.", "Solve the 3 Easy ones for the title INITIATE" (or "The title is yours."), then each level
+  (`PUZ_LEVELS`) with "n of m solved" and its puzzles as numbered stencil words (✓ solved in green), Back. Pointing at a
+  row puts that puzzle on the island (`buildPuz`): the menu's pieces sink, both keeps, their squads on their real tiles
+  (`P.foe`, facing you) and your shop as name tiles with the unit across your half (`P.shop`); one note on their army:
+  the puzzle's name and its goal line (which ends "You have N gold."). Camera `VIEWS.puz`. A click starts it
+  (`startPuzzle`); leaving or finishing it comes back to Puzzles (`home.back = 'puzzles'` → `home.puz`). Back, Esc and
+  the logo go to the menu; Profile and Play close it. Checked at 1920×1080, 1440×900, 1366×768, 1280×720.
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 - Eleventh round (2026-11-09): the golem's note (menu and Profile) has a small saffron button, INVITE A FRIEND
@@ -103,14 +119,14 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   its way, as before).
 
 **Monday 2026-11-09 (owner):** the golem's note button is done (eleventh round above). Next: the owner's PC trial,
-then the PC launch if the owner says go (item 3). Everything under "Done from the owner's second trial notes" is live
+then the PC launch if the owner says go (item 3: done 2026-11-10). Everything under "Done from the owner's second trial notes" is live
 on `main` behind `?ui=diorama` (last commit of 2026-11-08: the small text in Bricolage Grotesque).
 
 **Open, in order:**
 1. **Ask the owner to try again** at `?ui=diorama` (list below) and fix what they find.
 2. **The in-match music panel:** the owner designs it with the new Battle screen, in that separate session (answered
    2026-11-08). Leave the game's panel (`openPlaylist`, `mp-pop`) as it is here.
-3. **The PC launch** when the owner says so (planned for 2026-11-08 if all goes well, otherwise Monday 2026-11-09): `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`, push to `main`
+3. **The PC launch (done 2026-11-10, `57015d3`; build with `PB_UI_DEFAULT=pc` from now on)** when the owner says so (planned for 2026-11-08 if all goes well, otherwise Monday 2026-11-09): `PB_UI_DEFAULT=pc node src/build.js`, commit `index.html`, push to `main`
    (the Diorama on computers, the old UI on phones and tablets). Never commit a non-`classic` build otherwise.
 4. **Designs the owner wants before the full launch:** Puzzles, How to play, and the room you wait in (still the
    game's sheets / screens, restyled).
@@ -557,4 +573,4 @@ timeout leaves `wrangler dev` / `workerd` running and the next run's accounts fa
 
 ## Still to ask the owner
 
-- After the live trial: make the Diorama the PC default (`PB_UI_DEFAULT=pc`)?
+- ~~After the live trial: make the Diorama the PC default (`PB_UI_DEFAULT=pc`)?~~ Done 2026-11-10.

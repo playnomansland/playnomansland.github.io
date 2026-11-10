@@ -721,6 +721,15 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .nameplate.big .np-tag { font-size: 22px; }
 .nameplate.row { justify-items: start; }
 .nameplate.menu-np .np-tag { font-size: 20px; color: #fff; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6); }
+/* players online (2026-11-10, developers only): a small pill in the DEV title's pink under the name, with a live dot */
+.online-np { display: inline-flex; align-items: center; gap: 7px; margin-top: 6px; padding: 3px 11px 3px 9px; border-radius: 999px; font: 700 11px var(--font-display); letter-spacing: 0.16em; text-transform: uppercase; color: #FF5FC4;
+  background: linear-gradient(90deg, transparent, rgba(255, 95, 196, 0.16) 18%, rgba(255, 95, 196, 0.16) 82%, transparent); text-shadow: 0 0 8px rgba(255, 95, 196, 0.45); }
+.online-np[hidden] { display: none; }
+.online-np b { font: 700 13px var(--font-data, var(--font-display)); letter-spacing: 0.02em; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+.online-np .live, #dio .online .live { position: relative; width: 7px; height: 7px; border-radius: 50%; background: #4BE38A; box-shadow: 0 0 6px rgba(75, 227, 138, 0.8); flex: none; }
+.online-np .live::after, #dio .online .live::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid #4BE38A; opacity: 0; animation: onlPulse 2.4s ease-out infinite; }
+@keyframes onlPulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(1.9); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .online-np .live::after, #dio .online .live::after { animation: none; } }
 .ptitle { --tc: #B67CFF; --tg: rgba(182, 124, 255, 0.5); display: inline-flex; align-items: center; gap: 6px; font: 700 10px var(--font-display); letter-spacing: 0.22em; text-transform: uppercase; color: var(--tc); padding: 2px 9px 2px 11px; border-radius: 999px;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tc) 22%, transparent) 25%, color-mix(in srgb, var(--tc) 22%, transparent) 75%, transparent);
   text-shadow: 0 0 8px var(--tg), 0 0 2px var(--tg); animation: tglow 2.6s ease-in-out infinite; }
@@ -985,6 +994,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <img class="logo" src="img/title.png" alt="No Mans Land: main menu" role="button" tabindex="0">
   <nav class="acct" aria-label="Account">
+    <span class="online" id="dio-online" data-online hidden title="Players with the game open right now. Only developers see this."><span class="dvt">DEV</span><i class="live" aria-hidden="true"></i><span class="n"><b></b> online</span></span>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="currentColor"/><path d="M2 20c0-3.9 3.1-6 7-6s7 2.1 7 6" fill="currentColor"/><circle cx="17" cy="9" r="2.8" fill="currentColor" opacity=".7"/><path d="M17 13.5c2.9.2 5 1.9 5 5.5h-4.4c0-2-.6-3.7-1.8-5" fill="currentColor" opacity=".7"/></svg><span>Friends</span><b class="badge" id="fr-badge" hidden></b></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/></svg><span>Guest</span></button>
     <button><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.7a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.7h4l.4-2.7a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg><span>Settings</span></button>
@@ -1159,6 +1169,18 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button class="create" id="pf-hist">Match history <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
     <button class="create" id="pf-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
   </section>
+
+  <!-- Puzzles (2026-11-10): the game's tutorial puzzles as rows of words, by level. The island shows the pointed-at one:
+       their squads on their tiles, your shop on tiles along your side. One click on a row starts it -->
+  <section class="pz" aria-label="Puzzles">
+    <span class="k">Puzzles · one fight each</span>
+    <h2>Puzzles</h2>
+    <p class="pz-lede">You see their whole army. Win it with the gold you have.</p>
+    <p class="pz-title" id="pz-title"></p>
+    <div class="pz-list" id="pz-list"></div>
+    <button class="create" id="pz-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
+  </section>
+  <div class="note qnote" data-q="foe" style="display:none"></div>
 
   <!-- Match history: your online matches, newest first; a match folds out its rounds, each with a replay -->
   <section class="history" aria-label="Match history">
@@ -1468,12 +1490,14 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     eyesInTheFront2: { title: 'Eyes in the front 2', file: 'audio/eyes-in-the-front-2.mp3' }, // the whole song (menu)
     // the same song as battle music: plays from start to end (seconds), then loops back to start
     joeBiden: { title: 'Joe biden', file: 'audio/joe-biden.mp3' },
+    broski: { title: 'Broski', file: 'audio/broski.mp3' },
+    dawnOnU: { title: 'DawnOnU', file: 'audio/dawn-on-u.mp3' },
     eyesInTheFront2Battle: { title: 'Eyes in the front 2', file: 'audio/eyes-in-the-front-2.mp3', start: 22.15, end: 88.61 },
   };
   // deployment / battle music not given to a look yet: kept out of the menu playlist and played nowhere until it goes
   // in PLAYLISTS or MUSIC_COMBOS (and then out of this list). Developers hear them in the DEV playlist ('dev', devMusic);
   // everyone else doesn't see them anywhere, not in All music or their own playlists either.
-  const UNASSIGNED = ['evening', 's4knandet', 'eyesInTheFront2Battle'];
+  const UNASSIGNED = ['evening', 's4knandet', 'eyesInTheFront2Battle', 'broski', 'dawnOnU'];
   const ARTIST = 'Snetänd'; // unless a song names its own
   const songName = (id) => `“${SONGS[id].title}” - ${SONGS[id].artist || ARTIST}`;
   const PLAYLISTS = { deploy: ['bulgaria'], battle: ['habbyourmam'] };
@@ -2591,41 +2615,34 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const offIdx = () => units.map((u, i) => offUnits.includes(u.name) ? i : -1).filter(i => i >= 0);
   const unitsOn = () => units.length - offIdx().length;
   // The unit pack (2026-11-02), saved on this device; the host's counts with a friend:
-  //  'learn'    Learn the game: Game.STANDARD_PACK (fewer units, leaders and towers, for new players)
   //  'standard' Standard: every unit, leader and tower (Blixten is retired from every pool, see Game.RETIRED_CHARS)
   //  'custom'   developers only: every unit, leader and tower, minus what Leaders and Units leave out (the old All units)
   // A Counter Lab roster always plays as 'custom'. Nobody but a developer can change what a pack holds.
+  // The smaller Learn the game pack (Game.STANDARD_PACK) is gone from the menu since 2026-11-10: every match, against the
+  // computer too, plays with the whole pool; a device that had it saved plays Standard.
   const PACK_STORE = 'pb-unit-pack2';
   const STD_OFF_CHARS = [];
-  let unitPack = 'learn';
-  try {
-    const v = localStorage.getItem(PACK_STORE), old = localStorage.getItem('pb-unit-pack'); // the old values: 'standard' = the small pack, 'all'
-    if (['learn', 'standard', 'custom'].includes(v)) unitPack = v; else if (old === 'all') unitPack = 'standard';
-  } catch (e) {}
+  let unitPack = 'standard';
+  try { if (localStorage.getItem(PACK_STORE) === 'custom') unitPack = 'custom'; } catch (e) {}
   const packNow = () => customSet ? 'custom' : unitPack === 'custom' && !devMode() ? 'standard' : unitPack;
-  const packOn = () => packNow() === 'learn';
-  const SP = Game.STANDARD_PACK;
-  const packUnits = () => units.filter(u => SP.units.includes(u.name)).length;
-  const packTowers = () => Game.TOWER_TYPES.filter(x => !SP.offTowers.includes(x.id));
   // what a new match takes from the menu: units, leaders and towers left out, and the rules of a Counter Lab roster
-  const matchOff = () => packOn() && packUnits() >= 2 ? units.map((u, i) => SP.units.includes(u.name) ? -1 : i).filter(i => i >= 0) : packNow() === 'standard' ? [] : offIdx();
-  const matchChars = () => packOn() ? Game.CHARACTERS.map(c => c.id).filter(id => !SP.chars.includes(id)) : packNow() === 'standard' ? STD_OFF_CHARS.slice() : offChars;
+  const matchOff = () => packNow() === 'standard' ? [] : offIdx();
+  const matchChars = () => packNow() === 'standard' ? STD_OFF_CHARS.slice() : offChars;
   let lateGame = false; // DEVTESTLATEGAME (developer menu): the next match gets more health and the tier 3+ squad cap (Game.LATE)
-  const matchOpts = () => ({ late: lateGame, skin: skinPick || null, lastSkin: (m && m.skin) || null, offUnits: matchOff(), offTowers: packOn() ? SP.offTowers : [], rules: customSet && rawSet.rules && typeof rawSet.rules === 'object' ? rawSet.rules : null });
-  const packNote = () => packOn()
-    ? `${packUnits()} units, ${SP.chars.length} leaders, ${packTowers().length} towers. The best way to start.`
-    : packNow() === 'standard' ? `All ${units.length} units, ${Game.CHARACTERS.length - STD_OFF_CHARS.length} leaders and ${Game.TOWER_TYPES.length} towers. What ranked is played with.`
+  const matchOpts = () => ({ late: lateGame, skin: skinPick || null, lastSkin: (m && m.skin) || null, offUnits: matchOff(), offTowers: [], rules: customSet && rawSet.rules && typeof rawSet.rules === 'object' ? rawSet.rules : null });
+  const packNote = () => packNow() === 'standard' ? `All ${units.length} units, ${Game.CHARACTERS.length - STD_OFF_CHARS.length} leaders and ${Game.TOWER_TYPES.length} towers. What ranked is played with.`
     : `${unitsOn() === units.length ? 'All ' + units.length : `${unitsOn()} of ${units.length}`} units, ${charsOn()} leaders, ${Game.TOWER_TYPES.length} towers. Pick which below (developer).`;
-  const packSeg = () => customSet ? '' : `<div class="bar">
+  // the Units choice is for developers only now (Standard or Custom); everyone else always plays Standard
+  const packSeg = () => customSet || !devMode() ? '' : `<div class="bar">
         <span class="hint">Units</span>
         <div class="seg" role="group" aria-label="Unit pack">
-          <button data-pack="learn" aria-pressed="${packNow() === 'learn'}">Learn the game</button><button data-pack="standard" aria-pressed="${packNow() === 'standard'}">Standard</button>${devMode() ? `<button data-pack="custom" aria-pressed="${packNow() === 'custom'}">Custom</button>` : ''}
+          <button data-pack="standard" aria-pressed="${packNow() === 'standard'}">Standard</button><button data-pack="custom" aria-pressed="${packNow() === 'custom'}">Custom</button>
         </div>
       </div>
       <span class="hint" id="pack-note" style="margin-top:-6px">${packNote()}</span>`;
   const wirePackSeg = () => { const root = setRoot(); root.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {
     const v = b.dataset.pack;
-    unitPack = v === 'custom' && devMode() ? 'custom' : v === 'standard' ? 'standard' : 'learn';
+    unitPack = v === 'custom' && devMode() ? 'custom' : 'standard';
     try { localStorage.setItem(PACK_STORE, unitPack); } catch (e) {}
     root.querySelectorAll('[data-pack]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     root.querySelector('#pack-note').textContent = packNote();
@@ -3964,6 +3981,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     home.ctx = { resume, netBack, newcomer };
     if (!home.screen || home.screen === 'menu' || !home.welcomeNeeded()) home.screen = home.welcomeNeeded() ? 'welcome' : 'menu';
     if (home.back === 'lobby' && home.screen === 'menu') { home.screen = 'lobby'; home.pop = false; } // a match from the lobby: back to the Rooms list
+    if (home.back === 'puzzles' && home.screen === 'menu') { home.pop = false; home.puz = true; } // a puzzle: back to the Diorama's Puzzles
     home.back = '';
     drawHome();
     size(); render();
@@ -4248,6 +4266,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       </div>
       <div class="home-mid">
         ${acct ? nameplate(acct.tag, acct.title, 'menu-np') : ''}
+        ${devMode() ? onlineChip() : ''}
         <button class="hbtn gold play-big" id="play">Play</button>
         <div class="home-more">
           ${inTour ? `<button class="btn primary" id="tour-back">Back to tournament ${esc(tour.code)}</button>` : ''}
@@ -4294,6 +4313,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if ($('skin-ok')) $('skin-ok').addEventListener('click', () => { skinsSeen(); drawHome(); });
     if (acct && !home.refreshed) { home.refreshed = true; acctCall('me', {}, true).then(r => { if (r.status === 200) { acctTake(r); if (phase === 'start' && home.screen === 'menu' && !home.pop) drawHome(); } }); } // titles for accounts made before them
     if ($('stay-yes')) { $('stay-yes').addEventListener('click', () => { setStay(true); drawHome(); }); $('stay-no').addEventListener('click', () => { setStay(false); drawHome(); }); }
+    if (typeof onl !== 'undefined' && onl) onlShow(); // players online (developers): the chip drawn just now gets the count
     $('play').addEventListener('click', () => { home.pop = true; drawHome(); });
     $('music-open').addEventListener('click', openSoundSheet);
     $('acct-open').addEventListener('click', openAccountSheet);
@@ -5172,7 +5192,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   function acctSave(a) {
     const dev0 = devMode();
     acct = a;
-    if (devMode() !== dev0) musicDevChanged(); // the DEV playlist comes or goes
+    if (devMode() !== dev0) { musicDevChanged(); if (onl) onlLoad(); } // the DEV playlist and the players-online count come or go
     try {
       localStorage.removeItem(ACCT_STORE); sessionStorage.removeItem(ACCT_STORE);
       if (a) acctStore().setItem(ACCT_STORE, JSON.stringify(a));
@@ -5418,6 +5438,62 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     frBadge(); frBanner();
   }
   setInterval(frTick, 2000);
+
+  // ---------- players online (2026-11-10): every open page keeps one socket to the server's OnlineRoom (/online?d=,
+  // server/src/online.js) as one device (pb-device, a random id kept on this browser, so tabs count once), pinging every
+  // 30 s so a sleeping phone drops out. Developers see how many are online now ([data-online]: under the name on the
+  // phone menu, in the Diorama's top bar), from POST /account/online every 20 s while the page is in view.
+  var onl = { ws: null, tries: 0, timer: 0, ping: 0, n: null, busy: false, device: '' };
+  function onlDevice() {
+    if (onl.device) return onl.device;
+    let d = ''; try { d = localStorage.getItem('pb-device') || ''; } catch (e) {}
+    if (!/^[a-z0-9]{8,32}$/.test(d)) {
+      try { d = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => (b % 36).toString(36)).join(''); } catch (e) { d = (Math.random().toString(36) + Math.random().toString(36)).replace(/[^a-z0-9]/g, '').slice(0, 16); }
+      try { localStorage.setItem('pb-device', d); } catch (e) {}
+    }
+    return (onl.device = d);
+  }
+  function onlOpen() {
+    if (onl.ws || onl.timer || typeof WebSocket !== 'function') return;
+    let ws;
+    try { ws = new WebSocket(`${SERVER_URL.replace(/^http/, 'ws')}/online?d=${onlDevice()}`); } catch (e) { onlRetry(); return; }
+    onl.ws = ws;
+    ws.onopen = () => { if (onl.ws === ws) onl.tries = 0; };
+    ws.onclose = () => { if (onl.ws !== ws) return; onl.ws = null; onlRetry(); };
+    clearInterval(onl.ping); onl.ping = setInterval(() => { if (onl.ws === ws && ws.readyState === 1) ws.send('{"t":"ping"}'); }, 30000);
+  }
+  // after a failure: 4 s, 8 s ... up to 5 minutes (a page where the server isn't allowed, like a preview, stops trying hard)
+  function onlRetry() { clearTimeout(onl.timer); onl.tries++; onl.timer = setTimeout(() => { onl.timer = 0; onlOpen(); }, Math.min(300e3, 2000 * 2 ** Math.min(8, onl.tries))); }
+  async function onlLoad() {
+    if (!devMode()) { if (onl.n != null) { onl.n = null; onlShow(); } return; }
+    if (onl.busy || document.hidden) return;
+    onl.busy = true;
+    const r = await acctCall('online', {}, true);
+    onl.busy = false;
+    if (r.status === 200 && Number.isFinite(r.online)) onl.n = Math.max(0, r.online | 0);
+    else if (r.status === 403 || r.status === 401) onl.n = null;
+    onlShow();
+  }
+  // the count wherever the page shows it ([data-online] with a <b> for the number), developers only
+  function onlShow() {
+    const on = devMode() && onl.n != null, n = on ? String(onl.n) : '';
+    document.querySelectorAll('[data-online]').forEach(el => {
+      el.hidden = !on;
+      const b = el.querySelector('b'); if (b && b.textContent !== n) b.textContent = n;
+      if (on) el.setAttribute('aria-label', `${n} ${n === '1' ? 'player' : 'players'} online now (developers only)`);
+    });
+  }
+  const onlineChip = () => '<span class="online-np" data-online hidden title="Players with the game open right now. Only developers see this."><i class="live" aria-hidden="true"></i><b></b> online</span>';
+  if (qs.has('test')) window.__online = () => ({ open: !!(onl.ws && onl.ws.readyState === 1), state: onl.ws ? onl.ws.readyState : -1, retry: !!onl.timer, tries: onl.tries, device: onl.device, n: onl.n }); // UI tests
+  setTimeout(onlOpen, 0); // once the whole script has run (SERVER_URL is further down)
+  setInterval(onlLoad, 20000);
+  setTimeout(onlLoad, 1200);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return;
+    if (onl.ws && onl.ws.readyState === 1) { try { onl.ws.send('{"t":"ping"}'); } catch (e) {} } // back in view: counted again at once
+    else if (!onl.ws) { clearTimeout(onl.timer); onl.timer = 0; onl.tries = 0; onlOpen(); }
+    onlLoad();
+  });
   async function frLoad() {
     if (!frOk()) return;
     const r = await acctCall('friends', {}, true);
@@ -6264,11 +6340,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     m.gold[1] = 0;
     m.gold = [P.gold, 0];
     tut = { intro: 2, wrong: false, tskillSeen: true, sheetSeen: true, puzzle: k, hint: false };
+    if (DIO) home.back = 'puzzles'; // the Diorama: the end of a puzzle comes back to its Puzzles screen
     nextReady = [false, false]; rematch = [false, false];
     enterDeploy(0);
   }
   // the menu's list of puzzles
   function openPuzzles() {
+    if (DIO && typeof dio !== 'undefined' && dio.api && dio.api.puzzles && phase === 'start' && !m) { closeSheet(true); dio.api.puzzles(); return; } // the Diorama's Puzzles screen
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Tutorial puzzles</h3><button class="btn small" id="close">Close</button></div>
       <p class="hint" style="margin:0">One fight each. You see the whole enemy army; win with the gold you have.</p>
       <p class="hint" style="margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${hasInitiate() ? 'The title is yours.' : `Solve the ${PUZ_TITLE.length} Easy puzzles for the title`} ${titleHtml('initiate')}</p>
@@ -8886,7 +8964,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       ${settingsBox(`
         ${mapSeg()}
         ${charSeg()}
-        <span class="hint">You both play with the units on this device: ${customSet ? `your ${units.length} Counter Lab units` : packOn() ? `the Learn the game pack (${packUnits()} of the ${units.length} built-in units)` : `the ${units.length} built-in units`}.</span>`)}`}`;
+        <span class="hint">You both play with the units on this device: ${customSet ? `your ${units.length} Counter Lab units` : `the ${units.length} built-in units`}.</span>`)}`}`;
     if ($('share')) $('share').addEventListener('click', () => { navigator.share({ title: 'No Mans Land', text: `Fight me in No Mans Land! Code ${net.code}`, url: link }).catch(() => {}); });
     $('copy').addEventListener('click', () => {
       const done = () => { $('copy').textContent = 'Copied'; setTimeout(() => { if ($('copy')) $('copy').textContent = 'Copy link'; }, 1500); };
@@ -8932,7 +9010,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
           + row('Spectators', word('spec', 1, 'On', watch) + word('spec', 0, 'Off', !watch), watch ? 'Anyone can watch once it starts.' : 'Just the two of you.') : ''}
         ${rk ? row('Units', '<span class="w" aria-pressed="true">Standard</span>', 'Ranked: the Standard map and pack, the same 5 leaders and 3 towers for you both. Win 2 games to take the series; only ranked series count on the leaderboard.')
           : customSet ? row('Units', `<span class="w" aria-pressed="true">Your ${units.length}</span>`, 'Your Counter Lab units, on this device.')
-          : row('Units', word('pack', 'learn', 'Learn the game', packNow() === 'learn') + word('pack', 'standard', 'Standard', packNow() === 'standard') + (devMode() ? word('pack', 'custom', 'Custom', packNow() === 'custom') : ''), packNote(), 'pack-row')}
+          : row('Units', devMode() ? word('pack', 'standard', 'Standard', packNow() === 'standard') + word('pack', 'custom', 'Custom', packNow() === 'custom') : '<span class="w" aria-pressed="true">Standard</span>', packNote(), 'pack-row')}
         ${row('Battlefield', `<button class="arrow" data-bf="-1" aria-label="Previous battlefield">‹</button><span class="w" aria-pressed="true">${esc(bf.name)}</span><button class="arrow" data-bf="1" aria-label="Next battlefield">›</button>`, `${k + 1} of ${skins.length}. The match is played here.`)}`;
     const dev = host && devMode() && !rk ? `<div class="ddev"><span class="lab">Developer</span>
         ${factionsReady() ? `<div class="seg" role="group" aria-label="Gamemode"><button data-kind="standard" aria-pressed="${matchKind !== 'factions'}">Standard</button><button data-kind="factions" aria-pressed="${matchKind === 'factions'}">Factions</button></div>` : ''}
@@ -8959,7 +9037,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     P.querySelectorAll('[data-pub]').forEach(b => b.addEventListener('click', () => { talk.pub = b.dataset.pub === '1'; send({ t: 'public', on: talk.pub }); dioRoom(); }));
     P.querySelectorAll('[data-spec]').forEach(b => b.addEventListener('click', () => { talk.spectate = b.dataset.spec === '1'; send({ t: 'spectate', on: talk.spectate }); dioRoom(); }));
     P.querySelectorAll('[data-pack]').forEach(b => b.addEventListener('click', () => {
-      const v = b.dataset.pack; unitPack = v === 'custom' && devMode() ? 'custom' : v === 'standard' ? 'standard' : 'learn';
+      const v = b.dataset.pack; unitPack = v === 'custom' && devMode() ? 'custom' : 'standard';
       try { localStorage.setItem(PACK_STORE, unitPack); } catch (e) {}
       dioRoom();
     }));
@@ -9575,7 +9653,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   function srvRetry() { clearTimeout(net.retryTimer); net.tries++; net.retryTimer = setTimeout(() => { if (net.alive && !net.ws) srvOpen(); }, Math.min(8000, 600 * net.tries)); }
   // the match settings from this phone's menu (map, look, units, leaders and towers left out)
-  const srvSettings = () => ({ map: playMap() || '', skin: skinPick || '', offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: packOn() ? SP.offTowers.slice() : [], late: lateGame });
+  const srvSettings = () => ({ map: playMap() || '', skin: skinPick || '', offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: [], late: lateGame });
   // one of this phone's own actions (a Game call that worked): to the server, and kept until it says it has it
   function srvAct(fn, a) {
     net.seq++;
@@ -10958,8 +11036,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   // the match settings from the menu's own pickers (map, look, unit pack, leaders and units left out)
   function tourCaptured() {
-    return { map: curMap() || '', skin: skinPick || '', pack: packOn() ? 'standard' : 'all',
-      offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: packOn() ? SP.offTowers.slice() : [] };
+    return { map: curMap() || '', skin: skinPick || '', pack: 'all',
+      offUnits: matchOff().map(i => units[i].name), offChars: matchChars().slice(), offTowers: [] };
   }
   const tourCapture = () => tourDo('settings', tourCaptured());
 

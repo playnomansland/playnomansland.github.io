@@ -48,6 +48,12 @@
 #dio .acct button { display: inline-flex; align-items: center; gap: 8px; opacity: .9; }
 #dio .acct button:hover { opacity: 1; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
 #dio .acct svg { width: 18px; height: 18px; }
+/* players online (2026-11-10, developers only): first in the top bar, the DEV tag (.dvt), a live dot and the count */
+#dio .acct .online { display: inline-flex; align-items: center; gap: 9px; opacity: .9; cursor: default; white-space: nowrap; }
+#dio .acct .online[hidden] { display: none; }
+#dio .acct .online .dvt { padding: 2px 7px 1px; font-size: 10px; }
+#dio .acct .online .live { background: #1F8F4E; box-shadow: none; } #dio .acct .online .live::after { border-color: #1F8F4E; }
+#dio .acct .online b { font-variant-numeric: tabular-nums; }
 
 /* ── the menu: words, not boxes ── */
 #dio .menu { position: fixed; left: 48px; bottom: 96px; display: grid; justify-items: start; }
@@ -193,7 +199,7 @@
   #dio #world { position: absolute; height: 350px; } #dio .scrim { display: none; }
   #dio .field { position: fixed; }
   #dio .logo { top: 20px; left: 16px; width: 170px; }
-  #dio .acct { top: 22px; right: 16px; gap: 16px; } #dio .acct span { display: none; } #dio .acct svg { width: 22px; height: 22px; }
+  #dio .acct { top: 22px; right: 16px; gap: 16px; } #dio .acct button span { display: none; } #dio .acct .online .dvt { display: none; } #dio .acct .online .n { display: inline; } #dio .acct svg { width: 22px; height: 22px; }
   #dio .notes, #dio .note { display: none !important; }
   #dio .note { position: absolute; max-width: 160px; font-size: 13px; } #dio .note small { font-size: 12px; }
   #dio .zz { position: absolute; }
@@ -1688,4 +1694,36 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
     min-height: 40px; padding: 10px 22px 6px; border: 0; background: none; color: #17140F; font: 700 18px/1 var(--dstencil); letter-spacing: .04em; text-transform: uppercase; isolation: isolate; }
   html.diorama.pcwide:not(.pc) .dshop::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(6% 0, 94% 4%, 100% 100%, 0 100%); }
   html.diorama.pcwide:not(.pc) .dshop[hidden], html:not(.dboard) .dshop { display: none; }
+}
+/* ── Puzzles (2026-11-10): its own field colour, a deep teal (the fourth: ultramarine menu, saffron Play, ink Profile).
+   The left column as Profile's: the title, a line, the title to earn, the puzzles by level as stencil words (the saffron
+   shard on the pointed-at one), Back. The island shows the pointed-at puzzle ── */
+#dio.puz { --field: #1F5A57; --field-lo: #143C3A; }
+#dio.puz .menu, #dio.puz .zz, #dio.puz .standings, #dio.puz #dio-backto, #dio.puz .tiers { display: none; }
+#dio .pz { position: fixed; left: 48px; top: clamp(100px, 14.2vh, 128px); width: min(600px, 42vw); display: none; align-content: start; justify-items: start; }
+#dio.puz .pz { display: grid; }
+#dio .pz .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .9; }
+#dio .pz h2 { margin: 2px 0 0; font: 700 clamp(60px, 11.6vh, 104px)/.86 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; }
+#dio .pz .pz-lede { margin: clamp(8px, 1.6vh, 14px) 0 0; font: 700 15px/1.35 var(--type); opacity: .92; }
+#dio .pz .pz-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0 0; font: 700 15px/1.35 var(--type); opacity: .92; }
+#dio .pz .pz-title .ptitle { margin: 0; font-size: 20px; }
+#dio .pz .pz-list { display: grid; justify-items: start; margin: clamp(10px, 2.4vh, 22px) 0 clamp(12px, 2.6vh, 24px); }
+#dio .pz .pz-lv { display: flex; align-items: baseline; gap: 14px; margin: clamp(6px, 1.4vh, 12px) 0 clamp(2px, .6vh, 6px); }
+#dio .pz .pz-lv:first-child { margin-top: 0; }
+#dio .pz .pz-n { font: 700 13px var(--type); opacity: .75; }
+#dio .pz .item { font-size: clamp(28px, 4.6vh, 42px); margin: clamp(1px, .45vh, 4px) 0 clamp(1px, .45vh, 4px) 4px; padding: 3px 4px 0; }
+#dio .pz .item small { margin-left: 4px; font: 700 13px var(--type); text-transform: none; letter-spacing: 0; color: #9FE0B0; transform: translateY(-3px); }
+#dio .pz .item.on small, #dio .pz .item:hover small { color: var(--ink); }
+#dio .pz .create { background: var(--saffron); color: var(--ink); font-size: clamp(28px, 4vh, 36.4px); padding: clamp(6px, 1.1vh, 10px) 22px clamp(5px, .9vh, 8px) 18px; }
+#dio .pz .create svg { margin-right: -2px; }
+#dio .note.qnote { max-width: 260px; cursor: default; }
+#dio.puz .acct { display: flex; }
+
+/* ── phones: the Puzzles screen (merged from main 2026-11-10) in the same flow as the other screens ── */
+@media (max-width: 700px) {
+  html.diorama #dio .pz { position: relative; left: auto; top: auto; width: auto; margin: 0 16px; order: 3; }
+  html.diorama #dio.puz :is(.music, .build, .phone-reward) { display: none !important; }
+  html.diorama #dio .pz h2 { font-size: clamp(44px, 13.5vw, 56px); }
+  html.diorama #dio .pz .item { font-size: clamp(24px, 7.4vw, 32px); min-height: 40px; white-space: normal; }
+  html.diorama #dio .pz .create { font-size: clamp(26px, 8vw, 32px); }
 }
