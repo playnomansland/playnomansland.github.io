@@ -1542,6 +1542,22 @@ html.diorama.pcwide .sheet-back, html.dright.diorama.pcwide .sheet-back { align-
 html.diorama.pcwide .sheet { margin: 0; max-height: calc(100vh - 32px); border-bottom: 1px solid rgba(244, 236, 216, .16);
   clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px); }
 
+/* the top line's dropdowns in a match (the owner, 2026-11-10): Settings (the cog) and Damage (the bars) hang under their
+   icon as the main menu's dropdowns, a cream line with a dot on the icon running down to the panel; no dimming veil,
+   the panel the battlefield's card colour with the menu dropdown's cut corner and stencil title */
+html.diorama.pcwide .sheet-back.ddrop { background: transparent; display: block; padding: 0; }
+html.diorama.pcwide .sheet-back.ddrop #sheet { position: absolute; left: var(--ddx, 50%); top: var(--ddy, 120px); width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - var(--ddy, 120px) - 16px);
+  border: 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 7% 100%, 0 calc(100% - 22px)); filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .45)); animation: none; opacity: 1; transform: none; }
+html.diorama.pcwide .sheet-back.ddrop .sheet::before { content: none; }
+html.diorama.pcwide .sheet-back.ddrop #sheet h3 { font: 700 30px/.95 var(--dstencil); text-transform: uppercase; letter-spacing: -.01em; }
+@keyframes ddrop-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+html.diorama.pcwide #stats-dd { width: min(380px, calc(100vw - 32px)); padding: 18px 20px 20px; border: 0; border-radius: 0; background: var(--dcard, #0D1315); color: #F4ECD8; box-shadow: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 7% 100%, 0 calc(100% - 22px)); filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .45)); z-index: 8; animation: ddrop-in .22s cubic-bezier(.2, .9, .25, 1); font-family: var(--dtype); }
+html.diorama.pcwide #stats-dd h4 { font: 700 12px var(--dtype); letter-spacing: .12em; color: #F2B23A; }
+.ddline { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 8; pointer-events: none; overflow: visible; }
+.ddline circle { fill: #F4ECD8; } .ddline polyline { fill: none; stroke: #F4ECD8; stroke-width: 1.5; }
+html:not(.pcwide) .ddline { display: none; }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -17996,7 +18012,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 69d6458'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · 82a7de5'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -24268,6 +24284,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function closeSheet(byPlayer) {
     if (byPlayer !== true && !$('sheet-back').hidden && $('sheet').querySelector('[data-keep]')) return;
     $('sheet-back').hidden = true; loaderRun++; unlockAsk = null;
+    if (typeof dioDropOff === 'function') dioDropOff('sheet');
   }
 
   // ---------- load units from Counter Lab ----------
@@ -24363,7 +24380,43 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     });
   }
   $('sheet-back').addEventListener('click', (e) => { if (e.target.id === 'sheet-back') closeSheet(true); });
-  $('cog').addEventListener('click', openSoundSheet);
+  // the Diorama's match screen: the cog drops Settings down from itself, as the menu's dropdowns, a line from the cog
+  // to the panel; the cog again, a click anywhere but the panel, or Esc puts it away (the owner, 2026-11-10)
+  $('cog').addEventListener('click', () => {
+    if (DIO && dioWide()) {
+      if (!$('sheet-back').hidden && $('sheet').querySelector('#spk-music, [data-board]')) { closeSheet(true); return; }
+      openStats(false); openSoundSheet(); dioDropOn('sheet', $('cog')); return;
+    }
+    openSoundSheet();
+  });
+  // A Diorama dropdown in a match: the panel hangs under its button (Settings: #sheet in #sheet-back.ddrop; Damage:
+  // #stats-dd), and a cream line with a dot on the button runs down to the panel, as the menu's notes
+  const ddrop = { which: '', btn: null };
+  function dioDropOn(which, btn) {
+    ddrop.which = which; ddrop.btn = btn;
+    const back = $('sheet-back');
+    if (which === 'sheet') back.classList.add('ddrop');
+    dioDropPlace();
+  }
+  function dioDropOff(which) {
+    if (which && ddrop.which !== which) return;
+    ddrop.which = ''; ddrop.btn = null;
+    $('sheet-back').classList.remove('ddrop');
+    const l = $('ddline'); if (l) l.innerHTML = '';
+  }
+  function dioDropPlace() {
+    if (!ddrop.which || !ddrop.btn) return;
+    const panel = ddrop.which === 'sheet' ? $('sheet') : $('stats-dd'); if (!panel) return;
+    const b = ddrop.btn.getBoundingClientRect(), cx = b.left + b.width / 2, top = b.bottom + 46;
+    const w = panel.offsetWidth || 560, left = Math.max(16, Math.min(innerWidth - w - 16, cx - w / 2));
+    if (ddrop.which === 'sheet') { panel.style.setProperty('--ddx', left + 'px'); panel.style.setProperty('--ddy', top + 'px'); }
+    else { panel.style.left = left + 'px'; panel.style.top = top + 'px'; panel.style.transform = 'none'; }
+    let svg = $('ddline');
+    if (!svg) { document.body.insertAdjacentHTML('beforeend', '<svg id="ddline" class="ddline" aria-hidden="true"></svg>'); svg = $('ddline'); }
+    const y0 = b.bottom + 5, x = Math.max(left + 14, Math.min(left + w - 14, cx));
+    svg.innerHTML = `<circle cx="${cx}" cy="${y0}" r="3.5"/><polyline points="${cx},${y0} ${cx},${top - 12} ${x},${top - 12} ${x},${top}"/>`;
+  }
+  addEventListener('resize', () => { if (ddrop.which) dioDropPlace(); });
   for (const id of ['music-btn', 'music-fab']) $(id).addEventListener('click', (e) => { e.stopPropagation(); openPlaylist(); });
   $('foe-name').addEventListener('click', () => { if (talkOn() && mode === 'net') return; const p = foePlayer(); if (p && p.tag && !net.duo) frPlayerMenu({ tag: p.tag, title: p.title }); }); // friends: Add friend / Message (with chat on, from the chat's name menu)
   // ---------- damage stats: a dropdown under the HUD with what each unit dealt in the last fight, as a share of its team's total ----------
@@ -24441,9 +24494,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function openStats(open) {
     const dd = $('stats-dd');
     dd.hidden = !open; $('stats').setAttribute('aria-expanded', String(open));
-    if (!open) return;
+    if (!open) { if (typeof dioDropOff === 'function') dioDropOff('stats'); return; }
     dd.innerHTML = statsHtml();
     dd.style.top = ($('stats').getBoundingClientRect().bottom + 8) + 'px';
+    if (DIO && dioWide()) dioDropOn('stats', $('stats')); // the Diorama: it hangs from the icon on a line
     dd.querySelectorAll('[data-st]').forEach(c => c.addEventListener('change', () => { statsShow[c.dataset.st] = c.checked; openStats(true); }));
     dd.querySelectorAll('[data-stm]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); statsTeam = b.dataset.stm === 'team'; try { sessionStorage.setItem(STATS_TEAM_STORE, statsTeam ? '1' : '0'); } catch (err) {} openStats(true); }));
   }

@@ -8411,6 +8411,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function closeSheet(byPlayer) {
     if (byPlayer !== true && !$('sheet-back').hidden && $('sheet').querySelector('[data-keep]')) return;
     $('sheet-back').hidden = true; loaderRun++; unlockAsk = null;
+    if (typeof dioDropOff === 'function') dioDropOff('sheet');
   }
 
   // ---------- load units from Counter Lab ----------
@@ -8506,7 +8507,43 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     });
   }
   $('sheet-back').addEventListener('click', (e) => { if (e.target.id === 'sheet-back') closeSheet(true); });
-  $('cog').addEventListener('click', openSoundSheet);
+  // the Diorama's match screen: the cog drops Settings down from itself, as the menu's dropdowns, a line from the cog
+  // to the panel; the cog again, a click anywhere but the panel, or Esc puts it away (the owner, 2026-11-10)
+  $('cog').addEventListener('click', () => {
+    if (DIO && dioWide()) {
+      if (!$('sheet-back').hidden && $('sheet').querySelector('#spk-music, [data-board]')) { closeSheet(true); return; }
+      openStats(false); openSoundSheet(); dioDropOn('sheet', $('cog')); return;
+    }
+    openSoundSheet();
+  });
+  // A Diorama dropdown in a match: the panel hangs under its button (Settings: #sheet in #sheet-back.ddrop; Damage:
+  // #stats-dd), and a cream line with a dot on the button runs down to the panel, as the menu's notes
+  const ddrop = { which: '', btn: null };
+  function dioDropOn(which, btn) {
+    ddrop.which = which; ddrop.btn = btn;
+    const back = $('sheet-back');
+    if (which === 'sheet') back.classList.add('ddrop');
+    dioDropPlace();
+  }
+  function dioDropOff(which) {
+    if (which && ddrop.which !== which) return;
+    ddrop.which = ''; ddrop.btn = null;
+    $('sheet-back').classList.remove('ddrop');
+    const l = $('ddline'); if (l) l.innerHTML = '';
+  }
+  function dioDropPlace() {
+    if (!ddrop.which || !ddrop.btn) return;
+    const panel = ddrop.which === 'sheet' ? $('sheet') : $('stats-dd'); if (!panel) return;
+    const b = ddrop.btn.getBoundingClientRect(), cx = b.left + b.width / 2, top = b.bottom + 46;
+    const w = panel.offsetWidth || 560, left = Math.max(16, Math.min(innerWidth - w - 16, cx - w / 2));
+    if (ddrop.which === 'sheet') { panel.style.setProperty('--ddx', left + 'px'); panel.style.setProperty('--ddy', top + 'px'); }
+    else { panel.style.left = left + 'px'; panel.style.top = top + 'px'; panel.style.transform = 'none'; }
+    let svg = $('ddline');
+    if (!svg) { document.body.insertAdjacentHTML('beforeend', '<svg id="ddline" class="ddline" aria-hidden="true"></svg>'); svg = $('ddline'); }
+    const y0 = b.bottom + 5, x = Math.max(left + 14, Math.min(left + w - 14, cx));
+    svg.innerHTML = `<circle cx="${cx}" cy="${y0}" r="3.5"/><polyline points="${cx},${y0} ${cx},${top - 12} ${x},${top - 12} ${x},${top}"/>`;
+  }
+  addEventListener('resize', () => { if (ddrop.which) dioDropPlace(); });
   for (const id of ['music-btn', 'music-fab']) $(id).addEventListener('click', (e) => { e.stopPropagation(); openPlaylist(); });
   $('foe-name').addEventListener('click', () => { if (talkOn() && mode === 'net') return; const p = foePlayer(); if (p && p.tag && !net.duo) frPlayerMenu({ tag: p.tag, title: p.title }); }); // friends: Add friend / Message (with chat on, from the chat's name menu)
   // ---------- damage stats: a dropdown under the HUD with what each unit dealt in the last fight, as a share of its team's total ----------
@@ -8584,9 +8621,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function openStats(open) {
     const dd = $('stats-dd');
     dd.hidden = !open; $('stats').setAttribute('aria-expanded', String(open));
-    if (!open) return;
+    if (!open) { if (typeof dioDropOff === 'function') dioDropOff('stats'); return; }
     dd.innerHTML = statsHtml();
     dd.style.top = ($('stats').getBoundingClientRect().bottom + 8) + 'px';
+    if (DIO && dioWide()) dioDropOn('stats', $('stats')); // the Diorama: it hangs from the icon on a line
     dd.querySelectorAll('[data-st]').forEach(c => c.addEventListener('change', () => { statsShow[c.dataset.st] = c.checked; openStats(true); }));
     dd.querySelectorAll('[data-stm]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); statsTeam = b.dataset.stm === 'team'; try { sessionStorage.setItem(STATS_TEAM_STORE, statsTeam ? '1' : '0'); } catch (err) {} openStats(true); }));
   }
