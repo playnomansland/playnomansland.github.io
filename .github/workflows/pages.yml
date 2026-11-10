@@ -1,0 +1,53 @@
+# Publishes the site to GitHub Pages, leaving out files the live pages never load (design screenshots,
+# reference art, the server's code), so each deploy uploads about half as much.
+# Needs Settings > Pages > Build and deployment > Source set to "GitHub Actions".
+# To leave something else out of the site, add an --exclude line below. It stays in the repo either way.
+name: Pages deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time. A push made while one is running waits; if several pile up, only the newest
+# is published. A running deploy is never cancelled halfway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy the site, without the files it doesn't need
+        run: |
+          rsync -a ./ _site/ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '_site/' \
+            --exclude 'design/diorama/screens/' \
+            --exclude 'models/heads/refs/' \
+            --exclude '*.blend' \
+            --exclude 'server/'
+          echo "Site size: $(du -sh _site | cut -f1)"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
