@@ -4123,7 +4123,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const WIZ_TURN = Math.PI * 1.75; // faces -z; this turns it three-quarters to the right, its staff on the fire's side
   async function wizPic() {
     await Promise.resolve(); // THREE_URL and V3D are set further down the script
-    const THREE = await import(THREE_URL);
+    const THREE = await import(threeSrc());
     if (typeof Models3D !== 'function') for (const f of ['kaykit3d', 'models3d']) await load3d(f);
     const W = 320, H = 400, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const ren = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: true, preserveDrawingBuffer: true });
@@ -7480,6 +7480,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
+  // import() of a relative address: resolved by hand against the page's <base> (the Diorama's test page in design/diorama/
+  // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
+  // <base>, so there it looked for design/diorama/vendor/... and failed: "Importing a module script failed" (2026-11-10)
+  const threeSrc = () => new URL(THREE_URL, document.baseURI).href;
   const V3D = '/*V3D*/'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
@@ -7508,7 +7512,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const el = document.createElement('div');
       let b = null, loaded = false;
       try {
-        const THREE = await import(THREE_URL);
+        const THREE = await import(threeSrc());
         if (typeof Render3D !== 'function') for (const f of ['camera3d', 'kaykit3d', 'models3d', 'scenery3d', 'render3d']) await load3d(f); // V3D: a new name each build, so a browser never runs an old copy
         loaded = true;
         if (!want3d) return; // switched back to 2D while loading

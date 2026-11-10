@@ -52,7 +52,7 @@
   }
   async function dioStart() {
     const body = $('dio');
-    const THREE = await import(THREE_URL);
+    const THREE = await import(threeSrc());
     if (typeof Models3D !== 'function') for (const f of ['kaykit3d', 'models3d']) await load3d(f);
     // the island's renderer: made when the home shows, freed while a match runs. No WebGL (or ?board=2d): flat
     let cv = document.getElementById('world'), renderer = null, running = false, raf = 0, flat = force2d;

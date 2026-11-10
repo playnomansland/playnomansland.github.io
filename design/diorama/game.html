@@ -18389,7 +18389,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · bcf041d'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 9ce4964'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -20251,7 +20251,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const WIZ_TURN = Math.PI * 1.75; // faces -z; this turns it three-quarters to the right, its staff on the fire's side
   async function wizPic() {
     await Promise.resolve(); // THREE_URL and V3D are set further down the script
-    const THREE = await import(THREE_URL);
+    const THREE = await import(threeSrc());
     if (typeof Models3D !== 'function') for (const f of ['kaykit3d', 'models3d']) await load3d(f);
     const W = 320, H = 400, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const ren = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: true, preserveDrawingBuffer: true });
@@ -23670,6 +23670,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
+  // import() of a relative address: resolved by hand against the page's <base> (the Diorama's test page in design/diorama/
+  // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
+  // <base>, so there it looked for design/diorama/vendor/... and failed: "Importing a module script failed" (2026-11-10)
+  const threeSrc = () => new URL(THREE_URL, document.baseURI).href;
   const V3D = '11cac48cf5'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
@@ -23698,7 +23702,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const el = document.createElement('div');
       let b = null, loaded = false;
       try {
-        const THREE = await import(THREE_URL);
+        const THREE = await import(threeSrc());
         if (typeof Render3D !== 'function') for (const f of ['camera3d', 'kaykit3d', 'models3d', 'scenery3d', 'render3d']) await load3d(f); // V3D: a new name each build, so a browser never runs an old copy
         loaded = true;
         if (!want3d) return; // switched back to 2D while loading
@@ -27959,7 +27963,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   async function dioStart() {
     const body = $('dio');
-    const THREE = await import(THREE_URL);
+    const THREE = await import(threeSrc());
     if (typeof Models3D !== 'function') for (const f of ['kaykit3d', 'models3d']) await load3d(f);
     // the island's renderer: made when the home shows, freed while a match runs. No WebGL (or ?board=2d): flat
     let cv = document.getElementById('world'), renderer = null, running = false, raf = 0, flat = force2d;
