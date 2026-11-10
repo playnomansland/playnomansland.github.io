@@ -490,10 +490,13 @@
         }
         const [o, hh, [dx, dy]] = bf ? (inPlay && !playTilt ? [bfPlan, 0, [-40, 118]] : [bfMenu, 0, [-40, -130]]) : anchors[el.dataset.anchor], [x, y] = proj(o, hh);
         let ddy = dy; if (el.dataset.anchor === 'golemW') { const lb = body.querySelector('.logo').getBoundingClientRect().bottom; ddy = Math.max(dy, lb + 16 + el.offsetHeight - y); } // clear of the big logo
-        let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the right, in the sky over the far towers; else up and left, above the golem's note
+        let sdx = dx; if (el.dataset.anchor === 'skeleton') { // the hint: up and to the left, above the golem's note (owner, 2026-11-10); right only without room
           const gn = body.querySelector('.rw-note:not(.pnote)'), gr = gn && gn.style.display !== 'none' ? gn.getBoundingClientRect() : null, lg = body.querySelector('.logo').getBoundingClientRect();
-          let ly = Math.max(y - 110, lg.bottom + 20 + h); sdx = Math.min(80, innerWidth - 32 - w - x);
-          if (sdx < 4) { sdx = -120; ly = Math.max(gr ? Math.min(y - 110, gr.top - 14) : y - 110, h + 12); }
+          // over the golem's note it must fit above it, under the header; beside it, it only stays under the header.
+          // To the right when there's no room left of the island or above the golem's note
+          const L = x - 120 - w, overG = gr && L < gr.right + 16 && x - 120 > gr.left - 16;
+          let ly = Math.max(overG ? Math.min(y - 110, gr.top - 14) : y - 110, h + 76); sdx = -120;
+          if (L < Math.max(32, lg.right + 24) || (overG && ly > gr.top - 14)) { ly = Math.max(y - 110, lg.bottom + 20 + h); sdx = Math.min(80, innerWidth - 32 - w - x); }
           ddy = ly - y; }
         // a pointed-at piece's note tries other spots before giving up (on a small window the first can land on PLAY)
         const tries = el.hasAttribute('data-hover') ? [[sdx, ddy], [-sdx, ddy], [sdx, -150], [-sdx, -150], [sdx, 150], [-sdx, 150]] : [[sdx, ddy]];

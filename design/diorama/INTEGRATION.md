@@ -94,6 +94,9 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   the island. Units' tiles, a unit's hover note and its sheet showed the unit's raw `cost` (1, 2, 3, 5: the number the
   tiers come from) as "1 gold"; they showed the game's price for a squad (`Game.unitCostOf`) for a moment, then the owner asked for no price at all
   (2026-11-10): the tiles show the name only, the note and the sheet's tag "Tier N".
+- Fifteenth round (2026-11-10): the skeleton's hint ("Hover over stuff on the island with your mouse!") goes up and to
+  the left of the skeleton, beside the golem's note (or above it when it would sit over it); to the right only when
+  there's no room (small windows: 1280×720, 1024×768).
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 - Eleventh round (2026-11-09): the golem's note (menu and Profile) has a small saffron button, INVITE A FRIEND
