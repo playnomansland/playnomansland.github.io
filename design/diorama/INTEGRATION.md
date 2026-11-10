@@ -78,6 +78,13 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   `#spk-sfx`, `spkDraw`; the icon is the game's `spkSvg`, shared with the menu's); the old UI keeps its On / Off rows
   (`data-mute`, `data-sfx`) and their tests (music-ui, sfx-ui pass with the old UI; with the Diorama they stop at the
   same old controls as on `main`).
+- Thirteenth round (2026-11-10): **Back** on the Play screen (`#play-back`, an ink `.create` under the choices; to the
+  menu: `leavePlay()`). The owner's island bug: clicking PLAY hid the menu under the pointer, and its `mouseleave`
+  swung the camera back to the menu's view, so Play showed the island at an angle; after Profile → Back it was seen
+  from above (`VIEWS.orders`, the designed Play view). `mouseleave` now leaves Play's and Profile's view alone. From
+  above is the default on the Play side (Play, Rooms, New room); a click on the island switches to the menu's angle
+  and back (`playTilt`, `playView()`, kept as localStorage `pb-dio-tilt`; the pointer shows it's clickable; the
+  battlefield note's dot follows the view). Under `?test`, `window.__dio.cam()` says which view the camera is heading to.
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 - Eleventh round (2026-11-09): the golem's note (menu and Profile) has a small saffron button, INVITE A FRIEND

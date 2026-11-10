@@ -88,6 +88,7 @@
 #dio .orders { position: fixed; left: 48px; top: min(52vh, calc(100vh - 400px)); display: none; }
 #dio.play .orders { display: grid; } #dio.play .menu, #dio.play .zz { display: none; } /* notes: only the battlefield's shows on Play (JS) */
 #dio .orders .who { display: grid; justify-items: start; }
+#dio .orders #play-back { margin: 22px 0 0 4px; font-size: calc(34px * var(--k, 1)); padding: 7px 16px 5px 13px; gap: 10px; } #dio .orders #play-back svg { width: 20px; height: 20px; } /* Play's Back: the menu (owner, 2026-11-10) */
 #dio .orders .who .item { font-size: calc(76px * var(--k, 1)); }
 #dio .orders .item .shard { fill: var(--ink); }
 #dio .orders .item:hover, #dio .orders .item:focus-visible, #dio .orders .item.on { color: #F2B23A; }
