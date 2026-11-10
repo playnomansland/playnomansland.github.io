@@ -2695,6 +2695,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // boards draw it (render2d drawFoeStart, render3d collectDeploy): [{ unit, x, y }] in board metres, or null
   function foeStart() {
     if (phase !== 'deploy' || !m || m.round !== 1 || mode === 'spec' || mode === 'tutorial' || mode === 'sandbox' || duoOn()) return null;
+    if (Game.needsPack(m, me)) return null; // not before you've chosen your own start (the owner, 2026-11-10)
     const list = Game.startSeen(m, foe());
     if (!list || !list.length) return null;
     const n = list.length, back = Game.zoneRows(foe()).slice(-1)[0], tw = (m.towers && m.towers[foe()]) || Game.towerSpot(m, foe());

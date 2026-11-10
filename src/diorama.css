@@ -969,6 +969,11 @@ html.droom-on .knote:not([hidden]) { display: block; position: fixed; z-index: 5
 html.droom-on .knote .wait { opacity: .85; font-style: italic; }
 html:not(.droom-on) .dlines { display: none; }
 html.diorama.pcwide .talk-fab { top: 28px; left: calc(32px + 380px); } /* chat: right of your health, clear of the name */
+/* the top line's sides (names, health) reach to the middle and sat over the chat button, which is under the top line's
+   layer (the owner, 2026-11-10: "can't press the chat button"): they let the pointer through; the foe's name, a tap
+   for their card in online matches, still takes it */
+html.diorama.pcwide .hud > .side { pointer-events: none; }
+html.diorama.pcwide .hud > .side #foe-name.np-tap { pointer-events: auto; }
 html.diorama.pcwide .app:has(#talk-fab:not([hidden])) .hud { padding-left: 32px; }
 html.diorama.pcwide .hud .side #foe-name.np-tap { text-decoration: none; cursor: pointer; }
 html.droom-on .panel { padding-bottom: 190px; }

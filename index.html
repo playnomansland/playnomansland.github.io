@@ -1104,6 +1104,11 @@ html.droom-on .knote:not([hidden]) { display: block; position: fixed; z-index: 5
 html.droom-on .knote .wait { opacity: .85; font-style: italic; }
 html:not(.droom-on) .dlines { display: none; }
 html.diorama.pcwide .talk-fab { top: 28px; left: calc(32px + 380px); } /* chat: right of your health, clear of the name */
+/* the top line's sides (names, health) reach to the middle and sat over the chat button, which is under the top line's
+   layer (the owner, 2026-11-10: "can't press the chat button"): they let the pointer through; the foe's name, a tap
+   for their card in online matches, still takes it */
+html.diorama.pcwide .hud > .side { pointer-events: none; }
+html.diorama.pcwide .hud > .side #foe-name.np-tap { pointer-events: auto; }
 html.diorama.pcwide .app:has(#talk-fab:not([hidden])) .hud { padding-left: 32px; }
 html.diorama.pcwide .hud .side #foe-name.np-tap { text-decoration: none; cursor: pointer; }
 html.droom-on .panel { padding-bottom: 190px; }
@@ -18075,7 +18080,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '9 Nov 2026 · 20b595a'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '9 Nov 2026 · e1c2c40'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -18568,6 +18573,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // boards draw it (render2d drawFoeStart, render3d collectDeploy): [{ unit, x, y }] in board metres, or null
   function foeStart() {
     if (phase !== 'deploy' || !m || m.round !== 1 || mode === 'spec' || mode === 'tutorial' || mode === 'sandbox' || duoOn()) return null;
+    if (Game.needsPack(m, me)) return null; // not before you've chosen your own start (the owner, 2026-11-10)
     const list = Game.startSeen(m, foe());
     if (!list || !list.length) return null;
     const n = list.length, back = Game.zoneRows(foe()).slice(-1)[0], tw = (m.towers && m.towers[foe()]) || Game.towerSpot(m, foe());
