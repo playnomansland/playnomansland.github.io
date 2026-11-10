@@ -1394,3 +1394,10 @@ html.diorama.pcwide .sheet .seg button { padding: 4px 12px; }
 html.diorama.pcwide .sheet-back:has(#spk-music, [data-board]) { align-items: center; justify-items: center; padding: 16px; }
 html.diorama.pcwide .sheet:has(#spk-music, [data-board]) { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); margin: 0; border-bottom: 1px solid rgba(244, 236, 216, .16);
   clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px); }
+
+/* the picks' options (start, leader, tower), their details and the coach line take the unit cards' colour for the
+   battlefield (--dcard), not the scenery (the owner, 2026-11-10); a little lighter under the pointer, saffron picked */
+html.diorama.pcwide .pick .opt::before { background: var(--dcard, #0D1315); filter: none; }
+html.diorama.pcwide .pick .opt:hover:not(:disabled):not([aria-pressed="true"])::before { background: color-mix(in srgb, var(--dcard, #0D1315), #F4ECD8 8%); filter: none; }
+html.diorama.pcwide .pick .opt[aria-pressed="true"]::before { background: #F2B23A; }
+html.diorama.pcwide .pick .det, html.diorama.pcwide #wrap > .coach, html.diorama.pcwide #wrap > .task { background: var(--dcard, #0D1315); }

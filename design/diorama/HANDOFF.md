@@ -478,3 +478,4 @@ under 860 px high.
   key so earlier choices don't carry over). With it off, the board frames beside the column (no overlap); the central
   framing only applies while sliding is on.
 - **2026-11-10 (owner):** the match's Settings sheet sits **in the exact middle of the screen** (not risen from the bottom, not beside the column); the other sheets still rise from the bottom.
+- **2026-11-10 (owner):** the picks' options (start, leader, tower), their details box and the coach line take **the unit cards' colour for the battlefield** (`--dcard`), not the scenery patches (`DPAT_LOOKS` is empty; `?dpat=all` still tries them).
