@@ -403,6 +403,7 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 .helper .hp-box { display: grid; gap: 3px; padding: 10px 13px 8px 12px; background: #F2B23A; clip-path: polygon(0 3px, calc(100% - 5px) 0, 100% calc(100% - 4px), 4px 100%); pointer-events: auto; animation: hp-in .22s cubic-bezier(.3, 1.5, .5, 1) both; }
 .helper .hp-box b { font-size: 14.5px; }
 .helper .hp-box span { font-weight: 600; }
+.helper .hp-box small { font-size: 11.5px; opacity: .6; white-space: nowrap; }
 .helper .hp-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
 .helper .hp-row button { padding: 0; border: 0; background: none; font: 700 12px/1.2 "Bricolage Grotesque", system-ui, sans-serif; color: #17140F; cursor: pointer; opacity: .7; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
 .helper .hp-row button:hover, .helper .hp-row button:focus-visible { opacity: 1; }
@@ -3180,7 +3181,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     { id: 'buy', show: () => helpDeploy() && selected === null && !helpBought() && !!helpCard(), done: helpBought, at: helpCard, side: 'right', h: 'Buy a squad.', t: 'Click a unit, then a tile in your zone. Dragging it there works too.' },
     { id: 'level', show: () => helpDeploy() && selected === null && !!helpLevel(), at: () => { const q = helpLevel(); return q ? helpTile(q.col, q.row) : null; }, side: 'top', h: 'It can level up.', t: 'Click the squad with the gold badge. Level 2 doubles its health and attack.' },
     { id: 'unlock', show: () => helpDeploy() && m.round >= 2 && selected === null && !!helpUnlock(), at: helpUnlock, side: 'right', h: 'More units.', t: 'Unlocking one costs gold once. It stays in your shop for the match.' },
-    { id: 'ready', show: () => helpDeploy() && (helpBought() || Game.deploysLeft(m, me) <= 0) && !!$('ready'), done: () => phase === 'battle', at: () => $('ready'), side: 'top', h: 'Ready?', t: 'This starts the fight. Gold you don’t spend stays yours.' },
+    { id: 'ready', show: () => helpDeploy() && (helpBought() || Game.deploysLeft(m, me) <= 0) && !!$('ready'), done: () => phase === 'battle', at: () => $('ready'), side: 'top', h: 'Ready?', t: () => `This starts the fight. Gold you don’t spend stays yours. <small>(Up to ${Game.CARRY_CAP})</small>` }, // (the carry cap, small: the owner, 2026-11-10)
     // (the Diorama's match screen tucks the panel away for the fight: the note is on that edge. Any other layout: on the speeds)
     { id: 'fight', show: () => phase === 'battle', at: () => helpTucked() ? { x: dSide === 'right' ? innerWidth - 8 : 8, y: innerHeight / 2 } : document.querySelector('#panel .speeds'), side: 'right', h: 'They fight on their own.', t: () => helpTucked() ? 'Point at this edge for the speed and Skip.' : 'The speed and Skip are here.' },
     { id: 'result', show: () => phase === 'result' && !!$('next'), at: () => $('next'), side: 'bottom', h: 'The loser takes damage.', t: 'Every squad the winner has left standing hurts. Run out of health and the match is over.' },

@@ -137,12 +137,12 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   100"), "click" for "tap", and the treasury, the loser's +50 and the 10 health a fallen tower costs are in. **Maps is
   a developers' chapter** (with the DEV tag), since only developers pick a map. Not built: phones (step 8), and the
   screen inside a match (Help's How to play button still opens the sheet there).
-- **Helpers (2026-11-10, on the branch `claude/nifty-cerf-z6lrxm` for the owner to see first; PC only).** A first
+- **Helpers (2026-11-10, live on `main` on the owner's word the same day; PC only).** A first
   game against the computer gets small yellow notes, one at a time, each with a tail on the thing to press next
   (`HELP_TIPS`, `helperFrame` in `src/site-template.html`; the box is `#helper`, styled with the Diorama's saffron and
   ink beside `.coach`). Nothing is blocked and nothing is scripted: each note has a condition in the match's own state,
   and the first one that holds is the one on screen. In order: **Your start** (beside Choose), **Buy a squad** (a shop
-  card), **Place it** (your zone's front edge), **Ready?** (READY), **They fight on their own** (the edge the panel
+  card), **Place it** (your zone's front edge), **Ready?** (READY; "Gold you don't spend stays yours." with a small, pale "(Up to 500)", the carry cap: the owner), **They fight on their own** (the edge the panel
   tucked to: the speed and Skip), **The loser takes damage** (Next round), **Your leader** (round 2), **It can level
   up** (a squad with the badge), **More units** (an Unlock tile you can afford), **Your tower** (round 3), **That's the
   basics** (the ?). Buy, Place and Ready go when the thing is done (shown or not); the others once they've been on

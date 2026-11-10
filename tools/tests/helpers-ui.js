@@ -44,6 +44,7 @@ const URL = 'http://127.0.0.1:8766/index.html?ui=diorama&test&board=2d#still';
     ok(await wait(p, 'Place it.'), 'a unit picked: the note is on your zone');
     const t = await freeTile(p); await p.mouse.click(t[0], t[1]);
     ok(await wait(p, 'Ready?'), 'a squad placed: the note is on READY'); ok(await beside(p, '#ready'), 'it sits beside READY');
+    ok(await p.evaluate(() => { const sm = document.querySelector('#helper small'); return !!sm && sm.textContent === `(Up to ${Game.CARRY_CAP})` && +getComputedStyle(sm).opacity < 1; }), 'with the carry cap, small and pale: (Up to 500)');
     ok(['buy', 'place'].every(x => (store(p), true)) && (await store(p)).seen.includes('buy') && (await store(p)).seen.includes('place'), 'buy and place are done');
     await fight(p);
     ok(await wait(p, 'They fight on their own.'), 'the fight: where the speed and Skip are');
