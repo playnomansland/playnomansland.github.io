@@ -35,12 +35,30 @@ Screenshots: `screens/phone-game-home.jpg` (menu, Play, Rooms, New room, Units, 
 - Picks (start, leader, tower) take the whole screen and the drawer steps aside. A round's result sits over the
   board. Sheets rise from the bottom, full width. The corner music player is hidden on a phone.
 
+**Shop mode and board mode** (the owner's idea, 2026-11-10; `dioBoardMode` in `src/site-template.html`, `html.dboard`):
+- **Shop mode** is the screen above: the drawer up, the board in the tilted overview.
+- **Board mode**: the drawer drops to its top row (gold, deployments, READY) with a saffron **SHOP ▴** tab on its edge,
+  and the board is seen **from straight above, filling the rest of the screen**. Tiles are square, about 27 px on a
+  390 px phone. That's as big as they get with all 14 columns showing; bigger means cropping columns and panning, so
+  not yet.
+- **Dragging a card** up out of the drawer goes to board mode at once. The view then holds still while you aim (the
+  tile under the card is lit, your zone's grid shows). **Letting go** goes back to the shop after a short beat, unless
+  the squad still wants something (an aim, a move: the task line is up).
+- **A tap on the board in shop mode** only brings up board mode (nothing is placed or picked by that tap). In board
+  mode, taps work as before: place a picked card, pick a squad to move it.
+- Back to the shop: the SHOP tab, a tap on the drawer (not on a button), or a swipe up on it.
+- READY from board mode, a pick (leader, tower) or the fight end board mode; the fight keeps its tilted view.
+- Screenshots: `screens/phone-game-boardmode.jpg` (shop mode, dragging a card, back in the shop, board mode from a
+  tap).
+
 ## Checked
 
 - 390×844 and 360×740 with touch emulation (Chromium, software WebGL): menu, Play, Multiplayer, Rooms, New room,
   Units with a unit's sheet, Rankings, Settings, Friends, Profile, Match history; a match against the AI from
   choose your start through the round 1 fight, the result, the round 2 leader pick and round 2's deploy. No page
   errors, no sideways scroll.
+- Board mode with touch at 390×844 and 360×740: a card dragged up and dropped (it lands, gold goes down, back to the
+  shop); a tap on the board in shop mode; the SHOP tab; READY pressed in board mode into the fight and round 2.
 - Nothing changed elsewhere: the old UI on a phone (`index.html`, the old drawer) and the Diorama on a PC at
   1440×900 (left column, READY) look as before.
 
@@ -49,6 +67,9 @@ Screenshots: `screens/phone-game-home.jpg` (menu, Play, Rooms, New room, Units, 
 - **A real phone.** Only emulated here, where 3D runs at 1–2 fps. Software 3D falls back to 2D after a slow fight,
   so add `&board=3d` to keep it 3D.
 - **The 2D board on a phone** still gets the old match layout.
+- Board mode in the hand: whether going back to the shop after each drop feels good or tiring when placing several
+  squads (if it tires, stay in board mode after a drop until SHOP is tapped). The camera's turn takes 0.3 s on a real
+  phone; here it crawls (about 1 frame a second).
 - **The room** (waiting for an opponent, `html.droom-on`) on a phone: not checked here (it needs the game server).
   Its column will be in the drawer, but it hasn't been styled for that.
 - **Welcome / Sign up / Log in** under the Diorama on a phone: not checked (`?test` shows the old welcome first).
