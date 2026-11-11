@@ -2179,8 +2179,9 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 @keyframes hp-nudge-y { 0%, 100% { translate: 0 0; } 50% { translate: 0 var(--nudge); } }
 @media (prefers-reduced-motion: reduce) { .helper, .helper .hp-box { animation: none !important; } }
 /* the menu's guide (2026-11-11) is drawn as the Diorama's own notes (owner): cream type on the field with the field's
-   halo, a line under the label (over it when the label hangs below) and out to a dot on the thing. Got it is the
-   notes' small saffron button (.rw-btn), Turn off helpers a plain underlined word */
+   halo, a line under the label (over it when the label hangs below) and out to a dot on the thing, which has a
+   softly blinking saffron outline round it (.hp-ring). Got it is the notes' small saffron button (.rw-btn), Turn off
+   helpers a plain underlined word */
 .helper.line { max-width: 236px; filter: none; animation: none !important; font: 700 15px/1.3 "Bricolage Grotesque", system-ui, sans-serif; color: #F4ECD8; text-shadow: 0 0 3px #2E3E9C, 0 0 6px #2E3E9C, 0 0 10px #2E3E9C, 0 0 14px #2E3E9C; }
 .helper.line .hp-box { display: block; padding: 0 0 9px; background: none; clip-path: none; animation: hp-fade .25s ease both; }
 .helper.line[data-line="over"] .hp-box { padding: 9px 0 0; }
@@ -2194,10 +2195,11 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 .helper.line .hp-ln path { fill: none; stroke: currentColor; stroke-width: 1.5; }
 .helper.line .hp-ln .dot { fill: currentColor; }
 .helper.line .hp-ln .ring { fill: none; stroke: currentColor; stroke-width: 1; opacity: .5; }
-.helper.line .hp-ln .pulse { fill: none; stroke: currentColor; stroke-width: 1.5; transform-box: fill-box; transform-origin: center; animation: hp-ring 1.8s ease-out infinite; }
+.helper.line .hp-ring { position: absolute; overflow: visible; pointer-events: none; animation: hp-blink 1.7s ease-in-out infinite; }
+.helper.line .hp-ring polygon { fill: none; stroke: #F2B23A; stroke-width: 2.5; stroke-linejoin: round; }
 @keyframes hp-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes hp-ring { 0% { transform: scale(1); opacity: .7; } 70%, 100% { transform: scale(2.4); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .helper.line .hp-ln, .helper.line .hp-ln .pulse { animation: none !important; } .helper.line .hp-ln .pulse { opacity: 0; } }
+@keyframes hp-blink { 0%, 100% { opacity: 1; } 50% { opacity: .28; } }
+@media (prefers-reduced-motion: reduce) { .helper.line .hp-ln, .helper.line .hp-ring { animation: none !important; } }
 /* tutorial: the coach line over the board, a ring on what it talks about, and a glow on the next thing to tap */
 .board-banner { position: absolute; left: 0; right: 0; top: 42%; z-index: 4; pointer-events: none; text-align: center; padding: 14px 8px; background: linear-gradient(90deg, transparent, rgba(13, 19, 21, 0.88) 18%, rgba(13, 19, 21, 0.88) 82%, transparent); border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold); color: var(--gold); font-size: 26px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; animation: banner-in 3.2s ease both; }
 .board-banner small { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; color: var(--text, #e8e6df); }
@@ -18442,7 +18444,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · 78b2936'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · 9d6f7d6'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19285,15 +19287,27 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // must: shown even in a window with no free spot for it (the others are left out there, helperLine); own: its
   // thing, where `at` is a point or a box on it; side, along, off, lean: where its dot stands (which edge, how far along it and off it) and which way its label runs
   const MENU_KEEP = ['#play', '#puzzles-open', '#how', '.menu [data-cam="units"]', '.menu [data-cam="ranks"]', '.music', '.bf-note', '.acct', '.logo'];
+  // what a menu note is about, outlined (owner, 2026-11-11: a softly blinking saffron outline, so it's plain which
+  // button the words mean): a menu word's own shard, where it lights up when pointed at (PLAY's is saffron already, so
+  // its outline stands off it); anything else a shard a little bigger than it. The note's dot stands on the outline
+  const RING_PTS = '1,8 98,0 100,90 2,100';
+  function ringOf(e, px = 9, py = 7) {
+    const g = e ? e.getBoundingClientRect() : null; if (!g || !g.width) return null;
+    const sh = e.matches('.menu .item') ? e.querySelector('.shard') : null;
+    let l = g.left - px, t = g.top - py, r = g.right + px, b = g.bottom + py;
+    if (sh) { const c = getComputedStyle(sh), off = e.id === 'play' ? 7 : 0, sl = parseFloat(c.left) || 0, st = parseFloat(c.top) || 0; // (the shard as it is laid out: its hover tilt aside)
+      l = g.left + sl - off; t = g.top + st - off; r = g.left + sl + (parseFloat(c.width) || g.width) + off; b = g.top + st + (parseFloat(c.height) || g.height) + off; }
+    return { left: l, top: t, right: r, bottom: b, width: r - l, height: b - t, pts: sh ? sh.querySelector('polygon').getAttribute('points') : RING_PTS };
+  }
   const MENU_TIPS = [
-    { id: 'how', menu: true, must: true, show: () => true, done: () => dioHas('how'), at: () => { const e = $('how'), g = wordBox(e); return e.getBoundingClientRect().width ? g : null; }, get own() { return $('how'); }, side: 'right', off: 15, h: 'New here?', t: 'Press here to learn how the game works.' }, // (the dot at the end of the word's letters)
-    { id: 'puzzles', menu: true, show: () => true, done: () => dioHas('puz'), at: () => $('puzzles-open'), side: 'rail', h: 'Puzzles.', t: 'Small battles to solve. Each one teaches you one idea.' },
-    { id: 'play', menu: true, get own() { return $('play'); }, show: () => true, done: () => dioHas('play', 'in-rooms'), at: () => { const r = $('play').getBoundingClientRect(); return r.width ? { x: r.left + Math.min(r.width * 0.3, 150), y: r.top + 4 } : null; }, side: 'top', h: 'Ready to fight?', t: 'Start with a game against the computer. Notes like this one point out what to press.' }, // (on the shard's top edge, over the word)
-    { id: 'units', menu: true, show: () => true, done: () => dioHas('pinned') && dioHas('units'), at: () => dioQ('.menu [data-cam="units"]'), side: 'rail', h: 'Units.', t: 'Every unit in the game: what it does and what it beats.' },
-    { id: 'field', menu: true, get own() { return dioQ('.bf-note'); }, show: () => true, at: () => dioQ('.bf-note .bf-btn'), side: 'left', h: 'Your battlefield.', t: 'This is the board you play on. Change its look here.' },
-    { id: 'music', menu: true, show: () => true, at: () => dioQ('.music'), side: 'top', along: 0.8, off: 12, lean: -1, h: 'Music.', t: 'Pause or skip a song here. Playlist lets you pick what plays.' },
-    { id: 'guest', menu: true, show: () => (!!firstRun || !(acct && acct.google)) && $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(2)'), side: 'bottom', only: true, off: 13, lean: 1, h: 'You’re a guest.', t: 'Click your name to sign in with Google. It keeps your name and results, and opens Ranked and Friends.' },
-    { id: 'settings', menu: true, show: () => $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(3)'), side: 'bottom', only: true, off: 13, lean: -1, h: 'That’s the menu.', t: 'Settings has the sound, full screen and Helpers: these notes, On or Off.' },
+    { id: 'how', menu: true, must: true, show: () => true, done: () => dioHas('how'), at: () => ringOf($('how')), get own() { return $('how'); }, side: 'right', h: 'New here?', t: 'Press here to learn how the game works.' },
+    { id: 'puzzles', menu: true, show: () => true, done: () => dioHas('puz'), at: () => ringOf($('puzzles-open')), get own() { return $('puzzles-open'); }, side: 'rail', h: 'Puzzles.', t: 'Small battles to solve. Each one teaches you one idea.' },
+    { id: 'play', menu: true, show: () => true, done: () => dioHas('play', 'in-rooms'), at: () => ringOf($('play')), get own() { return $('play'); }, side: 'top', along: 0.3, off: -5, h: 'Ready to fight?', t: 'Start with a game against the computer. Notes like this one point out what to press.' }, // (off: the shard's top edge dips there)
+    { id: 'units', menu: true, show: () => true, done: () => dioHas('pinned') && dioHas('units'), at: () => ringOf(dioQ('.menu [data-cam="units"]')), get own() { return dioQ('.menu [data-cam="units"]'); }, side: 'rail', h: 'Units.', t: 'Every unit in the game: what it does and what it beats.' },
+    { id: 'field', menu: true, show: () => true, at: () => ringOf(dioQ('.bf-note .bf-btn'), 8, 7), get own() { return dioQ('.bf-note'); }, side: 'left', h: 'Your battlefield.', t: 'This is the board you play on. Change its look here.' },
+    { id: 'music', menu: true, show: () => true, at: () => ringOf(dioQ('.music'), 12, 10), get own() { return dioQ('.music'); }, side: 'top', along: 0.8, lean: -1, h: 'Music.', t: 'Pause or skip a song here. Playlist lets you pick what plays.' },
+    { id: 'guest', menu: true, show: () => (!!firstRun || !(acct && acct.google)) && $('dio-stay').hidden, at: () => ringOf(dioQ('.acct button:nth-of-type(2)'), 10, 8), side: 'bottom', only: true, lean: 1, h: 'You’re a guest.', t: 'Click your name to sign in with Google. It keeps your name and results, and opens Ranked and Friends.' },
+    { id: 'settings', menu: true, show: () => $('dio-stay').hidden, at: () => ringOf(dioQ('.acct button:nth-of-type(3)'), 10, 8), side: 'bottom', only: true, lean: -1, h: 'That’s the menu.', t: 'Settings has the sound, full screen and Helpers: these notes, On or Off.' },
   ];
   const menuActive = () => DIO && !!helpers.menu && !helpers.off && phase === 'start' && !m && document.documentElement.classList.contains('pc') && MENU_TIPS.some(T => !helpers.menu.includes(T.id));
   // the plain main menu is on screen (not Play, Rooms, Profile, Puzzles, How to play, or Units / Rankings clicked open)
@@ -19381,7 +19395,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (!T) { el.hidden = true; el.innerHTML = ''; return; }
     const line = !!(T.menu || T.line); // the menu's notes: the Diorama's own (a line and a dot), not the yellow box
     el.classList.toggle('line', line); if (line) el.removeAttribute('data-side'); else el.removeAttribute('data-line');
-    el.innerHTML = `${line ? '<svg class="hp-ln" aria-hidden="true"><path/><circle class="pulse" r="9"/><circle class="ring" r="9"/><circle class="dot" r="4.5"/></svg>' : ''}<div class="hp-box"><b>${T.h}</b><span>${typeof T.t === 'function' ? T.t() : T.t}</span>${plain ? '' : '<div class="hp-row"><button id="hp-ok">Got it</button><button id="hp-off">Turn off helpers</button></div>'}</div>${line ? '' : '<i class="hp-tail"></i>'}`;
+    el.innerHTML = `${line ? '<svg class="hp-ring" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon vector-effect="non-scaling-stroke"/></svg><svg class="hp-ln" aria-hidden="true"><path/><circle class="ring" r="9"/><circle class="dot" r="4.5"/></svg>' : ''}<div class="hp-box"><b>${T.h}</b><span>${typeof T.t === 'function' ? T.t() : T.t}</span>${plain ? '' : '<div class="hp-row"><button id="hp-ok">Got it</button><button id="hp-off">Turn off helpers</button></div>'}</div>${line ? '' : '<i class="hp-tail"></i>'}`;
     el.hidden = false; el.style.visibility = 'hidden'; // (shown once it has its place)
     helperPlace(T);
   }
@@ -19422,7 +19436,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     return r > l ? { left: l, top: t, right: r, bottom: b, width: r - l, height: b - t } : e.getBoundingClientRect();
   };
   function helperLine(T, el, a, r) {
-    const w = el.offsetWidth, h = el.offsetHeight, W = innerWidth, H = innerHeight, isEl = a instanceof Element, D = a.x != null ? 0 : T.off == null ? 6 : T.off, OUT = 44, RUN = 34;
+    const w = el.offsetWidth, h = el.offsetHeight, W = innerWidth, H = innerHeight, isEl = a instanceof Element, D = T.off != null ? T.off : a.x != null || a.pts ? 0 : 6, OUT = 44, RUN = 34; // (an outlined thing: the dot on the outline)
     const keep = MENU_KEEP.map(dioQ).filter(e => e && e !== a && e !== T.own && !(isEl && e.contains(a)) && getComputedStyle(e).display !== 'none').map(wordBox).filter(g => g.width);
     const al = T.along == null ? 0.5 : T.along;
     // the island on screen (its top and the earth under it): a label is better off in the open field
@@ -19433,7 +19447,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       let dx, dy, x, y, ly, over = false, join = null;
       if (sd === 'rail') { // a left-hand menu word (as its white hover note): the dot before the word, a rail up the left margin to a label over PLAY (and over Back to match, when that's there)
         const pr = $('play').getBoundingClientRect(), bt = $('dio-backto'), br = bt && bt.offsetHeight ? bt.getBoundingClientRect() : null;
-        dx = r.left - 16; dy = r.top + (r.bottom - r.top) * 0.55; ly = (br ? Math.min(pr.top, br.top) : pr.top) - 34; x = dx + 18; y = ly - h; join = dx;
+        dx = a.pts ? r.left + 1 : r.left - 16; dy = r.top + (r.bottom - r.top) * 0.55; ly = (br ? Math.min(pr.top, br.top) : pr.top) - 34; x = dx + 18; y = ly - h; join = dx;
       } else if (sd === 'top' || sd === 'bottom') { // the label above (its line under it) or below (its line over it), run off to one side of the dot
         dx = r.left + (r.right - r.left) * al; dy = sd === 'top' ? r.top - D : r.bottom + D; over = sd === 'bottom';
         // (near the screen's edge the label slides back in along its line, and the line from the dot meets it part-way)
@@ -19455,6 +19469,9 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (el.dataset.line !== (q.over ? 'over' : 'under')) el.dataset.line = q.over ? 'over' : 'under';
     sv.querySelector('path').setAttribute('d', `M${n(q.dx - X)} ${n(q.dy - Y)} L${n(q.join - X)} ${n(q.ly - Y)} M${n(Math.min(q.x, q.join) - X)} ${n(q.ly - Y)} L${n(Math.max(q.x + w, q.join) - X)} ${n(q.ly - Y)}`);
     for (const c of sv.querySelectorAll('circle')) { c.setAttribute('cx', n(q.dx - X)); c.setAttribute('cy', n(q.dy - Y)); }
+    const rg = el.querySelector('.hp-ring'); // the outline round what the note is about
+    if (rg) { rg.style.display = a.pts ? '' : 'none';
+      if (a.pts) { rg.style.left = n(r.left - X) + 'px'; rg.style.top = n(r.top - Y) + 'px'; rg.style.width = n(r.right - r.left) + 'px'; rg.style.height = n(r.bottom - r.top) + 'px'; const pg = rg.firstElementChild; if (pg.getAttribute('points') !== a.pts) pg.setAttribute('points', a.pts); } }
     el.style.left = X + 'px'; el.style.top = Y + 'px'; el.style.visibility = '';
   }
   // Settings' Helpers, and a note's own "Turn off helpers". On: they start over, from the next thing to do
@@ -19467,7 +19484,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     else if (e.target.closest('#hp-off')) { // off, and one last note says where they can be had back
       const where = helpCur && helpCur.menu ? dioQ('.acct button:nth-of-type(3)') : $('cog'); // the menu's Settings, or the match's
       setHelpers(false, true);
-      if (where && where.getBoundingClientRect().width) { helperDraw({ at: () => where, side: 'bottom', only: true, must: true, off: 13, lean: -1, line: !!(DIO && dio.shown), h: 'Helpers are off.', t: 'Settings turns them back on.' }, true); helpFlash = setTimeout(() => { helpFlash = 0; helperDraw(null); tourSync(); }, 4200); }
+      if (where && where.getBoundingClientRect().width) { helperDraw({ at: () => DIO && dio.shown ? ringOf(where, 10, 8) : where, side: 'bottom', only: true, must: true, lean: -1, line: !!(DIO && dio.shown), h: 'Helpers are off.', t: 'Settings turns them back on.' }, true); helpFlash = setTimeout(() => { helpFlash = 0; helperDraw(null); tourSync(); }, 4200); }
       tourSync();
     }
   });

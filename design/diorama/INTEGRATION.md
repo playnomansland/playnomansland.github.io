@@ -155,8 +155,10 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
 - **The menu's guide (2026-11-11, live on `main` on the owner's word the same day; PC only).** Notes on the main menu for a guest's first time in (`MENU_TIPS`, `menuPick`, `guideStart`, `helperLine` in
   `src/site-template.html`; the loop, the store and the switch are the helpers'). **The look (owner, 2026-11-11):** not
   the helpers' yellow box but the Diorama's own notes: cream type on the field with the field's halo, a line under the
-  label (over it when the label hangs below its thing) and out to a dot with a ring on the thing; the ring pulses, so
-  the eye finds it. **Got it** is the notes' small saffron button (as INVITE A FRIEND), *Turn off helpers* an
+  label (over it when the label hangs below its thing) and out to a dot with a ring on the thing; and the
+  thing itself has a saffron outline round it that blinks softly (`ringOf`, `.hp-ring`; owner, 2026-11-11: so it is
+  plain which button the words mean). A menu word's outline is its own shard, where it lights up when pointed at;
+  PLAY's stands off its saffron shard; anything else gets a shard a little bigger than it. The dot stands on the outline. **Got it** is the notes' small saffron button (as INVITE A FRIEND), *Turn off helpers* an
   underlined word. A match's helpers keep the yellow box. **Who gets it:** only a guest who comes in from the welcome
   screen (Play as guest, Sign up as a guest) for the first time on a device: `guideStart` sets `pb-helpers`' `menu` to
   `[]` (absent / `null`: this device never has it). Not a page that opens on the menu, not Log in or Sign up with
