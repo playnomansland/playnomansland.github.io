@@ -11,13 +11,13 @@
 //   - All nests down: she falls, is stunned for CFG.mommy.stun seconds and takes full damage for the rest of the fight.
 //   - Attention: while she hangs and no enemy body stands within her reach (CFG.mommy.near m), she winds up a web mortar at the
 //     biggest clump of the player's army.
-//   - Web: every enemy body within her reach is slowed and hits softer.
+//   - Web: every enemy body within CFG.mommy.web.r of her is slowed and hits softer.
 //   - Molt: every CFG.mommy.molt seconds she sheds poison, bleed, burn, frost, slows and range cuts.
 //   - The player: normal match income, every allowed unit unlocked, skills on, one free move and one free extra
 //     deployment a round, a treasury (no tower): the game's own rule, 50 gold for each fight it survives, gold lost when it falls.
 //
 // Run from the repo root:  node tools/boss/mommy.js            (unit ranking, then the sample plans)
-//                          node tools/boss/mommy.js rank|plans|search
+//                          node tools/boss/mommy.js rank|plans|tanks|search
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
@@ -66,10 +66,10 @@ const CFG = {
     hp: 14000, col: 5.5, row: 5, // the front edge of her zone
     hang: 0.15,       // share of damage she takes while hanging
     stun: 5,          // seconds stunned after the fall
-    near: 16,         // m: her reach. A body this close holds her attention, and is bitten and webbed
+    near: 22,         // m: her reach. A body this close holds her attention; she attacks the nearest one (long enough for mid-range shooters to hold her)
     bite: { hit: 150, aps: 0.8, splash: 0 },
     sweep: { hit: 70, aps: 1, splash: 5 }, // the bite in CFG.sweepRounds: hits everything near its target
-    web: { slow: 40, dmg: 40 },
+    web: { r: 14, slow: 40, dmg: 40 }, // r: only bodies this close are webbed
     mortar: { wind: 8, every: 4, hit: 350, r: 6, slow: 60, dmg: 60, secs: 4 }, // wind: seconds with nobody in reach before the first one (long enough to walk to her)
     molt: 6,          // seconds between sheds (0: never)
     bleedPct: false,  // whether bleed's share of max health works on her
@@ -117,9 +117,10 @@ function fight(m, st, cfg = CFG, o = {}) {
   mom.hp = st.hp; mom.bossTag = true; mom.noPct = !cfg.mommy.bleedPct;
   const spots = o.nests || byRound(cfg.nests, round);
   const nu = o.noHatch ? { ...nestUnit(cfg, round), spawn: null, deathSpawn: null } : nestUnit(cfg, round);
-  const nests = spots.map(([c, r], k) => { const w = world(c, r); return Engine.buildSquad(nu, 1, w.x, w.y, -20 - k, TILE, 1 + k)[0]; });
+  // a nest spot is [col, row] or [col, row, 'low']: a low nest hangs where melee units reach it too
+  const nests = spots.map(([c, r, kind], k) => { const w = world(c, r); return Engine.buildSquad(kind === 'low' ? { ...nu, rangedOnly: 0 } : nu, 1, w.x, w.y, -20 - k, TILE, 1 + k)[0]; });
   const B = [mom, ...nests];
-  const out = { round, fallAt: null, mortars: 0, mortarAt: null, hang: 0, ground: 0, nestsLeft: 0, end: 0, treasury: null };
+  const out = { round, fallAt: null, mortars: 0, mortarAt: null, held: 0, hang: 0, ground: 0, nestsLeft: 0, end: 0, treasury: null };
   let hanging = !o.fallen, quiet = 0, shots = 0, moltT = cfg.mommy.molt, last = mom.hp;
   const visible = (f) => f.alive && f.side === 0 && !f.u.structure && !f.u.aloft && !f.hidden && !(f.inside && f.inside.alive) && !(f.delay > 0);
   const d2 = (a, x, y) => { const dx = a.x - x, dy = a.y - y; return Math.sqrt(dx * dx + dy * dy); };
@@ -141,7 +142,7 @@ function fight(m, st, cfg = CFG, o = {}) {
     const wb = cfg.mommy.web;
     for (const f of api.sides[0]) {
       if (!f.alive || f.u.structure) continue;
-      if (!stunned && wb.slow + wb.dmg > 0 && d2(f, mw.x, mw.y) <= cfg.mommy.near) {
+      if (!stunned && wb.r > 0 && d2(f, mw.x, mw.y) <= wb.r) {
         f.momWeb = true; f.web = { slow: Math.max(wb.slow, f.web && !f.momWebOnly ? f.web.slow : 0), dmg: Math.max(wb.dmg, f.web && !f.momWebOnly ? f.web.dmg : 0), t: 1, max: 90 }; f.momWebOnly = true;
         if (!f.u.unstoppable) { if (!(f.slowT > 0)) { f.slowMove = 0; f.slowAtk = 0; } f.slowMove = Math.max(f.slowMove, wb.slow); f.slowT = Math.max(f.slowT, api.dt * 1.5); }
       } else if (f.momWeb && !(f.mortarWebT > api.t)) { f.momWeb = false; f.momWebOnly = false; f.web = null; }
@@ -149,7 +150,7 @@ function fight(m, st, cfg = CFG, o = {}) {
     // attention: nobody close while she hangs, and the mortar winds up
     if (!hanging || stunned) { quiet = 0; shots = 0; return; }
     const mo = cfg.mommy.mortar;
-    if (api.sides[0].some((f) => visible(f) && d2(f, mw.x, mw.y) <= cfg.mommy.near)) { quiet = 0; shots = 0; return; }
+    if (api.sides[0].some((f) => visible(f) && d2(f, mw.x, mw.y) <= cfg.mommy.near)) { quiet = 0; shots = 0; out.held += api.dt; return; }
     quiet += api.dt;
     if (!(mo.hit > 0) || quiet + 1e-9 < mo.wind + shots * mo.every) return;
     shots++;
@@ -261,9 +262,33 @@ function rank(cfg = CFG) {
   return rows;
 }
 
+// Who can hold her? One squad alone in front of her for a whole fight (she never falls, no nests): the seconds it held
+// her attention, under a fast light bite and a slow heavy one with the same damage per second.
+function tanks(cfg = CFG) {
+  const cands = [['Goblin Swarm'], ['Spiders'], ['Ent'], ['Ent', 1], ['Brute'], ['Brute', 0], ['Just a horse'], ['Obelisk'], ['Steel Wizard'], ['Steel Wizard', 0], ['Ether Golem'],
+    ['Wisps'], ['Wisps', 1], ['Skeleton Archers'], ['Skeleton Archers', 2], ['Leaf Wizard'], ['Leaf Wizard', 0], ['Earth Wizard', 2], ['Water Mage'], ['Water Mage', 3], ['Ember Imps', 3]];
+  const bites = { 'fast bite (150 x 0.8/s)': { hit: 150, aps: 0.8, splash: 0 }, 'heavy bite (480 x 0.25/s)': { hit: 480, aps: 0.25, splash: 0 }, 'sweep (70 x 1/s, 5 m)': { hit: 70, aps: 1, splash: 5 } };
+  console.log('\nWho can hold her: seconds of a 30 s fight one squad alone keeps her attention (cost includes the skill)');
+  console.log('squad'.padEnd(40) + 'cost'.padStart(5) + Object.keys(bites).map((k) => k.padStart(27)).join(''));
+  for (const [name, k] of cands) {
+    let line = '', cost = 0, label = name;
+    for (const bite of Object.values(bites)) {
+      const c2 = { ...cfg, sweepRounds: [], mommy: { ...cfg.mommy, bite } };
+      const run = newRun(c2); run.m.gold[0] = 5000; const a = act(run);
+      const sq = a.buy(name, 5, 10); // (a skill needs a squad of its unit on the board)
+      if (k != null) { const d = units[ix(name)].skillDefs[k]; let ok = a.skill(name, k); if (!ok && sq && Game.awaken) ok = !!Game.awaken(run.m, 0, sq.id, k); label = name + ' + ' + (d ? d.name : '?') + (ok ? '' : ' (NOT BOUGHT)'); }
+      cost = 5000 - run.m.gold[0];
+      const f = fight(run.m, run.st, c2, { fallAt: 99, nests: [], noTreasury: true });
+      line += (f.held.toFixed(1) + ' s' + (f.left ? ' (alive)' : '')).padStart(27);
+    }
+    console.log(label.padEnd(40) + String(cost).padStart(5) + line);
+  }
+}
+
 if (require.main === module) {
   const what = process.argv[2] || 'all';
   if (what === 'rank' || what === 'all') rank();
   if (what === 'plans' || what === 'all') require('./plans.js').report();
+  if (what === 'tanks') tanks();
   if (what === 'search') require('./plans.js').search(+process.argv[3] || 300);
 }
