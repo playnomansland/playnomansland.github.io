@@ -11,8 +11,12 @@
 //   - All nests down: she falls and takes full damage for the rest of the fight. She and every spider on the board are
 //     stunned for CFG.mommy.stun seconds.
 //   - Attention: while she hangs and no enemy body stands within her reach (CFG.mommy.near m), she winds up a web mortar
-//     at the biggest clump of the player's army. Each shot is one of her own nests, ripped loose, and the blast
-//     cripples (web) more than it kills, so leaving her alone and letting her spend her nests is a way to play too.
+//     at the biggest clump of the player's army. Each shot is one of her own nests, ripped loose (only a nest within her
+//     reach: CFG.mommy.mortar.ammoReach), and the blast webs what it hits, so leaving her alone and letting her spend her
+//     nests is a way to play too.
+//   - (proposed 11 Nov) While she hangs, the player's units pick her only when none of her nests or spiders are left to
+//     pick (CFG.mommy.lastPick); spiderlings are lighter than a Spiders body (CFG.spider); a hit's share of max health
+//     (bleed, Deadeye) never works on her.
 //   - Her bite changes by round (CFG.biteByRound): fast and light, slow and heavy, or a sweep.
 //   - Web: every enemy body within CFG.mommy.web.r of her is slowed and hits softer.
 //   - Molt: every CFG.mommy.molt seconds she sheds poison, bleed, burn, frost, slows and range cuts.
@@ -21,8 +25,9 @@
 //     gold for each fight it survives, gold lost when it falls. The fight runs to the timer, so spiders left over
 //     when the army is gone go for the treasury.
 //
-// Run from the repo root:  node tools/boss/mommy.js            (unit ranking, then the sample plans)
-//                          node tools/boss/mommy.js rank|plans|tanks|greedy|search
+// Run from the repo root:  node tools/boss/mommy.js            (unit ranking, the sample plans, the five-round lines)
+//                          node tools/boss/mommy.js rank|skills|tanks|plans|lines|greedy|search
+//                          node tools/boss/mommy.js show "<plan name>" [her health]   (one plan, board by board)
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
@@ -78,7 +83,7 @@ const CFG = {
   banned: ['Meteor Caller', 'Assassin', 'Rogue', 'Truespear', 'Sun Priest'],
   maxPerType: 3,      // squads of one unit type on the board at a time
   mommy: {
-    hp: 14000, col: 5.5, row: 5, // the front edge of her zone
+    hp: 42000, col: 5.5, row: 5, // the front edge of her zone. hp: proposed 11 Nov (14,000 was a placeholder), see the handoff doc
     hang: 0.15,       // share of damage she takes while hanging
     stun: 5,          // seconds she and her spiders are stunned after the fall
     near: 22,         // m: her reach. A body this close holds her attention; she attacks the nearest one (long enough for mid-range shooters to hold her)
@@ -350,8 +355,10 @@ function rankSkills(cfg = CFG, names) {
 // Who can hold her? One squad alone in front of her for a whole fight (she never falls, no nests): the seconds it held
 // her attention, under each of her bite styles.
 function tanks(cfg = CFG) {
+  // [unit, skill slot or [slots in order]]: a fourth-slot skill needs one of slots 1-2 first
   const cands = [['Goblin Swarm'], ['Spiders'], ['Ent'], ['Ent', 1], ['Brute'], ['Brute', 0], ['Just a horse'], ['Obelisk'], ['Steel Wizard'], ['Steel Wizard', 0], ['Ether Golem'],
-    ['Wisps'], ['Wisps', 1], ['Skeleton Archers'], ['Skeleton Archers', 2], ['Leaf Wizard'], ['Leaf Wizard', 0], ['Earth Wizard', 2], ['Water Mage'], ['Water Mage', 3], ['Ember Imps', 3]];
+    ['Wisps'], ['Wisps', 1], ['Skeleton Archers'], ['Skeleton Archers', 2], ['Leaf Wizard'], ['Leaf Wizard', 0], ['Earth Wizard', 2], ['Water Mage'], ['Water Mage', [1, 3]], ['Ember Imps', [1, 3]],
+    ['Necromancer'], ['Necromancer', 1], ['War Mammoth']];
   const bites = Object.keys(cfg.mommy.bites);
   console.log('\nWho can hold her: seconds of a 30 s fight one squad alone keeps her attention (cost includes the skill)');
   console.log('squad'.padEnd(40) + 'cost'.padStart(5) + bites.map((k) => { const x = cfg.mommy.bites[k]; return `${k} (${x.hit} x ${x.aps}/s${x.splash ? ', ' + x.splash + ' m' : ''})`.padStart(27); }).join(''));
@@ -361,7 +368,7 @@ function tanks(cfg = CFG) {
       const c2 = { ...cfg, biteByRound: [bite] };
       const run = newRun(c2); run.m.gold[0] = 5000; const a = act(run);
       const sq = a.buy(name, 5, 10); // (a skill needs a squad of its unit on the board)
-      if (k != null) { const d = units[ix(name)].skillDefs[k]; let ok = a.skill(name, k); if (!ok && sq && Game.awaken) ok = !!Game.awaken(run.m, 0, sq.id, k); label = name + ' + ' + (d ? d.name : '?') + (ok ? '' : ' (NOT BOUGHT)'); }
+      if (k != null) { const ks = [].concat(k); let ok = true; for (const kk of ks) { let one = a.skill(name, kk); if (!one && sq && Game.awaken) one = !!Game.awaken(run.m, 0, sq.id, kk); ok = ok && one; } label = name + ' + ' + ks.map((kk) => units[ix(name)].skillDefs[kk].name).join(' + ') + (ok ? '' : ' (NOT BOUGHT)'); }
       cost = 5000 - run.m.gold[0];
       const f = fight(run.m, run.st, c2, { fallAt: 99, nests: [], noTreasury: true });
       line += (f.held.toFixed(1) + ' s' + (f.left ? ' (alive)' : '')).padStart(27);
