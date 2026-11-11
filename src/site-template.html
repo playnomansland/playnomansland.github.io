@@ -11329,8 +11329,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       },
     },
     // ===== fieldHospital (page) =====
-    // who stands within 1 tile, this round's Field dressing, and Second wind's squad: pick one of your team's squads
-    // (yours or your teammate's) to buy it on, or move it to another once bought
+    // who stands within 1 tile, this round's Field dressing, and Second wind's squad: a button, then a tap on one of your
+    // team's squads on the board (yours or your teammate's) buys it on that squad, or moves it there once bought, as
+    // Mark Bounty picks its enemy (the owner, 2026-11-11: not a list of every squad by name and tile)
     fieldHospital: {
       squads(side) {
         const L = duoMyLane(), mine = (m.armies[side] || []).map(q => ({ q, lane: L, id: q.id })), mate = Game.teamArmy(m, side).map(q => ({ q, lane: 1 - L, id: Duo.unmap(q.id) }));
@@ -11346,19 +11347,23 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         if (own && phase === 'deploy') {
           const cur = w && list.find(x => x.lane === w.lane && x.id === w.id);
           if (w) lines.push(`Second wind this round: ${cur ? who(cur) : 'a squad that is gone'}`);
-          const btn = (x) => {
-            const on = w && x.lane === w.lane && x.id === w.id, ok = live && !on && (w ? true : !Mpb.whyNot(m, me, rec.key, 'wind', [x.lane, x.id]));
-            return `<button class="btn small${ok ? ' either' : ''}" data-fh-wind="${x.lane}:${x.id}" ${ok ? '' : 'disabled'}>${on ? '✓ ' : ''}${who(x)}</button>`;
-          };
-          if (list.length) pick = `<p class="hint" style="margin:0">${w ? 'Second wind: tap another squad to move it there.' : `Second wind (${Mpb.skillCost(m, me, rec.key, 'wind')} gold): tap the squad it is for.`}</p><div style="display:flex;gap:6px;flex-wrap:wrap">${list.filter(x => !Game.isRider(x.q)).map(btn).join('')}</div>`;
+          const ok = live && list.some(x => !Game.isRider(x.q) && !(w && x.lane === w.lane && x.id === w.id) && (w || !Mpb.whyNot(m, me, rec.key, 'wind', [x.lane, x.id])));
+          if (list.length) pick = `<p style="margin:0"><button class="btn small${ok ? ' either' : ''}" id="fh-wind-pick" ${ok ? '' : 'disabled'}>${w ? 'Move Second wind' : `Second wind · ${Mpb.skillCost(m, me, rec.key, 'wind')} gold`}</button> <span class="hint">then tap ${w ? 'another' : 'the'} squad of your team on the board</span></p>`;
         }
         return `<p style="margin:0">${lines.join(' · ')}</p>${pick}`;
       },
-      wire(root, side, rec, again) {
-        root.querySelectorAll('[data-fh-wind]').forEach(b => b.addEventListener('click', () => {
-          const [lane, id] = b.dataset.fhWind.split(':').map(Number), w = rec.data.wind && rec.data.wind.round === m.round && rec.skills.wind;
-          if (editable() && (w ? Game.mpbAct(m, me, rec.key, 'wind', lane, id) : Game.mpbBuy(m, me, rec.key, 'wind', lane, id))) { changed(); again(); }
-        }));
+      wire(root, side, rec) {
+        const b = root.querySelector('#fh-wind-pick'); if (!b) return;
+        b.addEventListener('click', () => {
+          closeSheet(); duoToastSay('Second wind: tap one of your team’s squads', 3000);
+          mpbPicking = (t) => { // your squad or your teammate's on that tile (not a rider: its carrier is the squad there)
+            const x = this.squads(me).find(x => !Game.isRider(x.q) && Game.blockOf(m, x.q.unit, x.q.col, x.q.row).some(([c, r]) => c === t.col && r === t.row));
+            const r = Mpb.recOf(m, me, rec.key), w = r && r.data.wind && r.data.wind.round === m.round && r.skills.wind;
+            if (x && r && editable() && (w ? Game.mpbAct(m, me, r.key, 'wind', x.lane, x.id) : Game.mpbBuy(m, me, r.key, 'wind', x.lane, x.id))) { changed(); duoToastSay(`Second wind: ${m.units[x.q.unit].name}${x.lane === duoMyLane() ? '' : ' (teammate’s)'}`, 2500); }
+            else { if (!x) duoToastSay('Not a squad of your team: Second wind not changed', 2500); render(); }
+            return true;
+          };
+        });
       },
     },
     // ===== coalMine (page) =====

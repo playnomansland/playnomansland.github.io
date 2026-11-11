@@ -22,6 +22,7 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ## 11 November 2026 – A tour of the menu
 
+- **2v2, Field hospital:** *Second wind* is one button now, not a list of every squad by name and tile: press it, then tap the squad on the board (yours or your teammate's), as *Mark Bounty* picks its enemy. Once bought, the same button moves it to another squad.
 - **Click a tower in a fight** and its card now shows that player's **leader** and what it does, as the tower's sheet does while deploying (the sheet says *Leader* now, not *Character*).
 - **Fixed (PC):** the board no longer looks like it's seen through a wide-angle lens. Things at the bottom of the screen (your tower's ring, the treasury) kept their shape only in the middle of the screen and stretched into tall ovals near the edge, worst in the final seconds of a close fight, when the camera moved in. The camera now stands further back with a longer lens, and in those final seconds it simply zooms in on the action.
 - **Fixed (PC):** the card of a unit or tower clicked in a fight lay on top of your name and health, and the speeds and Skip slid in over it. It now sits under them, at the side. In 2v2 the card of an artifact you click no longer covers the opponents' names and health either.
