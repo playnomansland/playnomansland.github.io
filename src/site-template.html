@@ -4249,7 +4249,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     wireMore();
     if (net.duo && mode === 'net') wireDuoRow();
     if (duoOn()) wireMpbPanel(); // 2v2: the artifact draft's cards
-    $('help-btn').addEventListener('click', openHelp);
+    $('help-btn').addEventListener('click', () => { if (m && m.boss) openBossRules(); else openHelp(); }); // (the Mommy boss puzzle: her rules, with Game help inside)
     if ($('mage-gen')) $('mage-gen').addEventListener('click', () => openTowerSheet(me));
     if ($('loan')) $('loan').addEventListener('click', () => { if (editable() && Game.takeLoan(m, me)) changed(); });
     if ($('slot-open')) $('slot-open').addEventListener('click', openSlots);
@@ -4324,11 +4324,13 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         <div class="seg speeds" role="group" aria-label="Playback speed">
           ${SPEEDS.map(s => `<button data-s="${s}" aria-pressed="${playSpeed() === s}">${s}×</button>`).join('')}
         </div>
+        ${m && m.boss ? '<button class="btn small" id="boss-rules">Mommy’s rules</button>' : ''}
         <button class="btn small" id="skip">Skip to result</button>
       </div>
       ${net.duo && mode === 'net' ? duoRow(true) : ''}
       <span class="hint speed-ask" id="speed-ask" aria-live="polite" hidden></span>`;
     if (net.duo && mode === 'net') wireDuoRow();
+    if ($('boss-rules')) $('boss-rules').addEventListener('click', openBossRules);
     $('panel').querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => pickSpeed(+b.dataset.s)));
     showSpeed();
     // asks first, as selling does: the first tap turns it into "Tap again to skip" (gold) for a few seconds
@@ -7093,12 +7095,57 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     Boss.setup(m);
     nextReady = [false, false]; rematch = [false, false];
     beginAiRound();
+    openBossRules(); // what's new here, before the first deployment
   }
   const BITE_NOTE = { fast: 'fast and light: health holds her', heavy: 'slow and heavy: many bodies, shields and wards hold her', sweep: 'a sweep: one big body holds her' };
   function bossLine() {
     const p = bossView(); if (!p) return;
     const low = p.nests.filter(n => n.low).length;
     banner(`Mommy · round ${p.round} of ${p.rounds}`, `Her bite: ${BITE_NOTE[p.bite] || p.bite}. ${p.nests.length} nests (${low} low, ${p.nests.length - low} high). Health ${Math.round(p.hp).toLocaleString('en')}.`);
+  }
+  // Mommy's rules: every mechanic the boss adds, in one sheet. It opens by itself as a run starts; the ? while deploying
+  // and a button in the fight open it again. The numbers come from Boss.CFG and this round's layout
+  function openBossRules() {
+    if (!m || !m.boss || typeof Boss === 'undefined') return;
+    const C = Boss.CFG, mo = C.mommy, p = bossView() || {}, r = p.round || m.round, b = (x) => `<b>${x}</b>`; // (p: the round on the board; in the fight m.round has moved on already)
+    const hatch = Boss.byRound(C.hatch, r), bite = p.bite || Boss.byRound(C.biteByRound, r);
+    const BITES = { fast: ['Fast', 'quick, light bites: a unit with lots of health holds her best'], heavy: ['Heavy', 'slow, huge bites that splash a little: many bodies, shields and wards hold her best'], sweep: ['Sweep', 'light bites that hit everything round the target: one big body holds her best (a swarm melts)'] };
+    const sec = (title, items) => `<h4 style="margin:10px 0 2px">${title}</h4><ul class="helplist">${items.filter(Boolean).map(x => `<li>${x}</li>`).join('')}</ul>`;
+    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
+      <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. Beat her within ${C.titleRound} rounds for the “Mommy” title.</p>
+      ${sec('Hanging', [
+        `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage, and she can’t be stunned, slowed, rooted or moved.`,
+        mo.lastPick ? 'Your units only shoot her while she hangs if none of her nests or spiders are left to hit.' : ''])}
+      ${sec('Nests', [
+        'Her nests hang in new places every round. While you deploy you see where this round’s hang.',
+        `${b('HIGH')} nests can only be hit by ranged units. ${b('LOW')} nests can be hit by melee units too.`,
+        `Each nest hatches a spiderling every ${b(hatch + ' s')} this round (faster in later rounds). A destroyed nest bursts into ${C.nest.burst} spiderlings.`])}
+      ${sec('The fall', [
+        `When every nest is down she ${b('falls')}: she and all her spiders are stunned for ${mo.stun} s, and she takes ${b('full damage')} for the rest of the fight.`,
+        `A fight lasts ${C.fightSecs} s, so the sooner the nests fall, the longer she lies there.`])}
+      ${sec('Her reach and her bite', [
+        `She bites the nearest of your units inside her reach (the dashed ring, ${mo.near} m). A unit in her reach ${b('holds')} her: she bites it, not the rest.`,
+        `Her bite changes each round. This round: ${b(BITES[bite] ? BITES[bite][0] : bite)}, ${BITES[bite] ? BITES[bite][1] : ''}.`,
+        `Units close to her (${mo.web.r} m) are caught in her ${b('web')}: they walk ${mo.web.slow}% slower and hit ${mo.web.dmg}% softer.`])}
+      ${sec('The web mortar', [
+        `If none of your units is inside her reach for ${mo.mortar.wind} s while she hangs, she fires a web mortar at your biggest clump, then another every ${mo.mortar.every} s: ${mo.mortar.hit} damage to everything in the blast, and a web that slows them.`,
+        mo.mortar.ammo ? `Each shot is ${b('one of her own nests')}, ripped loose${mo.mortar.ammoReach ? ' (only a nest inside her reach)' : ''}: it is gone, and its spiders burst out. Leaving her alone is a way to play too: spread out, and let her spend her nests.` : ''])}
+      ${sec('Poison pools', C.pools && C.pools.pct > 0 ? [
+        `The ${b('green tiles')} are poison. Your units standing in one lose ${C.pools.pct}% of their max health a second and are slowed, and it lasts ${C.pools.linger} s after they step out. Her spiders don’t mind them.`,
+        'Slime units (Slime Wizard, Slimeshots) drink poison: it heals them.'] : [])}
+      ${sec('She sheds', [
+        mo.molt ? `Every ${mo.molt} s she molts: poison, bleed, burn, frost and slows fall off her.` : '',
+        mo.bleedPct ? '' : 'Hits that take a share of max health (bleed’s big stacks, Deadeye) don’t work on her.'])}
+      ${sec('Your side', [
+        `${C.startGold} gold to start, then the normal income each round.`,
+        `Every round: ${b('one free move')} for a squad from an earlier round, and ${b('one free extra deployment')}.`,
+        `At most ${b(m.boss.cap + ' squads')} of any one unit.`,
+        `No tower: a ${b('treasury')} instead. It pays 50 gold for each fight it stands through; her spiders go for it once your army is gone. You have no health to lose: only the rounds run out.`,
+        `Not allowed: ${esc((m.boss.banned || []).join(', '))}.`])}
+      <div class="bar"><span></span><button class="btn small" id="boss-help">Game help</button></div>`;
+    $('sheet-back').hidden = false;
+    $('close').addEventListener('click', closeSheet);
+    $('boss-help').addEventListener('click', () => { closeSheet(); openHelp(); });
   }
   function bossResult(sum) {
     const r = sum.boss || (m.boss.log || []).slice(-1)[0];
