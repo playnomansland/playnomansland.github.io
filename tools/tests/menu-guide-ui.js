@@ -1,5 +1,6 @@
 // The menu's guide (2026-11-11): notes on the Diorama's main menu for a guest's first time in, on a PC, drawn as the
-// Diorama's own notes: cream type, a line and a dot on the thing (src/site-template.html, MENU_TIPS, helperLine; the
+// Diorama's own notes: cream type, a line and a dot on the thing, which has a softly blinking saffron outline round
+// it (src/site-template.html, MENU_TIPS, helperLine, ringOf; the
 // loop and the switch are the first game's helpers', tools/tests/helpers-ui.js).
 //  - only a guest coming in from the welcome screen for the first time on a device gets it: not a page opened on the
 //    menu, not a device that has played here before, not after a log-out
@@ -43,7 +44,11 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&test&server=http://127
     const h = document.getElementById('helper'), e = h.getBoundingClientRect(), t = wb(s);
     const off = (r) => e.right <= r.left + 2 || e.left >= r.right - 2 || e.bottom <= r.top + 2 || e.top >= r.bottom - 2;
     const d = h.querySelector('.hp-ln .dot'), dr = d ? d.getBoundingClientRect() : null, dx = dr ? (dr.left + dr.right) / 2 : 0, dy = dr ? (dr.top + dr.bottom) / 2 : 0;
-    const onIt = !!dr && dx > t.left - 20 && dx < t.right + 20 && dy > t.top - 20 && dy < t.bottom + 20; // (the dot: on the thing, or just off its edge)
+    // the thing has a saffron outline round it, softly blinking, and the dot stands on that outline
+    const rg = h.querySelector('.hp-ring'), g = rg ? rg.getBoundingClientRect() : null, te = document.querySelector(s).getBoundingClientRect(), /* (the whole button: a menu word's is wider than its letters) */ tx = (t.left + t.right) / 2, ty = (t.top + t.bottom) / 2;
+    const ringed = !!g && g.width > 0 && g.left < tx && g.right > tx && g.top < ty && g.bottom > ty && g.left > te.left - 40 && g.right < te.right + 40 && g.top > te.top - 30 && g.bottom < te.bottom + 30
+      && getComputedStyle(rg.firstElementChild).stroke === 'rgb(242, 178, 58)' && getComputedStyle(rg).animationName === 'hp-blink';
+    const onIt = ringed && !!dr && dx > g.left - 8 && dx < g.right + 8 && dy > g.top - 8 && dy < g.bottom + 8 && (Math.min(Math.abs(dx - g.left), Math.abs(dx - g.right)) < 8 || Math.min(Math.abs(dy - g.top), Math.abs(dy - g.bottom)) < 12);
     return h.classList.contains('line') && onIt && off(t) && e.left >= 0 && e.top >= 0 && e.right <= innerWidth && e.bottom <= innerHeight && cl.every(c => { const r = wb(c); return !r.width || off(r); }); }, [sel, clear]);
   // the notes on the island that are on screen now (the golem's, the hover hint, a pointed-at piece's)
   const isle = (p) => p.evaluate(() => [...document.querySelectorAll('#dio > .note:not(.btn-note):not(.bf-note)')].filter(e => getComputedStyle(e).display !== 'none' && +getComputedStyle(e).opacity > 0.05 && e.getBoundingClientRect().width > 0).map(e => e.dataset.anchor));
