@@ -561,7 +561,8 @@
     const proj = (o, h) => { const v = new THREE.Vector3(); o.getWorldPosition(v); v.y += h; v.project(cam); return [(v.x + 1) / 2 * cv.clientWidth, (1 - v.y) / 2 * cv.clientHeight]; };
     const dotSvg = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="currentColor"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>`;
     // (each tower and treasury shows only its own note: owner, 2026-11-08)
-    const showing = (el, hovered) => body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
+    // (a menu word's white note stays away while a yellow guide note is on the menu's words: helpQuiet)
+    const showing = (el, hovered) => el.dataset.anchor === 'btn' && helpQuiet() ? false : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
     // a label off the point (x, y): a line out to it and under it, kept on screen. Returns the line's svg
     let placed = []; // the island notes' boxes laid out so far this frame (notes() empties it)
     let pinFading = false, pinOverFading = false; // the note being laid out is fading; it may sit over fading boxes
@@ -1491,7 +1492,7 @@
       const r = await acctCall('guest', tag ? { tag } : {});
       home.busy = false; b.disabled = false;
       if (r.status !== 200) { if (r.error === 'bad tag') { door.err = TAG_BAD; signMsg(''); return drawSignin(); } signMsg(acctFail(r)); return; }
-      acctTake(r); homeDone();
+      acctTake(r); guideStart(); homeDone(); // (a guest's first time in: the menu's guide)
     });
     // the account's notes, off the account button, one at a time as the old menu's popups came: Stay logged in? (asked
     // once after making an account or logging in), then a new Title, then a new skin (each announced once per phone)
@@ -1646,7 +1647,7 @@
         <span class="k">Sound</span><div class="set">${spkVol('vol', 'music', musicOn(), snd.vol, 'Music')}${spkVol('sfxVol', 'sfx', !!snd.sfx && snd.sfxVol > 0, snd.sfxVol, 'Sound effects')}
           ${navigator.audioSession ? `<span class="lab">Other apps</span><span class="seg"><button class="w" data-set="solo|0" aria-pressed="${!snd.solo}">Keep playing</button><button class="w" data-set="solo|1" aria-pressed="${!!snd.solo}">Pause them</button></span><p class="sn">Pause them: plays even on silent.</p>` : ''}</div>
         ${PC() ? `<span class="k">Match screen</span><div class="set"><span class="lab">Deploy panel</span><span class="seg"><button class="w" data-set="dside|0" aria-pressed="${dSide === 'left'}">Left</button><button class="w" data-set="dside|1" aria-pressed="${dSide === 'right'}">Right</button></span><p class="sn">Where your gold, the shop and READY sit in a match.</p>${onoff('dauto', 'Slides away', dAuto, dAuto ? 'It tucks to its side when your pointer leaves it, and comes back when you point at that side.' : 'Always shown.')}</div>` : ''}
-        <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}${PC() ? onoff('helpers', 'Helpers', helpersOn(), helpersOn() ? (helpers.done ? 'You’ve had them all. Off and On again starts them over.' : 'Yellow notes point things out in your first game.') : 'No notes. On starts them from the beginning.') : ''}</div>
+        <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}${PC() ? onoff('helpers', 'Helpers', helpersOn(), helpersOn() ? (helpers.done ? 'You’ve had them all. Off and On again starts them over.' : helpers.menu ? 'Yellow notes point things out on the menu and in your first game.' : 'Yellow notes point things out in your first game.') : 'No notes. On starts them from the beginning.') : ''}</div>
         <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
         <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', staying(), staying() ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${acct && !acct.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
         ${devMode() ? `<span class="k" style="color:#FF5FC4">Developer</span><div class="set">${onoff('rk', 'Ranked play', home.rankedOn === true, '<span id="rk-msg">For everyone, not only developers.</span>')}</div>` : ''}

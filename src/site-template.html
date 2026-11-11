@@ -1494,12 +1494,15 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   let selected = null;      // unit index chosen in the shop
   // helpers (2026-11-10): the yellow notes of a first game against the computer. off: switched off (Settings, or a
   // note's own "Turn off helpers"); seen: the notes shown or done already; done: a whole game has been finished with
-  // them. On by default, except on a device that finished the old guided tutorial
+  // them. On by default, except on a device that finished the old guided tutorial. menu (2026-11-11): the main menu's
+  // guide. null: this device never had it (only a guest's first time in starts it, guideStart); a list: its notes
+  // shown already. ?guide starts it over on any device, to look at it
   const HELP_STORE = 'pb-helpers';
-  let helpers = { off: false, seen: [], done: false };
+  let helpers = { off: false, seen: [], done: false, menu: null };
   try { const h = JSON.parse(localStorage.getItem(HELP_STORE) || 'null');
-    if (h && Array.isArray(h.seen)) helpers = { off: !!h.off, seen: h.seen.map(String), done: !!h.done };
+    if (h && Array.isArray(h.seen)) helpers = { off: !!h.off, seen: h.seen.map(String), done: !!h.done, menu: Array.isArray(h.menu) ? h.menu.map(String) : null };
     else if (localStorage.getItem('phonebellum.tutorial.v1') === 'done') helpers.off = true; } catch (e) {}
+  if (qs.has('guide')) { helpers.off = false; helpers.menu = []; }
   let rangeOf = null;       // { side, id }: the squad last tapped on the board; its range shows as a dotted ring
   let inspect = null, inspectHtml = ''; // a fight: the body tapped (its card shows, see inspectCard), and what the card shows now
   let bt = null;            // battle being played back
@@ -3201,13 +3204,71 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   ];
   let helpCur = null, helpSince = 0, helpRaf = 0, helpEval = 0, helpFlash = 0;
   const helpActive = () => mode === 'ai' && !!m && !helpers.off && !helpers.done && document.documentElement.classList.contains('pc') && ['deploy', 'battle', 'result', 'end'].includes(phase);
-  // the match's screens call this (hud): the notes run while a game against the computer is on
+
+  // ---------- the menu's guide (2026-11-11): a guest's first time on the main menu, on a PC ----------
+  // The same yellow notes on the Diorama's main menu, one at a time: How to play first ("New here?"), then Play, the
+  // battlefield, the music, your name (what signing in gives a guest) and Settings. Only for a guest who comes in from
+  // the welcome screen for the first time on this device (guideStart): nobody else ever gets it. A note goes with Got
+  // it, when its thing is pressed (How to play, Play), or once it has been read and the player has gone to another
+  // screen; something lying over the menu for a moment (a dropdown, a sheet, the playlist) only hides it. "Turn off
+  // helpers" is Settings' Helpers, the one switch for every yellow note; On starts these over as well.
+  const dioHas = (...c) => { const D = $('dio'); return !!D && c.some(x => D.classList.contains(x)); };
+  const dioQ = (sel) => { const D = $('dio'); return D ? D.querySelector(sel) : null; };
+  // menu: one of these. quiet: the menu words' own white notes stay away while it's up (they would lie under it).
+  // must: shown even in a window with no free side for it (the others are left out there, helperPlace); own: its
+  // thing, where `at` is a point on it
+  const MENU_KEEP = ['#play', '#puzzles-open', '#how', '.menu [data-cam="units"]', '.menu [data-cam="ranks"]', '.music', '.bf-note'];
+  const MENU_TIPS = [
+    { id: 'how', menu: true, quiet: true, must: true, show: () => true, done: () => dioHas('how'), at: () => $('how'), side: 'right', h: 'New here?', t: 'Press here to learn how the game works.' },
+    { id: 'play', menu: true, quiet: true, get own() { return $('play'); }, show: () => true, done: () => dioHas('play', 'in-rooms'), at: () => { const r = $('play').getBoundingClientRect(); return r.width ? { x: r.left + Math.min(r.width / 2, 190), y: r.top + 2 } : null; }, side: 'top', h: 'Ready to fight?', t: 'Start with a game against the computer. Notes like this one point out what to press.' }, // (over the word, not the middle of its long shard)
+    { id: 'field', menu: true, show: () => true, at: () => dioQ('.bf-note'), side: 'top', h: 'Your battlefield.', t: 'This is the board you play on. Change its look here.' },
+    { id: 'music', menu: true, show: () => true, at: () => dioQ('.music'), side: 'top', h: 'Music.', t: 'Pause or skip a song here. Playlist lets you pick what plays.' },
+    { id: 'guest', menu: true, show: () => !(acct && acct.google) && $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(2)'), side: 'bottom', h: 'You’re a guest.', t: 'Click your name to sign in with Google. It keeps your name and results, and opens Ranked and Friends.' },
+    { id: 'settings', menu: true, show: () => $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(3)'), side: 'bottom', h: 'That’s the menu.', t: 'Settings has the sound, full screen and Helpers: these notes, On or Off.' },
+  ];
+  const menuActive = () => DIO && !!helpers.menu && !helpers.off && phase === 'start' && !m && document.documentElement.classList.contains('pc') && MENU_TIPS.some(T => !helpers.menu.includes(T.id));
+  // the plain main menu is on screen (not Play, Rooms, Profile, Puzzles, How to play, or Units / Rankings clicked open)
+  const menuHome = () => dio.shown && home.screen === 'menu' && !dioHas('welcome', 'play', 'profile', 'puz', 'how', 'pinned', 'in-rooms', 'in-create', 'in-history');
+  // something lies over it for a moment: a sheet, a dropdown, the playlist (or the island is still flying)
+  const menuOver = () => !$('sheet-back').hidden || dioHas('music-open') || !$('dd-friends').hidden || !$('dd-settings').hidden || !!(dio.api && dio.api.flying && dio.api.flying());
+  const helpQuiet = () => !!helpCur && !!helpCur.quiet && !$('helper').hidden; // (src/diorama.js asks: showing())
+  // a guest comes in from the welcome screen (Play as guest, Sign up as a guest). The first time on this device starts
+  // the guide; a device that has played here before (a game with helpers, a puzzle, the old tutorial, an account that
+  // logged out: guideNever) has had its first time
+  const guideNever = () => { if (!helpers.menu) { helpers.menu = MENU_TIPS.map(T => T.id); saveHelpers(); } };
+  function guideStart() {
+    if (helpers.menu) return;
+    let old = helpers.done || helpers.seen.length > 0 || puzSolved.length > 0;
+    try { old = old || localStorage.getItem('phonebellum.tutorial.v1') === 'done'; } catch (e) {}
+    if (old) return guideNever();
+    helpers.menu = []; saveHelpers(); helperWake();
+  }
+  let menuRead = 0, menuLast = 0; // how long the note has been up to be read (frames it was on screen: a stalled page counts for little)
+  function menuPick(t) {
+    if (helpCur && !helpCur.menu) { helpCur = null; helperDraw(null); } // (a match's note left over)
+    if (helpCur && $('helper').style.visibility !== 'hidden') menuRead += Math.min(250, t - menuLast);
+    menuLast = t;
+    let dirty = false;
+    const see = (id) => { if (!helpers.menu.includes(id)) { helpers.menu.push(id); dirty = true; } };
+    for (const T of MENU_TIPS) if (T.done && T.done()) see(T.id);
+    const here = menuHome(), next = here && !menuOver() ? MENU_TIPS.find(T => !helpers.menu.includes(T.id) && !T.cramped && T.show()) || null : null;
+    if (next !== helpCur) {
+      if (helpCur && !here && menuRead > 1200) see(helpCur.id); // read, and the player has gone to another screen
+      helpCur = next && !helpers.menu.includes(next.id) ? next : null; menuRead = 0; helperDraw(helpCur);
+    }
+    if (dirty) saveHelpers();
+  }
+
+  // the match's screens call this (hud), and so does the menu: the notes run while a game against the computer is
+  // on, or while the menu's guide has notes left
   function helperWake() {
-    if (!helpActive()) { if (helpCur) { helpCur = null; helperDraw(null); } return; }
+    if (!helpActive() && !menuActive()) { if (helpCur) { helpCur = null; helperDraw(null); } return; }
     if (!helpRaf) helpRaf = requestAnimationFrame(helperFrame);
   }
   function helperFrame(t) {
     helpRaf = 0;
+    if (menuActive()) { if (t - helpEval > 120) { helpEval = t; menuPick(t); } helperPlace(); helpRaf = requestAnimationFrame(helperFrame); return; }
+    if (helpCur && helpCur.menu) { helpCur = null; helperDraw(null); } // (the menu's note: a match has started)
     if (!helpActive()) { helpCur = null; if (!helpFlash) helperDraw(null); return; } // (the last note, "Helpers are off", goes by itself)
     if (m.over) { helpers.done = true; saveHelpers(); helpCur = null; helperDraw(null); return; } // a whole game: that was the first one
     if (t - helpEval > 120) { helpEval = t; helperPick(t); }
@@ -3246,8 +3307,14 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       ? { x: sd === 'right' ? r.right + gap : r.left - gap - w, y: Math.max(8, Math.min(H - h - 8, cy - h / 2)), ok: sd === 'right' ? r.right + gap + w <= W - 8 : r.left - gap - w >= 8 }
       : { x: Math.max(8, Math.min(W - w - 8, cx - w / 2)), y: sd === 'top' ? r.top - gap - h : r.bottom + gap, ok: sd === 'top' ? r.top - gap - h >= 8 : r.bottom + gap + h <= H - 8 };
     const go = $('ready') || $('fight'), gr = go && go !== a ? go.getBoundingClientRect() : null;
-    const clear = (q) => !gr || q.x + w < gr.left || q.x > gr.right || q.y + h < gr.top || q.y > gr.bottom;
-    const order = [T.side, flip[T.side], ...turn], side = order.find(sd => { const q = spot(sd); return q.ok && clear(q); }) || order.find(sd => spot(sd).ok) || T.side;
+    // (the menu's notes lie over none of the menu's words, the music or Change battlefield, their own thing aside)
+    const keep = T.menu ? MENU_KEEP.map(dioQ).filter(e => e && e !== a && e !== T.own && !e.contains(a.nodeType ? a : null)).map(e => e.getBoundingClientRect()).filter(g => g.width) : gr ? [gr] : [];
+    const clear = (q) => keep.every(g => q.x + w < g.left || q.x > g.right || q.y + h < g.top || q.y > g.bottom);
+    const order = [T.side, flip[T.side], ...turn], free = order.find(sd => { const q = spot(sd); return q.ok && clear(q); });
+    // no free side: a match's note takes a side with room, and so does the menu's first; any other menu note waits for a
+    // bigger window (menuPick goes on to the next)
+    if (!free && T.menu && !T.must) { T.cramped = true; el.style.visibility = 'hidden'; return; }
+    const side = free || order.find(sd => spot(sd).ok) || T.side;
     const { x, y } = spot(side);
     el.style.setProperty('--tail', (side === 'right' || side === 'left' ? Math.max(14, Math.min(h - 14, cy - y)) : Math.max(16, Math.min(w - 16, cx - x))) + 'px');
     if (el.dataset.side !== side) el.dataset.side = side;
@@ -3255,17 +3322,20 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   }
   // Settings' Helpers, and a note's own "Turn off helpers". On: they start over, from the next thing to do
   function setHelpers(on) {
-    helpers = { off: !on, seen: [], done: false }; saveHelpers();
+    helpers = { off: !on, seen: [], done: false, menu: helpers.menu ? [] : null }; saveHelpers(); // (the menu's guide too, on a device that had it)
     helpCur = null; helperDraw(null); helperWake();
   }
   $('helper').addEventListener('click', (e) => {
-    if (e.target.closest('#hp-ok') && helpCur) { helpers.seen.push(helpCur.id); saveHelpers(); helpCur = null; helperDraw(null); }
+    if (e.target.closest('#hp-ok') && helpCur) { (helpCur.menu ? helpers.menu : helpers.seen).push(helpCur.id); saveHelpers(); helpCur = null; helperDraw(null); }
     else if (e.target.closest('#hp-off')) { // off, and one last note says where they can be had back
+      const where = helpCur && helpCur.menu ? dioQ('.acct button:nth-of-type(3)') : $('cog'); // the menu's Settings, or the match's
       setHelpers(false);
-      if ($('cog') && $('cog').getBoundingClientRect().width) { helperDraw({ at: () => $('cog'), side: 'bottom', h: 'Helpers are off.', t: 'Settings turns them back on.' }, true); helpFlash = setTimeout(() => { helpFlash = 0; helperDraw(null); }, 4200); }
+      if (where && where.getBoundingClientRect().width) { helperDraw({ at: () => where, side: 'bottom', h: 'Helpers are off.', t: 'Settings turns them back on.' }, true); helpFlash = setTimeout(() => { helpFlash = 0; helperDraw(null); }, 4200); }
     }
   });
-  addEventListener('resize', () => helperPlace());
+  // (on the menu that last note lies where Settings opens: a press anywhere else puts it away)
+  addEventListener('pointerdown', (e) => { if (helpFlash && DIO && dio.shown && !e.target.closest('#helper')) helperDraw(null); }, true);
+  addEventListener('resize', () => { for (const T of MENU_TIPS) T.cramped = false; helperPlace(); });
 
   function setNet(text, state) {
     const n = $('net');
@@ -4464,6 +4534,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     const r = await acctCall('guest', {});
     home.busy = false;
     if (r.status === 200) acctTake(r);
+    guideStart(); // a guest's first time in: the menu's guide
     homeDone();
   }
   // Sign up (its own screen: a username, then Google or a guest with that name) and Log in (Google)
@@ -4493,7 +4564,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       signMsg('One moment…');
       const r = await acctCall('guest', tag ? { tag } : {});
       if (r.status !== 200) { signMsg(acctFail(r)); return; }
-      acctTake(r); homeDone();
+      acctTake(r); guideStart(); homeDone();
     });
     acctUi.after = async (r) => { // Google said yes (acctGoogle): Sign up keeps the username typed here
       const tag = up && tagIn ? tagIn.value.trim() : '';
@@ -5528,6 +5599,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // Log out (Profile): signed out on this phone, back to the welcome screen
   async function acctLogOut() {
     await acctSignOut();
+    guideNever(); // (whoever comes in next on this device isn't here for the first time: no menu guide)
     acctUi.outSure = false;
     try { localStorage.removeItem(WELCOME_STORE); sessionStorage.removeItem(WELCOME_STORE); } catch (e) {}
     closeSheet(true); home.screen = 'welcome'; home.msg = '';
