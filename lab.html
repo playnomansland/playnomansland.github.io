@@ -2695,7 +2695,7 @@ const Engine = (() => {
         if (d <= reachTo(reachOf(b), b, f) + 0.01 && d >= b.u.minRange && inSight(b, f)) {
           if (counters) counters.validTargetsCandidates++;
           if (callerCounters) callerCounters.candidates++;
-          valid.push([b.u.healthiest ? (f.u.structure ? 1e9 : 0) - poolHp(f) : d, f]); // healthiest: most health first, units before structures
+          valid.push([b.u.healthiest ? (f.u.structure ? 1e9 : 0) - poolHp(f) : d - (f.u.lure || 0), f]); // healthiest: most health first, units before structures (u.lure: that many m closer)
         }
       }
       // noBldg: an enemy wall in its reach that stands between it and the unit it walks to may be hit after all
@@ -2737,7 +2737,7 @@ const Engine = (() => {
         const d = gap(f, b), mine = f === b.goal;
         if (d > aware * (mine ? AWARE.leash : 1)) continue;
         const lane = g.awareLane == null ? AWARE.lane : g.awareLane;
-        let c = d - (mine ? AWARE.stick : 0) + lane * Math.abs(f.x - b.x);
+        let c = d - (mine ? AWARE.stick : 0) - (f.u.lure || 0) + lane * Math.abs(f.x - b.x); // u.lure (src/boss.js, her nests): it counts that many m closer
         if (melee) { const n = (f.claimsM || 0) - (mine ? 1 : 0); c += n >= slotsOf(f) ? AWARE.full : n * AWARE.step; }
         else c += ((f.claimsR || 0) - (mine ? 1 : 0)) * 0.5;
         if (c < bc) { bc = c; best = f; }

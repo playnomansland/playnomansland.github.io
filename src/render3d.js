@@ -865,8 +865,17 @@ const Render3D = (THREE, el, view, opts = {}) => {
   function collectBoss(v, f, deploying) {
     const bs = v.boss, foe = 1 - v.me, pool = color('#7FD13B'), tc = teamColor(foe, v.me), ink = color(css('--ink') || '#E8EEEE');
     for (const [c0, r0, c1, r1] of bs.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const st = tileCenter(v, c, r); tileSq(st.c, st.r, pool, 0.4, 0.5, 0, 0.03); }
-    if (!deploying) return;
+    const thread = (wx, wz, t) => beam(wx + Math.sin(t * 1.3) * 0.4, 60, wz, wx, 5, wz, 0.18, color('#EDEDED'), 0.8); // her silk thread, up off the board
+    if (!deploying) { // her state in the fight (mom.bs, src/boss.js)
+      const mom = v.bt && v.bt.bodies.find(b => b.u.boss && b.alive); if (!mom || !mom.bs) return;
+      const st = mom.bs, [wx, wz] = world(f, mom.x, mom.y), t = v.bt.time(), R = size(mom.u) * 1.4;
+      if (st.phase === 'hanging') thread(wx, wz, t);
+      if (st.mortarIn != null) { const full = st.mortarIn > 4.05 ? 5 : 4; arc(wx, wz, R, color('#FF5A4E'), 0.9, Math.max(0.02, 1 - st.mortarIn / full), 0.1); } // the mortar winding up
+      if (st.phase === 'stunned') arc(wx, wz, R * 0.8, color('#FFE15A'), 0.85, 1, 0.06, 10); // dazed
+      return;
+    }
     const mo = bs.mommy, [mx, mz] = world(f, mo.x, mo.y);
+    thread(mx, mz, 0);
     arc(mx, mz, mo.reach, tc, 0.55, 1, 0.04, 28);
     bodies.push({ u: mo.u, side: foe, x: mo.x, y: mo.y, look: 'ghost' });
     for (const n of bs.nests) {
@@ -956,8 +965,10 @@ const Render3D = (THREE, el, view, opts = {}) => {
     const sg = group('projectiles', shotGeo, flatMat, rest.length);
     const LEAF = color('#7BE05A'), FLAME = color('#FF9A3D'); // a Leaf Wizard's leaves, a Leafblade missile's flame
     rest.forEach((p, i) => {
-      tmpP.set(p.x * f, (p.missile ? 2.2 : 1.6) + groundY(p.x * f, -p.y * f), -p.y * f); tmpS.setScalar(fxWide() * (p.missile ? 2 : 1.4)); tmpQ.identity(); sg.setMatrixAt(i, tmpM.compose(tmpP, tmpQ, tmpS));
-      sg.setColorAt(i, p.missile ? FLAME : p.owner.u.name === 'Leaf Wizard' ? tmpC.copy(LEAF).lerp(teamColor(p.owner.side, me), 0.25) : tmpC.copy(teamColor(p.owner.side, me)).lerp(white, 0.45));
+      const big = !!p.owner.u.boss; // the Mommy boss's bite: a big pale web ball, slow enough to see coming
+      tmpP.set(p.x * f, (p.missile ? 2.2 : big ? 3 : 1.6) + groundY(p.x * f, -p.y * f), -p.y * f); tmpS.setScalar(fxWide() * (p.missile ? 2 : big ? 3 : 1.4)); tmpQ.identity(); sg.setMatrixAt(i, tmpM.compose(tmpP, tmpQ, tmpS));
+      if (big) beam(p.x * f, 3, -p.y * f, (p.x - p.dirX * 4) * f, 3, -(p.y - p.dirY * 4) * f, 0.3 * fxWide(), color('#EDEDED'), 0.6); // its silk trail
+      sg.setColorAt(i, big ? color('#F4F1E8') : p.missile ? FLAME : p.owner.u.name === 'Leaf Wizard' ? tmpC.copy(LEAF).lerp(teamColor(p.owner.side, me), 0.25) : tmpC.copy(teamColor(p.owner.side, me)).lerp(white, 0.45));
       if (p.missile) beam(p.x * f, 2.2, -p.y * f, (p.x - p.dirX * 2.5) * f, 2.0, -(p.y - p.dirY * 2.5) * f, 0.25 * fxWide(), FLAME, 0.8); // its trail
     });
     finish(sg, rest.length);

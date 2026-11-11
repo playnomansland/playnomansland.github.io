@@ -49,10 +49,12 @@
       molt: 6,          // seconds between sheds (0: never)
       bleedPct: false,  // whether a hit's share of max health (bleed at 3-4 stacks, Deadeye) works on her
       size: 4,          // m: how far out her body reaches once she lies on the ground (melee can crowd round her)
+      projSpeed: 15,    // m/s: her bite flies as a slow web shot you can see coming (it hits the first body in its way, or lands where it was aimed); 0: it lands at once
       lastPick: true,   // while she hangs, units pick her only when none of her nests or spiders are left
     },
     biteByRound: ['fast', 'heavy', 'sweep', 'heavy', 'sweep'],
-    nest: { hp: 500, rangedOnly: 8, burst: 3 }, // the same health every round: where they hang is the puzzle
+    nest: { hp: 500, rangedOnly: 8, burst: 3, lure: 12 }, // the same health every round: where they hang is the puzzle. lure: m a nest counts closer when units pick whom to walk to and shoot (so they don't chase hatchlings past it)
+    engage: true,       // the player's units go for her nests and spiders from the first second, instead of marching up their column until something comes in sight
     spider: { hp: 90 }, // the spiderling: one body of the Spiders unit, lighter
     hatch: [6, 5, 4, 3, 3], // seconds per spider, per nest, by round
     // per round: [col, row] a high nest (ranged only), [col, row, 'low'] one melee reaches too. Rows 0-5 are her zone,
@@ -90,11 +92,11 @@
   }
   function mommyUnit(cfg, round) {
     const a = cfg.mommy.bites[byRound(cfg.biteByRound, round)];
-    return E().withTraits({ name: 'Mommy', cost: 0, bodies: 1, hp: cfg.mommy.hp, hit: a.hit, aps: a.aps, range: cfg.mommy.near, splash: a.splash, speed: 0, anchored: true, unstoppable: true, shape: 'spider', color: '#1a1a1a', level: 0, boss: 'mommy', drawR: 4.2 });
+    return E().withTraits({ name: 'Mommy', cost: 0, bodies: 1, hp: cfg.mommy.hp, hit: a.hit, aps: a.aps, range: cfg.mommy.near, splash: a.splash, speed: 0, anchored: true, unstoppable: true, shape: 'spider', color: '#1a1a1a', level: 0, boss: 'mommy', drawR: 4.2, projSpeed: cfg.mommy.projSpeed || 0 });
   }
   function nestUnit(units, cfg, round) {
     return E().withTraits({ name: 'Nest', cost: 0, bodies: 1, hp: byRound(cfg.nest.hp, round), hit: 0, aps: 1, range: 0, speed: 0, splash: 0, structure: true, lesser: true, kind: 'nest', shape: 'circle', color: '#d8d0c0', level: 0,
-      rangedOnly: cfg.nest.rangedOnly,
+      rangedOnly: cfg.nest.rangedOnly, ...(cfg.nest.lure > 0 ? { lure: cfg.nest.lure } : {}),
       spawn: { every: byRound(cfg.hatch, round), count: 1, max: 999, waves: 0, unit: spiderUnit(units, cfg) },
       ...(cfg.nest.burst > 0 ? { deathSpawn: { name: 'Spiderling', unit: spiderUnit(units, cfg), count: cfg.nest.burst, strength: 1 } } : {}) });
   }
@@ -159,11 +161,14 @@
     const d2 = (a, x, y) => { const dx = a.x - x, dy = a.y - y; return Math.sqrt(dx * dx + dy * dy); };
     const ground = (u) => ({ ...u, unstoppable: false, ...(cfg.mommy.size > 0 ? { barrier: cfg.mommy.size } : {}) });
     if (!hanging) { mom.takeMul = groundMul; mom.stunT = o.fallen === true ? 1e9 : o.fallen; out.fallAt = 0; mom.u = ground(mom.u); }
+    mom.lastPick = hanging && !!cfg.mommy.lastPick; // (from the first tick: nobody aims at her while she hangs and anything else is left)
+    mom.bs = { phase: hanging ? 'hanging' : 'down', stunLeft: 0, nestsLeft: spots.length, nests: spots.length, moltIn: cfg.mommy.molt || null, mortarIn: null, holder: null, take: hanging ? cfg.mommy.hang : groundMul, bite: byRound(cfg.biteByRound, round) };
     const poolRects = (o.pools || (cfg.pools && cfg.pools.pct > 0 && cfg.pools.at ? byRound(cfg.pools.at, round) || [] : [])).map(([c0, r0, c1, r1]) => { const a = world(c0, r0), b = world(c1, r1), h = T / 2; return { x0: Math.min(a.x, b.x) - h, x1: Math.max(a.x, b.x) + h, y0: Math.min(a.y, b.y) - h, y1: Math.max(a.y, b.y) + h }; });
     const bossTick = (api) => {
       if (!mom.alive) return;
       nests.forEach((n, k) => { if (!n.alive && out.nestDown[k] == null) out.nestDown[k] = api.t; });
       for (const f of api.all) if (f.side === 0 && !f.alive && f.diedAt == null) f.diedAt = api.t;
+      if (cfg.engage) for (const f of api.sides[0]) if (f.alive && !f.engaged && !f.u.structure) f.engaged = true; // no blind marching up the column
       if (o.trace && api.t + 1e-9 >= (out.traceT || 0)) { // once a second: where each squad's first live body is and what it is after
         out.traceT = (out.traceT || 0) + 1;
         const seen = new Set(), line = [];
@@ -196,14 +201,19 @@
           if (!f.u.unstoppable) { if (!(f.slowT > 0)) { f.slowMove = 0; f.slowAtk = 0; } f.slowMove = Math.max(f.slowMove, wb.slow); f.slowT = Math.max(f.slowT, api.dt * 1.5); }
         } else if (f.momWeb && !(f.mortarWebT > api.t)) { f.momWeb = false; f.momWebOnly = false; f.web = null; }
       }
+      // her state, for the boss bar and the boards (mom.bs): her phase, the mortar's count, who holds her, the next molt
+      const mo = cfg.mommy.mortar;
+      const bs = mom.bs = { phase: hanging ? 'hanging' : stunned ? 'stunned' : 'down', stunLeft: stunned ? mom.stunT : 0, nestsLeft: nests.filter((n) => n.alive).length, nests: nests.length,
+        moltIn: cfg.mommy.molt > 0 ? moltT : null, mortarIn: null, holder: null, take: hanging ? cfg.mommy.hang : groundMul, bite: byRound(cfg.biteByRound, round) };
       // attention: nobody close while she hangs, and the mortar winds up
       if (!hanging || stunned) { quiet = 0; shots = 0; return; }
-      const mo = cfg.mommy.mortar;
       let holder = null, hd = cfg.mommy.near;
       for (const f of api.sides[0]) if (visible(f)) { const d = d2(f, mw.x, mw.y); if (d <= hd) { hd = d; holder = f; } }
-      if (holder) { quiet = 0; shots = 0; out.held += api.dt; const hn = sqName(holder); out.holders[hn] = (out.holders[hn] || 0) + api.dt; return; }
+      if (holder) { quiet = 0; shots = 0; out.held += api.dt; const hn = sqName(holder); out.holders[hn] = (out.holders[hn] || 0) + api.dt; bs.holder = hn; return; }
       quiet += api.dt;
+      if (mo.hit > 0) bs.mortarIn = Math.max(0, mo.wind + shots * mo.every - quiet);
       if (!(mo.hit > 0) || quiet + 1e-9 < mo.wind + shots * mo.every) return;
+      bs.mortarFired = api.t;
       shots++;
       let best = null, bn = 0;
       for (const f of api.sides[0]) {
