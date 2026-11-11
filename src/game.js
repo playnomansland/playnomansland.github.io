@@ -1461,9 +1461,10 @@ const Game = (() => {
   const tierOf = (units, ui) => [...new Set(units.map(unitCostOf))].sort((a, b) => a - b).indexOf(unitCostOf(units[ui])) + 1;
   // DEVTESTLATEGAME: a player's health at the start, and the cap on squads of one tier 3+ unit type (squads on the board, gifts and package squads too)
   const startHp = (m) => START_HP + (m && m.late ? LATE.hp : 0);
-  const capped = (m, ui) => !!(m && m.late) && tierOf(m.units, ui) >= LATE.tier;
+  const capped = (m, ui) => !!(m && m.boss && m.boss.cap > 0) || (!!(m && m.late) && tierOf(m.units, ui) >= LATE.tier); // (the Mommy boss puzzle: every type)
+  const capOf = (m) => m && m.boss && m.boss.cap > 0 ? m.boss.cap : LATE.cap; // the most squads of a capped type
   const capCount = (m, side, ui) => m.armies[side].filter(s => s.unit === ui).length;
-  const capFull = (m, side, ui) => capped(m, ui) && capCount(m, side, ui) >= LATE.cap;
+  const capFull = (m, side, ui) => capped(m, ui) && capCount(m, side, ui) >= capOf(m);
   // side (optional): that player's price, so Emile's tier 1 unlocks are free and Phil's tier 4 ones cheaper
   const unlockCost = (m, ui, side) => {
     const base = Math.max(0, Math.round(+m.units[ui].unlock || 0)), ch = side != null ? charOf(m, side) : null;
@@ -2038,7 +2039,6 @@ const Game = (() => {
     if (needsTower(m, side)) return null; // the tower goes down first
     if (!isUnlocked(m, side, unitIdx)) return null;
     if (capFull(m, side, unitIdx)) return null; // DEVTESTLATEGAME: at most LATE.cap squads of a tier 3+ unit type
-    if (m.boss && m.boss.cap && m.armies[side].filter(q => q.unit === unitIdx).length >= m.boss.cap) return null; // the Mommy boss puzzle: at most cap squads of a type
     if (mpbLocked(m, side, unitIdx)) return null; // 2v2: a unit type the other team's Shadow Den sabotaged this round
     if (schoolLock(m, side, unitIdx)) return null; // 2v2 School: none of the unit type sitting in it
     const into = boardable(m, side, col, row, unitIdx); // a carrier with room: the new squad rides inside
@@ -3552,7 +3552,7 @@ const Game = (() => {
 
   const api = {
     MAX_ROUND_DMG, TIER_DMG, bankBusy, seenAt, charShown, towerTypeShown, altarShown, elfOwnShown, shroomShown, removingShroom, movedId, canMove, moveSquad, undoMove,
-    COLS, ROWS, TILE, ZONE, START_HP, LATE, startHp, capped, capCount, capFull, START_GOLD, INCOME, incomeFor, LOSER_BONUS, LOSER_BONUS_ROUND, TOWER_FALL_HP, CARRY_CAP, SHUTDOWN, shutdownGold, CREDIT_LINE, loanTerms, loanTaken, treasurySteal, SQUAD_COST, SETTINGS, XP_STEPS, xpNeeded, unitCostOf,
+    COLS, ROWS, TILE, ZONE, START_HP, LATE, startHp, capped, capOf, capCount, capFull, START_GOLD, INCOME, incomeFor, LOSER_BONUS, LOSER_BONUS_ROUND, TOWER_FALL_HP, CARRY_CAP, SHUTDOWN, shutdownGold, CREDIT_LINE, loanTerms, loanTaken, treasurySteal, SQUAD_COST, SETTINGS, XP_STEPS, xpNeeded, unitCostOf,
     levelCost, isReady, levelUp, undoLevel, levelAllPlan, levelAll, upgradeOffer, seenLevel, aiLevel, AI, CONFIG,
     deploysAllowed, deploysLeft, deployedThisRound, canBuyDeploy, buyDeploy, refundDeploy, musterOn, deployBuyable,
     PACKAGE, allPackages, packOf, needsPack, startSeen, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,

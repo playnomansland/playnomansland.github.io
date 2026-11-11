@@ -762,6 +762,27 @@ const Render2D = (cv, view, opts = {}) => {
   // the Mommy boss puzzle (view.boss from the page: Boss.preview): this round's poison pools, and while deploying her,
   // her reach and this round's nests, see-through, each nest marked HIGH (only ranged units reach it) or LOW
   const BOSS_POOL = '#7FD13B';
+  // her state in the fight (mom.bs, src/boss.js): hanging on her thread, the mortar winding up, stunned on the ground
+  function drawBossState() {
+    const mom = bt && bt.bodies.find(b => b.u.boss && b.alive); if (!mom || !mom.bs) return;
+    const bs = mom.bs, x = PX(mom.x), y = PY(mom.y), R = radius(mom.u), time = bt.time();
+    if (bs.phase === 'hanging') bossThread(x, y, R, time);
+    if (bs.mortarIn != null) { // the mortar winding up: a red ring that closes as the shot comes
+      const full = bs.mortarIn > 4.05 ? 5 : 4, k = Math.max(0, Math.min(1, 1 - bs.mortarIn / full));
+      ctx.strokeStyle = '#FF5A4E'; ctx.globalAlpha = 0.35 + 0.4 * k; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(x, y, R * 1.35, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    if (bs.phase === 'stunned') { // dazed: stars round her head
+      ctx.fillStyle = '#FFE15A';
+      for (let k = 0; k < 4; k++) { const a = time * 3 + k * Math.PI / 2; Shapes.draw(ctx, 'star', x + Math.cos(a) * R * 0.9, y - R * 0.6 + Math.sin(a) * R * 0.3, Math.max(3, R * 0.16), 1); }
+    }
+  }
+  // her silk thread, from her up off the board (she hangs on it until the nests are down)
+  function bossThread(x, y, R, time) {
+    const sway = Math.sin(time * 1.3) * R * 0.15;
+    ctx.strokeStyle = '#EDEDED'; ctx.globalAlpha = 0.75; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x, y - R * 0.3); ctx.quadraticCurveTo(x + sway, y / 2, x + sway * 0.5, 0); ctx.stroke(); ctx.globalAlpha = 1;
+  }
   function drawBossPools() {
     const t = tilePx(), time = phase === 'battle' && bt ? bt.time() : 0;
     for (const [c0, r0, c1, r1] of boss.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
@@ -776,6 +797,7 @@ const Render2D = (cv, view, opts = {}) => {
     const t = tilePx(), side = foe(), col = teamCol(side), mo = boss.mommy;
     ctx.strokeStyle = col; ctx.globalAlpha = 0.45; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); // her reach: inside it, a body holds her
     ctx.beginPath(); ctx.arc(PX(mo.x), PY(mo.y), mo.reach * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    bossThread(PX(mo.x), PY(mo.y), radius(mo.u), 0);
     ctx.globalAlpha = 0.6; Shapes.body(ctx, mo.u.shape, PX(mo.x), PY(mo.y), radius(mo.u), upOf(side), mo.u.color, col, 0.6);
     const fs = Math.max(8, Math.round(t * 0.24));
     ctx.font = `600 ${fs}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1866,6 +1888,7 @@ const Render2D = (cv, view, opts = {}) => {
       }
     }
     ctx.globalAlpha = 1;
+    if (boss) drawBossState();
     for (const p of bt.projectiles()) {
       if (p.spear || p.owner.u.shape === 'spear') { // a thrown spear (Truespear, a titanium spear): shaft and head along its flight, in the unit's colour
         const L = Math.max(12, 3 * S), dx = p.dirX * flip(), dy = -p.dirY * flip(), hx = PX(p.x), hy = PY(p.y), tx = hx - dx * L, ty = hy - dy * L;
@@ -1879,6 +1902,14 @@ const Render2D = (cv, view, opts = {}) => {
         continue;
       }
       const dx = p.dirX * flip(), dy = -p.dirY * flip(), x = PX(p.x), y = PY(p.y);
+      if (p.owner.u.boss) { // the Mommy boss's bite: a big pale web ball with a silk trail, slow enough to see coming
+        const r = Math.max(4, 0.9 * S);
+        ctx.strokeStyle = '#EDEDED'; ctx.globalAlpha = 0.5; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - dx * r * 4, y - dy * r * 4); ctx.stroke();
+        ctx.globalAlpha = 1; ctx.fillStyle = '#F4F1E8'; ctx.strokeStyle = teamCol(p.owner.side); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = 'rgba(60,60,60,0.5)'; ctx.lineWidth = 1; for (let k = 0; k < 3; k++) { const a = k * Math.PI / 3; ctx.beginPath(); ctx.moveTo(x - Math.cos(a) * r, y - Math.sin(a) * r); ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); ctx.stroke(); }
+        continue;
+      }
       if (p.missile) { // a Leafblade missile: a dark body with a flame behind it
         ctx.strokeStyle = '#FF9A3D'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - dx * 4, y - dy * 4); ctx.lineTo(x - dx * 10, y - dy * 10); ctx.stroke();
         ctx.strokeStyle = '#2B2F33'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x - dx * 4, y - dy * 4); ctx.lineTo(x + dx * 4, y + dy * 4); ctx.stroke();

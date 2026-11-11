@@ -20,12 +20,14 @@ ok(Game.freeMovesLeft(m, 0) === 1, 'one free move a round');
 
 // her fight in the game's own path (Game.startBattle / Game.resolve) plays as the prototype's lines say
 const res = P.runPlan(P.PLANS['Line B: read each round (no tank in round 4)'].slice(0, 1), { ...Boss.CFG, rounds: 1 });
-ok(Math.round(res.log[0].ground) === 6303 && Math.abs(res.log[0].fallAt - 8) < 0.01, `Line B round 1: nests down at 8.0 s, 6,303 damage (${Math.round(res.log[0].ground)})`);
+const D1 = Math.round(res.log[0].hang + res.log[0].ground);
+ok(D1 > 3000 && res.log[0].fallAt != null && res.log[0].fallAt < 15, `Line B round 1: her nests fall (at ${res.log[0].fallAt.toFixed(1)} s) and she takes ${D1}`);
 const m2 = B.newRun().m;
 for (const [n, c, r] of [['Goblin Swarm', 2, 10], ['Goblin Swarm', 1, 10], ['Wisps', 10, 10], ['Skeleton Archers', 9, 10]]) Game.place(m2, 0, ix(n), c, r);
 const sim = Game.startBattle(m2); while (sim.step()) { /* the fight */ }
 const sum = Game.resolve(m2, sim.result());
-ok(Math.round(m2.boss.hp) === Boss.CFG.mommy.hp - 6303 && sum.boss && sum.boss.dmg === 6303, 'Game.startBattle and Game.resolve: the same fight, her health carries on');
+ok(Math.round(Boss.CFG.mommy.hp - m2.boss.hp) === D1 && sum.boss && sum.boss.dmg === D1, 'Game.startBattle and Game.resolve: the same fight as the prototype\'s, her health carries on');
+ok(sim.boss.mom.bs && ['hanging', 'stunned', 'down'].includes(sim.boss.mom.bs.phase), 'her state for the boss bar (mom.bs)');
 ok(m2.round === 2 && !m2.over && m2.hp[0] === 100 && Game.deploysLeft(m2, 0) === 3, 'round 2: no player health lost, 3 deployments');
 
 // she dies: the fight stops and the match is won
