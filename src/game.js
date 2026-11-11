@@ -1476,6 +1476,7 @@ const Game = (() => {
   const unlockVisible = (m, side, ui) => unlockCost(m, ui, side) === 0 || (isUnlocked(m, side, ui) && m.unlocks[side][ui] < m.round);
   function unlock(m, side, ui) {
     if (ui < 0 || ui >= m.units.length || isOff(m, ui, side) || isUnlocked(m, side, ui)) return false;
+    if (m.boss && (m.boss.banned || []).includes(m.units[ui].name)) return false; // the Mommy boss puzzle's banned units
     const cost = unlockCost(m, ui, side);
     if (m.gold[side] < cost) return false;
     if (!m.unlocks) m.unlocks = [{}, {}];
@@ -1896,6 +1897,7 @@ const Game = (() => {
 
   // Refund an extra deployment bought this round that hasn't been used
   function refundDeploy(m, side) {
+    if (m.boss) return false; // the Mommy boss puzzle: the extra deployment is a free one, nothing to refund
     if (m.extraDeploys[side] <= 0 || deploysLeft(m, side) <= 0) return false;
     m.extraDeploys[side]--;
     m.gold[side] += deployCost(m, side);
@@ -2009,7 +2011,7 @@ const Game = (() => {
   // a 2v2 building of side's on the tile that holds a squad of unit ui (ui null: any squad at all) (Mpb.holds)
   const mpbHolds = (m, side, col, row, ui) => !!(MPB && m && m.mpb && MPB.holds) && MPB.holds(m, side, col, row, ui);
   const occupied = (m, side, col, row) => towerAt(m, side, col, row) || treasuryAt(m, side, col, row) || elfOwnAt(m, side, col, row) || !!buildingAt(m, side, col, row) || teamBuildingAt(m, side, col, row) || m.armies[side].some(s => covers(m, s, col, row)) || teamArmy(m, side).some(s => covers(m, s, col, row)) || devOccupied(m, side, col, row) || mpbAt(m, col, row);
-  const needsTower = (m, side) => !!(m.towers && !m.towers[side]);
+  const needsTower = (m, side) => !!(m.towers && !m.towers[side] && !m.boss); // (the Mommy boss puzzle: no towers)
   // the tower can be placed (or moved) during round 1 only
   function placeTower(m, side, col, row) {
     if (!m.towers) m.towers = [null, null];
@@ -2020,6 +2022,7 @@ const Game = (() => {
   }
   // a match without a tower (saved before towers were fixed) gets the fixed one
   function ensureTower(m, side) {
+    if (m.boss) return; // the Mommy boss puzzle: a treasury, no tower
     if (!m.towers) m.towers = [null, null];
     if (m.towers[side]) return;
     m.towers[side] = towerSpot(m, side);
@@ -2035,6 +2038,7 @@ const Game = (() => {
     if (needsTower(m, side)) return null; // the tower goes down first
     if (!isUnlocked(m, side, unitIdx)) return null;
     if (capFull(m, side, unitIdx)) return null; // DEVTESTLATEGAME: at most LATE.cap squads of a tier 3+ unit type
+    if (m.boss && m.boss.cap && m.armies[side].filter(q => q.unit === unitIdx).length >= m.boss.cap) return null; // the Mommy boss puzzle: at most cap squads of a type
     if (mpbLocked(m, side, unitIdx)) return null; // 2v2: a unit type the other team's Shadow Den sabotaged this round
     if (schoolLock(m, side, unitIdx)) return null; // 2v2 School: none of the unit type sitting in it
     const into = boardable(m, side, col, row, unitIdx); // a carrier with room: the new squad rides inside
@@ -2347,7 +2351,11 @@ const Game = (() => {
     return { dmg: CHAR.zoeDmg[lv], hp: CHAR.zoeHp[lv], aps: CHAR.zoeAps[lv] };
   };
 
+  // the Mommy boss puzzle (src/boss.js, global Boss): a match with m.boss set plays her fight. game.js never loads it
+  // itself (the server has no need of it): the page has it, and the prototype's tools require it
+  const bossApi = () => (typeof Boss !== 'undefined' ? Boss : null);
   function startBattle(m) {
+    if (m.boss && bossApi()) return bossApi().battle(m, { record: true });
     ensureTower(m, 0); ensureTower(m, 1);
     settleTowerPicks(m);
     ensureBwalls(m, 0); ensureBwalls(m, 1);
@@ -2681,6 +2689,7 @@ const Game = (() => {
       m.gold[sd] -= cut;
       return cut;
     });
+    if (m.boss && res.boss && bossApi()) bossApi().afterFight(m, res, summary); // the Mommy boss puzzle: her health carries on, the match ends when she dies or after the last round
     return summary;
   }
 
@@ -2706,7 +2715,7 @@ const Game = (() => {
   // one went (so nothing new can show the opponent a move). A longer move is the horseshoe's or the paid one. (2026-11-07)
   const MARCH = { tiles: 2 };
   const marchMoves = (m, side) => towerPicked(m, side) && towerType(m, side).freeMove ? 1 : 0;
-  const shoeMoves = (m, side) => shoePerk(m, side, 'move') ? 1 : 0;
+  const shoeMoves = (m, side) => (shoePerk(m, side, 'move') ? 1 : 0) + (m && m.boss && side === 0 ? 1 : 0); // (the Mommy boss puzzle: one free move a round, anywhere)
   const freeMoves = (m, side) => marchMoves(m, side) + shoeMoves(m, side);
   // within March order's reach: (col, row) from sq's tile at the round's start
   const marchNear = (m, sq, col, row) => { const o = sq.from && sq.movedRound === m.round ? sq.from : sq; return Math.max(Math.abs(col - o.col), Math.abs(row - o.row)) <= MARCH.tiles; };

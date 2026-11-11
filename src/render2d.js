@@ -22,8 +22,8 @@
 const Render2D = (cv, view, opts = {}) => {
   let ctx = cv.getContext('2d'); // swapped for a moment while drawing map thumbnails (thumb)
   let m = null, me = 0, phase = 'start', units = [], mode = 'ai', bt = null, battlePre = null, fx = [], battleCam = null, win = null;
-  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null, foeStart = null;
-  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null, foeStart = null } = view()); };
+  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null, foeStart = null, boss = null;
+  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null, foeStart = null, boss = null } = view()); };
   // win (a 2v2 fight on a phone): { aspect, cols, x } the canvas is shaped for `aspect` columns, shows `cols` of them
   // (zoomed out up to the whole wide board) and starts at screen column x; the board sits in the middle top to bottom
   const foe = () => 1 - me;
@@ -51,7 +51,7 @@ const Render2D = (cv, view, opts = {}) => {
   // size from health, but a leveled unit (2x, 3x health) only counts part of its extra health, and swarms
   // (5+ bodies) even less, so level 2 and 3 squads don't crowd the board
   const LEVEL_SIZE = [1, 0.8, 0.65], SWARM_SIZE = [1, 0.72, 0.56];
-  const radius = (u) => Math.max(0.6, Math.min(2.4, 0.55 + Math.sqrt(u.hp * ((u.bodies >= 5 ? SWARM_SIZE : LEVEL_SIZE)[u.level | 0] || 1)) / 30)) * S;
+  const radius = (u) => u.drawR > 0 ? u.drawR * S : Math.max(0.6, Math.min(2.4, 0.55 + Math.sqrt(u.hp * ((u.bodies >= 5 ? SWARM_SIZE : LEVEL_SIZE)[u.level | 0] || 1)) / 30)) * S;
   const teamCol = (side) => Art.teamCol(side, me);
   const upOf = (side) => side === me ? 1 : -1;
 
@@ -493,6 +493,7 @@ const Render2D = (cv, view, opts = {}) => {
     }
     ctx.globalAlpha = 1;
     if (Game.isIce(v)) { drawStorm(v); if (phase === 'deploy' && Game.altarRound(v)) drawAltar(); } // the altar only stands while deploying
+    if (boss) drawBossPools();
     if (mp && mp.shrooms) for (const tl of v.map.tiles || []) {
       if (shroomShown(v, tl.col, tl.row)) drawShroomTile(tl);
       else if (!plain && myRemovalNow(tl.col, tl.row)) { // removed by you this round: a faint dashed outline until the fight
@@ -756,6 +757,33 @@ const Render2D = (cv, view, opts = {}) => {
       ctx.fillStyle = css('--ink'); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
       ctx.globalAlpha = 0.85; ctx.fillText(tag(u), (c + 0.5) * t, (r0 + 1) * t - 1); ctx.globalAlpha = 1;
     }
+  }
+
+  // the Mommy boss puzzle (view.boss from the page: Boss.preview): this round's poison pools, and while deploying her,
+  // her reach and this round's nests, see-through, each nest marked HIGH (only ranged units reach it) or LOW
+  const BOSS_POOL = '#7FD13B';
+  function drawBossPools() {
+    const t = tilePx(), time = phase === 'battle' && bt ? bt.time() : 0;
+    for (const [c0, r0, c1, r1] of boss.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+      const x = scol(c) * t, y = srow(r) * t;
+      ctx.fillStyle = BOSS_POOL; ctx.globalAlpha = 0.2 + 0.05 * Math.sin(time * 2 + c + r); ctx.fillRect(x + 1, y + 1, t - 2, t - 2);
+      ctx.fillStyle = '#C6F27A'; ctx.globalAlpha = 0.5; // a few bubbles
+      for (let k = 0; k < 3; k++) { const ph = (time * 0.6 + k * 0.37 + (c * 7 + r * 3) * 0.13) % 1; ctx.beginPath(); ctx.arc(x + t * (0.25 + 0.25 * k), y + t * (0.8 - 0.5 * ph), t * 0.05, 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawBossPreview() {
+    const t = tilePx(), side = foe(), col = teamCol(side), mo = boss.mommy;
+    ctx.strokeStyle = col; ctx.globalAlpha = 0.45; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); // her reach: inside it, a body holds her
+    ctx.beginPath(); ctx.arc(PX(mo.x), PY(mo.y), mo.reach * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.globalAlpha = 0.6; Shapes.body(ctx, mo.u.shape, PX(mo.x), PY(mo.y), radius(mo.u), upOf(side), mo.u.color, col, 0.6);
+    const fs = Math.max(8, Math.round(t * 0.24));
+    ctx.font = `600 ${fs}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const n of boss.nests) {
+      ctx.globalAlpha = 0.55; Shapes.body(ctx, n.u.shape, PX(n.x), PY(n.y), radius(n.u) * 0.85, upOf(side), n.u.color, col, 0.6);
+      ctx.globalAlpha = 0.9; ctx.fillStyle = n.low ? css('--ink') : col; ctx.fillText(n.low ? 'LOW' : 'HIGH', PX(n.x), PY(n.y) + t * 0.5);
+    }
+    ctx.globalAlpha = 1;
   }
 
   // round 1: the opponent's starting squads (view.foeStart from the page: [{ unit, x, y }] in board metres), see-through
@@ -1508,6 +1536,7 @@ const Render2D = (cv, view, opts = {}) => {
       drawSquad(phase === 'deploy' ? { ...sq, unit: look, col: p.col, row: p.row, level: Game.seenLevel(m, sq) } : { ...sq, unit: look }, foe(), false); // a level-up bought this round stays hidden
     }
     if (phase === 'deploy' && foeStart) drawFoeStart();
+    if (phase === 'deploy' && boss) drawBossPreview();
     // what rides inside a carrier: a small disc with its shape, bottom left of the tile (only its team sees it), ringed in
     // its player's colour in 2v2 (yours in your teammate's horse, theirs in yours)
     const riderBadge = (at, rider) => {

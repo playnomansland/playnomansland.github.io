@@ -36,7 +36,7 @@ fs.writeFileSync('lab.html', labDoc);
 const game0 = src('site-template.html').replace('/*BASECSS*/', () => src('game.css'))
   .replace('/*UI_DEFAULT*/', () => ['diorama', 'pc'].includes(process.env.PB_UI_DEFAULT) ? process.env.PB_UI_DEFAULT : 'classic').replace('/*DIORAMA_CSS*/', () => src('diorama.css')).replace('/*DIORAMA*/', () => src('diorama.js')) // the Diorama UI (?ui=diorama)
   .replace('/*SHAPES*/', () => shapes).replace('/*ENGINE*/', () => eng)
-  .replace('/*GAME*/', () => src('game.js')).replace('/*REFEREE*/', () => src('referee.js')).replace('/*MPB*/', () => src('mpb.js')).replace('/*DUO*/', () => src('duo.js')).replace('/*TOUR*/', () => src('tournament.js'))
+  .replace('/*GAME*/', () => src('game.js')).replace('/*BOSS*/', () => src('boss.js')).replace('/*REFEREE*/', () => src('referee.js')).replace('/*MPB*/', () => src('mpb.js')).replace('/*DUO*/', () => src('duo.js')).replace('/*TOUR*/', () => src('tournament.js'))
   .replace('/*EXPLOITBOT*/', () => src('exploit-bot.js'))
   .replace('/*ART*/', () => src('art.js')).replace('/*RENDER2D*/', () => src('render2d.js') + '\n' + src('floors.js')).replace('/*DATA*/', () => src('demo-units.json'))
   .replace('/*FACTIONS*/', () => src('faction-units.json')).replace('/*PUZZLES*/', () => src('puzzles.json'))

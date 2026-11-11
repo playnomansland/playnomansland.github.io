@@ -2127,11 +2127,16 @@ const Engine = (() => {
     // looking for a squad its side's Hunters marked (f.prey, set by the game)
     // (2v2 Scorch turrets, src/mpb.js scorch: u.scorchSight sees stealthed units at any distance)
     const seesHidden = (b, f) => f.u.stealth && !f.u.aloft && ((f.marked && b.sniperMark > 0) || (f.prey && b.u.hunter) || (b.u.trueSight && gap(f, b) <= b.u.range + 1e-9) || !!b.u.scorchSight);
-    const pickable = (b, f) => f.alive && (!f.hidden || seesHidden(b, f)) && !sheltered(f) && !(b.hunt && !isLone(f)) && !ignores(b, f);
+    // u.rangedOnly = N (the Mommy boss puzzle's high nests, src/boss.js): only bodies with range N or more pick it or hurt it.
+    // f.lastPick (Mommy while she hangs): picked only when none of f's side is left that b could pick instead
+    const lastPickOthers = (b, f) => sides[f.side].some((g) => g !== f && g.alive && !g.lastPick && !g.hidden && !sheltered(g) && !(g.u.rangedOnly > 0 && b.u.range < g.u.rangedOnly));
+    const pickable = (b, f) => f.alive && (!f.hidden || seesHidden(b, f)) && !sheltered(f) && !(b.hunt && !isLone(f)) && !ignores(b, f) && !(f.u.rangedOnly > 0 && b.u.range < f.u.rangedOnly) && !(f.lastPick && lastPickOthers(b, f));
     // damage that skips armor and ward (poison)
     function direct(owner, v, amount) {
       if (v.turning || v.u.aloft || sheltered(v)) return;
+      if (v.takeMul != null) amount *= v.takeMul; // (src/boss.js)
       const applied = Math.min(amount, poolHp(v));
+      if (v.bossTag) owner.bossDealt = (owner.bossDealt || 0) + applied;
       if (applied <= 0) return;
       stats[owner.side].dealt += applied;
       owner.dealt = (owner.dealt || 0) + applied;
@@ -2235,7 +2240,7 @@ const Engine = (() => {
       // Wind walk: the 1st, (every+1)th, ... attack aimed at it misses, and it dashes away to one side (see u.windWalk)
       if (v.u.windWalk && owner.side !== v.side) {
         const ww = v.u.windWalk, n = v.aimedAt = (v.aimedAt || 0) + 1;
-        if ((n - 1) % ww.every === 0) {
+        if ((n - 1) % ww.every === 0 || owner.dodgeable) { // owner.dodgeable (src/boss.js): every attack it aims at Wind walk misses
           st.missed += hit;
           if (ww.step > 0 && !v.u.structure && !v.u.anchored && !v.u.unstoppable) {
             let dx = v.x - fromX, dy = v.y - fromY, d = hyp(dx, dy);
@@ -2258,7 +2263,7 @@ const Engine = (() => {
       // a guard (the keep's) that is attacked leaves its post and goes for its attacker
       if (v.guard && owner.alive && owner.side !== v.side && !owner.u.aloft && !(v.avenge && v.avenge.alive)) { v.holdT = 0; v.avenge = owner; v.engaged = true; }
       if (owner.u.bldgPct > 0 && v.u.structure) hit = hit * owner.u.bldgPct / 100; // weaker against buildings (the Assassin)
-      let pct = owner.u.pctHit > 0 && !v.u.structure ? v.u.hp * owner.u.pctHit / 100 : 0;
+      let pct = owner.u.pctHit > 0 && !v.u.structure && !v.noPct ? v.u.hp * owner.u.pctHit / 100 : 0;
       if (owner.u.hunter && v.prey && owner.side !== v.side) { hit = hit * (1 + owner.u.hunter.dmg / 100); pct = pct * (1 + owner.u.hunter.dmg / 100); } // Hunter: its mark
       if (owner.sniperMark > 0 && v.marked && owner.side !== v.side) { hit = hit * (1 + owner.sniperMark / 100); pct = pct * (1 + owner.sniperMark / 100); } // Mark Bounty (sniper tower)
       if (cripple[ck(owner)] > 0) { hit = hit * (1 - towerDown.attack / 100); pct = pct * (1 - towerDown.attack / 100); }
@@ -2285,8 +2290,11 @@ const Engine = (() => {
         if (v.u.bonusWard > 0) dmg = Math.min(dmg, v.u.bonusWard);
       }
       if (cripple[ck(v)] > 0) dmg = dmg * (1 + towerDown.taken / 100);
+      if (v.u.rangedOnly > 0 && owner.u.range < v.u.rangedOnly) return; // (src/boss.js) out of this attacker's reach, splash too
+      if (v.takeMul != null) dmg *= v.takeMul; // (src/boss.js) a body that takes only a share of every hit (Mommy hanging)
       st.blocked += hit - dmg;
       const applied = Math.min(dmg, poolHp(v));
+      if (v.bossTag) owner.bossDealt = (owner.bossDealt || 0) + applied; // (src/boss.js) damage to her, per attacker
       st.dealt += applied;
       owner.dealt = (owner.dealt || 0) + applied;
       if (owner.u.lifesteal > 0 && owner.alive) heal(owner, applied * owner.u.lifesteal / 100);
@@ -3171,7 +3179,7 @@ const Engine = (() => {
 
     function step() {
       if (over) return false;
-      if (t >= g.timeCap || !aliveCount(A) || !aliveCount(B)) { over = true; return false; }
+      if (t >= g.timeCap || (!opts.toTimer && (!aliveCount(A) || !aliveCount(B)))) { over = true; return false; } // opts.toTimer (src/boss.js): on to the time cap
       shots = [];
       tick++;
       for (const b of bullNew) b.bullArmed = true; // a charge's armor counts from the tick after it set off, so a hit in the
@@ -3582,6 +3590,7 @@ const Engine = (() => {
           else { heal(f, q.amt * healMul * dt); if (q.speed > 0) { f.poolFast = q.speed; f.poolFastT = q.secs; } }
         }
       }
+      if (opts.bossTick) opts.bossTick({ t, dt, all, sides, hurt, direct, record: !!opts.record, shots }); // (src/boss.js) the boss's rules, once a tick
       // ongoing effects: poison, bleed, regeneration, shortsight wearing off, spawns
       for (const b of turnOrder()) { // (the sides take turns going first here too; bodies spawned below start next tick)
         if (!b.alive) continue;
@@ -3612,7 +3621,7 @@ const Engine = (() => {
             bl.pulse += BLEED.pulse;
             let dmg = BLEED.dmg;
             for (let k = 1; k < bl.n; k++) dmg *= 2;
-            if (BLEED.pct[bl.n] > 0 && !b.u.structure) dmg += b.u.hp * BLEED.pct[bl.n] / 100 * BLEED.pulse;
+            if (BLEED.pct[bl.n] > 0 && !b.u.structure && !b.noPct) dmg += b.u.hp * BLEED.pct[bl.n] / 100 * BLEED.pulse;
             direct(bl.src, b, dmg);
           }
           bl.t -= dt;

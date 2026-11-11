@@ -2935,7 +2935,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <span class="dk"><b>Developer</b>every mode and tool · only developers see this</span>
     <div class="dv">
       <span class="lab">Vs computer</span>
-      <span class="seg"><button data-dv="factions">Factions</button><button data-dv="devtest">Devtest</button><button data-dv="late">Late game</button><button data-dv="claude">Vs Claude</button></span>
+      <span class="seg"><button data-dv="factions">Factions</button><button data-dv="devtest">Devtest</button><button data-dv="late">Late game</button><button data-dv="mommy">Mommy</button><button data-dv="claude">Vs Claude</button></span>
       <span class="lab">Exploit bot</span>
       <span class="seg" role="group" aria-label="Exploit bot"><button data-xb="" aria-pressed="true">Off</button><button data-xb="flank">Flank</button><button data-xb="steel">Steel</button><button data-xb="necro">Necro</button><button data-xb="wizards">Wizards</button><button data-xb="hoard">Hoard</button><button data-xb="arrow">Arrow</button></span>
       <span class="lab">Tools</span>
@@ -4795,11 +4795,16 @@ const Engine = (() => {
     // looking for a squad its side's Hunters marked (f.prey, set by the game)
     // (2v2 Scorch turrets, src/mpb.js scorch: u.scorchSight sees stealthed units at any distance)
     const seesHidden = (b, f) => f.u.stealth && !f.u.aloft && ((f.marked && b.sniperMark > 0) || (f.prey && b.u.hunter) || (b.u.trueSight && gap(f, b) <= b.u.range + 1e-9) || !!b.u.scorchSight);
-    const pickable = (b, f) => f.alive && (!f.hidden || seesHidden(b, f)) && !sheltered(f) && !(b.hunt && !isLone(f)) && !ignores(b, f);
+    // u.rangedOnly = N (the Mommy boss puzzle's high nests, src/boss.js): only bodies with range N or more pick it or hurt it.
+    // f.lastPick (Mommy while she hangs): picked only when none of f's side is left that b could pick instead
+    const lastPickOthers = (b, f) => sides[f.side].some((g) => g !== f && g.alive && !g.lastPick && !g.hidden && !sheltered(g) && !(g.u.rangedOnly > 0 && b.u.range < g.u.rangedOnly));
+    const pickable = (b, f) => f.alive && (!f.hidden || seesHidden(b, f)) && !sheltered(f) && !(b.hunt && !isLone(f)) && !ignores(b, f) && !(f.u.rangedOnly > 0 && b.u.range < f.u.rangedOnly) && !(f.lastPick && lastPickOthers(b, f));
     // damage that skips armor and ward (poison)
     function direct(owner, v, amount) {
       if (v.turning || v.u.aloft || sheltered(v)) return;
+      if (v.takeMul != null) amount *= v.takeMul; // (src/boss.js)
       const applied = Math.min(amount, poolHp(v));
+      if (v.bossTag) owner.bossDealt = (owner.bossDealt || 0) + applied;
       if (applied <= 0) return;
       stats[owner.side].dealt += applied;
       owner.dealt = (owner.dealt || 0) + applied;
@@ -4903,7 +4908,7 @@ const Engine = (() => {
       // Wind walk: the 1st, (every+1)th, ... attack aimed at it misses, and it dashes away to one side (see u.windWalk)
       if (v.u.windWalk && owner.side !== v.side) {
         const ww = v.u.windWalk, n = v.aimedAt = (v.aimedAt || 0) + 1;
-        if ((n - 1) % ww.every === 0) {
+        if ((n - 1) % ww.every === 0 || owner.dodgeable) { // owner.dodgeable (src/boss.js): every attack it aims at Wind walk misses
           st.missed += hit;
           if (ww.step > 0 && !v.u.structure && !v.u.anchored && !v.u.unstoppable) {
             let dx = v.x - fromX, dy = v.y - fromY, d = hyp(dx, dy);
@@ -4926,7 +4931,7 @@ const Engine = (() => {
       // a guard (the keep's) that is attacked leaves its post and goes for its attacker
       if (v.guard && owner.alive && owner.side !== v.side && !owner.u.aloft && !(v.avenge && v.avenge.alive)) { v.holdT = 0; v.avenge = owner; v.engaged = true; }
       if (owner.u.bldgPct > 0 && v.u.structure) hit = hit * owner.u.bldgPct / 100; // weaker against buildings (the Assassin)
-      let pct = owner.u.pctHit > 0 && !v.u.structure ? v.u.hp * owner.u.pctHit / 100 : 0;
+      let pct = owner.u.pctHit > 0 && !v.u.structure && !v.noPct ? v.u.hp * owner.u.pctHit / 100 : 0;
       if (owner.u.hunter && v.prey && owner.side !== v.side) { hit = hit * (1 + owner.u.hunter.dmg / 100); pct = pct * (1 + owner.u.hunter.dmg / 100); } // Hunter: its mark
       if (owner.sniperMark > 0 && v.marked && owner.side !== v.side) { hit = hit * (1 + owner.sniperMark / 100); pct = pct * (1 + owner.sniperMark / 100); } // Mark Bounty (sniper tower)
       if (cripple[ck(owner)] > 0) { hit = hit * (1 - towerDown.attack / 100); pct = pct * (1 - towerDown.attack / 100); }
@@ -4953,8 +4958,11 @@ const Engine = (() => {
         if (v.u.bonusWard > 0) dmg = Math.min(dmg, v.u.bonusWard);
       }
       if (cripple[ck(v)] > 0) dmg = dmg * (1 + towerDown.taken / 100);
+      if (v.u.rangedOnly > 0 && owner.u.range < v.u.rangedOnly) return; // (src/boss.js) out of this attacker's reach, splash too
+      if (v.takeMul != null) dmg *= v.takeMul; // (src/boss.js) a body that takes only a share of every hit (Mommy hanging)
       st.blocked += hit - dmg;
       const applied = Math.min(dmg, poolHp(v));
+      if (v.bossTag) owner.bossDealt = (owner.bossDealt || 0) + applied; // (src/boss.js) damage to her, per attacker
       st.dealt += applied;
       owner.dealt = (owner.dealt || 0) + applied;
       if (owner.u.lifesteal > 0 && owner.alive) heal(owner, applied * owner.u.lifesteal / 100);
@@ -5839,7 +5847,7 @@ const Engine = (() => {
 
     function step() {
       if (over) return false;
-      if (t >= g.timeCap || !aliveCount(A) || !aliveCount(B)) { over = true; return false; }
+      if (t >= g.timeCap || (!opts.toTimer && (!aliveCount(A) || !aliveCount(B)))) { over = true; return false; } // opts.toTimer (src/boss.js): on to the time cap
       shots = [];
       tick++;
       for (const b of bullNew) b.bullArmed = true; // a charge's armor counts from the tick after it set off, so a hit in the
@@ -6250,6 +6258,7 @@ const Engine = (() => {
           else { heal(f, q.amt * healMul * dt); if (q.speed > 0) { f.poolFast = q.speed; f.poolFastT = q.secs; } }
         }
       }
+      if (opts.bossTick) opts.bossTick({ t, dt, all, sides, hurt, direct, record: !!opts.record, shots }); // (src/boss.js) the boss's rules, once a tick
       // ongoing effects: poison, bleed, regeneration, shortsight wearing off, spawns
       for (const b of turnOrder()) { // (the sides take turns going first here too; bodies spawned below start next tick)
         if (!b.alive) continue;
@@ -6280,7 +6289,7 @@ const Engine = (() => {
             bl.pulse += BLEED.pulse;
             let dmg = BLEED.dmg;
             for (let k = 1; k < bl.n; k++) dmg *= 2;
-            if (BLEED.pct[bl.n] > 0 && !b.u.structure) dmg += b.u.hp * BLEED.pct[bl.n] / 100 * BLEED.pulse;
+            if (BLEED.pct[bl.n] > 0 && !b.u.structure && !b.noPct) dmg += b.u.hp * BLEED.pct[bl.n] / 100 * BLEED.pulse;
             direct(bl.src, b, dmg);
           }
           bl.t -= dt;
@@ -8244,6 +8253,7 @@ const Game = (() => {
   const unlockVisible = (m, side, ui) => unlockCost(m, ui, side) === 0 || (isUnlocked(m, side, ui) && m.unlocks[side][ui] < m.round);
   function unlock(m, side, ui) {
     if (ui < 0 || ui >= m.units.length || isOff(m, ui, side) || isUnlocked(m, side, ui)) return false;
+    if (m.boss && (m.boss.banned || []).includes(m.units[ui].name)) return false; // the Mommy boss puzzle's banned units
     const cost = unlockCost(m, ui, side);
     if (m.gold[side] < cost) return false;
     if (!m.unlocks) m.unlocks = [{}, {}];
@@ -8664,6 +8674,7 @@ const Game = (() => {
 
   // Refund an extra deployment bought this round that hasn't been used
   function refundDeploy(m, side) {
+    if (m.boss) return false; // the Mommy boss puzzle: the extra deployment is a free one, nothing to refund
     if (m.extraDeploys[side] <= 0 || deploysLeft(m, side) <= 0) return false;
     m.extraDeploys[side]--;
     m.gold[side] += deployCost(m, side);
@@ -8777,7 +8788,7 @@ const Game = (() => {
   // a 2v2 building of side's on the tile that holds a squad of unit ui (ui null: any squad at all) (Mpb.holds)
   const mpbHolds = (m, side, col, row, ui) => !!(MPB && m && m.mpb && MPB.holds) && MPB.holds(m, side, col, row, ui);
   const occupied = (m, side, col, row) => towerAt(m, side, col, row) || treasuryAt(m, side, col, row) || elfOwnAt(m, side, col, row) || !!buildingAt(m, side, col, row) || teamBuildingAt(m, side, col, row) || m.armies[side].some(s => covers(m, s, col, row)) || teamArmy(m, side).some(s => covers(m, s, col, row)) || devOccupied(m, side, col, row) || mpbAt(m, col, row);
-  const needsTower = (m, side) => !!(m.towers && !m.towers[side]);
+  const needsTower = (m, side) => !!(m.towers && !m.towers[side] && !m.boss); // (the Mommy boss puzzle: no towers)
   // the tower can be placed (or moved) during round 1 only
   function placeTower(m, side, col, row) {
     if (!m.towers) m.towers = [null, null];
@@ -8788,6 +8799,7 @@ const Game = (() => {
   }
   // a match without a tower (saved before towers were fixed) gets the fixed one
   function ensureTower(m, side) {
+    if (m.boss) return; // the Mommy boss puzzle: a treasury, no tower
     if (!m.towers) m.towers = [null, null];
     if (m.towers[side]) return;
     m.towers[side] = towerSpot(m, side);
@@ -8803,6 +8815,7 @@ const Game = (() => {
     if (needsTower(m, side)) return null; // the tower goes down first
     if (!isUnlocked(m, side, unitIdx)) return null;
     if (capFull(m, side, unitIdx)) return null; // DEVTESTLATEGAME: at most LATE.cap squads of a tier 3+ unit type
+    if (m.boss && m.boss.cap && m.armies[side].filter(q => q.unit === unitIdx).length >= m.boss.cap) return null; // the Mommy boss puzzle: at most cap squads of a type
     if (mpbLocked(m, side, unitIdx)) return null; // 2v2: a unit type the other team's Shadow Den sabotaged this round
     if (schoolLock(m, side, unitIdx)) return null; // 2v2 School: none of the unit type sitting in it
     const into = boardable(m, side, col, row, unitIdx); // a carrier with room: the new squad rides inside
@@ -9115,7 +9128,11 @@ const Game = (() => {
     return { dmg: CHAR.zoeDmg[lv], hp: CHAR.zoeHp[lv], aps: CHAR.zoeAps[lv] };
   };
 
+  // the Mommy boss puzzle (src/boss.js, global Boss): a match with m.boss set plays her fight. game.js never loads it
+  // itself (the server has no need of it): the page has it, and the prototype's tools require it
+  const bossApi = () => (typeof Boss !== 'undefined' ? Boss : null);
   function startBattle(m) {
+    if (m.boss && bossApi()) return bossApi().battle(m, { record: true });
     ensureTower(m, 0); ensureTower(m, 1);
     settleTowerPicks(m);
     ensureBwalls(m, 0); ensureBwalls(m, 1);
@@ -9449,6 +9466,7 @@ const Game = (() => {
       m.gold[sd] -= cut;
       return cut;
     });
+    if (m.boss && res.boss && bossApi()) bossApi().afterFight(m, res, summary); // the Mommy boss puzzle: her health carries on, the match ends when she dies or after the last round
     return summary;
   }
 
@@ -9474,7 +9492,7 @@ const Game = (() => {
   // one went (so nothing new can show the opponent a move). A longer move is the horseshoe's or the paid one. (2026-11-07)
   const MARCH = { tiles: 2 };
   const marchMoves = (m, side) => towerPicked(m, side) && towerType(m, side).freeMove ? 1 : 0;
-  const shoeMoves = (m, side) => shoePerk(m, side, 'move') ? 1 : 0;
+  const shoeMoves = (m, side) => (shoePerk(m, side, 'move') ? 1 : 0) + (m && m.boss && side === 0 ? 1 : 0); // (the Mommy boss puzzle: one free move a round, anywhere)
   const freeMoves = (m, side) => marchMoves(m, side) + shoeMoves(m, side);
   // within March order's reach: (col, row) from sq's tile at the round's start
   const marchNear = (m, sq, col, row) => { const o = sq.from && sq.movedRound === m.round ? sq.from : sq; return Math.max(Math.abs(col - o.col), Math.abs(row - o.row)) <= MARCH.tiles; };
@@ -10347,6 +10365,282 @@ const Game = (() => {
   return api;
 })();
 if (typeof module !== 'undefined') module.exports = Game;
+
+// ===== The Mommy boss puzzle (developer test, 2026-11-11; design: docs/HANDOFF-BOSS-MOMMY.md) =====
+// A five-round fight against one boss, a huge spider hanging at the front edge of her zone. Shared by the page (the
+// Developer menu's Mommy) and the prototype's tools (tools/boss/). A match plays it when m.boss is set (Boss.setup):
+// Game.startBattle builds her fight here (Boss.battle) and Game.resolve hands its result back (Boss.afterFight). The
+// engine features it uses do nothing unless asked for (src/engine.js: u.rangedOnly, takeMul, bossTag, noPct, lastPick,
+// dodgeable, opts.toTimer, opts.bossTick).
+//
+// The rules (numbers in CFG):
+//   - She never moves. Her health carries over between rounds and never comes back.
+//   - Hanging: she takes CFG.mommy.hang of all damage, can't be stunned, rooted, slowed or moved, and units pick her
+//     only when none of her nests or spiders are left to pick.
+//   - Nests hang in scripted places each round, all with the same health. A high nest can only be hit by ranged units;
+//     a low one by melee too. Each hatches a spider every few seconds; a destroyed nest bursts into spiders.
+//   - All nests down: she falls, she and her spiders are stunned, and she takes full damage for the rest of the fight.
+//   - Attention: she bites the nearest body within her reach; bodies close to her are webbed. With nobody in her reach
+//     while she hangs she fires a web mortar at the player's biggest clump, and each shot is one of her nests within her
+//     reach, ripped loose.
+//   - Her bite changes by round: fast, heavy (Wind walk can't dodge it... unless bites.heavy.dodgeable), or a sweep.
+//   - Molt: every few seconds she sheds poison, bleed, burn, frost and slows. A hit's share of max health never works.
+//   - Poison pools: scripted tiles each round; the player's units standing in one are poisoned and slowed.
+//   - The player: CFG.startGold, then the game's income; every allowed unit unlocked, at most CFG.maxPerType squads of a
+//     type, one free move and one free extra deployment a round, a treasury and no tower. Win: kill her by round 5.
+(function (root) {
+  const E = () => (typeof Engine !== 'undefined' ? Engine : require('./engine.js'));
+  const G = () => (typeof Game !== 'undefined' ? Game : require('./game.js'));
+
+  const CFG = {
+    rounds: 5,          // kill her by the end of this round
+    startGold: 450,     // the start (the game's own is 250: two squads, which made round 1 a dead round)
+    fightSecs: 30,
+    banned: ['Meteor Caller', 'Assassin', 'Rogue', 'Truespear', 'Sun Priest'],
+    maxPerType: 3,      // squads of one unit type at a time
+    titleRound: 3,      // beating her by this round earns the "Mommy" title (not given out yet)
+    mommy: {
+      hp: 46000, col: 5.5, row: 5, // the front edge of her zone
+      hang: 0.15,       // share of damage she takes while hanging
+      stun: 5,          // seconds she and her spiders are stunned after the fall
+      near: 22,         // m: her reach. A body this close holds her attention; she bites the nearest one
+      bites: {          // her bite on the nearest body in reach, by style (about the same damage per second on one body)
+        fast: { hit: 150, aps: 0.8, splash: 0 },    // rewards health
+        heavy: { hit: 480, aps: 0.25, splash: 2.5 }, // rewards many bodies, shields and wards
+        sweep: { hit: 70, aps: 1, splash: 5 },      // rewards one big body
+      },
+      web: { r: 14, slow: 40, dmg: 40 }, // bodies this close are slowed and hit softer
+      // the mortar: wind s with nobody in reach before the first shot, then one every `every` s, at the biggest clump
+      // (r m). Each shot rips loose one of her nests within ammoReach m (the one with least health): it is gone and its
+      // spiders burst out where it hung. hit: the blast's damage; slow / dmg / secs: the web it leaves
+      mortar: { wind: 5, every: 4, hit: 120, ammo: true, ammoReach: 22, r: 6, slow: 60, dmg: 60, secs: 4 },
+      molt: 6,          // seconds between sheds (0: never)
+      bleedPct: false,  // whether a hit's share of max health (bleed at 3-4 stacks, Deadeye) works on her
+      size: 4,          // m: how far out her body reaches once she lies on the ground (melee can crowd round her)
+      lastPick: true,   // while she hangs, units pick her only when none of her nests or spiders are left
+    },
+    biteByRound: ['fast', 'heavy', 'sweep', 'heavy', 'sweep'],
+    nest: { hp: 500, rangedOnly: 8, burst: 3 }, // the same health every round: where they hang is the puzzle
+    spider: { hp: 90 }, // the spiderling: one body of the Spiders unit, lighter
+    hatch: [6, 5, 4, 3, 3], // seconds per spider, per nest, by round
+    // per round: [col, row] a high nest (ranged only), [col, row, 'low'] one melee reaches too. Rows 0-5 are her zone,
+    // 6-9 no man's land; she hangs at col 5.5, row 5 and her reach is about 3.7 tiles. Out on the wings, so an army
+    // stacked in the middle can't reach them
+    nests: [
+      [[2, 6, 'low'], [10, 8]],                           // a low nest in her reach on the left (a melee squad on it holds her), a high one out on the right
+      [[0, 7, 'low'], [11, 8], [9, 4]],                   // the low nest far out of her reach; a high one far right; one up in her reach (she can rip it)
+      [[9, 6, 'low'], [0, 5], [11, 5]],                   // one in her web; two on the far wings at her zone's edge
+      [[1, 8, 'low'], [10, 8, 'low'], [5.5, 2], [11, 5]], // two low ones out of reach, one behind her (she can rip it), one far right
+      [[0, 6, 'low'], [8, 7, 'low'], [3, 3], [11, 5]],    // a far low one, a low one in her reach, one up in her reach, one far right
+    ],
+    treasury: { hp: 400, col: 4, row: 15 },
+    // poison pools, by round: [[col0, row0, col1, row1], ...] (tiles, inclusive). pct: % of max health a second, past
+    // armor; linger: seconds it keeps working after the body walks out. Her spiders don't mind them; slime units drink them
+    pools: { pct: 4, linger: 2, at: [
+      [[4, 8, 7, 8]],                                     // the middle lane in front of her
+      [[4, 8, 7, 8], [10, 9, 11, 9]],                     // ...and under the right wing's firing spot
+      [[4, 7, 7, 8], [0, 8, 1, 8], [10, 8, 11, 8]],       // a wider lane, and both wings' firing spots
+      [[4, 8, 7, 8], [2, 9, 3, 9], [8, 9, 9, 9]],
+      [[4, 7, 7, 8], [1, 9, 2, 9], [10, 7, 11, 7]],
+    ] },
+    late: {},           // (prototype only) ways to keep the late rounds from deciding everything: wound, groundMul, climb, income, carryNests
+  };
+
+  const byRound = (v, round) => Array.isArray(v) ? v[Math.min(round, v.length) - 1] : v;
+  const world = (col, row) => G().tileToWorld(col, row);
+  const TILE = () => G().TILE || 6;
+
+  // ---------- her bodies ----------
+  function spiderUnit(units, cfg) {
+    const sp = units.find((u) => u.name === 'Spiders') || { name: 'Spiders', hp: 185, hit: 20, aps: 0.8, range: 2, speed: 6, splash: 0, shape: 'spider', color: '#5B4636' };
+    const { skills, skillDefs, skillsInnate, skillMods, skillOr, skillNeedsAny, skillNeeds, ...s } = sp;
+    return E().withTraits({ ...s, name: 'Spiderling', bodies: 1, level: 0, ...(cfg.spider || {}) });
+  }
+  function mommyUnit(cfg, round) {
+    const a = cfg.mommy.bites[byRound(cfg.biteByRound, round)];
+    return E().withTraits({ name: 'Mommy', cost: 0, bodies: 1, hp: cfg.mommy.hp, hit: a.hit, aps: a.aps, range: cfg.mommy.near, splash: a.splash, speed: 0, anchored: true, unstoppable: true, shape: 'spider', color: '#1a1a1a', level: 0, boss: 'mommy', drawR: 4.2 });
+  }
+  function nestUnit(units, cfg, round) {
+    return E().withTraits({ name: 'Nest', cost: 0, bodies: 1, hp: byRound(cfg.nest.hp, round), hit: 0, aps: 1, range: 0, speed: 0, splash: 0, structure: true, lesser: true, kind: 'nest', shape: 'circle', color: '#d8d0c0', level: 0,
+      rangedOnly: cfg.nest.rangedOnly,
+      spawn: { every: byRound(cfg.hatch, round), count: 1, max: 999, waves: 0, unit: spiderUnit(units, cfg) },
+      ...(cfg.nest.burst > 0 ? { deathSpawn: { name: 'Spiderling', unit: spiderUnit(units, cfg), count: cfg.nest.burst, strength: 1 } } : {}) });
+  }
+  const treasuryUnit = (cfg) => E().withTraits({ name: 'Treasury', cost: 0, bodies: 1, hp: cfg.treasury.hp, hit: 0, aps: 1, range: 0, speed: 0, splash: 0, structure: true, lesser: true, kind: 'treasury', shape: 'square', color: '#D9B95B', level: 0 });
+
+  // ---------- a match ----------
+  // make m a Mommy match: call right after Game.createMatch (side 0 is the player). Every allowed unit unlocked, the
+  // start gold, the free extra deployment, no towers
+  function setup(m, cfg = CFG) {
+    m.boss = { hp: cfg.mommy.hp, max: cfg.mommy.hp, falls: 0, carry: [], log: [], cap: cfg.maxPerType, banned: cfg.banned.slice(), rounds: cfg.rounds };
+    m.packages = [[], []];
+    m.towers = [null, null];
+    m.units.forEach((u, k) => { if (!cfg.banned.includes(u.name) && !u.building) m.unlocks[0][k] = 1; });
+    m.extraDeploys[0] = 1;
+    m.gold = [cfg.startGold, 0];
+    return m;
+  }
+  // what the boards draw for this round, while deploying and in the fight: her, the nests and the pools
+  function preview(m, cfg = CFG) {
+    if (!m || !m.boss) return null;
+    const round = m.round, u = m.units || [];
+    const spots = byRound(cfg.nests, round).concat((cfg.late || {}).carryNests ? m.boss.carry || [] : []);
+    const nu = nestUnit(u, cfg, round);
+    return {
+      mommy: { u: mommyUnit(cfg, round), ...world(cfg.mommy.col, cfg.mommy.row), reach: cfg.mommy.near },
+      nests: spots.map(([c, r, kind]) => ({ u: kind === 'low' ? { ...nu, rangedOnly: 0 } : nu, low: kind === 'low', col: c, row: r, ...world(c, r) })),
+      pools: cfg.pools && cfg.pools.pct > 0 && cfg.pools.at ? byRound(cfg.pools.at, round) || [] : [],
+      bite: byRound(cfg.biteByRound, round), hp: m.boss.hp, max: m.boss.max, round, rounds: m.boss.rounds,
+    };
+  }
+
+  // ---------- one fight ----------
+  // The fight for m as it stands. o (all optional): cfg; st: her state ({ hp, falls, carry }, else m.boss); record;
+  // nests, pools (this round's instead of CFG's); fallen (true, or seconds she lies stunned: she starts on the ground);
+  // fallAt (she falls at this time whatever the nests); noHatch, noTreasury, secs; trace (log once a second);
+  // name(sq) (a squad's name in the stats). Returns the engine's battle; its step() stops once she is dead, and its
+  // result() carries `boss`: what happened (see out below), hpLeft included. Changes nothing on m.
+  function battle(m, o = {}) {
+    const cfg = o.cfg || CFG, Gm = G(), En = E();
+    const st = o.st || m.boss, round = m.round, units = m.units, T = TILE();
+    const { g, opts } = Gm.battleSetup(m);
+    g.timeCap = o.secs || cfg.fightSecs;
+    const A = Gm.bodiesFor(m, 0);
+    let tre = null;
+    if (!o.noTreasury) { const w = world(cfg.treasury.col, cfg.treasury.row); [tre] = En.buildSquad(treasuryUnit(cfg), 0, w.x, w.y, -150, T, A.length); A.push(tre); }
+    const mw = world(cfg.mommy.col, cfg.mommy.row);
+    const [mom] = En.buildSquad(mommyUnit(cfg, round), 1, mw.x, mw.y, 0, T, 0);
+    mom.hp = st.hp; mom.bossTag = true; mom.noPct = !cfg.mommy.bleedPct;
+    mom.dodgeable = !!cfg.mommy.bites[byRound(cfg.biteByRound, round)].dodgeable;
+    const late = cfg.late || {};
+    const spots = o.nests || byRound(cfg.nests, round).concat(late.carryNests ? st.carry || [] : []);
+    const groundMul = (1 + (late.wound || 0) * (st.falls || 0)) * (late.groundMul ? byRound(late.groundMul, round) : 1);
+    const climbAfter = late.climb ? byRound(late.climb, round) : 0;
+    const nu = o.noHatch ? { ...nestUnit(units, cfg, round), spawn: null, deathSpawn: null } : nestUnit(units, cfg, round);
+    const nests = spots.map(([c, r, kind], k) => { const w = world(c, r); return En.buildSquad(kind === 'low' ? { ...nu, rangedOnly: 0 } : nu, 1, w.x, w.y, -20 - k, T, 1 + k)[0]; });
+    const B = [mom, ...nests];
+    const out = { round, fallAt: null, mortars: 0, mortarAt: null, mortarNests: 0, held: 0, hang: 0, ground: 0, nestsLeft: 0, nests: nests.length, end: 0, treasury: null, nestDown: nests.map(() => null), holders: {}, gone: {}, poolSecs: 0, hpStart: st.hp };
+    const nameOf = o.name || ((sq) => units[sq.unit] ? units[sq.unit].name : '?');
+    const sqName = (b) => { const o2 = b.credit || b; const sq = m.armies[0].find((s) => s.id === o2.squad); return sq ? nameOf(sq) : b.u.name; };
+    let climbed = false, hanging = !o.fallen, quiet = 0, shots = 0, moltT = cfg.mommy.molt, last = mom.hp;
+    const visible = (f) => f.alive && f.side === 0 && !f.u.structure && !f.u.aloft && !f.hidden && !(f.inside && f.inside.alive) && !(f.delay > 0);
+    const d2 = (a, x, y) => { const dx = a.x - x, dy = a.y - y; return Math.sqrt(dx * dx + dy * dy); };
+    const ground = (u) => ({ ...u, unstoppable: false, ...(cfg.mommy.size > 0 ? { barrier: cfg.mommy.size } : {}) });
+    if (!hanging) { mom.takeMul = groundMul; mom.stunT = o.fallen === true ? 1e9 : o.fallen; out.fallAt = 0; mom.u = ground(mom.u); }
+    const poolRects = (o.pools || (cfg.pools && cfg.pools.pct > 0 && cfg.pools.at ? byRound(cfg.pools.at, round) || [] : [])).map(([c0, r0, c1, r1]) => { const a = world(c0, r0), b = world(c1, r1), h = T / 2; return { x0: Math.min(a.x, b.x) - h, x1: Math.max(a.x, b.x) + h, y0: Math.min(a.y, b.y) - h, y1: Math.max(a.y, b.y) + h }; });
+    const bossTick = (api) => {
+      if (!mom.alive) return;
+      nests.forEach((n, k) => { if (!n.alive && out.nestDown[k] == null) out.nestDown[k] = api.t; });
+      for (const f of api.all) if (f.side === 0 && !f.alive && f.diedAt == null) f.diedAt = api.t;
+      if (o.trace && api.t + 1e-9 >= (out.traceT || 0)) { // once a second: where each squad's first live body is and what it is after
+        out.traceT = (out.traceT || 0) + 1;
+        const seen = new Set(), line = [];
+        for (const f of api.all) { if (f.side !== 0 || !f.alive || f.u.structure || seen.has(f.squad)) continue; seen.add(f.squad); const sq = m.armies[0].find((q) => q.id === f.squad); if (!sq) continue; const nm = f.near ? (f.near === mom ? 'MOM' : f.near.u.kind === 'nest' ? 'nest' + (nests.indexOf(f.near)) : f.near.u.name.slice(0, 5)) : '-'; line.push(`${nameOf(sq).slice(0, 8)}@${(f.x / T + 5.5).toFixed(1)},${(7.5 - f.y / T).toFixed(1)}>${nm}`); }
+        console.log(`  t${api.t.toFixed(0).padStart(3)} ` + line.join('  ') + `  | nests ${nests.map((n) => n.alive ? Math.round(n.hp) : 'x').join(',')} mom ${Math.round(mom.hp)}`);
+      }
+      out[hanging ? 'hang' : 'ground'] += last - mom.hp; last = mom.hp;
+      if (!hanging && climbAfter > 0 && out.fallAt != null && api.t >= out.fallAt + climbAfter) { hanging = true; climbed = true; mom.u = { ...mom.u, unstoppable: true, barrier: 0 }; out.climbAt = api.t; }
+      if (hanging && !climbed && (o.fallAt != null ? api.t >= o.fallAt : !nests.some((n) => n.alive))) { // the last nest is down: she falls
+        hanging = false; out.fallAt = api.t; mom.takeMul = groundMul; mom.stunT = Math.max(mom.stunT, cfg.mommy.stun);
+        mom.u = ground(mom.u); mom.fallen = true;
+        for (const b of api.sides[1]) if (b.alive && b !== mom && !b.u.structure) b.stunT = Math.max(b.stunT, cfg.mommy.stun); // her spiders are stunned with her
+      }
+      mom.x = mw.x; mom.y = mw.y;
+      if (hanging) { mom.takeMul = cfg.mommy.hang; mom.stunT = 0; mom.frozenT = 0; }
+      mom.lastPick = hanging && !!cfg.mommy.lastPick;
+      if (cfg.mommy.molt > 0) { moltT -= api.dt; if (moltT <= 0) { moltT += cfg.mommy.molt; mom.poison = null; mom.bleed = null; mom.burn = null; mom.frost = null; mom.web = null; mom.slowT = 0; mom.slowMove = 0; mom.slowAtk = 0; mom.shrinkT = 0; mom.shrinkM = 0; } }
+      const stunned = mom.stunT > 0;
+      if (poolRects.length) for (const f of api.sides[0]) { // the poison pools
+        if (!f.alive || f.u.structure || f.u.aloft || !poolRects.some((q) => f.x >= q.x0 && f.x <= q.x1 && f.y >= q.y0 && f.y <= q.y1)) continue;
+        out.poolSecs += api.dt;
+        const pp = f.poison && f.poison.find((x) => x.pool);
+        if (pp) pp.t = cfg.pools.linger; else (f.poison || (f.poison = [])).push({ src: null, dps: f.u.hp * cfg.pools.pct / 100, t: cfg.pools.linger, pool: true });
+      }
+      const wb = cfg.mommy.web; // her web: close to her, slower and softer (not while she lies stunned)
+      for (const f of api.sides[0]) {
+        if (!f.alive || f.u.structure) continue;
+        if (!stunned && wb.r > 0 && d2(f, mw.x, mw.y) <= wb.r) {
+          f.momWeb = true; f.web = { slow: Math.max(wb.slow, f.web && !f.momWebOnly ? f.web.slow : 0), dmg: Math.max(wb.dmg, f.web && !f.momWebOnly ? f.web.dmg : 0), t: 1, max: 90 }; f.momWebOnly = true;
+          if (!f.u.unstoppable) { if (!(f.slowT > 0)) { f.slowMove = 0; f.slowAtk = 0; } f.slowMove = Math.max(f.slowMove, wb.slow); f.slowT = Math.max(f.slowT, api.dt * 1.5); }
+        } else if (f.momWeb && !(f.mortarWebT > api.t)) { f.momWeb = false; f.momWebOnly = false; f.web = null; }
+      }
+      // attention: nobody close while she hangs, and the mortar winds up
+      if (!hanging || stunned) { quiet = 0; shots = 0; return; }
+      const mo = cfg.mommy.mortar;
+      let holder = null, hd = cfg.mommy.near;
+      for (const f of api.sides[0]) if (visible(f)) { const d = d2(f, mw.x, mw.y); if (d <= hd) { hd = d; holder = f; } }
+      if (holder) { quiet = 0; shots = 0; out.held += api.dt; const hn = sqName(holder); out.holders[hn] = (out.holders[hn] || 0) + api.dt; return; }
+      quiet += api.dt;
+      if (!(mo.hit > 0) || quiet + 1e-9 < mo.wind + shots * mo.every) return;
+      shots++;
+      let best = null, bn = 0;
+      for (const f of api.sides[0]) {
+        if (!visible(f)) continue;
+        let n = 0; for (const h of api.sides[0]) if (visible(h) && d2(h, f.x, f.y) <= mo.r) n++;
+        if (n > bn) { bn = n; best = f; }
+      }
+      if (!best) return;
+      out.mortars++; if (out.mortarAt == null) out.mortarAt = api.t;
+      const bx = best.x, by = best.y;
+      if (api.record && api.shots) api.shots.push([mw.x, mw.y, bx, by, 1, mo.r, 1, 0, 0, 0, 0, 0, 0, 0]); // the boards draw it as a shot with a splash
+      for (const f of api.sides[0].slice()) {
+        if (!f.alive || f.u.aloft || d2(f, bx, by) > mo.r) continue;
+        api.hurt(mom, f, mo.hit, mw.x, mw.y);
+        if (f.alive && !f.u.structure) { f.web = { slow: mo.slow, dmg: mo.dmg, t: mo.secs, max: 90 }; f.momWeb = true; f.momWebOnly = true; f.mortarWebT = api.t + mo.secs; if (!f.u.unstoppable) { f.slowMove = Math.max(f.slowT > 0 ? f.slowMove : 0, mo.slow); f.slowT = Math.max(f.slowT, mo.secs); } }
+      }
+      if (mo.ammo) { let pick = null; for (const n of nests) if (n.alive && !(mo.ammoReach > 0 && d2(n, mw.x, mw.y) > mo.ammoReach) && (!pick || n.hp < pick.hp)) pick = n; if (pick) { api.hurt(mom, pick, 1e9, mw.x, mw.y); if (!pick.alive) { out.mortarNests++; out.nestDown[nests.indexOf(pick)] = -api.t; } } }
+    };
+    const sim = En.createBattle(A, B, g, { ...opts, bossTick, toTimer: true, record: !!o.record });
+    // it ends when she dies; result() carries what happened
+    const step0 = sim.step;
+    sim.step = function () { return mom.alive && step0.apply(sim, arguments); };
+    if (sim.isOver) { const over0 = sim.isOver; sim.isOver = function () { return !mom.alive || over0.apply(sim, arguments); }; }
+    let done = null;
+    const finish = () => {
+      if (done) return done;
+      for (const sq of m.armies[0]) { const bs = sim.bodies.filter((b) => b.side === 0 && b.squad === sq.id && !b.u.structure); if (bs.length) out.gone[nameOf(sq)] = bs.some((b) => b.alive) ? null : Math.max(...bs.map((b) => b.diedAt || 0)); }
+      out[hanging ? 'hang' : 'ground'] += last - Math.max(0, mom.hp); last = Math.max(0, mom.hp);
+      out.dead = !mom.alive; out.nestsLeft = nests.filter((n) => n.alive).length;
+      out.treasury = tre ? tre.alive : null;
+      out.left = sim.bodies.filter((b) => b.side === 0 && b.alive && !b.u.structure).length;
+      out.spiders = sim.bodies.filter((b) => b.side === 1 && b.alive && b !== mom && !b.u.structure).length;
+      out.by = {};
+      for (const b of sim.bodies) { if (b.side !== 0 || !(b.bossDealt > 0)) continue; const n = sqName(b); out.by[n] = (out.by[n] || 0) + b.bossDealt; }
+      out.hpLeft = Math.max(0, mom.hp);
+      out.carry = nests.map((n, k) => n.alive ? spots[k] : null).filter(Boolean);
+      return (done = out);
+    };
+    const result0 = sim.result;
+    sim.result = function () { const r = result0.apply(sim, arguments); const b = finish(); b.end = r.time; return { ...r, ...(mom.alive ? {} : { winner: 0 }), boss: b }; };
+    sim.boss = { mom, nests, out };
+    return sim;
+  }
+
+  // After Game.resolve has paid out the fight (experience, income, the treasury): her state carries on, the player's
+  // health stays full (there is none in this puzzle), the free extra deployment comes back, and the match ends when she
+  // is dead or the last round is over. Returns the round's report (also in m.boss.log).
+  function afterFight(m, res, summary) {
+    const b = res && res.boss; if (!m.boss || !b) return null;
+    const cfg = CFG;
+    m.boss.hp = b.hpLeft;
+    if (b.fallAt != null) m.boss.falls = (m.boss.falls || 0) + 1;
+    m.boss.carry = b.carry || [];
+    const rep = { round: b.round, fallAt: b.fallAt, window: b.fallAt != null ? Math.max(0, b.end - b.fallAt) : 0, mortars: b.mortars, mortarNests: b.mortarNests, nests: b.nests, nestsLeft: b.nestsLeft,
+      dmg: Math.round(b.hang + b.ground), hang: Math.round(b.hang), ground: Math.round(b.ground), hpLeft: Math.round(b.hpLeft), dead: !!b.dead, end: b.end, treasury: b.treasury, left: b.left, spiders: b.spiders,
+      by: Object.entries(b.by || {}).sort((x, y) => y[1] - x[1]).map(([n, d]) => [n, Math.round(d)]) };
+    m.boss.log.push(rep);
+    m.hp = [100, 100];
+    m.extraDeploys[0] = 1;
+    const last = b.round >= (m.boss.rounds || cfg.rounds);
+    m.over = !!b.dead || last; m.winner = b.dead ? 0 : last ? 1 : -1;
+    if (summary) { summary.boss = rep; summary.winner = b.dead ? 0 : -1; summary.timeout = !b.dead; }
+    return rep;
+  }
+
+  const api = { CFG, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  root.Boss = api;
+})(typeof window !== 'undefined' ? window : globalThis);
 
 // ===== The referee of a live match (server step 3, 2026-11-02) =====
 // The game server (server/src/room.js) keeps every live match and both phones send it actions, never state: each
@@ -15219,8 +15513,8 @@ const Art = (() => {
 const Render2D = (cv, view, opts = {}) => {
   let ctx = cv.getContext('2d'); // swapped for a moment while drawing map thumbnails (thumb)
   let m = null, me = 0, phase = 'start', units = [], mode = 'ai', bt = null, battlePre = null, fx = [], battleCam = null, win = null;
-  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null, foeStart = null;
-  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null, foeStart = null } = view()); };
+  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null, foeStart = null, boss = null;
+  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null, foeStart = null, boss = null } = view()); };
   // win (a 2v2 fight on a phone): { aspect, cols, x } the canvas is shaped for `aspect` columns, shows `cols` of them
   // (zoomed out up to the whole wide board) and starts at screen column x; the board sits in the middle top to bottom
   const foe = () => 1 - me;
@@ -15248,7 +15542,7 @@ const Render2D = (cv, view, opts = {}) => {
   // size from health, but a leveled unit (2x, 3x health) only counts part of its extra health, and swarms
   // (5+ bodies) even less, so level 2 and 3 squads don't crowd the board
   const LEVEL_SIZE = [1, 0.8, 0.65], SWARM_SIZE = [1, 0.72, 0.56];
-  const radius = (u) => Math.max(0.6, Math.min(2.4, 0.55 + Math.sqrt(u.hp * ((u.bodies >= 5 ? SWARM_SIZE : LEVEL_SIZE)[u.level | 0] || 1)) / 30)) * S;
+  const radius = (u) => u.drawR > 0 ? u.drawR * S : Math.max(0.6, Math.min(2.4, 0.55 + Math.sqrt(u.hp * ((u.bodies >= 5 ? SWARM_SIZE : LEVEL_SIZE)[u.level | 0] || 1)) / 30)) * S;
   const teamCol = (side) => Art.teamCol(side, me);
   const upOf = (side) => side === me ? 1 : -1;
 
@@ -15690,6 +15984,7 @@ const Render2D = (cv, view, opts = {}) => {
     }
     ctx.globalAlpha = 1;
     if (Game.isIce(v)) { drawStorm(v); if (phase === 'deploy' && Game.altarRound(v)) drawAltar(); } // the altar only stands while deploying
+    if (boss) drawBossPools();
     if (mp && mp.shrooms) for (const tl of v.map.tiles || []) {
       if (shroomShown(v, tl.col, tl.row)) drawShroomTile(tl);
       else if (!plain && myRemovalNow(tl.col, tl.row)) { // removed by you this round: a faint dashed outline until the fight
@@ -15953,6 +16248,33 @@ const Render2D = (cv, view, opts = {}) => {
       ctx.fillStyle = css('--ink'); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
       ctx.globalAlpha = 0.85; ctx.fillText(tag(u), (c + 0.5) * t, (r0 + 1) * t - 1); ctx.globalAlpha = 1;
     }
+  }
+
+  // the Mommy boss puzzle (view.boss from the page: Boss.preview): this round's poison pools, and while deploying her,
+  // her reach and this round's nests, see-through, each nest marked HIGH (only ranged units reach it) or LOW
+  const BOSS_POOL = '#7FD13B';
+  function drawBossPools() {
+    const t = tilePx(), time = phase === 'battle' && bt ? bt.time() : 0;
+    for (const [c0, r0, c1, r1] of boss.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+      const x = scol(c) * t, y = srow(r) * t;
+      ctx.fillStyle = BOSS_POOL; ctx.globalAlpha = 0.2 + 0.05 * Math.sin(time * 2 + c + r); ctx.fillRect(x + 1, y + 1, t - 2, t - 2);
+      ctx.fillStyle = '#C6F27A'; ctx.globalAlpha = 0.5; // a few bubbles
+      for (let k = 0; k < 3; k++) { const ph = (time * 0.6 + k * 0.37 + (c * 7 + r * 3) * 0.13) % 1; ctx.beginPath(); ctx.arc(x + t * (0.25 + 0.25 * k), y + t * (0.8 - 0.5 * ph), t * 0.05, 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawBossPreview() {
+    const t = tilePx(), side = foe(), col = teamCol(side), mo = boss.mommy;
+    ctx.strokeStyle = col; ctx.globalAlpha = 0.45; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); // her reach: inside it, a body holds her
+    ctx.beginPath(); ctx.arc(PX(mo.x), PY(mo.y), mo.reach * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.globalAlpha = 0.6; Shapes.body(ctx, mo.u.shape, PX(mo.x), PY(mo.y), radius(mo.u), upOf(side), mo.u.color, col, 0.6);
+    const fs = Math.max(8, Math.round(t * 0.24));
+    ctx.font = `600 ${fs}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const n of boss.nests) {
+      ctx.globalAlpha = 0.55; Shapes.body(ctx, n.u.shape, PX(n.x), PY(n.y), radius(n.u) * 0.85, upOf(side), n.u.color, col, 0.6);
+      ctx.globalAlpha = 0.9; ctx.fillStyle = n.low ? css('--ink') : col; ctx.fillText(n.low ? 'LOW' : 'HIGH', PX(n.x), PY(n.y) + t * 0.5);
+    }
+    ctx.globalAlpha = 1;
   }
 
   // round 1: the opponent's starting squads (view.foeStart from the page: [{ unit, x, y }] in board metres), see-through
@@ -16705,6 +17027,7 @@ const Render2D = (cv, view, opts = {}) => {
       drawSquad(phase === 'deploy' ? { ...sq, unit: look, col: p.col, row: p.row, level: Game.seenLevel(m, sq) } : { ...sq, unit: look }, foe(), false); // a level-up bought this round stays hidden
     }
     if (phase === 'deploy' && foeStart) drawFoeStart();
+    if (phase === 'deploy' && boss) drawBossPreview();
     // what rides inside a carrier: a small disc with its shape, bottom left of the tile (only its team sees it), ringed in
     // its player's colour in 2v2 (yours in your teammate's horse, theirs in yours)
     const riderBadge = (at, rider) => {
@@ -17552,7 +17875,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const AI_READY_MS = (() => { try { if (/[?&]test\b/.test(location.search)) { const v = /[?&]aiready=(\d+)/.exec(location.search); return v ? +v[1] : 0; } } catch (e) {} return 5000; })(); // UI tests: at once, unless ?aiready=ms
   // the opponent's account on a server match ({ tag, title }), if their phone has one
   const foePlayer = () => mode === 'net' && net.players && net.players[foe()] || null;
-  const foeName = () => (mode === 'sandbox' && sbx.foe) || (mode === 'spec' && tour.spec ? tour.spec.foe : '') || tourFoe() || (foePlayer() ? foePlayer().tag : '') || (mode === 'ai' || mode === 'tutorial' ? 'Enemy' : mode === 'claude' ? 'Claude' : 'Opponent'); // a tournament opponent by username
+  const foeName = () => (mode === 'sandbox' && sbx.foe) || (mode === 'spec' && tour.spec ? tour.spec.foe : '') || tourFoe() || (foePlayer() ? foePlayer().tag : '') || (m && m.boss ? 'Mommy' : mode === 'ai' || mode === 'tutorial' ? 'Enemy' : mode === 'claude' ? 'Claude' : 'Opponent'); // a tournament opponent by username (the Mommy boss puzzle: her)
   let me = 0;               // which side of the match this screen plays (the guest is side 1)
   const foe = () => 1 - me;
   let m = null;             // match state (on the guest: a copy kept in step by the host)
@@ -18450,7 +18773,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · a17a2c3'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · 66ac1c8'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -18931,7 +19254,13 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     battleCam: cam && cam.k > 0 ? { zoom: 1 + (CAM.zoom - 1) * cam.k, x: cam.x, y: cam.y, k: cam.k } : null,
     aim: phase === 'deploy' && (aimMode != null || aimDrag) ? { id: aimDrag ? aimDrag.id : aimMode, end: aimDrag ? aimDrag.end : hoverTile } : null, // (aimDrag without aimMode: a head dragged)
     placingBuilding: placingBuilding(), win: null, duo: duoBoard(),
-    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me], foeStart: foeStart() }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
+    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me], foeStart: foeStart(), boss: bossView() }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
+  // the Mommy boss puzzle: what both boards draw (Boss.preview: this round's pools, and while deploying her and the nests)
+  function bossView() {
+    const v = phase === 'battle' && battlePre ? battlePre : m;
+    if (!v || !v.boss || typeof Boss === 'undefined') return null;
+    try { return Boss.preview(v.units ? v : withUnits(v)); } catch (e) { return null; }
+  }
   // round 1 (2026-11-07): the opponent's package squads, as see-through figures side by side along the back row of their
   // zone, on the side away from their tower: which units they start with, not where they stand (Game.startSeen). Both
   // boards draw it (render2d drawFoeStart, render3d collectDeploy): [{ unit, x, y }] in board metres, or null
@@ -19205,6 +19534,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     const hpFull = net.duo && mode === 'net' ? Duo.HP : Game.startHp(v); // 2v2: the team's shared health
     $('hpbar-you').style.width = Math.min(100, hpMe / hpFull * 100) + '%';
     $('hpbar-foe').style.width = Math.min(100, hpFoe / hpFull * 100) + '%';
+    if (v && v.boss) { $('hp-foe').textContent = Math.round(v.boss.hp).toLocaleString('en'); $('hpbar-foe').style.width = Math.min(100, v.boss.hp / v.boss.max * 100) + '%'; } // the Mommy boss puzzle: her health
     $('round').textContent = v ? v.round : 1;
     for (const [id, sd] of [['streak-you', me], ['streak-foe', foe()]]) { // a live shutdown bounty on a win streak
       const n = v && v.streak ? v.streak[sd] || 0 : 0, el = $(id), b = Game.shutdownGold(n);
@@ -20204,7 +20534,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         ${fortOffer() ? (Game.fortifyOf(m, me) ? '<button class="btn small" id="fort-undo">Undo Fortify</button>' : `<button class="btn small" id="fort" ${can && Game.canFortify(m, me) ? '' : 'disabled'}>${placingFort() ? 'Cancel Fortify' : `Fortify · ${Game.FORTIFY.cost}`}</button>`) : ''}
         ${mageOffer() ? `<button class="btn small" id="mage-gen" ${can ? '' : 'disabled'}>${Game.mageGenOf(m, me) || Game.mageTpOf(m, me) ? [Game.mageGenOf(m, me), Game.mageTpOf(m, me) && 'teleport'].filter(Boolean).map(id => esc(Game.mageGenInfo(id).name)).join(' + ') : 'Mage general'}…</button>` : ''}
         ${tskillOffer() ? `<button class="btn small" id="buy-tskill" ${can && Game.canBuyTowerSkill(m, me) ? '' : 'disabled'}>${esc(Game.towerType(m, me).skill.name)} · ${Game.towerSkillCost(m, me)}</button>` : ''}
-        ${can && m.extraDeploys[me] > 0 && left > 0 ? `<button class="btn small" id="refund-deploy">Refund unused</button>` : ''}
+        ${can && m.extraDeploys[me] > 0 && left > 0 && !m.boss ? `<button class="btn small" id="refund-deploy">Refund unused</button>` : ''}
         ${Game.isDev(m) ? (() => { // Factions devtest: the building to place, spells, arrows, this round's pick
           const ub = Game.unplacedLesser(m, me), pk = Game.pickNow(m, me);
           return `${ub ? `<button class="btn small primary" id="dev-place" ${can ? '' : 'disabled'}>Place ${esc((Game.devBuilding(ub.id) || {}).name || 'building')}</button>` : ''}
@@ -20223,7 +20553,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       action = `<button class="btn primary" id="fight" ${m.armies[me].length && !choosingTower() ? '' : 'disabled'}>${deadline ? 'Fight now' : 'Fight'}</button>`;
     } else {
       const away = (mode === 'host' && !net.connected) || (mode === 'net' && !net.foeHere);
-      status = away ? 'Opponent is away. The clock is paused.' : ready[foe()] ? 'Opponent is ready.' : mode === 'host' && Game.needsTowerPick(m, 1) ? 'Opponent is picking their tower.' : 'Opponent is deploying.';
+      status = m.boss ? `${m.armies[me].length} squad${m.armies[me].length === 1 ? '' : 's'} on the board · at most ${m.boss.cap} of a kind` : away ? 'Opponent is away. The clock is paused.' : ready[foe()] ? 'Opponent is ready.' : mode === 'host' && Game.needsTowerPick(m, 1) ? 'Opponent is picking their tower.' : 'Opponent is deploying.';
       action = `<button class="btn ${ready[me] ? '' : 'primary'}" id="ready" ${timeUp || choosingTower() ? 'disabled' : ''}>${ready[me] ? 'Not ready' : 'Ready'}</button>`;
     }
     const showShop = !((choosingPack() || choosingTower() || devPicking()) && can);
@@ -20867,6 +21197,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         <div class="bar"><span class="hint">${factionsReady() ? 'Factions: draft two factions each.' : 'Factions mode: coming soon.'}</span><button class="btn small" id="factions-ai" ${factionsReady() ? '' : 'disabled'}>Factions vs AI</button></div>
         <div class="bar"><span class="hint">${devReady() ? 'Buildings, Powers and spells on the big board.' : 'No factions yet.'}</span><button class="btn small" id="devtest-ai" ${devReady() ? '' : 'disabled'}>Factions – devtest</button></div>
         <div class="bar"><span class="hint">DEVTESTLATEGAME on Standard (with treasuries): ${Game.START_HP + Game.LATE.hp} health each, at most ${Game.LATE.cap} squads of any one tier 3 or tier 4 unit.</span><span class="btnrow"><button class="btn small" id="late-friend">vs Friend</button><button class="btn small" id="late-ai">vs AI</button></span></div>
+        <div class="bar"><span class="hint">Mommy: the boss puzzle. Five rounds against a giant spider and her nests, on this phone.</span><button class="btn small" id="boss-ai">Mommy</button></div>
         <div class="bar"><span class="hint">2v2: two boards side by side. Invite three players, set the teams.</span><button class="btn small" id="duo-new">2v2 lobby</button></div>
         <div class="bar"><span class="hint">Exploit bot: the AI opponent plays one of the strongest lines the exploit lab found (docs/EXPLOITS-2026-11.md) instead of its normal self. Off is the normal AI. Applies to any match against the computer.</span>
           <div class="seg looks" role="group" aria-label="Exploit bot">${[{ id: '', short: 'Off' }].concat(ExploitBot.TACTICS.map(t => ({ id: t.id, short: t.short || t.name.split(' ')[0] })))
@@ -20896,6 +21227,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if ($('duo-new')) $('duo-new').addEventListener('click', () => duoHost());
     if ($('late-friend')) $('late-friend').addEventListener('click', () => { matchKind = 'standard'; lateGame = true; hostLobby(); });
     if ($('late-ai')) $('late-ai').addEventListener('click', () => { matchKind = 'standard'; lateGame = true; startAiMatch(); });
+    if ($('boss-ai')) $('boss-ai').addEventListener('click', () => { if (devMode()) startBoss(); });
     if ($('vs-claude')) $('vs-claude').addEventListener('click', startClaudeMatch);
     if ($('load-units')) $('load-units').addEventListener('click', openLoader);
     if ($('tour-new')) $('tour-new').addEventListener('click', () => tourCreate());
@@ -21089,6 +21421,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // the health a fallen tower cost its owner this round (less than TOWER_FALL_HP when the round's cap was near)
   const towerLoss = (sum, side) => sum.towerHp ? sum.towerHp[side] : Game.TOWER_FALL_HP;
   function showResult(sum) {
+    if (m && m.boss) { bossResult(sum); return; } // the Mommy boss puzzle: her report
     if (mode === 'tutorial') { tutResult(sum); return; }
     if (mode === 'spec') { specResult(sum); return; }
     if (mode === 'sandbox') { sbxResult(sum); return; }
@@ -22979,6 +23312,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (DIO && typeof dio !== 'undefined' && dio.api && dio.api.puzzles && phase === 'start' && !m) { closeSheet(true); dio.api.puzzles(); return; } // the Diorama's Puzzles screen
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Tutorial puzzles</h3><button class="btn small" id="close">Close</button></div>
       <p class="hint" style="margin:0">One fight each. You see the whole enemy army; win with the gold you have.</p>
+      ${devMode() && typeof Boss !== 'undefined' ? `<h4 class="puz-level" style="margin:6px 0 0;display:flex;justify-content:space-between;gap:8px">Weekly boss<span class="hint" style="font-weight:normal">developers only</span></h4>
+      <button class="btn" id="boss-weekly" style="display:flex;justify-content:space-between;gap:8px;text-align:left"><span><b>Weekly boss - The Mommy</b><br><span class="hint">Five rounds against a giant spider and her nests. Kill her by round 5.</span></span></button>` : ''}
       <p class="hint" style="margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${hasInitiate() ? 'The title is yours.' : `Solve the ${PUZ_TITLE.length} Easy puzzles for the title`} ${titleHtml('initiate')}</p>
       ${PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), done = ks.filter(k => puzSolvedAll().includes(k)).length;
         return `<h4 class="puz-level" style="margin:6px 0 0;display:flex;justify-content:space-between;gap:8px">${esc(L)}<span class="hint" style="font-weight:normal">${done} of ${ks.length} solved</span></h4>
@@ -22986,6 +23321,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     $('sheet-back').hidden = false;
     $('close').addEventListener('click', closeSheet);
     $('sheet').querySelectorAll('[data-puz]').forEach(b => b.addEventListener('click', () => startPuzzle(+b.dataset.puz)));
+    if ($('boss-weekly')) $('boss-weekly').addEventListener('click', () => startBoss());
   }
   // the fight is over: solved, or try again (with a hint)
   function puzResult(sum) {
@@ -23177,8 +23513,56 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     beginAiRound();
   }
 
+  // ---------- the Mommy boss puzzle (developer test, 2026-11-11; src/boss.js, docs/HANDOFF-BOSS-MOMMY.md) ----------
+  // Five rounds against one boss on your phone: the normal deploy panel and clock, no AI. A line over the board says the
+  // round's bite and her health; after each fight the report says when her nests fell, how long she was down, what her
+  // mortar did and who hurt her most.
+  function startBoss() {
+    if (typeof Boss === 'undefined') return;
+    leaveNet(); closeSheet(true);
+    mode = 'ai'; me = 0; report = null; lastAiLevels = [];
+    restoreSet();
+    m = Game.createMatch(units, M, (now() ^ (Math.random() * 1e9)) >>> 0, 'standard', null, [], { draft: false });
+    Boss.setup(m);
+    nextReady = [false, false]; rematch = [false, false];
+    beginAiRound();
+  }
+  const BITE_NOTE = { fast: 'fast and light: health holds her', heavy: 'slow and heavy: many bodies, shields and wards hold her', sweep: 'a sweep: one big body holds her' };
+  function bossLine() {
+    const p = bossView(); if (!p) return;
+    const low = p.nests.filter(n => n.low).length;
+    banner(`Mommy · round ${p.round} of ${p.rounds}`, `Her bite: ${BITE_NOTE[p.bite] || p.bite}. ${p.nests.length} nests (${low} low, ${p.nests.length - low} high). Health ${Math.round(p.hp).toLocaleString('en')}.`);
+  }
+  function bossResult(sum) {
+    const r = sum.boss || (m.boss.log || []).slice(-1)[0];
+    phase = m.over ? 'end' : 'result'; resultShownAt = now(); hud(); netStatus();
+    if (!r) { overlay(null); return; }
+    const s1 = (x) => x.toFixed(1);
+    const top = (r.by || []).slice(0, 3).map(([n, d]) => `${esc(n)} ${d.toLocaleString('en')}`).join(', ');
+    const lines = [
+      r.fallAt != null ? `Nests down at <b class="num">${s1(r.fallAt)} s</b>: she was down for <b class="num">${s1(r.window)} s</b>.` : `<b>She never fell</b>: ${r.nestsLeft} of ${r.nests} nests still hang.`,
+      `Mortar shots: <b class="num">${r.mortars}</b>${r.mortarNests ? ` (${r.mortarNests} of her nests spent on them)` : ''}.`,
+      `Damage to her: <b class="num">${r.dmg.toLocaleString('en')}</b> (${r.hang.toLocaleString('en')} while she hung).${top ? ` Most: ${top}.` : ''}`,
+      `Her health: <b class="num">${r.hpLeft.toLocaleString('en')}</b> of ${m.boss.max.toLocaleString('en')}.`,
+      r.treasury === false ? 'Her spiders broke your treasury.' : '',
+    ].filter(Boolean).map(x => `<p>${x}</p>`).join('');
+    const won = r.dead, title = won && r.round <= Boss.CFG.titleRound;
+    const head = won ? `Mommy is dead<br>round ${r.round}` : m.over ? 'She survived' : `Round&nbsp;${r.round}<br>done`;
+    overlay(`<div class="card">
+      <span class="eyebrow">Mommy · developer test</span>
+      <h2 class="${won ? 'you' : m.over ? 'foe' : ''}">${head}</h2>
+      ${won ? `<p class="big">${title ? 'Within ' + Boss.CFG.titleRound + ' rounds: that is the “Mommy” title (not given out yet).' : 'Beat her within ' + Boss.CFG.titleRound + ' rounds for the “Mommy” title.'}</p>` : ''}
+      ${lines}
+      <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>
+    </div>`);
+    if ($('boss-next')) $('boss-next').addEventListener('click', () => { overlay(null); beginAiRound(); });
+    if ($('boss-again')) $('boss-again').addEventListener('click', () => { overlay(null); startBoss(); });
+    if ($('boss-menu')) $('boss-menu').addEventListener('click', () => { overlay(null); m = null; showStart(); });
+  }
+
   function beginAiRound() {
     if (mode === 'tutorial') { tutRound(); enterDeploy(0); return; } // the enemy's army is set by the script; no clock
+    if (m && m.boss) { enterDeploy(timerOn ? deployMs() : 0); bossLine(); return; } // the Mommy boss puzzle: no AI, the normal clock
     if (mode === 'claude') { foeLeaderTurn(); startClaudeTurn(); enterDeploy(timerOn ? deployMs() : 0); return; } // Claude picks its leader first when it won round 1
     aiWaits = Game.needsLeaderPick(m, 1) && !Game.leaderTurn(m, 1); // the player picks a leader first: the AI deploys after (foeLeaderTurn)
     if (!aiWaits) aiFoeDeploy(1); // the AI commits first; its new squads stay hidden until the fight
@@ -23241,7 +23625,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     commitPick();
     if (mode === 'claude' && claude.busy) { if (!claude.fightWaiting) { claude.fightWaiting = true; selected = null; closeSheet(); panelDeploy(); } return; }
     closeSheet(); selected = null;
-    if (mode === 'ai' || (mode === 'claude' && claude.bot)) lastAiLevels = aiFoeLevel(1); // the AI spends its level-ups now
+    if (m.boss) lastAiLevels = []; // (the Mommy boss puzzle: nobody on the other side)
+    else if (mode === 'ai' || (mode === 'claude' && claude.bot)) lastAiLevels = aiFoeLevel(1); // the AI spends its level-ups now
     else if (mode !== 'claude') lastAiLevels = [];
     Game.ensureTower(m, 0); Game.ensureTower(m, 1);
     if (aiWaits && mode === 'ai') { aiWaits = false; Game.settleLeaders(m); aiFoeDeploy(1); } // the player never picked: their leader is settled, then the AI deploys
@@ -24108,7 +24493,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
-  const V3D = '11cac48cf5'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '91da03b9aa'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
@@ -29339,6 +29724,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       factions: () => factionsReady() ? '<b>Factions vs AI.</b> Draft two factions each.' : '<b>Factions.</b> Coming soon: not enough factions yet.',
       devtest: () => devReady() ? '<b>Factions · devtest.</b> Buildings, Powers and spells on the big board, against the AI.' : '<b>Devtest.</b> No factions yet.',
       late: () => `<b>Late game vs AI.</b> DEVTESTLATEGAME on Standard with treasuries: ${Game.START_HP + Game.LATE.hp} health each, at most ${Game.LATE.cap} squads of any one tier ${Game.LATE.tier} or tier 4 unit.`,
+      mommy: () => '<b>Mommy.</b> The boss puzzle: five rounds against a giant spider and her nests, on this phone. Kill her by round 5.',
       claude: () => sampleFn ? '<b>Vs Claude.</b> Claude plays the other side.' : '<b>Vs Claude.</b> Only where Claude can be reached (the game as a Claude artifact).',
       tours: () => '<b>Tournaments.</b> Host one, or practise against bots. Joining is by a link.',
       load: () => `<b>Load units.</b> ${customSet ? `Your ${units.length} Counter Lab units now.` : `${units.length} built-in units now.`} Load a Counter Lab set instead${reportDb ? '; matches are saved for Claude to review' : ''}.`,
@@ -29358,6 +29744,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       factions: () => { matchKind = 'factions'; lateGame = false; startAiMatch(); },
       devtest: () => { matchKind = 'devtest'; lateGame = false; startAiMatch(); },
       late: () => { matchKind = 'standard'; lateGame = true; startAiMatch(); },
+      mommy: () => startBoss(),
       claude: () => startClaudeMatch(),
       tours: () => openToursSheet(),
       load: () => openLoader(),
@@ -29569,7 +29956,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       $('pz-title').innerHTML = hasInitiate() ? `The title is yours. ${tchip}` : `Solve the ${PUZ_TITLE.length} Easy ones for the title ${tchip}`;
       const shards = ['0,12 92,0 100,84 7,100', '3,0 100,10 96,100 0,88', '0,8 97,0 100,92 3,100', '2,0 100,12 97,96 0,100'];
       let n = 0;
-      $('pz-list').innerHTML = PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), got = ks.filter(k => done.includes(k)).length;
+      // the weekly boss (developers only for now): the Mommy boss puzzle (startBoss)
+      $('pz-list').innerHTML = (devMode() && typeof Boss !== 'undefined' ? `<div class="pz-lv"><span class="k">Weekly boss</span><span class="pz-n">developers only</span></div><button class="item" data-boss="mommy"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[0]}"/></svg><span class="n">★</span>Weekly boss - The Mommy<small>5 rounds</small></button>` : '') + PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), got = ks.filter(k => done.includes(k)).length;
         return `<div class="pz-lv"><span class="k">${esc(L)}</span><span class="pz-n">${got} of ${ks.length} solved</span></div>` + ks.map(k => { n++;
           return `<button class="item${done.includes(k) ? ' done' : ''}${k === puzPick ? ' on' : ''}" data-puz="${k}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[k % 4]}"/></svg><span class="n">${String(n).padStart(2, '0')}</span>${esc(PUZZLES[k].name)}${done.includes(k) ? '<small>✓ solved</small>' : ''}</button>`; }).join(''); }).join('');
     }
@@ -29581,7 +29969,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     function closePuz() { if (!body.classList.contains('puz')) return; body.classList.remove('puz'); home.puz = false; want = VIEWS.play; body.querySelectorAll('.qnote').forEach(n => { n.style.display = 'none'; n._off = null; }); }
     $('pz-list').addEventListener('mouseover', (e) => { const b = e.target.closest('[data-puz]'); if (b && +b.dataset.puz !== puzPick) puzShow(+b.dataset.puz); });
     $('pz-list').addEventListener('focusin', (e) => { const b = e.target.closest('[data-puz]'); if (b && +b.dataset.puz !== puzPick) puzShow(+b.dataset.puz); });
-    $('pz-list').addEventListener('click', (e) => { const b = e.target.closest('[data-puz]'); if (b) startPuzzle(+b.dataset.puz); });
+    $('pz-list').addEventListener('click', (e) => { if (e.target.closest('[data-boss]')) { startBoss(); return; } const b = e.target.closest('[data-puz]'); if (b) startPuzzle(+b.dataset.puz); });
     $('pz-back').addEventListener('click', closePuz);
 
     // ── How to play (2026-11-10): the rules as chapters (the old sheet's, said for a PC and for the Standard map everyone
