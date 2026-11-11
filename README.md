@@ -287,6 +287,8 @@ From `docs/EXPLOITS-2026-11.md`: `mark`, `loanT`, `pack` and `vote` are in `UNDO
 
 The source is in `src/`. After changing it, run `node src/build.js` from the repo root. This rebuilds `index.html`, `lab.html` and `lab3d.html`.
 
+Publishing (`.github/workflows/pages.yml`): the site gets only the files listed in `.github/site-files.txt`, and the deploy minifies that copy (`tools/minify-site.js`: no comments, short local names). The repo's own files stay readable. A new file the pages load must be added to `site-files.txt`, or it will be missing on the site. To try the published version locally: copy the listed files to a folder, run `node tools/minify-site.js <folder>` (needs `terser` and `html-minifier-terser`), and serve that folder.
+
 - `engine.js`: the battle engine. Plain arithmetic only, so both phones in a live match play the same fight. Draws nothing.
 - `game.js`: match rules (gold, rounds, maps, characters, the AI, what each player may see of the other). Draws nothing.
 - `shapes.js`: how a unit looks: its shape, colour and 3-letter tag.

@@ -36,6 +36,17 @@ jobs:
           mkdir _site
           xargs -d '\n' -a "$RUNNER_TEMP/site-files" cp -r --parents -t _site/
           echo "Site size: $(du -sh _site | cut -f1), $(find _site -type f | wc -l) files"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Minify the published copy only (tools/minify-site.js): the game pages and the 3D board's files lose their
+      # comments and readable names. The repo's files stay as they are. Pinned versions, so a minifier update can't
+      # change the live game by surprise.
+      - name: Minify the pages and scripts
+        run: |
+          npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/min" terser@5.49.2 html-minifier-terser@7.2.0
+          NODE_PATH="$RUNNER_TEMP/min/node_modules" node tools/minify-site.js _site
+          echo "Site size: $(du -sh _site | cut -f1)"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
