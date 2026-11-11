@@ -422,6 +422,26 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 @keyframes hp-nudge-x { 0%, 100% { translate: 0 0; } 50% { translate: var(--nudge) 0; } }
 @keyframes hp-nudge-y { 0%, 100% { translate: 0 0; } 50% { translate: 0 var(--nudge); } }
 @media (prefers-reduced-motion: reduce) { .helper, .helper .hp-box { animation: none !important; } }
+/* the menu's guide (2026-11-11) is drawn as the Diorama's own notes (owner): cream type on the field with the field's
+   halo, a line under the label (over it when the label hangs below) and out to a dot on the thing. Got it is the
+   notes' small saffron button (.rw-btn), Turn off helpers a plain underlined word */
+.helper.line { max-width: 236px; filter: none; animation: none !important; font: 700 15px/1.3 "Bricolage Grotesque", system-ui, sans-serif; color: #F4ECD8; text-shadow: 0 0 3px #2E3E9C, 0 0 6px #2E3E9C, 0 0 10px #2E3E9C, 0 0 14px #2E3E9C; }
+.helper.line .hp-box { display: block; padding: 0 0 9px; background: none; clip-path: none; animation: hp-fade .25s ease both; }
+.helper.line[data-line="over"] .hp-box { padding: 9px 0 0; }
+.helper.line .hp-box b { display: block; font-size: 15px; }
+.helper.line .hp-box span { display: block; margin-top: 4px; font-size: 13px; font-weight: 700; opacity: .88; }
+.helper.line .hp-row { margin-top: 9px; gap: 14px; }
+.helper.line .hp-row button { color: #F4ECD8; font-size: 12.5px; opacity: .8; }
+.helper.line .hp-row #hp-ok { display: inline-flex; align-items: center; height: 24px; padding: 2px 11px 0 9px; font: 700 16px/1 "Chakra Petch", "Arial Narrow", sans-serif; text-transform: uppercase; letter-spacing: -.01em; color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; opacity: 1; transition: transform .15s ease; }
+.helper.line .hp-row #hp-ok:hover, .helper.line .hp-row #hp-ok:focus-visible { color: #17140F; transform: rotate(-1.5deg) scale(1.04); }
+.helper.line .hp-ln { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; color: #F4ECD8; animation: hp-fade .25s ease both; }
+.helper.line .hp-ln path { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.helper.line .hp-ln .dot { fill: currentColor; }
+.helper.line .hp-ln .ring { fill: none; stroke: currentColor; stroke-width: 1; opacity: .5; }
+.helper.line .hp-ln .pulse { fill: none; stroke: currentColor; stroke-width: 1.5; transform-box: fill-box; transform-origin: center; animation: hp-ring 1.8s ease-out infinite; }
+@keyframes hp-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hp-ring { 0% { transform: scale(1); opacity: .7; } 70%, 100% { transform: scale(2.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .helper.line .hp-ln, .helper.line .hp-ln .pulse { animation: none !important; } .helper.line .hp-ln .pulse { opacity: 0; } }
 /* tutorial: the coach line over the board, a ring on what it talks about, and a glow on the next thing to tap */
 .board-banner { position: absolute; left: 0; right: 0; top: 42%; z-index: 4; pointer-events: none; text-align: center; padding: 14px 8px; background: linear-gradient(90deg, transparent, rgba(13, 19, 21, 0.88) 18%, rgba(13, 19, 21, 0.88) 82%, transparent); border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold); color: var(--gold); font-size: 26px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; animation: banner-in 3.2s ease both; }
 .board-banner small { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; color: var(--text, #e8e6df); }
@@ -1494,12 +1514,15 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   let selected = null;      // unit index chosen in the shop
   // helpers (2026-11-10): the yellow notes of a first game against the computer. off: switched off (Settings, or a
   // note's own "Turn off helpers"); seen: the notes shown or done already; done: a whole game has been finished with
-  // them. On by default, except on a device that finished the old guided tutorial
+  // them. On by default, except on a device that finished the old guided tutorial. menu (2026-11-11): the main menu's
+  // guide. null: this device never had it (only a guest's first time in starts it, guideStart); a list: its notes
+  // shown already. ?guide starts it over on any device, to look at it
   const HELP_STORE = 'pb-helpers';
-  let helpers = { off: false, seen: [], done: false };
+  let helpers = { off: false, seen: [], done: false, menu: null };
   try { const h = JSON.parse(localStorage.getItem(HELP_STORE) || 'null');
-    if (h && Array.isArray(h.seen)) helpers = { off: !!h.off, seen: h.seen.map(String), done: !!h.done };
+    if (h && Array.isArray(h.seen)) helpers = { off: !!h.off, seen: h.seen.map(String), done: !!h.done, menu: Array.isArray(h.menu) ? h.menu.map(String) : null };
     else if (localStorage.getItem('phonebellum.tutorial.v1') === 'done') helpers.off = true; } catch (e) {}
+  if (qs.has('guide')) { helpers.off = false; helpers.menu = []; }
   let rangeOf = null;       // { side, id }: the squad last tapped on the board; its range shows as a dotted ring
   let inspect = null, inspectHtml = ''; // a fight: the body tapped (its card shows, see inspectCard), and what the card shows now
   let bt = null;            // battle being played back
@@ -3201,13 +3224,82 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   ];
   let helpCur = null, helpSince = 0, helpRaf = 0, helpEval = 0, helpFlash = 0;
   const helpActive = () => mode === 'ai' && !!m && !helpers.off && !helpers.done && document.documentElement.classList.contains('pc') && ['deploy', 'battle', 'result', 'end'].includes(phase);
-  // the match's screens call this (hud): the notes run while a game against the computer is on
+
+  // ---------- the menu's guide (2026-11-11): a guest's first time on the main menu, on a PC ----------
+  // Notes on the Diorama's main menu, one at a time: How to play first ("New here?"), then Puzzles, Play, Units, the
+  // battlefield, the music, your name (what signing in gives a guest) and Settings. While it runs its note is the only
+  // one on screen (helpTour). Only for a guest who comes in from
+  // the welcome screen for the first time on this device (guideStart): nobody else ever gets it. A note goes with Got
+  // it, when its thing is pressed (How to play, Play), or once it has been read and the player has gone to another
+  // screen; something lying over the menu for a moment (a dropdown, a sheet, the playlist) only hides it. "Turn off
+  // helpers" is Settings' Helpers, the one switch for every yellow note; On starts these over as well.
+  const dioHas = (...c) => { const D = $('dio'); return !!D && c.some(x => D.classList.contains(x)); };
+  const dioQ = (sel) => { const D = $('dio'); return D ? D.querySelector(sel) : null; };
+  // menu: one of these.
+  // must: shown even in a window with no free spot for it (the others are left out there, helperLine); own: its
+  // thing, where `at` is a point or a box on it; side, along, off, lean: where its dot stands (which edge, how far along it and off it) and which way its label runs
+  const MENU_KEEP = ['#play', '#puzzles-open', '#how', '.menu [data-cam="units"]', '.menu [data-cam="ranks"]', '.music', '.bf-note', '.acct', '.logo'];
+  const MENU_TIPS = [
+    { id: 'how', menu: true, must: true, show: () => true, done: () => dioHas('how'), at: () => { const e = $('how'), g = wordBox(e); return e.getBoundingClientRect().width ? g : null; }, get own() { return $('how'); }, side: 'right', off: 15, h: 'New here?', t: 'Press here to learn how the game works.' }, // (the dot at the end of the word's letters)
+    { id: 'puzzles', menu: true, show: () => true, done: () => dioHas('puz'), at: () => $('puzzles-open'), side: 'rail', h: 'Puzzles.', t: 'Small battles to solve. Each one teaches you one idea.' },
+    { id: 'play', menu: true, get own() { return $('play'); }, show: () => true, done: () => dioHas('play', 'in-rooms'), at: () => { const r = $('play').getBoundingClientRect(); return r.width ? { x: r.left + Math.min(r.width * 0.3, 150), y: r.top + 4 } : null; }, side: 'top', h: 'Ready to fight?', t: 'Start with a game against the computer. Notes like this one point out what to press.' }, // (on the shard's top edge, over the word)
+    { id: 'units', menu: true, show: () => true, done: () => dioHas('pinned') && dioHas('units'), at: () => dioQ('.menu [data-cam="units"]'), side: 'rail', h: 'Units.', t: 'Every unit in the game: what it does and what it beats.' },
+    { id: 'field', menu: true, get own() { return dioQ('.bf-note'); }, show: () => true, at: () => dioQ('.bf-note .bf-btn'), side: 'left', h: 'Your battlefield.', t: 'This is the board you play on. Change its look here.' },
+    { id: 'music', menu: true, show: () => true, at: () => dioQ('.music'), side: 'top', along: 0.8, off: 12, lean: -1, h: 'Music.', t: 'Pause or skip a song here. Playlist lets you pick what plays.' },
+    { id: 'guest', menu: true, show: () => !(acct && acct.google) && $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(2)'), side: 'bottom', only: true, off: 13, lean: 1, h: 'You’re a guest.', t: 'Click your name to sign in with Google. It keeps your name and results, and opens Ranked and Friends.' },
+    { id: 'settings', menu: true, show: () => $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(3)'), side: 'bottom', only: true, off: 13, lean: -1, h: 'That’s the menu.', t: 'Settings has the sound, full screen and Helpers: these notes, On or Off.' },
+  ];
+  const menuActive = () => DIO && !!helpers.menu && !helpers.off && phase === 'start' && !m && document.documentElement.classList.contains('pc') && MENU_TIPS.some(T => !helpers.menu.includes(T.id));
+  // the plain main menu is on screen (not Play, Rooms, Profile, Puzzles, How to play, or Units / Rankings clicked open)
+  const menuHome = () => dio.shown && home.screen === 'menu' && !dioHas('welcome', 'play', 'profile', 'puz', 'how', 'pinned', 'in-rooms', 'in-create', 'in-history');
+  // something lies over it for a moment: a sheet, a dropdown, the playlist (or the island is still flying)
+  const menuOver = () => !$('sheet-back').hidden || dioHas('music-open') || !$('dd-friends').hidden || !$('dd-settings').hidden || !!(dio.api && dio.api.flying && dio.api.flying());
+  // while the tour has a note to show on the menu, it is the only note on screen: every note on the island (the
+  // golem's, the hover hint, a pointed-at piece's) and the menu words' own white notes (with Full leaderboard) are
+  // off, and back when the tour is done or off (owner, 2026-11-11; src/diorama.js asks: notes(), showing())
+  const helpTour = () => (menuActive() && home.screen === 'menu' && MENU_TIPS.some(T => !helpers.menu.includes(T.id) && !T.cramped && T.show()))
+    || (!!helpFlash && DIO && dio.shown); // (and while its last note, "Helpers are off", is up)
+  // the account's own notes (Stay logged in?, a new title or skin) wait for the tour as well: when it ends, the
+  // menu is drawn again and they come
+  let tourWas = false;
+  function tourSync() { const on = helpTour(); if (on === tourWas) return; tourWas = on; if (!on && DIO && dio.api && phase === 'start' && !m) dio.api.draw(); }
+  // a guest comes in from the welcome screen (Play as guest, Sign up as a guest). The first time on this device starts
+  // the guide; a device that has played here before (a game with helpers, a puzzle, the old tutorial, an account that
+  // logged out: guideNever) has had its first time
+  const guideNever = () => { if (!helpers.menu) { helpers.menu = MENU_TIPS.map(T => T.id); saveHelpers(); } };
+  function guideStart() {
+    if (helpers.menu) return;
+    let old = helpers.done || helpers.seen.length > 0 || puzSolved.length > 0;
+    try { old = old || localStorage.getItem('phonebellum.tutorial.v1') === 'done'; } catch (e) {}
+    if (old) return guideNever();
+    helpers.menu = []; saveHelpers(); tourWas = true; helperWake();
+  }
+  let menuRead = 0, menuLast = 0; // how long the note has been up to be read (frames it was on screen: a stalled page counts for little)
+  function menuPick(t) {
+    if (helpCur && !helpCur.menu) { helpCur = null; helperDraw(null); } // (a match's note left over)
+    if (helpCur && $('helper').style.visibility !== 'hidden') menuRead += Math.min(250, t - menuLast);
+    menuLast = t;
+    let dirty = false;
+    const see = (id) => { if (!helpers.menu.includes(id)) { helpers.menu.push(id); dirty = true; } };
+    for (const T of MENU_TIPS) if (T.done && T.done()) see(T.id);
+    const here = menuHome(), next = here && !menuOver() ? MENU_TIPS.find(T => !helpers.menu.includes(T.id) && !T.cramped && T.show()) || null : null;
+    if (next !== helpCur) {
+      if (helpCur && !here && menuRead > 1200) see(helpCur.id); // read, and the player has gone to another screen
+      helpCur = next && !helpers.menu.includes(next.id) ? next : null; menuRead = 0; helperDraw(helpCur);
+    }
+    if (dirty) saveHelpers();
+  }
+
+  // the match's screens call this (hud), and so does the menu: the notes run while a game against the computer is
+  // on, or while the menu's guide has notes left
   function helperWake() {
-    if (!helpActive()) { if (helpCur) { helpCur = null; helperDraw(null); } return; }
+    if (!helpActive() && !menuActive()) { if (helpCur) { helpCur = null; helperDraw(null); } return; }
     if (!helpRaf) helpRaf = requestAnimationFrame(helperFrame);
   }
   function helperFrame(t) {
-    helpRaf = 0;
+    helpRaf = 0; tourSync();
+    if (menuActive()) { if (t - helpEval > 120) { helpEval = t; menuPick(t); } helperPlace(); helpRaf = requestAnimationFrame(helperFrame); return; }
+    if (helpCur && helpCur.menu) { helpCur = null; helperDraw(null); } // (the menu's note: a match has started)
     if (!helpActive()) { helpCur = null; if (!helpFlash) helperDraw(null); return; } // (the last note, "Helpers are off", goes by itself)
     if (m.over) { helpers.done = true; saveHelpers(); helpCur = null; helperDraw(null); return; } // a whole game: that was the first one
     if (t - helpEval > 120) { helpEval = t; helperPick(t); }
@@ -3229,7 +3321,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   function helperDraw(T, plain) {
     const el = $('helper'); clearTimeout(helpFlash); helpFlash = 0;
     if (!T) { el.hidden = true; el.innerHTML = ''; return; }
-    el.innerHTML = `<div class="hp-box"><b>${T.h}</b><span>${typeof T.t === 'function' ? T.t() : T.t}</span>${plain ? '' : '<div class="hp-row"><button id="hp-ok">Got it</button><button id="hp-off">Turn off helpers</button></div>'}</div><i class="hp-tail"></i>`;
+    const line = !!(T.menu || T.line); // the menu's notes: the Diorama's own (a line and a dot), not the yellow box
+    el.classList.toggle('line', line); if (line) el.removeAttribute('data-side'); else el.removeAttribute('data-line');
+    el.innerHTML = `${line ? '<svg class="hp-ln" aria-hidden="true"><path/><circle class="pulse" r="9"/><circle class="ring" r="9"/><circle class="dot" r="4.5"/></svg>' : ''}<div class="hp-box"><b>${T.h}</b><span>${typeof T.t === 'function' ? T.t() : T.t}</span>${plain ? '' : '<div class="hp-row"><button id="hp-ok">Got it</button><button id="hp-off">Turn off helpers</button></div>'}</div>${line ? '' : '<i class="hp-tail"></i>'}`;
     el.hidden = false; el.style.visibility = 'hidden'; // (shown once it has its place)
     helperPlace(T);
   }
@@ -3237,8 +3331,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   function helperPlace(T = helpCur) {
     const el = $('helper'); if (!T || el.hidden) return;
     const a = T.at(); if (!a) { el.style.visibility = 'hidden'; return; }
-    const r = a.getBoundingClientRect ? a.getBoundingClientRect() : { left: a.x, right: a.x, top: a.y, bottom: a.y, width: 1, height: 1 };
+    const r = a.getBoundingClientRect ? a.getBoundingClientRect() : a.width != null ? a : { left: a.x, right: a.x, top: a.y, bottom: a.y, width: 1, height: 1 }; // (an element, a box or a point)
     if (!r.width && !r.height) { el.style.visibility = 'hidden'; return; }
+    if (el.classList.contains('line')) return helperLine(T, el, a, r);
     const w = el.offsetWidth, h = el.offsetHeight, gap = 13, W = innerWidth, H = innerHeight, cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
     // its own side first, then the opposite one, then the other two: the first with room that doesn't lie over READY
     const flip = { right: 'left', left: 'right', top: 'bottom', bottom: 'top' }, turn = T.side === 'right' || T.side === 'left' ? ['bottom', 'top'] : ['right', 'left'];
@@ -3253,19 +3348,74 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (el.dataset.side !== side) el.dataset.side = side;
     el.style.left = Math.round(x) + 'px'; el.style.top = Math.round(y) + 'px'; el.style.visibility = '';
   }
+  // A menu note, as the Diorama's notes are drawn: the dot stands on the thing's edge (T.side; T.along: how far along
+  // that edge, 0 to 1), and the label lies off it with its line: under the label when the label is above or beside the
+  // dot, over it when the label hangs below. T.lean: which way the label runs from the dot (1: right, or down the
+  // side; -1: left, or up). The label lies over none of the menu's words, the music, Change battlefield or the top
+  // line (MENU_KEEP); the first spot that is free and on screen is taken: its own side both ways, then the opposite
+  // side, then the other two; a spot in the open field (off the island) before one over it (the island's own notes
+  // are off while the tour runs: helpTour). None free: the menu's first note takes a spot with room anyway (T.must);
+  // any other waits for a bigger window (T.cramped: menuPick goes on to the next). T.side 'rail' (Puzzles, Units: no
+  // room beside them) has one spot: over PLAY, at the end of a rail up the left margin
+  const wordBox = (e) => { // a menu word's letters (its button is wider, and its shard only shows when pointed at)
+    if (!e.matches('.menu .sub .item')) return e.getBoundingClientRect();
+    let l = 1e9, t = 1e9, r = -1e9, b = -1e9; const tw = document.createTreeWalker(e, NodeFilter.SHOW_TEXT), rg = document.createRange();
+    for (let n = tw.nextNode(); n; n = tw.nextNode()) { rg.selectNodeContents(n); for (const q of rg.getClientRects()) { l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom); } }
+    return r > l ? { left: l, top: t, right: r, bottom: b, width: r - l, height: b - t } : e.getBoundingClientRect();
+  };
+  function helperLine(T, el, a, r) {
+    const w = el.offsetWidth, h = el.offsetHeight, W = innerWidth, H = innerHeight, isEl = a instanceof Element, D = a.x != null ? 0 : T.off == null ? 6 : T.off, OUT = 44, RUN = 34;
+    const keep = MENU_KEEP.map(dioQ).filter(e => e && e !== a && e !== T.own && !(isEl && e.contains(a)) && getComputedStyle(e).display !== 'none').map(wordBox).filter(g => g.width);
+    const al = T.along == null ? 0.5 : T.along;
+    // the island on screen (its top and the earth under it): a label is better off in the open field
+    let isle = null; try { isle = dio.api && dio.api.isle ? dio.api.isle() : null; } catch (e) {}
+    const inQuad = (px, py) => { let s = 0; for (let i = 0; i < 4; i++) { const [ax, ay] = isle[i], [bx, by] = isle[(i + 1) % 4], c = (bx - ax) * (py - ay) - (by - ay) * (px - ax); if (c) { if (s && (c > 0) !== (s > 0)) return false; s = c; } } return true; };
+    const onIsle = (x, y) => { if (!isle) return false; for (let i = 0; i <= 4; i++) for (let j = 0; j <= 3; j++) { const px = x + w * i / 4, py = y + h * j / 3; if (inQuad(px, py) || inQuad(px, py - 30) || inQuad(px, py - 58)) return true; } return false; };
+    const spot = (sd, lean) => {
+      let dx, dy, x, y, ly, over = false, join = null;
+      if (sd === 'rail') { // a left-hand menu word (as its white hover note): the dot before the word, a rail up the left margin to a label over PLAY (and over Back to match, when that's there)
+        const pr = $('play').getBoundingClientRect(), bt = $('dio-backto'), br = bt && bt.offsetHeight ? bt.getBoundingClientRect() : null;
+        dx = r.left - 16; dy = r.top + (r.bottom - r.top) * 0.55; ly = (br ? Math.min(pr.top, br.top) : pr.top) - 34; x = dx + 18; y = ly - h; join = dx;
+      } else if (sd === 'top' || sd === 'bottom') { // the label above (its line under it) or below (its line over it), run off to one side of the dot
+        dx = r.left + (r.right - r.left) * al; dy = sd === 'top' ? r.top - D : r.bottom + D; over = sd === 'bottom';
+        // (near the screen's edge the label slides back in along its line, and the line from the dot meets it part-way)
+        ly = sd === 'top' ? dy - OUT : dy + OUT; x = Math.max(8, Math.min(W - 8 - w, lean > 0 ? dx + RUN : dx - RUN - w)); y = over ? ly : ly - h;
+        join = Math.max(x, Math.min(x + w, dx + lean * RUN));
+      } else { // beside it: the label's line under it, a little below the dot (or over it, a little above)
+        dx = sd === 'right' ? r.right + D : r.left - D; dy = r.top + (r.bottom - r.top) * al; over = lean < 0;
+        ly = over ? dy - 30 : dy + 30; x = sd === 'right' ? dx + 26 : dx - 26 - w; y = over ? ly : ly - h;
+      }
+      if (join == null) join = sd === 'right' ? x : x + w;
+      return { dx, dy, x, y, ly, join, over, ok: x >= 8 && x + w <= W - 8 && y >= 8 && y + h <= H - 8,
+        clear: keep.every(g => x + w < g.left - 4 || x > g.right + 4 || y + h < g.top - 4 || y > g.bottom + 4), field: !onIsle(x, y) };
+    };
+    const flip = { right: 'left', left: 'right', top: 'bottom', bottom: 'top' }, turn = T.side === 'right' || T.side === 'left' ? ['bottom', 'top'] : ['right', 'left'], ln = T.lean || 1;
+    const all = T.side === 'rail' ? [spot('rail', 1)] : (T.only ? [T.side] : [T.side, flip[T.side], ...turn]).flatMap(sd => [spot(sd, ln), spot(sd, -ln)]); // (T.only: a thing on the top line has its label under it, nowhere else)
+    const q = all.find(c => c.ok && c.clear && c.field) || all.find(c => c.ok && c.clear) || (T.must ? all.find(c => c.ok) || all[0] : null);
+    if (!q) { T.cramped = true; el.style.visibility = 'hidden'; return; }
+    const X = Math.round(q.x), Y = Math.round(q.y), n = (v) => Math.round(v * 10) / 10, sv = el.querySelector('.hp-ln');
+    if (el.dataset.line !== (q.over ? 'over' : 'under')) el.dataset.line = q.over ? 'over' : 'under';
+    sv.querySelector('path').setAttribute('d', `M${n(q.dx - X)} ${n(q.dy - Y)} L${n(q.join - X)} ${n(q.ly - Y)} M${n(Math.min(q.x, q.join) - X)} ${n(q.ly - Y)} L${n(Math.max(q.x + w, q.join) - X)} ${n(q.ly - Y)}`);
+    for (const c of sv.querySelectorAll('circle')) { c.setAttribute('cx', n(q.dx - X)); c.setAttribute('cy', n(q.dy - Y)); }
+    el.style.left = X + 'px'; el.style.top = Y + 'px'; el.style.visibility = '';
+  }
   // Settings' Helpers, and a note's own "Turn off helpers". On: they start over, from the next thing to do
-  function setHelpers(on) {
-    helpers = { off: !on, seen: [], done: false }; saveHelpers();
-    helpCur = null; helperDraw(null); helperWake();
+  function setHelpers(on, later) {
+    helpers = { off: !on, seen: [], done: false, menu: helpers.menu ? [] : null }; saveHelpers(); // (the menu's guide too, on a device that had it)
+    helpCur = null; helperDraw(null); helperWake(); if (!later) tourSync();
   }
   $('helper').addEventListener('click', (e) => {
-    if (e.target.closest('#hp-ok') && helpCur) { helpers.seen.push(helpCur.id); saveHelpers(); helpCur = null; helperDraw(null); }
+    if (e.target.closest('#hp-ok') && helpCur) { (helpCur.menu ? helpers.menu : helpers.seen).push(helpCur.id); saveHelpers(); helpCur = null; helperDraw(null); }
     else if (e.target.closest('#hp-off')) { // off, and one last note says where they can be had back
-      setHelpers(false);
-      if ($('cog') && $('cog').getBoundingClientRect().width) { helperDraw({ at: () => $('cog'), side: 'bottom', h: 'Helpers are off.', t: 'Settings turns them back on.' }, true); helpFlash = setTimeout(() => { helpFlash = 0; helperDraw(null); }, 4200); }
+      const where = helpCur && helpCur.menu ? dioQ('.acct button:nth-of-type(3)') : $('cog'); // the menu's Settings, or the match's
+      setHelpers(false, true);
+      if (where && where.getBoundingClientRect().width) { helperDraw({ at: () => where, side: 'bottom', only: true, must: true, off: 13, lean: -1, line: !!(DIO && dio.shown), h: 'Helpers are off.', t: 'Settings turns them back on.' }, true); helpFlash = setTimeout(() => { helpFlash = 0; helperDraw(null); tourSync(); }, 4200); }
+      tourSync();
     }
   });
-  addEventListener('resize', () => helperPlace());
+  // (on the menu that last note lies where Settings opens: a press anywhere else puts it away)
+  addEventListener('pointerdown', (e) => { if (helpFlash && DIO && dio.shown && !e.target.closest('#helper')) { helperDraw(null); tourSync(); } }, true);
+  addEventListener('resize', () => { for (const T of MENU_TIPS) T.cramped = false; helperPlace(); });
 
   function setNet(text, state) {
     const n = $('net');
@@ -4464,6 +4614,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     const r = await acctCall('guest', {});
     home.busy = false;
     if (r.status === 200) acctTake(r);
+    guideStart(); // a guest's first time in: the menu's guide
     homeDone();
   }
   // Sign up (its own screen: a username, then Google or a guest with that name) and Log in (Google)
@@ -4493,7 +4644,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       signMsg('One moment…');
       const r = await acctCall('guest', tag ? { tag } : {});
       if (r.status !== 200) { signMsg(acctFail(r)); return; }
-      acctTake(r); homeDone();
+      acctTake(r); guideStart(); homeDone();
     });
     acctUi.after = async (r) => { // Google said yes (acctGoogle): Sign up keeps the username typed here
       const tag = up && tagIn ? tagIn.value.trim() : '';
@@ -5528,6 +5679,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // Log out (Profile): signed out on this phone, back to the welcome screen
   async function acctLogOut() {
     await acctSignOut();
+    guideNever(); // (whoever comes in next on this device isn't here for the first time: no menu guide)
     acctUi.outSure = false;
     try { localStorage.removeItem(WELCOME_STORE); sessionStorage.removeItem(WELCOME_STORE); } catch (e) {}
     closeSheet(true); home.screen = 'welcome'; home.msg = '';
