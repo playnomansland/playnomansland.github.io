@@ -18439,7 +18439,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · e115390'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 16cccdc'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19269,7 +19269,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const helpActive = () => mode === 'ai' && !!m && !helpers.off && !helpers.done && document.documentElement.classList.contains('pc') && ['deploy', 'battle', 'result', 'end'].includes(phase);
 
   // ---------- the menu's guide (2026-11-11): a guest's first time on the main menu, on a PC ----------
-  // The same yellow notes on the Diorama's main menu, one at a time: How to play first ("New here?"), then Play, the
+  // Notes on the Diorama's main menu, one at a time: How to play first ("New here?"), then Puzzles, Play, Units, the
   // battlefield, the music, your name (what signing in gives a guest) and Settings. While it runs its note is the only
   // one on screen (helpTour). Only for a guest who comes in from
   // the welcome screen for the first time on this device (guideStart): nobody else ever gets it. A note goes with Got
@@ -19284,7 +19284,9 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const MENU_KEEP = ['#play', '#puzzles-open', '#how', '.menu [data-cam="units"]', '.menu [data-cam="ranks"]', '.music', '.bf-note', '.acct', '.logo'];
   const MENU_TIPS = [
     { id: 'how', menu: true, must: true, show: () => true, done: () => dioHas('how'), at: () => { const e = $('how'), g = wordBox(e); return e.getBoundingClientRect().width ? g : null; }, get own() { return $('how'); }, side: 'right', off: 15, h: 'New here?', t: 'Press here to learn how the game works.' }, // (the dot at the end of the word's letters)
+    { id: 'puzzles', menu: true, show: () => true, done: () => dioHas('puz'), at: () => $('puzzles-open'), side: 'rail', h: 'Puzzles.', t: 'Small battles to solve. Each one teaches you one idea.' },
     { id: 'play', menu: true, get own() { return $('play'); }, show: () => true, done: () => dioHas('play', 'in-rooms'), at: () => { const r = $('play').getBoundingClientRect(); return r.width ? { x: r.left + Math.min(r.width * 0.3, 150), y: r.top + 4 } : null; }, side: 'top', h: 'Ready to fight?', t: 'Start with a game against the computer. Notes like this one point out what to press.' }, // (on the shard's top edge, over the word)
+    { id: 'units', menu: true, show: () => true, done: () => dioHas('pinned') && dioHas('units'), at: () => dioQ('.menu [data-cam="units"]'), side: 'rail', h: 'Units.', t: 'Every unit in the game: what it does and what it beats.' },
     { id: 'field', menu: true, get own() { return dioQ('.bf-note'); }, show: () => true, at: () => dioQ('.bf-note .bf-btn'), side: 'left', h: 'Your battlefield.', t: 'This is the board you play on. Change its look here.' },
     { id: 'music', menu: true, show: () => true, at: () => dioQ('.music'), side: 'top', along: 0.8, off: 12, lean: -1, h: 'Music.', t: 'Pause or skip a song here. Playlist lets you pick what plays.' },
     { id: 'guest', menu: true, show: () => !(acct && acct.google) && $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(2)'), side: 'bottom', only: true, off: 13, lean: 1, h: 'You’re a guest.', t: 'Click your name to sign in with Google. It keeps your name and results, and opens Ranked and Friends.' },
@@ -19396,7 +19398,8 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // line (MENU_KEEP); the first spot that is free and on screen is taken: its own side both ways, then the opposite
   // side, then the other two; a spot in the open field (off the island) before one over it (the island's own notes
   // are off while the tour runs: helpTour). None free: the menu's first note takes a spot with room anyway (T.must);
-  // any other waits for a bigger window (T.cramped: menuPick goes on to the next)
+  // any other waits for a bigger window (T.cramped: menuPick goes on to the next). T.side 'rail' (Puzzles, Units: no
+  // room beside them) has one spot: over PLAY, at the end of a rail up the left margin
   const wordBox = (e) => { // a menu word's letters (its button is wider, and its shard only shows when pointed at)
     if (!e.matches('.menu .sub .item')) return e.getBoundingClientRect();
     let l = 1e9, t = 1e9, r = -1e9, b = -1e9; const tw = document.createTreeWalker(e, NodeFilter.SHOW_TEXT), rg = document.createRange();
@@ -19413,7 +19416,10 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     const onIsle = (x, y) => { if (!isle) return false; for (let i = 0; i <= 4; i++) for (let j = 0; j <= 3; j++) { const px = x + w * i / 4, py = y + h * j / 3; if (inQuad(px, py) || inQuad(px, py - 30) || inQuad(px, py - 58)) return true; } return false; };
     const spot = (sd, lean) => {
       let dx, dy, x, y, ly, over = false, join = null;
-      if (sd === 'top' || sd === 'bottom') { // the label above (its line under it) or below (its line over it), run off to one side of the dot
+      if (sd === 'rail') { // a left-hand menu word (as its white hover note): the dot before the word, a rail up the left margin to a label over PLAY (and over Back to match, when that's there)
+        const pr = $('play').getBoundingClientRect(), bt = $('dio-backto'), br = bt && bt.offsetHeight ? bt.getBoundingClientRect() : null;
+        dx = r.left - 16; dy = r.top + (r.bottom - r.top) * 0.55; ly = (br ? Math.min(pr.top, br.top) : pr.top) - 34; x = dx + 18; y = ly - h; join = dx;
+      } else if (sd === 'top' || sd === 'bottom') { // the label above (its line under it) or below (its line over it), run off to one side of the dot
         dx = r.left + (r.right - r.left) * al; dy = sd === 'top' ? r.top - D : r.bottom + D; over = sd === 'bottom';
         // (near the screen's edge the label slides back in along its line, and the line from the dot meets it part-way)
         ly = sd === 'top' ? dy - OUT : dy + OUT; x = Math.max(8, Math.min(W - 8 - w, lean > 0 ? dx + RUN : dx - RUN - w)); y = over ? ly : ly - h;
@@ -19427,12 +19433,12 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         clear: keep.every(g => x + w < g.left - 4 || x > g.right + 4 || y + h < g.top - 4 || y > g.bottom + 4), field: !onIsle(x, y) };
     };
     const flip = { right: 'left', left: 'right', top: 'bottom', bottom: 'top' }, turn = T.side === 'right' || T.side === 'left' ? ['bottom', 'top'] : ['right', 'left'], ln = T.lean || 1;
-    const all = (T.only ? [T.side] : [T.side, flip[T.side], ...turn]).flatMap(sd => [spot(sd, ln), spot(sd, -ln)]); // (T.only: a thing on the top line has its label under it, nowhere else)
+    const all = T.side === 'rail' ? [spot('rail', 1)] : (T.only ? [T.side] : [T.side, flip[T.side], ...turn]).flatMap(sd => [spot(sd, ln), spot(sd, -ln)]); // (T.only: a thing on the top line has its label under it, nowhere else)
     const q = all.find(c => c.ok && c.clear && c.field) || all.find(c => c.ok && c.clear) || (T.must ? all.find(c => c.ok) || all[0] : null);
     if (!q) { T.cramped = true; el.style.visibility = 'hidden'; return; }
     const X = Math.round(q.x), Y = Math.round(q.y), n = (v) => Math.round(v * 10) / 10, sv = el.querySelector('.hp-ln');
     if (el.dataset.line !== (q.over ? 'over' : 'under')) el.dataset.line = q.over ? 'over' : 'under';
-    sv.querySelector('path').setAttribute('d', `M${n(q.dx - X)} ${n(q.dy - Y)} L${n(q.join - X)} ${n(q.ly - Y)} M${n(q.x - X)} ${n(q.ly - Y)} L${n(q.x + w - X)} ${n(q.ly - Y)}`);
+    sv.querySelector('path').setAttribute('d', `M${n(q.dx - X)} ${n(q.dy - Y)} L${n(q.join - X)} ${n(q.ly - Y)} M${n(Math.min(q.x, q.join) - X)} ${n(q.ly - Y)} L${n(Math.max(q.x + w, q.join) - X)} ${n(q.ly - Y)}`);
     for (const c of sv.querySelectorAll('circle')) { c.setAttribute('cx', n(q.dx - X)); c.setAttribute('cy', n(q.dy - Y)); }
     el.style.left = X + 'px'; el.style.top = Y + 'px'; el.style.visibility = '';
   }

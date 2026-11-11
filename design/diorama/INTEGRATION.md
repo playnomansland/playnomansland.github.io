@@ -162,12 +162,15 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   screen (Play as guest, Sign up as a guest) for the first time on a device: `guideStart` sets `pb-helpers`' `menu` to
   `[]` (absent / `null`: this device never has it). Not a page that opens on the menu, not Log in or Sign up with
   Google, not a device that has played here before (a game's helper notes, a solved puzzle, the old tutorial) and not
-  a guest after a log-out (`guideNever`). `?guide` in the address starts it on any device, to look at it. **The
-  notes**, one at a time: **New here?** "Press here to learn how the game works." (the dot at the end of HOW TO PLAY),
-  **Ready to fight?** (on PLAY's top edge), **Your battlefield.** (beside Change battlefield), **Music.** (over the
-  player), **You're a guest.** (under your name: what a Google sign-in gives; left out once signed in with Google),
-  **That's the menu.** (under Settings: the sound, full screen and Helpers). A note goes with **Got it** (the next one
-  comes at once), when its thing is pressed (How to play, Play), or once it has been on screen 1.2 s and the player
+  a guest after a log-out (`guideNever`). `?guide` in the address starts it on any device, to look at it. **The notes**, one at a time, eight of them: **New here?** "Press here to learn how the game works." (the dot at
+  the end of HOW TO PLAY), **Puzzles.** "Small battles to solve. Each one teaches you one idea.", **Ready to fight?**
+  (on PLAY's top edge), **Units.** "Every unit in the game: what it does and what it beats.", **Your battlefield.**
+  (beside Change battlefield), **Music.** (over the player), **You're a guest.** (under your name: what a Google
+  sign-in gives; left out once signed in with Google), **That's the menu.** (under Settings: the sound, full screen
+  and Helpers). Puzzles and Units have no room beside them, so theirs are laid out as those words' white hover notes
+  (`side: 'rail'`): the dot before the word, a rail up the left margin, the label over PLAY (2026-11-11, the owner).
+  A note goes with **Got it** (the next one
+  comes at once), when its thing is pressed (How to play, Puzzles, Play, Units), or once it has been on screen 1.2 s and the player
   has gone to another screen (Play, Profile, Puzzles, Units or Rankings clicked open, a match). A dropdown, a sheet or
   the playlist over the menu only hides it. **One note at a time (owner, 2026-11-11):** while the tour has a note to
   show (`helpTour`), nothing else that looks like a note is on screen: every note on the island (the golem's, the hover
@@ -182,7 +185,7 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   label slides back in along its line. In a window with no free spot a note is left out until the window changes
   (1280×720 and 1024×768: Your battlefield), except New here?, which always shows. **Turning it off:** "Turn off
   helpers" is Settings' Helpers, the one switch for every note (a last note points at Settings); Helpers On starts
-  the guide over on a device that had it. Puzzles and Units have no note yet; with lines instead of boxes they could.
+  the guide over on a device that had it.
   `tools/tests/menu-guide-ui.js` (the game server is never called). Pictures: `screens/menu-guide-*.jpg`.
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
