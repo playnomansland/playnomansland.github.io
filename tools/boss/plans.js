@@ -18,16 +18,27 @@ function runPlan(plan, cfg = B.CFG) {
 }
 
 const PLANS = {
-  // round 1 only: a melee squad up the column of the low nest in her reach (it kills the nest and holds her), a
-  // shooter on the high nest. With the game's 250 gold that is two squads, and nobody is left to hit her when she falls
-  'Round 1: Goblins on the low nest, Wisps on the high one': [
-    [['buy', 'Goblin Swarm', 4, 10], ['buy', 'Wisps', 9, 10]],
+  // Round 1 only (450 gold: four cheap squads). She hangs at col 5.5, row 5; the low nest is at col 4, row 7 (in her
+  // reach), the high one at col 9, row 8 (out of it).
+  // A melee squad up the low nest's column kills that nest and holds her; shooters take the high one.
+  'Round 1, tank: Goblins on the low nest, Wisps + Archers + Sniper on the high one': [
+    [['buy', 'Goblin Swarm', 4, 10], ['buy', 'Wisps', 9, 10], ['buy', 'Skeleton Archers', 10, 10], ['buy', 'Sniper', 8, 11]],
   ],
-  // round 1 only: nobody in her reach, so the mortar fires
-  'Round 1: two shooters, nobody near her': [
-    [['buy', 'Wisps', 2, 10], ['buy', 'Wisps', 9, 10]],
+  'Round 1, tank: Brute on the low nest, Wisps + Archers on the high one': [
+    [['buy', 'Brute', 4, 10], ['buy', 'Wisps', 9, 10], ['buy', 'Skeleton Archers', 10, 10]],
   ],
-  // what the greedy planner below found (40 tries a round): it clears round 2 and never reaches the nests up in her zone
+  'Round 1, tank: two Goblin squads on the low nest, Wisps + Archers on the high one': [
+    [['buy', 'Goblin Swarm', 4, 10], ['buy', 'Goblin Swarm', 3, 10], ['buy', 'Wisps', 9, 10], ['buy', 'Skeleton Archers', 10, 10]],
+  ],
+  // nobody in her reach: she spends a nest on each mortar shot
+  'Round 1, no tank: four shooters in a clump': [
+    [['buy', 'Wisps', 8, 10], ['buy', 'Sniper', 9, 11], ['buy', 'Skeleton Archers', 9, 10], ['buy', 'Sniper', 8, 11]],
+  ],
+  'Round 1, no tank: four shooters spread wide': [
+    [['buy', 'Wisps', 0, 10], ['buy', 'Sniper', 11, 11], ['buy', 'Skeleton Archers', 9, 10], ['buy', 'Sniper', 1, 11]],
+  ],
+  // what the greedy planner below found when the puzzle still started on 250 gold (40 tries a round): it never
+  // reaches the nests up in her zone. Not a good plan; kept as a five-round example
   'Greedy sample': [
     [['buy', 'Goblin Swarm', 5, 10], ['buy', 'Ether Golem', 8, 10], ['buy', 'Goblin Swarm', 5, 11], ['buy', 'Water Mage', 7, 11]],
     [['buy', 'Ember Imps', 6, 11], ['buy', 'Shiv', 10, 10], ['buy', 'Wisps', 1, 10]],

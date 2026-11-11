@@ -11,12 +11,12 @@
 //   - All nests down: she falls and takes full damage for the rest of the fight. She and every spider on the board are
 //     stunned for CFG.mommy.stun seconds.
 //   - Attention: while she hangs and no enemy body stands within her reach (CFG.mommy.near m), she winds up a web mortar
-//     at the biggest clump of the player's army. It hurts her own nests where it lands, so leaving her alone and
-//     baiting the mortar onto the nests is a way to play too.
+//     at the biggest clump of the player's army. Each shot is one of her own nests, ripped loose, and the blast
+//     cripples (web) more than it kills, so leaving her alone and letting her spend her nests is a way to play too.
 //   - Her bite changes by round (CFG.biteByRound): fast and light, slow and heavy, or a sweep.
 //   - Web: every enemy body within CFG.mommy.web.r of her is slowed and hits softer.
 //   - Molt: every CFG.mommy.molt seconds she sheds poison, bleed, burn, frost, slows and range cuts.
-//   - The player: normal match income, every allowed unit unlocked, skills on, at most CFG.maxPerType squads of one
+//   - The player: CFG.startGold to start with, then normal match income, every allowed unit unlocked, skills on, at most CFG.maxPerType squads of one
 //     unit type, one free move and one free extra deployment a round, a treasury (no tower): the game's own rule, 50
 //     gold for each fight it survives, gold lost when it falls. The fight runs to the timer, so spiders left over
 //     when the army is gone go for the treasury.
@@ -67,6 +67,7 @@ const TILE = Game.TILE || 6;
 // ---------- the design's numbers ----------
 const CFG = {
   rounds: 5,          // kill her by the end of this round
+  startGold: 450,     // this puzzle's starting gold (the game's own is 250: two squads, which made round 1 a dead round)
   fightSecs: 30,
   banned: ['Meteor Caller', 'Assassin', 'Rogue', 'Truespear', 'Sun Priest'],
   maxPerType: 3,      // squads of one unit type on the board at a time
@@ -81,7 +82,7 @@ const CFG = {
       sweep: { hit: 70, aps: 1, splash: 5 },      // rewards one big body
     },
     web: { r: 14, slow: 40, dmg: 40 }, // r: only bodies this close are webbed
-    mortar: { wind: 5, every: 4, hit: 350, nestHit: 350, ammo: false, r: 6, slow: 60, dmg: 60, secs: 4 }, // wind: seconds with nobody in reach before the first one (her reach is long, so even slow units get there). nestHit: what it does to her own nests in its radius. ammo (an idea under test): each shot is one of her own nests, ripped loose (the one with least health): it is gone, and its spiders burst out where it hung // wind: seconds with nobody in reach before the first one (long enough to walk to her)
+    mortar: { wind: 5, every: 4, hit: 120, nestHit: 0, ammo: true, r: 6, slow: 60, dmg: 60, secs: 4 }, // wind: seconds with nobody in reach before the first one (her reach is long, so even slow units get there). ammo: each shot is one of her own nests, ripped loose (the one with least health): it is gone, and its spiders burst out where it hung. hit: the blast cripples (web) more than it kills. nestHit: damage to her nests inside the blast (the first version of the rule; it never came into play, so it is off) // wind: seconds with nobody in reach before the first one (long enough to walk to her)
     molt: 6,          // seconds between sheds (0: never)
     bleedPct: false,  // whether bleed's share of max health works on her
     size: 4,          // m: how far out her body reaches once she lies on the ground (melee can crowd round her)
