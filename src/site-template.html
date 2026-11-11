@@ -1164,7 +1164,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <span class="k">Rankings · this month · ranked best-of-3</span>
     <h2>Standings</h2>
     <p class="leg"></p>
-    <button class="lb-all" id="lb-open">Full leaderboard →</button>
+    <ol class="lb-list" aria-label="Leaderboard" hidden></ol>
+    <p class="lb-how" hidden>Score: 75% wins (the most wins on the board is full marks), 25% win share (a tie is half a win).</p>
   </section>
 
   <p class="phone-reward" style="display:none;position:relative;margin:22px 16px 0;font:400 14px/1.4 var(--type)"><span class="tag" style="display:inline-block;padding:3px 7px 2px;font:700 11px var(--type);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--saffron)">Limited reward</span><br>Invite a friend. <b>This golem skin is yours.</b></p>
