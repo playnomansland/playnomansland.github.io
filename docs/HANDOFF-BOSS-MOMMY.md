@@ -314,3 +314,40 @@ Health:
 Units:
 11. Leave Goblins as they are: they are twice anything else on the ground, but the sweep rounds and the mortar kill them. Recommended: agree.
 
+
+---
+
+## 9. Measuring difficulty without making it a damage check (11 November, later)
+
+`node tools/boss/difficulty.js [games per player, default 40] [health]` plays many automatic players against her, each knowing a different amount, and reports how often each wins by round 3, 4 and 5. Her health is set out of reach during the games, so one set of games answers any health.
+
+- **random:** random units on random tiles, levels up.
+- **statmax:** the top of the damage ranking (Goblins, Archers, Wisps, Earth Wizard, Sniper...) and their best skills, in the middle front rows, levels everything. No arrows, moves or selling, and it never reads the round. Also run with +100 and +200 gold a round, to price knowledge in gold.
+- **aware:** reads each round with random but sensible choices: a melee squad with an arrow on each low nest, shooters in the nest columns, a holder that suits the bite (selling the swarm before a sweep), no tank when a nest she can rip sits deep, the free move, gold spread over the deployments.
+- **Ablations:** Line B with one piece of knowledge taken out, and Line B with every squad nudged up to a tile (40 times).
+
+### At 42,000 health (40 games each)
+
+| Player | Win by R4 | Win by R5 | Median damage by R5 |
+|---|---|---|---|
+| random | 0% | 3% | 15.5k |
+| statmax | 0% | 10% | 30.2k |
+| statmax + 100 gold a round | 3% | 38% | 40.0k |
+| statmax + 200 gold a round | 28% | 93% | 56.3k |
+| aware | 3% | 63% | 45.3k |
+| Line B nudged a tile | 15% | 75% | 51.8k |
+| Line B as written | 100% | 100% | 64.9k |
+
+Line B with one thing taken out (damage by R4 / R5, thousands): no arrows 36.1 / 56.4, no free moves 35.9 / 49.1, keeps the Goblins in R3 39.0 / 47.5, holds her in R4 35.9 / 53.1, no level-ups 27.0 / 36.7, shooters in the middle 28.0 / 34.2. Each one alone costs the round-4 win.
+
+### What it shows
+
+- **Round 4 already needs knowledge.** Only the exact Line B wins it (3% of aware games, 0% of stat-max). It is fragile, though: nudging squads a tile drops it to 15%.
+- **Round 5 is too easy.** 63% of aware games and 10% of stat-max games win, and 1 random game in 40 does too.
+- **Knowledge is worth about 150 gold a round.** Aware players land between stat-max +100 and stat-max +200.
+- **Raising her health is a damage check.** From 42k to 52k, aware drops from 63% to 20% by R5, but stat-max +200 only drops from 93% to 73%. Health punishes knowing less than it punishes having less.
+- **A bigger mortar blast (9 m, 120 or 200) changed nothing for stat-max** (10% → 7% by R5). Its middle-stacked army walks into her reach, so someone is always holding her and the mortar never fires.
+
+### The method (proposed)
+
+The gap between "knows the systems" and "has more stats" is called skill depth (Nielsen, Barros, Togelius and Nelson, 2015, relative algorithm performance profiles). Changes are judged by that gap; her health is set last, as a fine dial. See the owner's questions in the message that came with this commit.
