@@ -1137,7 +1137,8 @@ const Render3D = (THREE, el, view, opts = {}) => {
     for (const a of Object.values(sprAttr)) { a.clearUpdateRanges(); a.addUpdateRange(0, ns * a.itemSize); a.needsUpdate = true; }
     showNote(uiOff ? {} : v);
     const near = Math.max(0, Math.min(1, (cam.zoom() - 1) / 2)); // fog only at the ground view: the strategic, tilted and angled views see the whole board
-    scene.fog.near = 400 - 310 * near; scene.fog.far = 600 - 380 * near;
+    const lk = cam.lensK(); // (a longer overview lens stands further back: the fog with it)
+    scene.fog.near = (400 - 310 * near) * lk; scene.fog.far = (600 - 380 * near) * lk;
     renderer.render(scene, camera);
   }
   // where a touch meets the ground, raised or lowered (a couple of steps toward the ground's height there)

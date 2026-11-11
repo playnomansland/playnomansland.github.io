@@ -8382,14 +8382,22 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); } // (the column, the pick and the result cards follow these)
     return r;
   }
+  // the overview lens on the PC's match screen (degrees, the camera's own is 35): a long lens from further back, so the
+  // fit below enlarges a narrow picture instead of a wide one (the owner, 2026-11-11: "decrease this fov effect by a lot")
+  const DIO_LENS = 20;
   function dioFit(ts) {
     const b = board3d, c3 = b && b.cam3; if (!c3) return;
+    if (b.camera.lens) b.camera.lens(dioWide() ? DIO_LENS : null);
     if (!dioWide()) { if (dfit.on) { c3.clearViewOffset(); Object.assign(dfit, { k: 1, ox: 0, oy: 0, held: null, on: false }); } return; }
     const dt = dfit.on && dfit.ts ? Math.min(0.1, (ts - dfit.ts) / 1000) : null; dfit.ts = ts;
     const W = innerWidth, H = innerHeight, R = dioSafe(), z = b.camera.zoom();
     const base = (p) => [(p[0]) / dfit.k + dfit.ox, (p[1]) / dfit.k + dfit.oy];
     let k, cx, cy;
-    if (z <= 1.001 || !dfit.held) {
+    // the battle cam (a close fight's last seconds) moves the camera in: the fit is held meanwhile, so it zooms in on the
+    // action; fitted afresh, the whole board stayed in the picture and the lens went wide (a dolly zoom: the rings at the
+    // bottom of the screen stretched into tall ovals, the owner's screenshot, 2026-11-11)
+    const fk = b.camera.focusK ? b.camera.focusK() : 0;
+    if ((z <= 1.001 && fk === 0) || !dfit.held) {
       const C = Game.COLS - 1, Rw = Game.ROWS - 1;
       const pts = [[0, 0, 0], [C, 0, 0], [0, Rw, 0], [C, Rw, 0], [0, 0, 5], [C, 0, 5]].map(([c, r, h]) => base(b.screenAt(c, r, h)));
       let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0])), y0 = Math.min(...pts.map(p => p[1])), y1 = Math.max(...pts.map(p => p[1]));
@@ -8398,7 +8406,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       cx = (x0 + x1) / 2; cy = (y0 + y1) / 2;
       if (z <= 1.001) dfit.held = { k, dx: cx - W / 2, dy: cy - H / 2 };
     } else {
-      const w = Math.min(1, z - 1), h = dfit.held;
+      const w = Math.max(0, Math.min(1, z - 1)), h = dfit.held;
       k = h.k + (1 - h.k) * w; cx = W / 2 + h.dx * (1 - w); cy = H / 2 + h.dy * (1 - w);
     }
     if (!isFinite(k) || k <= 0) return;
