@@ -18,38 +18,22 @@ function runPlan(plan, cfg = B.CFG) {
 }
 
 const PLANS = {
-  // the first idea a player has: shoot her from the start, nobody near her
-  'Snipers only': [
-    [['buy', 'Sniper', 5, 10], ['buy', 'Sniper', 6, 10]],
-    [['buy', 'Sniper', 4, 10], ['buy', 'Sniper', 7, 10], ['buy', 'Sniper', 3, 10]],
-    [['buy', 'Sniper', 2, 10], ['buy', 'Sniper', 8, 10], ['buy', 'Sniper', 9, 10]],
-    [['buy', 'Sniper', 5, 11], ['buy', 'Sniper', 6, 11], ['buy', 'Sniper', 4, 11]],
-    [['buy', 'Sniper', 7, 11], ['buy', 'Sniper', 3, 11], ['buy', 'Sniper', 8, 11]],
+  // round 1 only: a melee squad up the column of the low nest in her reach (it kills the nest and holds her), a
+  // shooter on the high nest. With the game's 250 gold that is two squads, and nobody is left to hit her when she falls
+  'Round 1: Goblins on the low nest, Wisps on the high one': [
+    [['buy', 'Goblin Swarm', 4, 10], ['buy', 'Wisps', 9, 10]],
   ],
-  // melee only: holds her attention, can't touch the nests
-  'Goblins only': [
-    [['buy', 'Goblin Swarm', 5, 10], ['buy', 'Goblin Swarm', 6, 10]],
-    [['buy', 'Goblin Swarm', 4, 10], ['buy', 'Goblin Swarm', 7, 10], ['buy', 'Goblin Swarm', 3, 10]],
-    [['buy', 'Goblin Swarm', 2, 10], ['buy', 'Goblin Swarm', 8, 10], ['buy', 'Goblin Swarm', 9, 10]],
-    [['buy', 'Goblin Swarm', 5, 11], ['buy', 'Goblin Swarm', 6, 11], ['buy', 'Goblin Swarm', 4, 11]],
-    [['buy', 'Goblin Swarm', 7, 11], ['buy', 'Goblin Swarm', 3, 11], ['buy', 'Goblin Swarm', 8, 11]],
+  // round 1 only: nobody in her reach, so the mortar fires
+  'Round 1: two shooters, nobody near her': [
+    [['buy', 'Wisps', 2, 10], ['buy', 'Wisps', 9, 10]],
   ],
-  // the intended shape: one squad on her, shooters on the nests, more damage each round
-  'Tank and shooters': [
-    [['buy', 'Goblin Swarm', 5, 10], ['buy', 'Sniper', 3, 10]],
-    [['buy', 'Sniper', 8, 10], ['buy', 'Wisps', 5, 11], ['buy', 'Goblin Swarm', 6, 10]],
-    [['buy', 'Brute', 6, 11], ['buy', 'Wisps', 2, 10], ['buy', 'Wisps', 9, 10]],
-    [['buy', 'Sniper', 4, 11], ['buy', 'Sniper', 7, 11], ['buy', 'Wisps', 1, 10]],
-    [['buy', 'Sniper', 0, 10], ['buy', 'Sniper', 11, 10], ['buy', 'Goblin Swarm', 4, 10]],
-  ],
-  // the best plan the search below found with these numbers (no skills, levels, sells or moves): it gives up the
-  // first three rounds and wins on rounds 4 and 5
-  'Search best': [
-    [['buy', 'Leaf Wizard', 2, 11], ['buy', 'Earth Wizard', 10, 11], ['buy', 'Ent', 5, 10], ['buy', 'Sniper', 2, 11]],
-    [['buy', 'Leaf Wizard', 5, 11], ['buy', 'Skeleton Archers', 8, 11], ['buy', 'Skeleton Archers', 8, 11], ['buy', 'Fire Mage', 5, 11]],
-    [['buy', 'Earth Wizard', 9, 11], ['buy', 'Sniper', 5, 11], ['buy', 'Wisps', 8, 10], ['buy', 'Sniper', 1, 10]],
-    [['buy', 'Brute', 5, 10], ['buy', 'Leaf Wizard', 5, 10], ['buy', 'Wisps', 6, 10], ['buy', 'Steel Wizard', 10, 11]],
-    [['buy', 'Wisps', 8, 10], ['buy', 'Steel Wizard', 7, 10], ['buy', 'Skeleton Archers', 1, 11], ['buy', 'Steel Wizard', 3, 10]],
+  // what the greedy planner below found (40 tries a round): it clears round 2 and never reaches the nests up in her zone
+  'Greedy sample': [
+    [['buy', 'Goblin Swarm', 5, 10], ['buy', 'Ether Golem', 8, 10], ['buy', 'Goblin Swarm', 5, 11], ['buy', 'Water Mage', 7, 11]],
+    [['buy', 'Ember Imps', 6, 11], ['buy', 'Shiv', 10, 10], ['buy', 'Wisps', 1, 10]],
+    [['buy', 'Ether Golem', 1, 11], ['buy', 'Skeleton Archers', 6, 10], ['buy', 'Obelisk', 3, 10]],
+    [['buy', 'Leaf Wizard', 8, 11], ['buy', 'Frost Wizard', 5, 10], ['buy', 'Earth Wizard', 7, 11]],
+    [['buy', 'Brute', 4, 11], ['buy', 'Goblin Swarm', 8, 10], ['buy', 'Earth Wizard', 1, 10]],
   ],
 };
 
@@ -72,7 +56,7 @@ function search(tries = 150, cfg = B.CFG, pool, seed0 = 12345) {
   let seed = seed0;
   const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const ri = (n) => Math.floor(rnd() * n);
-  const step = () => { const n = pool[ri(pool.length)], melee = B.units[B.ix(n)].range < cfg.nest.rangedOnly; return ['buy', n, melee ? 3 + ri(6) : ri(12), melee ? 10 : 10 + ri(2)]; };
+  const step = () => ['buy', pool[ri(pool.length)], ri(12), 10 + ri(2)];
   const fresh = () => Array.from({ length: cfg.rounds }, () => Array.from({ length: 4 }, step));
   const score = (res) => res.won ? res.rounds - (1 - res.log[res.log.length - 1].end / cfg.fightSecs) : cfg.rounds + 1 + res.hpLeft / cfg.mommy.hp;
   let best = null;
@@ -93,4 +77,35 @@ function search(tries = 150, cfg = B.CFG, pool, seed0 = 12345) {
   return { best, wins };
 }
 
-module.exports = { PLANS, runPlan, report, search };
+// ---------- greedy, round by round ----------
+// For each round in turn: try `per` random sets of up to three purchases (units from the pool, in a column of one of
+// this round's nests or in the middle) on top of what the earlier rounds bought, and keep the set that hurts her most
+// this round. Short-sighted, but it shows what a sensible army can do round by round.
+function greedy(per = 40, cfg = B.CFG, pool, seed0 = 777) {
+  pool = pool || ['Goblin Swarm', 'Wisps', 'Skeleton Archers', 'Sniper', 'Ember Imps', 'Fire Mage', 'Ent', 'Brute', 'Leaf Wizard', 'Earth Wizard', 'Shiv', 'Spiders', 'Steel Wizard', 'Obelisk', 'Water Mage', 'Frost Wizard', 'Ether Golem'];
+  let seed = seed0;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const ri = (n) => Math.floor(rnd() * n);
+  const plan = [];
+  let res = null;
+  for (let r = 1; r <= cfg.rounds; r++) {
+    const cols = B.CFG.nests[Math.min(r, cfg.nests.length) - 1].map((n) => Math.round(n[0])).concat([5, 6]);
+    let best = null;
+    for (let k = 0; k < per; k++) {
+      const steps = Array.from({ length: r === 1 ? 4 : 3 }, () => ['buy', pool[ri(pool.length)], Math.max(0, Math.min(11, cols[ri(cols.length)] + ri(3) - 1)), 10 + ri(2)]);
+      const out = runPlan(plan.concat([steps]), { ...cfg, rounds: r });
+      const f = out.log[r - 1];
+      if (!f) continue; // she was dead before this round
+      const sc = (out.won ? 1e6 : 0) + f.ground + f.hang + (f.treasury ? 100 : 0);
+      if (!best || sc > best.sc) best = { sc, steps, out };
+    }
+    plan.push(best.steps); res = best.out;
+    if (res.won) break;
+  }
+  console.log(`\nGreedy, ${per} tries a round (purchases only): ${res.won ? 'WON in round ' + res.rounds : 'lost with ' + Math.round(res.hpLeft) + ' health left on her'}`);
+  plan.forEach((s2, r) => console.log(`  R${r + 1}: ` + s2.map((x) => `${x[1]}@${x[2]},${x[3]}`).join('  ')));
+  for (const f of res.log) console.log('  ' + B.fmt(f) + `, gold after ${f.goldLeft}`);
+  return { plan, res };
+}
+
+module.exports = { PLANS, runPlan, report, search, greedy };
