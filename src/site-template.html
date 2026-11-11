@@ -1512,7 +1512,6 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const typingIn = (el) => !!el && el.nodeType === 1 && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
   window.typingIn = typingIn;
   const css = Art.css;
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const now = () => Date.now();
 
   // ---------- state ----------
@@ -7354,7 +7353,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     cam = { end: lastSummary && lastSummary.round === pre.round ? lastSummary.time : null, decided: false, on: false, k: 0, x: 0, y: 0 };
     closeSheet(); overlay(null); hud(); panelBattle(); render();
     cancelAnimationFrame(raf);
-    if (reduced) { while (bt.step()) {} finishBattle(); return; }
+    // (the fight always plays: with the device's "reduce motion" on, e.g. Windows' Animation effects off, it used to
+    // skip straight to the result, so those players never saw a round, the owner's friend, 2026-11-11)
     if (!solo() && mode !== 'replay') send({ t: 'speed', s: liveSpeed[me] }); // our pick, so both phones start the fight at the same speed
     if (document.hidden) awayStart(); // (it began while this page is in the background: it waits for it, see awayStart)
     raf = requestAnimationFrame(loop);
@@ -11292,8 +11292,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         const golem = !mine ? '' : g ? `Coin Golem this round: ${g.g} gold, ${Mpb.golemSkin(g.g)}.` : clicked(L) ? 'Coin golem: waiting for your teammate.' : clicked(1 - L) ? 'Coin golem: your teammate clicked it. Click it too to summon it.' : '';
         let pick = '';
         if (mine && phase === 'deploy') {
-          const room = { put: Mpb.vaultRoom(m, me, 'put'), take: Mpb.vaultRoom(m, me, 'take') }, hi = Math.max(room.put, room.take, 1);
-          mpbAmt = Math.max(1, Math.min(mpbAmt, hi));
+          // the amount in tens, 10 at least (the owner, 2026-11-11: it offered 1 gold once the room left was under 10, or
+          // an odd amount); under 10 of room, Put in and Take out stay off
+          const room = { put: Mpb.vaultRoom(m, me, 'put'), take: Mpb.vaultRoom(m, me, 'take') }, hi = Math.floor(Math.max(room.put, room.take) / 10) * 10;
+          mpbAmt = Math.max(10, Math.min(Math.round(mpbAmt / 10) * 10, hi));
           pick = `<div class="mpb-amt" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             <button class="btn small" data-mpb-amt="-50" ${live ? '' : 'disabled'}>−50</button><button class="btn small" data-mpb-amt="-10" ${live ? '' : 'disabled'}>−10</button>
             <b class="num" id="mpb-amt">${mpbAmt}</b>
@@ -11305,7 +11307,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         return `<p style="margin:0"><b class="num" style="color:var(--gold)">${v.gold}</b> gold inside${mine && mode0 ? ` · a ${mode0} round` : mine ? ' · no move yet this round' : ' (as the round began)'}${Mpb.skillN(rec, 'interest') ? ` · interest ${Mpb.VAULT.interest}% a round` : ''}</p>${pick}${golem ? `<p style="margin:0">${esc(golem)}</p>` : ''}`;
       },
       wire(root, side, rec, again) {
-        root.querySelectorAll('[data-mpb-amt]').forEach(b => b.addEventListener('click', () => { mpbAmt = Math.max(1, mpbAmt + +b.dataset.mpbAmt); again(); }));
+        root.querySelectorAll('[data-mpb-amt]').forEach(b => b.addEventListener('click', () => { mpbAmt = Math.max(10, mpbAmt + +b.dataset.mpbAmt); again(); }));
         if ($('mpb-put')) $('mpb-put').addEventListener('click', () => { if (editable() && Game.vaultPut(m, me, mpbAmt)) { changed(); again(); } });
         if ($('mpb-take')) $('mpb-take').addEventListener('click', () => { if (editable() && Game.vaultTake(m, me, mpbAmt)) { changed(); again(); } });
       },
