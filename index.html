@@ -18439,7 +18439,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · c5d1a19'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · e115390'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19270,20 +19270,21 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
 
   // ---------- the menu's guide (2026-11-11): a guest's first time on the main menu, on a PC ----------
   // The same yellow notes on the Diorama's main menu, one at a time: How to play first ("New here?"), then Play, the
-  // battlefield, the music, your name (what signing in gives a guest) and Settings. Only for a guest who comes in from
+  // battlefield, the music, your name (what signing in gives a guest) and Settings. While it runs its note is the only
+  // one on screen (helpTour). Only for a guest who comes in from
   // the welcome screen for the first time on this device (guideStart): nobody else ever gets it. A note goes with Got
   // it, when its thing is pressed (How to play, Play), or once it has been read and the player has gone to another
   // screen; something lying over the menu for a moment (a dropdown, a sheet, the playlist) only hides it. "Turn off
   // helpers" is Settings' Helpers, the one switch for every yellow note; On starts these over as well.
   const dioHas = (...c) => { const D = $('dio'); return !!D && c.some(x => D.classList.contains(x)); };
   const dioQ = (sel) => { const D = $('dio'); return D ? D.querySelector(sel) : null; };
-  // menu: one of these. quiet: the menu words' own white notes stay away while it's up (they would lie under it).
+  // menu: one of these.
   // must: shown even in a window with no free spot for it (the others are left out there, helperLine); own: its
   // thing, where `at` is a point or a box on it; side, along, off, lean: where its dot stands (which edge, how far along it and off it) and which way its label runs
   const MENU_KEEP = ['#play', '#puzzles-open', '#how', '.menu [data-cam="units"]', '.menu [data-cam="ranks"]', '.music', '.bf-note', '.acct', '.logo'];
   const MENU_TIPS = [
-    { id: 'how', menu: true, quiet: true, must: true, show: () => true, done: () => dioHas('how'), at: () => { const e = $('how'), g = wordBox(e); return e.getBoundingClientRect().width ? g : null; }, get own() { return $('how'); }, side: 'right', off: 15, h: 'New here?', t: 'Press here to learn how the game works.' }, // (the dot at the end of the word's letters)
-    { id: 'play', menu: true, quiet: true, get own() { return $('play'); }, show: () => true, done: () => dioHas('play', 'in-rooms'), at: () => { const r = $('play').getBoundingClientRect(); return r.width ? { x: r.left + Math.min(r.width * 0.3, 150), y: r.top + 4 } : null; }, side: 'top', h: 'Ready to fight?', t: 'Start with a game against the computer. Notes like this one point out what to press.' }, // (on the shard's top edge, over the word)
+    { id: 'how', menu: true, must: true, show: () => true, done: () => dioHas('how'), at: () => { const e = $('how'), g = wordBox(e); return e.getBoundingClientRect().width ? g : null; }, get own() { return $('how'); }, side: 'right', off: 15, h: 'New here?', t: 'Press here to learn how the game works.' }, // (the dot at the end of the word's letters)
+    { id: 'play', menu: true, get own() { return $('play'); }, show: () => true, done: () => dioHas('play', 'in-rooms'), at: () => { const r = $('play').getBoundingClientRect(); return r.width ? { x: r.left + Math.min(r.width * 0.3, 150), y: r.top + 4 } : null; }, side: 'top', h: 'Ready to fight?', t: 'Start with a game against the computer. Notes like this one point out what to press.' }, // (on the shard's top edge, over the word)
     { id: 'field', menu: true, get own() { return dioQ('.bf-note'); }, show: () => true, at: () => dioQ('.bf-note .bf-btn'), side: 'left', h: 'Your battlefield.', t: 'This is the board you play on. Change its look here.' },
     { id: 'music', menu: true, show: () => true, at: () => dioQ('.music'), side: 'top', along: 0.8, off: 12, lean: -1, h: 'Music.', t: 'Pause or skip a song here. Playlist lets you pick what plays.' },
     { id: 'guest', menu: true, show: () => !(acct && acct.google) && $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(2)'), side: 'bottom', only: true, off: 13, lean: 1, h: 'You’re a guest.', t: 'Click your name to sign in with Google. It keeps your name and results, and opens Ranked and Friends.' },
@@ -19294,11 +19295,15 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const menuHome = () => dio.shown && home.screen === 'menu' && !dioHas('welcome', 'play', 'profile', 'puz', 'how', 'pinned', 'in-rooms', 'in-create', 'in-history');
   // something lies over it for a moment: a sheet, a dropdown, the playlist (or the island is still flying)
   const menuOver = () => !$('sheet-back').hidden || dioHas('music-open') || !$('dd-friends').hidden || !$('dd-settings').hidden || !!(dio.api && dio.api.flying && dio.api.flying());
-  const helpQuiet = () => !!helpCur && !!helpCur.quiet && !$('helper').hidden; // (src/diorama.js asks: showing())
-  // the label's box on the menu: an island note that would lie under it steps aside while it's up (src/diorama.js
-  // asks, with the note's own box: notes())
-  let helpBox = null;
-  const helpCovers = (g) => !!helpBox && !$('helper').hidden && $('helper').style.visibility !== 'hidden' && g.left < helpBox.r + 12 && g.right > helpBox.l - 12 && g.top < helpBox.b + 10 && g.bottom > helpBox.t - 10;
+  // while the tour has a note to show on the menu, it is the only note on screen: every note on the island (the
+  // golem's, the hover hint, a pointed-at piece's) and the menu words' own white notes (with Full leaderboard) are
+  // off, and back when the tour is done or off (owner, 2026-11-11; src/diorama.js asks: notes(), showing())
+  const helpTour = () => (menuActive() && home.screen === 'menu' && MENU_TIPS.some(T => !helpers.menu.includes(T.id) && !T.cramped && T.show()))
+    || (!!helpFlash && DIO && dio.shown); // (and while its last note, "Helpers are off", is up)
+  // the account's own notes (Stay logged in?, a new title or skin) wait for the tour as well: when it ends, the
+  // menu is drawn again and they come
+  let tourWas = false;
+  function tourSync() { const on = helpTour(); if (on === tourWas) return; tourWas = on; if (!on && DIO && dio.api && phase === 'start' && !m) dio.api.draw(); }
   // a guest comes in from the welcome screen (Play as guest, Sign up as a guest). The first time on this device starts
   // the guide; a device that has played here before (a game with helpers, a puzzle, the old tutorial, an account that
   // logged out: guideNever) has had its first time
@@ -19308,7 +19313,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     let old = helpers.done || helpers.seen.length > 0 || puzSolved.length > 0;
     try { old = old || localStorage.getItem('phonebellum.tutorial.v1') === 'done'; } catch (e) {}
     if (old) return guideNever();
-    helpers.menu = []; saveHelpers(); helperWake();
+    helpers.menu = []; saveHelpers(); tourWas = true; helperWake();
   }
   let menuRead = 0, menuLast = 0; // how long the note has been up to be read (frames it was on screen: a stalled page counts for little)
   function menuPick(t) {
@@ -19333,7 +19338,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (!helpRaf) helpRaf = requestAnimationFrame(helperFrame);
   }
   function helperFrame(t) {
-    helpRaf = 0;
+    helpRaf = 0; tourSync();
     if (menuActive()) { if (t - helpEval > 120) { helpEval = t; menuPick(t); } helperPlace(); helpRaf = requestAnimationFrame(helperFrame); return; }
     if (helpCur && helpCur.menu) { helpCur = null; helperDraw(null); } // (the menu's note: a match has started)
     if (!helpActive()) { helpCur = null; if (!helpFlash) helperDraw(null); return; } // (the last note, "Helpers are off", goes by itself)
@@ -19355,7 +19360,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (dirty) saveHelpers();
   }
   function helperDraw(T, plain) {
-    const el = $('helper'); clearTimeout(helpFlash); helpFlash = 0; helpBox = null;
+    const el = $('helper'); clearTimeout(helpFlash); helpFlash = 0;
     if (!T) { el.hidden = true; el.innerHTML = ''; return; }
     const line = !!(T.menu || T.line); // the menu's notes: the Diorama's own (a line and a dot), not the yellow box
     el.classList.toggle('line', line); if (line) el.removeAttribute('data-side'); else el.removeAttribute('data-line');
@@ -19387,11 +19392,11 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // A menu note, as the Diorama's notes are drawn: the dot stands on the thing's edge (T.side; T.along: how far along
   // that edge, 0 to 1), and the label lies off it with its line: under the label when the label is above or beside the
   // dot, over it when the label hangs below. T.lean: which way the label runs from the dot (1: right, or down the
-  // side; -1: left, or up). The label lies over none of the menu's words, the music, Change battlefield or the
-  // island's standing notes (MENU_KEEP, [data-home]); the first spot that is free and on screen is taken: its own
-  // side both ways, then the opposite side, then the other two; a spot in the open field (off the island, clear of the
-  // island's standing notes) before one that isn't. None free: the menu's first note takes a spot with
-  // room anyway (T.must); any other waits for a bigger window (T.cramped: menuPick goes on to the next)
+  // side; -1: left, or up). The label lies over none of the menu's words, the music, Change battlefield or the top
+  // line (MENU_KEEP); the first spot that is free and on screen is taken: its own side both ways, then the opposite
+  // side, then the other two; a spot in the open field (off the island) before one over it (the island's own notes
+  // are off while the tour runs: helpTour). None free: the menu's first note takes a spot with room anyway (T.must);
+  // any other waits for a bigger window (T.cramped: menuPick goes on to the next)
   const wordBox = (e) => { // a menu word's letters (its button is wider, and its shard only shows when pointed at)
     if (!e.matches('.menu .sub .item')) return e.getBoundingClientRect();
     let l = 1e9, t = 1e9, r = -1e9, b = -1e9; const tw = document.createTreeWalker(e, NodeFilter.SHOW_TEXT), rg = document.createRange();
@@ -19401,9 +19406,6 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   function helperLine(T, el, a, r) {
     const w = el.offsetWidth, h = el.offsetHeight, W = innerWidth, H = innerHeight, isEl = a instanceof Element, D = a.x != null ? 0 : T.off == null ? 6 : T.off, OUT = 44, RUN = 34;
     const keep = MENU_KEEP.map(dioQ).filter(e => e && e !== a && e !== T.own && !(isEl && e.contains(a)) && getComputedStyle(e).display !== 'none').map(wordBox).filter(g => g.width);
-    // the island's standing notes (the golem's, the hover hint), where they stand when shown (e._gr, kept by notes()):
-    // a spot clear of them is better; one over a note makes that note step aside (helpCovers)
-    const stand = [...$('dio').querySelectorAll('.note[data-home]')].map(e => e._gr).filter(Boolean);
     const al = T.along == null ? 0.5 : T.along;
     // the island on screen (its top and the earth under it): a label is better off in the open field
     let isle = null; try { isle = dio.api && dio.api.isle ? dio.api.isle() : null; } catch (e) {}
@@ -19422,14 +19424,12 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       }
       if (join == null) join = sd === 'right' ? x : x + w;
       return { dx, dy, x, y, ly, join, over, ok: x >= 8 && x + w <= W - 8 && y >= 8 && y + h <= H - 8,
-        clear: keep.every(g => x + w < g.left - 4 || x > g.right + 4 || y + h < g.top - 4 || y > g.bottom + 4), field: !onIsle(x, y),
-        alone: stand.every(g => x + w < g.left - 12 || x > g.right + 12 || y + h < g.top - 10 || y > g.bottom + 10) };
+        clear: keep.every(g => x + w < g.left - 4 || x > g.right + 4 || y + h < g.top - 4 || y > g.bottom + 4), field: !onIsle(x, y) };
     };
     const flip = { right: 'left', left: 'right', top: 'bottom', bottom: 'top' }, turn = T.side === 'right' || T.side === 'left' ? ['bottom', 'top'] : ['right', 'left'], ln = T.lean || 1;
     const all = (T.only ? [T.side] : [T.side, flip[T.side], ...turn]).flatMap(sd => [spot(sd, ln), spot(sd, -ln)]); // (T.only: a thing on the top line has its label under it, nowhere else)
-    const q = all.find(c => c.ok && c.clear && c.field && c.alone) || all.find(c => c.ok && c.clear && c.field) || all.find(c => c.ok && c.clear) || (T.must ? all.find(c => c.ok) || all[0] : null);
-    if (!q) { T.cramped = true; helpBox = null; el.style.visibility = 'hidden'; return; }
-    helpBox = { l: q.x, t: q.y, r: q.x + w, b: q.y + h };
+    const q = all.find(c => c.ok && c.clear && c.field) || all.find(c => c.ok && c.clear) || (T.must ? all.find(c => c.ok) || all[0] : null);
+    if (!q) { T.cramped = true; el.style.visibility = 'hidden'; return; }
     const X = Math.round(q.x), Y = Math.round(q.y), n = (v) => Math.round(v * 10) / 10, sv = el.querySelector('.hp-ln');
     if (el.dataset.line !== (q.over ? 'over' : 'under')) el.dataset.line = q.over ? 'over' : 'under';
     sv.querySelector('path').setAttribute('d', `M${n(q.dx - X)} ${n(q.dy - Y)} L${n(q.join - X)} ${n(q.ly - Y)} M${n(q.x - X)} ${n(q.ly - Y)} L${n(q.x + w - X)} ${n(q.ly - Y)}`);
@@ -19437,21 +19437,22 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     el.style.left = X + 'px'; el.style.top = Y + 'px'; el.style.visibility = '';
   }
   // Settings' Helpers, and a note's own "Turn off helpers". On: they start over, from the next thing to do
-  function setHelpers(on) {
+  function setHelpers(on, later) {
     helpers = { off: !on, seen: [], done: false, menu: helpers.menu ? [] : null }; saveHelpers(); // (the menu's guide too, on a device that had it)
-    helpCur = null; helperDraw(null); helperWake();
+    helpCur = null; helperDraw(null); helperWake(); if (!later) tourSync();
   }
   $('helper').addEventListener('click', (e) => {
     if (e.target.closest('#hp-ok') && helpCur) { (helpCur.menu ? helpers.menu : helpers.seen).push(helpCur.id); saveHelpers(); helpCur = null; helperDraw(null); }
     else if (e.target.closest('#hp-off')) { // off, and one last note says where they can be had back
       const where = helpCur && helpCur.menu ? dioQ('.acct button:nth-of-type(3)') : $('cog'); // the menu's Settings, or the match's
-      setHelpers(false);
-      if (where && where.getBoundingClientRect().width) { helperDraw({ at: () => where, side: 'bottom', only: true, must: true, off: 13, lean: -1, line: !!(DIO && dio.shown), h: 'Helpers are off.', t: 'Settings turns them back on.' }, true); helpFlash = setTimeout(() => { helpFlash = 0; helperDraw(null); }, 4200); }
+      setHelpers(false, true);
+      if (where && where.getBoundingClientRect().width) { helperDraw({ at: () => where, side: 'bottom', only: true, must: true, off: 13, lean: -1, line: !!(DIO && dio.shown), h: 'Helpers are off.', t: 'Settings turns them back on.' }, true); helpFlash = setTimeout(() => { helpFlash = 0; helperDraw(null); tourSync(); }, 4200); }
+      tourSync();
     }
   });
   // (on the menu that last note lies where Settings opens: a press anywhere else puts it away)
-  addEventListener('pointerdown', (e) => { if (helpFlash && DIO && dio.shown && !e.target.closest('#helper')) helperDraw(null); }, true);
-  addEventListener('resize', () => { for (const T of MENU_TIPS) T.cramped = false; if (DIO) for (const e of document.querySelectorAll('#dio .note[data-home]')) e._gr = null; helperPlace(); });
+  addEventListener('pointerdown', (e) => { if (helpFlash && DIO && dio.shown && !e.target.closest('#helper')) { helperDraw(null); tourSync(); } }, true);
+  addEventListener('resize', () => { for (const T of MENU_TIPS) T.cramped = false; helperPlace(); });
 
   function setNet(text, state) {
     const n = $('net');
@@ -28831,8 +28832,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const proj = (o, h) => { const v = new THREE.Vector3(); o.getWorldPosition(v); v.y += h; v.project(cam); return [(v.x + 1) / 2 * cv.clientWidth, (1 - v.y) / 2 * cv.clientHeight]; };
     const dotSvg = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="currentColor"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>`;
     // (each tower and treasury shows only its own note: owner, 2026-11-08)
-    // (a menu word's white note stays away while a yellow guide note is on the menu's words: helpQuiet)
-    const showing = (el, hovered) => el.dataset.anchor === 'btn' && helpQuiet() ? false : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
+    // (a menu word's white note stays away while the menu guide's tour is on: helpTour. One note at a time)
+    const showing = (el, hovered) => el.dataset.anchor === 'btn' && helpTour() ? false : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
     // a label off the point (x, y): a line out to it and under it, kept on screen. Returns the line's svg
     let placed = []; // the island notes' boxes laid out so far this frame (notes() empties it)
     let pinFading = false, pinOverFading = false; // the note being laid out is fading; it may sit over fading boxes
@@ -28877,7 +28878,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
-          if (on && !phone() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf') && !body.classList.contains('how-over-bf')) {
+          if (on && !phone() && !helpTour() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf') && !body.classList.contains('how-over-bf')) { // (no line to the island while the menu guide's tour is on: its note is the only one. The button stays)
             const r = el.getBoundingClientRect(), ty = r.top - 4;
             // the point is picked where the camera is heading and kept while it moves, so the line glides with the island
             // instead of hopping between corners mid-move (owner, 2026-11-10)
@@ -28902,12 +28903,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         let op = 1, fading = false;
         if (el.dataset.anchor !== 'btn') {
           const home = el.hasAttribute('data-home'), t = performance.now(), dt = Math.min(100, t - (el._t || t)); el._t = t;
-          // (the menu guide's label wants this spot: the standing note steps aside, quickly, and comes back after it)
-          let aside = false; if (home) { const g = el.style.display !== 'none' ? el.getBoundingClientRect() : null; if (g && g.width) el._gr = { left: g.left, top: g.top, right: g.right, bottom: g.bottom }; aside = !!el._gr && helpCovers(el._gr); if (aside) show = false; }
+          // the menu guide's tour is on: its note is the only one on screen, so every island note is off at once (the
+          // golem's, the hover hint, a pointed-at piece's); they come back when the tour is done (owner, 2026-11-11)
+          if (helpTour() && !body.classList.contains('welcome')) { el._op = 0; el._off = null; el.style.display = 'none'; continue; }
           const menu = !phone() && !inPlay && !inProf && viewName === 'play' && !body.classList.contains('welcome');
           if (!menu) el._op = show ? 1 : home ? 1 : 0;
           else if (show && !(home && (el._op ?? 1) < 1 && t - hoverOff < 1000)) el._op = home ? Math.min(1, (el._op ?? 1) + dt / 250) : 1; // the menu's own notes wait a second after the pointer leaves before coming back
-          else { show = false; el._op = Math.max(0, (el._op ?? (home ? 1 : 0)) - dt / (aside ? 180 : 1000)); fading = el._op > 0; }
+          else { show = false; el._op = Math.max(0, (el._op ?? (home ? 1 : 0)) - dt / 1000); fading = el._op > 0; }
           op = el._op; show = show || fading;
         }
         el.style.display = show ? '' : 'none'; el.style.opacity = op < 1 ? op : ''; el.style.pointerEvents = fading ? 'none' : ''; if (!show) { el._off = null; continue; }
@@ -29770,7 +29772,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     // once after making an account or logging in), then a new Title, then a new skin (each announced once per phone)
     const stayEl = $('dio-stay');
     function drawStay() {
-      const on = !!acct && !HOME_AUTO && !door.screen && home.screen === 'menu';
+      const on = !!acct && !HOME_AUTO && !door.screen && home.screen === 'menu' && !helpTour(); // (after the menu guide's tour: one note at a time; tourSync draws this again when it ends)
       const ask = on && stayPref() == null, nt = on && !ask ? titlesUnseen() : [], ns = on && !ask && !nt.length ? skinsUnseen() : [];
       stayEl.hidden = !(ask || nt.length || ns.length); stayEl.classList.toggle('news', !ask);
       if (ask) {

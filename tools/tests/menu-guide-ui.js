@@ -13,7 +13,7 @@
 const { chromium } = require('playwright-core');
 let fails = 0; const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + msg); if (!c) fails++; };
 const PID = 'p0123456789abcdef', SID = 'a'.repeat(64); // a made-up guest account, in the shapes the page checks
-const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&server=http://127.0.0.1:8799';
+const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&test&server=http://127.0.0.1:8799'; // (?test: window.__dio.pts, where the island's pieces are)
 (async () => {
   const b = await chromium.launch();
   // guest: what the server says to Play as guest ('none': it can't be reached; 'acct': a guest account)
@@ -44,6 +44,9 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&server=http://127.0.0.
     const d = h.querySelector('.hp-ln .dot'), dr = d ? d.getBoundingClientRect() : null, dx = dr ? (dr.left + dr.right) / 2 : 0, dy = dr ? (dr.top + dr.bottom) / 2 : 0;
     const onIt = !!dr && dx > t.left - 20 && dx < t.right + 20 && dy > t.top - 20 && dy < t.bottom + 20; // (the dot: on the thing, or just off its edge)
     return h.classList.contains('line') && onIt && off(t) && e.left >= 0 && e.top >= 0 && e.right <= innerWidth && e.bottom <= innerHeight && cl.every(c => { const r = wb(c); return !r.width || off(r); }); }, [sel, clear]);
+  // the notes on the island that are on screen now (the golem's, the hover hint, a pointed-at piece's)
+  const isle = (p) => p.evaluate(() => [...document.querySelectorAll('#dio > .note:not(.btn-note):not(.bf-note)')].filter(e => getComputedStyle(e).display !== 'none' && +getComputedStyle(e).opacity > 0.05 && e.getBoundingClientRect().width > 0).map(e => e.dataset.anchor));
+  const overPiece = async (p, k) => { const [x, y] = await p.evaluate((k) => window.__dio.pts()[k], k); await p.mouse.move(x, y - 4); await p.mouse.move(x, y); await p.waitForTimeout(700); };
   const WORDS = ['#play', '#puzzles-open', '#how', '#dio .menu [data-cam="units"]', '#dio .menu [data-cam="ranks"]'];
   const guestIn = async (p) => { await p.click('#w-guest'); await p.waitForTimeout(300); await p.mouse.move(700, 60); }; // (the pointer off the menu's words)
 
@@ -60,6 +63,11 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&server=http://127.0.0.
     ok(await p.evaluate(() => document.querySelector('#helper span').textContent) === 'Press here to learn how the game works.', 'it says: Press here to learn how the game works.');
     ok(await beside(p, '#how', WORDS.filter(w => w !== '#how')), 'it sits beside How to play, over none of the menu’s words');
     ok(JSON.stringify((await store(p)).menu) === '[]', 'the guide is this device’s from now on');
+    // one note at a time: every note on the island is off while the tour is on
+    ok((await isle(p)).length === 0, 'the island’s own notes (the golem’s, the hover hint) are off');
+    await overPiece(p, 'mammoth');
+    ok((await isle(p)).length === 0 && (await note(p)) === 'New here?', 'pointing at a piece on the island shows no note either');
+    await p.mouse.move(700, 60); await p.waitForTimeout(300);
     // pointing at the menu's words: their own white notes stay away under the guide's
     await p.hover('#how'); await p.waitForTimeout(700);
     ok(await p.evaluate(() => getComputedStyle(document.querySelector('#dio .btn-note[data-btn="rules"]')).display === 'none') && (await note(p)) === 'New here?', 'pointing at How to play: the guide’s note stays, the word’s white note stays away');
@@ -78,11 +86,17 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&server=http://127.0.0.
     for (const [head, sel, id] of steps) {
       await js(p, '#hp-ok');
       ok(await wait(p, head) && (await store(p)).menu.includes(prev), `Got it: then ${head}`);
+      ok((await isle(p)).length === 0, 'still the only note on screen');
       ok(await beside(p, sel, id === 'play' ? WORDS.slice(1) : WORDS.concat(id === 'field' ? [] : ['#dio .bf-note'])), `it sits beside ${sel.replace('#dio ', '')}`);
       prev = id;
     }
     await js(p, '#hp-ok'); await p.waitForTimeout(500);
     ok((await note(p)) === '' && (await store(p)).menu.length === 6, 'the last Got it: the guide is over');
+    await p.mouse.move(700, 60); await p.waitForTimeout(2500);
+    ok((await isle(p)).includes('skeleton'), 'and the island’s notes are back');
+    await overPiece(p, 'mammoth');
+    ok((await isle(p)).includes('mammoth'), 'a pointed-at piece has its note again');
+    await p.mouse.move(700, 60);
     await p.hover('#how'); await p.waitForTimeout(700);
     ok(await p.evaluate(() => getComputedStyle(document.querySelector('#dio .btn-note[data-btn="rules"]')).display !== 'none'), 'and the words’ white notes are back');
     await p.reload(); await p.waitForFunction(() => window.__dio && window.__dio.ready, null, { timeout: 60000 }); await p.waitForTimeout(2000);
@@ -112,17 +126,22 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&server=http://127.0.0.
     ok(await wait(p, 'Your battlefield.'), 'back on the menu: the next one');
     await p.close();
   }
-  { // ---- a guest account: Stay logged in? is asked under the name first ----
+  { // ---- a guest account: Stay logged in? waits for the tour (one note at a time), and is asked when it ends ----
     const p = await open({ guest: 'acct' }); await guestIn(p);
-    ok(await wait(p, 'New here?') && await p.evaluate(() => !document.getElementById('dio-stay').hidden), 'a guest account: New here? shows beside Stay logged in?');
-    for (const h of ['Ready to fight?']) { await js(p, '#hp-ok'); await wait(p, h); }
-    await js(p, '#hp-ok'); await p.waitForTimeout(600); // (Change battlefield waits for the answer too: its note is hidden)
-    ok(['', 'Music.'].includes(await note(p)), 'the notes on the top bar wait for the answer');
-    if ((await note(p)) === 'Music.') { await js(p, '#hp-ok'); await p.waitForTimeout(600); }
-    ok(!['You’re a guest.', 'That’s the menu.'].includes(await note(p)), 'no note under the name while the question is there');
-    await js(p, '#stay-yes');
-    ok(await wait(p, 'Your battlefield.') || ['You’re a guest.'].includes(await note(p)), 'answered: the guide goes on');
+    ok(await wait(p, 'New here?') && await p.evaluate(() => document.getElementById('dio-stay').hidden), 'a guest account: New here? first, Stay logged in? waits');
+    ok(await p.evaluate(() => !document.querySelector('#lines path')), 'and Change battlefield has no line to the island meanwhile');
+    for (const h of ['Ready to fight?', 'Your battlefield.', 'Music.', 'You’re a guest.', 'That’s the menu.']) { await js(p, '#hp-ok'); await wait(p, h); ok(await p.evaluate(() => document.getElementById('dio-stay').hidden), `${h} still no question`); }
+    await js(p, '#hp-ok');
+    ok(await p.waitForFunction(() => !document.getElementById('dio-stay').hidden && /Stay logged in/.test(document.getElementById('dio-stay').textContent), null, { timeout: 5000 }).then(() => true, () => false) && (await note(p)) === '', 'the tour is over: Stay logged in? is asked');
+    await js(p, '#stay-yes'); await p.mouse.move(700, 60); await p.waitForTimeout(1500);
+    ok(await p.evaluate(() => !!document.querySelector('#lines path')), 'and the lines are back');
     await p.close();
+    // Turn off helpers ends the tour too: the question comes at once
+    const q = await open({ guest: 'acct' }); await guestIn(q); await wait(q, 'New here?'); await js(q, '#hp-off');
+    await q.waitForTimeout(500);
+    ok((await note(q)) === 'Helpers are off.' && await q.evaluate(() => document.getElementById('dio-stay').hidden), 'Turn off helpers: its last note is alone too');
+    ok(await q.waitForFunction(() => !document.getElementById('dio-stay').hidden, null, { timeout: 8000 }).then(() => true, () => false) && (await note(q)) === '', 'then the question is asked');
+    await q.close();
   }
   { // ---- a player already on this device logs out, and comes in as a guest: that isn't a first time ----
     const p = await open({ guest: 'acct', init: `try { if (!localStorage.getItem('pb-welcomed')) { localStorage.setItem('phonebellum.account.v1', JSON.stringify({ id: '${PID}', tag: 'Guest 1234', titles: [], skins: [], puzzles: [], session: '${SID}', ts: Date.now() })); localStorage.setItem('pb-stay', '1'); localStorage.setItem('pb-welcomed', '1'); } } catch (e) {}` });

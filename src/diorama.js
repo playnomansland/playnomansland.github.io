@@ -561,8 +561,8 @@
     const proj = (o, h) => { const v = new THREE.Vector3(); o.getWorldPosition(v); v.y += h; v.project(cam); return [(v.x + 1) / 2 * cv.clientWidth, (1 - v.y) / 2 * cv.clientHeight]; };
     const dotSvg = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="currentColor"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>`;
     // (each tower and treasury shows only its own note: owner, 2026-11-08)
-    // (a menu word's white note stays away while a yellow guide note is on the menu's words: helpQuiet)
-    const showing = (el, hovered) => el.dataset.anchor === 'btn' && helpQuiet() ? false : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
+    // (a menu word's white note stays away while the menu guide's tour is on: helpTour. One note at a time)
+    const showing = (el, hovered) => el.dataset.anchor === 'btn' && helpTour() ? false : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
     // a label off the point (x, y): a line out to it and under it, kept on screen. Returns the line's svg
     let placed = []; // the island notes' boxes laid out so far this frame (notes() empties it)
     let pinFading = false, pinOverFading = false; // the note being laid out is fading; it may sit over fading boxes
@@ -607,7 +607,7 @@
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
           const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
-          if (on && !phone() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf') && !body.classList.contains('how-over-bf')) {
+          if (on && !phone() && !helpTour() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf') && !body.classList.contains('how-over-bf')) { // (no line to the island while the menu guide's tour is on: its note is the only one. The button stays)
             const r = el.getBoundingClientRect(), ty = r.top - 4;
             // the point is picked where the camera is heading and kept while it moves, so the line glides with the island
             // instead of hopping between corners mid-move (owner, 2026-11-10)
@@ -632,12 +632,13 @@
         let op = 1, fading = false;
         if (el.dataset.anchor !== 'btn') {
           const home = el.hasAttribute('data-home'), t = performance.now(), dt = Math.min(100, t - (el._t || t)); el._t = t;
-          // (the menu guide's label wants this spot: the standing note steps aside, quickly, and comes back after it)
-          let aside = false; if (home) { const g = el.style.display !== 'none' ? el.getBoundingClientRect() : null; if (g && g.width) el._gr = { left: g.left, top: g.top, right: g.right, bottom: g.bottom }; aside = !!el._gr && helpCovers(el._gr); if (aside) show = false; }
+          // the menu guide's tour is on: its note is the only one on screen, so every island note is off at once (the
+          // golem's, the hover hint, a pointed-at piece's); they come back when the tour is done (owner, 2026-11-11)
+          if (helpTour() && !body.classList.contains('welcome')) { el._op = 0; el._off = null; el.style.display = 'none'; continue; }
           const menu = !phone() && !inPlay && !inProf && viewName === 'play' && !body.classList.contains('welcome');
           if (!menu) el._op = show ? 1 : home ? 1 : 0;
           else if (show && !(home && (el._op ?? 1) < 1 && t - hoverOff < 1000)) el._op = home ? Math.min(1, (el._op ?? 1) + dt / 250) : 1; // the menu's own notes wait a second after the pointer leaves before coming back
-          else { show = false; el._op = Math.max(0, (el._op ?? (home ? 1 : 0)) - dt / (aside ? 180 : 1000)); fading = el._op > 0; }
+          else { show = false; el._op = Math.max(0, (el._op ?? (home ? 1 : 0)) - dt / 1000); fading = el._op > 0; }
           op = el._op; show = show || fading;
         }
         el.style.display = show ? '' : 'none'; el.style.opacity = op < 1 ? op : ''; el.style.pointerEvents = fading ? 'none' : ''; if (!show) { el._off = null; continue; }
@@ -1500,7 +1501,7 @@
     // once after making an account or logging in), then a new Title, then a new skin (each announced once per phone)
     const stayEl = $('dio-stay');
     function drawStay() {
-      const on = !!acct && !HOME_AUTO && !door.screen && home.screen === 'menu';
+      const on = !!acct && !HOME_AUTO && !door.screen && home.screen === 'menu' && !helpTour(); // (after the menu guide's tour: one note at a time; tourSync draws this again when it ends)
       const ask = on && stayPref() == null, nt = on && !ask ? titlesUnseen() : [], ns = on && !ask && !nt.length ? skinsUnseen() : [];
       stayEl.hidden = !(ask || nt.length || ns.length); stayEl.classList.toggle('news', !ask);
       if (ask) {

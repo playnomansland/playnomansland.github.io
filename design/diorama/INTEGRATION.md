@@ -169,14 +169,16 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   **That's the menu.** (under Settings: the sound, full screen and Helpers). A note goes with **Got it** (the next one
   comes at once), when its thing is pressed (How to play, Play), or once it has been on screen 1.2 s and the player
   has gone to another screen (Play, Profile, Puzzles, Units or Rankings clicked open, a match). A dropdown, a sheet or
-  the playlist over the menu only hides it. The notes under the top bar wait for *Stay logged in?* to be answered; New
-  here? shows beside it. While a note is on the menu's words, those words' own white hover notes (and Full
-  leaderboard) stay away (`helpQuiet`, asked by `showing()` in `src/diorama.js`). **Placing (`helperLine`):** each note
+  the playlist over the menu only hides it. **One note at a time (owner, 2026-11-11):** while the tour has a note to
+  show (`helpTour`), nothing else that looks like a note is on screen: every note on the island (the golem's, the hover
+  hint, a pointed-at piece's), the menu words' white hover notes (and Full leaderboard), Change battlefield's line to
+  the island (the button stays) and the account's notes (*Stay logged in?*, a new title or skin). They come back when
+  the tour is done or turned off (`tourSync` draws the menu again), so *Stay logged in?* is asked after the tour.
+  **Placing (`helperLine`):** each note
   says where its dot stands (`side`, `along`, `off`) and which way its label runs (`lean`); the label takes the first
   spot that is on screen and over none of the menu's words (their letters, `wordBox`), the music, Change battlefield,
   the top bar or the logo (`MENU_KEEP`), in the open field if it can: off the island (`dio.api.isle`, its corners on
-  screen) and clear of the island's two standing notes. Where it has to lie over a standing note (the golem's, the
-  hover hint), that note steps aside while it is up (`helpCovers`, asked by `notes()`). Near the screen's edge a
+  screen). Near the screen's edge a
   label slides back in along its line. In a window with no free spot a note is left out until the window changes
   (1280×720 and 1024×768: Your battlefield), except New here?, which always shows. **Turning it off:** "Turn off
   helpers" is Settings' Helpers, the one switch for every note (a last note points at Settings); Helpers On starts
