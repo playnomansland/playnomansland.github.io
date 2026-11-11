@@ -1,8 +1,8 @@
 # Handoff: the Mommy boss puzzle
 
-Work branch `claude/charming-allen-kjik08`, merged into `main` (live) after each step. Written 11 November 2026 over one long day; sections are in the order the work happened. **Start with section 0 (where things stand now)**, then section 7 (working with the owner); the rest is history and evidence.
+Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, merged into `main` (live) after each step. Written 11 November 2026 over one long day; sections are in the order the work happened. **Start with section 0 (where things stand now)**, then section 7 (working with the owner); the rest is history and evidence. Section 12 is the latest session (her attacks reworked, difficulty measured again, unit priorities measured).
 
-## 0. Where things stand now (end of 11 November)
+## 0. Where things stand now (11 November, night)
 
 **Live for developer accounts, phone and PC.** Puzzles → *Weekly boss - The Mommy* (a "Weekly boss · developers only" section at the top), the Developer menu → *Mommy*, or the test link `playnomansland.github.io/?mommy` (opens her straight away on a developer account; on any other it says which account the page sees). It runs on the device against nobody: no server, no AI.
 
@@ -12,18 +12,21 @@ Work branch `claude/charming-allen-kjik08`, merged into `main` (live) after each
 - a rules popup (*Mommy's rules*) as a run starts; the ? while deploying and a button in the fight open it again
 - a banner per round; her reach (dashed ring), the nests marked LOW / HIGH and the poison pools on the board while deploying
 - a boss bar over the board: name, phase (HANGING / FALLEN · STUNNED n s / ON THE GROUND / DEAD), health with numbers, a white strip for the latest damage, tokens (damage taken %, nests left, bite, mortar countdown or who holds her, molt countdown, poison / bleed / burn / frost / slow on her)
-- on the board: her silk thread while she hangs, her web ring, the bite's wind-up line (yellow fast, red heavy, orange sweep) and a ring on the target, a splat where the bite lands, the mortar's red crosshair then a streak from the ripped nest and a web splat, a dust ring when she falls, stars while stunned
-- her bite is a slow web ball (15 m/s), so it can be seen coming and dodged by a unit that moves
+- on the board: her silk thread while she hangs, her web ring, a dust ring and SHE FALLS when she falls, stars while stunned, MOLT when she sheds something
+- **her bite** (reworked, section 12): her jaws open on the ground where her target stands, with a ring the size of the bite (yellow fast, red heavy, orange sweep), close for 1 s and snap shut. Whoever stands in the ring then is bitten; a unit that walked out is missed. The bite mark stays 4 s
+- **her mortar** (reworked, section 12): her thread lies on the nest she will throw (THROWS IN n s), a dashed ring follows the clump she aims at; the nest then flies in an arc for 1.6 s to a red ring (WEB MORTAR) that fills as it comes, lands on whoever stands there then, and leaves a web on the ground
 - shop cards show n/3 (the squad cap); Settings in a match has *Restart Mommy*; a report after every fight
 
-**Numbers in force** (`Boss.CFG`): health 46,000 (owner agreed); start 450 gold; 30 s fights; hang 15%; reach 22 m; web 14 m; bites fast 150×0.8/s, heavy 480×0.25/s splash 2.5, sweep 70×1/s splash 5, order fast, heavy, sweep, heavy, sweep; mortar after 5 s with nobody in reach, every 4 s, 120 damage, only rips nests within her reach; nests 500 health, burst 3, hatch 6/5/4/3/3 s, lure 12 m; spiderlings 90 health; pools 4%/s, linger 2 s; wing-nest layouts and pools per round as in CFG; molt 6 s; no share-of-max-health damage on her; banned Meteor Caller, Assassin, Rogue, Truespear, Sun Priest; at most 3 squads of a type; one free move and one free extra deployment a round; a treasury, no tower.
+**Numbers in force** (`Boss.CFG`): health 46,000 (owner agreed); start 450 gold; 30 s fights; hang 15%; reach 22 m; web 14 m; bites fast 150×0.8/s, heavy 480×0.25/s splash 2.5, sweep 70×1/s splash 5, order fast, heavy, sweep, heavy, sweep, each landing 1 s after her jaws open, where they opened; mortar after 5 s with nobody in reach, every 4 s, 1.6 s in the air, 120 damage, only rips nests within her reach; nests 500 health, burst 3, hatch 6/5/4/3/3 s, lure 12 m; spiderlings 90 health; pools 4%/s, linger 2 s; wing-nest layouts and pools per round as in CFG; molt 6 s; no share-of-max-health damage on her; banned Meteor Caller, Assassin, Rogue, Truespear, Sun Priest; at most 3 squads of a type; one free move and one free extra deployment a round; a treasury, no tower.
 
 **Owner decisions since section 8:** questions 1-5 there agreed; health 46,000 with no late-round rule; leave Goblins as they are; pools at 4% for now; the round-3 ceiling should be searched further before a real launch; poison pools back (in place of "spiders go for the biggest clump"); wing nests (5b); the Puzzles button is named "Weekly boss - The Mommy".
 
-**Open, waiting on the owner:**
-1. Unit priorities, how far to go. Built so far: units engage from the first second (no blind march up their column), nests count 12 m closer when picking whom to walk to and shoot, she is picked last from the first tick. Measured (16 games each): nests fall about 1 s sooner a round for aware players, stat-max damage +14%. Still odd: all melee squads crowd the one low nest (melee can't hit high nests), shooters take nests nearest first. Options put to the owner: (1, recommended) let ranged squads take a direction arrow onto a nest in her fight, and shoot it first; (2) a stronger nest pull (25 m); (3) squads keep to nests on their own half; (4) leave it.
-2. Re-measure difficulty (`node tools/boss/difficulty.js 40`) after the targeting and slow-bite changes; the health was set before them. Section 9 has the method and targets.
-3. Not built: the "Mommy" title (the win screen mentions it), the server checking a win, a weekly rotation (it is the one boss), a model of her own (the spider model drawn big), nests in the 2D fight are drawn like little houses (the board's look for any structure).
+**Open, waiting on the owner** (put to the owner at the end of the section-12 session; numbers in section 12):
+1. Her health: 46,000 no longer meets the targets (a knowing player wins 65% by round 5, was 35% when it was agreed). Recommended 54,000: the same picture as when 46,000 was agreed, and the best plan known still wins in round 3 (55.2k by round 3).
+2. Unit priorities: recommended to leave them as they are (option 4). Pointing shooters at a nest (option 1) was measured and did not help; the engine switch for it (`sq.focus`) is in, with no button.
+3. The new bite and mortar: agree, or change the times (`CFG.mommy.biteSecs` 1 s, `CFG.mommy.mortar.fly` 1.6 s).
+4. Clarity fixes noticed while playing, not built: the "100" health top left (there is no player health here), her reach ring in the fight, nests that look like nests and keep their LOW / HIGH label in the fight.
+5. Not built: the "Mommy" title (the win screen mentions it), the server checking a win, a weekly rotation (it is the one boss), a model of her own (the spider model drawn big).
 
 **Things that bit this session (read before working):**
 - Build like live: `PB_UI_DEFAULT=pc node src/build.js` (live's `index.html` has `const DEF = 'pc'`; a plain build makes 'classic' and the merge then changes PC players' menu).
@@ -31,6 +34,9 @@ Work branch `claude/charming-allen-kjik08`, merged into `main` (live) after each
 - Engine changes: run `QUICK=1 node tools/tests/fast-paths.js` (identical battles in both targeting modes) and the server tests one at a time (`cd server && node test/<name>.test.js`; run together on a busy machine `hub.test.js` can time out).
 - Browser tests here: serve on a high port (`python3 -m http.server 18795 --bind 127.0.0.1`; 879x are taken by the server tests' wrangler) and restart it each turn. A fake developer account in localStorage (`phonebellum.account.v1`) needs `skins: [], titles: [], puzzles: []` or the Diorama won't start; `?ui=diorama` forces the PC menu (headless Chrome has no mouse, so 'pc' shows the classic menu), `?board=3d` the 3D board, `?test` exposes `window.__pb()` (the live match) and `__pbRedraw`.
 - Developer status arrives with the server's answer a moment after the page opens; anything developer-only drawn before it must be drawn again (`bossRowChanged`, from `acctSave`).
+- Looking at a fight: `tools/boss/watch.js` plays one in a headless browser and saves screenshots at exact fight times (it steps the frames itself; with real time a slow machine shoots the wrong moment). The 3D board is slow there (software rendering): keep the window small.
+- The PC layout (`html.diorama.pcwide`) lays the round line over the top of the board, so anything pinned to the top of the board (`#wrap`) sits behind it unless it is moved down (`diorama.css`).
+- The boss hook runs before the tick's attacks, so the engine's `shots` are empty there; her bites are read from `api.projectiles` the tick after.
 - The page plays each fight twice (headless for the result, then on screen from the same snapshot); `Boss.battle` must stay deterministic and never change `m`. Her visual events (`mom.ev`, `mom.bs.aim`, `mom.bs.mortarAim`) are recorded only when `o.record` is set (the shown fight).
 
 The prototype tools live in `tools/boss/` and run the game's own `src/boss.js`. Run them from the repo root:
@@ -453,3 +459,65 @@ The owner agreed: 46,000 health with no extra late-round rule; Goblins left as t
 - **One change from the prototype:** the prototype's player quietly had the game's default tower (an Outpost at col 8, row 14). The design says a treasury and no tower, so the game has none, and so does the prototype now. Lines A and B and the round-3 winner came out the same (Line B 71.6k over five rounds, A 71.6k); Line C moved (59.1k).
 - **What a round shows:** a banner with the round's bite, the nests (low and high) and her health; on the board her reach (a dashed ring), the nests marked LOW or HIGH, and the poison pools (green tiles, also in the fight). After the fight a report: nests down at, how long she was down, mortar shots, damage to her (and how much while she hung), the three squads that hurt her most, her health.
 - **Not done yet:** the "Mommy" title (the win screen says it would be earned), the server checking a win, a weekly rotation (it is the one boss), a model of her own (she is the spider model, drawn big), the mortar's wind-up on the board.
+
+
+---
+
+## 12. Her attacks reworked, difficulty measured again, unit priorities measured (11 November, night)
+
+The owner: the round title overlapped the boss bar on PC, and her attacks were hard to read ("Bite is a bite mark that stays on the screen. Throwing something somewhere needs low projectile speed so you see what's happening as well as some animation").
+
+### What changed
+
+- **The overlap.** On the PC layout the round line lies over the top of the board, and the boss bar sat behind it. The bar now sits under it. Her health number was also cut off by the bar's edge (on every layout); fixed.
+- **The bite** is no longer a web ball. Her jaws open on the ground where her target stands and shut `biteSecs` (1 s) later; it lands there, on whoever stands in the ring then. Before, the ball flew at 15 m/s (0.3 to 1.5 s, by distance) and hit the first body in its way. The mark stays 4 s. Engine: `u.lob` (lands where aimed, already there) and the new `u.projSecs`.
+- **The mortar** is thrown, not instant: the nest is gone the moment she throws it (as before, so fall times don't move), flies 1.6 s (`mortar.fly`), and its hit and web land where the clump stood when she threw. A squad that walks on is missed.
+- **Both boards draw the same pictures** (`Art.bossJaws`, `bossBiteMark`, `bossWeb`); the 3D board got pictures that lie on the ground (`decal`).
+- `tools/boss/difficulty.js` judges one set of games at several healths and takes changed rules (`--set`); `tools/boss/watch.js` takes screenshots of a fight.
+
+### Difficulty (40 games each; win by round 4 / by round 5; `node tools/boss/difficulty.js 40 46000,50000,54000,58000`)
+
+| Player | 46,000 when agreed (section 10) | 46,000 before this session | 46,000 now | 50,000 now | 54,000 now | 58,000 now |
+|---|---|---|---|---|---|---|
+| random | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% |
+| statmax | 0 / 0% | 0 / 15% | 0 / 5% | 0 / 3% | 0 / 0% | 0 / 0% |
+| statmax + 100 gold | 0 / 15% | 5 / 30% | 0 / 28% | 0 / 23% | 0 / 13% | 0 / 3% |
+| statmax + 200 gold | 8 / 65% | 8 / 93% | 15 / 85% | 8 / 78% | 5 / 63% | 0 / 50% |
+| aware | 0 / 35% | 10 / 57% | 8 / 65% | 3 / 48% | 0 / 30% | 0 / 20% |
+| Line B nudged a tile | | 0 / 70% | 0 / 85% | 0 / 78% | 0 / 63% | |
+
+"Before this session" is the targeting work and the slow web-ball bite of the session before, which were never measured. The new bite and mortar moved the medians by under 5% (damage by round 5, thousands, before → now: statmax 33.0 → 33.4, +100 39.2 → 40.8, +200 57.7 → 58.1, aware 47.6 → 49.8).
+
+Where the extra ease came from (median damage by round 5, thousands):
+
+| Rules | statmax | + 100 gold | + 200 gold | aware |
+|---|---|---|---|---|
+| Now | 33.4 | 40.8 | 58.1 | 49.8 |
+| The bite lands at once (can't be dodged) | 28.6 | 33.6 | 53.4 | 44.8 |
+| Jaws shut after 0.7 s | 33.1 | 39.0 | 55.2 | 49.1 |
+| No targeting help (no nest pull, units march up their column first) | 29.8 | 39.1 | 55.4 | 45.0 |
+
+A bite that can be dodged is worth 10 to 20% damage, more to the stat-max player than to the knowing one; the targeting help about 10% to everyone.
+
+**The round-3 title.** With her health out of reach the best plan known does 8.5 / 30.9 / 55.2k by rounds 1 / 2 / 3 (56.7k before the rework). At 54,000 it still wins in round 3, by 2%. No automatic player won by round 3 in any run. Lines now (by R3 / R4 / R5): A 32.0 / 49.2 / 65.0, B 32.0 / 44.8 / 71.5, C 21.3 / 31.5 / 56.1, search best five rounds 35.0 / 51.2 / 81.9.
+
+### Unit priorities (median damage by round 5, thousands; 40 games each)
+
+| Option | statmax | + 100 gold | aware | best aware game |
+|---|---|---|---|---|
+| 4. As now (nests pull 12 m) | 33.4 | 40.8 | 49.8 | 73.6 |
+| 1. Shooters can be pointed at a nest: every shooter pointed | 33.4 | 40.8 | 47.9 | 65.7 |
+| 1. ...only the shooters bought or moved this round | 33.4 | 40.8 | 49.2 | 66.9 |
+| 1. ...only shooters that outrange her reach | 33.4 | 40.8 | 48.6 | 66.3 |
+| 2. A stronger pull (25 m) | 34.6 | 41.4 | 51.8 | 73.9 |
+| 3. Squads keep to their own side (lane cost 1.5 for 0.5) | 30.4 | 41.3 | 48.2 | 71.6 |
+
+Pointing shooters at a nest did not help the knowing test player in any of three ways of using it: a pointed squad walks past the spiderlings that are biting it. The stronger pull adds 2 to 4% to everyone, so it is ease, not knowledge. Keeping to a side costs the stat-max player 9% and the knowing one 3%. Recommended: leave it (option 4). The switch for option 1 stays in the engine (`b.focus`, set from `sq.focus` in `Boss.battle`; the test player uses it with `--set proto.focus=true`), with no button in the game.
+
+### Noticed while playing it (not built)
+
+- Top left on PC and phone the player has "100" and a health bar; there is no player health in this puzzle.
+- Her reach (the dashed ring) shows only while deploying. In the fight only the web ring (14 m) shows, which reads as her reach.
+- Nests are little houses tagged NES on the 2D board and small grey lumps on the 3D one, and lose their LOW / HIGH label when the fight starts.
+- The top right repeats her health next to the boss bar.
+

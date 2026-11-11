@@ -16,9 +16,16 @@
 // nudged a tile at random (does it win by knowledge or by luck?).
 //
 // Run from the repo root: node tools/boss/difficulty.js [runs per agent, default 40] [health to judge by, default CFG]
+//   several healths at once (the same games judged at each):  node tools/boss/difficulty.js 40 46000,50000,54000
+//   a changed rule (any number of them; the value is JSON):   ... --set mommy.biteSecs=0 --set mommy.mortar.fly=0
+//   only the automatic players, no Line B rows:               ... --quick
 const B = require('./mommy.js');
 const P = require('./plans.js');
-const C = B.CFG;
+const ARGS = process.argv.slice(2), SETS = [], POS = [];
+for (let k = 0; k < ARGS.length; k++) { if (ARGS[k] === '--set') SETS.push(ARGS[++k]); else if (!ARGS[k].startsWith('--')) POS.push(ARGS[k]); }
+const QUICK = ARGS.includes('--quick');
+const C = JSON.parse(JSON.stringify(B.CFG));
+for (const kv of require.main === module ? SETS : []) { const i = kv.indexOf('='), path = kv.slice(0, i).split('.'); let o = C; for (const k of path.slice(0, -1)) o = o[k] || (o[k] = {}); o[path[path.length - 1]] = JSON.parse(kv.slice(i + 1)); }
 const OUT = { ...C, mommy: { ...C.mommy, hp: 1e7 } }; // her health out of reach: every round is played
 const mw = B.world(C.mommy.col, C.mommy.row);
 const distHer = (c, r) => { const w = B.world(c, r); return Math.hypot(w.x - mw.x, w.y - mw.y); };
@@ -78,6 +85,13 @@ const awareAgent = (seed) => { const rnd = rng(seed); return (a, r, run) => {
   const safe = (tiles) => tiles.filter(([c]) => !poolCols.has(c)).concat(tiles.filter(([c]) => poolCols.has(c)));
   const wide = (col, rows) => { const t = []; for (const d of [0, 1, -1, 2, -2]) for (const rw of rows) t.push([Math.max(1, Math.min(10, col + d)), rw]); return t; };
   let moved = false;
+  // (prototype, cfg.proto.focus) a ranged squad can be pointed at a nest: it walks to that one and shoots it first.
+  // Squads from earlier rounds are pointed at the nest nearest their column; new ones at the nest they were bought for
+  // (proto.focus: true every shooter; 'new' only the ones bought or moved this round; 'long' only those that outrange her reach)
+  const FMODE = cfg.proto && cfg.proto.focus, FOCUS = !!FMODE;
+  const point = (sq, spot) => { if (FOCUS && sq && !isMelee(name(sq)) && !(FMODE === 'long' && U(name(sq)).range < reach + 2)) sq.focus = spots.indexOf(spot); };
+  const nearestSpot = (q) => spots.slice().sort((x, y) => Math.abs(x[0] - q.col) - Math.abs(y[0] - q.col))[0];
+  for (const q of a.army()) { delete q.focus; if (FOCUS && FMODE !== 'new') point(q, nearestSpot(q)); }
   // a melee squad with an arrow on each low nest (one out of her reach keeps it away from her)
   for (const [c, rw, kind] of spots) {
     if (kind !== 'low' || deploysLeft(run) <= 0) continue;
@@ -97,8 +111,8 @@ const awareAgent = (seed) => { const rnd = rng(seed); return (a, r, run) => {
     if (kind === 'low') continue;
     const col = Math.max(1, Math.min(10, Math.round(c))), tiles = safe(wide(col, [10, 11, 12]));
     const longOnly = rw <= 4;
-    if (!moved && rnd() < 0.6) { const old = a.army().find((q) => q.round < r && !isMelee(name(q)) && Math.abs(q.col - col) > 2 && (!longOnly || U(name(q)).range >= 24)); if (old) for (const [tc, tr] of tiles) if (a.move(old, tc, tr)) { moved = true; break; } }
-    if (deploysLeft(run) > 0) { const n = choose(rnd, longOnly ? ['Sniper', 'Earth Wizard', 'Slime Wizard', 'Frost Wizard'] : SHOOTERS, a, run); if (n) buyAt(a, n, tiles); }
+    if (!moved && rnd() < 0.6) { const old = a.army().find((q) => q.round < r && !isMelee(name(q)) && Math.abs(q.col - col) > 2 && (!longOnly || U(name(q)).range >= 24)); if (old) for (const [tc, tr] of tiles) if (a.move(old, tc, tr)) { moved = true; point(old, spots.find((x) => x[0] === c && x[1] === rw)); break; } }
+    if (deploysLeft(run) > 0) { const n = choose(rnd, longOnly ? ['Sniper', 'Earth Wizard', 'Slime Wizard', 'Frost Wizard'] : SHOOTERS, a, run); if (n) point(buyAt(a, n, tiles), spots.find((x) => x[0] === c && x[1] === rw)); }
   }
   // deployments and gold left: a second melee squad on a low nest in her reach (it holds her while it clears), or
   // another shooter on a nest's column, cheaper ones when gold runs low
@@ -109,10 +123,10 @@ const awareAgent = (seed) => { const rnd = rng(seed); return (a, r, run) => {
       const sq = m2 && buyAt(a, m2, safe(wide(col, [10, 11])));
       if (sq) { B.Game.setAim(run.m, 0, sq.id, Math.round(low[0]) - sq.col, low[1] - sq.row); continue; }
     }
-    const [c] = pick(rnd, spots), col = Math.max(1, Math.min(10, Math.round(c)));
+    const spot = pick(rnd, spots), [c] = spot, col = Math.max(1, Math.min(10, Math.round(c)));
     const n = choose(rnd, SHOOTERS, a, run);
     if (!n) break;
-    buyAt(a, n, safe(wide(col, [11, 12])));
+    point(buyAt(a, n, safe(wide(col, [11, 12]))), spot);
   }
   levelAll(a);
 }; };
@@ -139,23 +153,29 @@ function summary(label, cums, hp) {
   const best = Math.max(...cums.map((c) => c[c.length - 1])) / 1000;
   console.log(label.padEnd(44) + String(n).padStart(5) + `${by(3).toFixed(0)}%`.padStart(8) + `${by(4).toFixed(0)}%`.padStart(8) + `${by(5).toFixed(0)}%`.padStart(8) + med(4).toFixed(1).padStart(10) + med(5).toFixed(1).padStart(10) + best.toFixed(1).padStart(9));
 }
-function report(runs = 40, hp = C.mommy.hp) {
-  console.log(`\nHow often each kind of player beats her (health ${hp}). Damage in thousands, with her health out of reach.`);
-  console.log('player'.padEnd(44) + 'runs'.padStart(5) + 'by R3'.padStart(8) + 'by R4'.padStart(8) + 'by R5'.padStart(8) + 'median R4'.padStart(10) + 'median R5'.padStart(10) + 'best R5'.padStart(9));
-  const pops = {};
-  const pop = (label, make) => { const cums = []; for (let s = 1; s <= runs; s++) cums.push(runAgent(make(s * 7919 + 13))); pops[label] = cums; summary(label, cums, hp); };
+// hps: one health or a list; the games are played once and judged at each. quick: only the automatic players
+function report(runs = 40, hps = C.mommy.hp, quick = false) {
+  const pops = {}, rows = [];
+  const pop = (label, make) => { const cums = []; for (let s = 1; s <= runs; s++) cums.push(runAgent(make(s * 7919 + 13))); pops[label] = cums; rows.push([label, cums]); };
   pop('random', randomAgent);
   pop('statmax', (s) => statmaxAgent(s));
   pop('statmax + 100 gold a round', (s) => statmaxAgent(s, 100));
   pop('statmax + 200 gold a round', (s) => statmaxAgent(s, 200));
   pop('aware', awareAgent);
-  console.log('\nLine B with one piece of knowledge taken out');
-  for (const [label, plan] of Object.entries(ablations)) { const res = P.runPlan(plan, OUT); summary(label + (res.fails.length ? ` (${res.fails.length} steps failed)` : ''), [cumulative(res.log)], hp); }
-  const jit = []; for (let s = 1; s <= runs; s++) jit.push(cumulative(P.runPlan(jittered(LINE_B, s * 104729), OUT).log));
-  summary('Line B, every squad nudged up to a tile', jit, hp);
-  pops['Line B jittered'] = jit;
+  if (!quick) {
+    rows.push(['\nLine B with one piece of knowledge taken out']);
+    for (const [label, plan] of Object.entries(ablations)) { const res = P.runPlan(plan, OUT); rows.push([label + (res.fails.length ? ` (${res.fails.length} steps failed)` : ''), [cumulative(res.log)]]); }
+    const jit = []; for (let s = 1; s <= runs; s++) jit.push(cumulative(P.runPlan(jittered(LINE_B, s * 104729), OUT).log));
+    rows.push(['Line B, every squad nudged up to a tile', jit]);
+    pops['Line B jittered'] = jit;
+  }
+  for (const hp of [].concat(hps)) {
+    console.log(`\nHow often each kind of player beats her (health ${hp}). Damage in thousands, with her health out of reach.`);
+    console.log('player'.padEnd(44) + 'runs'.padStart(5) + 'by R3'.padStart(8) + 'by R4'.padStart(8) + 'by R5'.padStart(8) + 'median R4'.padStart(10) + 'median R5'.padStart(10) + 'best R5'.padStart(9));
+    for (const [label, cums] of rows) if (cums) summary(label, cums, hp); else console.log(label);
+  }
   return pops;
 }
 
 module.exports = { randomAgent, statmaxAgent, awareAgent, ablations, jittered, report, runAgent, winRound };
-if (require.main === module) report(+process.argv[2] || 40, +process.argv[3] || C.mommy.hp);
+if (require.main === module) { if (SETS.length) console.log('rules changed: ' + SETS.join(', ')); report(+POS[0] || 40, POS[1] ? POS[1].split(',').map(Number) : C.mommy.hp, QUICK); }

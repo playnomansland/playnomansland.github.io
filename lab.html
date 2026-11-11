@@ -2717,6 +2717,7 @@ const Engine = (() => {
     // even if another enemy comes closer; then it picks the nearest
     function locked(b, valid) {
       if (b.avenge && b.avenge.alive && valid.includes(b.avenge)) b.lock = b.avenge; // a guard going for its attacker
+      if (b.focus && b.focus.alive && valid.includes(b.focus)) b.lock = b.focus; // (src/boss.js) the nest its squad was pointed at comes first
       if (b.u.hunter && !(b.lock && b.lock.alive && b.lock.prey && valid.includes(b.lock))) { const p = valid.find(f => f.prey); if (p) b.lock = p; } // Hunter: a marked enemy in reach comes first
       if (!(b.lock && b.lock.alive && valid.includes(b.lock))) {
         // aware2: the nearest enemy that isn't about to die from what its side is already shooting at it
@@ -2735,6 +2736,7 @@ const Engine = (() => {
       for (const f of sides[1 - b.side]) {
         if (!pickable(b, f) || !inSight(b, f)) continue;
         const d = gap(f, b), mine = f === b.goal;
+        if (f === b.focus) { best = f; break; } // (src/boss.js) the nest its squad was pointed at: it walks to that one, however far
         if (d > aware * (mine ? AWARE.leash : 1)) continue;
         const lane = g.awareLane == null ? AWARE.lane : g.awareLane;
         let c = d - (mine ? AWARE.stick : 0) - (f.u.lure || 0) + lane * Math.abs(f.x - b.x); // u.lure (src/boss.js, her nests): it counts that many m closer
@@ -2842,8 +2844,9 @@ const Engine = (() => {
         } else if (b.u.projSpeed > 0) {
           // minR: it flies over the bodies within the shooter's minimum range of where it was fired (the Meteor Caller);
           // seek: a spear thrown at its locked target flies past the others and follows it (the Truespear) (2026-11-07)
+          // u.projSecs (src/boss.js, Mommy's bite): it lands that many seconds after it was fired, however far it flies
           projectiles.push({ owner: b, x: b.x, y: b.y, fx: b.x, fy: b.y, tx: tgt.x, ty: tgt.y, dirX, dirY, left: d, hit: hk, minR: b.u.minRange,
-            ...(b.u.seek && tgt === b.lock && tgt.u ? { homing: tgt } : {}) });
+            ...(b.u.seek && tgt === b.lock && tgt.u ? { homing: tgt } : {}), ...(b.u.projSecs > 0 ? { speed: Math.max(0.5, d / b.u.projSecs) } : {}) });
         } else {
           impact(b, tgt.x, tgt.y, tgt, hk, dirX, dirY, b.x, b.y);
         }
@@ -3590,7 +3593,7 @@ const Engine = (() => {
           else { heal(f, q.amt * healMul * dt); if (q.speed > 0) { f.poolFast = q.speed; f.poolFastT = q.secs; } }
         }
       }
-      if (opts.bossTick) opts.bossTick({ t, dt, all, sides, hurt, direct, record: !!opts.record, shots }); // (src/boss.js) the boss's rules, once a tick
+      if (opts.bossTick) opts.bossTick({ t, dt, all, sides, hurt, direct, record: !!opts.record, shots, projectiles }); // (src/boss.js) the boss's rules, once a tick
       // ongoing effects: poison, bleed, regeneration, shortsight wearing off, spawns
       for (const b of turnOrder()) { // (the sides take turns going first here too; bodies spawned below start next tick)
         if (!b.alive) continue;
