@@ -4,8 +4,9 @@
 // loop and the switch are the first game's helpers', tools/tests/helpers-ui.js).
 //  - only a guest coming in from the welcome screen for the first time on a device gets it: not a page opened on the
 //    menu, not a device that has played here before, not after a log-out
-//  - one at a time: New here? (How to play), Puzzles, Ready to fight? (Play), Units, Your battlefield, Music, You're a guest (your
-//    name), That's the menu (Settings); each points at its thing, on screen, and never shows twice
+//  - one at a time: New here? (How to play), Puzzles, Units, Your profile (your name: what signing in gives a guest),
+//    Settings, Music, and last Ready to fight? (Play); each points at its thing, on screen, and never shows twice.
+//    Change battlefield has no note
 //  - Got it puts one away, and so does pressing its thing (How to play) or reading it and going to another screen; a
 //    dropdown over the menu only hides it; the menu words' own white notes stay away under it
 //  - "Turn off helpers" is Settings' Helpers (a last note points at Settings); On starts the guide over
@@ -87,17 +88,18 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&test&server=http://127
     await p.keyboard.press('Escape');
     ok(await wait(p, 'New here?') && (await store(p)).menu.length === 0, 'closed: the same note is back (it only hid)');
     // Got it: the next one, each on its thing
-    const steps = [['Puzzles.', '#puzzles-open', 'puzzles'], ['Ready to fight?', '#play', 'play'], ['Units.', '#dio .menu [data-cam="units"]', 'units'], ['Your battlefield.', '#dio .bf-note .bf-btn', 'field'], ['Music.', '#dio .music', 'music'], ['You’re a guest.', '#dio .acct button:nth-of-type(2)', 'guest'], ['That’s the menu.', '#dio .acct button:nth-of-type(3)', 'settings']];
+    const steps = [['Puzzles.', '#puzzles-open', 'puzzles'], ['Units.', '#dio .menu [data-cam="units"]', 'units'], ['Your profile.', '#dio .acct button:nth-of-type(2)', 'profile'], ['Settings.', '#dio .acct button:nth-of-type(3)', 'settings'], ['Music.', '#dio .music', 'music'], ['Ready to fight?', '#play', 'play']];
     let prev = 'how';
     for (const [head, sel, id] of steps) {
       await js(p, '#hp-ok');
       ok(await wait(p, head) && (await store(p)).menu.includes(prev), `Got it: then ${head}`);
       ok((await isle(p)).length === 0, 'still the only note on screen');
-      ok(await beside(p, sel, id === 'play' ? WORDS.slice(1) : WORDS.concat(id === 'field' ? [] : ['#dio .bf-note'])), `it sits beside ${sel.replace('#dio ', '')}`);
+      ok(await beside(p, sel, id === 'play' ? WORDS.slice(1) : WORDS.concat(['#dio .bf-note'])), `it sits beside ${sel.replace('#dio ', '')}`);
+      if (id === 'profile') ok(/You’re a guest: sign in with Google/.test(await p.evaluate(() => document.querySelector('#helper span').textContent)), 'a guest’s says what signing in with Google gives');
       prev = id;
     }
     await js(p, '#hp-ok'); await p.waitForTimeout(500);
-    ok((await note(p)) === '' && (await store(p)).menu.length === 8, 'the last Got it: the guide is over');
+    ok((await note(p)) === '' && (await store(p)).menu.length === 7 && !(await store(p)).menu.includes('field'), 'the last Got it, on Play’s note: the guide is over (Change battlefield had none)');
     await p.mouse.move(700, 60); await p.waitForTimeout(2500);
     ok((await isle(p)).includes('skeleton'), 'and the island’s notes are back');
     await overPiece(p, 'mammoth');
@@ -130,14 +132,16 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&test&server=http://127
     ok((await note(p)) === '' && (await store(p)).menu.includes('puzzles'), 'read, then Units opened: Puzzles’ note counts as read');
     ok((await store(p)).menu.includes('units'), 'and Units’ own note is done: its thing was pressed');
     await p.click('#dio .logo'); await p.mouse.move(700, 60);
-    ok(await wait(p, 'Ready to fight?'), 'back on the menu: the next one, Ready to fight?');
+    ok(await wait(p, 'Your profile.'), 'back on the menu: the next one, Your profile.');
+    await p.click('#dio .acct button:nth-of-type(2)'); await p.waitForFunction(() => document.getElementById('dio').classList.contains('profile'), null, { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(400);
+    ok((await note(p)) === '' && (await store(p)).menu.includes('profile'), 'your name pressed: Profile opens, and that note is done');
     await p.close();
   }
   { // ---- a guest account: Stay logged in? waits for the tour (one note at a time), and is asked when it ends ----
     const p = await open({ guest: 'acct' }); await guestIn(p);
     ok(await wait(p, 'New here?') && await p.evaluate(() => document.getElementById('dio-stay').hidden), 'a guest account: New here? first, Stay logged in? waits');
     ok(await p.evaluate(() => !document.querySelector('#lines path')), 'and Change battlefield has no line to the island meanwhile');
-    for (const h of ['Puzzles.', 'Ready to fight?', 'Units.', 'Your battlefield.', 'Music.', 'You’re a guest.', 'That’s the menu.']) { await js(p, '#hp-ok'); await wait(p, h); ok(await p.evaluate(() => document.getElementById('dio-stay').hidden), `${h} still no question`); }
+    for (const h of ['Puzzles.', 'Units.', 'Your profile.', 'Settings.', 'Music.', 'Ready to fight?']) { await js(p, '#hp-ok'); await wait(p, h); ok(await p.evaluate(() => document.getElementById('dio-stay').hidden), `${h} still no question`); }
     await js(p, '#hp-ok');
     ok(await p.waitForFunction(() => !document.getElementById('dio-stay').hidden && /Stay logged in/.test(document.getElementById('dio-stay').textContent), null, { timeout: 5000 }).then(() => true, () => false) && (await note(p)) === '', 'the tour is over: Stay logged in? is asked');
     await js(p, '#stay-yes'); await p.mouse.move(700, 60); await p.waitForTimeout(1500);
@@ -158,13 +162,13 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&test&server=http://127
     await p.waitForFunction(() => document.getElementById('dio').classList.contains('welcome'), null, { timeout: 8000 }).catch(() => {});
     ok(await p.evaluate(() => document.getElementById('dio').classList.contains('welcome')), '(logged out: the welcome screen)');
     await guestIn(p); await p.waitForTimeout(2000);
-    ok((await note(p)) === '' && (await store(p)).menu.length === 8, 'a guest again after a log-out: no guide');
+    ok((await note(p)) === '' && (await store(p)).menu.length === 7, 'a guest again after a log-out: no guide');
     await p.close();
   }
   { // ---- a device that has played here before: no guide ----
     const p = await open({ init: () => { try { if (!localStorage.getItem('pb-helpers')) localStorage.setItem('pb-helpers', JSON.stringify({ off: false, seen: ['start', 'buy'], done: false })); } catch (e) {} } });
     await guestIn(p); await p.waitForTimeout(2000);
-    ok((await note(p)) === '' && (await store(p)).menu.length === 8, 'a device with a game’s notes behind it: no guide');
+    ok((await note(p)) === '' && (await store(p)).menu.length === 7, 'a device with a game’s notes behind it: no guide');
     await p.close();
     const q = await open({ q: '&guide' }); await q.click('#play-back'); await q.mouse.move(700, 60); // (a page opened by a test starts on Play)
     ok(await wait(q, 'New here?'), '?guide starts it on any device, to look at it');
@@ -183,8 +187,8 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&test&server=http://127
     ok(await p.evaluate(() => document.getElementById('dio').classList.contains('welcome') && document.getElementById('dd-settings').hidden) && (await note(p)) === '', 'Try it: the welcome screen, as a new player gets it');
     await guestIn(p);
     ok(await wait(p, 'New here?') && await p.evaluate(() => document.getElementById('dio-stay').hidden) && (await isle(p)).length === 0, 'Play as guest: the tour from its first note, alone on screen');
-    let all = true; for (const h of ['Puzzles.', 'Ready to fight?', 'Units.', 'Your battlefield.', 'Music.', 'You’re a guest.', 'That’s the menu.']) { await js(p, '#hp-ok'); all = await wait(p, h) && all; }
-    ok(all, 'all eight notes, You’re a guest among them (the account is Google’s)');
+    let all = true, said = false; for (const h of ['Puzzles.', 'Units.', 'Your profile.', 'Settings.', 'Music.', 'Ready to fight?']) { await js(p, '#hp-ok'); all = await wait(p, h) && all; if (h === 'Your profile.') said = /You’re a guest/.test(await p.evaluate(() => document.querySelector('#helper span').textContent)); }
+    ok(all && said, 'all seven notes, Your profile as a guest reads it (the account is Google’s)');
     await js(p, '#hp-ok');
     ok(await p.waitForFunction(() => !document.getElementById('dio-stay').hidden && /Stay logged in/.test(document.getElementById('dio-stay').textContent), null, { timeout: 5000 }).then(() => true, () => false), 'then Stay logged in? is asked, as after a first tour');
     await js(p, '#stay-no'); await p.waitForTimeout(500);
@@ -197,9 +201,9 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&test&server=http://127
   // ---- other windows: every note on screen, beside its thing, over none of the menu's words, the music or Change
   // battlefield. A small window has no free side for some: those are left out there (New here? always shows) ----
   const KEEP = WORDS.concat(['#dio .music', '#dio .bf-note']);
-  for (const [size, left] of [[[1920, 1080], []], [[1536, 730], []], [[1366, 768], []], [[1280, 720], ['Your battlefield.']], [[1024, 768], ['Your battlefield.']]]) {
+  for (const [size, left] of [[[1920, 1080], []], [[1536, 730], []], [[1366, 768], []], [[1280, 720], []], [[1024, 768], []]]) {
     const p = await open({ size }); await guestIn(p);
-    const steps = [['New here?', '#how'], ['Puzzles.', '#puzzles-open'], ['Ready to fight?', '#play'], ['Units.', '#dio .menu [data-cam="units"]'], ['Your battlefield.', '#dio .bf-note .bf-btn'], ['Music.', '#dio .music'], ['You’re a guest.', '#dio .acct button:nth-of-type(2)'], ['That’s the menu.', '#dio .acct button:nth-of-type(3)']].filter(x => !left.includes(x[0]));
+    const steps = [['New here?', '#how'], ['Puzzles.', '#puzzles-open'], ['Units.', '#dio .menu [data-cam="units"]'], ['Your profile.', '#dio .acct button:nth-of-type(2)'], ['Settings.', '#dio .acct button:nth-of-type(3)'], ['Music.', '#dio .music'], ['Ready to fight?', '#play']].filter(x => !left.includes(x[0]));
     let all = true, why = '';
     for (const [head, sel] of steps) {
       const up = await wait(p, head, 4000), fits = up && await beside(p, sel, (head === 'New here?' && size[0] < 1200 ? WORDS : KEEP).filter(w => w !== sel));
@@ -207,7 +211,7 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&test&server=http://127
       await js(p, '#hp-ok'); await p.waitForTimeout(250);
     }
     await p.waitForTimeout(400);
-    ok(all && (await note(p)) === '', `${size.join('×')}: ${left.length ? 'the notes with a free side fit, ' + left.join(', ') + ' is left out' : 'all eight notes fit'}${why}`);
+    ok(all && (await note(p)) === '', `${size.join('×')}: ${left.length ? 'the notes with a free side fit, ' + left.join(', ') + ' is left out' : 'all seven notes fit'}${why}`);
     await p.close();
   }
   await b.close(); console.log(fails ? `${fails} FAILED` : 'all passed'); process.exit(fails ? 1 : 0);

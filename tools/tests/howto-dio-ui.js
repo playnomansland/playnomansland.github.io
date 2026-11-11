@@ -1,7 +1,8 @@
 // The Diorama's How to play screen (2026-11-10, src/diorama.js openHow): the menu's HOW TO PLAY opens it instead of the
 // sheet; a click opens a chapter (pointing doesn't), ← → turn the page, ↑ ↓ go through a list, Next stays put, a tile
 // on the island picks its leader, Esc / Back / the logo / Profile leave it, the last page leads to Play; and every
-// chapter (every tower, every leader) fits the window at 1280x720, 1366x768, 1920x1080 and 1024x768.
+// chapter (every tower, every leader, each list of Controls) fits the window at 1280x720, 1366x768, 1920x1080 and
+// 1024x768. Controls (2026-11-11) is the fourth chapter: three lists of rows, a control and what it does.
 // Needs the game on port 8766 (python3 -m http.server 8766 --bind 127.0.0.1) and WebGL (software 3D is slow: minutes).
 const { chromium } = require('playwright-core');
 let fails = 0; const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + msg); if (!c) fails++; };
@@ -22,10 +23,10 @@ let fails = 0; const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + ms
     await p.click('#how'); await p.waitForTimeout(1500);
     ok((await cls(p)).includes('how'), 'How to play opens from the menu word');
     ok(await p.evaluate(() => document.getElementById('sheet-back').hidden), 'the old sheet stays shut');
-    ok(await p.evaluate(() => document.querySelectorAll('#hw-toc .item').length) === 8, '8 chapters (no Maps without developer mode)');
+    ok(await p.evaluate(() => document.querySelectorAll('#hw-toc .item').length) === 9, '9 chapters (no Maps without developer mode)');
     ok(await p.evaluate(() => document.querySelector('#hw-page h3').textContent) === 'A round', 'it starts on A round');
     ok(await p.evaluate(() => window.__dio.cam().want) === 'other', 'the camera goes to the chapter’s view');
-    for (let i = 0; i < 8; i++) { await p.click(`[data-hw="${i}"]`); await p.waitForTimeout(900); const bad = await fitsScreen(p); ok(!bad.length, `chapter ${i + 1} fits 1440x900 ${bad.join('; ')}`);
+    for (let i = 0; i < 9; i++) { await p.click(`[data-hw="${i}"]`); await p.waitForTimeout(900); const bad = await fitsScreen(p); ok(!bad.length, `chapter ${i + 1} fits 1440x900 ${bad.join('; ')}`);
       const n = await p.evaluate(() => [...document.querySelectorAll('#dio .hnote')].filter(e => e.style.display !== 'none').length), all = await p.evaluate(() => document.querySelectorAll('#dio .hnote').length); ok(n === all, `chapter ${i + 1}: ${n} of ${all} notes placed`); }
     // hover marks, doesn't open
     await p.click('[data-hw="0"]'); await p.hover('[data-hw="2"]'); await p.waitForTimeout(400);
@@ -40,15 +41,28 @@ let fails = 0; const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + ms
     ok(await p.evaluate(() => document.querySelector('#hw-toc .item.on').dataset.hw) === '1', 'Next opens the next chapter');
     const y1 = await p.evaluate(() => document.getElementById('hw-next').getBoundingClientRect().top); await p.click('#hw-next'); await p.waitForTimeout(300);
     const y2 = await p.evaluate(() => document.getElementById('hw-next').getBoundingClientRect().top); ok(Math.abs(y1 - y2) < 1, 'Next stays in the same place');
+    // Controls (2026-11-11): the fourth chapter, the last of The basics; three lists, each row a control and what it does
+    await p.click('[data-hw="3"]'); await p.waitForTimeout(700);
+    ok(await p.evaluate(() => document.querySelector('#hw-page h3').textContent === 'Controls' && /04\s*of 09 · The basics/i.test(document.querySelector('#hw-page > .k').textContent.replace(/\s+/g, ' '))), 'Controls is chapter 04, the last of The basics');
+    ok(await p.evaluate(() => [...document.querySelectorAll('#hw-page [data-hp]')].map(x => x.textContent.trim()).join('|')) === 'Deploying|The fight|The view', 'its three lists: Deploying, The fight, The view');
+    ok(await p.evaluate(() => { const on = document.querySelector('.hw-det .on'); const dt = on.querySelectorAll('.hw-ctl dt'), dd = on.querySelectorAll('.hw-ctl dd'); return dt.length === 5 && dd.length === 5 && [...dt].every(x => x.querySelector('kbd')) && [...dd].every(x => x.textContent.trim().length > 10); }), 'Deploying: five rows, each a control (as keys) and what it does');
+    ok(await p.evaluate(() => new RegExp(`${Game.CONFIG.moveCost} gold`).test(document.querySelector('.hw-det .on').textContent)), 'the price of moving a squad is the game’s own');
+    ok(await p.evaluate(() => document.querySelector('#dio .hnote').textContent.startsWith('Your squads.')), 'the island’s note is on your squads');
+    await p.keyboard.press('ArrowDown'); await p.waitForTimeout(500);
+    ok(await p.evaluate(() => document.querySelector('.hw-det .on .nm').textContent === 'Starting and watching a fight' && !!document.querySelector('.hw-det .on kbd.go') && /1×/.test(document.querySelector('.hw-det .on').textContent)), '↓: The fight, with READY and the speeds');
+    await p.click('[data-hp="2"]'); await p.waitForTimeout(500);
+    ok(await p.evaluate(() => { const t = document.querySelector('.hw-det .on').textContent; return /Scroll/.test(t) && /Right-drag/.test(t) && /Esc/.test(t) && document.querySelector('#dio .hnote').textContent.startsWith('The board.'); }), 'The view: Scroll, Right-drag, Q and E, Esc, and the note is on the board');
+    await p.keyboard.press('ArrowRight'); await p.waitForTimeout(500);
+    ok(await p.evaluate(() => document.querySelector('#hw-page h3').textContent) === 'Your start', '→ goes on to Your start');
     // lists
-    await p.click('[data-hw="5"]'); await p.waitForTimeout(600); await p.click('[data-hp="2"]'); await p.waitForTimeout(600);
+    await p.click('[data-hw="6"]'); await p.waitForTimeout(600); await p.click('[data-hp="2"]'); await p.waitForTimeout(600);
     ok(await p.evaluate(() => document.querySelector('.hw-det .on .nm').textContent) === 'Bastion', 'a tower’s word shows its text');
     ok(await p.evaluate(() => document.querySelector('#dio .hnote').textContent.startsWith('Bastion.')), 'the island’s note follows');
     const ny = await p.evaluate(() => document.getElementById('hw-next').getBoundingClientRect().top); await p.keyboard.press('ArrowDown'); await p.waitForTimeout(400);
     ok(await p.evaluate(() => document.querySelector('.hw-det .on .nm').textContent) === 'Mage tower', '↓ goes down the list');
     ok(Math.abs(ny - await p.evaluate(() => document.getElementById('hw-next').getBoundingClientRect().top)) < 1, 'the page doesn’t jump when the pick changes');
     // a tile on the island
-    await p.click('[data-hw="4"]'); await p.waitForTimeout(1200);
+    await p.click('[data-hw="5"]'); await p.waitForTimeout(1200);
     // click the tile under the 9th leader's place: find it through the note's dot after picking it, then pick another and click there
     await p.click('[data-hp="8"]'); await p.waitForTimeout(700);
     const d8 = await p.evaluate(() => { const cs = [...document.querySelectorAll('#lines circle')]; const c = cs[cs.length - 2]; return [+c.getAttribute('cx'), +c.getAttribute('cy')]; });
@@ -71,7 +85,7 @@ let fails = 0; const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + ms
     ok((await cls(p)).includes('profile') && !(await cls(p)).split(' ').includes('how'), 'Profile closes it');
     await p.click('#pf-back'); await p.waitForTimeout(400); await p.click('#how'); await p.waitForTimeout(400);
     // the last page leads to Play
-    await p.click('[data-hw="7"]'); await p.waitForTimeout(400);
+    await p.click('[data-hw="8"]'); await p.waitForTimeout(400);
     ok(await p.evaluate(() => document.getElementById('hw-next').textContent.trim()) === 'Play', 'the last page’s button says Play');
     await p.click('#hw-next'); await p.waitForTimeout(700);
     ok((await cls(p)).split(' ').includes('play') && !(await cls(p)).split(' ').includes('how'), 'and opens the Play screen');
@@ -82,12 +96,12 @@ let fails = 0; const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + ms
   }
   for (const [w, h] of [[1280, 720], [1366, 768], [1920, 1080], [1024, 768]]) { // ---- every chapter fits ----
     const p = await open(w, h); await p.click('#how'); await p.waitForTimeout(1200);
-    for (let i = 0; i < 8; i++) { await p.click(`[data-hw="${i}"]`); await p.waitForTimeout(500);
+    for (let i = 0; i < 9; i++) { await p.click(`[data-hw="${i}"]`); await p.waitForTimeout(500);
       const picks = await p.evaluate(() => document.querySelectorAll('[data-hp]').length);
       for (let k = 0; k < Math.max(1, picks); k++) { if (picks) { await p.click(`[data-hp="${k}"]`); await p.waitForTimeout(120); } }
       const bad = await fitsScreen(p); ok(!bad.length, `${w}x${h} chapter ${i + 1} fits ${bad.join('; ')}`); }
     await p.click('[data-hw="0"]'); await p.waitForTimeout(1500);
-    await p.click('[data-hw="5"]'); await p.waitForTimeout(600); await p.click('[data-hp="3"]'); await p.waitForTimeout(1500);
+    await p.click('[data-hw="6"]'); await p.waitForTimeout(600); await p.click('[data-hp="3"]'); await p.waitForTimeout(1500);
     await p.close();
   }
   await b.close(); console.log(fails ? `${fails} FAILED` : 'all passed'); process.exit(fails ? 1 : 0);

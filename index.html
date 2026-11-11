@@ -1771,6 +1771,12 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
 #dio .hw .hw-det > div.on { visibility: visible; }
 #dio .hw .hw-det .nm { font: 700 clamp(16px, 2.15vh, 19px)/1.2 var(--type); }
 #dio .hw .hw-det p { margin: 0; color: color-mix(in srgb, var(--cream) 90%, transparent); }
+/* Controls (2026-11-11): what you do on the left, as keys; what it does beside it. One row a control */
+#dio .hw .hw-ctl { display: grid; grid-template-columns: minmax(0, 41%) minmax(0, 1fr); gap: clamp(7px, 1.25vh, 11px) 14px; margin: clamp(3px, .6vh, 6px) 0 0; align-items: baseline; }
+#dio .hw .hw-ctl dt { color: var(--cream); line-height: 1.6; }
+#dio .hw .hw-ctl dd { margin: 0; color: color-mix(in srgb, var(--cream) 90%, transparent); }
+#dio .hw .hw-ctl kbd { display: inline-block; margin: 0 3px 0 0; padding: 1px 6px 0; font: 700 .92em/1.45 var(--type); white-space: nowrap; color: var(--cream); border: 1.5px solid color-mix(in srgb, var(--cream) 60%, transparent); }
+#dio .hw .hw-ctl kbd.go { padding: 3px 9px 0; border: 0; font: 700 1.12em/1.2 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); background: var(--saffron); clip-path: polygon(0 10%, 96% 0, 100% 86%, 3% 100%); }
 #dio .hw .hw-det p i { font-style: normal; color: var(--cream); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
 /* the foot of the page: the next chapter (the last one: Play) */
 /* (at the foot of the page, level with Back: the same place on every page that fits, so a reader can click on through) */
@@ -18444,7 +18450,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · 9d6f7d6'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · a17a2c3'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19274,8 +19280,8 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const helpActive = () => mode === 'ai' && !!m && !helpers.off && !helpers.done && document.documentElement.classList.contains('pc') && ['deploy', 'battle', 'result', 'end'].includes(phase);
 
   // ---------- the menu's guide (2026-11-11): a guest's first time on the main menu, on a PC ----------
-  // Notes on the Diorama's main menu, one at a time: How to play first ("New here?"), then Puzzles, Play, Units, the
-  // battlefield, the music, your name (what signing in gives a guest) and Settings. While it runs its note is the only
+  // Notes on the Diorama's main menu, one at a time: How to play first ("New here?"), then Puzzles, Units, your
+  // profile (and what signing in gives a guest), Settings, the music, and Play last. While it runs its note is the only
   // one on screen (helpTour). Only for a guest who comes in from
   // the welcome screen for the first time on this device (guideStart): nobody else ever gets it. A note goes with Got
   // it, when its thing is pressed (How to play, Play), or once it has been read and the player has gone to another
@@ -19299,15 +19305,17 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       l = g.left + sl - off; t = g.top + st - off; r = g.left + sl + (parseFloat(c.width) || g.width) + off; b = g.top + st + (parseFloat(c.height) || g.height) + off; }
     return { left: l, top: t, right: r, bottom: b, width: r - l, height: b - t, pts: sh ? sh.querySelector('polygon').getAttribute('points') : RING_PTS };
   }
+  // (owner, 2026-11-11: Play comes last, where the tour hands over to a first game; your profile has a note, Change
+  // battlefield has none. Your name's note says what a guest gets from signing in: one note for one button)
+  const guestNow = () => !!firstRun || !(acct && acct.google);
   const MENU_TIPS = [
     { id: 'how', menu: true, must: true, show: () => true, done: () => dioHas('how'), at: () => ringOf($('how')), get own() { return $('how'); }, side: 'right', h: 'New here?', t: 'Press here to learn how the game works.' },
     { id: 'puzzles', menu: true, show: () => true, done: () => dioHas('puz'), at: () => ringOf($('puzzles-open')), get own() { return $('puzzles-open'); }, side: 'rail', h: 'Puzzles.', t: 'Small battles to solve. Each one teaches you one idea.' },
-    { id: 'play', menu: true, show: () => true, done: () => dioHas('play', 'in-rooms'), at: () => ringOf($('play')), get own() { return $('play'); }, side: 'top', along: 0.3, off: -5, h: 'Ready to fight?', t: 'Start with a game against the computer. Notes like this one point out what to press.' }, // (off: the shard's top edge dips there)
     { id: 'units', menu: true, show: () => true, done: () => dioHas('pinned') && dioHas('units'), at: () => ringOf(dioQ('.menu [data-cam="units"]')), get own() { return dioQ('.menu [data-cam="units"]'); }, side: 'rail', h: 'Units.', t: 'Every unit in the game: what it does and what it beats.' },
-    { id: 'field', menu: true, show: () => true, at: () => ringOf(dioQ('.bf-note .bf-btn'), 8, 7), get own() { return dioQ('.bf-note'); }, side: 'left', h: 'Your battlefield.', t: 'This is the board you play on. Change its look here.' },
+    { id: 'profile', menu: true, show: () => $('dio-stay').hidden, done: () => dioHas('profile'), at: () => ringOf(dioQ('.acct button:nth-of-type(2)'), 10, 8), side: 'bottom', only: true, lean: 1, h: 'Your profile.', t: () => 'Your name, title, skins and match history.' + (guestNow() ? ' You’re a guest: sign in with Google here to keep them, and to play Ranked.' : '') },
+    { id: 'settings', menu: true, show: () => $('dio-stay').hidden, at: () => ringOf(dioQ('.acct button:nth-of-type(3)'), 10, 8), side: 'bottom', only: true, lean: -1, h: 'Settings.', t: 'The sound, full screen and Helpers: these notes, On or Off.' },
     { id: 'music', menu: true, show: () => true, at: () => ringOf(dioQ('.music'), 12, 10), get own() { return dioQ('.music'); }, side: 'top', along: 0.8, lean: -1, h: 'Music.', t: 'Pause or skip a song here. Playlist lets you pick what plays.' },
-    { id: 'guest', menu: true, show: () => (!!firstRun || !(acct && acct.google)) && $('dio-stay').hidden, at: () => ringOf(dioQ('.acct button:nth-of-type(2)'), 10, 8), side: 'bottom', only: true, lean: 1, h: 'You’re a guest.', t: 'Click your name to sign in with Google. It keeps your name and results, and opens Ranked and Friends.' },
-    { id: 'settings', menu: true, show: () => $('dio-stay').hidden, at: () => ringOf(dioQ('.acct button:nth-of-type(3)'), 10, 8), side: 'bottom', only: true, lean: -1, h: 'That’s the menu.', t: 'Settings has the sound, full screen and Helpers: these notes, On or Off.' },
+    { id: 'play', menu: true, show: () => true, done: () => dioHas('play', 'in-rooms'), at: () => ringOf($('play')), get own() { return $('play'); }, side: 'top', along: 0.3, off: -5, h: 'Ready to fight?', t: 'Start with a game against the computer. Notes like this one point out what to press.' }, // (off: the shard's top edge dips there)
   ];
   const menuActive = () => DIO && !!helpers.menu && !helpers.off && phase === 'start' && !m && document.documentElement.classList.contains('pc') && MENU_TIPS.some(T => !helpers.menu.includes(T.id));
   // the plain main menu is on screen (not Play, Rooms, Profile, Puzzles, How to play, or Units / Rankings clicked open)
@@ -19336,7 +19344,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   }
   let menuRead = 0, menuLast = 0; // how long the note has been up to be read (frames it was on screen: a stalled page counts for little)
   // Developers: the whole first visit, as a new guest gets it, without logging out. The welcome screen first (Play as
-  // guest goes on; the account stays as it is), then the menu's tour from its first note, with You're a guest in it,
+  // guest goes on; the account stays as it is), then the menu's tour from its first note (Your profile reads as a guest's),
   // then Stay logged in? (for show: the answer changes nothing unless it was never answered), and a first game's
   // helpers from the start. It lasts this visit: after a reload the notes go on as any player's would
   function firstTry() {
@@ -28727,6 +28735,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
           [['Brute', 5, 12], ['Skeleton Archers', 8, 13], ['Fire Mage', 10, 12], ['Goblin Swarm', 2, 13]].forEach(([n, c, r]) => sq(n, YOU, c, r, 0));
           [['War Mammoth', 6, 5], ['Sniper', 10, 3], ['Goblin Swarm', 3, 5], ['Wisps', 9, 5]].forEach(([n, c, r]) => sq(n, FOE, c, r, Y));
           hwDot('mine', tx(10), tz(12), 1.2); hwDot('theirs', tx(10), tz(3), 1.25);
+        } else if (id === 'controls') { // a deploy as it stands: your zone, both armies; a dot for each list's note
+          hwPaint(0, D - zone, W - 1, D - 1, YOU, 0.4, hwWords('Your zone', 0.21, 0.82, 0.95));
+          hwPaint(0, zone, W - 1, D - zone - 1, null, 0, hwWords('No man’s land', 0.5, 0.5, 1.1));
+          keeps(); vaults();
+          [['Brute', 5, 12], ['Skeleton Archers', 8, 13], ['Fire Mage', 10, 12], ['Goblin Swarm', 2, 13]].forEach(([n, c, r]) => sq(n, YOU, c, r, 0));
+          [['War Mammoth', 6, 5], ['Sniper', 10, 3], ['Goblin Swarm', 3, 5]].forEach(([n, c, r]) => sq(n, FOE, c, r, Y));
+          hwDot('pick0', tx(10), tz(12), 1.2); hwDot('pick1', tx(10), tz(3), 1.25); hwDot('pick2', tx(W - 0.5), tz(1), 0);
         } else if (id === 'win') { // after a fight: your squads still standing in their half, and what it cost them
           keeps(); vaults();
           const alive = [['Brute', 6, 5], ['Fire Mage', 8, 7], ['Skeleton Archers', 4, 6]];
@@ -28798,6 +28813,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const HW_VIEWS = {
       round:   { az: 0.3, el: 0.82, at: [0, 0, 0.2], span: 19.6, tall: 17.6, nr: 0 },
       win:     { az: 0.42, el: 0.7, at: [0.9, 0.4, -3.6], span: 16, tall: 10.6, nr: 0 },
+      controls: { az: 0.3, el: 0.82, at: [0, 0, 0.2], span: 19.6, tall: 17.6, nr: 0 },
       gold:    { az: 0.46, el: 0.64, at: [0, 0.3, 0.3], span: 21, tall: 15.6, nr: 0 },
       start:   { az: 0.22, el: 0.72, at: [0, 0.4, 3.3], span: 15.6, tall: 9.4, nr: 0 },
       leaders: { az: 0.16, el: 0.84, at: [0, 0.1, 0.35], span: 15.2, tall: 9.6, nr: 0 },
@@ -29577,7 +29593,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const arrowR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>';
     let HOWS = [], hwAt = 0; const hwSub = {};
     function howChapters() {
-      const G = Game, b = (x) => `<b>${x}</b>`, TD = G.TIER_DMG, tsk = G.TOWER_SKILL, tr = G.TREASURY;
+      const G = Game, b = (x) => `<b>${x}</b>`, key = (x) => `<kbd>${x}</kbd>`, TD = G.TIER_DMG, tsk = G.TOWER_SKILL, tr = G.TREASURY;
       const zone = ((G.findMap(STD_MAP) || {}).grid || G.GRID).zone, prices = ROSTER.units.map(G.unitCostOf), lo = Math.min(...prices), hi = Math.max(...prices);
       const tower = (x) => [esc(x.text),
         x.skill ? `<i>${esc(x.skill.name)}</i> (${tsk.cost} gold): ${esc(x.skill.text)}` : '',
@@ -29606,6 +29622,29 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
             `From round ${G.LOSER_BONUS_ROUND}, the loser of a round gets ${b('+' + G.LOSER_BONUS)} gold.`,
             `Break an enemy streak of ${G.SHUTDOWN.from} or more wins (🔥 by their health) for ${b('+' + G.SHUTDOWN.gold)} gold, and +${G.SHUTDOWN.step} for each win past ${G.SHUTDOWN.from}.`],
           notes: [['vaultFoe', 'Their treasury.', 'Destroy it to steal their gold', 90, -90], ['income', 'Gold each round.', `${G.CONFIG.incomeStep} more every round from round 3`, 110, -70], ['vaultYou', 'Your treasury.', `${tr.gold} gold for every fight it survives`, 110, 96]] },
+        // Controls (2026-11-11, the owner): what the mouse and the few keys do in a match, on a PC with the 3D board,
+        // in three short lists (the page's row of words, as Leaders and Towers). Every row was tried in a match:
+        // the camera's steps and keys are src/camera3d.js's, the rest the board's own (boardPress, cardPress)
+        { id: 'controls', g: 0, name: 'Controls', gist: 'The mouse does everything. A few keys turn the view.',
+          picks: [
+            { short: 'Deploying', name: 'While you deploy', note: ['Your squads.', 'Click one to open it · drag it to move it', 34, 150], rows: [
+                [`${key('Click')} a unit, then a tile`, 'Buys a squad and places it. Or drag the unit there.'],
+                [`${key('Drag')} a squad`, `Moves it. Free in the round you place it, then ${b(G.CONFIG.moveCost + ' gold')}, once a round.`],
+                [`${key('Click')} a squad`, 'Opens its sheet: level up, skills, take it back or sell it.'],
+                [`${key('Click')} a tower or an enemy`, 'Shows what it does. Your tower’s skills are there.'],
+                [`${key('Point')} at a unit`, 'Shows how far it reaches.']] },
+            { short: 'The fight', name: 'Starting and watching a fight', note: ['Their army.', 'Both armies fight on their own', 44, -112], rows: [
+                [`<kbd class="go">Ready</kbd>`, 'Locks in your army. The fight starts when both players are ready, or the clock runs out.'],
+                [SPEEDS.map(v => key(v + '×')).join(''), 'The fight’s speed. Online, the slower of the two players’ picks.'],
+                [key('Skip to result'), 'Jumps to the end. It asks once more first.'],
+                [`${key('Point')} at the screen’s edge`, 'Brings back the deploy panel, which slides away for the fight. The speed and Skip are on it.'],
+                [`${key('Click')} a unit`, 'Shows how far it reaches.']] },
+            { short: 'The view', name: 'Looking around', note: ['The board.', 'Scroll to come closer · <span style="white-space:nowrap">right-drag</span> to turn it', 70, -110], rows: [
+                [key('Scroll'), 'Steps closer or further out. Four views, from straight above to ground level.'],
+                [`${key('Right-drag')} or ${key('Q')}${key('E')}`, 'Turns the board.'],
+                [key('Drag'), 'Looks around, in the two closest views.'],
+                [key('Esc'), 'Back to the view from straight above.'],
+                [key('Settings'), 'In a match: a flat 2D board, if you prefer one.']] }] },
         { id: 'start', g: 1, name: 'Your start', tag: 'round 1', gist: `Round 1: pick one of ${G.PACKAGE.options === 3 ? 'three' : G.PACKAGE.options} starting packages.`, pts: [
             `Each package unlocks ${b('two units')} for free and gives you free squads of them worth ${b(G.PACKAGE.value + ' gold')}.`,
             `You keep your ${b(G.START_GOLD + ' gold')} to spend on top, and the free squads don’t use up your deployments.`,
@@ -29658,7 +29697,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         <h3>${esc(C.name)}</h3><p class="hw-gist">${C.gist}</p>
         ${C.pts && C.pts.length ? `<ul class="hw-pts">${C.pts.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
         ${C.picks ? `<div class="hw-seg" role="group" aria-label="${esc(C.name)}">${C.picks.map((p, k) => `<button data-hp="${k}" aria-pressed="${k === s}">${p.img || ''}${esc(p.short)}</button>`).join('')}</div>
-          <div class="hw-det">${C.picks.map((p, k) => `<div${k === s ? ' class="on"' : ''}><span class="nm">${esc(p.name)}</span>${p.text.map(t => `<p>${t}</p>`).join('')}</div>`).join('')}</div>` : ''}
+          <div class="hw-det">${C.picks.map((p, k) => `<div${k === s ? ' class="on"' : ''}><span class="nm">${esc(p.name)}</span>${p.rows ? `<dl class="hw-ctl">${p.rows.map(([k, t]) => `<dt>${k}</dt><dd>${t}</dd>`).join('')}</dl>` : ''}${(p.text || []).map(t => `<p>${t}</p>`).join('')}</div>`).join('')}</div>` : ''}
         <div class="hw-nav"><button class="create" id="hw-next">${nx ? `<small>Next</small>${esc(nx.name)}` : 'Play'}${arrowR}</button><span class="hw-keys" aria-label="Arrow keys: left and right turn the page${C.picks ? ', up and down go through the list' : ''}"><kbd>←</kbd><kbd>→</kbd> page${C.picks ? ' · <kbd>↑</kbd><kbd>↓</kbd> list' : ''}</span></div>`;
       if (keep) $('hw-next').focus();
       hwNotes(C); buildHow(C.id, s); want = hwView(C.id); hwLead(); notes();

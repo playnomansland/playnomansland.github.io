@@ -137,6 +137,18 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   100"), "click" for "tap", and the treasury, the loser's +50 and the 10 health a fallen tower costs are in. **Maps is
   a developers' chapter** (with the DEV tag), since only developers pick a map. Not built: phones (step 8), and the
   screen inside a match (Help's How to play button still opens the sheet there).
+  **Controls (2026-11-11, the owner; chapter 04, the last of The basics).** What the mouse and the few keys do in a
+  match on a PC with the 3D board, as the page's row of words with a list under each (`picks` with `rows`: a control
+  as keys, `<kbd>`, and what it does; `.hw-ctl`): **Deploying** (click a unit then a tile, or drag it there; drag a
+  squad to move it, free in the round it's placed, then `Game.CONFIG.moveCost` gold once a round; click a squad for
+  its sheet; click a tower or an enemy; point at a unit for its reach), **The fight** (READY; the speeds, `SPEEDS`,
+  and online the slower of the two picks; Skip to result, which asks once more; pointing at the screen's edge brings
+  the deploy panel back; click a unit for its reach) and **The view** (scroll steps through the four views; right-drag
+  or Q / E turns the board; drag looks around in the two closest views; Esc goes back to straight above; a match's
+  Settings has the 2D board). Every row was tried in a match first (the camera's are `src/camera3d.js`'s). The island
+  shows a deploy as it stands (your zone, both armies), with one note for the list on show. Three lists, not one long
+  one, so the page ends where every other chapter's does at 1024×768 and 1280×720. The old sheet (phones, and Help in a
+  match) has no Controls chapter: Help there already lists the touch controls.
 - **Helpers (2026-11-10, live on `main` on the owner's word the same day; PC only).** A first
   game against the computer gets small yellow notes, one at a time, each with a tail on the thing to press next
   (`HELP_TIPS`, `helperFrame` in `src/site-template.html`; the box is `#helper`, styled with the Diorama's saffron and
@@ -163,15 +175,16 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   screen (Play as guest, Sign up as a guest) for the first time on a device: `guideStart` sets `pb-helpers`' `menu` to
   `[]` (absent / `null`: this device never has it). Not a page that opens on the menu, not Log in or Sign up with
   Google, not a device that has played here before (a game's helper notes, a solved puzzle, the old tutorial) and not
-  a guest after a log-out (`guideNever`). `?guide` in the address starts it on any device, to look at it. **The notes**, one at a time, eight of them: **New here?** "Press here to learn how the game works." (the dot at
-  the end of HOW TO PLAY), **Puzzles.** "Small battles to solve. Each one teaches you one idea.", **Ready to fight?**
-  (on PLAY's top edge), **Units.** "Every unit in the game: what it does and what it beats.", **Your battlefield.**
-  (beside Change battlefield), **Music.** (over the player), **You're a guest.** (under your name: what a Google
-  sign-in gives; left out once signed in with Google), **That's the menu.** (under Settings: the sound, full screen
-  and Helpers). Puzzles and Units have no room beside them, so theirs are laid out as those words' white hover notes
-  (`side: 'rail'`): the dot before the word, a rail up the left margin, the label over PLAY (2026-11-11, the owner).
+  a guest after a log-out (`guideNever`). `?guide` in the address starts it on any device, to look at it. **The notes**, one at a time, seven of them (the owner's order, 2026-11-11: Play last, where the tour hands over
+  to a first game; Change battlefield has no note): **New here?** "Press here to learn how the game works." (HOW TO
+  PLAY), **Puzzles.** "Small battles to solve. Each one teaches you one idea.", **Units.** "Every unit in the game:
+  what it does and what it beats.", **Your profile.** (your name: "Your name, title, skins and match history.", and for
+  a guest "You're a guest: sign in with Google here to keep them, and to play Ranked."), **Settings.** (the sound, full
+  screen and Helpers), **Music.** (the player), **Ready to fight?** (PLAY). Puzzles and Units have no room beside
+  them, so theirs are laid out as those words' white hover notes (`side: 'rail'`): the dot before the word, a rail up
+  the left margin, the label over PLAY.
   A note goes with **Got it** (the next one
-  comes at once), when its thing is pressed (How to play, Puzzles, Play, Units), or once it has been on screen 1.2 s and the player
+  comes at once), when its thing is pressed (How to play, Puzzles, Units, your name, Play), or once it has been on screen 1.2 s and the player
   has gone to another screen (Play, Profile, Puzzles, Units or Rankings clicked open, a match). A dropdown, a sheet or
   the playlist over the menu only hides it. **One note at a time (owner, 2026-11-11):** while the tour has a note to
   show (`helpTour`), nothing else that looks like a note is on screen: every note on the island (the golem's, the hover
@@ -184,13 +197,13 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   the top bar or the logo (`MENU_KEEP`), in the open field if it can: off the island (`dio.api.isle`, its corners on
   screen). Near the screen's edge a
   label slides back in along its line. In a window with no free spot a note is left out until the window changes
-  (1280×720 and 1024×768: Your battlefield), except New here?, which always shows. **Turning it off:** "Turn off
+  (none of the seven at 1024×768 and up), except New here?, which always shows. **Turning it off:** "Turn off
   helpers" is Settings' Helpers, the one switch for every note (a last note points at Settings); Helpers On starts
   the guide over on a device that had it.
   `tools/tests/menu-guide-ui.js` (the game server is never called). Pictures: `screens/menu-guide-*.jpg`.
   **Developers: First time (2026-11-11).** Settings → Developer → *First time: Try it* (`firstTry`, `firstRun` in
   `src/site-template.html`; PC only) runs the whole first visit as a new guest gets it, without logging out: the
-  welcome screen (Play as guest goes on), the tour from its first note with *You're a guest* in it, *Stay logged in?*
+  welcome screen (Play as guest goes on), the tour from its first note with the guest's line in *Your profile*, *Stay logged in?*
   after it (for show: the answer changes nothing unless it was never answered) and a first game's helpers from the
   start (it resets `pb-helpers`). The pretend parts last the visit; after a reload the notes go on as any player's.
   `?guide` still starts only the tour.
