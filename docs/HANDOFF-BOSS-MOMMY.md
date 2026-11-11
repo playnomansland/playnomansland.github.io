@@ -1,10 +1,39 @@
 # Handoff: the Mommy boss puzzle
 
-Branch `claude/charming-allen-kjik08` (built on `claude/sleepy-noether-613e5e`; not merged, no pull request). Written 11 November 2026, second session added the same day (section 8).
+Work branch `claude/charming-allen-kjik08`, merged into `main` (live) after each step. Written 11 November 2026 over one long day; sections are in the order the work happened. **Start with section 0 (where things stand now)**, then section 7 (working with the owner); the rest is history and evidence.
 
-**Status (11 November, late): in the game for developers** (Puzzles → Weekly boss - The Mommy, or the Developer menu → Mommy), phone and PC. See section 11. Five-round hand-built plans now exist and win; section 8 has what they showed and the questions waiting on the owner. The next job is the owner's answers to those, then the go-ahead before building it into the game.
+## 0. Where things stand now (end of 11 November)
 
-The prototype lives in `tools/boss/` and does not touch `src/`. Run it from the repo root:
+**Live for developer accounts, phone and PC.** Puzzles → *Weekly boss - The Mommy* (a "Weekly boss · developers only" section at the top), the Developer menu → *Mommy*, or the test link `playnomansland.github.io/?mommy` (opens her straight away on a developer account; on any other it says which account the page sees). It runs on the device against nobody: no server, no AI.
+
+**Code:** her rules are `src/boss.js` (global `Boss`), shared by the page and the prototype tools in `tools/boss/`; engine features she uses are opt-in properties in `src/engine.js`; game hooks in `src/game.js` act only when `m.boss` is set. README section "The Mommy boss puzzle" lists every hook. Check: `node tools/tests/boss.js`.
+
+**What a player sees** (all built and checked in a browser, 2D and 3D, classic menu and the new PC/Diorama menu):
+- a rules popup (*Mommy's rules*) as a run starts; the ? while deploying and a button in the fight open it again
+- a banner per round; her reach (dashed ring), the nests marked LOW / HIGH and the poison pools on the board while deploying
+- a boss bar over the board: name, phase (HANGING / FALLEN · STUNNED n s / ON THE GROUND / DEAD), health with numbers, a white strip for the latest damage, tokens (damage taken %, nests left, bite, mortar countdown or who holds her, molt countdown, poison / bleed / burn / frost / slow on her)
+- on the board: her silk thread while she hangs, her web ring, the bite's wind-up line (yellow fast, red heavy, orange sweep) and a ring on the target, a splat where the bite lands, the mortar's red crosshair then a streak from the ripped nest and a web splat, a dust ring when she falls, stars while stunned
+- her bite is a slow web ball (15 m/s), so it can be seen coming and dodged by a unit that moves
+- shop cards show n/3 (the squad cap); Settings in a match has *Restart Mommy*; a report after every fight
+
+**Numbers in force** (`Boss.CFG`): health 46,000 (owner agreed); start 450 gold; 30 s fights; hang 15%; reach 22 m; web 14 m; bites fast 150×0.8/s, heavy 480×0.25/s splash 2.5, sweep 70×1/s splash 5, order fast, heavy, sweep, heavy, sweep; mortar after 5 s with nobody in reach, every 4 s, 120 damage, only rips nests within her reach; nests 500 health, burst 3, hatch 6/5/4/3/3 s, lure 12 m; spiderlings 90 health; pools 4%/s, linger 2 s; wing-nest layouts and pools per round as in CFG; molt 6 s; no share-of-max-health damage on her; banned Meteor Caller, Assassin, Rogue, Truespear, Sun Priest; at most 3 squads of a type; one free move and one free extra deployment a round; a treasury, no tower.
+
+**Owner decisions since section 8:** questions 1-5 there agreed; health 46,000 with no late-round rule; leave Goblins as they are; pools at 4% for now; the round-3 ceiling should be searched further before a real launch; poison pools back (in place of "spiders go for the biggest clump"); wing nests (5b); the Puzzles button is named "Weekly boss - The Mommy".
+
+**Open, waiting on the owner:**
+1. Unit priorities, how far to go. Built so far: units engage from the first second (no blind march up their column), nests count 12 m closer when picking whom to walk to and shoot, she is picked last from the first tick. Measured (16 games each): nests fall about 1 s sooner a round for aware players, stat-max damage +14%. Still odd: all melee squads crowd the one low nest (melee can't hit high nests), shooters take nests nearest first. Options put to the owner: (1, recommended) let ranged squads take a direction arrow onto a nest in her fight, and shoot it first; (2) a stronger nest pull (25 m); (3) squads keep to nests on their own half; (4) leave it.
+2. Re-measure difficulty (`node tools/boss/difficulty.js 40`) after the targeting and slow-bite changes; the health was set before them. Section 9 has the method and targets.
+3. Not built: the "Mommy" title (the win screen mentions it), the server checking a win, a weekly rotation (it is the one boss), a model of her own (the spider model drawn big), nests in the 2D fight are drawn like little houses (the board's look for any structure).
+
+**Things that bit this session (read before working):**
+- Build like live: `PB_UI_DEFAULT=pc node src/build.js` (live's `index.html` has `const DEF = 'pc'`; a plain build makes 'classic' and the merge then changes PC players' menu).
+- Merging: `git checkout -B main origin/main && git merge --no-ff claude/charming-allen-kjik08`; `index.html` conflicts are the built file: rebuild with the line above and add it. Then `git checkout claude/charming-allen-kjik08 && git merge --ff-only main` so the next merge is clean.
+- Engine changes: run `QUICK=1 node tools/tests/fast-paths.js` (identical battles in both targeting modes) and the server tests one at a time (`cd server && node test/<name>.test.js`; run together on a busy machine `hub.test.js` can time out).
+- Browser tests here: serve on a high port (`python3 -m http.server 18795 --bind 127.0.0.1`; 879x are taken by the server tests' wrangler) and restart it each turn. A fake developer account in localStorage (`phonebellum.account.v1`) needs `skins: [], titles: [], puzzles: []` or the Diorama won't start; `?ui=diorama` forces the PC menu (headless Chrome has no mouse, so 'pc' shows the classic menu), `?board=3d` the 3D board, `?test` exposes `window.__pb()` (the live match) and `__pbRedraw`.
+- Developer status arrives with the server's answer a moment after the page opens; anything developer-only drawn before it must be drawn again (`bossRowChanged`, from `acctSave`).
+- The page plays each fight twice (headless for the result, then on screen from the same snapshot); `Boss.battle` must stay deterministic and never change `m`. Her visual events (`mom.ev`, `mom.bs.aim`, `mom.bs.mortarAim`) are recorded only when `o.record` is set (the shown fight).
+
+The prototype tools live in `tools/boss/` and run the game's own `src/boss.js`. Run them from the repo root:
 
 ```
 node tools/boss/mommy.js            # unit ranking, the sample plans, the five-round lines
@@ -424,4 +453,3 @@ The owner agreed: 46,000 health with no extra late-round rule; Goblins left as t
 - **One change from the prototype:** the prototype's player quietly had the game's default tower (an Outpost at col 8, row 14). The design says a treasury and no tower, so the game has none, and so does the prototype now. Lines A and B and the round-3 winner came out the same (Line B 71.6k over five rounds, A 71.6k); Line C moved (59.1k).
 - **What a round shows:** a banner with the round's bite, the nests (low and high) and her health; on the board her reach (a dashed ring), the nests marked LOW or HIGH, and the poison pools (green tiles, also in the fight). After the fight a report: nests down at, how long she was down, mortar shots, damage to her (and how much while she hung), the three squads that hurt her most, her health.
 - **Not done yet:** the "Mommy" title (the win screen says it would be earned), the server checking a win, a weekly rotation (it is the one boss), a model of her own (she is the spider model, drawn big), the mortar's wind-up on the board.
-
