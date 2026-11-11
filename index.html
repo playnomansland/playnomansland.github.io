@@ -1,4 +1,9 @@
 <!doctype html>
+<!--
+  No Mans Land. Copyright (c) 2026 Vilhelm (GitHub: snetendare). All rights reserved.
+  This page's code, art, models, music and game design may not be copied, modified, re-hosted or
+  redistributed without written permission. For permission, contact github.com/snetendare
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -2440,6 +2445,7 @@ html.pc .corner button span { display: inline; }
 #foe-name { cursor: pointer; }
 .lb tr[data-pid] { cursor: pointer; }
 .home-foot { width: 100%; max-width: 760px; display: grid; gap: 10px; justify-items: center; }
+.home-copy { margin: 0; font-size: 10px; letter-spacing: 0.03em; color: rgba(255, 255, 255, 0.55); text-align: center; }
 .tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .tiles button { display: grid; justify-items: center; gap: 4px; min-width: 84px; padding: 10px 10px 8px; border: 1px solid rgba(255, 255, 255, 0.35); background: rgba(13, 19, 21, 0.62); color: #fff; border-radius: 10px; font: 600 12px var(--font-display); letter-spacing: 0.04em; }
 .tiles button svg { width: 22px; height: 22px; }
@@ -2930,7 +2936,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   </section>
 
   <p class="phone-reward" style="display:none;position:relative;margin:22px 16px 0;font:400 14px/1.4 var(--type)"><span class="tag" style="display:inline-block;padding:3px 7px 2px;font:700 11px var(--type);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--saffron)">Limited reward</span><br>Invite a friend. <b>This golem skin is yours.</b></p>
-  <div class="build">Music: Snetänd, Emil Helleday · Build 2026.11</div>
+  <div class="build">Music: Snetänd, Emil Helleday · Build 2026.11 · © 2026 Vilhelm. All rights reserved.</div>
 
   <!-- Play: one click on a choice starts it. Multiplayer folds out its kinds; a kind opens Rooms, filtered to it -->
   <section class="orders" aria-label="New match">
@@ -18889,7 +18895,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · 89c9701'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · b8aa6b9'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -21223,6 +21229,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
           ${inTour || !devMode() ? '' : `<button id="tours-open">${HICON.bracket}Tournaments</button>`}
         </div>
         ${playerHtml()}
+        <p class="home-copy">© 2026 Vilhelm · No Mans Land. All rights reserved.</p>
       </div>
       ${home.pop ? `<div class="pop-back${HOME_AUTO ? ' auto' : ''}" id="pop-back">${playPop()}</div>`
         : acct && stayPref() == null && !HOME_AUTO ? `<div class="pop-back" id="stay-back"><div class="pop" role="dialog" aria-modal="true" aria-labelledby="stay-h">
