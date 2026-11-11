@@ -1905,11 +1905,16 @@ const Engine = (() => {
     // looking for a squad its side's Hunters marked (f.prey, set by the game)
     // (2v2 Scorch turrets, src/mpb.js scorch: u.scorchSight sees stealthed units at any distance)
     const seesHidden = (b, f) => f.u.stealth && !f.u.aloft && ((f.marked && b.sniperMark > 0) || (f.prey && b.u.hunter) || (b.u.trueSight && gap(f, b) <= b.u.range + 1e-9) || !!b.u.scorchSight);
-    const pickable = (b, f) => f.alive && (!f.hidden || seesHidden(b, f)) && !sheltered(f) && !(b.hunt && !isLone(f)) && !ignores(b, f);
+    // u.rangedOnly = N (the Mommy boss puzzle's high nests, src/boss.js): only bodies with range N or more pick it or hurt it.
+    // f.lastPick (Mommy while she hangs): picked only when none of f's side is left that b could pick instead
+    const lastPickOthers = (b, f) => sides[f.side].some((g) => g !== f && g.alive && !g.lastPick && !g.hidden && !sheltered(g) && !(g.u.rangedOnly > 0 && b.u.range < g.u.rangedOnly));
+    const pickable = (b, f) => f.alive && (!f.hidden || seesHidden(b, f)) && !sheltered(f) && !(b.hunt && !isLone(f)) && !ignores(b, f) && !(f.u.rangedOnly > 0 && b.u.range < f.u.rangedOnly) && !(f.lastPick && lastPickOthers(b, f));
     // damage that skips armor and ward (poison)
     function direct(owner, v, amount) {
       if (v.turning || v.u.aloft || sheltered(v)) return;
+      if (v.takeMul != null) amount *= v.takeMul; // (src/boss.js)
       const applied = Math.min(amount, poolHp(v));
+      if (v.bossTag) owner.bossDealt = (owner.bossDealt || 0) + applied;
       if (applied <= 0) return;
       stats[owner.side].dealt += applied;
       owner.dealt = (owner.dealt || 0) + applied;
@@ -2013,7 +2018,7 @@ const Engine = (() => {
       // Wind walk: the 1st, (every+1)th, ... attack aimed at it misses, and it dashes away to one side (see u.windWalk)
       if (v.u.windWalk && owner.side !== v.side) {
         const ww = v.u.windWalk, n = v.aimedAt = (v.aimedAt || 0) + 1;
-        if ((n - 1) % ww.every === 0) {
+        if ((n - 1) % ww.every === 0 || owner.dodgeable) { // owner.dodgeable (src/boss.js): every attack it aims at Wind walk misses
           st.missed += hit;
           if (ww.step > 0 && !v.u.structure && !v.u.anchored && !v.u.unstoppable) {
             let dx = v.x - fromX, dy = v.y - fromY, d = hyp(dx, dy);
@@ -2036,7 +2041,7 @@ const Engine = (() => {
       // a guard (the keep's) that is attacked leaves its post and goes for its attacker
       if (v.guard && owner.alive && owner.side !== v.side && !owner.u.aloft && !(v.avenge && v.avenge.alive)) { v.holdT = 0; v.avenge = owner; v.engaged = true; }
       if (owner.u.bldgPct > 0 && v.u.structure) hit = hit * owner.u.bldgPct / 100; // weaker against buildings (the Assassin)
-      let pct = owner.u.pctHit > 0 && !v.u.structure ? v.u.hp * owner.u.pctHit / 100 : 0;
+      let pct = owner.u.pctHit > 0 && !v.u.structure && !v.noPct ? v.u.hp * owner.u.pctHit / 100 : 0;
       if (owner.u.hunter && v.prey && owner.side !== v.side) { hit = hit * (1 + owner.u.hunter.dmg / 100); pct = pct * (1 + owner.u.hunter.dmg / 100); } // Hunter: its mark
       if (owner.sniperMark > 0 && v.marked && owner.side !== v.side) { hit = hit * (1 + owner.sniperMark / 100); pct = pct * (1 + owner.sniperMark / 100); } // Mark Bounty (sniper tower)
       if (cripple[ck(owner)] > 0) { hit = hit * (1 - towerDown.attack / 100); pct = pct * (1 - towerDown.attack / 100); }
@@ -2063,8 +2068,11 @@ const Engine = (() => {
         if (v.u.bonusWard > 0) dmg = Math.min(dmg, v.u.bonusWard);
       }
       if (cripple[ck(v)] > 0) dmg = dmg * (1 + towerDown.taken / 100);
+      if (v.u.rangedOnly > 0 && owner.u.range < v.u.rangedOnly) return; // (src/boss.js) out of this attacker's reach, splash too
+      if (v.takeMul != null) dmg *= v.takeMul; // (src/boss.js) a body that takes only a share of every hit (Mommy hanging)
       st.blocked += hit - dmg;
       const applied = Math.min(dmg, poolHp(v));
+      if (v.bossTag) owner.bossDealt = (owner.bossDealt || 0) + applied; // (src/boss.js) damage to her, per attacker
       st.dealt += applied;
       owner.dealt = (owner.dealt || 0) + applied;
       if (owner.u.lifesteal > 0 && owner.alive) heal(owner, applied * owner.u.lifesteal / 100);
@@ -2949,7 +2957,7 @@ const Engine = (() => {
 
     function step() {
       if (over) return false;
-      if (t >= g.timeCap || !aliveCount(A) || !aliveCount(B)) { over = true; return false; }
+      if (t >= g.timeCap || (!opts.toTimer && (!aliveCount(A) || !aliveCount(B)))) { over = true; return false; } // opts.toTimer (src/boss.js): on to the time cap
       shots = [];
       tick++;
       for (const b of bullNew) b.bullArmed = true; // a charge's armor counts from the tick after it set off, so a hit in the
@@ -3360,6 +3368,7 @@ const Engine = (() => {
           else { heal(f, q.amt * healMul * dt); if (q.speed > 0) { f.poolFast = q.speed; f.poolFastT = q.secs; } }
         }
       }
+      if (opts.bossTick) opts.bossTick({ t, dt, all, sides, hurt, direct, record: !!opts.record, shots }); // (src/boss.js) the boss's rules, once a tick
       // ongoing effects: poison, bleed, regeneration, shortsight wearing off, spawns
       for (const b of turnOrder()) { // (the sides take turns going first here too; bodies spawned below start next tick)
         if (!b.alive) continue;
@@ -3390,7 +3399,7 @@ const Engine = (() => {
             bl.pulse += BLEED.pulse;
             let dmg = BLEED.dmg;
             for (let k = 1; k < bl.n; k++) dmg *= 2;
-            if (BLEED.pct[bl.n] > 0 && !b.u.structure) dmg += b.u.hp * BLEED.pct[bl.n] / 100 * BLEED.pulse;
+            if (BLEED.pct[bl.n] > 0 && !b.u.structure && !b.noPct) dmg += b.u.hp * BLEED.pct[bl.n] / 100 * BLEED.pulse;
             direct(bl.src, b, dmg);
           }
           bl.t -= dt;
@@ -5354,6 +5363,7 @@ const Game = (() => {
   const unlockVisible = (m, side, ui) => unlockCost(m, ui, side) === 0 || (isUnlocked(m, side, ui) && m.unlocks[side][ui] < m.round);
   function unlock(m, side, ui) {
     if (ui < 0 || ui >= m.units.length || isOff(m, ui, side) || isUnlocked(m, side, ui)) return false;
+    if (m.boss && (m.boss.banned || []).includes(m.units[ui].name)) return false; // the Mommy boss puzzle's banned units
     const cost = unlockCost(m, ui, side);
     if (m.gold[side] < cost) return false;
     if (!m.unlocks) m.unlocks = [{}, {}];
@@ -5774,6 +5784,7 @@ const Game = (() => {
 
   // Refund an extra deployment bought this round that hasn't been used
   function refundDeploy(m, side) {
+    if (m.boss) return false; // the Mommy boss puzzle: the extra deployment is a free one, nothing to refund
     if (m.extraDeploys[side] <= 0 || deploysLeft(m, side) <= 0) return false;
     m.extraDeploys[side]--;
     m.gold[side] += deployCost(m, side);
@@ -5887,7 +5898,7 @@ const Game = (() => {
   // a 2v2 building of side's on the tile that holds a squad of unit ui (ui null: any squad at all) (Mpb.holds)
   const mpbHolds = (m, side, col, row, ui) => !!(MPB && m && m.mpb && MPB.holds) && MPB.holds(m, side, col, row, ui);
   const occupied = (m, side, col, row) => towerAt(m, side, col, row) || treasuryAt(m, side, col, row) || elfOwnAt(m, side, col, row) || !!buildingAt(m, side, col, row) || teamBuildingAt(m, side, col, row) || m.armies[side].some(s => covers(m, s, col, row)) || teamArmy(m, side).some(s => covers(m, s, col, row)) || devOccupied(m, side, col, row) || mpbAt(m, col, row);
-  const needsTower = (m, side) => !!(m.towers && !m.towers[side]);
+  const needsTower = (m, side) => !!(m.towers && !m.towers[side] && !m.boss); // (the Mommy boss puzzle: no towers)
   // the tower can be placed (or moved) during round 1 only
   function placeTower(m, side, col, row) {
     if (!m.towers) m.towers = [null, null];
@@ -5898,6 +5909,7 @@ const Game = (() => {
   }
   // a match without a tower (saved before towers were fixed) gets the fixed one
   function ensureTower(m, side) {
+    if (m.boss) return; // the Mommy boss puzzle: a treasury, no tower
     if (!m.towers) m.towers = [null, null];
     if (m.towers[side]) return;
     m.towers[side] = towerSpot(m, side);
@@ -5913,6 +5925,7 @@ const Game = (() => {
     if (needsTower(m, side)) return null; // the tower goes down first
     if (!isUnlocked(m, side, unitIdx)) return null;
     if (capFull(m, side, unitIdx)) return null; // DEVTESTLATEGAME: at most LATE.cap squads of a tier 3+ unit type
+    if (m.boss && m.boss.cap && m.armies[side].filter(q => q.unit === unitIdx).length >= m.boss.cap) return null; // the Mommy boss puzzle: at most cap squads of a type
     if (mpbLocked(m, side, unitIdx)) return null; // 2v2: a unit type the other team's Shadow Den sabotaged this round
     if (schoolLock(m, side, unitIdx)) return null; // 2v2 School: none of the unit type sitting in it
     const into = boardable(m, side, col, row, unitIdx); // a carrier with room: the new squad rides inside
@@ -6225,7 +6238,11 @@ const Game = (() => {
     return { dmg: CHAR.zoeDmg[lv], hp: CHAR.zoeHp[lv], aps: CHAR.zoeAps[lv] };
   };
 
+  // the Mommy boss puzzle (src/boss.js, global Boss): a match with m.boss set plays her fight. game.js never loads it
+  // itself (the server has no need of it): the page has it, and the prototype's tools require it
+  const bossApi = () => (typeof Boss !== 'undefined' ? Boss : null);
   function startBattle(m) {
+    if (m.boss && bossApi()) return bossApi().battle(m, { record: true });
     ensureTower(m, 0); ensureTower(m, 1);
     settleTowerPicks(m);
     ensureBwalls(m, 0); ensureBwalls(m, 1);
@@ -6559,6 +6576,7 @@ const Game = (() => {
       m.gold[sd] -= cut;
       return cut;
     });
+    if (m.boss && res.boss && bossApi()) bossApi().afterFight(m, res, summary); // the Mommy boss puzzle: her health carries on, the match ends when she dies or after the last round
     return summary;
   }
 
@@ -6584,7 +6602,7 @@ const Game = (() => {
   // one went (so nothing new can show the opponent a move). A longer move is the horseshoe's or the paid one. (2026-11-07)
   const MARCH = { tiles: 2 };
   const marchMoves = (m, side) => towerPicked(m, side) && towerType(m, side).freeMove ? 1 : 0;
-  const shoeMoves = (m, side) => shoePerk(m, side, 'move') ? 1 : 0;
+  const shoeMoves = (m, side) => (shoePerk(m, side, 'move') ? 1 : 0) + (m && m.boss && side === 0 ? 1 : 0); // (the Mommy boss puzzle: one free move a round, anywhere)
   const freeMoves = (m, side) => marchMoves(m, side) + shoeMoves(m, side);
   // within March order's reach: (col, row) from sq's tile at the round's start
   const marchNear = (m, sq, col, row) => { const o = sq.from && sq.movedRound === m.round ? sq.from : sq; return Math.max(Math.abs(col - o.col), Math.abs(row - o.row)) <= MARCH.tiles; };
@@ -7643,8 +7661,8 @@ const Art = (() => {
 const Render2D = (cv, view, opts = {}) => {
   let ctx = cv.getContext('2d'); // swapped for a moment while drawing map thumbnails (thumb)
   let m = null, me = 0, phase = 'start', units = [], mode = 'ai', bt = null, battlePre = null, fx = [], battleCam = null, win = null;
-  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null, foeStart = null;
-  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null, foeStart = null } = view()); };
+  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null, foeStart = null, boss = null;
+  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null, foeStart = null, boss = null } = view()); };
   // win (a 2v2 fight on a phone): { aspect, cols, x } the canvas is shaped for `aspect` columns, shows `cols` of them
   // (zoomed out up to the whole wide board) and starts at screen column x; the board sits in the middle top to bottom
   const foe = () => 1 - me;
@@ -7672,7 +7690,7 @@ const Render2D = (cv, view, opts = {}) => {
   // size from health, but a leveled unit (2x, 3x health) only counts part of its extra health, and swarms
   // (5+ bodies) even less, so level 2 and 3 squads don't crowd the board
   const LEVEL_SIZE = [1, 0.8, 0.65], SWARM_SIZE = [1, 0.72, 0.56];
-  const radius = (u) => Math.max(0.6, Math.min(2.4, 0.55 + Math.sqrt(u.hp * ((u.bodies >= 5 ? SWARM_SIZE : LEVEL_SIZE)[u.level | 0] || 1)) / 30)) * S;
+  const radius = (u) => u.drawR > 0 ? u.drawR * S : Math.max(0.6, Math.min(2.4, 0.55 + Math.sqrt(u.hp * ((u.bodies >= 5 ? SWARM_SIZE : LEVEL_SIZE)[u.level | 0] || 1)) / 30)) * S;
   const teamCol = (side) => Art.teamCol(side, me);
   const upOf = (side) => side === me ? 1 : -1;
 
@@ -8114,6 +8132,7 @@ const Render2D = (cv, view, opts = {}) => {
     }
     ctx.globalAlpha = 1;
     if (Game.isIce(v)) { drawStorm(v); if (phase === 'deploy' && Game.altarRound(v)) drawAltar(); } // the altar only stands while deploying
+    if (boss) drawBossPools();
     if (mp && mp.shrooms) for (const tl of v.map.tiles || []) {
       if (shroomShown(v, tl.col, tl.row)) drawShroomTile(tl);
       else if (!plain && myRemovalNow(tl.col, tl.row)) { // removed by you this round: a faint dashed outline until the fight
@@ -8377,6 +8396,33 @@ const Render2D = (cv, view, opts = {}) => {
       ctx.fillStyle = css('--ink'); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
       ctx.globalAlpha = 0.85; ctx.fillText(tag(u), (c + 0.5) * t, (r0 + 1) * t - 1); ctx.globalAlpha = 1;
     }
+  }
+
+  // the Mommy boss puzzle (view.boss from the page: Boss.preview): this round's poison pools, and while deploying her,
+  // her reach and this round's nests, see-through, each nest marked HIGH (only ranged units reach it) or LOW
+  const BOSS_POOL = '#7FD13B';
+  function drawBossPools() {
+    const t = tilePx(), time = phase === 'battle' && bt ? bt.time() : 0;
+    for (const [c0, r0, c1, r1] of boss.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+      const x = scol(c) * t, y = srow(r) * t;
+      ctx.fillStyle = BOSS_POOL; ctx.globalAlpha = 0.2 + 0.05 * Math.sin(time * 2 + c + r); ctx.fillRect(x + 1, y + 1, t - 2, t - 2);
+      ctx.fillStyle = '#C6F27A'; ctx.globalAlpha = 0.5; // a few bubbles
+      for (let k = 0; k < 3; k++) { const ph = (time * 0.6 + k * 0.37 + (c * 7 + r * 3) * 0.13) % 1; ctx.beginPath(); ctx.arc(x + t * (0.25 + 0.25 * k), y + t * (0.8 - 0.5 * ph), t * 0.05, 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawBossPreview() {
+    const t = tilePx(), side = foe(), col = teamCol(side), mo = boss.mommy;
+    ctx.strokeStyle = col; ctx.globalAlpha = 0.45; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]); // her reach: inside it, a body holds her
+    ctx.beginPath(); ctx.arc(PX(mo.x), PY(mo.y), mo.reach * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.globalAlpha = 0.6; Shapes.body(ctx, mo.u.shape, PX(mo.x), PY(mo.y), radius(mo.u), upOf(side), mo.u.color, col, 0.6);
+    const fs = Math.max(8, Math.round(t * 0.24));
+    ctx.font = `600 ${fs}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const n of boss.nests) {
+      ctx.globalAlpha = 0.55; Shapes.body(ctx, n.u.shape, PX(n.x), PY(n.y), radius(n.u) * 0.85, upOf(side), n.u.color, col, 0.6);
+      ctx.globalAlpha = 0.9; ctx.fillStyle = n.low ? css('--ink') : col; ctx.fillText(n.low ? 'LOW' : 'HIGH', PX(n.x), PY(n.y) + t * 0.5);
+    }
+    ctx.globalAlpha = 1;
   }
 
   // round 1: the opponent's starting squads (view.foeStart from the page: [{ unit, x, y }] in board metres), see-through
@@ -9129,6 +9175,7 @@ const Render2D = (cv, view, opts = {}) => {
       drawSquad(phase === 'deploy' ? { ...sq, unit: look, col: p.col, row: p.row, level: Game.seenLevel(m, sq) } : { ...sq, unit: look }, foe(), false); // a level-up bought this round stays hidden
     }
     if (phase === 'deploy' && foeStart) drawFoeStart();
+    if (phase === 'deploy' && boss) drawBossPreview();
     // what rides inside a carrier: a small disc with its shape, bottom left of the tile (only its team sees it), ringed in
     // its player's colour in 2v2 (yours in your teammate's horse, theirs in yours)
     const riderBadge = (at, rider) => {
@@ -10818,6 +10865,9 @@ const Models3D = (THREE) => {
     ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z]) => P(cyl(0.28, 0.28, 0.16, 8), DARK, [x * 0.5, 0.28, z * 0.32], [0, 0, Math.PI / 2])),
     P(cyl(0.07, 0.07, 0.5, 5), IRON, [0.25, 1.3, 0.3])];
   BUILD.building = BUILD['building:factory']; // any other building, until it has a model of its own
+  // the Mommy boss puzzle's nest: a pale egg sac of silk hanging on a thread
+  BUILD.nest = () => [P(ball(0.85), 'tint', [0, 1.7, 0]), P(ball(0.55), 'tint', [0.45, 1.25, 0.3]), P(ball(0.5), 'tint', [-0.4, 1.3, -0.25]),
+    P(cyl(0.035, 0.035, 2.4, 4), '#EDEDED', [0, 3.6, 0]), P(cyl(0.5, 0.7, 0.12, 8), DARK, [0, 0.06, 0])];
   // ---------- 2v2 buildings (src/mpb.js): one model per kind, 'mpb:<kind>' (a part: 'mpb:<kind>:<part>'; a walker
   // with a look: 'mpb:<kind>:<look>'), drawn at their real size like towers. Kinds without one get BUILD.mpb (a plain
   // block in the kind's colour, 'tint', with a roof in the team colour) and parts BUILD['mpb:part']. B groups add
@@ -11098,6 +11148,7 @@ const Models3D = (THREE) => {
     if (u.mpb) { const k = 'mpb:' + u.mpb + (u.mpbPart ? ':' + u.mpbPart : u.mpbSkin ? ':' + u.mpbSkin : ''); return BUILD[k] ? k : u.mpbPart ? 'mpb:part' : u.structure ? 'mpb' : 'brute'; } // a 2v2 building (src/mpb.js), or its walker
     if (u.spire) return 'spire';
     if (u.structure && u.kind === 'wall' && u.barrier) return 'stonewall';
+    if (u.structure && u.kind === 'nest') return 'nest'; // the Mommy boss puzzle's nests
     if (u.structure && u.kind === 'treasury' && season === 'xmas') return 'treasury:xmas';
     if (u.structure && (u.kind === 'lesser' || u.kind === 'wall' || u.kind === 'treasury' || u.kind === 'watchtower')) return u.kind;
     if (u.building) { const k = 'building:' + u.building; return u.awake && BUILD[k + ':awake'] ? k + ':awake' : BUILD[k] ? k : 'building'; } // Core Awoken: its walking version
@@ -13073,7 +13124,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
   function finish(g, n) { g.count = n; g.instanceMatrix.needsUpdate = true; if (g.instanceColor) g.instanceColor.needsUpdate = true; }
   // size in metres, from health, as on the 2D board
   const LEVEL_SIZE = [1, 0.8, 0.65], SWARM_SIZE = [1, 0.72, 0.56];
-  const size = (u) => Math.max(0.6, Math.min(2.4, 0.55 + Math.sqrt(u.hp * ((u.bodies >= 5 ? SWARM_SIZE : LEVEL_SIZE)[u.level | 0] || 1)) / 30));
+  const size = (u) => u.drawR > 0 ? u.drawR : Math.max(0.6, Math.min(2.4, 0.55 + Math.sqrt(u.hp * ((u.bodies >= 5 ? SWARM_SIZE : LEVEL_SIZE)[u.level | 0] || 1)) / 30));
   // unit models are drawn this much bigger than their 2D size, so they read from above
   const MODEL_SCALE = 1.3;
   const cols = {};
@@ -13726,6 +13777,21 @@ const Render3D = (THREE, el, view, opts = {}) => {
     }
   }
 
+  // the Mommy boss puzzle (v.boss from the page: Boss.preview): this round's poison pools, and while deploying her, her
+  // reach and this round's nests, see-through, each nest marked HIGH (only ranged units reach it) or LOW
+  function collectBoss(v, f, deploying) {
+    const bs = v.boss, foe = 1 - v.me, pool = color('#7FD13B'), tc = teamColor(foe, v.me), ink = color(css('--ink') || '#E8EEEE');
+    for (const [c0, r0, c1, r1] of bs.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const st = tileCenter(v, c, r); tileSq(st.c, st.r, pool, 0.4, 0.5, 0, 0.03); }
+    if (!deploying) return;
+    const mo = bs.mommy, [mx, mz] = world(f, mo.x, mo.y);
+    arc(mx, mz, mo.reach, tc, 0.55, 1, 0.04, 28);
+    bodies.push({ u: mo.u, side: foe, x: mo.x, y: mo.y, look: 'ghost' });
+    for (const n of bs.nests) {
+      bodies.push({ u: n.u, side: foe, x: n.x, y: n.y, look: 'ghost' });
+      const [wx, wz] = world(f, n.x, n.y);
+      icon('label|' + (n.low ? 'LOW' : 'HIGH'), wx + camDown.x * 4, 0.3, wz + camDown.z * 4, 2.2, n.low ? ink : tc, 0.95);
+    }
+  }
   let v0 = null;
   function placeBodies(v, dt) {
     const f = v.me === 1 ? -1 : 1, me = v.me;
@@ -13733,6 +13799,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (!v.m) return;
     const battle = v.bt && (v.phase === 'battle' || v.phase === 'result' || v.phase === 'end');
     if (battle) collectBattle(v, dt, f); else collectDeploy(v, f);
+    if (v.boss) collectBoss(v, f, !battle);
     const byKey = {};
     // a skin's own model (2026-11-03, Shapes.skinOf), else the unit's
     const kindOfBody = (s) => { const sk = !s.u.structure && Shapes.skinOf(s.side, s.u); return sk && sk.model && models.KINDS.includes(sk.model) ? sk.model : models.kindOf(s.u); };

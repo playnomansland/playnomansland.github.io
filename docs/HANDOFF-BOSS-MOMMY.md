@@ -2,7 +2,7 @@
 
 Branch `claude/charming-allen-kjik08` (built on `claude/sleepy-noether-613e5e`; not merged, no pull request). Written 11 November 2026, second session added the same day (section 8).
 
-**Status: design mostly agreed, a headless prototype exists, nothing is in the game yet.** Five-round hand-built plans now exist and win; section 8 has what they showed and the questions waiting on the owner. The next job is the owner's answers to those, then the go-ahead before building it into the game.
+**Status (11 November, late): in the game for developers** (Puzzles → Weekly boss - The Mommy, or the Developer menu → Mommy), phone and PC. See section 11. Five-round hand-built plans now exist and win; section 8 has what they showed and the questions waiting on the owner. The next job is the owner's answers to those, then the go-ahead before building it into the game.
 
 The prototype lives in `tools/boss/` and does not touch `src/`. Run it from the repo root:
 
@@ -411,3 +411,17 @@ Health is set to **46,000** for now (proposed). Against the targets in section 9
 - statmax + 100 gold 15% by R5 ✗ (target 5-10%)
 
 **The searches are weak.** The R3 search found 43.4k; a search aimed at R4 then found a plan with 54.4k by R3. The real ceiling may be higher still, so the title needs checking again whenever her rules change.
+
+
+---
+
+## 11. In the game (11 November, late)
+
+The owner agreed: 46,000 health with no extra late-round rule; Goblins left as they are; the round-3 ceiling to be searched further before the real launch; pools at 4% a second for now. Then asked for it on live for developer accounts, on phone and PC, with the Puzzles button named "Weekly boss - The Mommy".
+
+- **Where:** Puzzles → *Weekly boss - The Mommy* (developers only for now), and the Developer menu → *Mommy*. Phone (classic menu) and PC (Diorama). It runs on the phone against nobody: no server, no AI, the normal deploy panel and clock.
+- **Code:** the prototype's rules moved into `src/boss.js`, which the page and `tools/boss/` both run, so the prototype's numbers are the game's. The engine patches became engine features that do nothing unless asked for. README "The Mommy boss puzzle" lists the hooks. Check: `node tools/tests/boss.js`.
+- **One change from the prototype:** the prototype's player quietly had the game's default tower (an Outpost at col 8, row 14). The design says a treasury and no tower, so the game has none, and so does the prototype now. Lines A and B and the round-3 winner came out the same (Line B 71.6k over five rounds, A 71.6k); Line C moved (59.1k).
+- **What a round shows:** a banner with the round's bite, the nests (low and high) and her health; on the board her reach (a dashed ring), the nests marked LOW or HIGH, and the poison pools (green tiles, also in the fight). After the fight a report: nests down at, how long she was down, mortar shots, damage to her (and how much while she hung), the three squads that hurt her most, her health.
+- **Not done yet:** the "Mommy" title (the win screen says it would be earned), the server checking a win, a weekly rotation (it is the one boss), a model of her own (she is the spider model, drawn big), the mortar's wind-up on the board.
+

@@ -697,6 +697,9 @@ const Models3D = (THREE) => {
     ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z]) => P(cyl(0.28, 0.28, 0.16, 8), DARK, [x * 0.5, 0.28, z * 0.32], [0, 0, Math.PI / 2])),
     P(cyl(0.07, 0.07, 0.5, 5), IRON, [0.25, 1.3, 0.3])];
   BUILD.building = BUILD['building:factory']; // any other building, until it has a model of its own
+  // the Mommy boss puzzle's nest: a pale egg sac of silk hanging on a thread
+  BUILD.nest = () => [P(ball(0.85), 'tint', [0, 1.7, 0]), P(ball(0.55), 'tint', [0.45, 1.25, 0.3]), P(ball(0.5), 'tint', [-0.4, 1.3, -0.25]),
+    P(cyl(0.035, 0.035, 2.4, 4), '#EDEDED', [0, 3.6, 0]), P(cyl(0.5, 0.7, 0.12, 8), DARK, [0, 0.06, 0])];
   // ---------- 2v2 buildings (src/mpb.js): one model per kind, 'mpb:<kind>' (a part: 'mpb:<kind>:<part>'; a walker
   // with a look: 'mpb:<kind>:<look>'), drawn at their real size like towers. Kinds without one get BUILD.mpb (a plain
   // block in the kind's colour, 'tint', with a roof in the team colour) and parts BUILD['mpb:part']. B groups add
@@ -977,6 +980,7 @@ const Models3D = (THREE) => {
     if (u.mpb) { const k = 'mpb:' + u.mpb + (u.mpbPart ? ':' + u.mpbPart : u.mpbSkin ? ':' + u.mpbSkin : ''); return BUILD[k] ? k : u.mpbPart ? 'mpb:part' : u.structure ? 'mpb' : 'brute'; } // a 2v2 building (src/mpb.js), or its walker
     if (u.spire) return 'spire';
     if (u.structure && u.kind === 'wall' && u.barrier) return 'stonewall';
+    if (u.structure && u.kind === 'nest') return 'nest'; // the Mommy boss puzzle's nests
     if (u.structure && u.kind === 'treasury' && season === 'xmas') return 'treasury:xmas';
     if (u.structure && (u.kind === 'lesser' || u.kind === 'wall' || u.kind === 'treasury' || u.kind === 'watchtower')) return u.kind;
     if (u.building) { const k = 'building:' + u.building; return u.awake && BUILD[k + ':awake'] ? k + ':awake' : BUILD[k] ? k : 'building'; } // Core Awoken: its walking version

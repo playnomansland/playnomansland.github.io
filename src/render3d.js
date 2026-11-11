@@ -207,7 +207,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
   function finish(g, n) { g.count = n; g.instanceMatrix.needsUpdate = true; if (g.instanceColor) g.instanceColor.needsUpdate = true; }
   // size in metres, from health, as on the 2D board
   const LEVEL_SIZE = [1, 0.8, 0.65], SWARM_SIZE = [1, 0.72, 0.56];
-  const size = (u) => Math.max(0.6, Math.min(2.4, 0.55 + Math.sqrt(u.hp * ((u.bodies >= 5 ? SWARM_SIZE : LEVEL_SIZE)[u.level | 0] || 1)) / 30));
+  const size = (u) => u.drawR > 0 ? u.drawR : Math.max(0.6, Math.min(2.4, 0.55 + Math.sqrt(u.hp * ((u.bodies >= 5 ? SWARM_SIZE : LEVEL_SIZE)[u.level | 0] || 1)) / 30));
   // unit models are drawn this much bigger than their 2D size, so they read from above
   const MODEL_SCALE = 1.3;
   const cols = {};
@@ -860,6 +860,21 @@ const Render3D = (THREE, el, view, opts = {}) => {
     }
   }
 
+  // the Mommy boss puzzle (v.boss from the page: Boss.preview): this round's poison pools, and while deploying her, her
+  // reach and this round's nests, see-through, each nest marked HIGH (only ranged units reach it) or LOW
+  function collectBoss(v, f, deploying) {
+    const bs = v.boss, foe = 1 - v.me, pool = color('#7FD13B'), tc = teamColor(foe, v.me), ink = color(css('--ink') || '#E8EEEE');
+    for (const [c0, r0, c1, r1] of bs.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const st = tileCenter(v, c, r); tileSq(st.c, st.r, pool, 0.4, 0.5, 0, 0.03); }
+    if (!deploying) return;
+    const mo = bs.mommy, [mx, mz] = world(f, mo.x, mo.y);
+    arc(mx, mz, mo.reach, tc, 0.55, 1, 0.04, 28);
+    bodies.push({ u: mo.u, side: foe, x: mo.x, y: mo.y, look: 'ghost' });
+    for (const n of bs.nests) {
+      bodies.push({ u: n.u, side: foe, x: n.x, y: n.y, look: 'ghost' });
+      const [wx, wz] = world(f, n.x, n.y);
+      icon('label|' + (n.low ? 'LOW' : 'HIGH'), wx + camDown.x * 4, 0.3, wz + camDown.z * 4, 2.2, n.low ? ink : tc, 0.95);
+    }
+  }
   let v0 = null;
   function placeBodies(v, dt) {
     const f = v.me === 1 ? -1 : 1, me = v.me;
@@ -867,6 +882,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (!v.m) return;
     const battle = v.bt && (v.phase === 'battle' || v.phase === 'result' || v.phase === 'end');
     if (battle) collectBattle(v, dt, f); else collectDeploy(v, f);
+    if (v.boss) collectBoss(v, f, !battle);
     const byKey = {};
     // a skin's own model (2026-11-03, Shapes.skinOf), else the unit's
     const kindOfBody = (s) => { const sk = !s.u.structure && Shapes.skinOf(s.side, s.u); return sk && sk.model && models.KINDS.includes(sk.model) ? sk.model : models.kindOf(s.u); };

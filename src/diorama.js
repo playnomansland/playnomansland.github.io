@@ -1010,6 +1010,7 @@
       factions: () => factionsReady() ? '<b>Factions vs AI.</b> Draft two factions each.' : '<b>Factions.</b> Coming soon: not enough factions yet.',
       devtest: () => devReady() ? '<b>Factions · devtest.</b> Buildings, Powers and spells on the big board, against the AI.' : '<b>Devtest.</b> No factions yet.',
       late: () => `<b>Late game vs AI.</b> DEVTESTLATEGAME on Standard with treasuries: ${Game.START_HP + Game.LATE.hp} health each, at most ${Game.LATE.cap} squads of any one tier ${Game.LATE.tier} or tier 4 unit.`,
+      mommy: () => '<b>Mommy.</b> The boss puzzle: five rounds against a giant spider and her nests, on this phone. Kill her by round 5.',
       claude: () => sampleFn ? '<b>Vs Claude.</b> Claude plays the other side.' : '<b>Vs Claude.</b> Only where Claude can be reached (the game as a Claude artifact).',
       tours: () => '<b>Tournaments.</b> Host one, or practise against bots. Joining is by a link.',
       load: () => `<b>Load units.</b> ${customSet ? `Your ${units.length} Counter Lab units now.` : `${units.length} built-in units now.`} Load a Counter Lab set instead${reportDb ? '; matches are saved for Claude to review' : ''}.`,
@@ -1029,6 +1030,7 @@
       factions: () => { matchKind = 'factions'; lateGame = false; startAiMatch(); },
       devtest: () => { matchKind = 'devtest'; lateGame = false; startAiMatch(); },
       late: () => { matchKind = 'standard'; lateGame = true; startAiMatch(); },
+      mommy: () => startBoss(),
       claude: () => startClaudeMatch(),
       tours: () => openToursSheet(),
       load: () => openLoader(),
@@ -1240,7 +1242,8 @@
       $('pz-title').innerHTML = hasInitiate() ? `The title is yours. ${tchip}` : `Solve the ${PUZ_TITLE.length} Easy ones for the title ${tchip}`;
       const shards = ['0,12 92,0 100,84 7,100', '3,0 100,10 96,100 0,88', '0,8 97,0 100,92 3,100', '2,0 100,12 97,96 0,100'];
       let n = 0;
-      $('pz-list').innerHTML = PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), got = ks.filter(k => done.includes(k)).length;
+      // the weekly boss (developers only for now): the Mommy boss puzzle (startBoss)
+      $('pz-list').innerHTML = (devMode() && typeof Boss !== 'undefined' ? `<div class="pz-lv"><span class="k">Weekly boss</span><span class="pz-n">developers only</span></div><button class="item" data-boss="mommy"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[0]}"/></svg><span class="n">★</span>Weekly boss - The Mommy<small>5 rounds</small></button>` : '') + PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), got = ks.filter(k => done.includes(k)).length;
         return `<div class="pz-lv"><span class="k">${esc(L)}</span><span class="pz-n">${got} of ${ks.length} solved</span></div>` + ks.map(k => { n++;
           return `<button class="item${done.includes(k) ? ' done' : ''}${k === puzPick ? ' on' : ''}" data-puz="${k}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[k % 4]}"/></svg><span class="n">${String(n).padStart(2, '0')}</span>${esc(PUZZLES[k].name)}${done.includes(k) ? '<small>✓ solved</small>' : ''}</button>`; }).join(''); }).join('');
     }
@@ -1252,7 +1255,7 @@
     function closePuz() { if (!body.classList.contains('puz')) return; body.classList.remove('puz'); home.puz = false; want = VIEWS.play; body.querySelectorAll('.qnote').forEach(n => { n.style.display = 'none'; n._off = null; }); }
     $('pz-list').addEventListener('mouseover', (e) => { const b = e.target.closest('[data-puz]'); if (b && +b.dataset.puz !== puzPick) puzShow(+b.dataset.puz); });
     $('pz-list').addEventListener('focusin', (e) => { const b = e.target.closest('[data-puz]'); if (b && +b.dataset.puz !== puzPick) puzShow(+b.dataset.puz); });
-    $('pz-list').addEventListener('click', (e) => { const b = e.target.closest('[data-puz]'); if (b) startPuzzle(+b.dataset.puz); });
+    $('pz-list').addEventListener('click', (e) => { if (e.target.closest('[data-boss]')) { startBoss(); return; } const b = e.target.closest('[data-puz]'); if (b) startPuzzle(+b.dataset.puz); });
     $('pz-back').addEventListener('click', closePuz);
 
     // ── How to play (2026-11-10): the rules as chapters (the old sheet's, said for a PC and for the Standard map everyone
