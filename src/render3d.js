@@ -869,7 +869,20 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (!deploying) { // her state in the fight (mom.bs, src/boss.js)
       const mom = v.bt && v.bt.bodies.find(b => b.u.boss && b.alive); if (!mom || !mom.bs) return;
       const st = mom.bs, [wx, wz] = world(f, mom.x, mom.y), t = v.bt.time(), R = size(mom.u) * 1.4;
-      if (st.phase === 'hanging') thread(wx, wz, t);
+      const BC = { fast: '#FFE15A', heavy: '#FF5A4E', sweep: '#FF9A3D' }, silk = color('#EDEDED'), webR = typeof Boss !== 'undefined' ? Boss.CFG.mommy.web.r : 14;
+      if (st.phase === 'hanging') { thread(wx, wz, t); arc(wx, wz, webR, silk, 0.3, 1, 0.02, 24); } // her web round her
+      if (st.aim && st.aim.k > 0.45) { // her bite winding up: a line to whom she will bite, and a ring on them just before
+        const k = (st.aim.k - 0.45) / 0.55, [ax, az] = world(f, st.aim.x, st.aim.y), c = color(BC[st.bite] || '#FFE15A');
+        beam(wx, 3, wz, ax, 1.2, az, 0.12 + 0.25 * k, c, 0.25 + 0.6 * k);
+        if (k > 0.65) arc(ax, az, Math.max(1.2, mom.u.splash || 0), c, 0.6 + 0.35 * Math.sin(t * 18), 1, 0.12);
+      }
+      if (st.mortarAim) { const [ax, az] = world(f, st.mortarAim.x, st.mortarAim.y); arc(ax, az, st.mortarAim.r, color('#FF5A4E'), 0.6 + 0.3 * Math.sin(t * 14), 1, 0.08, 12); } // the mortar's mark
+      for (const e of mom.ev || []) { // what she just did
+        const a = t - e.t;
+        if (e.k === 'bite') { const la = t - e.land; if (la < 0 || la > 0.45) continue; const q = la / 0.45, [ex, ez] = world(f, e.x, e.y); arc(ex, ez, Math.max(1.5, e.r) * (0.6 + 0.6 * q), color(BC[e.bite] || '#FFE15A'), 0.9 * (1 - q), 1, e.bite === 'heavy' ? 0.3 : 0.15); }
+        else if (e.k === 'mortar' && a >= 0 && a < 0.9) { const [ex, ez] = world(f, e.x, e.y), q = a / 0.9; if (a < 0.3) { const [nx, nz] = world(f, e.fx, e.fy); beam(nx, 3, nz, ex, 1, ez, 0.4, silk, 0.9 * (1 - a / 0.3)); } arc(ex, ez, e.r * (0.5 + 0.5 * Math.min(1, q * 2)), silk, 0.85 * (1 - q), 1, 0.12, 16); }
+        else if (e.k === 'fall' && a >= 0 && a < 0.9) arc(wx, wz, R * (1 + a * 1.4), color('#B49A7A'), 0.7 * (1 - a / 0.9), 1, 0.15);
+      }
       if (st.mortarIn != null) { const full = st.mortarIn > 4.05 ? 5 : 4; arc(wx, wz, R, color('#FF5A4E'), 0.9, Math.max(0.02, 1 - st.mortarIn / full), 0.1); } // the mortar winding up
       if (st.phase === 'stunned') arc(wx, wz, R * 0.8, color('#FFE15A'), 0.85, 1, 0.06, 10); // dazed
       return;

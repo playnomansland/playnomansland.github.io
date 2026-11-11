@@ -164,6 +164,13 @@
     mom.lastPick = hanging && !!cfg.mommy.lastPick; // (from the first tick: nobody aims at her while she hangs and anything else is left)
     mom.bs = { phase: hanging ? 'hanging' : 'down', stunLeft: 0, nestsLeft: spots.length, nests: spots.length, moltIn: cfg.mommy.molt || null, mortarIn: null, holder: null, take: hanging ? cfg.mommy.hang : groundMul, bite: byRound(cfg.biteByRound, round) };
     const poolRects = (o.pools || (cfg.pools && cfg.pools.pct > 0 && cfg.pools.at ? byRound(cfg.pools.at, round) || [] : [])).map(([c0, r0, c1, r1]) => { const a = world(c0, r0), b = world(c1, r1), h = T / 2; return { x0: Math.min(a.x, b.x) - h, x1: Math.max(a.x, b.x) + h, y0: Math.min(a.y, b.y) - h, y1: Math.max(a.y, b.y) + h }; });
+    // her attacks for the boards to draw (only in a fight that is shown: o.record): mom.ev, events with their time t
+    // (bite: where it was aimed and when it lands; mortar: the blast and the nest it came from; fall), and in mom.bs her
+    // bite's wind-up (aim: target, k 0..1) and the mortar's mark (mortarAim) just before it fires
+    const fxOn = !!o.record, ev = mom.ev = [];
+    let lastAtk0 = null;
+    // the player's biggest clump: the body with the most others within the mortar's blast (the mortar's target)
+    const clump = (army) => { let best = null, bn = 0; for (const f of army) { if (!visible(f)) continue; let n = 0; for (const h of army) if (visible(h) && d2(h, f.x, f.y) <= cfg.mommy.mortar.r) n++; if (n > bn) { bn = n; best = f; } } return best; };
     const bossTick = (api) => {
       if (!mom.alive) return;
       nests.forEach((n, k) => { if (!n.alive && out.nestDown[k] == null) out.nestDown[k] = api.t; });
@@ -179,6 +186,7 @@
       if (!hanging && climbAfter > 0 && out.fallAt != null && api.t >= out.fallAt + climbAfter) { hanging = true; climbed = true; mom.u = { ...mom.u, unstoppable: true, barrier: 0 }; out.climbAt = api.t; }
       if (hanging && !climbed && (o.fallAt != null ? api.t >= o.fallAt : !nests.some((n) => n.alive))) { // the last nest is down: she falls
         hanging = false; out.fallAt = api.t; mom.takeMul = groundMul; mom.stunT = Math.max(mom.stunT, cfg.mommy.stun);
+        if (fxOn) ev.push({ k: 'fall', t: api.t });
         mom.u = ground(mom.u); mom.fallen = true;
         for (const b of api.sides[1]) if (b.alive && b !== mom && !b.u.structure) b.stunT = Math.max(b.stunT, cfg.mommy.stun); // her spiders are stunned with her
       }
@@ -205,6 +213,13 @@
       const mo = cfg.mommy.mortar;
       const bs = mom.bs = { phase: hanging ? 'hanging' : stunned ? 'stunned' : 'down', stunLeft: stunned ? mom.stunT : 0, nestsLeft: nests.filter((n) => n.alive).length, nests: nests.length,
         moltIn: cfg.mommy.molt > 0 ? moltT : null, mortarIn: null, holder: null, take: hanging ? cfg.mommy.hang : groundMul, bite: byRound(cfg.biteByRound, round) };
+      if (fxOn) { // her bite: each one fired (seen the tick after), and the wind-up to the next
+        if (mom.lastAtk != null && mom.lastAtk !== lastAtk0) { lastAtk0 = mom.lastAtk; const tg = mom.lock; if (tg) { const d = d2(tg, mw.x, mw.y); ev.push({ k: 'bite', t: mom.lastAtk, x: tg.x, y: tg.y, land: mom.lastAtk + (mom.u.projSpeed > 0 ? d / mom.u.projSpeed : 0), r: mom.u.splash || 0, bite: bs.bite }); } }
+        let tg = null, td = mom.u.range + (mom.fallen ? cfg.mommy.size : 0); // who she bites next: the nearest body in her reach
+        for (const f of api.sides[0]) if (f.alive && !f.u.aloft && !f.hidden && !(f.inside && f.inside.alive)) { const d = d2(f, mw.x, mw.y); if (d <= td) { td = d; tg = f; } }
+        if (!stunned && tg) { const cyc = 1 / Math.max(0.05, mom.u.aps); bs.aim = { x: tg.x, y: tg.y, k: Math.min(1, (api.t - (mom.lastAtk == null ? -cyc * 0.5 : mom.lastAtk)) / cyc) }; }
+        if (ev.length > 40) ev.splice(0, ev.length - 40);
+      }
       // attention: nobody close while she hangs, and the mortar winds up
       if (!hanging || stunned) { quiet = 0; shots = 0; return; }
       let holder = null, hd = cfg.mommy.near;
@@ -212,25 +227,22 @@
       if (holder) { quiet = 0; shots = 0; out.held += api.dt; const hn = sqName(holder); out.holders[hn] = (out.holders[hn] || 0) + api.dt; bs.holder = hn; return; }
       quiet += api.dt;
       if (mo.hit > 0) bs.mortarIn = Math.max(0, mo.wind + shots * mo.every - quiet);
+      if (fxOn && bs.mortarIn != null && bs.mortarIn < 1.5) { const c = clump(api.sides[0]); if (c) bs.mortarAim = { x: c.x, y: c.y, r: mo.r }; } // where it will land
       if (!(mo.hit > 0) || quiet + 1e-9 < mo.wind + shots * mo.every) return;
       bs.mortarFired = api.t;
       shots++;
-      let best = null, bn = 0;
-      for (const f of api.sides[0]) {
-        if (!visible(f)) continue;
-        let n = 0; for (const h of api.sides[0]) if (visible(h) && d2(h, f.x, f.y) <= mo.r) n++;
-        if (n > bn) { bn = n; best = f; }
-      }
+      const best = clump(api.sides[0]);
       if (!best) return;
       out.mortars++; if (out.mortarAt == null) out.mortarAt = api.t;
       const bx = best.x, by = best.y;
-      if (api.record && api.shots) api.shots.push([mw.x, mw.y, bx, by, 1, mo.r, 1, 0, 0, 0, 0, 0, 0, 0]); // the boards draw it as a shot with a splash
       for (const f of api.sides[0].slice()) {
         if (!f.alive || f.u.aloft || d2(f, bx, by) > mo.r) continue;
         api.hurt(mom, f, mo.hit, mw.x, mw.y);
         if (f.alive && !f.u.structure) { f.web = { slow: mo.slow, dmg: mo.dmg, t: mo.secs, max: 90 }; f.momWeb = true; f.momWebOnly = true; f.mortarWebT = api.t + mo.secs; if (!f.u.unstoppable) { f.slowMove = Math.max(f.slowT > 0 ? f.slowMove : 0, mo.slow); f.slowT = Math.max(f.slowT, mo.secs); } }
       }
-      if (mo.ammo) { let pick = null; for (const n of nests) if (n.alive && !(mo.ammoReach > 0 && d2(n, mw.x, mw.y) > mo.ammoReach) && (!pick || n.hp < pick.hp)) pick = n; if (pick) { api.hurt(mom, pick, 1e9, mw.x, mw.y); if (!pick.alive) { out.mortarNests++; out.nestDown[nests.indexOf(pick)] = -api.t; } } }
+      let pick = null;
+      if (mo.ammo) { for (const n of nests) if (n.alive && !(mo.ammoReach > 0 && d2(n, mw.x, mw.y) > mo.ammoReach) && (!pick || n.hp < pick.hp)) pick = n; if (pick) { api.hurt(mom, pick, 1e9, mw.x, mw.y); if (!pick.alive) { out.mortarNests++; out.nestDown[nests.indexOf(pick)] = -api.t; } } }
+      if (fxOn) ev.push({ k: 'mortar', t: api.t, x: bx, y: by, r: mo.r, fx: pick ? pick.x : mw.x, fy: pick ? pick.y : mw.y }); // the blast, and the nest it was
     };
     const sim = En.createBattle(A, B, g, { ...opts, bossTick, toTimer: true, record: !!o.record });
     // it ends when she dies; result() carries what happened

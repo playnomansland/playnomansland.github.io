@@ -7338,7 +7338,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
 
   function absorb() {
-    for (const s of bt.lastShots()) if (s[13] === 1) Art.frostBeam(fx, s); // a frost beam, held on its target
+    const bossAt = battlePre && battlePre.boss ? bt.bodies.find(b => b.u.boss) : null; // (the Mommy boss puzzle: her bite has its own look, src/render2d drawBossState / render3d collectBoss)
+    for (const s of bt.lastShots()) if (bossAt && s[0] === bossAt.x && s[1] === bossAt.y && s[4] === bossAt.side) continue;
+    else if (s[13] === 1) Art.frostBeam(fx, s); // a frost beam, held on its target
     else if (s[13] === 2) fx.push({ kind: 'freeze', x: s[0], y: s[1], side: s[4], age: 0, life: 0.6 }); // frozen solid
     else if (s[13] === 3) fx.push({ kind: 'eat', x1: s[0], y1: s[1], x2: s[2], y2: s[3], side: s[4], age: 0, life: 0.6 }); // eaten by the Obelisk
     else if (s[12] === 1) fx.push({ kind: 'roar', x: s[0], y: s[1], r: s[5], side: s[4], age: 0, life: 0.8 });
