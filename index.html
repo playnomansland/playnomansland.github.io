@@ -1070,8 +1070,8 @@ html.diorama.pcwide .panel .hint { color: #F4ECD8; font: 700 14px/1.4 var(--dtyp
    card's close button under the column works while the panel is out */
 html.diorama.pcwide .bcard { top: 190px; left: 32px; width: min(300px, calc(var(--dpw, 340px) - 54px)); border-radius: 0; background: color-mix(in srgb, var(--dcard, #0D1315) 94%, transparent); }
 html.dright.diorama.pcwide .bcard { left: auto; right: 16px; }
-html.diorama.pcwide .bcard.right { top: 112px; left: auto; right: 32px; }
-html.dright.diorama.pcwide .bcard.right { top: 160px; left: 32px; right: auto; } /* (under the chat button there) */
+html.diorama.pcwide .bcard.right { top: 112px; left: auto; right: 32px; } /* (until the page measures the opponent's block: artifactCard) */
+html.dright.diorama.pcwide .bcard.right { top: 160px; left: 32px; right: auto; }
 html.diorama.pcwide.pcfight .panel { pointer-events: none; }
 html.diorama.pcwide.pcfight .panel > * { pointer-events: auto; }
 
@@ -19038,7 +19038,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · 789c7d8'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · e621844'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -24498,7 +24498,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // ---------- 2v2 artifacts (docs/MPB-2V2.md): a tap on an artifact's tile shows its card ----------
   // The board state carries them in the round they stand in (m.artifacts = { round, list: [{ id, col, row, card: { type:
   // 'tower' | 'mpb', id } }] }, src/duo.js); a fight's live points come from the battle (bt.artifacts(), in list order).
-  let artTapAt = null, artHtml = ''; // the artifact tile whose card is open ({ col, row }), and what the card shows now
+  let artTapAt = null, artHtml = '', artFitT = 0; // the artifact tile whose card is open ({ col, row }), and what the card shows now
   // the artifact on tile t: { k, a (its list entry), live (the fight's, or null) }, or null
   function artifactAt(t) {
     const src = (bt && battlePre) || m, arts = src && src.artifacts;
@@ -24547,7 +24547,22 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       $('wrap').appendChild(el); artHtml = '';
     }
     el.style.setProperty('--c', '#CDB8FF');
-    if (html !== artHtml) { el.innerHTML = html; artHtml = html; }
+    const fresh = html !== artHtml;
+    if (fresh) { el.innerHTML = html; artHtml = html; }
+    // The Diorama on a PC: under the opponent's block of the top line (in 2v2 two names, the health and "Deploying…"
+    // under it: the owner's screenshot, 2026-11-11, the card lay on them), and under the chat button where that stands
+    // on the same side; measured, as the block's height changes
+    const ts = performance.now();
+    if (dioWide()) {
+      if (fresh || !el.style.top || ts - artFitT > 300) {
+        artFitT = ts;
+        const c = el.getBoundingClientRect(), over = (r) => r.width > 0 && r.height > 0 && r.left < c.right && c.left < r.right;
+        let y = 0;
+        for (const x of [document.querySelector('.hud .side.foe'), $('talk-fab')]) { if (!x) continue; const r = x.getBoundingClientRect(); if (over(r)) y = Math.max(y, r.bottom); }
+        const top = Math.round(Math.max(y + 14, 60)) + 'px';
+        if (el.style.top !== top) el.style.top = top;
+      }
+    } else if (el.style.top) el.style.top = '';
   }
 
   // ---------- marks over the board: a unit's range under the mouse, the tutorial's tiles and ring ----------
