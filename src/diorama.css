@@ -914,6 +914,17 @@ html.diorama.pcwide .panel #skip { position: relative; isolation: isolate; paddi
 html.diorama.pcwide .panel #skip.primary { color: #17140F; opacity: 1; text-shadow: none; }
 html.diorama.pcwide .panel #skip.primary::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: var(--dshard); }
 html.diorama.pcwide .panel .hint { color: #F4ECD8; font: 700 14px/1.4 var(--dtype); text-shadow: var(--dhalo); }
+/* a fight's card of the body clicked (inspectCard): in the column under the speeds and Skip, which slide in over the top
+   left where the card used to lie on the name and health (the owner's screenshot, 2026-11-11). Its top is measured by
+   the page from what the panel shows (190px until then); with the panel on the right it mirrors. The artifact's card
+   (2v2, .right) stands on the other side, under the opponent. The fight's panel takes clicks on its words only, so the
+   card's close button under the column works while the panel is out */
+html.diorama.pcwide .bcard { top: 190px; left: 32px; width: min(300px, calc(var(--dpw, 340px) - 54px)); border-radius: 0; background: color-mix(in srgb, var(--dcard, #0D1315) 94%, transparent); }
+html.dright.diorama.pcwide .bcard { left: auto; right: 16px; }
+html.diorama.pcwide .bcard.right { top: 112px; left: auto; right: 32px; }
+html.dright.diorama.pcwide .bcard.right { top: 160px; left: 32px; right: auto; } /* (under the chat button there) */
+html.diorama.pcwide.pcfight .panel { pointer-events: none; }
+html.diorama.pcwide.pcfight .panel > * { pointer-events: auto; }
 
 /* the moments over the board (round 1's start, the leader, the tower): a veil, a kicker, a huge title, the options,
    CHOOSE on the shard and Hide (look at the board). Centred on the free space beside the column */
