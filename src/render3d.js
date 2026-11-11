@@ -221,7 +221,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
   // Each is a quad: an icon or a bar facing the camera, or a ring arc, disc or tile square lying on the ground.
   // p: icon -> its place in the atlas (u0, v0, u1, v1); bar -> fill; arc -> fill, thickness (share of the radius),
   // dashes around the full circle, soft (fades toward the rim); square -> -, thickness (share of half the side), dashes.
-  const MODE = { icon: 0, bar: 1, arc: 2, square: 3 };
+  const MODE = { icon: 0, bar: 1, arc: 2, square: 3, decal: 4 }; // decal: an atlas picture lying on the ground
   const SPR_CAP = 6000;
   const sprGeo = new THREE.InstancedBufferGeometry();
   const quad = new THREE.PlaneGeometry(1, 1);
@@ -253,7 +253,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
       varying vec2 vUv; varying vec4 vCol; varying vec4 vP; varying float vMode;
       void main() {
         vec4 c = vCol;
-        if (vMode < 0.5) c *= texture2D(atlas, mix(vP.xy, vP.zw, vUv));
+        if (vMode < 0.5 || vMode > 3.5) c *= texture2D(atlas, mix(vP.xy, vP.zw, vUv));
         else if (vMode < 1.5) {
           float edge = step(vUv.y, 0.16) + step(0.84, vUv.y) + step(vUv.x, 0.025) + step(0.975, vUv.x);
           if (edge > 0.0 || vUv.x > vP.x) c = vec4(0.03, 0.04, 0.05, 0.8 * vCol.a);
@@ -295,6 +295,11 @@ const Render3D = (THREE, el, view, opts = {}) => {
   const white = color('#ffffff');
   // icon (billboard), size s metres tall; wide icons (labels) keep their shape
   function icon(key, x, y, z, s, c = white, a = 1) { const u = cell(key); spr(MODE.icon, x, y, z, s * u.aspect, s, c, a, u.u0, u.v0, u.u1, u.v1); }
+  // a big picture ('big|...' in the atlas) lying on the ground at board point (wx, wz), s metres across; its top points
+  // away from this side's edge of the board. flip: upside down
+  function decal(key, wx, wz, s, c = white, a = 1, flip = false) { const u = cell(key); spr(MODE.decal, wx, 0.09, wz, s, s, c, a, flip ? u.u1 : u.u0, flip ? u.v1 : u.v0, flip ? u.u0 : u.u1, flip ? u.v0 : u.v1); }
+  // ...or standing up, facing the camera
+  function bigIcon(key, x, y, z, s, c = white, a = 1, flip = false) { const u = cell(key); spr(MODE.icon, x, y, z, s, s, c, a, flip ? u.u1 : u.u0, flip ? u.v1 : u.v0, flip ? u.u0 : u.u1, flip ? u.v0 : u.v1); }
   const bar = (x, y, z, w, h, fill, c, a = 1) => spr(MODE.bar, x, y, z, w, h, c, a, Math.max(0, Math.min(1, fill)));
   // a ring or arc on the ground at board point (wx, wz) in the world; r = outer radius
   const arc = (wx, wz, r, c, a, fill = 1, thick = 0.12, dashes = 0, soft = 0, y = 0.07) => spr(MODE.arc, wx, y, wz, r * 2, r * 2, c, a, fill, thick, dashes, soft);
@@ -309,8 +314,9 @@ const Render3D = (THREE, el, view, opts = {}) => {
 
   // the icon atlas: 64 px cells, drawn the first time each icon is needed (labels take two cells' width)
   const CELL = 64, PER = 1024 / CELL;
+  const BIG = 2, BIG_ROWS = 2; // big pictures: BIG x BIG cells each, in the atlas's last BIG_ROWS rows (keys 'big|...')
   const actx = atlasCv.getContext('2d');
-  let cells = {}, nextCell = 0;
+  let cells = {}, nextCell = 0, nextBig = 0;
   const ICONS = {
     dot: (g) => { g.fillStyle = '#fff'; g.beginPath(); g.arc(32, 32, 26, 0, Math.PI * 2); g.fill(); },
     star: (g) => { g.fillStyle = '#fff'; g.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 12 : 28; g.lineTo(32 + r * Math.cos(a), 34 + r * Math.sin(a)); } g.closePath(); g.fill(); },
@@ -340,6 +346,11 @@ const Render3D = (THREE, el, view, opts = {}) => {
     } else if (kind === 'label') { // a short line of text (four cells wide)
       g.font = '600 26px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.lineWidth = 6; g.strokeStyle = 'rgba(8,12,14,0.9)'; g.strokeText(a, 128, 33); g.fillStyle = '#E5ECE9'; g.fillText(a, 128, 33);
+    } else if (kind === 'big') { // the Mommy boss puzzle's pictures (Art.boss*), 128 px: a row of her fangs, a bite mark, her web
+      const h = CELL * BIG / 2;
+      if (a === 'fangs') Art.bossFangs(g, h, h, h * 0.92, -1, 0, b);
+      else if (a === 'bite') Art.bossBiteMark(g, h, h, h * 0.95, h * 0.95 * +c, b, 1);
+      else if (a === 'web') Art.bossWeb(g, h, h, h * 0.96, '#ffffff', 1);
     } else if (kind === 'arms') Art.armsFlag(g, a, 6, 12, 52, b); // a coat of arms on a flag edged in a side's colour
     else if (kind === 'rider') { // what rides inside a carrier: its shape on a disc
       g.fillStyle = css('--bg'); g.strokeStyle = c; g.lineWidth = 4; g.beginPath(); g.arc(32, 32, 27, 0, Math.PI * 2); g.fill(); g.stroke();
@@ -348,15 +359,25 @@ const Render3D = (THREE, el, view, opts = {}) => {
   }
   function cell(key) {
     if (cells[key]) return cells[key];
+    const e = 0.5 / 1024;
+    if (key.startsWith('big|')) {
+      const perRow = PER / BIG;
+      if (nextBig >= perRow * (BIG_ROWS / BIG)) { cells = {}; nextCell = 0; nextBig = 0; actx.clearRect(0, 0, 1024, 1024); } // full: start over
+      const bx = (nextBig % perRow) * CELL * BIG, by = (PER - BIG_ROWS + Math.floor(nextBig / perRow) * BIG) * CELL, sz = CELL * BIG;
+      nextBig++;
+      actx.save(); actx.translate(bx, by); actx.beginPath(); actx.rect(0, 0, sz, sz); actx.clip();
+      drawCell(key, actx); actx.restore();
+      atlas.needsUpdate = true;
+      return (cells[key] = { u0: bx / 1024 + e, u1: (bx + sz) / 1024 - e, v0: 1 - (by + sz) / 1024 + e, v1: 1 - by / 1024 - e, aspect: 1 });
+    }
     const wide = key.startsWith('tag|') ? 2 : key.startsWith('label|') ? 4 : 1;
     if (nextCell % PER + wide > PER) nextCell += PER - nextCell % PER;
-    if (nextCell + wide > PER * PER) { cells = {}; nextCell = 0; actx.clearRect(0, 0, 1024, 1024); } // full: start over
+    if (nextCell + wide > PER * (PER - BIG_ROWS)) { cells = {}; nextCell = 0; nextBig = 0; actx.clearRect(0, 0, 1024, 1024); } // full: start over
     const cx = nextCell % PER, cy = Math.floor(nextCell / PER);
     nextCell += wide;
     actx.save(); actx.translate(cx * CELL, cy * CELL); actx.beginPath(); actx.rect(0, 0, CELL * wide, CELL); actx.clip();
     drawCell(key, actx); actx.restore();
     atlas.needsUpdate = true;
-    const e = 0.5 / 1024;
     return (cells[key] = { u0: cx * CELL / 1024 + e, u1: (cx + wide) * CELL / 1024 - e, v0: 1 - (cy + 1) * CELL / 1024 + e, v1: 1 - cy * CELL / 1024 - e, aspect: wide });
   }
 
@@ -871,19 +892,73 @@ const Render3D = (THREE, el, view, opts = {}) => {
       const st = mom.bs, [wx, wz] = world(f, mom.x, mom.y), t = v.bt.time(), R = size(mom.u) * 1.4;
       const BC = { fast: '#FFE15A', heavy: '#FF5A4E', sweep: '#FF9A3D' }, silk = color('#EDEDED'), webR = typeof Boss !== 'undefined' ? Boss.CFG.mommy.web.r : 14;
       if (st.phase === 'hanging') { thread(wx, wz, t); arc(wx, wz, webR, silk, 0.3, 1, 0.02, 24); } // her web round her
-      if (st.aim && st.aim.k > 0.45) { // her bite winding up: a line to whom she will bite, and a ring on them just before
-        const k = (st.aim.k - 0.45) / 0.55, [ax, az] = world(f, st.aim.x, st.aim.y), c = color(BC[st.bite] || '#FFE15A');
-        beam(wx, 3, wz, ax, 1.2, az, 0.12 + 0.25 * k, c, 0.25 + 0.6 * k);
-        if (k > 0.65) arc(ax, az, Math.max(1.2, mom.u.splash || 0), c, 0.6 + 0.35 * Math.sin(t * 18), 1, 0.12);
+      // her bite: her jaws open where her target stands, close, and snap shut; whoever stands in the ring then is
+      // bitten. The bite mark stays a few seconds (as on the 2D board: src/render2d.js drawBossState)
+      const evs = mom.ev || [], RED = color('#FF5A4E'), STAYS = 4, LS = 1.5 * fxWide(); // LS: how tall her labels are (bigger from further up)
+      const jaws = (ex, ez, JR, gap, hex, al) => { // two rows of fangs facing the camera, the far one coming down the screen and the near one up
+        const off = JR * (Art.BOSS_JAW.shut + Art.BOSS_JAW.open * gap), key = 'big|fangs|' + hex;
+        scene_(() => { bigIcon(key, ex - camDown.x * off, 2.2, ez - camDown.z * off, JR * 2.6, white, al); bigIcon(key, ex + camDown.x * off, 2.2, ez + camDown.z * off, JR * 2.6, white, al, true); });
+      };
+      let closing = false;
+      for (const e of evs) {
+        if (e.k !== 'bite' || t < e.t) continue;
+        const hex = BC[e.bite] || '#FFE15A', c = color(hex), [ex, ez] = world(f, e.x, e.y), hitR = Math.max(1, e.r), JR = Math.max(3, e.r * 1.15);
+        if (t < e.land) {
+          closing = true;
+          const q = Math.min(1, (t - e.t) / Math.max(0.05, e.land - e.t));
+          scene_(() => { beam(wx, 4, wz, ex, 1, ez, 0.08, c, 0.25); disc(ex, ez, hitR, c, 0.12 + 0.25 * q); arc(ex, ez, hitR, c, 0.95, 1, Math.min(0.5, 0.25 / hitR)); });
+          jaws(ex, ez, JR, 1 - q * q, hex, 0.6 + 0.4 * q);
+        } else {
+          const a = t - e.land;
+          if (a < 0.3) { const g = a / 0.3; scene_(() => arc(ex, ez, hitR * (1 + 0.8 * g), white, 0.9 * (1 - g), 1, 0.15)); jaws(ex, ez, JR, 0, hex, 1 - g * 0.6); }
+          if (a < STAYS) scene_(() => decal(`big|bite|${hex}|${(hitR / JR).toFixed(2)}`, ex, ez, JR * 2, white, Math.min(1, (STAYS - a) / 1.5) * 0.9));
+        }
       }
-      if (st.mortarAim) { const [ax, az] = world(f, st.mortarAim.x, st.mortarAim.y); arc(ax, az, st.mortarAim.r, color('#FF5A4E'), 0.6 + 0.3 * Math.sin(t * 14), 1, 0.08, 12); } // the mortar's mark
-      for (const e of mom.ev || []) { // what she just did
+      if (st.aim && !closing && st.aim.cyc >= 2 && st.aim.in < 1.5) { // whom she bites next (the heavy bite): open jaws that follow them
+        const hex = BC[st.bite] || '#FFE15A', [ax, az] = world(f, st.aim.x, st.aim.y), k = 1 - st.aim.in / 1.5;
+        scene_(() => arc(ax, az, Math.max(1, st.aim.r), color(hex), 0.3 + 0.4 * k, 1, 0.08, 14));
+        jaws(ax, az, Math.max(3, st.aim.r * 1.15), 1.25, hex, 0.25 + 0.3 * k);
+      }
+      // the web mortar. Before: her thread on the nest she is about to rip loose, and a ring on the clump she aims at.
+      // Thrown: the nest flies in an arc to the red ring, which fills as it comes. Landed: a web that stays
+      if (st.mortarIn != null) {
+        const full = st.mortarIn > 4.05 ? 5 : 4, k = Math.max(0, Math.min(1, 1 - st.mortarIn / full));
+        arc(wx, wz, R, RED, 0.9, Math.max(0.02, k), 0.1); // round her: a red ring that closes as the shot comes
+        if (st.mortarNest) scene_(() => {
+          const [nx, nz] = world(f, st.mortarNest.x, st.mortarNest.y), wob = Math.sin(t * 22) * (0.1 + 0.25 * k);
+          beam(wx, 5, wz, nx + wob, 2.5, nz, 0.1 + 0.3 * k, silk, 0.4 + 0.5 * k);
+          arc(nx, nz, 3.4, RED, 0.55 + 0.4 * Math.sin(t * 10), 1, 0.07, 14);
+          icon('label|THROWS THIS', nx - camDown.x * (4 + LS * 0.5), 0.3, nz - camDown.z * (4 + LS * 0.5), LS, color('#FF8A80'), 0.95);
+        });
+        if (st.mortarAim) { const [ax, az] = world(f, st.mortarAim.x, st.mortarAim.y); scene_(() => arc(ax, az, st.mortarAim.r, RED, 0.3 + 0.3 * k, 1, 0.04, 20)); } // where she is aiming: it follows the clump until she throws
+      }
+      for (const e of evs) {
         const a = t - e.t;
-        if (e.k === 'bite') { const la = t - e.land; if (la < 0 || la > 0.45) continue; const q = la / 0.45, [ex, ez] = world(f, e.x, e.y); arc(ex, ez, Math.max(1.5, e.r) * (0.6 + 0.6 * q), color(BC[e.bite] || '#FFE15A'), 0.9 * (1 - q), 1, e.bite === 'heavy' ? 0.3 : 0.15); }
-        else if (e.k === 'mortar' && a >= 0 && a < 0.9) { const [ex, ez] = world(f, e.x, e.y), q = a / 0.9; if (a < 0.3) { const [nx, nz] = world(f, e.fx, e.fy); beam(nx, 3, nz, ex, 1, ez, 0.4, silk, 0.9 * (1 - a / 0.3)); } arc(ex, ez, e.r * (0.5 + 0.5 * Math.min(1, q * 2)), silk, 0.85 * (1 - q), 1, 0.12, 16); }
-        else if (e.k === 'fall' && a >= 0 && a < 0.9) arc(wx, wz, R * (1 + a * 1.4), color('#B49A7A'), 0.7 * (1 - a / 0.9), 1, 0.15);
+        if (e.k === 'mortar' && a >= 0) {
+          const [ex, ez] = world(f, e.x, e.y), fly = Math.max(0.01, e.land - e.t), la = t - e.land;
+          if (la < 0) scene_(() => { // in the air
+            const q = a / fly, hgt = Math.sin(Math.PI * q), [ox, oz] = world(f, e.fx, e.fy), gx = ox + (ex - ox) * q, gz = oz + (ez - oz) * q, by = 2.5 + hgt * 14;
+            disc(ex, ez, e.r * q, RED, 0.2); arc(ex, ez, e.r, RED, 0.95, 1, 0.06); arc(ex, ez, e.r * 1.12, RED, 0.5, 1, 0.03, 12); // the ring fills as it comes
+            icon('label|WEB MORTAR', ex - camDown.x * (e.r + 1 + LS * 0.5), 0.3, ez - camDown.z * (e.r + 1 + LS * 0.5), LS, color('#FF8A80'), 0.95);
+            disc(gx, gz, 1.6 + hgt, color('#000000'), 0.3, 1); // its shadow on the ground
+            beam(ox, 3, oz, gx, by, gz, 0.2, silk, 0.5); // the silk it trails
+            if (e.nest && bs.nests && bs.nests[0]) bodies.push({ u: bs.nests[0].u, side: foe, x: e.fx + (e.x - e.fx) * q, y: e.fy + (e.y - e.fy) * q, look: 'solid', raise: by, noRing: true, phase: 0, scale: 1.6 + 0.8 * hgt });
+            else icon('dot', gx, by, gz, 3, silk, 1);
+          });
+          else if (la < (e.secs || 4)) scene_(() => { // landed: a web on the ground for as long as it slows what it hit
+            const g = la / (e.secs || 4);
+            decal('big|web', ex, ez, e.r * 2, silk, 0.85 * (1 - g * g));
+            if (la < 0.4) arc(ex, ez, e.r * (0.6 + 0.7 * la / 0.4), white, 0.9 * (1 - la / 0.4), 1, 0.12);
+          });
+        } else if (e.k === 'fall' && a >= 0 && a < 1.6) scene_(() => {
+          if (a < 0.9) arc(wx, wz, R * (1 + a * 1.4), color('#B49A7A'), 0.7 * (1 - a / 0.9), 1, 0.15);
+          icon('label|SHE FALLS', wx, 9 + a * 2, wz, LS * 1.3, color('#FFE15A'), Math.min(1, (1.6 - a) / 0.5));
+        });
+        else if (e.k === 'molt' && a >= 0 && a < 1.2) scene_(() => {
+          arc(wx, wz, R * (1.1 + a * 0.8), color('#C9B8E8'), 0.7 * (1 - a / 1.2), 1, 0.06, 18);
+          icon('label|MOLT', wx, 9 + a * 2, wz, LS * 1.1, color('#C9B8E8'), Math.min(1, (1.2 - a) / 0.4));
+        });
       }
-      if (st.mortarIn != null) { const full = st.mortarIn > 4.05 ? 5 : 4; arc(wx, wz, R, color('#FF5A4E'), 0.9, Math.max(0.02, 1 - st.mortarIn / full), 0.1); } // the mortar winding up
       if (st.phase === 'stunned') arc(wx, wz, R * 0.8, color('#FFE15A'), 0.85, 1, 0.06, 10); // dazed
       return;
     }
@@ -944,7 +1019,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
         // a stealthed body is only its see-through model, as the dashed ghost on the 2D board: no markers, and no
         // ring under the opponent's
         const ghost = !!(s.b && s.b.hidden && !s.u.aloft);
-        if (!s.u.spire && !s.u.barrier && !uiOff && !(ghost && s.side !== me)) rings.push([wx, wz, r * (s.u.structure || s.u.building ? 2.6 * (s.u.size > 1 ? 1.6 : 1) : 1), s.side]);
+        if (!s.u.spire && !s.u.barrier && !uiOff && !s.noRing && !(ghost && s.side !== me)) rings.push([wx, wz, r * (s.u.structure || s.u.building ? 2.6 * (s.u.size > 1 ? 1.6 : 1) : 1), s.side]);
         const h = top * sc + lift;
         if (s.crest) icon(`arms|${s.crest}|${s.edge}`, wx, h + 1.2, wz, 1.5);
         if (s.b && !ghost) { bodyMarkers(s, f, me, wx, wz, r, h, clock); s.marked = true; }
@@ -974,11 +1049,11 @@ const Render3D = (THREE, el, view, opts = {}) => {
     // projectiles in flight: thrown spears, and team-coloured shot for the rest
     const ps = v.phase === 'battle' ? v.bt.projectiles() : [];
     const isSpear = (p) => p.spear || p.owner.u.shape === 'spear'; // Truespear, and titanium spears
-    const spears = ps.filter(isSpear), rest = ps.filter(p => !isSpear(p));
+    const spears = ps.filter(isSpear), rest = ps.filter(p => !isSpear(p) && !(p.owner.u.boss && p.owner.u.lob)); // (the Mommy boss's bite is her jaws on the ground: collectBoss)
     const sg = group('projectiles', shotGeo, flatMat, rest.length);
     const LEAF = color('#7BE05A'), FLAME = color('#FF9A3D'); // a Leaf Wizard's leaves, a Leafblade missile's flame
     rest.forEach((p, i) => {
-      const big = !!p.owner.u.boss; // the Mommy boss's bite: a big pale web ball, slow enough to see coming
+      const big = !!p.owner.u.boss; // (the Mommy boss's older bite, CFG.mommy.biteSecs 0: a big pale web ball)
       tmpP.set(p.x * f, (p.missile ? 2.2 : big ? 3 : 1.6) + groundY(p.x * f, -p.y * f), -p.y * f); tmpS.setScalar(fxWide() * (p.missile ? 2 : big ? 3 : 1.4)); tmpQ.identity(); sg.setMatrixAt(i, tmpM.compose(tmpP, tmpQ, tmpS));
       if (big) beam(p.x * f, 3, -p.y * f, (p.x - p.dirX * 4) * f, 3, -(p.y - p.dirY * 4) * f, 0.3 * fxWide(), color('#EDEDED'), 0.6); // its silk trail
       sg.setColorAt(i, big ? color('#F4F1E8') : p.missile ? FLAME : p.owner.u.name === 'Leaf Wizard' ? tmpC.copy(LEAF).lerp(teamColor(p.owner.side, me), 0.25) : tmpC.copy(teamColor(p.owner.side, me)).lerp(white, 0.45));
