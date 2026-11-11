@@ -2127,15 +2127,14 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const dioMini = () => DIO && document.documentElement.classList.contains('pcwide');
   function dioMusicDock() {
     const pop = $('mp-pop'), want = dioMini();
-    if (want && !mpui.open) { openPlaylist(); const p2 = $('mp-pop'); if (p2) p2.classList.add('mini'); }
+    if (want && !mpui.open) { dmHid = true; openPlaylist(); const p2 = $('mp-pop'); if (p2) p2.classList.add('mini'); } // a new match: down
     else if (!want && mpui.open && pop && pop.classList.contains('dmini')) mpClose(true);
     const p3 = $('mp-pop'); if (p3 && want && mpui.open) p3.classList.add('dmini');
     dioMusicDecor();
   }
-  // the player's own down arrow slides it away, leaving a small "♪ Music ⌃" that brings it back (the owner, 2026-11-09);
-  // kept on this device
+  // the player's own down arrow slides it away, leaving a small "♪ Music ⌃" that brings it back (the owner, 2026-11-09).
+  // Every match starts with it down (the owner, 2026-11-10 and 11-11): opened, it stays up until that match ends
   let dmHid = true;
-  try { dmHid = localStorage.getItem('pb-dmusic') !== 'shown'; } catch (e) {} // (it starts down: the owner, 2026-11-10)
   function dioMusicDecor() {
     const pop = $('mp-pop'); if (!pop || !pop.classList.contains('dmini')) return;
     const pl = pop.querySelector('.mplayer'), dk = pop.querySelector('.mp-dock');
@@ -2150,7 +2149,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     pop.classList.toggle('hid', dmHid);
   }
   function dioMusicHide(h) {
-    dmHid = h; try { localStorage.setItem('pb-dmusic', h ? 'hid' : 'shown'); } catch (e) {}
+    dmHid = h;
     const pop = $('mp-pop'); if (!pop) return;
     if (h) { pop.classList.add('mini'); mpui.edit = null; }
     pop.classList.toggle('hid', h);
@@ -7966,8 +7965,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (!wide || !(dAuto || document.documentElement.classList.contains('pcfight'))) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); return; }
     const pw = dioPw(), x = e.clientX, edge = dOut ? pw + 40 : 140; // (a wide zone to call it back, the owner, 2026-11-10)
     const near = dSide === 'right' ? x >= innerWidth - edge : x <= edge;
+    if (e.buttons) { clearTimeout(dOutT); dOutT = 0; return; } // a button held (a card or a squad dragged, the camera turned with a right-drag): the panel stays as it is, never called back
     if (dFightHold) { if (near) return; dFightHold = false; }
-    if (near || e.buttons || !$('sheet-back').hidden) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); }
+    if (near || !$('sheet-back').hidden) { clearTimeout(dOutT); dOutT = 0; dioPanelOut(true); }
     else if (dOut && !dOutT) dOutT = setTimeout(() => { dOutT = 0; dioPanelOut(false); }, 1500); // (it stays out a while)
   }, { passive: true });
   try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
