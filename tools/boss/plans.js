@@ -37,7 +37,7 @@ function runPlan(plan, cfg = B.CFG, o = {}) {
 }
 
 // the board as text: her zone (rows 0-5), no man's land (6-9), the player's rows (10-15). M Mommy, H a high nest, L a
-// low one, a letter per squad (the key below), > an arrow's end, . her reach
+// low one, a letter per squad (the key below), > an arrow's end, . her reach, ~ a poison pool
 function board(run, round, cfg = B.CFG) {
   const { m } = run, rows = [];
   const spots = cfg.nests[Math.min(round, cfg.nests.length) - 1];
@@ -46,6 +46,7 @@ function board(run, round, cfg = B.CFG) {
   for (let r = 0; r < 16; r++) for (let c = 0; c < 12; c++) { const w = B.world(c, r); if (Math.hypot(w.x - mw.x, w.y - mw.y) <= cfg.mommy.near) grid[r][c] = '.'; }
   for (const sq of m.armies[0]) { const e = B.Game.aimEnd(m, sq); if (e) grid[e.row][e.col] = '>'; }
   m.armies[0].forEach((sq, k) => { const ch = String.fromCharCode(97 + k); grid[sq.row][sq.col] = ch; key.push(`${ch} ${sq.tag || B.units[sq.unit].name}${sq.level ? ' L' + sq.level : ''}`); });
+  for (const [c0, r0, c1, r1] of (cfg.pools && cfg.pools.at && cfg.pools.pct > 0 ? cfg.pools.at[Math.min(round, cfg.pools.at.length) - 1] || [] : [])) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) if (grid[r][c] === ' ' || grid[r][c] === '.') grid[r][c] = '~';
   for (const [c, r, kind] of spots) grid[r][Math.round(c)] = kind === 'low' ? 'L' : 'H';
   grid[cfg.mommy.row][5] = 'M'; grid[cfg.mommy.row][6] = 'M';
   for (let r = 0; r < 16; r++) rows.push(`   ${String(r).padStart(2)} |${grid[r].join(' ')}|${r === 5 ? ' her zone ends' : r === 9 ? ' no man\'s land ends' : ''}`);
@@ -82,39 +83,42 @@ const PLANS = {
   'Round 1, no tank: four shooters spread wide': [
     [['buy', 'Wisps', 0, 10], ['buy', 'Sniper', 11, 11], ['buy', 'Skeleton Archers', 9, 10], ['buy', 'Sniper', 1, 11]],
   ],
-  // ---- five-round lines, written by hand to follow the intended strategies (her health is set huge in `lines` so
-  // every round is played and can be measured). Squads are named with { as } so later rounds can move, aim and sell them.
-  // Line A: someone holds her in every round
-  'Line A: hold her every round': [
-    // R1 fast bite. Two Goblin squads walk the low nest's column, kill it and hold her; Wisps + Archers take the high one
-    [['buy', 'Goblin Swarm', 4, 10, { as: 'gobA' }], ['buy', 'Goblin Swarm', 3, 10, { as: 'gobB' }], ['buy', 'Wisps', 9, 10, { as: 'wisp' }], ['buy', 'Skeleton Archers', 10, 10, { as: 'archA' }]],
-    // R2 heavy. One Goblin squad is sent (arrow) to the far low nest, the other at her: a swarm soaks the heavy bite
-    [['aim', 'gobA', 1, 7], ['aim', 'gobB', 5, 6], ['buy', 'Sniper', 10, 11, { as: 'snipA' }], ['buy', 'Skeleton Archers', 6, 11, { as: 'archB' }], ['levels']],
-    // R3 sweep. Sell both Goblin squads (the sweep kills them); a Brute walks to the low nest in her web and holds her;
-    // an Earth Wizard and the Wisps (the free move) take the left nest, the Sniper and Archers the right one
-    [['sell', 'gobA'], ['sell', 'gobB'], ['buy', 'Brute', 7, 10, { as: 'brute', aim: [7, 6] }], ['buy', 'Earth Wizard', 1, 10, { as: 'earth' }], ['move', 'wisp', 2, 10], ['levels']],
-    // R4 heavy. A new Goblin squad goes at her to hold; a Leaf Wizard dives for the nest behind her
-    [['buy', 'Goblin Swarm', 5, 10, { as: 'gobC', aim: [5, 6] }], ['buy', 'Leaf Wizard', 6, 12, { as: 'leaf' }], ['levels']],
-    // R5 sweep. A second Brute on the low nest in her reach holds; the Goblins are swapped for a fresh squad behind
-    [['buy', 'Brute', 7, 11, { as: 'brute2', aim: [7, 7] }], ['sell', 'gobC'], ['buy', 'Goblin Swarm', 4, 11, { as: 'gobD' }], ['levels']],
-  ],
-  // Line B: read each round. As line A, but round 4 is played without a tank: sell the Brute, keep out of her reach,
-  // and she spends the nest behind her on a mortar shot
+  // ---- five-round lines, written by hand to follow the intended strategies, for the wing nests and poison pools (her
+  // health is set huge in `lines` so every round is played and can be measured). Squads are named with { as } so later
+  // rounds can move, aim and sell them.
+  // Line B: read each round
   'Line B: read each round (no tank in round 4)': [
-    [['buy', 'Goblin Swarm', 4, 10, { as: 'gobA' }], ['buy', 'Goblin Swarm', 3, 10, { as: 'gobB' }], ['buy', 'Wisps', 9, 10, { as: 'wisp' }], ['buy', 'Skeleton Archers', 10, 10, { as: 'archA' }]],
-    [['aim', 'gobA', 1, 7], ['aim', 'gobB', 5, 6], ['buy', 'Sniper', 10, 11, { as: 'snipA' }], ['buy', 'Skeleton Archers', 6, 11, { as: 'archB' }], ['levels']],
-    [['sell', 'gobA'], ['sell', 'gobB'], ['buy', 'Brute', 7, 10, { as: 'brute', aim: [7, 6] }], ['buy', 'Earth Wizard', 1, 10, { as: 'earth' }], ['move', 'wisp', 2, 10], ['levels']],
-    [['sell', 'brute'], ['buy', 'Frost Wizard', 6, 10, { as: 'frost' }], ['buy', 'Slime Wizard', 5, 12, { as: 'slime' }], ['levels']],
-    // R5 sweep. A Brute on the low nest in her reach holds; two Goblin squads come back to hit her on the ground
-    [['buy', 'Brute', 7, 11, { as: 'brute2', aim: [7, 7] }], ['buy', 'Goblin Swarm', 4, 11, { as: 'gobC' }], ['buy', 'Goblin Swarm', 3, 11, { as: 'gobD' }], ['levels']],
+    // R1 fast. Two Goblin squads walk up the left wing to the low nest in her reach (clear of the pool in the middle
+    // lane), kill it and hold her; Wisps and Archers on the right take the high nest
+    [['buy', 'Goblin Swarm', 2, 10, { as: 'gobA' }], ['buy', 'Goblin Swarm', 1, 10, { as: 'gobB' }], ['buy', 'Wisps', 10, 10, { as: 'wisp' }], ['buy', 'Skeleton Archers', 9, 10, { as: 'archA' }]],
+    // R2 heavy. One Goblin squad gets an arrow to the far low nest, the other an arrow at her (a swarm soaks the heavy
+    // bite); a Sniper and more Wisps on the right
+    [['aim', 'gobA', 0, 7], ['aim', 'gobB', 5, 6], ['buy', 'Sniper', 9, 11, { as: 'snipA' }], ['buy', 'Wisps', 8, 10, { as: 'wispB' }], ['levels']],
+    // R3 sweep. Sell both Goblin squads; a Brute with an arrow to (8, 6), inside her reach next to the low nest, holds
+    // her; a Sniper and an Earth Wizard on the left for the far left nest (the Sniper stands short of the wing pool)
+    [['sell', 'gobA'], ['sell', 'gobB'], ['buy', 'Brute', 8, 11, { as: 'brute', aim: [8,  6] }], ['buy', 'Sniper', 2, 10, { as: 'snipB' }], ['buy', 'Earth Wizard', 3, 12, { as: 'earth' }], ['levels']],
+    // R4 heavy. Sell the Brute and keep out of her reach: she spends the nest behind her on a mortar shot. A Slime
+    // Wizard on the right stands in the pool there and drinks it; a Sniper for the left
+    [['sell', 'brute'], ['buy', 'Slime Wizard', 10, 12, { as: 'slime' }], ['buy', 'Sniper', 1, 11, { as: 'snipC' }], ['levels']],
+    // R5 sweep. A Brute with an arrow to the low nest in her reach holds; Goblins to the far left low nest
+    [['buy', 'Brute', 8, 12, { as: 'brute2', aim: [8,  7] }], ['buy', 'Goblin Swarm', 1, 10, { as: 'gobC', aim: [0,  6] }], ['levels']],
   ],
-  // Line C: nobody ever goes into her reach. She spends the nests in her reach on mortar shots; shooters take the rest
+  // Line A: as B, but in round 4 the Brute stays and a Leaf Wizard dives for the nest behind her
+  'Line A: hold her every round': [
+    [['buy', 'Goblin Swarm', 2, 10, { as: 'gobA' }], ['buy', 'Goblin Swarm', 1, 10, { as: 'gobB' }], ['buy', 'Wisps', 10, 10, { as: 'wisp' }], ['buy', 'Skeleton Archers', 9, 10, { as: 'archA' }]],
+    [['aim', 'gobA', 0, 7], ['aim', 'gobB', 5, 6], ['buy', 'Sniper', 9, 11, { as: 'snipA' }], ['buy', 'Wisps', 8, 10, { as: 'wispB' }], ['levels']],
+    [['sell', 'gobA'], ['sell', 'gobB'], ['buy', 'Brute', 8, 11, { as: 'brute', aim: [8,  6] }], ['buy', 'Sniper', 2, 10, { as: 'snipB' }], ['buy', 'Earth Wizard', 3, 12, { as: 'earth' }], ['levels']],
+    [['buy', 'Leaf Wizard', 6, 12, { as: 'leaf' }], ['levels']],
+    [['buy', 'Brute', 8, 12, { as: 'brute2', aim: [8,  7] }], ['buy', 'Goblin Swarm', 1, 10, { as: 'gobC', aim: [0,  6] }], ['levels']],
+  ],
+  // Line C: nobody is sent into her reach. She spends the nests in her reach on mortar shots; shooters (and a Goblin
+  // squad on the far low nests) take the rest
   'Line C: never hold her': [
-    [['buy', 'Wisps', 9, 10, { as: 'wispA' }], ['buy', 'Wisps', 8, 11, { as: 'wispB' }], ['buy', 'Skeleton Archers', 10, 10, { as: 'archA' }], ['buy', 'Sniper', 6, 12, { as: 'snipA' }]],
-    [['buy', 'Sniper', 2, 11, { as: 'snipB' }], ['buy', 'Skeleton Archers', 1, 10, { as: 'archB' }], ['levels']],
-    [['buy', 'Earth Wizard', 1, 11, { as: 'earth' }], ['buy', 'Wisps', 2, 10, { as: 'wispC' }], ['levels']],
-    [['buy', 'Frost Wizard', 6, 10, { as: 'frost' }], ['buy', 'Earth Wizard', 4, 12, { as: 'earthB' }], ['levels']],
-    [['buy', 'Sniper', 10, 12, { as: 'snipC' }], ['buy', 'Earth Wizard', 10, 11, { as: 'earth2' }], ['levels']],
+    [['buy', 'Wisps', 10, 10, { as: 'wispA' }], ['buy', 'Wisps', 2, 11, { as: 'wispB' }], ['buy', 'Skeleton Archers', 9, 10, { as: 'archA' }], ['buy', 'Sniper', 1, 11, { as: 'snipA' }]],
+    [['buy', 'Goblin Swarm', 1, 10, { as: 'gobA', aim: [0,  7] }], ['buy', 'Sniper', 9, 11, { as: 'snipB' }], ['buy', 'Skeleton Archers', 8, 11, { as: 'archB' }], ['levels']],
+    [['buy', 'Slime Wizard', 1, 12, { as: 'slime' }], ['buy', 'Sniper', 10, 11, { as: 'snipC' }], ['levels']],
+    [['buy', 'Earth Wizard', 10, 12, { as: 'earth' }], ['buy', 'Wisps', 3, 11, { as: 'wispC' }], ['levels']],
+    [['buy', 'Goblin Swarm', 2, 10, { as: 'gobB', aim: [0,  6] }], ['buy', 'Earth Wizard', 9, 12, { as: 'earth2' }], ['levels']],
   ],
   // a coaster: the least that clears rounds 1-3, gold banked, then the biggest army it can field in rounds 4-5 (the
   // deployment limit and the experience from fights stop it: it does about 5,000 in all)
@@ -125,8 +129,9 @@ const PLANS = {
     [['buy', 'Goblin Swarm', 4, 10, { as: 'gobA' }], ['buy', 'Goblin Swarm', 5, 10, { as: 'gobB' }], ['buy', 'Goblin Swarm', 6, 10, { as: 'gobC' }], ['levels']],
     [['buy', 'Wisps', 8, 10, { as: 'wispB' }], ['buy', 'Wisps', 7, 10, { as: 'wispC' }], ['buy', 'Sniper', 10, 12, { as: 'snipB' }], ['skill', 'Goblin Swarm', 0], ['skill', 'Wisps', 0], ['levels']],
   ],
-  // found by a hill climb (tools: a few hundred random changes to Line B, kept when she took more damage); the squads
-  // named x123456 are ones the climb added. The best found for rounds 1-3, and for all five rounds
+  // found by hill climbs (a few hundred random changes to Line B, kept when she took more damage; squads named x123456
+  // are ones the climb added): the best found for rounds 1-3 (it wins in round 3 at 46,000: three Goblin squads, one
+  // kept through the sweep) and for all five rounds
   'Search best, rounds 1-3': require('./best-r1-3.json'),
   'Search best, five rounds': require('./best-r1-5.json'),
 };

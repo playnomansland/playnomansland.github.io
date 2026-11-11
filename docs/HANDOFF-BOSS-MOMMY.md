@@ -351,3 +351,63 @@ Line B with one thing taken out (damage by R4 / R5, thousands): no arrows 36.1 /
 ### The method (proposed)
 
 The gap between "knows the systems" and "has more stats" is called skill depth (Nielsen, Barros, Togelius and Nelson, 2015, relative algorithm performance profiles). Changes are judged by that gap; her health is set last, as a fine dial. See the owner's questions in the message that came with this commit.
+
+---
+
+## 10. Poison pools and wing nests (11 November, later)
+
+The owner asked to bring the poison pools back (in place of "spiders go for the biggest clump") and to move the nests out to the wings (5b). A round-3 win must stay possible but very difficult.
+
+### What changed in the prototype
+
+- **Poison pools** (`CFG.pools`): scripted tile rectangles per round, shown on the board as `~`, so the preview can show them with the nests. A player's body standing in one is poisoned for 4% of its max health a second (past armor), slowed by the engine's poison, and keeps it for 2 s after walking out. Her spiders don't mind them. Slime units drink poison: the engine heals them with it, so a Slime Wizard can stand in a pool. Every round has a pool on the middle lane in front of her, plus pools on the wings' firing spots from round 2. The game's own toxic tile poisons only once, on entry, so the pools live in the boss hook.
+- **Wing nests** (`CFG.nests`, the old layouts are in a comment):
+  - R1: low (2, 6), high (10, 8)
+  - R2: low (0, 7), high (11, 8), high (9, 4)
+  - R3: low (9, 6), high (0, 5), high (11, 5)
+  - R4: low (1, 8), low (10, 8), high (5.5, 2), high (11, 5)
+  - R5: low (0, 6), low (8, 7), high (3, 3), high (11, 5)
+
+  R3's wing nests sat at row 4 at first; that made the round nearly impossible (falls at 15-20 s, 1-3k damage), so they moved to row 5.
+- **The aware player knows the pools:** it keeps squads out of pool columns where it can.
+- **Lines A, B and C were rewritten** for the new layouts. The old search-best plans were replaced by new ones.
+
+### Effect on the gap (16 games each, median damage by R5, thousands)
+
+| Rules | statmax | statmax + 100 gold | aware | aware / (statmax + 100) |
+|---|---|---|---|---|
+| Before | 30.2 | 37.8 | 46.3 | 1.22 |
+| Pools only | 26.8 | 34.0 | 38.5 | 1.13 |
+| Wing nests only | 25.7 | 32.9 | 46.4 | 1.41 |
+| Both (pool-aware player) | 24.0 | 26.9 | 43.5 | 1.62 |
+
+### The lines now (cumulative damage by R1 / R2 / R3 / R4 / R5, thousands)
+
+- Line A: 6.3 / 22.8 / 32.5 / 49.2 / 72.6
+- Line B: 6.3 / 22.8 / 32.5 / 45.0 / 70.9
+- Line C: 2.6 / 9.8 / 14.3 / 23.9 / 50.1
+- Search best, rounds 1-3: 8.2 / 30.1 / 54.4. Three Goblin squads, one kept fighting through R3's sweep (10.7k there on its own).
+- Search best, five rounds: 6.3 / 26.2 / 40.6 / 56.9 / 86.9
+
+### Win rates by health (40 games each for the rules as now, 30 for the late options; by R4 / by R5)
+
+| Player | As now, 43k | As now, 46k | As now, 50k | Hide 85/70%, 43k | Flat income 300, 43k |
+|---|---|---|---|---|---|
+| random | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% |
+| statmax | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% |
+| statmax + 100 gold | 0 / 18% | 0 / 15% | 0 / 8% | 0 / 10% | 3 / 7% |
+| statmax + 200 gold | 8 / 68% | 8 / 65% | 3 / 53% | 7 / 60% | 10 / 57% |
+| aware | 3 / 53% | 0 / 35% | 0 / 20% | 0 / 30% | 3 / 27% |
+| Line A / B / C | R4 / R4 / R5 | R4 / R5 / R5 | R5 / R5 / R5 | R4 / R4 / lost | R5 / R5 / R5 |
+| Search best, R1-3 | wins R3 | wins R3 | wins R3 (54.4k) | wins R3 | wins R3 |
+
+"Hide 85/70%" is late option 2 with milder numbers: on the ground she takes 85% in R4 and 70% in R5. Late options leave rounds 1-3 alone, so the round-3 title is unchanged by them.
+
+Health is set to **46,000** for now (proposed). Against the targets in section 9:
+- statmax 0% ✓
+- random 0% ✓
+- aware 35% by R5 ✓, 0% by R4 ✓
+- the R3 title only for the best plan found ✓
+- statmax + 100 gold 15% by R5 ✗ (target 5-10%)
+
+**The searches are weak.** The R3 search found 43.4k; a search aimed at R4 then found a plan with 54.4k by R3. The real ceiling may be higher still, so the title needs checking again whenever her rules change.

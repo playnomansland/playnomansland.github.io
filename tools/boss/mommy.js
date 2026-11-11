@@ -83,7 +83,7 @@ const CFG = {
   banned: ['Meteor Caller', 'Assassin', 'Rogue', 'Truespear', 'Sun Priest'],
   maxPerType: 3,      // squads of one unit type on the board at a time
   mommy: {
-    hp: 42000, col: 5.5, row: 5, // the front edge of her zone. hp: proposed 11 Nov (14,000 was a placeholder), see the handoff doc
+    hp: 46000, col: 5.5, row: 5, // the front edge of her zone. hp: proposed 11 Nov for the wing nests and pools (14,000 was a placeholder), see the handoff doc section 10
     hang: 0.15,       // share of damage she takes while hanging
     stun: 5,          // seconds she and her spiders are stunned after the fall
     near: 22,         // m: her reach. A body this close holds her attention; she attacks the nearest one (long enough for mid-range shooters to hold her)
@@ -105,14 +105,27 @@ const CFG = {
   hatch: [6, 5, 4, 3, 3],                        // seconds per spider, per nest, by round
   // [col, row] a high nest (ranged only), [col, row, 'low'] one melee reaches too. Rows 0-5 are her zone, 6-9 no
   // man's land; she hangs at col 5.5, row 5 and her reach is about 3.7 tiles.
+  // (proposed 11 Nov, owner's 5b) nests out on the wings, so an army stacked in the middle can't reach them. Before:
+  // [[4,7,low],[9,8]] / [[1,7,low],[5.5,8],[10,6]] / [[7,6,low],[1,4],[10,4]] / [[2,8,low],[9,8,low],[5.5,2],[5.5,8]] /
+  // [[0,6,low],[7,7,low],[4,3],[11,6]]
   nests: [
-    [[4, 7, 'low'], [9, 8]],                                  // a low nest in her reach (a melee squad on it holds her), a high one out on the wing
-    [[1, 7, 'low'], [5.5, 8], [10, 6]],                       // the low nest is out of her reach this time
-    [[7, 6, 'low'], [1, 4], [10, 4]],                         // one in her web, two up in her zone on the wings (long range reaches them with a short walk)
-    [[2, 8, 'low'], [9, 8, 'low'], [5.5, 2], [5.5, 8]],       // two low ones out of reach, one behind her
-    [[0, 6, 'low'], [7, 7, 'low'], [4, 3], [11, 6]],
+    [[2, 6, 'low'], [10, 8]],                                 // a low nest in her reach on the left wing (a melee squad on it holds her), a high one out on the right
+    [[0, 7, 'low'], [11, 8], [9, 4]],                         // the low nest far out of her reach; a high one far right; one up in her reach (she can rip it)
+    [[9, 6, 'low'], [0, 5], [11, 5]],                         // one in her web; two on the far wings at her zone's edge (long range, a short walk)
+    [[1, 8, 'low'], [10, 8, 'low'], [5.5, 2], [11, 5]],       // two low ones on the wings out of reach, one behind her (she can rip it), one far right
+    [[0, 6, 'low'], [8, 7, 'low'], [3, 3], [11, 5]],          // a far low one, a low one in her reach, one up in her reach, one far right
   ],
   treasury: { hp: 400, col: 4, row: 15 },
+  // (proposed 11 Nov, back from the rejected list at the owner's request) poison pools on the ground, by round:
+  // at: [[col0, row0, col1, row1], ...] per round, null for none. pct: % of max health a second; linger: seconds it
+  // keeps working after the body walks out
+  pools: { pct: 4, linger: 2, at: [
+    [[4, 8, 7, 8]],                                           // the middle lane in front of her
+    [[4, 8, 7, 8], [10, 9, 11, 9]],                           // ...and under the right wing's firing spot
+    [[4, 7, 7, 8], [0, 8, 1, 8], [10, 8, 11, 8]],             // a wider lane, and both wings' firing spots
+    [[4, 8, 7, 8], [2, 9, 3, 9], [8, 9, 9, 9]],
+    [[4, 7, 7, 8], [1, 9, 2, 9], [10, 7, 11, 7]],
+  ] },
   late: {},           // ways to keep the late rounds from deciding everything (none on): wound, groundMul, climb, income, carryNests
 };
 
@@ -160,6 +173,11 @@ function fight(m, st, cfg = CFG, o = {}) {
   const d2 = (a, x, y) => { const dx = a.x - x, dy = a.y - y; return Math.sqrt(dx * dx + dy * dy); };
   const ground = (u) => ({ ...u, unstoppable: false, ...(cfg.mommy.size > 0 ? { barrier: cfg.mommy.size } : {}) });
   if (!hanging) { mom.takeMul = groundMul; mom.stunT = o.fallen === true ? 1e9 : o.fallen; out.fallAt = 0; mom.u = ground(mom.u); }
+  // poison pools: tile rectangles [col0, row0, col1, row1] (inclusive), by round. A body of the player's standing in one is
+  // poisoned (pools.pct % of its max health a second, past armor) and slowed by the engine's poison, for pools.linger s
+  // after it walks out. Her spiders don't mind them. Slime units drink poison (the engine heals them with it).
+  const poolRects = (o.pools || (cfg.pools && cfg.pools.at ? byRound(cfg.pools.at, round) : [])).map(([c0, r0, c1, r1]) => { const a = world(c0, r0), b = world(c1, r1), h = TILE / 2; return { x0: Math.min(a.x, b.x) - h, x1: Math.max(a.x, b.x) + h, y0: Math.min(a.y, b.y) - h, y1: Math.max(a.y, b.y) + h }; });
+  out.poolSecs = 0;
   const bossTick = (api) => {
     if (!mom.alive) return;
     nests.forEach((n, k) => { if (!n.alive && out.nestDown[k] == null) out.nestDown[k] = api.t; });
@@ -183,6 +201,12 @@ function fight(m, st, cfg = CFG, o = {}) {
     // molt: she sheds what was put on her
     if (cfg.mommy.molt > 0) { moltT -= api.dt; if (moltT <= 0) { moltT += cfg.mommy.molt; mom.poison = null; mom.bleed = null; mom.burn = null; mom.frost = null; mom.web = null; mom.slowT = 0; mom.slowMove = 0; mom.slowAtk = 0; mom.shrinkT = 0; mom.shrinkM = 0; } }
     const stunned = mom.stunT > 0;
+    if (poolRects.length) for (const f of api.sides[0]) {
+      if (!f.alive || f.u.structure || f.u.aloft || !poolRects.some((q) => f.x >= q.x0 && f.x <= q.x1 && f.y >= q.y0 && f.y <= q.y1)) continue;
+      out.poolSecs += api.dt;
+      const pp = f.poison && f.poison.find((x) => x.pool);
+      if (pp) pp.t = cfg.pools.linger; else (f.poison || (f.poison = [])).push({ src: null, dps: f.u.hp * cfg.pools.pct / 100, t: cfg.pools.linger, pool: true });
+    }
     // web: everything close to her is slowed and hits softer (not while she lies stunned)
     const wb = cfg.mommy.web;
     for (const f of api.sides[0]) {

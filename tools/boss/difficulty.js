@@ -64,8 +64,8 @@ const isMelee = (n) => U(n).range <= 5;
 const budget = (a, run) => a.gold() - 100 * Math.max(0, deploysLeft(run) - 1);
 const choose = (rnd, pool, a, run) => { const ok = pool.filter((n) => B.Game.unitCostOf(U(n)) <= budget(a, run)); return ok.length ? pick(rnd, ok) : null; };
 const awareAgent = (seed) => { const rnd = rng(seed); return (a, r, run) => {
-  const bite = C.biteByRound[r - 1], spots = C.nests[r - 1];
-  const reach = C.mommy.near, ammo = C.mommy.mortar.ammoReach;
+  const cfg = run.cfg, bite = cfg.biteByRound[r - 1], spots = cfg.nests[r - 1]; // (the run's own rules, so variants can be tested)
+  const reach = cfg.mommy.near, ammo = cfg.mommy.mortar.ammoReach;
   const name = (q) => B.units[q.unit].name;
   // sell what this bite punishes (a swarm under the sweep)
   if (bite === 'sweep') for (const q of a.army().slice()) if (name(q) === 'Goblin Swarm' && rnd() < 0.8) a.sell(q);
@@ -73,25 +73,29 @@ const awareAgent = (seed) => { const rnd = rng(seed); return (a, r, run) => {
   const deep = spots.filter(([c, rw]) => rw <= 3 && distHer(c, rw) <= ammo);
   const noTank = deep.length > 0 && rnd() < 0.7;
   if (noTank) for (const q of a.army().slice()) if (isMelee(name(q))) { if (rnd() < 0.6) a.sell(q); else B.Game.clearAim(run.m, 0, q.id); }
+  // pools: tiles in a column a pool covers go last (squads walk up their column, shooters stand short of their target)
+  const poolCols = new Set(); for (const [c0, , c1] of (cfg.pools && cfg.pools.pct > 0 && cfg.pools.at ? cfg.pools.at[r - 1] || [] : [])) for (let c = c0; c <= c1; c++) poolCols.add(c);
+  const safe = (tiles) => tiles.filter(([c]) => !poolCols.has(c)).concat(tiles.filter(([c]) => poolCols.has(c)));
+  const wide = (col, rows) => { const t = []; for (const d of [0, 1, -1, 2, -2]) for (const rw of rows) t.push([Math.max(1, Math.min(10, col + d)), rw]); return t; };
   let moved = false;
   // a melee squad with an arrow on each low nest (one out of her reach keeps it away from her)
   for (const [c, rw, kind] of spots) {
     if (kind !== 'low' || deploysLeft(run) <= 0) continue;
     if (noTank && distHer(c, rw) <= reach) continue;
     const col = Math.max(1, Math.min(10, Math.round(c))), m2 = choose(rnd, MELEE_FOR_NEST[bite], a, run);
-    const sq = m2 && buyAt(a, m2, [[col, 10], [col + 1, 10], [col - 1, 10], [col, 11]]);
+    const sq = m2 && buyAt(a, m2, safe(wide(col, [10, 11])));
     if (sq) B.Game.setAim(run.m, 0, sq.id, Math.round(c) - sq.col, rw - sq.row);
   }
   // a holder that suits the bite, with an arrow at her (unless this is a no-tank round or the low-nest squad holds)
   const lowInReach = spots.some(([c, rw, kind]) => kind === 'low' && distHer(c, rw) <= reach);
   if (!noTank && !lowInReach && deploysLeft(run) > 0) {
-    const h = choose(rnd, HOLDERS[bite], a, run), sq = h && buyAt(a, h, [[5, 10], [6, 10], [5, 11], [6, 11]]);
-    if (sq && isMelee(h)) B.Game.setAim(run.m, 0, sq.id, 0, -4);
+    const h = choose(rnd, HOLDERS[bite], a, run), sq = h && buyAt(a, h, safe(wide(5, [10, 11])));
+    if (sq && isMelee(h)) B.Game.setAim(run.m, 0, sq.id, Math.round(5.5 - sq.col), 6 - sq.row);
   }
   // shooters in the column of each high nest, the long-range ones for deep nests; the free move brings an old one over
   for (const [c, rw, kind] of spots) {
     if (kind === 'low') continue;
-    const col = Math.max(1, Math.min(10, Math.round(c))), tiles = [[col, 10], [col, 11], [col + 1, 10], [col - 1, 10], [col, 12]];
+    const col = Math.max(1, Math.min(10, Math.round(c))), tiles = safe(wide(col, [10, 11, 12]));
     const longOnly = rw <= 4;
     if (!moved && rnd() < 0.6) { const old = a.army().find((q) => q.round < r && !isMelee(name(q)) && Math.abs(q.col - col) > 2 && (!longOnly || U(name(q)).range >= 24)); if (old) for (const [tc, tr] of tiles) if (a.move(old, tc, tr)) { moved = true; break; } }
     if (deploysLeft(run) > 0) { const n = choose(rnd, longOnly ? ['Sniper', 'Earth Wizard', 'Slime Wizard', 'Frost Wizard'] : SHOOTERS, a, run); if (n) buyAt(a, n, tiles); }
@@ -102,13 +106,13 @@ const awareAgent = (seed) => { const rnd = rng(seed); return (a, r, run) => {
     const low = spots.find(([c, rw, kind]) => kind === 'low' && distHer(c, rw) <= reach);
     if (low && !noTank && rnd() < 0.4) {
       const m2 = choose(rnd, MELEE_FOR_NEST[bite], a, run), col = Math.max(1, Math.min(10, Math.round(low[0])));
-      const sq = m2 && buyAt(a, m2, [[col - 1, 10], [col + 1, 10], [col, 11], [col - 1, 11]]);
+      const sq = m2 && buyAt(a, m2, safe(wide(col, [10, 11])));
       if (sq) { B.Game.setAim(run.m, 0, sq.id, Math.round(low[0]) - sq.col, low[1] - sq.row); continue; }
     }
     const [c] = pick(rnd, spots), col = Math.max(1, Math.min(10, Math.round(c)));
     const n = choose(rnd, SHOOTERS, a, run);
     if (!n) break;
-    buyAt(a, n, [[col, 11], [col + 1, 11], [col - 1, 11], [col, 12], [col + 1, 12]]);
+    buyAt(a, n, safe(wide(col, [11, 12])));
   }
   levelAll(a);
 }; };
