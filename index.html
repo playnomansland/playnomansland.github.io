@@ -18128,7 +18128,6 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const typingIn = (el) => !!el && el.nodeType === 1 && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
   window.typingIn = typingIn;
   const css = Art.css;
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const now = () => Date.now();
 
   // ---------- state ----------
@@ -19038,7 +19037,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · e621844'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · 9c35833'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -24032,7 +24031,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     cam = { end: lastSummary && lastSummary.round === pre.round ? lastSummary.time : null, decided: false, on: false, k: 0, x: 0, y: 0 };
     closeSheet(); overlay(null); hud(); panelBattle(); render();
     cancelAnimationFrame(raf);
-    if (reduced) { while (bt.step()) {} finishBattle(); return; }
+    // (the fight always plays: with the device's "reduce motion" on, e.g. Windows' Animation effects off, it used to
+    // skip straight to the result, so those players never saw a round, the owner's friend, 2026-11-11)
     if (!solo() && mode !== 'replay') send({ t: 'speed', s: liveSpeed[me] }); // our pick, so both phones start the fight at the same speed
     if (document.hidden) awayStart(); // (it began while this page is in the background: it waits for it, see awayStart)
     raf = requestAnimationFrame(loop);
@@ -27970,8 +27970,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         const golem = !mine ? '' : g ? `Coin Golem this round: ${g.g} gold, ${Mpb.golemSkin(g.g)}.` : clicked(L) ? 'Coin golem: waiting for your teammate.' : clicked(1 - L) ? 'Coin golem: your teammate clicked it. Click it too to summon it.' : '';
         let pick = '';
         if (mine && phase === 'deploy') {
-          const room = { put: Mpb.vaultRoom(m, me, 'put'), take: Mpb.vaultRoom(m, me, 'take') }, hi = Math.max(room.put, room.take, 1);
-          mpbAmt = Math.max(1, Math.min(mpbAmt, hi));
+          // the amount in tens, 10 at least (the owner, 2026-11-11: it offered 1 gold once the room left was under 10, or
+          // an odd amount); under 10 of room, Put in and Take out stay off
+          const room = { put: Mpb.vaultRoom(m, me, 'put'), take: Mpb.vaultRoom(m, me, 'take') }, hi = Math.floor(Math.max(room.put, room.take) / 10) * 10;
+          mpbAmt = Math.max(10, Math.min(Math.round(mpbAmt / 10) * 10, hi));
           pick = `<div class="mpb-amt" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             <button class="btn small" data-mpb-amt="-50" ${live ? '' : 'disabled'}>−50</button><button class="btn small" data-mpb-amt="-10" ${live ? '' : 'disabled'}>−10</button>
             <b class="num" id="mpb-amt">${mpbAmt}</b>
@@ -27983,7 +27985,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         return `<p style="margin:0"><b class="num" style="color:var(--gold)">${v.gold}</b> gold inside${mine && mode0 ? ` · a ${mode0} round` : mine ? ' · no move yet this round' : ' (as the round began)'}${Mpb.skillN(rec, 'interest') ? ` · interest ${Mpb.VAULT.interest}% a round` : ''}</p>${pick}${golem ? `<p style="margin:0">${esc(golem)}</p>` : ''}`;
       },
       wire(root, side, rec, again) {
-        root.querySelectorAll('[data-mpb-amt]').forEach(b => b.addEventListener('click', () => { mpbAmt = Math.max(1, mpbAmt + +b.dataset.mpbAmt); again(); }));
+        root.querySelectorAll('[data-mpb-amt]').forEach(b => b.addEventListener('click', () => { mpbAmt = Math.max(10, mpbAmt + +b.dataset.mpbAmt); again(); }));
         if ($('mpb-put')) $('mpb-put').addEventListener('click', () => { if (editable() && Game.vaultPut(m, me, mpbAmt)) { changed(); again(); } });
         if ($('mpb-take')) $('mpb-take').addEventListener('click', () => { if (editable() && Game.vaultTake(m, me, mpbAmt)) { changed(); again(); } });
       },
@@ -28007,8 +28009,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       },
     },
     // ===== fieldHospital (page) =====
-    // who stands within 1 tile, this round's Field dressing, and Second wind's squad: pick one of your team's squads
-    // (yours or your teammate's) to buy it on, or move it to another once bought
+    // who stands within 1 tile, this round's Field dressing, and Second wind's squad: a button, then a tap on one of your
+    // team's squads on the board (yours or your teammate's) buys it on that squad, or moves it there once bought, as
+    // Mark Bounty picks its enemy (the owner, 2026-11-11: not a list of every squad by name and tile)
     fieldHospital: {
       squads(side) {
         const L = duoMyLane(), mine = (m.armies[side] || []).map(q => ({ q, lane: L, id: q.id })), mate = Game.teamArmy(m, side).map(q => ({ q, lane: 1 - L, id: Duo.unmap(q.id) }));
@@ -28024,19 +28027,23 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         if (own && phase === 'deploy') {
           const cur = w && list.find(x => x.lane === w.lane && x.id === w.id);
           if (w) lines.push(`Second wind this round: ${cur ? who(cur) : 'a squad that is gone'}`);
-          const btn = (x) => {
-            const on = w && x.lane === w.lane && x.id === w.id, ok = live && !on && (w ? true : !Mpb.whyNot(m, me, rec.key, 'wind', [x.lane, x.id]));
-            return `<button class="btn small${ok ? ' either' : ''}" data-fh-wind="${x.lane}:${x.id}" ${ok ? '' : 'disabled'}>${on ? '✓ ' : ''}${who(x)}</button>`;
-          };
-          if (list.length) pick = `<p class="hint" style="margin:0">${w ? 'Second wind: tap another squad to move it there.' : `Second wind (${Mpb.skillCost(m, me, rec.key, 'wind')} gold): tap the squad it is for.`}</p><div style="display:flex;gap:6px;flex-wrap:wrap">${list.filter(x => !Game.isRider(x.q)).map(btn).join('')}</div>`;
+          const ok = live && list.some(x => !Game.isRider(x.q) && !(w && x.lane === w.lane && x.id === w.id) && (w || !Mpb.whyNot(m, me, rec.key, 'wind', [x.lane, x.id])));
+          if (list.length) pick = `<p style="margin:0"><button class="btn small${ok ? ' either' : ''}" id="fh-wind-pick" ${ok ? '' : 'disabled'}>${w ? 'Move Second wind' : `Second wind · ${Mpb.skillCost(m, me, rec.key, 'wind')} gold`}</button> <span class="hint">then tap ${w ? 'another' : 'the'} squad of your team on the board</span></p>`;
         }
         return `<p style="margin:0">${lines.join(' · ')}</p>${pick}`;
       },
-      wire(root, side, rec, again) {
-        root.querySelectorAll('[data-fh-wind]').forEach(b => b.addEventListener('click', () => {
-          const [lane, id] = b.dataset.fhWind.split(':').map(Number), w = rec.data.wind && rec.data.wind.round === m.round && rec.skills.wind;
-          if (editable() && (w ? Game.mpbAct(m, me, rec.key, 'wind', lane, id) : Game.mpbBuy(m, me, rec.key, 'wind', lane, id))) { changed(); again(); }
-        }));
+      wire(root, side, rec) {
+        const b = root.querySelector('#fh-wind-pick'); if (!b) return;
+        b.addEventListener('click', () => {
+          closeSheet(); duoToastSay('Second wind: tap one of your team’s squads', 3000);
+          mpbPicking = (t) => { // your squad or your teammate's on that tile (not a rider: its carrier is the squad there)
+            const x = this.squads(me).find(x => !Game.isRider(x.q) && Game.blockOf(m, x.q.unit, x.q.col, x.q.row).some(([c, r]) => c === t.col && r === t.row));
+            const r = Mpb.recOf(m, me, rec.key), w = r && r.data.wind && r.data.wind.round === m.round && r.skills.wind;
+            if (x && r && editable() && (w ? Game.mpbAct(m, me, r.key, 'wind', x.lane, x.id) : Game.mpbBuy(m, me, r.key, 'wind', x.lane, x.id))) { changed(); duoToastSay(`Second wind: ${m.units[x.q.unit].name}${x.lane === duoMyLane() ? '' : ' (teammate’s)'}`, 2500); }
+            else { if (!x) duoToastSay('Not a squad of your team: Second wind not changed', 2500); render(); }
+            return true;
+          };
+        });
       },
     },
     // ===== coalMine (page) =====
