@@ -1,0 +1,31 @@
+# What the Pages deploy publishes (.github/workflows/pages.yml). Only what is listed here goes on the site:
+# everything else in the repo (src/ code, server/, tools/, docs/, notes, design files, models' sources) stays
+# off it. A folder brings everything inside it. One path per line, from the repo root; # starts a comment.
+#
+# Adding a file the live pages load? Add it here too, or it will be missing on the site (the deploy fails
+# if a listed path does not exist, so a typo shows up straight away).
+
+# the pages
+index.html
+lab.html
+lab3d.html
+LICENSE
+.nojekyll
+
+# what the game loads
+icon.png
+peerjs.min.js
+vendor/
+audio/
+img/
+models/scenery.bin
+# the 3D board's code, loaded on its own when 3D starts (load3d in src/site-template.html)
+src/camera3d.js
+src/kaykit3d.js
+src/models3d.js
+src/scenery3d.js
+src/render3d.js
+
+# shared links: the showcase page (and its Discord kit) and the Diorama's test page
+showcase/
+design/diorama/game.html

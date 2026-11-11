@@ -1,7 +1,8 @@
-# Publishes the site to GitHub Pages, leaving out files the live pages never load (design screenshots,
-# reference art, the server's code), so each deploy uploads about half as much.
+# Publishes the site to GitHub Pages. Only the files listed in .github/site-files.txt are published (the pages
+# and what they load); the source code, server, tools, docs and design files stay off the site, so they can't be
+# downloaded from it.
 # Needs Settings > Pages > Build and deployment > Source set to "GitHub Actions".
-# To leave something else out of the site, add an --exclude line below. It stays in the repo either way.
+# To publish something new, add it to .github/site-files.txt. Anything not listed there stays in the repo only.
 name: Pages deploy
 
 on:
@@ -26,17 +27,15 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Copy the site, without the files it doesn't need
+      - name: Copy only the files listed in .github/site-files.txt
         run: |
-          rsync -a ./ _site/ \
-            --exclude '.git/' \
-            --exclude '.github/' \
-            --exclude '_site/' \
-            --exclude 'design/diorama/screens/' \
-            --exclude 'models/heads/refs/' \
-            --exclude '*.blend' \
-            --exclude 'server/'
-          echo "Site size: $(du -sh _site | cut -f1)"
+          grep -vE '^\s*(#|$)' .github/site-files.txt | sed 's/\s*$//' > "$RUNNER_TEMP/site-files"
+          missing=0
+          while read -r f; do [ -e "$f" ] || { echo "::error::.github/site-files.txt lists $f, which is not in the repo"; missing=1; }; done < "$RUNNER_TEMP/site-files"
+          [ "$missing" = 0 ]
+          mkdir _site
+          xargs -d '\n' -a "$RUNNER_TEMP/site-files" cp -r --parents -t _site/
+          echo "Site size: $(du -sh _site | cut -f1), $(find _site -type f | wc -l) files"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
