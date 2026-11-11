@@ -34,7 +34,13 @@
 // own side is toward +z (the bottom of the screen in the strategic view).
 const Camera3D = (THREE, camera, el, opts) => {
   const W = opts.width, D = opts.depth;
-  const FOV = camera.fov;
+  const FOV = camera.fov, FAR = camera.far; // the lens of the cinematic views (angled, ground), and the far plane at it
+  // the overview lens (strategic and tilted; lens(fov) sets it): narrower is a longer lens from further back, so the
+  // board and what stands at its near edge keep their shapes (the PC's match screen, the owner, 2026-11-11: the wide
+  // lens stretched the rings at the bottom of the screen into tall ovals). Between tilted and angled it blends to FOV
+  let LONG = FOV;
+  const tanH = (f) => Math.tan(f * Math.PI / 360);
+  const fovAt = (zz) => { const w = Math.max(0, Math.min(1, zz - 1)); return Math.atan(tanH(LONG) + (tanH(FOV) - tanH(LONG)) * w) * 360 / Math.PI; };
   // the levels: pitch (degrees above the horizon) and distance from the point looked at (metres)
   const LEVELS = [null, null, { pitch: 26, dist: 80 }, { pitch: 20, dist: 24 }]; // strategic and tilted fit the board; angled: low, far back to see the enemy side
   const MAX = LEVELS.length - 1;
@@ -65,7 +71,7 @@ const Camera3D = (THREE, camera, el, opts) => {
   };
   // the strategic view: straight down from high enough to fit the whole board
   const strategicDist = () => {
-    const tan = Math.tan(FOV * Math.PI / 360);
+    const tan = tanH(LONG);
     return Math.max(D / 2 / tan, W / 2 / (tan * aspect)) * 1.03;
   };
   // the tilted view: the distance, and the look point (z) that centres the board on the screen, so all four
@@ -73,7 +79,7 @@ const Camera3D = (THREE, camera, el, opts) => {
   const probe = new THREE.PerspectiveCamera(FOV, 1, 1, 1000), corner = new THREE.Vector3();
   function fitTilted() {
     const p = TILT * Math.PI / 180;
-    probe.aspect = aspect; probe.updateProjectionMatrix();
+    probe.fov = LONG; probe.aspect = aspect; probe.updateProjectionMatrix();
     const ext = (d, tz) => {
       probe.position.set(0, Math.sin(p) * d, tz + Math.cos(p) * d); probe.lookAt(0, 0, tz); probe.updateMatrixWorld();
       let x = 0, y0 = Infinity, y1 = -Infinity;
@@ -124,6 +130,7 @@ const Camera3D = (THREE, camera, el, opts) => {
     camera.position.set(tx + Math.sin(yw) * h, Math.sin(p) * dist, tz + Math.cos(yw) * h);
     camera.up.set(-Math.sin(yw), 0, -Math.cos(yw)); // "up" on the screen points away from the camera, so straight down works too
     camera.lookAt(tx, 0, tz);
+    camera.fov = fovAt(z); camera.far = FAR * lensK(); // (a longer lens stands further back: the far plane goes with it)
     camera.updateProjectionMatrix();
   }
   const level = () => Math.round(z);
@@ -165,7 +172,7 @@ const Camera3D = (THREE, camera, el, opts) => {
   }
   // move the look point so the ground follows a drag of dx, dy px
   function pan(dx, dy) {
-    const { pitch, dist } = pose(z), k = PAN_SPEED * 2 * dist * Math.tan(FOV * Math.PI / 360) / viewH;
+    const { pitch, dist } = pose(z), k = PAN_SPEED * 2 * dist * tanH(camera.fov) / viewH;
     const s = Math.sin(pitch * Math.PI / 180);
     const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
     target.x += -rx * dx * k + fx * dy * k / s;
@@ -312,6 +319,10 @@ const Camera3D = (THREE, camera, el, opts) => {
     if (k > 1 && !cinematic()) { if (z < 0.5) yaw = 0; target.set(Math.sin(yaw) * D / 4, 0, Math.cos(yaw) * D / 4); }
     settleTo(k);
   }
+  // the overview lens (degrees; null: the camera's own); how much further back the camera stands for it now (1 at the
+  // camera's own lens: the page scales its fog by it); the battle cam's strength now (0 to 1)
+  function lens(f) { const v = f > 0 ? Math.min(FOV, f) : FOV; if (v === LONG) return; LONG = v; fitTilted(); apply(); }
+  function lensK() { return tanH(FOV) / tanH(camera.fov); }
   function resize(width, height) { aspect = width / height; viewH = height; camera.aspect = aspect; fitTilted(); apply(); }
   // the battle cam (see the top); x, z on the ground
   function focus(k, x = 0, zz = 0) {
@@ -321,5 +332,5 @@ const Camera3D = (THREE, camera, el, opts) => {
 
   // moving on its own (gliding to a level, a gesture under way, a rotate key held), so the page should keep drawing
   const busy = () => !!settle || !!two || !!rotDrag || keys.has('q') || keys.has('e') || foc.k !== focT.k;
-  return { update, resize, groundAt, goStrategic, setLevel, strategic, handsOn, level, busy, dispose, zoom: () => z, yaw: () => yaw, LEVELS: MAX + 1, focus };
+  return { update, resize, groundAt, goStrategic, setLevel, strategic, handsOn, level, busy, dispose, zoom: () => z, yaw: () => yaw, LEVELS: MAX + 1, focus, lens, lensK, focusK: () => foc.k };
 };
