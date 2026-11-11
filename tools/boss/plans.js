@@ -4,17 +4,62 @@
 //   ['move', unit, col, row] (the oldest squad of that unit; one free move a round) | ['level', unit]
 const B = require('./mommy.js');
 
-function runPlan(plan, cfg = B.CFG) {
-  return B.play((a, r) => {
+// A step names a squad by its tag (set with { as } when bought) or by unit name (the oldest squad of that unit).
+//   ['buy', unit, col, row, { as: 'tag', aim: [col, row] }]   aim: a melee squad's direction arrow, to that tile
+//   ['aim', who, col, row]      set (or change) the arrow of a squad already on the board; ['unaim', who] clears it
+//   ['move', who, col, row]     the free reposition (one a round, for a squad from an earlier round)
+//   ['sell', who] | ['level', who] | ['levels'] (every ready squad, while gold lasts) | ['skill', unit, slot]
+// A step that doesn't go through is listed in the run's `fails` (so a plan can't silently do less than it says).
+function runPlan(plan, cfg = B.CFG, o = {}) {
+  const fails = [];
+  const res = B.play((a, r, run) => {
+    let moves = 0;
     for (const s of plan[r - 1] || []) {
-      const first = (n) => a.army().find((q) => B.units[q.unit].name === n && q.round < a.round());
-      if (s[0] === 'buy') a.buy(s[1], s[2], s[3]);
-      else if (s[0] === 'skill') a.skill(s[1], s[2]);
-      else if (s[0] === 'sell') { const q = first(s[1]); if (q) a.sell(q); }
-      else if (s[0] === 'move') { const q = first(s[1]); if (q) a.move(q, s[2], s[3]); }
-      else if (s[0] === 'level') { for (const q of a.army()) if (B.units[q.unit].name === s[1] && a.level(q)) break; }
+      const find = (w) => a.army().find((q) => q.tag === w) || a.army().find((q) => B.units[q.unit].name === w);
+      let ok = true;
+      if (s[0] === 'buy') {
+        const sq = a.buy(s[1], s[2], s[3]); ok = !!sq;
+        if (sq && s[4] && s[4].as) sq.tag = s[4].as;
+        if (sq && s[4] && s[4].aim) ok = B.Game.setAim(run.m, 0, sq.id, s[4].aim[0] - sq.col, s[4].aim[1] - sq.row);
+      } else if (s[0] === 'skill') ok = a.skill(s[1], s[2]);
+      else if (s[0] === 'sell') { const q = find(s[1]); ok = !!q && a.sell(q); }
+      else if (s[0] === 'unaim') { const q = find(s[1]); ok = !!q && B.Game.clearAim(run.m, 0, q.id); }
+      else if (s[0] === 'aim') { const q = find(s[1]); ok = !!q && B.Game.setAim(run.m, 0, q.id, s[2] - q.col, s[3] - q.row); }
+      else if (s[0] === 'move') { const q = find(s[1]); const old = q && q.round < a.round(); if (old && moves >= 1) ok = false; else { ok = !!q && a.move(q, s[2], s[3]); if (ok && old) moves++; } }
+      else if (s[0] === 'level') { const q = find(s[1]); ok = !!q && !!a.level(q); }
+      else if (s[0] === 'levels') { for (const q of a.army().slice()) while (a.level(q)) { /* every squad that is ready, while the gold lasts */ } }
+      if (!ok) fails.push(`R${r} ${JSON.stringify(s)}`);
     }
+    if (o.onDeploy) o.onDeploy(run, r);
   }, cfg);
+  res.fails = fails;
+  return res;
+}
+
+// the board as text: her zone (rows 0-5), no man's land (6-9), the player's rows (10-15). M Mommy, H a high nest, L a
+// low one, a letter per squad (the key below), > an arrow's end, . her reach
+function board(run, round, cfg = B.CFG) {
+  const { m } = run, rows = [];
+  const spots = cfg.nests[Math.min(round, cfg.nests.length) - 1];
+  const mw = B.world(cfg.mommy.col, cfg.mommy.row), key = [];
+  const grid = Array.from({ length: 16 }, () => Array(12).fill(' '));
+  for (let r = 0; r < 16; r++) for (let c = 0; c < 12; c++) { const w = B.world(c, r); if (Math.hypot(w.x - mw.x, w.y - mw.y) <= cfg.mommy.near) grid[r][c] = '.'; }
+  for (const sq of m.armies[0]) { const e = B.Game.aimEnd(m, sq); if (e) grid[e.row][e.col] = '>'; }
+  m.armies[0].forEach((sq, k) => { const ch = String.fromCharCode(97 + k); grid[sq.row][sq.col] = ch; key.push(`${ch} ${sq.tag || B.units[sq.unit].name}${sq.level ? ' L' + sq.level : ''}`); });
+  for (const [c, r, kind] of spots) grid[r][Math.round(c)] = kind === 'low' ? 'L' : 'H';
+  grid[cfg.mommy.row][5] = 'M'; grid[cfg.mommy.row][6] = 'M';
+  for (let r = 0; r < 16; r++) rows.push(`   ${String(r).padStart(2)} |${grid[r].join(' ')}|${r === 5 ? ' her zone ends' : r === 9 ? ' no man\'s land ends' : ''}`);
+  return rows.join('\n') + '\n      ' + key.join(', ');
+}
+
+// one fight, in more detail than fmt: when each nest fell (m: ripped loose for a mortar shot), who held her, who did
+// the damage, and which squads were wiped out when
+function detail(f) {
+  const nd = f.nestDown.map((t) => t == null ? 'stood' : t < 0 ? 'm' + (-t).toFixed(1) : t.toFixed(1)).join(' / ');
+  const hold = Object.entries(f.holders).sort((a, b) => b[1] - a[1]).map(([n, t]) => `${n} ${t.toFixed(1)}`).join(', ') || 'nobody';
+  const by = Object.entries(f.by).sort((a, b) => b[1] - a[1]).map(([n, d]) => `${n} ${Math.round(d)}`).join(', ') || '-';
+  const gone = Object.entries(f.gone).filter(([, t]) => t != null).map(([n, t]) => `${n} ${t.toFixed(1)}`).join(', ') || 'none';
+  return `      nests (s): ${nd}; held by: ${hold}\n      damage by: ${by}\n      wiped out (s): ${gone}`;
 }
 
 const PLANS = {
@@ -37,14 +82,48 @@ const PLANS = {
   'Round 1, no tank: four shooters spread wide': [
     [['buy', 'Wisps', 0, 10], ['buy', 'Sniper', 11, 11], ['buy', 'Skeleton Archers', 9, 10], ['buy', 'Sniper', 1, 11]],
   ],
-  // what the greedy planner below found when the puzzle still started on 250 gold (40 tries a round): it never
-  // reaches the nests up in her zone. Not a good plan; kept as a five-round example
-  'Greedy sample': [
-    [['buy', 'Goblin Swarm', 5, 10], ['buy', 'Ether Golem', 8, 10], ['buy', 'Goblin Swarm', 5, 11], ['buy', 'Water Mage', 7, 11]],
-    [['buy', 'Ember Imps', 6, 11], ['buy', 'Shiv', 10, 10], ['buy', 'Wisps', 1, 10]],
-    [['buy', 'Ether Golem', 1, 11], ['buy', 'Skeleton Archers', 6, 10], ['buy', 'Obelisk', 3, 10]],
-    [['buy', 'Leaf Wizard', 8, 11], ['buy', 'Frost Wizard', 5, 10], ['buy', 'Earth Wizard', 7, 11]],
-    [['buy', 'Brute', 4, 11], ['buy', 'Goblin Swarm', 8, 10], ['buy', 'Earth Wizard', 1, 10]],
+  // ---- five-round lines, written by hand to follow the intended strategies (her health is set huge in `lines` so
+  // every round is played and can be measured). Squads are named with { as } so later rounds can move, aim and sell them.
+  // Line A: someone holds her in every round
+  'Line A: hold her every round': [
+    // R1 fast bite. Two Goblin squads walk the low nest's column, kill it and hold her; Wisps + Archers take the high one
+    [['buy', 'Goblin Swarm', 4, 10, { as: 'gobA' }], ['buy', 'Goblin Swarm', 3, 10, { as: 'gobB' }], ['buy', 'Wisps', 9, 10, { as: 'wisp' }], ['buy', 'Skeleton Archers', 10, 10, { as: 'archA' }]],
+    // R2 heavy. One Goblin squad is sent (arrow) to the far low nest, the other at her: a swarm soaks the heavy bite
+    [['aim', 'gobA', 1, 7], ['aim', 'gobB', 5, 6], ['buy', 'Sniper', 10, 11, { as: 'snipA' }], ['buy', 'Skeleton Archers', 6, 11, { as: 'archB' }], ['levels']],
+    // R3 sweep. Sell both Goblin squads (the sweep kills them); a Brute walks to the low nest in her web and holds her;
+    // an Earth Wizard and the Wisps (the free move) take the left nest, the Sniper and Archers the right one
+    [['sell', 'gobA'], ['sell', 'gobB'], ['buy', 'Brute', 7, 10, { as: 'brute', aim: [7, 6] }], ['buy', 'Earth Wizard', 1, 10, { as: 'earth' }], ['move', 'wisp', 2, 10], ['levels']],
+    // R4 heavy. A new Goblin squad goes at her to hold; a Leaf Wizard dives for the nest behind her
+    [['buy', 'Goblin Swarm', 5, 10, { as: 'gobC', aim: [5, 6] }], ['buy', 'Leaf Wizard', 6, 12, { as: 'leaf' }], ['levels']],
+    // R5 sweep. A second Brute on the low nest in her reach holds; the Goblins are swapped for a fresh squad behind
+    [['buy', 'Brute', 7, 11, { as: 'brute2', aim: [7, 7] }], ['sell', 'gobC'], ['buy', 'Goblin Swarm', 4, 11, { as: 'gobD' }], ['levels']],
+  ],
+  // Line B: read each round. As line A, but round 4 is played without a tank: sell the Brute, keep out of her reach,
+  // and she spends the nest behind her on a mortar shot
+  'Line B: read each round (no tank in round 4)': [
+    [['buy', 'Goblin Swarm', 4, 10, { as: 'gobA' }], ['buy', 'Goblin Swarm', 3, 10, { as: 'gobB' }], ['buy', 'Wisps', 9, 10, { as: 'wisp' }], ['buy', 'Skeleton Archers', 10, 10, { as: 'archA' }]],
+    [['aim', 'gobA', 1, 7], ['aim', 'gobB', 5, 6], ['buy', 'Sniper', 10, 11, { as: 'snipA' }], ['buy', 'Skeleton Archers', 6, 11, { as: 'archB' }], ['levels']],
+    [['sell', 'gobA'], ['sell', 'gobB'], ['buy', 'Brute', 7, 10, { as: 'brute', aim: [7, 6] }], ['buy', 'Earth Wizard', 1, 10, { as: 'earth' }], ['move', 'wisp', 2, 10], ['levels']],
+    [['sell', 'brute'], ['buy', 'Frost Wizard', 6, 10, { as: 'frost' }], ['buy', 'Slime Wizard', 5, 12, { as: 'slime' }], ['levels']],
+    // R5 sweep. A Brute on the low nest in her reach holds; two Goblin squads come back to hit her on the ground
+    [['buy', 'Brute', 7, 11, { as: 'brute2', aim: [7, 7] }], ['buy', 'Goblin Swarm', 4, 11, { as: 'gobC' }], ['buy', 'Goblin Swarm', 3, 11, { as: 'gobD' }], ['levels']],
+  ],
+  // Line C: nobody ever goes into her reach. She spends the nests in her reach on mortar shots; shooters take the rest
+  'Line C: never hold her': [
+    [['buy', 'Wisps', 9, 10, { as: 'wispA' }], ['buy', 'Wisps', 8, 11, { as: 'wispB' }], ['buy', 'Skeleton Archers', 10, 10, { as: 'archA' }], ['buy', 'Sniper', 6, 12, { as: 'snipA' }]],
+    [['buy', 'Sniper', 2, 11, { as: 'snipB' }], ['buy', 'Skeleton Archers', 1, 10, { as: 'archB' }], ['levels']],
+    [['buy', 'Earth Wizard', 1, 11, { as: 'earth' }], ['buy', 'Wisps', 2, 10, { as: 'wispC' }], ['levels']],
+    [['buy', 'Frost Wizard', 6, 10, { as: 'frost' }], ['buy', 'Earth Wizard', 4, 12, { as: 'earthB' }], ['levels']],
+    [['buy', 'Sniper', 10, 12, { as: 'snipC' }], ['buy', 'Earth Wizard', 10, 11, { as: 'earth2' }], ['levels']],
+  ],
+  // a coaster: the least that clears rounds 1-3, gold banked, then the biggest army it can field in rounds 4-5 (the
+  // deployment limit and the experience from fights stop it: it does about 5,000 in all)
+  'Coaster: bank gold, burst late': [
+    [['buy', 'Wisps', 9, 10, { as: 'wisp' }], ['buy', 'Skeleton Archers', 10, 10, { as: 'archA' }]],
+    [['buy', 'Sniper', 2, 11, { as: 'snipA' }]],
+    [['buy', 'Earth Wizard', 1, 11, { as: 'earth' }]],
+    [['buy', 'Goblin Swarm', 4, 10, { as: 'gobA' }], ['buy', 'Goblin Swarm', 5, 10, { as: 'gobB' }], ['buy', 'Goblin Swarm', 6, 10, { as: 'gobC' }], ['levels']],
+    [['buy', 'Wisps', 8, 10, { as: 'wispB' }], ['buy', 'Wisps', 7, 10, { as: 'wispC' }], ['buy', 'Sniper', 10, 12, { as: 'snipB' }], ['skill', 'Goblin Swarm', 0], ['skill', 'Wisps', 0], ['levels']],
   ],
 };
 
@@ -119,4 +198,30 @@ function greedy(per = 40, cfg = B.CFG, pool, seed0 = 777) {
   return { plan, res };
 }
 
-module.exports = { PLANS, runPlan, report, search, greedy };
+// play one plan and print every round: the board as deployed, then what happened
+function show(plan, cfg = B.CFG, title = '') {
+  const boards = [];
+  const res = runPlan(plan, cfg, { onDeploy: (run, r) => boards.push(board(run, r, cfg) + `\n      gold left ${run.m.gold[0]}`) });
+  console.log(`\n=== ${title} ${res.won ? 'WON in round ' + res.rounds : 'lost, ' + Math.round(res.hpLeft) + ' health left'}${res.fails.length ? '  FAILED STEPS: ' + res.fails.join('; ') : ''}`);
+  res.log.forEach((f, k) => { console.log(boards[k]); console.log('  ' + B.fmt(f)); console.log(detail(f)); });
+  return res;
+}
+
+// the five-round lines, round by round, with her health set out of reach so every round is played: damage per round
+// (thousands), and the share of it done in rounds 4-5
+function lines(cfg = B.CFG) {
+  const c = { ...cfg, mommy: { ...cfg.mommy, hp: 1e7 } };
+  console.log(`\nDamage per round (thousands) with her health out of reach${Object.keys(cfg.late || {}).length ? ', late: ' + JSON.stringify(cfg.late) : ''}`);
+  console.log('line'.padEnd(46) + ['R1', 'R2', 'R3', 'R4', 'R5'].map((x) => x.padStart(6)).join('') + '  by R3   by R4     all  R4-5 share  fall times (s)');
+  const out = {};
+  for (const [name, plan] of Object.entries(PLANS)) {
+    if (plan.length < 5) continue;
+    const res = runPlan(plan, c), d = res.log.map((f) => f.hang + f.ground), tot = d.reduce((a, b) => a + b, 0);
+    const k = (x) => (x / 1000).toFixed(1).padStart(6);
+    console.log(name.slice(0, 45).padEnd(46) + d.map(k).join('') + k(d[0] + d[1] + d[2]) + '  ' + k(d[0] + d[1] + d[2] + d[3]) + '  ' + k(tot) + `${Math.round((d[3] + d[4]) / tot * 100)}%`.padStart(11) + '  ' + res.log.map((f) => f.fallAt == null ? '-' : f.fallAt.toFixed(1)).join(' / ') + (res.fails.length ? '  FAILED: ' + res.fails.join('; ') : ''));
+    out[name] = d;
+  }
+  return out;
+}
+
+module.exports = { PLANS, runPlan, report, search, greedy, board, detail, show, lines };
