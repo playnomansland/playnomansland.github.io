@@ -826,7 +826,7 @@
     const clock = new THREE.Clock();
     function frame() {
       raf = 0; if (!running) return;
-      if (fly) { flyFrame(); raf = requestAnimationFrame(frame); return; }
+      if (fly) { try { flyFrame(); } catch (e) { console.warn('No Mans Land: the island\'s flight broke off; landing it at once.', e); flyEnd(); } raf = requestAnimationFrame(frame); return; } // (a throw here stopped the loop: the island stayed over the match, 2026-11-11)
       const t = still ? 1.3 : clock.getElapsedTime(), k = still ? 1 : 0.08, kk = still ? 1 : 0.12;
       now.az = lerp(now.az, want.az, k); now.el = lerp(now.el, want.el, k); now.zoom = lerp(now.zoom, want.zoom, k);
       for (let i = 0; i < 3; i++) now.at[i] = lerp(now.at[i], want.at[i], k);
@@ -900,7 +900,10 @@
       if (!skip) { if (!F.shownYet) F.shown(); F.done(); }
     }
     function flyFrame() {
-      const F = fly, T = performance.now(), E = F.end();
+      const F = fly, T = performance.now();
+      // the board's pose, or the last one it gave: it can go for a moment on the way (a room's match starting, the
+      // window resized), and the flight keeps on to where the board was
+      const E = F.end() || F.last || null; if (E) F.last = E;
       if (!F.t0) { // the press waits (up to 4 s) for the board underneath: framed, and its scenery loaded
         if ((!E || !F.ready) && T < F.wait) { flyPose(F.start); renderer.render(scene, flyCam); return; }
         if (!E) { flyEnd(); return; }
