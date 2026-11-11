@@ -152,8 +152,7 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   computer in the menu's Settings and in the match's Settings; On starts them over. Off by default on a device that
   finished the old guided tutorial (`phonebellum.tutorial.v1`). Only `mode === 'ai'` on `html.pc`: not puzzles, online
   matches, replays or phones. No note while a sheet is open. `tools/tests/helpers-ui.js` plays it through (2D board).
-- **The menu's guide (2026-11-11, on the branch `claude/wonderful-einstein-zt2no0` for the owner to see first; PC
-  only).** Notes on the main menu for a guest's first time in (`MENU_TIPS`, `menuPick`, `guideStart`, `helperLine` in
+- **The menu's guide (2026-11-11, live on `main` on the owner's word the same day; PC only).** Notes on the main menu for a guest's first time in (`MENU_TIPS`, `menuPick`, `guideStart`, `helperLine` in
   `src/site-template.html`; the loop, the store and the switch are the helpers'). **The look (owner, 2026-11-11):** not
   the helpers' yellow box but the Diorama's own notes: cream type on the field with the field's halo, a line under the
   label (over it when the label hangs below its thing) and out to a dot with a ring on the thing; the ring pulses, so
