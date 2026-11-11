@@ -786,6 +786,9 @@ html.diorama.pcwide .tag-clock, html.diorama.pcwide .net, html.diorama.pcwide .d
 /* the top line: you top left, the round in the middle, the opponent top right (mirrored) */
 html.diorama.pcwide .hud { position: fixed; z-index: 7; top: 0; left: 0; right: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: 24px; padding: 18px 32px 0; pointer-events: none; color: #F4ECD8; }
 html.diorama.pcwide .hud > * { pointer-events: auto; }
+/* a tapped body's card in the fight (#bcard, a 2v2 artifact's #acard): under the HUD, in line with its names. At the old
+   UI's top left it sat under the HUD (z-index 7), the player's name and health over the card's own */
+html.diorama.pcwide .bcard { top: 104px; left: 32px; }
 html.diorama.pcwide .hud .side { display: grid; grid-template-columns: auto minmax(60px, 260px); column-gap: 16px; row-gap: 0; align-items: center; justify-content: start; text-align: left; }
 html.diorama.pcwide .hud .side.foe { grid-template-columns: minmax(60px, 260px) auto; justify-content: end; text-align: right; }
 html.diorama.pcwide .hud .side .lbl { display: contents; }

@@ -933,6 +933,9 @@ html.diorama.pcwide .tag-clock, html.diorama.pcwide .net, html.diorama.pcwide .d
 /* the top line: you top left, the round in the middle, the opponent top right (mirrored) */
 html.diorama.pcwide .hud { position: fixed; z-index: 7; top: 0; left: 0; right: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: 24px; padding: 18px 32px 0; pointer-events: none; color: #F4ECD8; }
 html.diorama.pcwide .hud > * { pointer-events: auto; }
+/* a tapped body's card in the fight (#bcard, a 2v2 artifact's #acard): under the HUD, in line with its names. At the old
+   UI's top left it sat under the HUD (z-index 7), the player's name and health over the card's own */
+html.diorama.pcwide .bcard { top: 104px; left: 32px; }
 html.diorama.pcwide .hud .side { display: grid; grid-template-columns: auto minmax(60px, 260px); column-gap: 16px; row-gap: 0; align-items: center; justify-content: start; text-align: left; }
 html.diorama.pcwide .hud .side.foe { grid-template-columns: minmax(60px, 260px) auto; justify-content: end; text-align: right; }
 html.diorama.pcwide .hud .side .lbl { display: contents; }
@@ -18416,7 +18419,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · 2f1bc7b'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · 303ae2f'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
