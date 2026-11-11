@@ -39,8 +39,9 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
 - Island notes: a piece's note shows at once (leaving waits 250 ms); Sniper and Fire Mage only on hover; the Ent on
   hover ("Sleeping Ent. · Sshhhh!"); the skeleton's always-on hint "Hover stuff on the island to learn more!" (above
   left, clear of the golem's note; to the right where the logo is in the way).
-- Full leaderboard hangs under the Rankings note (`.lb-rank`, moved out of the standings at boot; on phones it is
-  hidden with the notes: step 8). The right-hand menu notes' rail clears HOW TO PLAY.
+- ~~Full leaderboard hangs under the Rankings note~~ (2026-11-11, owner: no button to the leaderboard; the whole
+  list sits under STANDINGS, `.lb-list` drawn by `drawBoardList`, fitted above the menu and scrolling on a computer by
+  `fitBoardList`, running on down the page on a phone). The right-hand menu notes' rail clears HOW TO PLAY.
 - Multiplayer: "challenge your friend"; 1v1 Ranked: "BO3"; 2v2 (developers): "with new buildings and units".
 - How to play's Leaders (both UIs): "Leaders give you passive abilities throughout the game. Choose a leader in round
   2 of a match." and the list, no draft rules.

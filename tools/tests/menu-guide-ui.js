@@ -79,7 +79,7 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&test&server=http://127
     await p.hover('#how'); await p.waitForTimeout(700);
     ok(await p.evaluate(() => getComputedStyle(document.querySelector('#dio .btn-note[data-btn="rules"]')).display === 'none') && (await note(p)) === 'New here?', 'pointing at How to play: the guide’s note stays, the word’s white note stays away');
     await p.hover('#dio .menu [data-cam="ranks"]'); await p.waitForTimeout(700);
-    ok(await p.evaluate(() => getComputedStyle(document.querySelector('#dio .btn-note[data-btn="ranks"]')).display === 'none' && getComputedStyle(document.getElementById('lb-open')).display === 'none'), 'nor Rankings’ (with its Full leaderboard)');
+    ok(await p.evaluate(() => getComputedStyle(document.querySelector('#dio .btn-note[data-btn="ranks"]')).display === 'none'), 'nor Rankings’');
     await p.mouse.move(700, 60); await p.waitForTimeout(400);
     // a dropdown over the menu hides it, and it comes back
     await p.click('#dio .acct button:nth-of-type(3)'); await p.waitForTimeout(1700);

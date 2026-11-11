@@ -42,6 +42,7 @@
   }
   async function dioStart() {
     const body = $('dio');
+    let lbKey = '', boardAt = Date.now(); // Rankings: the leaderboard list drawn last, and when the board was fetched
     const THREE = await import(THREE_URL);
     if (typeof Models3D !== 'function') for (const f of ['kaykit3d', 'models3d']) await load3d(f);
     // the island's renderer: made when the home shows, freed while a match runs. No WebGL (or ?board=2d): flat
@@ -565,7 +566,6 @@
     const bfDots = [[7, -9], [7, 9], [-7, 9], [-7, -9], [7, 0], [0, 9], [-7, 0], [0, -9]].map(([x, z]) => { const o = new THREE.Object3D(); o.position.set(x, 0, z); island.add(o); return o; });
     let viewName = 'play', hovered = null, pinnedHover = false, picked = null;
     const svg = document.getElementById('lines');
-    const lbBtn = document.getElementById('lb-open'); body.appendChild(lbBtn); lbBtn.classList.add('lb-rank'); // (out of the standings: it hangs under the Rankings note)
     const proj = (o, h) => { const v = new THREE.Vector3(); o.getWorldPosition(v); v.y += h; v.project(cam); return [(v.x + 1) / 2 * cv.clientWidth, (1 - v.y) / 2 * cv.clientHeight]; };
     const dotSvg = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="currentColor"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>`;
     // (each tower and treasury shows only its own note: owner, 2026-11-08)
@@ -609,7 +609,6 @@
       const offMenu = (el, ln) => { if (!menuR || el.dataset.anchor === 'btn') return true; const r = el.getBoundingClientRect();
         return !(r.left < menuR.right + 8 && r.right > menuR.left - 8 && r.top < menuR.bottom + 8 && r.bottom > menuR.top - 8) && !crosses((ln.match(/d="([^"]*)"/) || [])[1] || '', menuR); };
       const clear = (el, x, y) => { const r = el.getBoundingClientRect(); if (under(r) || (dr && x >= dr.left - 12 && x <= dr.right + 12 && y >= dr.top - 12 && y <= dr.bottom + 12)) return false; return !inProf || (x > colR && r.left > colR); };
-      let lbOn = false;
       const rank = (n) => n.hasAttribute('data-home') ? 2 : n._off ? 1 : 0;
       for (const el of [...body.querySelectorAll('.note:not(.pnote):not(.qnote):not(.hnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
@@ -663,7 +662,6 @@
           } else {
             const x = r.right + 6, rail = Math.max(playR.right, ...[...body.querySelectorAll('.menu .item[data-cam="rules"], .menu .item[data-cam="ranks"]')].map(i => i.getBoundingClientRect().right)) + 28, ly = playR.top + 36 + (el.dataset.btn === 'ranks' ? 70 : 0), lx = rail + 16;
             el.style.left = lx + 'px'; el.style.top = ly + 'px'; el.style.textAlign = 'left';
-            if (el.dataset.btn === 'ranks') { lbOn = true; lbBtn.style.left = lx + 'px'; lbBtn.style.top = (ly + 10) + 'px'; } // Full leaderboard, under the note's line
             html += `<path d="M${x} ${y} L${rail} ${y} L${rail} ${ly} L${lx + w} ${ly}" fill="none" stroke="currentColor" stroke-width="1.5"/>${dotSvg(x, y)}`;
           }
           continue;
@@ -689,7 +687,6 @@
         pinOverFading = false;
         if (ln) html += op < 1 ? `<g opacity="${op.toFixed(3)}">${ln}</g>` : ln; else { el.style.display = 'none'; el._off = null; }
       }
-      lbBtn.style.display = lbOn ? '' : 'none';
       // Profile: the golem's note, while you can still earn its skin
       for (const el of body.querySelectorAll('.pnote')) {
         const show = !phone() && inProf && !body.classList.contains('in-history') && !body.classList.contains('units');
@@ -947,14 +944,14 @@
     // ── the menu drives the camera; Units and Rankings stay up once clicked ──
     const items = body.querySelectorAll('.menu .item');
     const MODES = { units: 'units', ranks: 'ranks' };
-    const setMode = (v) => { for (const m of Object.values(MODES)) body.classList.toggle(m, m === MODES[v]); };
+    const setMode = (v) => { for (const m of Object.values(MODES)) body.classList.toggle(m, m === MODES[v]); if (v === 'ranks') fitBoardList(); };
     for (const b of items) {
       const go = () => { if (body.classList.contains('pinned') && b.dataset.cam !== viewName) return; items.forEach(x => x.classList.toggle('on', x === b)); viewName = b.dataset.cam; want = VIEWS[viewName]; setMode(viewName); };
       b.addEventListener('mouseenter', go); b.addEventListener('focus', go);
     }
     // (the menu hides under the pointer when Play or Profile opens: that leave keeps their view; owner's bug, 2026-11-10)
     body.querySelector('.menu').addEventListener('mouseleave', () => { if (['pinned', 'play', 'profile', 'puz', 'how'].some(c => body.classList.contains(c))) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
-    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); });
+    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); if (v === 'ranks') { fitBoardList(); refreshBoard(); } });
     // Puzzles and How to play: the game's own calls, which hand over to their Diorama screens (dio.api.puzzles, .howto)
     $('puzzles-open').addEventListener('click', openPuzzles);
     $('how').addEventListener('click', openHowTo);
@@ -1559,17 +1556,50 @@
         $('skin-ok').addEventListener('click', () => { skinsSeen(); drawHome(); });
       }
     }
-    // Rankings: the line under STANDINGS (the Legend title and how long the month has left) and the full leaderboard
+    // Rankings: the line under STANDINGS (the Legend title and how long the month has left), then the whole
+    // leaderboard right there (owner, 2026-11-11: no button to a separate sheet). The top Legend.top rows are the
+    // Legend places; a row opens that player's menu (add a friend), as the old sheet's did
     function drawStandings() {
       const j = home.board, lg = j && j.legend && j.legend.top ? j.legend : null, el = body.querySelector('.standings .leg');
       let when = '';
       if (lg) { const left = Math.max(0, (lg.ends - Date.now()) / 864e5); when = left >= 1 ? `${Math.floor(left)} day${Math.floor(left) === 1 ? '' : 's'} left this month.` : left * 24 >= 1 ? `${Math.floor(left * 24)} hours left this month.` : 'The month ends within the hour.'; }
-      el.textContent = !j ? 'The standings come from the game server, which can’t be reached right now.'
+      el.textContent = (!j ? 'The standings come from the game server, which can’t be reached right now.'
         : !j.rows.length ? 'No ranked results yet. Play a ranked match against a friend to get on the board.'
-        : lg ? `The top ${lg.top} when the month ends earn the gold Legend title. ${when}` : 'Ranked best-of-3 series.';
+        : lg ? `The top ${lg.top} when the month ends earn the gold Legend title. ${when}` : 'Ranked best-of-3 series.') + (j && !j.on ? ' Ranked is switched off right now.' : '');
       buildPodium(j && j.rows);
+      drawBoardList(j, lg ? lg.top : 0);
     }
-    $('lb-open').addEventListener('click', openLeaderboard);
+    function drawBoardList(j, top) {
+      const list = body.querySelector('.standings .lb-list'), how = body.querySelector('.standings .lb-how'), rows = j ? j.rows : [], me = acct ? acct.id : '';
+      const key = JSON.stringify([top, me, rows.map(r => [r.id, r.tag, r.title, r.w, r.t, r.l, r.score])]);
+      if (key === lbKey) return fitBoardList(); lbKey = key;
+      list.hidden = how.hidden = !rows.length;
+      const pct = (r) => Math.round((r.w + r.t / 2) / Math.max(1, r.w + r.t + r.l) * 100);
+      const tt = (t) => TITLES[t] ? `<span class="tt" style="--tc:${TITLES[t].col}">${esc(TITLES[t].name)}</span>` : '';
+      list.innerHTML = rows.map((r, i) => { const mine = !!me && r.id === me;
+        const cls = [i === 0 ? 'first' : '', i < top ? 'legend' : '', i === top - 1 && rows.length > top ? 'cut' : '', mine ? 'me' : ''].filter(Boolean).join(' ');
+        return `<li${cls ? ` class="${cls}"` : ''} data-pid="${esc(r.id)}"${mine ? '' : ' tabindex="0" role="button"'}><span class="r">${i + 1}</span>
+          <span class="who"><b>${esc(r.tag)}${mine ? ' <i class="you">you</i>' : ''}${tt(r.title)}</b><small>${r.w}–${r.t}–${r.l} · ${pct(r)}% win share</small></span>
+          <span class="s">${r.score != null ? Math.round(r.score) : '–'}<small>score</small></span></li>`; }).join('');
+      fitBoardList();
+    }
+    // on a computer the list fits between STANDINGS and the menu and scrolls; on a phone it runs on down the page
+    function fitBoardList() {
+      const list = body.querySelector('.standings .lb-list'), menu = body.querySelector('.menu');
+      if (phone() || !menu) { list.style.maxHeight = ''; return; }
+      const st = body.querySelector('.standings'), y = st.offsetTop + list.offsetTop, h = body.querySelector('.standings .lb-how');
+      list.style.maxHeight = Math.max(150, menu.getBoundingClientRect().top - y - (h.hidden ? 0 : h.offsetHeight + 6) - 36) + 'px';
+    }
+    addEventListener('resize', fitBoardList);
+    { const list = body.querySelector('.standings .lb-list');
+      const open = (li) => { const r = home.board && home.board.rows.find(x => x.id === li.dataset.pid); if (r && !(acct && r.id === acct.id)) frPlayerMenu({ id: r.id, tag: r.tag, title: r.title }); };
+      list.addEventListener('click', (e) => { const li = e.target.closest('li[data-pid]'); if (li) open(li); });
+      list.addEventListener('keydown', (e) => { const li = e.target.closest('li[data-pid]'); if (li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(li); } }); }
+    // the standings come fresh each time Rankings opens (at most once a minute)
+    async function refreshBoard() {
+      if (home.board && Date.now() - boardAt < 60e3) return; boardAt = Date.now();
+      try { const r = await fetch(`${SERVER_URL}/leaderboard`); const j = r.ok ? await r.json() : null; if (j) { home.board = j; home.rankedOn = !!j.on; drawStandings(); } } catch (e) { /* the last board stays */ }
+    }
     body.querySelectorAll('.door .item').forEach(b => { b.addEventListener('mouseenter', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x === b)));
       b.addEventListener('focus', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x === b))); });
     body.querySelector('.door').addEventListener('mouseleave', () => body.querySelectorAll('.door .item').forEach(x => x.classList.toggle('on', x.id === 'w-login')));
