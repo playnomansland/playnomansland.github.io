@@ -10,7 +10,7 @@ This is a new mode, not a map. The game today has exactly two sides everywhere: 
 
 ## Phase 1: write docs/FFA.md (no game code)
 
-Read first: `src/duo.js` header and `claude/duo-2v2.md` (how 2v2 shares one fight), `src/engine.js` (where it assumes two sides: grep `1 - `, `side === 0`, `sides`, `cripple`), `src/referee.js` (view/hide), `server/src/duo.js` (a 4-seat room), README "Maps".
+Read first: `src/duo.js` header and `claude/duo-2v2.md` (how 2v2 shares one fight), `src/engine.js` (where it assumes two sides: grep `1 - `, `side === 0`, `sides`, `cripple`), `src/referee.js` (view/hide), `server/src/duo.js` (a 4-seat room), `docs/MAPS.md`.
 
 The doc proposes, with a recommendation for each and the options it rejected:
 

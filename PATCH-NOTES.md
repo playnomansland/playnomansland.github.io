@@ -1,6 +1,6 @@
 # No Mans Land – Patch notes
 
-Newest first. Each entry says what changed for players; technical details live in the README and `docs/`.
+Newest first. Each entry says what changed for players; technical details live in `docs/` (the README says which file).
 
 ---
 

@@ -64,7 +64,7 @@ Everything goes in `src/factions.json`. Then run `node tools/counter-table.js` a
 }
 ```
 
-- The Mechites also use the fight mechanics and building system from their branch (rollers, builders, the Factory, the Altar of Build, tower bots): see "Fight mechanics added for factions" in the README. Those buildings are bought with units and skills; the lesser buildings below are the devtest's round picks. Both kinds can stand in one match.
+- The Mechites also use the fight mechanics and building system from their branch (rollers, builders, the Factory, the Altar of Build, tower bots): see "Fight mechanics added for factions" in `docs/FACTIONS.md`. Those buildings are bought with units and skills; the lesser buildings below are the devtest's round picks. Both kinds can stand in one match.
 - Units use the same fields as `default-roster.json`, so anything Counter Lab can make works here. One new field: `"disguise": "Unit name"` (it looks like that unit to the opponent until it first attacks). `unlock` is the gold to unlock it in a match (0 = open from the start).
 - `trait` changes all the faction's units: `hp`, `hit`, `aps`, `range`, `speed` in %, `armor` flat.
 
