@@ -18889,7 +18889,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · c54f1c0'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · 504d778'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -23638,6 +23638,15 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // Five rounds against one boss on your phone: the normal deploy panel and clock, no AI. A line over the board says the
   // round's bite and her health; after each fight the report says when her nests fell, how long she was down, what her
   // mortar did and who hurt her most.
+  // ?mommy in the address (developers' test link): straight into Mommy on a developer account; on any other this says
+  // which account the page sees, so a missing Weekly boss button can be told apart from an old copy of the page
+  if (/[?&]mommy\b/.test(location.search)) setTimeout(() => {
+    if (devMode()) { startBoss(); return; }
+    closeSheet(true);
+    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Mommy is for developers</h3><button class="btn small" id="close">Close</button></div>
+      <p style="margin:0">${acct ? `This page is signed in as <b>${esc(acct.tag || '?')}</b>${acct.google ? '' : ' (a guest account)'}, which isn’t a developer account.` : 'This page isn’t signed in.'} Developer status comes from the Google account you sign in with.</p>`;
+    $('sheet-back').hidden = false; $('close').addEventListener('click', closeSheet);
+  }, 2500);
   function startBoss() {
     if (typeof Boss === 'undefined') return;
     leaveNet(); closeSheet(true);
