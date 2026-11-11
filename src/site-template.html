@@ -3256,7 +3256,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       l = g.left + sl - off; t = g.top + st - off; r = g.left + sl + (parseFloat(c.width) || g.width) + off; b = g.top + st + (parseFloat(c.height) || g.height) + off; }
     return { left: l, top: t, right: r, bottom: b, width: r - l, height: b - t, pts: sh ? sh.querySelector('polygon').getAttribute('points') : RING_PTS };
   }
-  // (owner, 2026-11-12: Play comes last, where the tour hands over to a first game; your profile has a note, Change
+  // (owner, 2026-11-11: Play comes last, where the tour hands over to a first game; your profile has a note, Change
   // battlefield has none. Your name's note says what a guest gets from signing in: one note for one button)
   const guestNow = () => !!firstRun || !(acct && acct.google);
   const MENU_TIPS = [

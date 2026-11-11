@@ -418,6 +418,13 @@
           [['Brute', 5, 12], ['Skeleton Archers', 8, 13], ['Fire Mage', 10, 12], ['Goblin Swarm', 2, 13]].forEach(([n, c, r]) => sq(n, YOU, c, r, 0));
           [['War Mammoth', 6, 5], ['Sniper', 10, 3], ['Goblin Swarm', 3, 5], ['Wisps', 9, 5]].forEach(([n, c, r]) => sq(n, FOE, c, r, Y));
           hwDot('mine', tx(10), tz(12), 1.2); hwDot('theirs', tx(10), tz(3), 1.25);
+        } else if (id === 'controls') { // a deploy as it stands: your zone, both armies; a dot for each list's note
+          hwPaint(0, D - zone, W - 1, D - 1, YOU, 0.4, hwWords('Your zone', 0.21, 0.82, 0.95));
+          hwPaint(0, zone, W - 1, D - zone - 1, null, 0, hwWords('No man’s land', 0.5, 0.5, 1.1));
+          keeps(); vaults();
+          [['Brute', 5, 12], ['Skeleton Archers', 8, 13], ['Fire Mage', 10, 12], ['Goblin Swarm', 2, 13]].forEach(([n, c, r]) => sq(n, YOU, c, r, 0));
+          [['War Mammoth', 6, 5], ['Sniper', 10, 3], ['Goblin Swarm', 3, 5]].forEach(([n, c, r]) => sq(n, FOE, c, r, Y));
+          hwDot('pick0', tx(10), tz(12), 1.2); hwDot('pick1', tx(10), tz(3), 1.25); hwDot('pick2', tx(W - 0.5), tz(1), 0);
         } else if (id === 'win') { // after a fight: your squads still standing in their half, and what it cost them
           keeps(); vaults();
           const alive = [['Brute', 6, 5], ['Fire Mage', 8, 7], ['Skeleton Archers', 4, 6]];
@@ -489,6 +496,7 @@
     const HW_VIEWS = {
       round:   { az: 0.3, el: 0.82, at: [0, 0, 0.2], span: 19.6, tall: 17.6, nr: 0 },
       win:     { az: 0.42, el: 0.7, at: [0.9, 0.4, -3.6], span: 16, tall: 10.6, nr: 0 },
+      controls: { az: 0.3, el: 0.82, at: [0, 0, 0.2], span: 19.6, tall: 17.6, nr: 0 },
       gold:    { az: 0.46, el: 0.64, at: [0, 0.3, 0.3], span: 21, tall: 15.6, nr: 0 },
       start:   { az: 0.22, el: 0.72, at: [0, 0.4, 3.3], span: 15.6, tall: 9.4, nr: 0 },
       leaders: { az: 0.16, el: 0.84, at: [0, 0.1, 0.35], span: 15.2, tall: 9.6, nr: 0 },
@@ -1268,7 +1276,7 @@
     const arrowR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>';
     let HOWS = [], hwAt = 0; const hwSub = {};
     function howChapters() {
-      const G = Game, b = (x) => `<b>${x}</b>`, TD = G.TIER_DMG, tsk = G.TOWER_SKILL, tr = G.TREASURY;
+      const G = Game, b = (x) => `<b>${x}</b>`, key = (x) => `<kbd>${x}</kbd>`, TD = G.TIER_DMG, tsk = G.TOWER_SKILL, tr = G.TREASURY;
       const zone = ((G.findMap(STD_MAP) || {}).grid || G.GRID).zone, prices = ROSTER.units.map(G.unitCostOf), lo = Math.min(...prices), hi = Math.max(...prices);
       const tower = (x) => [esc(x.text),
         x.skill ? `<i>${esc(x.skill.name)}</i> (${tsk.cost} gold): ${esc(x.skill.text)}` : '',
@@ -1297,6 +1305,29 @@
             `From round ${G.LOSER_BONUS_ROUND}, the loser of a round gets ${b('+' + G.LOSER_BONUS)} gold.`,
             `Break an enemy streak of ${G.SHUTDOWN.from} or more wins (🔥 by their health) for ${b('+' + G.SHUTDOWN.gold)} gold, and +${G.SHUTDOWN.step} for each win past ${G.SHUTDOWN.from}.`],
           notes: [['vaultFoe', 'Their treasury.', 'Destroy it to steal their gold', 90, -90], ['income', 'Gold each round.', `${G.CONFIG.incomeStep} more every round from round 3`, 110, -70], ['vaultYou', 'Your treasury.', `${tr.gold} gold for every fight it survives`, 110, 96]] },
+        // Controls (2026-11-11, the owner): what the mouse and the few keys do in a match, on a PC with the 3D board,
+        // in three short lists (the page's row of words, as Leaders and Towers). Every row was tried in a match:
+        // the camera's steps and keys are src/camera3d.js's, the rest the board's own (boardPress, cardPress)
+        { id: 'controls', g: 0, name: 'Controls', gist: 'The mouse does everything. A few keys turn the view.',
+          picks: [
+            { short: 'Deploying', name: 'While you deploy', note: ['Your squads.', 'Click one to open it · drag it to move it', 34, 150], rows: [
+                [`${key('Click')} a unit, then a tile`, 'Buys a squad and places it. Or drag the unit there.'],
+                [`${key('Drag')} a squad`, `Moves it. Free in the round you place it, then ${b(G.CONFIG.moveCost + ' gold')}, once a round.`],
+                [`${key('Click')} a squad`, 'Opens its sheet: level up, skills, take it back or sell it.'],
+                [`${key('Click')} a tower or an enemy`, 'Shows what it does. Your tower’s skills are there.'],
+                [`${key('Point')} at a unit`, 'Shows how far it reaches.']] },
+            { short: 'The fight', name: 'Starting and watching a fight', note: ['Their army.', 'Both armies fight on their own', 44, -112], rows: [
+                [`<kbd class="go">Ready</kbd>`, 'Locks in your army. The fight starts when both players are ready, or the clock runs out.'],
+                [SPEEDS.map(v => key(v + '×')).join(''), 'The fight’s speed. Online, the slower of the two players’ picks.'],
+                [key('Skip to result'), 'Jumps to the end. It asks once more first.'],
+                [`${key('Point')} at the screen’s edge`, 'Brings back the deploy panel, which slides away for the fight. The speed and Skip are on it.'],
+                [`${key('Click')} a unit`, 'Shows how far it reaches.']] },
+            { short: 'The view', name: 'Looking around', note: ['The board.', 'Scroll to come closer · <span style="white-space:nowrap">right-drag</span> to turn it', 70, -110], rows: [
+                [key('Scroll'), 'Steps closer or further out. Four views, from straight above to ground level.'],
+                [`${key('Right-drag')} or ${key('Q')}${key('E')}`, 'Turns the board.'],
+                [key('Drag'), 'Looks around, in the two closest views.'],
+                [key('Esc'), 'Back to the view from straight above.'],
+                [key('Settings'), 'In a match: a flat 2D board, if you prefer one.']] }] },
         { id: 'start', g: 1, name: 'Your start', tag: 'round 1', gist: `Round 1: pick one of ${G.PACKAGE.options === 3 ? 'three' : G.PACKAGE.options} starting packages.`, pts: [
             `Each package unlocks ${b('two units')} for free and gives you free squads of them worth ${b(G.PACKAGE.value + ' gold')}.`,
             `You keep your ${b(G.START_GOLD + ' gold')} to spend on top, and the free squads don’t use up your deployments.`,
@@ -1349,7 +1380,7 @@
         <h3>${esc(C.name)}</h3><p class="hw-gist">${C.gist}</p>
         ${C.pts && C.pts.length ? `<ul class="hw-pts">${C.pts.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
         ${C.picks ? `<div class="hw-seg" role="group" aria-label="${esc(C.name)}">${C.picks.map((p, k) => `<button data-hp="${k}" aria-pressed="${k === s}">${p.img || ''}${esc(p.short)}</button>`).join('')}</div>
-          <div class="hw-det">${C.picks.map((p, k) => `<div${k === s ? ' class="on"' : ''}><span class="nm">${esc(p.name)}</span>${p.text.map(t => `<p>${t}</p>`).join('')}</div>`).join('')}</div>` : ''}
+          <div class="hw-det">${C.picks.map((p, k) => `<div${k === s ? ' class="on"' : ''}><span class="nm">${esc(p.name)}</span>${p.rows ? `<dl class="hw-ctl">${p.rows.map(([k, t]) => `<dt>${k}</dt><dd>${t}</dd>`).join('')}</dl>` : ''}${(p.text || []).map(t => `<p>${t}</p>`).join('')}</div>`).join('')}</div>` : ''}
         <div class="hw-nav"><button class="create" id="hw-next">${nx ? `<small>Next</small>${esc(nx.name)}` : 'Play'}${arrowR}</button><span class="hw-keys" aria-label="Arrow keys: left and right turn the page${C.picks ? ', up and down go through the list' : ''}"><kbd>←</kbd><kbd>→</kbd> page${C.picks ? ' · <kbd>↑</kbd><kbd>↓</kbd> list' : ''}</span></div>`;
       if (keep) $('hw-next').focus();
       hwNotes(C); buildHow(C.id, s); want = hwView(C.id); hwLead(); notes();

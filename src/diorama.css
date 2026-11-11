@@ -1624,6 +1624,12 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
 #dio .hw .hw-det > div.on { visibility: visible; }
 #dio .hw .hw-det .nm { font: 700 clamp(16px, 2.15vh, 19px)/1.2 var(--type); }
 #dio .hw .hw-det p { margin: 0; color: color-mix(in srgb, var(--cream) 90%, transparent); }
+/* Controls (2026-11-11): what you do on the left, as keys; what it does beside it. One row a control */
+#dio .hw .hw-ctl { display: grid; grid-template-columns: minmax(0, 41%) minmax(0, 1fr); gap: clamp(7px, 1.25vh, 11px) 14px; margin: clamp(3px, .6vh, 6px) 0 0; align-items: baseline; }
+#dio .hw .hw-ctl dt { color: var(--cream); line-height: 1.6; }
+#dio .hw .hw-ctl dd { margin: 0; color: color-mix(in srgb, var(--cream) 90%, transparent); }
+#dio .hw .hw-ctl kbd { display: inline-block; margin: 0 3px 0 0; padding: 1px 6px 0; font: 700 .92em/1.45 var(--type); white-space: nowrap; color: var(--cream); border: 1.5px solid color-mix(in srgb, var(--cream) 60%, transparent); }
+#dio .hw .hw-ctl kbd.go { padding: 3px 9px 0; border: 0; font: 700 1.12em/1.2 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); background: var(--saffron); clip-path: polygon(0 10%, 96% 0, 100% 86%, 3% 100%); }
 #dio .hw .hw-det p i { font-style: normal; color: var(--cream); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
 /* the foot of the page: the next chapter (the last one: Play) */
 /* (at the foot of the page, level with Back: the same place on every page that fits, so a reader can click on through) */

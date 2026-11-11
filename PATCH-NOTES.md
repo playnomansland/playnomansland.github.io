@@ -23,6 +23,7 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 ## 11 November 2026 – A tour of the menu
 
 - **Menu tour (PC):** the first time you come in as a guest, the main menu shows you around, one note at a time. It starts at How to play (*New here? Press here to learn how the game works.*), then Puzzles, Units, your profile, Settings and the music, and ends at Play. **Got it** brings the next note, and so does pressing the thing it points at. While the tour is on, it is the only note on screen: the island's own notes wait, and *Stay logged in?* is asked after it. *Turn off helpers* on any note ends it, and **Helpers** in Settings starts it again.
+- **How to play** has a new chapter, **Controls** (PC): what the mouse and the few keys do, in three short lists. *Deploying*: buying, placing and moving squads, and opening a squad or a tower. *The fight*: READY, the speed and Skip. *The view*: scroll to come closer, right-drag or Q and E to turn the board, Esc for the view from above.
 
 ---
 
