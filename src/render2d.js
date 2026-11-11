@@ -763,10 +763,55 @@ const Render2D = (cv, view, opts = {}) => {
   // her reach and this round's nests, see-through, each nest marked HIGH (only ranged units reach it) or LOW
   const BOSS_POOL = '#7FD13B';
   // her state in the fight (mom.bs, src/boss.js): hanging on her thread, the mortar winding up, stunned on the ground
+  const BITE_COL = { fast: '#FFE15A', heavy: '#FF5A4E', sweep: '#FF9A3D' }; // her bite's colour, by style
   function drawBossState() {
     const mom = bt && bt.bodies.find(b => b.u.boss && b.alive); if (!mom || !mom.bs) return;
     const bs = mom.bs, x = PX(mom.x), y = PY(mom.y), R = radius(mom.u), time = bt.time();
-    if (bs.phase === 'hanging') bossThread(x, y, R, time);
+    const webR = typeof Boss !== 'undefined' ? Boss.CFG.mommy.web.r : 14;
+    if (bs.phase === 'hanging') { // her web: a faint ring of silk round her (inside it, slower and softer)
+      ctx.strokeStyle = '#EDEDED'; ctx.globalAlpha = 0.14; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(x, y, webR * S, 0, Math.PI * 2); ctx.stroke();
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * R, y + Math.sin(a) * R); ctx.lineTo(x + Math.cos(a) * webR * S, y + Math.sin(a) * webR * S); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+      bossThread(x, y, R, time);
+    }
+    // her bite winding up: a line to whom she will bite, brighter as it comes, and a ring on them just before
+    if (bs.aim && bs.aim.k > 0.45) {
+      const k = (bs.aim.k - 0.45) / 0.55, tx = PX(bs.aim.x), ty = PY(bs.aim.y), col = BITE_COL[bs.bite] || '#FFE15A';
+      ctx.strokeStyle = col; ctx.globalAlpha = 0.2 + 0.6 * k; ctx.lineWidth = 1 + 2 * k; ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke(); ctx.setLineDash([]);
+      if (k > 0.65) { ctx.globalAlpha = 0.5 + 0.4 * Math.sin(time * 18); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(tx, ty, Math.max(1.2, mom.u.splash || 0) * S, 0, Math.PI * 2); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    }
+    // the mortar's mark: a red crosshair on the clump it is about to hit
+    if (bs.mortarAim) {
+      const mx = PX(bs.mortarAim.x), my = PY(bs.mortarAim.y), r = bs.mortarAim.r * S;
+      ctx.strokeStyle = '#FF5A4E'; ctx.globalAlpha = 0.55 + 0.35 * Math.sin(time * 14); ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(mx, my, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(mx - r * 1.2, my); ctx.lineTo(mx - r * 0.5, my); ctx.moveTo(mx + r * 0.5, my); ctx.lineTo(mx + r * 1.2, my); ctx.moveTo(mx, my - r * 1.2); ctx.lineTo(mx, my - r * 0.5); ctx.moveTo(mx, my + r * 0.5); ctx.lineTo(mx, my + r * 1.2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    for (const e of mom.ev || []) { // what she just did
+      const a = time - e.t;
+      if (e.k === 'bite') { // where it lands: a splat the size of its splash, in the bite's colour
+        const la = time - e.land; if (la < 0 || la > 0.45) continue;
+        const q = la / 0.45, rr = Math.max(1.5, e.r) * S * (0.6 + 0.6 * q), ex = PX(e.x), ey = PY(e.y), col = BITE_COL[e.bite] || '#FFE15A';
+        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.globalAlpha = 0.25 * (1 - q); ctx.beginPath(); ctx.arc(ex, ey, rr, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.9 * (1 - q); ctx.lineWidth = e.bite === 'heavy' ? 4 : 2; ctx.stroke();
+        if (e.bite === 'sweep') { ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ex, ey, rr * 0.75, q * 4, q * 4 + Math.PI * 1.4); ctx.stroke(); } // the sweep's swipe
+      } else if (e.k === 'mortar' && a >= 0 && a < 0.9) { // the nest flung at the clump, and its web splat
+        const ex = PX(e.x), ey = PY(e.y), q = a / 0.9;
+        if (a < 0.3) { ctx.strokeStyle = '#F4F1E8'; ctx.globalAlpha = 0.9 * (1 - a / 0.3); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(PX(e.fx), PY(e.fy)); ctx.lineTo(ex, ey); ctx.stroke(); }
+        const rr = e.r * S * (0.5 + 0.5 * Math.min(1, q * 2));
+        ctx.strokeStyle = '#F4F1E8'; ctx.globalAlpha = 0.85 * (1 - q); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(ex, ey, rr, 0, Math.PI * 2); ctx.stroke();
+        for (let k = 0; k < 8; k++) { const an = k * Math.PI / 4 + 0.2; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex + Math.cos(an) * rr, ey + Math.sin(an) * rr); ctx.stroke(); }
+      } else if (e.k === 'fall' && a >= 0 && a < 0.9) { // she drops: a ring of dust
+        ctx.strokeStyle = '#B49A7A'; ctx.globalAlpha = 0.7 * (1 - a / 0.9); ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(x, y, R * (1 + a * 1.4), 0, Math.PI * 2); ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
     if (bs.mortarIn != null) { // the mortar winding up: a red ring that closes as the shot comes
       const full = bs.mortarIn > 4.05 ? 5 : 4, k = Math.max(0, Math.min(1, 1 - bs.mortarIn / full));
       ctx.strokeStyle = '#FF5A4E'; ctx.globalAlpha = 0.35 + 0.4 * k; ctx.lineWidth = 3;
