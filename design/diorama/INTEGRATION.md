@@ -153,25 +153,34 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   finished the old guided tutorial (`phonebellum.tutorial.v1`). Only `mode === 'ai'` on `html.pc`: not puzzles, online
   matches, replays or phones. No note while a sheet is open. `tools/tests/helpers-ui.js` plays it through (2D board).
 - **The menu's guide (2026-11-11, on the branch `claude/wonderful-einstein-zt2no0` for the owner to see first; PC
-  only).** The same yellow notes on the main menu, for a guest's first time in (`MENU_TIPS`, `menuPick`, `guideStart`
-  in `src/site-template.html`; the box, the loop and the switch are the helpers'). **Who gets it:** only a guest who
-  comes in from the welcome screen (Play as guest, Sign up as a guest) for the first time on a device: `guideStart`
-  sets `pb-helpers`' `menu` to `[]` (absent / `null`: this device never has it). Not a page that opens on the menu, not
-  Log in or Sign up with Google, not a device that has played here before (a game's helper notes, a solved puzzle, the
-  old tutorial) and not a guest after a log-out (`guideNever`). `?guide` in the address starts it on any device, to look
-  at it. **The notes**, one at a time: **New here?** "Press here to learn how the game works." (beside How to play),
-  **Ready to fight?** (over PLAY), **Your battlefield.** (over Change battlefield), **Music.** (over the player),
-  **You're a guest.** (under your name: what a Google sign-in gives; left out once signed in with Google), **That's the
-  menu.** (under Settings: the sound, full screen and Helpers). A note goes with **Got it** (the next one comes at
-  once), when its thing is pressed (How to play, Play), or once it has been on screen 1.2 s and the player has gone to
-  another screen (Play, Profile, Puzzles, Units or Rankings clicked open, a match). A dropdown, a sheet or the playlist
-  over the menu only hides it. The notes under the top bar wait for *Stay logged in?* to be answered; New here? shows
-  beside it. While a note is on the menu's words, those words' own white hover notes (and Full leaderboard) stay away
-  (`helpQuiet`, asked by `showing()` in `src/diorama.js`). **Placing:** `helperPlace` keeps a menu note off the menu's
-  words, the music and Change battlefield (`MENU_KEEP`); in a window with no free side a note is left out until the
-  window changes (1024×768: Your battlefield), except New here?, which always shows. **Turning it off:** "Turn off
-  helpers" is Settings' Helpers, the one switch for every yellow note (a last note points at Settings); Helpers On
-  starts the guide over on a device that had it. Puzzles and Units have no note: there is no free side next to them.
+  only).** Notes on the main menu for a guest's first time in (`MENU_TIPS`, `menuPick`, `guideStart`, `helperLine` in
+  `src/site-template.html`; the loop, the store and the switch are the helpers'). **The look (owner, 2026-11-11):** not
+  the helpers' yellow box but the Diorama's own notes: cream type on the field with the field's halo, a line under the
+  label (over it when the label hangs below its thing) and out to a dot with a ring on the thing; the ring pulses, so
+  the eye finds it. **Got it** is the notes' small saffron button (as INVITE A FRIEND), *Turn off helpers* an
+  underlined word. A match's helpers keep the yellow box. **Who gets it:** only a guest who comes in from the welcome
+  screen (Play as guest, Sign up as a guest) for the first time on a device: `guideStart` sets `pb-helpers`' `menu` to
+  `[]` (absent / `null`: this device never has it). Not a page that opens on the menu, not Log in or Sign up with
+  Google, not a device that has played here before (a game's helper notes, a solved puzzle, the old tutorial) and not
+  a guest after a log-out (`guideNever`). `?guide` in the address starts it on any device, to look at it. **The
+  notes**, one at a time: **New here?** "Press here to learn how the game works." (the dot at the end of HOW TO PLAY),
+  **Ready to fight?** (on PLAY's top edge), **Your battlefield.** (beside Change battlefield), **Music.** (over the
+  player), **You're a guest.** (under your name: what a Google sign-in gives; left out once signed in with Google),
+  **That's the menu.** (under Settings: the sound, full screen and Helpers). A note goes with **Got it** (the next one
+  comes at once), when its thing is pressed (How to play, Play), or once it has been on screen 1.2 s and the player
+  has gone to another screen (Play, Profile, Puzzles, Units or Rankings clicked open, a match). A dropdown, a sheet or
+  the playlist over the menu only hides it. The notes under the top bar wait for *Stay logged in?* to be answered; New
+  here? shows beside it. While a note is on the menu's words, those words' own white hover notes (and Full
+  leaderboard) stay away (`helpQuiet`, asked by `showing()` in `src/diorama.js`). **Placing (`helperLine`):** each note
+  says where its dot stands (`side`, `along`, `off`) and which way its label runs (`lean`); the label takes the first
+  spot that is on screen and over none of the menu's words (their letters, `wordBox`), the music, Change battlefield,
+  the top bar or the logo (`MENU_KEEP`), in the open field if it can: off the island (`dio.api.isle`, its corners on
+  screen) and clear of the island's two standing notes. Where it has to lie over a standing note (the golem's, the
+  hover hint), that note steps aside while it is up (`helpCovers`, asked by `notes()`). Near the screen's edge a
+  label slides back in along its line. In a window with no free spot a note is left out until the window changes
+  (1280×720 and 1024×768: Your battlefield), except New here?, which always shows. **Turning it off:** "Turn off
+  helpers" is Settings' Helpers, the one switch for every note (a last note points at Settings); Helpers On starts
+  the guide over on a device that had it. Puzzles and Units have no note yet; with lines instead of boxes they could.
   `tools/tests/menu-guide-ui.js` (the game server is never called). Pictures: `screens/menu-guide-*.jpg`.
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 

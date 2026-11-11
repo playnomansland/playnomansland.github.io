@@ -1,5 +1,6 @@
-// The menu's guide (2026-11-11): the yellow notes on the Diorama's main menu for a guest's first time in, on a PC
-// (src/site-template.html, MENU_TIPS; the box and the switch are the first game's helpers', tools/tests/helpers-ui.js).
+// The menu's guide (2026-11-11): notes on the Diorama's main menu for a guest's first time in, on a PC, drawn as the
+// Diorama's own notes: cream type, a line and a dot on the thing (src/site-template.html, MENU_TIPS, helperLine; the
+// loop and the switch are the first game's helpers', tools/tests/helpers-ui.js).
 //  - only a guest coming in from the welcome screen for the first time on a device gets it: not a page opened on the
 //    menu, not a device that has played here before, not after a log-out
 //  - one at a time: New here? (How to play), Ready to fight? (Play), Your battlefield, Music, You're a guest (your
@@ -31,10 +32,18 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&server=http://127.0.0.
   const wait = (p, head, ms = 8000) => p.waitForFunction((h) => { const e = document.getElementById('helper'); return (e.hidden || e.style.visibility === 'hidden' ? '' : e.querySelector('b').textContent) === h; }, head, { timeout: ms }).then(() => true, async () => { console.log('     (the note was: ' + JSON.stringify(await note(p)) + ', dio ' + await p.evaluate(() => document.getElementById('dio').className + ' ' + localStorage.getItem('pb-helpers')) + ')'); return false; });
   const js = (p, sel) => p.evaluate((s) => { const x = document.querySelector(s); if (x) x.click(); return !!x; }, sel);
   const store = (p) => p.evaluate(() => JSON.parse(localStorage.getItem('pb-helpers') || 'null'));
-  // the note's tail is on what it's about: the box sits beside the target, on screen, over none of the other things
-  const beside = (p, sel, clear = []) => p.evaluate(([s, cl]) => { const e = document.getElementById('helper').getBoundingClientRect(), t = document.querySelector(s).getBoundingClientRect();
-    const off = (r) => e.right <= r.left + 2 || e.left >= r.right - 2 || e.bottom <= r.top + 2 || e.top >= r.bottom - 2, near = Math.max(t.left - e.right, e.left - t.right, t.top - e.bottom, e.top - t.bottom) < 40;
-    return off(t) && near && e.left >= 0 && e.top >= 0 && e.right <= innerWidth && e.bottom <= innerHeight && cl.every(c => { const r = document.querySelector(c).getBoundingClientRect(); return !r.width || off(r); }); }, [sel, clear]);
+  // the note is on what it's about: its dot stands on the thing's edge, and its label lies off it, on screen, over none
+  // of the other things
+  const beside = (p, sel, clear = []) => p.evaluate(([s, cl]) => {
+    const wb = (q) => { const el = document.querySelector(q); if (!el.matches('.menu .sub .item')) return el.getBoundingClientRect(); // (a menu word: its letters, as the page measures it)
+      let l = 1e9, t = 1e9, r = -1e9, b = -1e9; const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), rg = document.createRange();
+      for (let n = tw.nextNode(); n; n = tw.nextNode()) { rg.selectNodeContents(n); for (const c of rg.getClientRects()) { l = Math.min(l, c.left); t = Math.min(t, c.top); r = Math.max(r, c.right); b = Math.max(b, c.bottom); } }
+      return { left: l, top: t, right: r, bottom: b, width: r - l, height: b - t }; };
+    const h = document.getElementById('helper'), e = h.getBoundingClientRect(), t = wb(s);
+    const off = (r) => e.right <= r.left + 2 || e.left >= r.right - 2 || e.bottom <= r.top + 2 || e.top >= r.bottom - 2;
+    const d = h.querySelector('.hp-ln .dot'), dr = d ? d.getBoundingClientRect() : null, dx = dr ? (dr.left + dr.right) / 2 : 0, dy = dr ? (dr.top + dr.bottom) / 2 : 0;
+    const onIt = !!dr && dx > t.left - 20 && dx < t.right + 20 && dy > t.top - 20 && dy < t.bottom + 20; // (the dot: on the thing, or just off its edge)
+    return h.classList.contains('line') && onIt && off(t) && e.left >= 0 && e.top >= 0 && e.right <= innerWidth && e.bottom <= innerHeight && cl.every(c => { const r = wb(c); return !r.width || off(r); }); }, [sel, clear]);
   const WORDS = ['#play', '#puzzles-open', '#how', '#dio .menu [data-cam="units"]', '#dio .menu [data-cam="ranks"]'];
   const guestIn = async (p) => { await p.click('#w-guest'); await p.waitForTimeout(300); await p.mouse.move(700, 60); }; // (the pointer off the menu's words)
 
@@ -51,9 +60,9 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&server=http://127.0.0.
     ok(await p.evaluate(() => document.querySelector('#helper span').textContent) === 'Press here to learn how the game works.', 'it says: Press here to learn how the game works.');
     ok(await beside(p, '#how', WORDS.filter(w => w !== '#how')), 'it sits beside How to play, over none of the menu’s words');
     ok(JSON.stringify((await store(p)).menu) === '[]', 'the guide is this device’s from now on');
-    // pointing at the menu's words: their own white notes stay away under the yellow one
+    // pointing at the menu's words: their own white notes stay away under the guide's
     await p.hover('#how'); await p.waitForTimeout(700);
-    ok(await p.evaluate(() => getComputedStyle(document.querySelector('#dio .btn-note[data-btn="rules"]')).display === 'none') && (await note(p)) === 'New here?', 'pointing at How to play: the yellow note stays, the word’s white note stays away');
+    ok(await p.evaluate(() => getComputedStyle(document.querySelector('#dio .btn-note[data-btn="rules"]')).display === 'none') && (await note(p)) === 'New here?', 'pointing at How to play: the guide’s note stays, the word’s white note stays away');
     await p.hover('#dio .menu [data-cam="ranks"]'); await p.waitForTimeout(700);
     ok(await p.evaluate(() => getComputedStyle(document.querySelector('#dio .btn-note[data-btn="ranks"]')).display === 'none' && getComputedStyle(document.getElementById('lb-open')).display === 'none'), 'nor Rankings’ (with its Full leaderboard)');
     await p.mouse.move(700, 60); await p.waitForTimeout(400);
@@ -64,7 +73,7 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&server=http://127.0.0.
     await p.keyboard.press('Escape');
     ok(await wait(p, 'New here?') && (await store(p)).menu.length === 0, 'closed: the same note is back (it only hid)');
     // Got it: the next one, each on its thing
-    const steps = [['Ready to fight?', '#play', 'play'], ['Your battlefield.', '#dio .bf-note', 'field'], ['Music.', '#dio .music', 'music'], ['You’re a guest.', '#dio .acct button:nth-of-type(2)', 'guest'], ['That’s the menu.', '#dio .acct button:nth-of-type(3)', 'settings']];
+    const steps = [['Ready to fight?', '#play', 'play'], ['Your battlefield.', '#dio .bf-note .bf-btn', 'field'], ['Music.', '#dio .music', 'music'], ['You’re a guest.', '#dio .acct button:nth-of-type(2)', 'guest'], ['That’s the menu.', '#dio .acct button:nth-of-type(3)', 'settings']];
     let prev = 'how';
     for (const [head, sel, id] of steps) {
       await js(p, '#hp-ok');
@@ -138,9 +147,9 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&server=http://127.0.0.
   // ---- other windows: every note on screen, beside its thing, over none of the menu's words, the music or Change
   // battlefield. A small window has no free side for some: those are left out there (New here? always shows) ----
   const KEEP = WORDS.concat(['#dio .music', '#dio .bf-note']);
-  for (const [size, left] of [[[1920, 1080], []], [[1366, 768], []], [[1280, 720], []], [[1024, 768], ['Your battlefield.']]]) {
+  for (const [size, left] of [[[1920, 1080], []], [[1536, 730], []], [[1366, 768], []], [[1280, 720], ['Your battlefield.']], [[1024, 768], ['Your battlefield.']]]) {
     const p = await open({ size }); await guestIn(p);
-    const steps = [['New here?', '#how'], ['Ready to fight?', '#play'], ['Your battlefield.', '#dio .bf-note'], ['Music.', '#dio .music'], ['You’re a guest.', '#dio .acct button:nth-of-type(2)'], ['That’s the menu.', '#dio .acct button:nth-of-type(3)']].filter(x => !left.includes(x[0]));
+    const steps = [['New here?', '#how'], ['Ready to fight?', '#play'], ['Your battlefield.', '#dio .bf-note .bf-btn'], ['Music.', '#dio .music'], ['You’re a guest.', '#dio .acct button:nth-of-type(2)'], ['That’s the menu.', '#dio .acct button:nth-of-type(3)']].filter(x => !left.includes(x[0]));
     let all = true, why = '';
     for (const [head, sel] of steps) {
       const up = await wait(p, head, 4000), fits = up && await beside(p, sel, (head === 'New here?' && size[0] < 1200 ? WORDS : KEEP).filter(w => w !== sel));

@@ -2178,6 +2178,26 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 @keyframes hp-nudge-x { 0%, 100% { translate: 0 0; } 50% { translate: var(--nudge) 0; } }
 @keyframes hp-nudge-y { 0%, 100% { translate: 0 0; } 50% { translate: 0 var(--nudge); } }
 @media (prefers-reduced-motion: reduce) { .helper, .helper .hp-box { animation: none !important; } }
+/* the menu's guide (2026-11-11) is drawn as the Diorama's own notes (owner): cream type on the field with the field's
+   halo, a line under the label (over it when the label hangs below) and out to a dot on the thing. Got it is the
+   notes' small saffron button (.rw-btn), Turn off helpers a plain underlined word */
+.helper.line { max-width: 236px; filter: none; animation: none !important; font: 700 15px/1.3 "Bricolage Grotesque", system-ui, sans-serif; color: #F4ECD8; text-shadow: 0 0 3px #2E3E9C, 0 0 6px #2E3E9C, 0 0 10px #2E3E9C, 0 0 14px #2E3E9C; }
+.helper.line .hp-box { display: block; padding: 0 0 9px; background: none; clip-path: none; animation: hp-fade .25s ease both; }
+.helper.line[data-line="over"] .hp-box { padding: 9px 0 0; }
+.helper.line .hp-box b { display: block; font-size: 15px; }
+.helper.line .hp-box span { display: block; margin-top: 4px; font-size: 13px; font-weight: 700; opacity: .88; }
+.helper.line .hp-row { margin-top: 9px; gap: 14px; }
+.helper.line .hp-row button { color: #F4ECD8; font-size: 12.5px; opacity: .8; }
+.helper.line .hp-row #hp-ok { display: inline-flex; align-items: center; height: 24px; padding: 2px 11px 0 9px; font: 700 16px/1 "Chakra Petch", "Arial Narrow", sans-serif; text-transform: uppercase; letter-spacing: -.01em; color: #17140F; background: #F2B23A; clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; opacity: 1; transition: transform .15s ease; }
+.helper.line .hp-row #hp-ok:hover, .helper.line .hp-row #hp-ok:focus-visible { color: #17140F; transform: rotate(-1.5deg) scale(1.04); }
+.helper.line .hp-ln { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; color: #F4ECD8; animation: hp-fade .25s ease both; }
+.helper.line .hp-ln path { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.helper.line .hp-ln .dot { fill: currentColor; }
+.helper.line .hp-ln .ring { fill: none; stroke: currentColor; stroke-width: 1; opacity: .5; }
+.helper.line .hp-ln .pulse { fill: none; stroke: currentColor; stroke-width: 1.5; transform-box: fill-box; transform-origin: center; animation: hp-ring 1.8s ease-out infinite; }
+@keyframes hp-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hp-ring { 0% { transform: scale(1); opacity: .7; } 70%, 100% { transform: scale(2.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .helper.line .hp-ln, .helper.line .hp-ln .pulse { animation: none !important; } .helper.line .hp-ln .pulse { opacity: 0; } }
 /* tutorial: the coach line over the board, a ring on what it talks about, and a glow on the next thing to tap */
 .board-banner { position: absolute; left: 0; right: 0; top: 42%; z-index: 4; pointer-events: none; text-align: center; padding: 14px 8px; background: linear-gradient(90deg, transparent, rgba(13, 19, 21, 0.88) 18%, rgba(13, 19, 21, 0.88) 82%, transparent); border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold); color: var(--gold); font-size: 26px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; animation: banner-in 3.2s ease both; }
 .board-banner small { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; color: var(--text, #e8e6df); }
@@ -18419,7 +18439,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '10 Nov 2026 · 80c8dbe'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '10 Nov 2026 · c5d1a19'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19258,16 +19278,16 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const dioHas = (...c) => { const D = $('dio'); return !!D && c.some(x => D.classList.contains(x)); };
   const dioQ = (sel) => { const D = $('dio'); return D ? D.querySelector(sel) : null; };
   // menu: one of these. quiet: the menu words' own white notes stay away while it's up (they would lie under it).
-  // must: shown even in a window with no free side for it (the others are left out there, helperPlace); own: its
-  // thing, where `at` is a point on it
-  const MENU_KEEP = ['#play', '#puzzles-open', '#how', '.menu [data-cam="units"]', '.menu [data-cam="ranks"]', '.music', '.bf-note'];
+  // must: shown even in a window with no free spot for it (the others are left out there, helperLine); own: its
+  // thing, where `at` is a point or a box on it; side, along, off, lean: where its dot stands (which edge, how far along it and off it) and which way its label runs
+  const MENU_KEEP = ['#play', '#puzzles-open', '#how', '.menu [data-cam="units"]', '.menu [data-cam="ranks"]', '.music', '.bf-note', '.acct', '.logo'];
   const MENU_TIPS = [
-    { id: 'how', menu: true, quiet: true, must: true, show: () => true, done: () => dioHas('how'), at: () => $('how'), side: 'right', h: 'New here?', t: 'Press here to learn how the game works.' },
-    { id: 'play', menu: true, quiet: true, get own() { return $('play'); }, show: () => true, done: () => dioHas('play', 'in-rooms'), at: () => { const r = $('play').getBoundingClientRect(); return r.width ? { x: r.left + Math.min(r.width / 2, 190), y: r.top + 2 } : null; }, side: 'top', h: 'Ready to fight?', t: 'Start with a game against the computer. Notes like this one point out what to press.' }, // (over the word, not the middle of its long shard)
-    { id: 'field', menu: true, show: () => true, at: () => dioQ('.bf-note'), side: 'top', h: 'Your battlefield.', t: 'This is the board you play on. Change its look here.' },
-    { id: 'music', menu: true, show: () => true, at: () => dioQ('.music'), side: 'top', h: 'Music.', t: 'Pause or skip a song here. Playlist lets you pick what plays.' },
-    { id: 'guest', menu: true, show: () => !(acct && acct.google) && $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(2)'), side: 'bottom', h: 'You’re a guest.', t: 'Click your name to sign in with Google. It keeps your name and results, and opens Ranked and Friends.' },
-    { id: 'settings', menu: true, show: () => $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(3)'), side: 'bottom', h: 'That’s the menu.', t: 'Settings has the sound, full screen and Helpers: these notes, On or Off.' },
+    { id: 'how', menu: true, quiet: true, must: true, show: () => true, done: () => dioHas('how'), at: () => { const e = $('how'), g = wordBox(e); return e.getBoundingClientRect().width ? g : null; }, get own() { return $('how'); }, side: 'right', off: 15, h: 'New here?', t: 'Press here to learn how the game works.' }, // (the dot at the end of the word's letters)
+    { id: 'play', menu: true, quiet: true, get own() { return $('play'); }, show: () => true, done: () => dioHas('play', 'in-rooms'), at: () => { const r = $('play').getBoundingClientRect(); return r.width ? { x: r.left + Math.min(r.width * 0.3, 150), y: r.top + 4 } : null; }, side: 'top', h: 'Ready to fight?', t: 'Start with a game against the computer. Notes like this one point out what to press.' }, // (on the shard's top edge, over the word)
+    { id: 'field', menu: true, get own() { return dioQ('.bf-note'); }, show: () => true, at: () => dioQ('.bf-note .bf-btn'), side: 'left', h: 'Your battlefield.', t: 'This is the board you play on. Change its look here.' },
+    { id: 'music', menu: true, show: () => true, at: () => dioQ('.music'), side: 'top', along: 0.8, off: 12, lean: -1, h: 'Music.', t: 'Pause or skip a song here. Playlist lets you pick what plays.' },
+    { id: 'guest', menu: true, show: () => !(acct && acct.google) && $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(2)'), side: 'bottom', only: true, off: 13, lean: 1, h: 'You’re a guest.', t: 'Click your name to sign in with Google. It keeps your name and results, and opens Ranked and Friends.' },
+    { id: 'settings', menu: true, show: () => $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(3)'), side: 'bottom', only: true, off: 13, lean: -1, h: 'That’s the menu.', t: 'Settings has the sound, full screen and Helpers: these notes, On or Off.' },
   ];
   const menuActive = () => DIO && !!helpers.menu && !helpers.off && phase === 'start' && !m && document.documentElement.classList.contains('pc') && MENU_TIPS.some(T => !helpers.menu.includes(T.id));
   // the plain main menu is on screen (not Play, Rooms, Profile, Puzzles, How to play, or Units / Rankings clicked open)
@@ -19275,6 +19295,10 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // something lies over it for a moment: a sheet, a dropdown, the playlist (or the island is still flying)
   const menuOver = () => !$('sheet-back').hidden || dioHas('music-open') || !$('dd-friends').hidden || !$('dd-settings').hidden || !!(dio.api && dio.api.flying && dio.api.flying());
   const helpQuiet = () => !!helpCur && !!helpCur.quiet && !$('helper').hidden; // (src/diorama.js asks: showing())
+  // the label's box on the menu: an island note that would lie under it steps aside while it's up (src/diorama.js
+  // asks, with the note's own box: notes())
+  let helpBox = null;
+  const helpCovers = (g) => !!helpBox && !$('helper').hidden && $('helper').style.visibility !== 'hidden' && g.left < helpBox.r + 12 && g.right > helpBox.l - 12 && g.top < helpBox.b + 10 && g.bottom > helpBox.t - 10;
   // a guest comes in from the welcome screen (Play as guest, Sign up as a guest). The first time on this device starts
   // the guide; a device that has played here before (a game with helpers, a puzzle, the old tutorial, an account that
   // logged out: guideNever) has had its first time
@@ -19331,9 +19355,11 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (dirty) saveHelpers();
   }
   function helperDraw(T, plain) {
-    const el = $('helper'); clearTimeout(helpFlash); helpFlash = 0;
+    const el = $('helper'); clearTimeout(helpFlash); helpFlash = 0; helpBox = null;
     if (!T) { el.hidden = true; el.innerHTML = ''; return; }
-    el.innerHTML = `<div class="hp-box"><b>${T.h}</b><span>${typeof T.t === 'function' ? T.t() : T.t}</span>${plain ? '' : '<div class="hp-row"><button id="hp-ok">Got it</button><button id="hp-off">Turn off helpers</button></div>'}</div><i class="hp-tail"></i>`;
+    const line = !!(T.menu || T.line); // the menu's notes: the Diorama's own (a line and a dot), not the yellow box
+    el.classList.toggle('line', line); if (line) el.removeAttribute('data-side'); else el.removeAttribute('data-line');
+    el.innerHTML = `${line ? '<svg class="hp-ln" aria-hidden="true"><path/><circle class="pulse" r="9"/><circle class="ring" r="9"/><circle class="dot" r="4.5"/></svg>' : ''}<div class="hp-box"><b>${T.h}</b><span>${typeof T.t === 'function' ? T.t() : T.t}</span>${plain ? '' : '<div class="hp-row"><button id="hp-ok">Got it</button><button id="hp-off">Turn off helpers</button></div>'}</div>${line ? '' : '<i class="hp-tail"></i>'}`;
     el.hidden = false; el.style.visibility = 'hidden'; // (shown once it has its place)
     helperPlace(T);
   }
@@ -19341,8 +19367,9 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   function helperPlace(T = helpCur) {
     const el = $('helper'); if (!T || el.hidden) return;
     const a = T.at(); if (!a) { el.style.visibility = 'hidden'; return; }
-    const r = a.getBoundingClientRect ? a.getBoundingClientRect() : { left: a.x, right: a.x, top: a.y, bottom: a.y, width: 1, height: 1 };
+    const r = a.getBoundingClientRect ? a.getBoundingClientRect() : a.width != null ? a : { left: a.x, right: a.x, top: a.y, bottom: a.y, width: 1, height: 1 }; // (an element, a box or a point)
     if (!r.width && !r.height) { el.style.visibility = 'hidden'; return; }
+    if (el.classList.contains('line')) return helperLine(T, el, a, r);
     const w = el.offsetWidth, h = el.offsetHeight, gap = 13, W = innerWidth, H = innerHeight, cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
     // its own side first, then the opposite one, then the other two: the first with room that doesn't lie over READY
     const flip = { right: 'left', left: 'right', top: 'bottom', bottom: 'top' }, turn = T.side === 'right' || T.side === 'left' ? ['bottom', 'top'] : ['right', 'left'];
@@ -19350,18 +19377,64 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       ? { x: sd === 'right' ? r.right + gap : r.left - gap - w, y: Math.max(8, Math.min(H - h - 8, cy - h / 2)), ok: sd === 'right' ? r.right + gap + w <= W - 8 : r.left - gap - w >= 8 }
       : { x: Math.max(8, Math.min(W - w - 8, cx - w / 2)), y: sd === 'top' ? r.top - gap - h : r.bottom + gap, ok: sd === 'top' ? r.top - gap - h >= 8 : r.bottom + gap + h <= H - 8 };
     const go = $('ready') || $('fight'), gr = go && go !== a ? go.getBoundingClientRect() : null;
-    // (the menu's notes lie over none of the menu's words, the music or Change battlefield, their own thing aside)
-    const keep = T.menu ? MENU_KEEP.map(dioQ).filter(e => e && e !== a && e !== T.own && !e.contains(a.nodeType ? a : null)).map(e => e.getBoundingClientRect()).filter(g => g.width) : gr ? [gr] : [];
-    const clear = (q) => keep.every(g => q.x + w < g.left || q.x > g.right || q.y + h < g.top || q.y > g.bottom);
-    const order = [T.side, flip[T.side], ...turn], free = order.find(sd => { const q = spot(sd); return q.ok && clear(q); });
-    // no free side: a match's note takes a side with room, and so does the menu's first; any other menu note waits for a
-    // bigger window (menuPick goes on to the next)
-    if (!free && T.menu && !T.must) { T.cramped = true; el.style.visibility = 'hidden'; return; }
-    const side = free || order.find(sd => spot(sd).ok) || T.side;
+    const clear = (q) => !gr || q.x + w < gr.left || q.x > gr.right || q.y + h < gr.top || q.y > gr.bottom;
+    const order = [T.side, flip[T.side], ...turn], side = order.find(sd => { const q = spot(sd); return q.ok && clear(q); }) || order.find(sd => spot(sd).ok) || T.side;
     const { x, y } = spot(side);
     el.style.setProperty('--tail', (side === 'right' || side === 'left' ? Math.max(14, Math.min(h - 14, cy - y)) : Math.max(16, Math.min(w - 16, cx - x))) + 'px');
     if (el.dataset.side !== side) el.dataset.side = side;
     el.style.left = Math.round(x) + 'px'; el.style.top = Math.round(y) + 'px'; el.style.visibility = '';
+  }
+  // A menu note, as the Diorama's notes are drawn: the dot stands on the thing's edge (T.side; T.along: how far along
+  // that edge, 0 to 1), and the label lies off it with its line: under the label when the label is above or beside the
+  // dot, over it when the label hangs below. T.lean: which way the label runs from the dot (1: right, or down the
+  // side; -1: left, or up). The label lies over none of the menu's words, the music, Change battlefield or the
+  // island's standing notes (MENU_KEEP, [data-home]); the first spot that is free and on screen is taken: its own
+  // side both ways, then the opposite side, then the other two; a spot in the open field (off the island, clear of the
+  // island's standing notes) before one that isn't. None free: the menu's first note takes a spot with
+  // room anyway (T.must); any other waits for a bigger window (T.cramped: menuPick goes on to the next)
+  const wordBox = (e) => { // a menu word's letters (its button is wider, and its shard only shows when pointed at)
+    if (!e.matches('.menu .sub .item')) return e.getBoundingClientRect();
+    let l = 1e9, t = 1e9, r = -1e9, b = -1e9; const tw = document.createTreeWalker(e, NodeFilter.SHOW_TEXT), rg = document.createRange();
+    for (let n = tw.nextNode(); n; n = tw.nextNode()) { rg.selectNodeContents(n); for (const q of rg.getClientRects()) { l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom); } }
+    return r > l ? { left: l, top: t, right: r, bottom: b, width: r - l, height: b - t } : e.getBoundingClientRect();
+  };
+  function helperLine(T, el, a, r) {
+    const w = el.offsetWidth, h = el.offsetHeight, W = innerWidth, H = innerHeight, isEl = a instanceof Element, D = a.x != null ? 0 : T.off == null ? 6 : T.off, OUT = 44, RUN = 34;
+    const keep = MENU_KEEP.map(dioQ).filter(e => e && e !== a && e !== T.own && !(isEl && e.contains(a)) && getComputedStyle(e).display !== 'none').map(wordBox).filter(g => g.width);
+    // the island's standing notes (the golem's, the hover hint), where they stand when shown (e._gr, kept by notes()):
+    // a spot clear of them is better; one over a note makes that note step aside (helpCovers)
+    const stand = [...$('dio').querySelectorAll('.note[data-home]')].map(e => e._gr).filter(Boolean);
+    const al = T.along == null ? 0.5 : T.along;
+    // the island on screen (its top and the earth under it): a label is better off in the open field
+    let isle = null; try { isle = dio.api && dio.api.isle ? dio.api.isle() : null; } catch (e) {}
+    const inQuad = (px, py) => { let s = 0; for (let i = 0; i < 4; i++) { const [ax, ay] = isle[i], [bx, by] = isle[(i + 1) % 4], c = (bx - ax) * (py - ay) - (by - ay) * (px - ax); if (c) { if (s && (c > 0) !== (s > 0)) return false; s = c; } } return true; };
+    const onIsle = (x, y) => { if (!isle) return false; for (let i = 0; i <= 4; i++) for (let j = 0; j <= 3; j++) { const px = x + w * i / 4, py = y + h * j / 3; if (inQuad(px, py) || inQuad(px, py - 30) || inQuad(px, py - 58)) return true; } return false; };
+    const spot = (sd, lean) => {
+      let dx, dy, x, y, ly, over = false, join = null;
+      if (sd === 'top' || sd === 'bottom') { // the label above (its line under it) or below (its line over it), run off to one side of the dot
+        dx = r.left + (r.right - r.left) * al; dy = sd === 'top' ? r.top - D : r.bottom + D; over = sd === 'bottom';
+        // (near the screen's edge the label slides back in along its line, and the line from the dot meets it part-way)
+        ly = sd === 'top' ? dy - OUT : dy + OUT; x = Math.max(8, Math.min(W - 8 - w, lean > 0 ? dx + RUN : dx - RUN - w)); y = over ? ly : ly - h;
+        join = Math.max(x, Math.min(x + w, dx + lean * RUN));
+      } else { // beside it: the label's line under it, a little below the dot (or over it, a little above)
+        dx = sd === 'right' ? r.right + D : r.left - D; dy = r.top + (r.bottom - r.top) * al; over = lean < 0;
+        ly = over ? dy - 30 : dy + 30; x = sd === 'right' ? dx + 26 : dx - 26 - w; y = over ? ly : ly - h;
+      }
+      if (join == null) join = sd === 'right' ? x : x + w;
+      return { dx, dy, x, y, ly, join, over, ok: x >= 8 && x + w <= W - 8 && y >= 8 && y + h <= H - 8,
+        clear: keep.every(g => x + w < g.left - 4 || x > g.right + 4 || y + h < g.top - 4 || y > g.bottom + 4), field: !onIsle(x, y),
+        alone: stand.every(g => x + w < g.left - 12 || x > g.right + 12 || y + h < g.top - 10 || y > g.bottom + 10) };
+    };
+    const flip = { right: 'left', left: 'right', top: 'bottom', bottom: 'top' }, turn = T.side === 'right' || T.side === 'left' ? ['bottom', 'top'] : ['right', 'left'], ln = T.lean || 1;
+    const all = (T.only ? [T.side] : [T.side, flip[T.side], ...turn]).flatMap(sd => [spot(sd, ln), spot(sd, -ln)]); // (T.only: a thing on the top line has its label under it, nowhere else)
+    const q = all.find(c => c.ok && c.clear && c.field && c.alone) || all.find(c => c.ok && c.clear && c.field) || all.find(c => c.ok && c.clear) || (T.must ? all.find(c => c.ok) || all[0] : null);
+    if (!q) { T.cramped = true; helpBox = null; el.style.visibility = 'hidden'; return; }
+    helpBox = { l: q.x, t: q.y, r: q.x + w, b: q.y + h };
+    const X = Math.round(q.x), Y = Math.round(q.y), n = (v) => Math.round(v * 10) / 10, sv = el.querySelector('.hp-ln');
+    if (el.dataset.line !== (q.over ? 'over' : 'under')) el.dataset.line = q.over ? 'over' : 'under';
+    sv.querySelector('path').setAttribute('d', `M${n(q.dx - X)} ${n(q.dy - Y)} L${n(q.join - X)} ${n(q.ly - Y)} M${n(q.x - X)} ${n(q.ly - Y)} L${n(q.x + w - X)} ${n(q.ly - Y)}`);
+    for (const c of sv.querySelectorAll('circle')) { c.setAttribute('cx', n(q.dx - X)); c.setAttribute('cy', n(q.dy - Y)); }
+    el.style.left = X + 'px'; el.style.top = Y + 'px'; el.style.visibility = '';
   }
   // Settings' Helpers, and a note's own "Turn off helpers". On: they start over, from the next thing to do
   function setHelpers(on) {
@@ -19373,12 +19446,12 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     else if (e.target.closest('#hp-off')) { // off, and one last note says where they can be had back
       const where = helpCur && helpCur.menu ? dioQ('.acct button:nth-of-type(3)') : $('cog'); // the menu's Settings, or the match's
       setHelpers(false);
-      if (where && where.getBoundingClientRect().width) { helperDraw({ at: () => where, side: 'bottom', h: 'Helpers are off.', t: 'Settings turns them back on.' }, true); helpFlash = setTimeout(() => { helpFlash = 0; helperDraw(null); }, 4200); }
+      if (where && where.getBoundingClientRect().width) { helperDraw({ at: () => where, side: 'bottom', only: true, must: true, off: 13, lean: -1, line: !!(DIO && dio.shown), h: 'Helpers are off.', t: 'Settings turns them back on.' }, true); helpFlash = setTimeout(() => { helpFlash = 0; helperDraw(null); }, 4200); }
     }
   });
   // (on the menu that last note lies where Settings opens: a press anywhere else puts it away)
   addEventListener('pointerdown', (e) => { if (helpFlash && DIO && dio.shown && !e.target.closest('#helper')) helperDraw(null); }, true);
-  addEventListener('resize', () => { for (const T of MENU_TIPS) T.cramped = false; helperPlace(); });
+  addEventListener('resize', () => { for (const T of MENU_TIPS) T.cramped = false; if (DIO) for (const e of document.querySelectorAll('#dio .note[data-home]')) e._gr = null; helperPlace(); });
 
   function setNet(text, state) {
     const n = $('net');
@@ -28829,10 +28902,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         let op = 1, fading = false;
         if (el.dataset.anchor !== 'btn') {
           const home = el.hasAttribute('data-home'), t = performance.now(), dt = Math.min(100, t - (el._t || t)); el._t = t;
+          // (the menu guide's label wants this spot: the standing note steps aside, quickly, and comes back after it)
+          let aside = false; if (home) { const g = el.style.display !== 'none' ? el.getBoundingClientRect() : null; if (g && g.width) el._gr = { left: g.left, top: g.top, right: g.right, bottom: g.bottom }; aside = !!el._gr && helpCovers(el._gr); if (aside) show = false; }
           const menu = !phone() && !inPlay && !inProf && viewName === 'play' && !body.classList.contains('welcome');
           if (!menu) el._op = show ? 1 : home ? 1 : 0;
           else if (show && !(home && (el._op ?? 1) < 1 && t - hoverOff < 1000)) el._op = home ? Math.min(1, (el._op ?? 1) + dt / 250) : 1; // the menu's own notes wait a second after the pointer leaves before coming back
-          else { show = false; el._op = Math.max(0, (el._op ?? (home ? 1 : 0)) - dt / 1000); fading = el._op > 0; }
+          else { show = false; el._op = Math.max(0, (el._op ?? (home ? 1 : 0)) - dt / (aside ? 180 : 1000)); fading = el._op > 0; }
           op = el._op; show = show || fading;
         }
         el.style.display = show ? '' : 'none'; el.style.opacity = op < 1 ? op : ''; el.style.pointerEvents = fading ? 'none' : ''; if (!show) { el._off = null; continue; }
@@ -30056,7 +30131,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
       homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
     }
-    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms, puzzles: openPuz, howto: openHow };
+    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms, puzzles: openPuz, howto: openHow, isle: () => bfDots.slice(0, 4).map(o => proj(o, 0)) }; // (isle: the island's four corners on screen, for the menu guide's labels)
     dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); window.__dio.cam = () => ({ want: Object.keys(VIEWS).find(k => VIEWS[k] === want) || 'other', el: +now.el.toFixed(2) }); } // the tests: the roster standing; show / hide the home by hand
