@@ -154,5 +154,51 @@ const Art = (() => {
   }
   // a held beam's strength: steady with a cold shimmer, fading out over its last 0.1 s
   const beamAlpha = (e) => e.held ? Math.min(1, (e.life - e.age) / 0.1) * (0.85 + 0.15 * Math.sin(e.age * 31)) : 1 - e.age / e.life;
-  return { frostBeam, frostFollow, beamAlpha, css, teamCol, ELF_COL, SHROOM_COL, CHARM_COL, BLEED_COL, POOL_COL, FROST_COL, GLUT_COL, DUO_RING, ARMS, arms, armsFlag, armsImg, keep };
+  // ---------- the Mommy boss puzzle: the pictures of her attacks, shared by both boards (src/boss.js) ----------
+  // one row of her fangs on canvas g, R across (half), its gum line off from (x, y) on side sg (-1: the row coming
+  // down, 1: the one coming up); the two rows mesh when they meet
+  function bossFangs(g, x, y, R, sg, off, col) {
+    const n = 5, w = R * 0.9 / n;
+    g.fillStyle = '#F7F3E8'; g.strokeStyle = col; g.lineWidth = Math.max(1, R * 0.07); g.lineJoin = 'round';
+    g.beginPath();
+    for (let k = 0; k < n; k++) {
+      const u = (k + 0.5) / n * 2 - 1 + sg * 0.09, tx = x + u * R * 0.9;
+      const gy = y + sg * (off + R * 0.32 * (1 - u * u)), len = R * (0.5 + 0.22 * (1 - Math.abs(u)));
+      g.moveTo(tx - w, gy); g.lineTo(tx + w, gy); g.lineTo(tx, gy - sg * len); g.closePath();
+    }
+    g.strokeStyle = 'rgba(16,8,6,0.85)'; g.lineWidth = Math.max(2.5, R * 0.16); g.stroke(); // a dark edge, so they read on any ground
+    g.strokeStyle = col; g.lineWidth = Math.max(1, R * 0.07); g.fill(); g.stroke();
+    g.beginPath(); // the gum line
+    for (let k = 0; k <= 12; k++) { const u = k / 6 - 1, px = x + u * R, py = y + sg * (off + R * 0.32 * (1 - u * u)); if (k) g.lineTo(px, py); else g.moveTo(px, py); }
+    g.lineCap = 'round'; g.strokeStyle = 'rgba(16,8,6,0.85)'; g.lineWidth = Math.max(3, R * 0.2); g.stroke();
+    g.strokeStyle = col; g.lineWidth = Math.max(1.5, R * 0.12); g.stroke(); g.lineCap = 'butt';
+  }
+  const BOSS_JAW = { shut: 0.22, open: 0.95 }; // how far each row's gum line is from the middle, in R: shut, and what wide open adds
+  // her jaws at (x, y), R across (half): gap 1 wide open .. 0 shut
+  function bossJaws(g, x, y, R, gap, col, alpha) {
+    g.globalAlpha = alpha;
+    for (const sg of [-1, 1]) bossFangs(g, x, y, R, sg, R * (BOSS_JAW.shut + BOSS_JAW.open * gap), col);
+    g.globalAlpha = 1;
+  }
+  // the mark a bite leaves: a bruise the size of the bite (hitR) and two rows of tooth holes
+  function bossBiteMark(g, x, y, R, hitR, col, alpha) {
+    g.globalAlpha = alpha * 0.3; g.fillStyle = '#3A0E0A'; g.beginPath(); g.arc(x, y, hitR, 0, Math.PI * 2); g.fill();
+    g.globalAlpha = alpha * 0.5; g.strokeStyle = col; g.lineWidth = 1; g.beginPath(); g.arc(x, y, hitR, 0, Math.PI * 2); g.stroke();
+    g.globalAlpha = alpha; g.fillStyle = col; g.strokeStyle = 'rgba(40,8,6,0.9)'; g.lineWidth = Math.max(1, R * 0.03);
+    const n = 5, w = R * 0.11;
+    for (const sg of [-1, 1]) for (let k = 0; k < n; k++) {
+      const u = (k + 0.5) / n * 2 - 1, tx = x + u * R * 0.8, ty = y + sg * R * (0.5 - 0.3 * u * u);
+      g.beginPath(); g.moveTo(tx - w, ty + sg * w); g.lineTo(tx + w, ty + sg * w); g.lineTo(tx, ty - sg * w * 1.6); g.closePath(); g.fill(); g.stroke();
+    }
+    g.globalAlpha = 1;
+  }
+  // the web her mortar leaves on the ground, r across (half)
+  function bossWeb(g, x, y, r, col, alpha) {
+    g.strokeStyle = col; g.lineWidth = Math.max(1.5, r * 0.025); g.globalAlpha = alpha;
+    for (let k = 0; k < 10; k++) { const an = k * Math.PI / 5 + 0.2; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(an) * r, y + Math.sin(an) * r); g.stroke(); }
+    for (const rr of [0.35, 0.68, 1]) { g.beginPath(); for (let k = 0; k <= 10; k++) { const an = k * Math.PI / 5 + 0.2, px = x + Math.cos(an) * r * rr, py = y + Math.sin(an) * r * rr; if (k) g.lineTo(px, py); else g.moveTo(px, py); } g.stroke(); }
+    g.fillStyle = col; g.globalAlpha = alpha * 0.12; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    g.globalAlpha = 1;
+  }
+  return { bossFangs, bossJaws, bossBiteMark, bossWeb, BOSS_JAW, frostBeam, frostFollow, beamAlpha, css, teamCol, ELF_COL, SHROOM_COL, CHARM_COL, BLEED_COL, POOL_COL, FROST_COL, GLUT_COL, DUO_RING, ARMS, arms, armsFlag, armsImg, keep };
 })();

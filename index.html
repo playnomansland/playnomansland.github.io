@@ -943,6 +943,8 @@ html.diorama.pcwide #wrap::after { left: 0; right: 0; top: 0; height: 150px; bac
 html.diorama.pcwide #wrap > .overlay, html.diorama.pcwide #wrap > .pick, html.diorama.pcwide #wrap > .pick-peek, html.diorama.pcwide #wrap > .coach, html.diorama.pcwide #wrap > .task,
 html.diorama.pcwide #wrap > .board-banner, html.diorama.pcwide #wrap > .note3d, html.diorama.pcwide #wrap > .meter3d { z-index: 6; }
 html.diorama.pcwide .tag-clock, html.diorama.pcwide .net, html.diorama.pcwide .dock-tab { display: none !important; }
+/* the Mommy boss puzzle's boss bar: under the round line (which sits over the top of the board here), not behind it */
+html.diorama.pcwide .boss-bar { top: 104px; z-index: 6; }
 
 /* the top line: you top left, the round in the middle, the opponent top right (mirrored) */
 html.diorama.pcwide .hud { position: fixed; z-index: 7; top: 0; left: 0; right: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: 24px; padding: 18px 32px 0; pointer-events: none; color: #F4ECD8; }
@@ -2243,7 +2245,7 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 .boss-bar .bb-lost { position: absolute; left: 0; top: 0; bottom: 0; background: #F4F1E8; opacity: 0.55; transition: width 0.9s ease-out 0.25s; }
 .boss-bar .bb-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(180deg, #E8584B, #9E2A22); transition: width 0.15s linear; }
 .boss-bar .bb-fill.hanging { background: linear-gradient(180deg, #9C86D8, #5B4A92); }
-.boss-bar .bb-num { position: relative; z-index: 1; line-height: 18px; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
+.boss-bar .bb-num { position: relative; z-index: 1; display: block; line-height: 18px; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
 .boss-bar .bb-tok { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 4px; }
 .boss-bar .bb-tok span { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 1px 6px; border-radius: 9px; background: rgba(10, 14, 16, 0.82); border: 1px solid #56646A; color: #E8EEEE; white-space: nowrap; }
 .boss-bar .bb-tok .bad { border-color: #FF5A4E; color: #FF8A80; animation: bb-pulse 0.5s ease-in-out infinite alternate; }
@@ -5430,6 +5432,7 @@ const Engine = (() => {
     // even if another enemy comes closer; then it picks the nearest
     function locked(b, valid) {
       if (b.avenge && b.avenge.alive && valid.includes(b.avenge)) b.lock = b.avenge; // a guard going for its attacker
+      if (b.focus && b.focus.alive && valid.includes(b.focus)) b.lock = b.focus; // (src/boss.js) the nest its squad was pointed at comes first
       if (b.u.hunter && !(b.lock && b.lock.alive && b.lock.prey && valid.includes(b.lock))) { const p = valid.find(f => f.prey); if (p) b.lock = p; } // Hunter: a marked enemy in reach comes first
       if (!(b.lock && b.lock.alive && valid.includes(b.lock))) {
         // aware2: the nearest enemy that isn't about to die from what its side is already shooting at it
@@ -5448,6 +5451,7 @@ const Engine = (() => {
       for (const f of sides[1 - b.side]) {
         if (!pickable(b, f) || !inSight(b, f)) continue;
         const d = gap(f, b), mine = f === b.goal;
+        if (f === b.focus) { best = f; break; } // (src/boss.js) the nest its squad was pointed at: it walks to that one, however far
         if (d > aware * (mine ? AWARE.leash : 1)) continue;
         const lane = g.awareLane == null ? AWARE.lane : g.awareLane;
         let c = d - (mine ? AWARE.stick : 0) - (f.u.lure || 0) + lane * Math.abs(f.x - b.x); // u.lure (src/boss.js, her nests): it counts that many m closer
@@ -5555,8 +5559,9 @@ const Engine = (() => {
         } else if (b.u.projSpeed > 0) {
           // minR: it flies over the bodies within the shooter's minimum range of where it was fired (the Meteor Caller);
           // seek: a spear thrown at its locked target flies past the others and follows it (the Truespear) (2026-11-07)
+          // u.projSecs (src/boss.js, Mommy's bite): it lands that many seconds after it was fired, however far it flies
           projectiles.push({ owner: b, x: b.x, y: b.y, fx: b.x, fy: b.y, tx: tgt.x, ty: tgt.y, dirX, dirY, left: d, hit: hk, minR: b.u.minRange,
-            ...(b.u.seek && tgt === b.lock && tgt.u ? { homing: tgt } : {}) });
+            ...(b.u.seek && tgt === b.lock && tgt.u ? { homing: tgt } : {}), ...(b.u.projSecs > 0 ? { speed: Math.max(0.5, d / b.u.projSecs) } : {}) });
         } else {
           impact(b, tgt.x, tgt.y, tgt, hk, dirX, dirY, b.x, b.y);
         }
@@ -6303,7 +6308,7 @@ const Engine = (() => {
           else { heal(f, q.amt * healMul * dt); if (q.speed > 0) { f.poolFast = q.speed; f.poolFastT = q.secs; } }
         }
       }
-      if (opts.bossTick) opts.bossTick({ t, dt, all, sides, hurt, direct, record: !!opts.record, shots }); // (src/boss.js) the boss's rules, once a tick
+      if (opts.bossTick) opts.bossTick({ t, dt, all, sides, hurt, direct, record: !!opts.record, shots, projectiles }); // (src/boss.js) the boss's rules, once a tick
       // ongoing effects: poison, bleed, regeneration, shortsight wearing off, spawns
       for (const b of turnOrder()) { // (the sides take turns going first here too; bodies spawned below start next tick)
         if (!b.alive) continue;
@@ -10458,11 +10463,16 @@ if (typeof module !== 'undefined') module.exports = Game;
       // the mortar: wind s with nobody in reach before the first shot, then one every `every` s, at the biggest clump
       // (r m). Each shot rips loose one of her nests within ammoReach m (the one with least health): it is gone and its
       // spiders burst out where it hung. hit: the blast's damage; slow / dmg / secs: the web it leaves
-      mortar: { wind: 5, every: 4, hit: 120, ammo: true, ammoReach: 22, r: 6, slow: 60, dmg: 60, secs: 4 },
+      // fly: seconds the ripped nest is in the air: the blast lands where the clump stood when it was thrown, so a squad
+      // that walks on is missed (0: it lands at once)
+      mortar: { wind: 5, every: 4, hit: 120, ammo: true, ammoReach: 22, r: 6, slow: 60, dmg: 60, secs: 4, fly: 1.6 },
       molt: 6,          // seconds between sheds (0: never)
       bleedPct: false,  // whether a hit's share of max health (bleed at 3-4 stacks, Deadeye) works on her
       size: 4,          // m: how far out her body reaches once she lies on the ground (melee can crowd round her)
-      projSpeed: 15,    // m/s: her bite flies as a slow web shot you can see coming (it hits the first body in its way, or lands where it was aimed); 0: it lands at once
+      // her bite: her jaws open where her target stands and snap shut biteSecs later. It lands there, on whoever stands
+      // in it then (a body that has walked out is missed). biteSecs 0: the older bite, a web shot flying at projSpeed
+      // m/s that hits the first body in its way (lob: ...that only lands where it was aimed); both 0: it lands at once
+      biteSecs: 1, projSpeed: 15, lob: false,
       lastPick: true,   // while she hangs, units pick her only when none of her nests or spiders are left
     },
     biteByRound: ['fast', 'heavy', 'sweep', 'heavy', 'sweep'],
@@ -10505,7 +10515,8 @@ if (typeof module !== 'undefined') module.exports = Game;
   }
   function mommyUnit(cfg, round) {
     const a = cfg.mommy.bites[byRound(cfg.biteByRound, round)];
-    return E().withTraits({ name: 'Mommy', cost: 0, bodies: 1, hp: cfg.mommy.hp, hit: a.hit, aps: a.aps, range: cfg.mommy.near, splash: a.splash, speed: 0, anchored: true, unstoppable: true, shape: 'spider', color: '#1a1a1a', level: 0, boss: 'mommy', drawR: 4.2, projSpeed: cfg.mommy.projSpeed || 0 });
+    return E().withTraits({ name: 'Mommy', cost: 0, bodies: 1, hp: cfg.mommy.hp, hit: a.hit, aps: a.aps, range: cfg.mommy.near, splash: a.splash, speed: 0, anchored: true, unstoppable: true, shape: 'spider', color: '#1a1a1a', level: 0, boss: 'mommy', drawR: 4.2,
+      ...(cfg.mommy.biteSecs > 0 ? { projSpeed: cfg.mommy.projSpeed || 15, projSecs: cfg.mommy.biteSecs, lob: true } : { projSpeed: cfg.mommy.projSpeed || 0, lob: !!cfg.mommy.lob }) });
   }
   function nestUnit(units, cfg, round) {
     return E().withTraits({ name: 'Nest', cost: 0, bodies: 1, hp: byRound(cfg.nest.hp, round), hit: 0, aps: 1, range: 0, speed: 0, splash: 0, structure: true, lesser: true, kind: 'nest', shape: 'circle', color: '#d8d0c0', level: 0,
@@ -10566,6 +10577,10 @@ if (typeof module !== 'undefined') module.exports = Game;
     const nu = o.noHatch ? { ...nestUnit(units, cfg, round), spawn: null, deathSpawn: null } : nestUnit(units, cfg, round);
     const nests = spots.map(([c, r, kind], k) => { const w = world(c, r); return En.buildSquad(kind === 'low' ? { ...nu, rangedOnly: 0 } : nu, 1, w.x, w.y, -20 - k, T, 1 + k)[0]; });
     const B = [mom, ...nests];
+    // (prototype) a ranged squad pointed at a nest (sq.focus: the nest's place in this round's list): its bodies walk
+    // to that nest and shoot it first, whatever is nearer
+    for (const sq of m.armies[0]) if (sq.focus != null && nests[sq.focus]) for (const b of A) if (b.squad === sq.id) b.focus = nests[sq.focus];
+    if (cfg.lane != null) g.awareLane = cfg.lane; // (prototype) how strongly a squad keeps to its own lane when it picks whom to walk to
     const out = { round, fallAt: null, mortars: 0, mortarAt: null, mortarNests: 0, held: 0, hang: 0, ground: 0, nestsLeft: 0, nests: nests.length, end: 0, treasury: null, nestDown: nests.map(() => null), holders: {}, gone: {}, poolSecs: 0, hpStart: st.hp };
     const nameOf = o.name || ((sq) => units[sq.unit] ? units[sq.unit].name : '?');
     const sqName = (b) => { const o2 = b.credit || b; const sq = m.armies[0].find((s) => s.id === o2.squad); return sq ? nameOf(sq) : b.u.name; };
@@ -10578,10 +10593,23 @@ if (typeof module !== 'undefined') module.exports = Game;
     mom.bs = { phase: hanging ? 'hanging' : 'down', stunLeft: 0, nestsLeft: spots.length, nests: spots.length, moltIn: cfg.mommy.molt || null, mortarIn: null, holder: null, take: hanging ? cfg.mommy.hang : groundMul, bite: byRound(cfg.biteByRound, round) };
     const poolRects = (o.pools || (cfg.pools && cfg.pools.pct > 0 && cfg.pools.at ? byRound(cfg.pools.at, round) || [] : [])).map(([c0, r0, c1, r1]) => { const a = world(c0, r0), b = world(c1, r1), h = T / 2; return { x0: Math.min(a.x, b.x) - h, x1: Math.max(a.x, b.x) + h, y0: Math.min(a.y, b.y) - h, y1: Math.max(a.y, b.y) + h }; });
     // her attacks for the boards to draw (only in a fight that is shown: o.record): mom.ev, events with their time t
-    // (bite: where it was aimed and when it lands; mortar: the blast and the nest it came from; fall), and in mom.bs her
-    // bite's wind-up (aim: target, k 0..1) and the mortar's mark (mortarAim) just before it fires
+    // (bite: where the jaws are, how wide (r) and when they shut (land); mortar: where it lands, when, and the nest it
+    // was (fx, fy); fall; molt), and in mom.bs whom she bites next (aim: target, k 0..1, in: seconds), the nest the
+    // mortar will rip (mortarNest) and where it is aiming (mortarAim) before it is thrown
     const fxOn = !!o.record, ev = mom.ev = [];
+    const seenShot = new WeakSet(), flying = []; // (her bites already in mom.ev; mortar shots in the air)
     let lastAtk0 = null;
+    const mo0 = cfg.mommy.mortar;
+    // the nest the mortar rips next: the one within ammoReach with the least health
+    const ammoPick = () => { let pick = null; if (mo0.ammo) for (const n of nests) if (n.alive && !(mo0.ammoReach > 0 && d2(n, mw.x, mw.y) > mo0.ammoReach) && (!pick || n.hp < pick.hp)) pick = n; return pick; };
+    // the mortar lands at (bx, by): its hit and its web on every body of the player's in the blast
+    const blast = (api, bx, by) => {
+      for (const f of api.sides[0].slice()) {
+        if (!f.alive || f.u.aloft || d2(f, bx, by) > mo0.r) continue;
+        api.hurt(mom, f, mo0.hit, mw.x, mw.y);
+        if (f.alive && !f.u.structure) { f.web = { slow: mo0.slow, dmg: mo0.dmg, t: mo0.secs, max: 90 }; f.momWeb = true; f.momWebOnly = true; f.mortarWebT = api.t + mo0.secs; if (!f.u.unstoppable) { f.slowMove = Math.max(f.slowT > 0 ? f.slowMove : 0, mo0.slow); f.slowT = Math.max(f.slowT, mo0.secs); } }
+      }
+    };
     // the player's biggest clump: the body with the most others within the mortar's blast (the mortar's target)
     const clump = (army) => { let best = null, bn = 0; for (const f of army) { if (!visible(f)) continue; let n = 0; for (const h of army) if (visible(h) && d2(h, f.x, f.y) <= cfg.mommy.mortar.r) n++; if (n > bn) { bn = n; best = f; } } return best; };
     const bossTick = (api) => {
@@ -10606,7 +10634,9 @@ if (typeof module !== 'undefined') module.exports = Game;
       mom.x = mw.x; mom.y = mw.y;
       if (hanging) { mom.takeMul = cfg.mommy.hang; mom.stunT = 0; mom.frozenT = 0; }
       mom.lastPick = hanging && !!cfg.mommy.lastPick;
-      if (cfg.mommy.molt > 0) { moltT -= api.dt; if (moltT <= 0) { moltT += cfg.mommy.molt; mom.poison = null; mom.bleed = null; mom.burn = null; mom.frost = null; mom.web = null; mom.slowT = 0; mom.slowMove = 0; mom.slowAtk = 0; mom.shrinkT = 0; mom.shrinkM = 0; } }
+      if (cfg.mommy.molt > 0) { moltT -= api.dt; if (moltT <= 0) { moltT += cfg.mommy.molt;
+        if (fxOn && ((mom.poison && mom.poison.length) || mom.bleed || mom.burn || mom.frost || mom.slowT > 0)) ev.push({ k: 'molt', t: api.t }); // (only when something falls off her)
+        mom.poison = null; mom.bleed = null; mom.burn = null; mom.frost = null; mom.web = null; mom.slowT = 0; mom.slowMove = 0; mom.slowAtk = 0; mom.shrinkT = 0; mom.shrinkM = 0; } }
       const stunned = mom.stunT > 0;
       if (poolRects.length) for (const f of api.sides[0]) { // the poison pools
         if (!f.alive || f.u.structure || f.u.aloft || !poolRects.some((q) => f.x >= q.x0 && f.x <= q.x1 && f.y >= q.y0 && f.y <= q.y1)) continue;
@@ -10626,12 +10656,14 @@ if (typeof module !== 'undefined') module.exports = Game;
       const mo = cfg.mommy.mortar;
       const bs = mom.bs = { phase: hanging ? 'hanging' : stunned ? 'stunned' : 'down', stunLeft: stunned ? mom.stunT : 0, nestsLeft: nests.filter((n) => n.alive).length, nests: nests.length,
         moltIn: cfg.mommy.molt > 0 ? moltT : null, mortarIn: null, holder: null, take: hanging ? cfg.mommy.hang : groundMul, bite: byRound(cfg.biteByRound, round) };
-      if (fxOn) { // her bite: each one fired (seen the tick after), and the wind-up to the next
-        if (mom.lastAtk != null && mom.lastAtk !== lastAtk0) { lastAtk0 = mom.lastAtk; const tg = mom.lock; if (tg) { const d = d2(tg, mw.x, mw.y); ev.push({ k: 'bite', t: mom.lastAtk, x: tg.x, y: tg.y, land: mom.lastAtk + (mom.u.projSpeed > 0 ? d / mom.u.projSpeed : 0), r: mom.u.splash || 0, bite: bs.bite }); } }
+      for (let k = 0; k < flying.length;) { if (api.t + 1e-9 >= flying[k].land) { const s = flying.splice(k, 1)[0]; blast(api, s.x, s.y); } else k++; } // a thrown nest lands
+      if (fxOn) { // her bite: each one on its way (seen the tick after it starts), and whom she bites next
+        for (const p of api.projectiles || []) if (p.owner === mom && !seenShot.has(p)) { seenShot.add(p); ev.push({ k: 'bite', t: api.t - api.dt, x: p.tx, y: p.ty, land: api.t + p.left / Math.max(0.5, p.speed || mom.u.projSpeed || 1), r: mom.u.splash || 1, bite: bs.bite }); }
+        if (!(mom.u.projSpeed > 0) && mom.lastAtk != null && mom.lastAtk !== lastAtk0) { lastAtk0 = mom.lastAtk; const tg = mom.lock; if (tg) ev.push({ k: 'bite', t: mom.lastAtk, x: tg.x, y: tg.y, land: mom.lastAtk, r: mom.u.splash || 1, bite: bs.bite }); } // (a bite that lands at once)
         let tg = null, td = mom.u.range + (mom.fallen ? cfg.mommy.size : 0); // who she bites next: the nearest body in her reach
         for (const f of api.sides[0]) if (f.alive && !f.u.aloft && !f.hidden && !(f.inside && f.inside.alive)) { const d = d2(f, mw.x, mw.y); if (d <= td) { td = d; tg = f; } }
-        if (!stunned && tg) { const cyc = 1 / Math.max(0.05, mom.u.aps); bs.aim = { x: tg.x, y: tg.y, k: Math.min(1, (api.t - (mom.lastAtk == null ? -cyc * 0.5 : mom.lastAtk)) / cyc) }; }
-        if (ev.length > 40) ev.splice(0, ev.length - 40);
+        if (!stunned && tg) { const cyc = 1 / Math.max(0.05, mom.u.aps), k = Math.min(1, (api.t - (mom.lastAtk == null ? -cyc * 0.5 : mom.lastAtk)) / cyc); bs.aim = { x: tg.x, y: tg.y, k, in: cyc * (1 - k), cyc, r: mom.u.splash || 1 }; }
+        if (ev.length > 60) ev.splice(0, ev.length - 60);
       }
       // attention: nobody close while she hangs, and the mortar winds up
       if (!hanging || stunned) { quiet = 0; shots = 0; return; }
@@ -10640,22 +10672,22 @@ if (typeof module !== 'undefined') module.exports = Game;
       if (holder) { quiet = 0; shots = 0; out.held += api.dt; const hn = sqName(holder); out.holders[hn] = (out.holders[hn] || 0) + api.dt; bs.holder = hn; return; }
       quiet += api.dt;
       if (mo.hit > 0) bs.mortarIn = Math.max(0, mo.wind + shots * mo.every - quiet);
-      if (fxOn && bs.mortarIn != null && bs.mortarIn < 1.5) { const c = clump(api.sides[0]); if (c) bs.mortarAim = { x: c.x, y: c.y, r: mo.r }; } // where it will land
+      if (fxOn && bs.mortarIn != null) { // which nest she is about to rip loose, and (just before) the clump she aims it at
+        const n = ammoPick(); if (n) bs.mortarNest = { x: n.x, y: n.y };
+        if (bs.mortarIn < 2) { const c = clump(api.sides[0]); if (c) bs.mortarAim = { x: c.x, y: c.y, r: mo.r }; }
+      }
       if (!(mo.hit > 0) || quiet + 1e-9 < mo.wind + shots * mo.every) return;
       bs.mortarFired = api.t;
       shots++;
       const best = clump(api.sides[0]);
       if (!best) return;
       out.mortars++; if (out.mortarAt == null) out.mortarAt = api.t;
-      const bx = best.x, by = best.y;
-      for (const f of api.sides[0].slice()) {
-        if (!f.alive || f.u.aloft || d2(f, bx, by) > mo.r) continue;
-        api.hurt(mom, f, mo.hit, mw.x, mw.y);
-        if (f.alive && !f.u.structure) { f.web = { slow: mo.slow, dmg: mo.dmg, t: mo.secs, max: 90 }; f.momWeb = true; f.momWebOnly = true; f.mortarWebT = api.t + mo.secs; if (!f.u.unstoppable) { f.slowMove = Math.max(f.slowT > 0 ? f.slowMove : 0, mo.slow); f.slowT = Math.max(f.slowT, mo.secs); } }
-      }
-      let pick = null;
-      if (mo.ammo) { for (const n of nests) if (n.alive && !(mo.ammoReach > 0 && d2(n, mw.x, mw.y) > mo.ammoReach) && (!pick || n.hp < pick.hp)) pick = n; if (pick) { api.hurt(mom, pick, 1e9, mw.x, mw.y); if (!pick.alive) { out.mortarNests++; out.nestDown[nests.indexOf(pick)] = -api.t; } } }
-      if (fxOn) ev.push({ k: 'mortar', t: api.t, x: bx, y: by, r: mo.r, fx: pick ? pick.x : mw.x, fy: pick ? pick.y : mw.y }); // the blast, and the nest it was
+      const bx = best.x, by = best.y, fly = mo.fly > 0 ? mo.fly : 0;
+      if (!fly) blast(api, bx, by);
+      const pick = ammoPick(), px = pick ? pick.x : mw.x, py = pick ? pick.y : mw.y; // the nest she throws: gone now, its spiders burst out where it hung
+      if (pick) { api.hurt(mom, pick, 1e9, mw.x, mw.y); if (!pick.alive) { out.mortarNests++; out.nestDown[nests.indexOf(pick)] = -api.t; } }
+      if (fly) flying.push({ land: api.t + fly, x: bx, y: by }); // it lands there after its flight, on whoever stands there then
+      if (fxOn) ev.push({ k: 'mortar', t: api.t, land: api.t + fly, x: bx, y: by, r: mo.r, fx: px, fy: py, nest: !!pick, secs: mo.secs });
     };
     const sim = En.createBattle(A, B, g, { ...opts, bossTick, toTimer: true, record: !!o.record });
     // it ends when she dies; result() carries what happened
@@ -15553,7 +15585,53 @@ const Art = (() => {
   }
   // a held beam's strength: steady with a cold shimmer, fading out over its last 0.1 s
   const beamAlpha = (e) => e.held ? Math.min(1, (e.life - e.age) / 0.1) * (0.85 + 0.15 * Math.sin(e.age * 31)) : 1 - e.age / e.life;
-  return { frostBeam, frostFollow, beamAlpha, css, teamCol, ELF_COL, SHROOM_COL, CHARM_COL, BLEED_COL, POOL_COL, FROST_COL, GLUT_COL, DUO_RING, ARMS, arms, armsFlag, armsImg, keep };
+  // ---------- the Mommy boss puzzle: the pictures of her attacks, shared by both boards (src/boss.js) ----------
+  // one row of her fangs on canvas g, R across (half), its gum line off from (x, y) on side sg (-1: the row coming
+  // down, 1: the one coming up); the two rows mesh when they meet
+  function bossFangs(g, x, y, R, sg, off, col) {
+    const n = 5, w = R * 0.9 / n;
+    g.fillStyle = '#F7F3E8'; g.strokeStyle = col; g.lineWidth = Math.max(1, R * 0.07); g.lineJoin = 'round';
+    g.beginPath();
+    for (let k = 0; k < n; k++) {
+      const u = (k + 0.5) / n * 2 - 1 + sg * 0.09, tx = x + u * R * 0.9;
+      const gy = y + sg * (off + R * 0.32 * (1 - u * u)), len = R * (0.5 + 0.22 * (1 - Math.abs(u)));
+      g.moveTo(tx - w, gy); g.lineTo(tx + w, gy); g.lineTo(tx, gy - sg * len); g.closePath();
+    }
+    g.strokeStyle = 'rgba(16,8,6,0.85)'; g.lineWidth = Math.max(2.5, R * 0.16); g.stroke(); // a dark edge, so they read on any ground
+    g.strokeStyle = col; g.lineWidth = Math.max(1, R * 0.07); g.fill(); g.stroke();
+    g.beginPath(); // the gum line
+    for (let k = 0; k <= 12; k++) { const u = k / 6 - 1, px = x + u * R, py = y + sg * (off + R * 0.32 * (1 - u * u)); if (k) g.lineTo(px, py); else g.moveTo(px, py); }
+    g.lineCap = 'round'; g.strokeStyle = 'rgba(16,8,6,0.85)'; g.lineWidth = Math.max(3, R * 0.2); g.stroke();
+    g.strokeStyle = col; g.lineWidth = Math.max(1.5, R * 0.12); g.stroke(); g.lineCap = 'butt';
+  }
+  const BOSS_JAW = { shut: 0.22, open: 0.95 }; // how far each row's gum line is from the middle, in R: shut, and what wide open adds
+  // her jaws at (x, y), R across (half): gap 1 wide open .. 0 shut
+  function bossJaws(g, x, y, R, gap, col, alpha) {
+    g.globalAlpha = alpha;
+    for (const sg of [-1, 1]) bossFangs(g, x, y, R, sg, R * (BOSS_JAW.shut + BOSS_JAW.open * gap), col);
+    g.globalAlpha = 1;
+  }
+  // the mark a bite leaves: a bruise the size of the bite (hitR) and two rows of tooth holes
+  function bossBiteMark(g, x, y, R, hitR, col, alpha) {
+    g.globalAlpha = alpha * 0.3; g.fillStyle = '#3A0E0A'; g.beginPath(); g.arc(x, y, hitR, 0, Math.PI * 2); g.fill();
+    g.globalAlpha = alpha * 0.5; g.strokeStyle = col; g.lineWidth = 1; g.beginPath(); g.arc(x, y, hitR, 0, Math.PI * 2); g.stroke();
+    g.globalAlpha = alpha; g.fillStyle = col; g.strokeStyle = 'rgba(40,8,6,0.9)'; g.lineWidth = Math.max(1, R * 0.03);
+    const n = 5, w = R * 0.11;
+    for (const sg of [-1, 1]) for (let k = 0; k < n; k++) {
+      const u = (k + 0.5) / n * 2 - 1, tx = x + u * R * 0.8, ty = y + sg * R * (0.5 - 0.3 * u * u);
+      g.beginPath(); g.moveTo(tx - w, ty + sg * w); g.lineTo(tx + w, ty + sg * w); g.lineTo(tx, ty - sg * w * 1.6); g.closePath(); g.fill(); g.stroke();
+    }
+    g.globalAlpha = 1;
+  }
+  // the web her mortar leaves on the ground, r across (half)
+  function bossWeb(g, x, y, r, col, alpha) {
+    g.strokeStyle = col; g.lineWidth = Math.max(1.5, r * 0.025); g.globalAlpha = alpha;
+    for (let k = 0; k < 10; k++) { const an = k * Math.PI / 5 + 0.2; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(an) * r, y + Math.sin(an) * r); g.stroke(); }
+    for (const rr of [0.35, 0.68, 1]) { g.beginPath(); for (let k = 0; k <= 10; k++) { const an = k * Math.PI / 5 + 0.2, px = x + Math.cos(an) * r * rr, py = y + Math.sin(an) * r * rr; if (k) g.lineTo(px, py); else g.moveTo(px, py); } g.stroke(); }
+    g.fillStyle = col; g.globalAlpha = alpha * 0.12; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    g.globalAlpha = 1;
+  }
+  return { bossFangs, bossJaws, bossBiteMark, bossWeb, BOSS_JAW, frostBeam, frostFollow, beamAlpha, css, teamCol, ELF_COL, SHROOM_COL, CHARM_COL, BLEED_COL, POOL_COL, FROST_COL, GLUT_COL, DUO_RING, ARMS, arms, armsFlag, armsImg, keep };
 })();
 
 // ===== 2D board renderer: draws the board, the squads and the battles on a <canvas> =====
@@ -16333,48 +16411,90 @@ const Render2D = (cv, view, opts = {}) => {
       ctx.globalAlpha = 1;
       bossThread(x, y, R, time);
     }
-    // her bite winding up: a line to whom she will bite, brighter as it comes, and a ring on them just before
-    if (bs.aim && bs.aim.k > 0.45) {
-      const k = (bs.aim.k - 0.45) / 0.55, tx = PX(bs.aim.x), ty = PY(bs.aim.y), col = BITE_COL[bs.bite] || '#FFE15A';
-      ctx.strokeStyle = col; ctx.globalAlpha = 0.2 + 0.6 * k; ctx.lineWidth = 1 + 2 * k; ctx.setLineDash([5, 4]);
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke(); ctx.setLineDash([]);
-      if (k > 0.65) { ctx.globalAlpha = 0.5 + 0.4 * Math.sin(time * 18); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(tx, ty, Math.max(1.2, mom.u.splash || 0) * S, 0, Math.PI * 2); ctx.stroke(); }
+    // --- her bite: her jaws open where her target stands, close, and snap shut; whoever stands in the ring then is
+    // bitten. The bite mark stays a few seconds
+    const now = time, evs = mom.ev || [];
+    let closing = false;
+    for (const e of evs) {
+      if (e.k !== 'bite' || now < e.t) continue;
+      const col = BITE_COL[e.bite] || '#FFE15A', ex = PX(e.x), ey = PY(e.y), hitR = Math.max(1, e.r) * S, JR = Math.max(3, e.r * 1.15) * S;
+      if (now < e.land) { // closing
+        closing = true;
+        const q = Math.min(1, (now - e.t) / Math.max(0.05, e.land - e.t));
+        ctx.strokeStyle = col; ctx.globalAlpha = 0.18; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); ctx.stroke(); // from her
+        ctx.fillStyle = col; ctx.globalAlpha = 0.10 + 0.22 * q; ctx.beginPath(); ctx.arc(ex, ey, hitR, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.9; ctx.lineWidth = 2; ctx.stroke();
+        Art.bossJaws(ctx, ex, ey, JR, 1 - q * q, col, 0.55 + 0.45 * q);
+      } else {
+        const a = now - e.land;
+        if (a < 0.3) { // the snap: shut jaws and a flash
+          const f = a / 0.3;
+          ctx.strokeStyle = '#FFFFFF'; ctx.globalAlpha = 0.9 * (1 - f); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ex, ey, hitR * (1 + 0.8 * f), 0, Math.PI * 2); ctx.stroke();
+          Art.bossJaws(ctx, ex, ey, JR, 0, col, 1 - f * 0.6);
+        }
+        if (a < BITE_STAYS) Art.bossBiteMark(ctx, ex, ey, JR, hitR, col, Math.min(1, (BITE_STAYS - a) / 1.5) * 0.85);
+      }
+    }
+    // whom she bites next (only when her bites come slowly: the heavy bite): open jaws that follow them
+    if (bs.aim && !closing && bs.aim.cyc >= 2 && bs.aim.in < 1.5) {
+      const col = BITE_COL[bs.bite] || '#FFE15A', ax = PX(bs.aim.x), ay = PY(bs.aim.y), k = 1 - bs.aim.in / 1.5;
+      ctx.strokeStyle = col; ctx.globalAlpha = 0.25 + 0.4 * k; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(ax, ay, Math.max(1, bs.aim.r) * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      Art.bossJaws(ctx, ax, ay, Math.max(3, bs.aim.r * 1.15) * S, 1.25, col, 0.2 + 0.3 * k);
+    }
+    ctx.globalAlpha = 1;
+    // --- the web mortar. Before: a thread from her to the nest she is about to rip loose, and a ring on the clump she
+    // aims at. Thrown: the nest flies in an arc to the red ring, which fills as it comes. Landed: a web that stays
+    const SILK = '#F4F1E8', RED = '#FF5A4E', tfs = Math.max(8, Math.round(tilePx() * 0.22));
+    const label = (txt, lx, ly, col, al) => { ctx.font = `700 ${tfs}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = al; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(8,12,14,0.9)'; ctx.strokeText(txt, lx, ly); ctx.fillStyle = col; ctx.fillText(txt, lx, ly); };
+    if (bs.mortarIn != null) {
+      const full = bs.mortarIn > 4.05 ? 5 : 4, k = Math.max(0, Math.min(1, 1 - bs.mortarIn / full));
+      ctx.strokeStyle = RED; ctx.globalAlpha = 0.35 + 0.4 * k; ctx.lineWidth = 3; // round her: a red ring that closes as the shot comes
+      ctx.beginPath(); ctx.arc(x, y, R * 1.35, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); ctx.stroke();
+      if (bs.mortarNest) { // the nest she will throw: her thread on it, tighter as the shot comes
+        const nx = PX(bs.mortarNest.x), ny = PY(bs.mortarNest.y), wob = Math.sin(time * 22) * (1 + 2 * k);
+        ctx.strokeStyle = SILK; ctx.globalAlpha = 0.35 + 0.5 * k; ctx.lineWidth = 1 + 2 * k;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo((x + nx) / 2 + wob, (y + ny) / 2 + (1 - k) * S * 2, nx, ny); ctx.stroke();
+        ctx.strokeStyle = RED; ctx.globalAlpha = 0.5 + 0.4 * Math.sin(time * 10); ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.arc(nx + wob * 0.4, ny, 3.2 * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+        label('THROWS IN ' + bs.mortarIn.toFixed(1) + 's', nx, ny - 4 * S, '#FF8A80', 0.95);
+      }
+      if (bs.mortarAim) { // where she is aiming: it follows the clump until she throws
+        const mx = PX(bs.mortarAim.x), my = PY(bs.mortarAim.y), r = bs.mortarAim.r * S;
+        ctx.strokeStyle = RED; ctx.globalAlpha = 0.3 + 0.3 * k; ctx.lineWidth = 1.5; ctx.setLineDash([6, 6]);
+        ctx.beginPath(); ctx.arc(mx, my, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      }
       ctx.globalAlpha = 1;
     }
-    // the mortar's mark: a red crosshair on the clump it is about to hit
-    if (bs.mortarAim) {
-      const mx = PX(bs.mortarAim.x), my = PY(bs.mortarAim.y), r = bs.mortarAim.r * S;
-      ctx.strokeStyle = '#FF5A4E'; ctx.globalAlpha = 0.55 + 0.35 * Math.sin(time * 14); ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(mx, my, r, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(mx - r * 1.2, my); ctx.lineTo(mx - r * 0.5, my); ctx.moveTo(mx + r * 0.5, my); ctx.lineTo(mx + r * 1.2, my); ctx.moveTo(mx, my - r * 1.2); ctx.lineTo(mx, my - r * 0.5); ctx.moveTo(mx, my + r * 0.5); ctx.lineTo(mx, my + r * 1.2); ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-    for (const e of mom.ev || []) { // what she just did
-      const a = time - e.t;
-      if (e.k === 'bite') { // where it lands: a splat the size of its splash, in the bite's colour
-        const la = time - e.land; if (la < 0 || la > 0.45) continue;
-        const q = la / 0.45, rr = Math.max(1.5, e.r) * S * (0.6 + 0.6 * q), ex = PX(e.x), ey = PY(e.y), col = BITE_COL[e.bite] || '#FFE15A';
-        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.globalAlpha = 0.25 * (1 - q); ctx.beginPath(); ctx.arc(ex, ey, rr, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 0.9 * (1 - q); ctx.lineWidth = e.bite === 'heavy' ? 4 : 2; ctx.stroke();
-        if (e.bite === 'sweep') { ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ex, ey, rr * 0.75, q * 4, q * 4 + Math.PI * 1.4); ctx.stroke(); } // the sweep's swipe
-      } else if (e.k === 'mortar' && a >= 0 && a < 0.9) { // the nest flung at the clump, and its web splat
-        const ex = PX(e.x), ey = PY(e.y), q = a / 0.9;
-        if (a < 0.3) { ctx.strokeStyle = '#F4F1E8'; ctx.globalAlpha = 0.9 * (1 - a / 0.3); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(PX(e.fx), PY(e.fy)); ctx.lineTo(ex, ey); ctx.stroke(); }
-        const rr = e.r * S * (0.5 + 0.5 * Math.min(1, q * 2));
-        ctx.strokeStyle = '#F4F1E8'; ctx.globalAlpha = 0.85 * (1 - q); ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(ex, ey, rr, 0, Math.PI * 2); ctx.stroke();
-        for (let k = 0; k < 8; k++) { const an = k * Math.PI / 4 + 0.2; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex + Math.cos(an) * rr, ey + Math.sin(an) * rr); ctx.stroke(); }
-      } else if (e.k === 'fall' && a >= 0 && a < 0.9) { // she drops: a ring of dust
-        ctx.strokeStyle = '#B49A7A'; ctx.globalAlpha = 0.7 * (1 - a / 0.9); ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.arc(x, y, R * (1 + a * 1.4), 0, Math.PI * 2); ctx.stroke();
+    for (const e of evs) {
+      const a = now - e.t;
+      if (e.k === 'mortar' && a >= 0) {
+        const ex = PX(e.x), ey = PY(e.y), r = e.r * S, fly = Math.max(0.01, e.land - e.t), la = now - e.land;
+        if (la < 0) { // in the air
+          const q = a / fly, hgt = Math.sin(Math.PI * q);
+          ctx.fillStyle = RED; ctx.globalAlpha = 0.16; ctx.beginPath(); ctx.arc(ex, ey, r * q, 0, Math.PI * 2); ctx.fill(); // the ring fills as it comes
+          ctx.strokeStyle = RED; ctx.globalAlpha = 0.9; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); for (let k = 0; k < 4; k++) { const an = k * Math.PI / 2 + time * 0.8; ctx.moveTo(ex + Math.cos(an) * r * 0.82, ey + Math.sin(an) * r * 0.82); ctx.lineTo(ex + Math.cos(an) * r * 1.14, ey + Math.sin(an) * r * 1.14); } ctx.stroke();
+          label('WEB MORTAR', ex, ey - r - tfs, '#FF8A80', 0.95);
+          const gx = PX(e.fx) + (ex - PX(e.fx)) * q, gy = PY(e.fy) + (ey - PY(e.fy)) * q, bx = gx, by = gy - hgt * 9 * S, br = (1.5 + 1.1 * hgt) * S;
+          ctx.fillStyle = '#000'; ctx.globalAlpha = 0.28; ctx.beginPath(); ctx.ellipse(gx, gy, br * 0.9, br * 0.45, 0, 0, Math.PI * 2); ctx.fill(); // its shadow on the ground
+          ctx.strokeStyle = SILK; ctx.globalAlpha = 0.55; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(PX(e.fx), PY(e.fy)); ctx.quadraticCurveTo((PX(e.fx) + bx) / 2, (PY(e.fy) + by) / 2 - hgt * 3 * S, bx, by); ctx.stroke(); // the silk it trails
+          ctx.globalAlpha = 1; ctx.fillStyle = e.nest ? '#d8d0c0' : SILK; ctx.strokeStyle = teamCol(mom.side); ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.strokeStyle = 'rgba(60,60,60,0.55)'; ctx.lineWidth = 1; for (let k = 0; k < 3; k++) { const an = k * Math.PI / 3 + q * 9; ctx.beginPath(); ctx.moveTo(bx - Math.cos(an) * br, by - Math.sin(an) * br); ctx.lineTo(bx + Math.cos(an) * br, by + Math.sin(an) * br); ctx.stroke(); }
+        } else if (la < (e.secs || 4)) { // landed: a web on the ground for as long as it slows what it hit
+          const f = la / (e.secs || 4), al = 0.75 * (1 - f * f);
+          Art.bossWeb(ctx, ex, ey, r, SILK, al);
+          if (la < 0.4) { const g = la / 0.4; ctx.strokeStyle = '#FFFFFF'; ctx.globalAlpha = 0.9 * (1 - g); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(ex, ey, r * (0.6 + 0.7 * g), 0, Math.PI * 2); ctx.stroke(); } // the hit
+        }
+      } else if (e.k === 'fall' && a >= 0 && a < 1.6) { // she drops: a ring of dust, and the word
+        if (a < 0.9) { ctx.strokeStyle = '#B49A7A'; ctx.globalAlpha = 0.7 * (1 - a / 0.9); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, R * (1 + a * 1.4), 0, Math.PI * 2); ctx.stroke(); }
+        label('SHE FALLS', x, y - R * 1.5 - a * S * 1.5, '#FFE15A', Math.min(1, (1.6 - a) / 0.5));
+      } else if (e.k === 'molt' && a >= 0 && a < 1.2) { // she sheds what was on her: a husk ring, and the word
+        ctx.strokeStyle = '#C9B8E8'; ctx.globalAlpha = 0.7 * (1 - a / 1.2); ctx.lineWidth = 2; ctx.setLineDash([3, 5]); ctx.beginPath(); ctx.arc(x, y, R * (1.1 + a * 0.8), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+        label('MOLT', x, y - R * 1.5 - a * S * 1.5, '#C9B8E8', Math.min(1, (1.2 - a) / 0.4));
       }
     }
     ctx.globalAlpha = 1;
-    if (bs.mortarIn != null) { // the mortar winding up: a red ring that closes as the shot comes
-      const full = bs.mortarIn > 4.05 ? 5 : 4, k = Math.max(0, Math.min(1, 1 - bs.mortarIn / full));
-      ctx.strokeStyle = '#FF5A4E'; ctx.globalAlpha = 0.35 + 0.4 * k; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(x, y, R * 1.35, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
-    }
     if (bs.phase === 'stunned') { // dazed: stars round her head
       ctx.fillStyle = '#FFE15A';
       for (let k = 0; k < 4; k++) { const a = time * 3 + k * Math.PI / 2; Shapes.draw(ctx, 'star', x + Math.cos(a) * R * 0.9, y - R * 0.6 + Math.sin(a) * R * 0.3, Math.max(3, R * 0.16), 1); }
@@ -16386,6 +16506,7 @@ const Render2D = (cv, view, opts = {}) => {
     ctx.strokeStyle = '#EDEDED'; ctx.globalAlpha = 0.75; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(x, y - R * 0.3); ctx.quadraticCurveTo(x + sway, y / 2, x + sway * 0.5, 0); ctx.stroke(); ctx.globalAlpha = 1;
   }
+  const BITE_STAYS = 4; // seconds a bite mark stays on the ground
   function drawBossPools() {
     const t = tilePx(), time = phase === 'battle' && bt ? bt.time() : 0;
     for (const [c0, r0, c1, r1] of boss.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
@@ -17505,7 +17626,8 @@ const Render2D = (cv, view, opts = {}) => {
         continue;
       }
       const dx = p.dirX * flip(), dy = -p.dirY * flip(), x = PX(p.x), y = PY(p.y);
-      if (p.owner.u.boss) { // the Mommy boss's bite: a big pale web ball with a silk trail, slow enough to see coming
+      if (p.owner.u.boss && p.owner.u.lob) continue; // the Mommy boss's bite is her jaws on the ground (drawBossState), not a shot
+      if (p.owner.u.boss) { // (her older bite, CFG.mommy.biteSecs 0) a big pale web ball with a silk trail, slow enough to see coming
         const r = Math.max(4, 0.9 * S);
         ctx.strokeStyle = '#EDEDED'; ctx.globalAlpha = 0.5; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - dx * r * 4, y - dy * r * 4); ctx.stroke();
         ctx.globalAlpha = 1; ctx.fillStyle = '#F4F1E8'; ctx.strokeStyle = teamCol(p.owner.side); ctx.lineWidth = 2;
@@ -18916,7 +19038,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · 4a17e30'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · 789c7d8'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -23764,11 +23886,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         `A fight lasts ${C.fightSecs} s, so the sooner the nests fall, the longer she lies there.`])}
       ${sec('Her reach and her bite', [
         `She bites the nearest of your units inside her reach (the dashed ring, ${mo.near} m). A unit in her reach ${b('holds')} her: she bites it, not the rest.`,
+        mo.biteSecs > 0 ? `Her ${b('jaws')} open on the ground where that unit stands and snap shut ${mo.biteSecs} s later. Whatever stands in the ring then is bitten; a unit that has walked out of it is missed. The bite mark stays on the ground for a moment.` : '',
         `Her bite changes each round. This round: ${b(BITES[bite] ? BITES[bite][0] : bite)}, ${BITES[bite] ? BITES[bite][1] : ''}.`,
         `Units close to her (${mo.web.r} m) are caught in her ${b('web')}: they walk ${mo.web.slow}% slower and hit ${mo.web.dmg}% softer.`])}
       ${sec('The web mortar', [
-        `If none of your units is inside her reach for ${mo.mortar.wind} s while she hangs, she fires a web mortar at your biggest clump, then another every ${mo.mortar.every} s: ${mo.mortar.hit} damage to everything in the blast, and a web that slows them.`,
-        mo.mortar.ammo ? `Each shot is ${b('one of her own nests')}, ripped loose${mo.mortar.ammoReach ? ' (only a nest inside her reach)' : ''}: it is gone, and its spiders burst out. Leaving her alone is a way to play too: spread out, and let her spend her nests.` : ''])}
+        `If none of your units is inside her reach for ${mo.mortar.wind} s while she hangs, she throws a web mortar at your biggest clump, then another every ${mo.mortar.every} s.`,
+        mo.mortar.fly > 0 ? `It is in the air for ${mo.mortar.fly} s and lands where the clump stood when she threw it: the ${b('red ring')}, which fills as it comes. Everything in the ring when it lands takes ${mo.mortar.hit} damage and is caught in a web that slows it. A squad that walks on gets out of the ring.` : `${mo.mortar.hit} damage to everything in the blast, and a web that slows them.`,
+        mo.mortar.ammo ? `Each shot is ${b('one of her own nests')}, ripped loose${mo.mortar.ammoReach ? ' (only a nest inside her reach)' : ''}: her thread shows which one she throws next. It is gone, and its spiders burst out where it hung. Leaving her alone is a way to play too: spread out, and let her spend her nests.` : ''])}
       ${sec('Poison pools', C.pools && C.pools.pct > 0 ? [
         `The ${b('green tiles')} are poison. Your units standing in one lose ${C.pools.pct}% of their max health a second and are slowed, and it lasts ${C.pools.linger} s after they step out. Her spiders don’t mind them.`,
         'Slime units (Slime Wizard, Slimeshots) drink poison: it heals them.'] : [])}
@@ -24763,7 +24887,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
-  const V3D = '689bb214af'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '3119246b89'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);

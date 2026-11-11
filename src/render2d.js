@@ -775,48 +775,90 @@ const Render2D = (cv, view, opts = {}) => {
       ctx.globalAlpha = 1;
       bossThread(x, y, R, time);
     }
-    // her bite winding up: a line to whom she will bite, brighter as it comes, and a ring on them just before
-    if (bs.aim && bs.aim.k > 0.45) {
-      const k = (bs.aim.k - 0.45) / 0.55, tx = PX(bs.aim.x), ty = PY(bs.aim.y), col = BITE_COL[bs.bite] || '#FFE15A';
-      ctx.strokeStyle = col; ctx.globalAlpha = 0.2 + 0.6 * k; ctx.lineWidth = 1 + 2 * k; ctx.setLineDash([5, 4]);
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke(); ctx.setLineDash([]);
-      if (k > 0.65) { ctx.globalAlpha = 0.5 + 0.4 * Math.sin(time * 18); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(tx, ty, Math.max(1.2, mom.u.splash || 0) * S, 0, Math.PI * 2); ctx.stroke(); }
+    // --- her bite: her jaws open where her target stands, close, and snap shut; whoever stands in the ring then is
+    // bitten. The bite mark stays a few seconds
+    const now = time, evs = mom.ev || [];
+    let closing = false;
+    for (const e of evs) {
+      if (e.k !== 'bite' || now < e.t) continue;
+      const col = BITE_COL[e.bite] || '#FFE15A', ex = PX(e.x), ey = PY(e.y), hitR = Math.max(1, e.r) * S, JR = Math.max(3, e.r * 1.15) * S;
+      if (now < e.land) { // closing
+        closing = true;
+        const q = Math.min(1, (now - e.t) / Math.max(0.05, e.land - e.t));
+        ctx.strokeStyle = col; ctx.globalAlpha = 0.18; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); ctx.stroke(); // from her
+        ctx.fillStyle = col; ctx.globalAlpha = 0.10 + 0.22 * q; ctx.beginPath(); ctx.arc(ex, ey, hitR, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.9; ctx.lineWidth = 2; ctx.stroke();
+        Art.bossJaws(ctx, ex, ey, JR, 1 - q * q, col, 0.55 + 0.45 * q);
+      } else {
+        const a = now - e.land;
+        if (a < 0.3) { // the snap: shut jaws and a flash
+          const f = a / 0.3;
+          ctx.strokeStyle = '#FFFFFF'; ctx.globalAlpha = 0.9 * (1 - f); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ex, ey, hitR * (1 + 0.8 * f), 0, Math.PI * 2); ctx.stroke();
+          Art.bossJaws(ctx, ex, ey, JR, 0, col, 1 - f * 0.6);
+        }
+        if (a < BITE_STAYS) Art.bossBiteMark(ctx, ex, ey, JR, hitR, col, Math.min(1, (BITE_STAYS - a) / 1.5) * 0.85);
+      }
+    }
+    // whom she bites next (only when her bites come slowly: the heavy bite): open jaws that follow them
+    if (bs.aim && !closing && bs.aim.cyc >= 2 && bs.aim.in < 1.5) {
+      const col = BITE_COL[bs.bite] || '#FFE15A', ax = PX(bs.aim.x), ay = PY(bs.aim.y), k = 1 - bs.aim.in / 1.5;
+      ctx.strokeStyle = col; ctx.globalAlpha = 0.25 + 0.4 * k; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(ax, ay, Math.max(1, bs.aim.r) * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      Art.bossJaws(ctx, ax, ay, Math.max(3, bs.aim.r * 1.15) * S, 1.25, col, 0.2 + 0.3 * k);
+    }
+    ctx.globalAlpha = 1;
+    // --- the web mortar. Before: a thread from her to the nest she is about to rip loose, and a ring on the clump she
+    // aims at. Thrown: the nest flies in an arc to the red ring, which fills as it comes. Landed: a web that stays
+    const SILK = '#F4F1E8', RED = '#FF5A4E', tfs = Math.max(8, Math.round(tilePx() * 0.22));
+    const label = (txt, lx, ly, col, al) => { ctx.font = `700 ${tfs}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = al; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(8,12,14,0.9)'; ctx.strokeText(txt, lx, ly); ctx.fillStyle = col; ctx.fillText(txt, lx, ly); };
+    if (bs.mortarIn != null) {
+      const full = bs.mortarIn > 4.05 ? 5 : 4, k = Math.max(0, Math.min(1, 1 - bs.mortarIn / full));
+      ctx.strokeStyle = RED; ctx.globalAlpha = 0.35 + 0.4 * k; ctx.lineWidth = 3; // round her: a red ring that closes as the shot comes
+      ctx.beginPath(); ctx.arc(x, y, R * 1.35, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); ctx.stroke();
+      if (bs.mortarNest) { // the nest she will throw: her thread on it, tighter as the shot comes
+        const nx = PX(bs.mortarNest.x), ny = PY(bs.mortarNest.y), wob = Math.sin(time * 22) * (1 + 2 * k);
+        ctx.strokeStyle = SILK; ctx.globalAlpha = 0.35 + 0.5 * k; ctx.lineWidth = 1 + 2 * k;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo((x + nx) / 2 + wob, (y + ny) / 2 + (1 - k) * S * 2, nx, ny); ctx.stroke();
+        ctx.strokeStyle = RED; ctx.globalAlpha = 0.5 + 0.4 * Math.sin(time * 10); ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.arc(nx + wob * 0.4, ny, 3.2 * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+        label('THROWS IN ' + bs.mortarIn.toFixed(1) + 's', nx, ny - 4 * S, '#FF8A80', 0.95);
+      }
+      if (bs.mortarAim) { // where she is aiming: it follows the clump until she throws
+        const mx = PX(bs.mortarAim.x), my = PY(bs.mortarAim.y), r = bs.mortarAim.r * S;
+        ctx.strokeStyle = RED; ctx.globalAlpha = 0.3 + 0.3 * k; ctx.lineWidth = 1.5; ctx.setLineDash([6, 6]);
+        ctx.beginPath(); ctx.arc(mx, my, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      }
       ctx.globalAlpha = 1;
     }
-    // the mortar's mark: a red crosshair on the clump it is about to hit
-    if (bs.mortarAim) {
-      const mx = PX(bs.mortarAim.x), my = PY(bs.mortarAim.y), r = bs.mortarAim.r * S;
-      ctx.strokeStyle = '#FF5A4E'; ctx.globalAlpha = 0.55 + 0.35 * Math.sin(time * 14); ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(mx, my, r, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(mx - r * 1.2, my); ctx.lineTo(mx - r * 0.5, my); ctx.moveTo(mx + r * 0.5, my); ctx.lineTo(mx + r * 1.2, my); ctx.moveTo(mx, my - r * 1.2); ctx.lineTo(mx, my - r * 0.5); ctx.moveTo(mx, my + r * 0.5); ctx.lineTo(mx, my + r * 1.2); ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-    for (const e of mom.ev || []) { // what she just did
-      const a = time - e.t;
-      if (e.k === 'bite') { // where it lands: a splat the size of its splash, in the bite's colour
-        const la = time - e.land; if (la < 0 || la > 0.45) continue;
-        const q = la / 0.45, rr = Math.max(1.5, e.r) * S * (0.6 + 0.6 * q), ex = PX(e.x), ey = PY(e.y), col = BITE_COL[e.bite] || '#FFE15A';
-        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.globalAlpha = 0.25 * (1 - q); ctx.beginPath(); ctx.arc(ex, ey, rr, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 0.9 * (1 - q); ctx.lineWidth = e.bite === 'heavy' ? 4 : 2; ctx.stroke();
-        if (e.bite === 'sweep') { ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ex, ey, rr * 0.75, q * 4, q * 4 + Math.PI * 1.4); ctx.stroke(); } // the sweep's swipe
-      } else if (e.k === 'mortar' && a >= 0 && a < 0.9) { // the nest flung at the clump, and its web splat
-        const ex = PX(e.x), ey = PY(e.y), q = a / 0.9;
-        if (a < 0.3) { ctx.strokeStyle = '#F4F1E8'; ctx.globalAlpha = 0.9 * (1 - a / 0.3); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(PX(e.fx), PY(e.fy)); ctx.lineTo(ex, ey); ctx.stroke(); }
-        const rr = e.r * S * (0.5 + 0.5 * Math.min(1, q * 2));
-        ctx.strokeStyle = '#F4F1E8'; ctx.globalAlpha = 0.85 * (1 - q); ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(ex, ey, rr, 0, Math.PI * 2); ctx.stroke();
-        for (let k = 0; k < 8; k++) { const an = k * Math.PI / 4 + 0.2; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex + Math.cos(an) * rr, ey + Math.sin(an) * rr); ctx.stroke(); }
-      } else if (e.k === 'fall' && a >= 0 && a < 0.9) { // she drops: a ring of dust
-        ctx.strokeStyle = '#B49A7A'; ctx.globalAlpha = 0.7 * (1 - a / 0.9); ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.arc(x, y, R * (1 + a * 1.4), 0, Math.PI * 2); ctx.stroke();
+    for (const e of evs) {
+      const a = now - e.t;
+      if (e.k === 'mortar' && a >= 0) {
+        const ex = PX(e.x), ey = PY(e.y), r = e.r * S, fly = Math.max(0.01, e.land - e.t), la = now - e.land;
+        if (la < 0) { // in the air
+          const q = a / fly, hgt = Math.sin(Math.PI * q);
+          ctx.fillStyle = RED; ctx.globalAlpha = 0.16; ctx.beginPath(); ctx.arc(ex, ey, r * q, 0, Math.PI * 2); ctx.fill(); // the ring fills as it comes
+          ctx.strokeStyle = RED; ctx.globalAlpha = 0.9; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); for (let k = 0; k < 4; k++) { const an = k * Math.PI / 2 + time * 0.8; ctx.moveTo(ex + Math.cos(an) * r * 0.82, ey + Math.sin(an) * r * 0.82); ctx.lineTo(ex + Math.cos(an) * r * 1.14, ey + Math.sin(an) * r * 1.14); } ctx.stroke();
+          label('WEB MORTAR', ex, ey - r - tfs, '#FF8A80', 0.95);
+          const gx = PX(e.fx) + (ex - PX(e.fx)) * q, gy = PY(e.fy) + (ey - PY(e.fy)) * q, bx = gx, by = gy - hgt * 9 * S, br = (1.5 + 1.1 * hgt) * S;
+          ctx.fillStyle = '#000'; ctx.globalAlpha = 0.28; ctx.beginPath(); ctx.ellipse(gx, gy, br * 0.9, br * 0.45, 0, 0, Math.PI * 2); ctx.fill(); // its shadow on the ground
+          ctx.strokeStyle = SILK; ctx.globalAlpha = 0.55; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(PX(e.fx), PY(e.fy)); ctx.quadraticCurveTo((PX(e.fx) + bx) / 2, (PY(e.fy) + by) / 2 - hgt * 3 * S, bx, by); ctx.stroke(); // the silk it trails
+          ctx.globalAlpha = 1; ctx.fillStyle = e.nest ? '#d8d0c0' : SILK; ctx.strokeStyle = teamCol(mom.side); ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.strokeStyle = 'rgba(60,60,60,0.55)'; ctx.lineWidth = 1; for (let k = 0; k < 3; k++) { const an = k * Math.PI / 3 + q * 9; ctx.beginPath(); ctx.moveTo(bx - Math.cos(an) * br, by - Math.sin(an) * br); ctx.lineTo(bx + Math.cos(an) * br, by + Math.sin(an) * br); ctx.stroke(); }
+        } else if (la < (e.secs || 4)) { // landed: a web on the ground for as long as it slows what it hit
+          const f = la / (e.secs || 4), al = 0.75 * (1 - f * f);
+          Art.bossWeb(ctx, ex, ey, r, SILK, al);
+          if (la < 0.4) { const g = la / 0.4; ctx.strokeStyle = '#FFFFFF'; ctx.globalAlpha = 0.9 * (1 - g); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(ex, ey, r * (0.6 + 0.7 * g), 0, Math.PI * 2); ctx.stroke(); } // the hit
+        }
+      } else if (e.k === 'fall' && a >= 0 && a < 1.6) { // she drops: a ring of dust, and the word
+        if (a < 0.9) { ctx.strokeStyle = '#B49A7A'; ctx.globalAlpha = 0.7 * (1 - a / 0.9); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y, R * (1 + a * 1.4), 0, Math.PI * 2); ctx.stroke(); }
+        label('SHE FALLS', x, y - R * 1.5 - a * S * 1.5, '#FFE15A', Math.min(1, (1.6 - a) / 0.5));
+      } else if (e.k === 'molt' && a >= 0 && a < 1.2) { // she sheds what was on her: a husk ring, and the word
+        ctx.strokeStyle = '#C9B8E8'; ctx.globalAlpha = 0.7 * (1 - a / 1.2); ctx.lineWidth = 2; ctx.setLineDash([3, 5]); ctx.beginPath(); ctx.arc(x, y, R * (1.1 + a * 0.8), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+        label('MOLT', x, y - R * 1.5 - a * S * 1.5, '#C9B8E8', Math.min(1, (1.2 - a) / 0.4));
       }
     }
     ctx.globalAlpha = 1;
-    if (bs.mortarIn != null) { // the mortar winding up: a red ring that closes as the shot comes
-      const full = bs.mortarIn > 4.05 ? 5 : 4, k = Math.max(0, Math.min(1, 1 - bs.mortarIn / full));
-      ctx.strokeStyle = '#FF5A4E'; ctx.globalAlpha = 0.35 + 0.4 * k; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(x, y, R * 1.35, -Math.PI / 2, -Math.PI / 2 + k * Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
-    }
     if (bs.phase === 'stunned') { // dazed: stars round her head
       ctx.fillStyle = '#FFE15A';
       for (let k = 0; k < 4; k++) { const a = time * 3 + k * Math.PI / 2; Shapes.draw(ctx, 'star', x + Math.cos(a) * R * 0.9, y - R * 0.6 + Math.sin(a) * R * 0.3, Math.max(3, R * 0.16), 1); }
@@ -828,6 +870,7 @@ const Render2D = (cv, view, opts = {}) => {
     ctx.strokeStyle = '#EDEDED'; ctx.globalAlpha = 0.75; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(x, y - R * 0.3); ctx.quadraticCurveTo(x + sway, y / 2, x + sway * 0.5, 0); ctx.stroke(); ctx.globalAlpha = 1;
   }
+  const BITE_STAYS = 4; // seconds a bite mark stays on the ground
   function drawBossPools() {
     const t = tilePx(), time = phase === 'battle' && bt ? bt.time() : 0;
     for (const [c0, r0, c1, r1] of boss.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
@@ -1947,7 +1990,8 @@ const Render2D = (cv, view, opts = {}) => {
         continue;
       }
       const dx = p.dirX * flip(), dy = -p.dirY * flip(), x = PX(p.x), y = PY(p.y);
-      if (p.owner.u.boss) { // the Mommy boss's bite: a big pale web ball with a silk trail, slow enough to see coming
+      if (p.owner.u.boss && p.owner.u.lob) continue; // the Mommy boss's bite is her jaws on the ground (drawBossState), not a shot
+      if (p.owner.u.boss) { // (her older bite, CFG.mommy.biteSecs 0) a big pale web ball with a silk trail, slow enough to see coming
         const r = Math.max(4, 0.9 * S);
         ctx.strokeStyle = '#EDEDED'; ctx.globalAlpha = 0.5; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - dx * r * 4, y - dy * r * 4); ctx.stroke();
         ctx.globalAlpha = 1; ctx.fillStyle = '#F4F1E8'; ctx.strokeStyle = teamCol(p.owner.side); ctx.lineWidth = 2;

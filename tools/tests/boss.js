@@ -43,6 +43,40 @@ const s4 = Game.startBattle(m4); while (s4.step()) { /* the fight */ }
 Game.resolve(m4, s4.result());
 ok(m4.over && m4.winner === 1, 'after round 5 she has won');
 
+// her attacks (2026-11-11, night): the bite lands where it was aimed, biteSecs after her jaws open; the mortar's nest
+// flies for mortar.fly and lands where the clump stood; a shown fight (record) plays the same as a hidden one
+const C = Boss.CFG, T = Game.TILE || 6;
+const setup5 = (list) => { const m5 = B.newRun().m; m5.gold[0] = 5000; m5.extraDeploys[0] = 9; for (const [nm, c, r] of list) Game.place(m5, 0, ix(nm), c, r); return m5; };
+const HOLD = [['Goblin Swarm', 2, 10], ['Goblin Swarm', 1, 10], ['Wisps', 10, 10], ['Skeleton Archers', 9, 10]], FAR = [['Sniper', 1, 14], ['Sniper', 10, 14], ['Skeleton Archers', 9, 13], ['Skeleton Archers', 10, 13]];
+const played = (list, record) => { const sim = Boss.battle(setup5(list), { record }); while (sim.step()) { /* the fight */ } return sim; };
+const shown = played(HOLD, true), hidden = played(HOLD, false);
+ok(shown.result().boss.hpLeft === hidden.result().boss.hpLeft && shown.result().boss.fallAt === hidden.result().boss.fallAt, 'a shown fight plays the same as a hidden one');
+const bites = shown.boss.mom.ev.filter((e) => e.k === 'bite');
+ok(bites.length > 3 && bites.every((e) => Math.abs(e.land - e.t - C.mommy.biteSecs) < 0.2 && e.r >= 1), `her bites: jaws open, shut ${C.mommy.biteSecs} s later (${bites.length} of them in the events)`);
+ok(shown.boss.mom.u.lob && shown.boss.mom.u.projSecs === C.mommy.biteSecs, 'her bite lands where it was aimed (lob), after biteSecs');
+{ // the mortar: nobody in her reach, so she throws a nest. Nothing is hurt before it lands; the nest is gone at once
+  const sim = Boss.battle(setup5(FAR), { record: true, noHatch: true }), mom = sim.boss.mom;
+  const near = (e) => sim.bodies.filter((b) => b.side === 0 && !b.u.structure && Math.hypot(b.x - e.x, b.y - e.y) <= e.r);
+  const hpOf = (bs) => bs.reduce((s, b) => s + (b.alive ? b.hp : 0), 0);
+  let e = null, t = 0, before = null, nests0 = null, mid = null;
+  while (sim.step()) {
+    t += Game.SETTINGS.dt;
+    if (!e) { e = mom.ev.find((x) => x.k === 'mortar'); if (e) { before = near(e); nests0 = sim.boss.nests.filter((n) => n.alive).length; mid = hpOf(before); } }
+    else if (t < e.land - 0.1) mid = Math.min(mid, hpOf(before)) === mid ? mid : -1;
+    else if (t > e.land + 0.2) break;
+  }
+  ok(e && Math.abs(e.t - C.mommy.mortar.wind) < 0.2 && Math.abs(e.land - e.t - C.mommy.mortar.fly) < 1e-6, `the mortar: thrown after ${C.mommy.mortar.wind} s alone, in the air ${C.mommy.mortar.fly} s`);
+  ok(e.nest && nests0 === sim.boss.nests.length - 1, 'the thrown nest is gone the moment she throws it');
+  ok(before.length > 0 && mid !== -1 && hpOf(before) < mid, 'nothing in the ring is hurt while it flies; it is when it lands');
+  ok(near(e).filter((b) => b.alive).every((b) => b.web && b.momWeb), 'what it hits and does not kill is webbed');
+  ok(before.filter((b) => b.alive && Math.hypot(b.x - e.x, b.y - e.y) > e.r).every((b) => b.hp === b.u.hp && !b.momWeb), 'a body that walked out of the ring before it landed is missed');
+}
+// (prototype) a ranged squad pointed at a nest shoots that one first
+{ const noMortar = { ...C, mommy: { ...C.mommy, mortar: { ...C.mommy.mortar, hit: 0 } } }; // (so she rips no nest herself)
+  const hurt = (focus) => { const m6 = setup5([['Sniper', 5, 13]]); if (focus != null) m6.armies[0][0].focus = focus; const sim = Boss.battle(m6, { noHatch: true, cfg: noMortar }); for (let k = 0; k < 400 && sim.step(); k++) { /* 20 s */ } return sim.boss.nests.map((n) => n.hp < n.u.hp); };
+  const f1 = hurt(1), f0 = hurt(0);
+  ok(f1[1] && !f1[0] && f0[0] && !f0[1], 'a squad pointed at a nest (sq.focus) shoots that nest first, whichever it is'); }
+
 // a normal match has none of it
 const n = Game.createMatch(units, B.matrix, 1, 'standard', null, [], { draft: false });
 ok(!n.boss && Game.needsTower(n, 0) !== undefined && Game.freeMovesLeft(n, 0) === 0, 'a normal match: no boss rules');
