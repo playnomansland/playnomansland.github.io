@@ -18889,7 +18889,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · 504d778'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · 89c9701'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -22150,7 +22150,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   function acctSave(a) {
     const dev0 = devMode();
     acct = a;
-    if (devMode() !== dev0) { musicDevChanged(); if (onl) onlLoad(); } // the DEV playlist and the players-online count come or go
+    if (devMode() !== dev0) { musicDevChanged(); if (onl) onlLoad(); bossRowChanged(); } // the DEV playlist and the players-online count come or go (and the Puzzles' Weekly boss)
     if (onl) onlHello(); // signed in, out or as someone else: the OnlineRoom is told (nothing is sent if the session is the same)
     try {
       localStorage.removeItem(ACCT_STORE); sessionStorage.removeItem(ACCT_STORE);
@@ -23638,15 +23638,25 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // Five rounds against one boss on your phone: the normal deploy panel and clock, no AI. A line over the board says the
   // round's bite and her health; after each fight the report says when her nests fell, how long she was down, what her
   // mortar did and who hurt her most.
+  // developer status came or went (the server's answer about the account lands a moment after the page opens, on a slow
+  // connection seconds later): a Puzzles list already open is drawn again, so its Weekly boss row comes or goes
+  function bossRowChanged() {
+    try {
+      if (typeof dio !== 'undefined' && dio.api && dio.api.puzRedraw) dio.api.puzRedraw();
+      if (!$('sheet-back').hidden && ($('sheet-h') || {}).textContent === 'Tutorial puzzles') openPuzzles();
+    } catch (e) {}
+  }
   // ?mommy in the address (developers' test link): straight into Mommy on a developer account; on any other this says
-  // which account the page sees, so a missing Weekly boss button can be told apart from an old copy of the page
-  if (/[?&]mommy\b/.test(location.search)) setTimeout(() => {
+  // which account the page sees, so a missing Weekly boss button can be told apart from an old copy of the page. It waits
+  // up to 8 s for the server's answer about the account
+  if (/[?&]mommy\b/.test(location.search)) { let tries = 0; const go = () => {
     if (devMode()) { startBoss(); return; }
+    if (++tries < 16) { setTimeout(go, 500); return; }
     closeSheet(true);
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Mommy is for developers</h3><button class="btn small" id="close">Close</button></div>
       <p style="margin:0">${acct ? `This page is signed in as <b>${esc(acct.tag || '?')}</b>${acct.google ? '' : ' (a guest account)'}, which isn’t a developer account.` : 'This page isn’t signed in.'} Developer status comes from the Google account you sign in with.</p>`;
     $('sheet-back').hidden = false; $('close').addEventListener('click', closeSheet);
-  }, 2500);
+  }; setTimeout(go, 500); }
   function startBoss() {
     if (typeof Boss === 'undefined') return;
     leaveNet(); closeSheet(true);
@@ -30818,7 +30828,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
       homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
     }
-    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms, puzzles: openPuz, howto: openHow, isle: () => bfDots.slice(0, 4).map(o => proj(o, 0)) }; // (isle: the island's four corners on screen, for the menu guide's labels)
+    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms, puzzles: openPuz, puzRedraw: () => { if (body.classList.contains('puz')) drawPuz(); }, howto: openHow, isle: () => bfDots.slice(0, 4).map(o => proj(o, 0)) }; // (isle: the island's four corners on screen, for the menu guide's labels)
     dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); window.__dio.cam = () => ({ want: Object.keys(VIEWS).find(k => VIEWS[k] === want) || 'other', el: +now.el.toFixed(2) }); } // the tests: the roster standing; show / hide the home by hand
