@@ -1502,13 +1502,14 @@
     const stayEl = $('dio-stay');
     function drawStay() {
       const on = !!acct && !HOME_AUTO && !door.screen && home.screen === 'menu' && !helpTour(); // (after the menu guide's tour: one note at a time; tourSync draws this again when it ends)
-      const ask = on && stayPref() == null, nt = on && !ask ? titlesUnseen() : [], ns = on && !ask && !nt.length ? skinsUnseen() : [];
+      const ask = on && (stayPref() == null || !!(firstRun && firstRun.stay)), /* (firstRun: a developer's try of the first visit asks it for show) */ nt = on && !ask ? titlesUnseen() : [], ns = on && !ask && !nt.length ? skinsUnseen() : [];
       stayEl.hidden = !(ask || nt.length || ns.length); stayEl.classList.toggle('news', !ask);
       if (ask) {
         stayEl.innerHTML = `<span class="k" id="stay-h">Stay logged in?</span><p>Keep <b>${esc(acct.tag)}</b> logged in on this device, so the game opens on the menu next time. Settings can change it.</p>
           <span class="seg"><button class="w go" id="stay-yes">Yes</button><button class="w" id="stay-no">No</button></span>`;
-        $('stay-yes').addEventListener('click', () => { setStay(true); drawHome(); });
-        $('stay-no').addEventListener('click', () => { setStay(false); drawHome(); });
+        const answer = (yes) => { const real = stayPref() == null; if (firstRun) firstRun.stay = false; if (real) setStay(yes); drawHome(); }; // (a developer's try: the answer changes nothing, unless it was never answered)
+        $('stay-yes').addEventListener('click', () => answer(true));
+        $('stay-no').addEventListener('click', () => answer(false));
       } else if (nt.length) {
         stayEl.innerHTML = `<span class="k" id="stay-h"><i class="tagnew">${nt.length > 1 ? 'New titles' : 'New title'}</i></span>
           <p class="nts">${nt.map(t => DTITLES[t] ? `<span class="ptitle" style="--tc:${DTITLES[t][1]}"><i></i>${esc(DTITLES[t][0])}<i></i></span>` : '').join('')}</p>
@@ -1653,7 +1654,7 @@
         <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}${PC() ? onoff('helpers', 'Helpers', helpersOn(), helpersOn() ? (helpers.done ? 'You’ve had them all. Off and On again starts them over.' : helpers.menu ? 'Yellow notes point things out on the menu and in your first game.' : 'Yellow notes point things out in your first game.') : 'No notes. On starts them from the beginning.') : ''}</div>
         <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
         <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', staying(), staying() ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${acct && !acct.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
-        ${devMode() ? `<span class="k" style="color:#FF5FC4">Developer</span><div class="set">${onoff('rk', 'Ranked play', home.rankedOn === true, '<span id="rk-msg">For everyone, not only developers.</span>')}</div>` : ''}
+        ${devMode() ? `<span class="k" style="color:#FF5FC4">Developer</span><div class="set">${onoff('rk', 'Ranked play', home.rankedOn === true, '<span id="rk-msg">For everyone, not only developers.</span>')}${PC() ? '<span class="lab">First time</span><span class="seg"><button class="w go" data-set="first|1">Try it</button></span><p class="sn">The whole first visit, as a new guest gets it: the welcome screen, the menu’s tour, Stay logged in? and the notes of a first game. Your account stays as it is.</p>' : ''}</div>` : ''}
         <div class="set-foot"><button class="lnk" id="mp-open2" data-playlists>Playlists</button><button class="lnk" id="bug-open" data-bug>Report a bug</button></div>
         <p class="hint" style="opacity:.55">In a match, Settings also has the 2D or 3D board and its quality.</p>`;
     }
@@ -1674,6 +1675,7 @@
       else if (k === 'dauto') setDeployAuto(on);
       else if (k === 'tm') timerOn = on; // the old PLAY popup's Deploy timer vs AI (for this visit, as there)
       else if (k === 'helpers') setHelpers(on); // the yellow notes of a first game against the computer
+      else if (k === 'first') { openDrop(''); firstTry(); return; } // developers: the whole first visit, from the welcome screen
       else if (k === 'rk') { const r = await acctCall('ranked', { on }, true); if (r.status === 200) home.rankedOn = !!r.on; drawSettings();
         if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }
       drawSettings();

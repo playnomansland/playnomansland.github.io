@@ -17566,6 +17566,9 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (h && Array.isArray(h.seen)) helpers = { off: !!h.off, seen: h.seen.map(String), done: !!h.done, menu: Array.isArray(h.menu) ? h.menu.map(String) : null };
     else if (localStorage.getItem('phonebellum.tutorial.v1') === 'done') helpers.off = true; } catch (e) {}
   if (qs.has('guide')) { helpers.off = false; helpers.menu = []; }
+  // developers (Settings: Developer, First time, firstTry): the whole first visit as a new guest gets it, for this
+  // visit, without logging out. welcome: the welcome screen is up; stay: Stay logged in? is still to ask (for show)
+  let firstRun = null;
   let rangeOf = null;       // { side, id }: the squad last tapped on the board; its range shows as a dotted ring
   let inspect = null, inspectHtml = ''; // a fight: the body tapped (its card shows, see inspectCard), and what the card shows now
   let bt = null;            // battle being played back
@@ -18439,7 +18442,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · 16cccdc'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · 78b2936'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19289,7 +19292,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     { id: 'units', menu: true, show: () => true, done: () => dioHas('pinned') && dioHas('units'), at: () => dioQ('.menu [data-cam="units"]'), side: 'rail', h: 'Units.', t: 'Every unit in the game: what it does and what it beats.' },
     { id: 'field', menu: true, get own() { return dioQ('.bf-note'); }, show: () => true, at: () => dioQ('.bf-note .bf-btn'), side: 'left', h: 'Your battlefield.', t: 'This is the board you play on. Change its look here.' },
     { id: 'music', menu: true, show: () => true, at: () => dioQ('.music'), side: 'top', along: 0.8, off: 12, lean: -1, h: 'Music.', t: 'Pause or skip a song here. Playlist lets you pick what plays.' },
-    { id: 'guest', menu: true, show: () => !(acct && acct.google) && $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(2)'), side: 'bottom', only: true, off: 13, lean: 1, h: 'You’re a guest.', t: 'Click your name to sign in with Google. It keeps your name and results, and opens Ranked and Friends.' },
+    { id: 'guest', menu: true, show: () => (!!firstRun || !(acct && acct.google)) && $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(2)'), side: 'bottom', only: true, off: 13, lean: 1, h: 'You’re a guest.', t: 'Click your name to sign in with Google. It keeps your name and results, and opens Ranked and Friends.' },
     { id: 'settings', menu: true, show: () => $('dio-stay').hidden, at: () => dioQ('.acct button:nth-of-type(3)'), side: 'bottom', only: true, off: 13, lean: -1, h: 'That’s the menu.', t: 'Settings has the sound, full screen and Helpers: these notes, On or Off.' },
   ];
   const menuActive = () => DIO && !!helpers.menu && !helpers.off && phase === 'start' && !m && document.documentElement.classList.contains('pc') && MENU_TIPS.some(T => !helpers.menu.includes(T.id));
@@ -19318,6 +19321,18 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     helpers.menu = []; saveHelpers(); tourWas = true; helperWake();
   }
   let menuRead = 0, menuLast = 0; // how long the note has been up to be read (frames it was on screen: a stalled page counts for little)
+  // Developers: the whole first visit, as a new guest gets it, without logging out. The welcome screen first (Play as
+  // guest goes on; the account stays as it is), then the menu's tour from its first note, with You're a guest in it,
+  // then Stay logged in? (for show: the answer changes nothing unless it was never answered), and a first game's
+  // helpers from the start. It lasts this visit: after a reload the notes go on as any player's would
+  function firstTry() {
+    if (!devMode()) return;
+    firstRun = { welcome: true, stay: true };
+    helpers = { off: false, seen: [], done: false, menu: [] }; for (const T of MENU_TIPS) T.cramped = false; saveHelpers();
+    helpCur = null; helperDraw(null); tourWas = true;
+    closeSheet(true); home.pop = false; home.puz = false; home.screen = 'welcome'; home.msg = '';
+    drawHome(); helperWake();
+  }
   function menuPick(t) {
     if (helpCur && !helpCur.menu) { helpCur = null; helperDraw(null); } // (a match's note left over)
     if (helpCur && $('helper').style.visibility !== 'hidden') menuRead += Math.min(250, t - menuLast);
@@ -20473,7 +20488,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const HOME_AUTO = (qs.has('test') || navigator.webdriver === true) && !qs.has('welcome'); // the UI tests (Playwright): no welcome screen or Stay logged in question, the PLAY popup open; ?welcome shows the real flow
   const home = { screen: '', ctx: {}, pop: HOME_AUTO, // ?test (the UI tests): the PLAY popup starts open, so Play vs AI, Play vs Friend and the code box are there at once
     msg: '', busy: false, mode: 'normal', rankedOn: null, bgKey: '',
-    welcomeNeeded: () => { if (acct || HOME_AUTO) return false; try { return !localStorage.getItem(WELCOME_STORE) && !sessionStorage.getItem(WELCOME_STORE); } catch (e) { return false; } } };
+    welcomeNeeded: () => { if (firstRun && firstRun.welcome) return true; if (acct || HOME_AUTO) return false; try { return !localStorage.getItem(WELCOME_STORE) && !sessionStorage.getItem(WELCOME_STORE); } catch (e) { return false; } } };
   try { if (localStorage.getItem(MODE_STORE) === 'ranked') home.mode = 'ranked'; } catch (e) {}
   const welcomed = () => { try { acctStore().setItem(WELCOME_STORE, '1'); } catch (e) {} };
   function setStay(on) {
@@ -20632,7 +20647,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     else drawMenu(el);
   }
   function homeMsg(t) { home.msg = t || ''; const x = $('home-msg'); if (x) x.textContent = home.msg; }
-  function homeDone() { welcomed(); home.screen = 'menu'; home.msg = ''; drawHome(); }
+  function homeDone() { if (firstRun && firstRun.welcome) firstRun.welcome = false; else welcomed(); home.screen = 'menu'; home.msg = ''; drawHome(); }
 
   // the first screen: the title, Log in (Sign up under it, smaller) and Play as guest
   function drawWelcome(el) {
@@ -21722,7 +21737,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // Log out (Profile): signed out on this phone, back to the welcome screen
   async function acctLogOut() {
     await acctSignOut();
-    guideNever(); // (whoever comes in next on this device isn't here for the first time: no menu guide)
+    guideNever(); firstRun = null; // (whoever comes in next on this device isn't here for the first time: no menu guide)
     acctUi.outSure = false;
     try { localStorage.removeItem(WELCOME_STORE); sessionStorage.removeItem(WELCOME_STORE); } catch (e) {}
     closeSheet(true); home.screen = 'welcome'; home.msg = '';
@@ -29779,13 +29794,14 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const stayEl = $('dio-stay');
     function drawStay() {
       const on = !!acct && !HOME_AUTO && !door.screen && home.screen === 'menu' && !helpTour(); // (after the menu guide's tour: one note at a time; tourSync draws this again when it ends)
-      const ask = on && stayPref() == null, nt = on && !ask ? titlesUnseen() : [], ns = on && !ask && !nt.length ? skinsUnseen() : [];
+      const ask = on && (stayPref() == null || !!(firstRun && firstRun.stay)), /* (firstRun: a developer's try of the first visit asks it for show) */ nt = on && !ask ? titlesUnseen() : [], ns = on && !ask && !nt.length ? skinsUnseen() : [];
       stayEl.hidden = !(ask || nt.length || ns.length); stayEl.classList.toggle('news', !ask);
       if (ask) {
         stayEl.innerHTML = `<span class="k" id="stay-h">Stay logged in?</span><p>Keep <b>${esc(acct.tag)}</b> logged in on this device, so the game opens on the menu next time. Settings can change it.</p>
           <span class="seg"><button class="w go" id="stay-yes">Yes</button><button class="w" id="stay-no">No</button></span>`;
-        $('stay-yes').addEventListener('click', () => { setStay(true); drawHome(); });
-        $('stay-no').addEventListener('click', () => { setStay(false); drawHome(); });
+        const answer = (yes) => { const real = stayPref() == null; if (firstRun) firstRun.stay = false; if (real) setStay(yes); drawHome(); }; // (a developer's try: the answer changes nothing, unless it was never answered)
+        $('stay-yes').addEventListener('click', () => answer(true));
+        $('stay-no').addEventListener('click', () => answer(false));
       } else if (nt.length) {
         stayEl.innerHTML = `<span class="k" id="stay-h"><i class="tagnew">${nt.length > 1 ? 'New titles' : 'New title'}</i></span>
           <p class="nts">${nt.map(t => DTITLES[t] ? `<span class="ptitle" style="--tc:${DTITLES[t][1]}"><i></i>${esc(DTITLES[t][0])}<i></i></span>` : '').join('')}</p>
@@ -29930,7 +29946,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         <span class="k">Vs computer</span><div class="set">${onoff('tm', 'Deploy timer', timerOn, timerOn ? 'A countdown while you deploy, as online.' : 'No countdown: take your time.')}${PC() ? onoff('helpers', 'Helpers', helpersOn(), helpersOn() ? (helpers.done ? 'You’ve had them all. Off and On again starts them over.' : helpers.menu ? 'Yellow notes point things out on the menu and in your first game.' : 'Yellow notes point things out in your first game.') : 'No notes. On starts them from the beginning.') : ''}</div>
         <span class="k">Online matches</span><div class="set">${onoff('chat', 'Chat', snd.chatOn !== false)}${onoff('emo', 'Emotes', snd.emotesOn !== false)}</div>
         <span class="k">This device</span><div class="set">${onoff('stay', 'Stay logged in', staying(), staying() ? 'You stay logged in on this device.' : `You’re logged out when you close the browser.${acct && !acct.google ? ' A guest can’t log back in: sign up with Google first.' : ''}`)}</div>
-        ${devMode() ? `<span class="k" style="color:#FF5FC4">Developer</span><div class="set">${onoff('rk', 'Ranked play', home.rankedOn === true, '<span id="rk-msg">For everyone, not only developers.</span>')}</div>` : ''}
+        ${devMode() ? `<span class="k" style="color:#FF5FC4">Developer</span><div class="set">${onoff('rk', 'Ranked play', home.rankedOn === true, '<span id="rk-msg">For everyone, not only developers.</span>')}${PC() ? '<span class="lab">First time</span><span class="seg"><button class="w go" data-set="first|1">Try it</button></span><p class="sn">The whole first visit, as a new guest gets it: the welcome screen, the menu’s tour, Stay logged in? and the notes of a first game. Your account stays as it is.</p>' : ''}</div>` : ''}
         <div class="set-foot"><button class="lnk" id="mp-open2" data-playlists>Playlists</button><button class="lnk" id="bug-open" data-bug>Report a bug</button></div>
         <p class="hint" style="opacity:.55">In a match, Settings also has the 2D or 3D board and its quality.</p>`;
     }
@@ -29951,6 +29967,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       else if (k === 'dauto') setDeployAuto(on);
       else if (k === 'tm') timerOn = on; // the old PLAY popup's Deploy timer vs AI (for this visit, as there)
       else if (k === 'helpers') setHelpers(on); // the yellow notes of a first game against the computer
+      else if (k === 'first') { openDrop(''); firstTry(); return; } // developers: the whole first visit, from the welcome screen
       else if (k === 'rk') { const r = await acctCall('ranked', { on }, true); if (r.status === 200) home.rankedOn = !!r.on; drawSettings();
         if ($('rk-msg')) $('rk-msg').textContent = r.status !== 200 ? (r.status === 403 ? 'Only a developer can do that.' : acctFail(r)) : r.on ? 'Ranked is on for everyone.' : 'Ranked is off for players (developers can still play it).'; drawKinds(); return; }
       drawSettings();

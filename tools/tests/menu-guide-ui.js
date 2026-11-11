@@ -16,13 +16,14 @@ const PID = 'p0123456789abcdef', SID = 'a'.repeat(64); // a made-up guest accoun
 const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&test&server=http://127.0.0.1:8799'; // (?test: window.__dio.pts, where the island's pieces are)
 (async () => {
   const b = await chromium.launch();
-  // guest: what the server says to Play as guest ('none': it can't be reached; 'acct': a guest account)
+  // guest: what the server says to Play as guest ('none': it can't be reached; 'acct': a guest account; 'dev': the
+  // account on the device is a developer's, signed in with Google)
   const open = async ({ q = '&welcome', guest = 'none', init, size = [1440, 900], ctx } = {}) => {
     const c = ctx || await b.newContext({ viewport: { width: size[0], height: size[1] } });
     const p = await c.newPage();
     p.on('pageerror', e => { if (/gis is not defined/.test(e.message)) return; console.log('page error:', e.message); fails++; });
     await p.route(/127\.0\.0\.1:8799\/account\//, (r) => {
-      if (guest === 'acct' && /\/account\/(guest|me)$/.test(r.request().url())) return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ player: { id: PID, tag: 'Guest 1234', titles: [], skins: [], puzzles: [] }, session: SID }) });
+      if ((guest === 'acct' || guest === 'dev') && /\/account\/(guest|me)$/.test(r.request().url())) return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ player: guest === 'dev' ? { id: PID, tag: 'Devvy', google: true, dev: true, titles: [], skins: [], puzzles: [0] } : { id: PID, tag: 'Guest 1234', titles: [], skins: [], puzzles: [] }, session: SID }) });
       if (r.request().method() === 'OPTIONS') return r.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
       return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{}' });
     });
@@ -163,6 +164,30 @@ const BASE = 'http://127.0.0.1:8766/index.html?ui=diorama&test&server=http://127
     const q = await open({ q: '&guide' }); await q.click('#play-back'); await q.mouse.move(700, 60); // (a page opened by a test starts on Play)
     ok(await wait(q, 'New here?'), '?guide starts it on any device, to look at it');
     await q.close();
+  }
+  { // ---- developers: Settings has First time, the whole first visit without logging out ----
+    const seed = (dev) => `try { if (!localStorage.getItem('pb-welcomed')) { localStorage.setItem('phonebellum.account.v1', JSON.stringify({ id: '${PID}', tag: 'Devvy', google: true, dev: ${dev}, titles: [], skins: [], puzzles: [0], session: '${SID}', ts: Date.now() })); localStorage.setItem('pb-stay', '1'); localStorage.setItem('pb-welcomed', '1'); localStorage.setItem('pb-helpers', JSON.stringify({ off: false, seen: ['start', 'buy'], done: true })); } } catch (e) {}`;
+    const n = await open({ guest: 'acct', init: seed(false) }); await n.click('#dio .acct button:nth-of-type(3)'); await n.waitForTimeout(400);
+    ok(await n.evaluate(() => !!document.querySelector('[data-set="helpers|1"]') && !document.querySelector('[data-set="first|1"]')), 'a player’s Settings has no First time');
+    await n.close();
+    const p = await open({ guest: 'dev', init: seed(true) }); await p.waitForTimeout(1200);
+    ok((await note(p)) === '' && await p.evaluate(() => !document.getElementById('dio').classList.contains('welcome')), 'a developer, signed in, a game played: the menu, no tour');
+    await p.click('#dio .acct button:nth-of-type(3)'); await p.waitForTimeout(400);
+    ok(await js(p, '[data-set="first|1"]'), 'a developer’s Settings has First time: Try it');
+    await p.waitForFunction(() => document.getElementById('dio').classList.contains('welcome'), null, { timeout: 5000 }).catch(() => {});
+    ok(await p.evaluate(() => document.getElementById('dio').classList.contains('welcome') && document.getElementById('dd-settings').hidden) && (await note(p)) === '', 'Try it: the welcome screen, as a new player gets it');
+    await guestIn(p);
+    ok(await wait(p, 'New here?') && await p.evaluate(() => document.getElementById('dio-stay').hidden) && (await isle(p)).length === 0, 'Play as guest: the tour from its first note, alone on screen');
+    let all = true; for (const h of ['Puzzles.', 'Ready to fight?', 'Units.', 'Your battlefield.', 'Music.', 'You’re a guest.', 'That’s the menu.']) { await js(p, '#hp-ok'); all = await wait(p, h) && all; }
+    ok(all, 'all eight notes, You’re a guest among them (the account is Google’s)');
+    await js(p, '#hp-ok');
+    ok(await p.waitForFunction(() => !document.getElementById('dio-stay').hidden && /Stay logged in/.test(document.getElementById('dio-stay').textContent), null, { timeout: 5000 }).then(() => true, () => false), 'then Stay logged in? is asked, as after a first tour');
+    await js(p, '#stay-no'); await p.waitForTimeout(500);
+    ok(await p.evaluate(() => document.getElementById('dio-stay').hidden && localStorage.getItem('pb-stay') === '1' && !!localStorage.getItem('phonebellum.account.v1')), 'No: nothing changes (still staying logged in, the account as it was)');
+    const st = await store(p);
+    ok(st.seen.length === 0 && st.done === false && st.off === false, 'and a first game’s helpers start over too');
+    ok(await p.evaluate(() => /Devvy/.test(document.querySelector('#dio .acct button:nth-of-type(2)').textContent)), 'still signed in as the developer');
+    await p.close();
   }
   // ---- other windows: every note on screen, beside its thing, over none of the menu's words, the music or Change
   // battlefield. A small window has no free side for some: those are left out there (New here? always shows) ----

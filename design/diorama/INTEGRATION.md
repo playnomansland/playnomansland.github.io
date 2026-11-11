@@ -186,6 +186,12 @@ you come home; the playlist has no scrollbar; Log out's underline sits closer to
   helpers" is Settings' Helpers, the one switch for every note (a last note points at Settings); Helpers On starts
   the guide over on a device that had it.
   `tools/tests/menu-guide-ui.js` (the game server is never called). Pictures: `screens/menu-guide-*.jpg`.
+  **Developers: First time (2026-11-11).** Settings → Developer → *First time: Try it* (`firstTry`, `firstRun` in
+  `src/site-template.html`; PC only) runs the whole first visit as a new guest gets it, without logging out: the
+  welcome screen (Play as guest goes on), the tour from its first note with *You're a guest* in it, *Stay logged in?*
+  after it (for show: the answer changes nothing unless it was never answered) and a first game's helpers from the
+  start (it resets `pb-helpers`). The pretend parts last the visit; after a reload the notes go on as any player's.
+  `?guide` still starts only the tour.
 - "Joe biden" as Ashlands battle music was the owner's request (2026-11-07, its own session, commit 8ae8492).
 
 - Eleventh round (2026-11-09): the golem's note (menu and Profile) has a small saffron button, INVITE A FRIEND
