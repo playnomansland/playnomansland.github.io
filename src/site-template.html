@@ -5681,7 +5681,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   function acctSave(a) {
     const dev0 = devMode();
     acct = a;
-    if (devMode() !== dev0) { musicDevChanged(); if (onl) onlLoad(); } // the DEV playlist and the players-online count come or go
+    if (devMode() !== dev0) { musicDevChanged(); if (onl) onlLoad(); bossRowChanged(); } // the DEV playlist and the players-online count come or go (and the Puzzles' Weekly boss)
     if (onl) onlHello(); // signed in, out or as someone else: the OnlineRoom is told (nothing is sent if the session is the same)
     try {
       localStorage.removeItem(ACCT_STORE); sessionStorage.removeItem(ACCT_STORE);
@@ -7107,15 +7107,25 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // Five rounds against one boss on your phone: the normal deploy panel and clock, no AI. A line over the board says the
   // round's bite and her health; after each fight the report says when her nests fell, how long she was down, what her
   // mortar did and who hurt her most.
+  // developer status came or went (the server's answer about the account lands a moment after the page opens, on a slow
+  // connection seconds later): a Puzzles list already open is drawn again, so its Weekly boss row comes or goes
+  function bossRowChanged() {
+    try {
+      if (typeof dio !== 'undefined' && dio.api && dio.api.puzRedraw) dio.api.puzRedraw();
+      if (!$('sheet-back').hidden && ($('sheet-h') || {}).textContent === 'Tutorial puzzles') openPuzzles();
+    } catch (e) {}
+  }
   // ?mommy in the address (developers' test link): straight into Mommy on a developer account; on any other this says
-  // which account the page sees, so a missing Weekly boss button can be told apart from an old copy of the page
-  if (/[?&]mommy\b/.test(location.search)) setTimeout(() => {
+  // which account the page sees, so a missing Weekly boss button can be told apart from an old copy of the page. It waits
+  // up to 8 s for the server's answer about the account
+  if (/[?&]mommy\b/.test(location.search)) { let tries = 0; const go = () => {
     if (devMode()) { startBoss(); return; }
+    if (++tries < 16) { setTimeout(go, 500); return; }
     closeSheet(true);
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Mommy is for developers</h3><button class="btn small" id="close">Close</button></div>
       <p style="margin:0">${acct ? `This page is signed in as <b>${esc(acct.tag || '?')}</b>${acct.google ? '' : ' (a guest account)'}, which isn’t a developer account.` : 'This page isn’t signed in.'} Developer status comes from the Google account you sign in with.</p>`;
     $('sheet-back').hidden = false; $('close').addEventListener('click', closeSheet);
-  }, 2500);
+  }; setTimeout(go, 500); }
   function startBoss() {
     if (typeof Boss === 'undefined') return;
     leaveNet(); closeSheet(true);
