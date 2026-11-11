@@ -51,6 +51,36 @@ assert.strictEqual(withSkills('Frost Wizard', ['snowStorm']).storm.radius, 10);
   assert.ok(near(atk.web.slow, 90) && near(atk.web.dmg, 90), `capped at 90% (${atk.web.slow}, ${atk.web.dmg})`);
 }
 
+// a web on a target that carries no poison (Web-shots needs Spiderlings or Cavestalkers, not Poisonous fangs): it
+// slows the target and cuts its damage while it lasts, and both are gone 3 s after (2026-11-11: the web's timer and
+// slow only ran on a poisoned body, so an unpoisoned one kept the damage cut all fight and was never slowed)
+{
+  const web = withSkills('Spiders', ['spiderlings', 'webShots']);
+  assert.ok(web.web && near(web.web.secs, 3) && !(web.poisonPct > 0), 'Web-shots without Poisonous fangs: no poison');
+  const spider = (on) => body({ ...web, web: on ? web.web : null, deathSpawn: null, bodies: 1, hp: 1e6, hit: 0, speed: 0, range: 1 }, 0, 0, 0, 1);
+  // a walker 9 m off, webbed and (in a twin fight with no web) not
+  const walk = (on) => { const v = body(E.withTraits({ name: 'W', cost: 1, bodies: 1, hp: 1e6, hit: 0, aps: 1, range: 1, speed: 1, splash: 0 }), 1, 0, 9, 50); return { v, bt: E.createBattle([spider(on)], [v], G) }; };
+  const a = walk(true), c = walk(false);
+  const both = (s) => { const y = [a.v.y, c.v.y]; steps(a.bt, s); steps(c.bt, s); return [y[0] - a.v.y, y[1] - c.v.y]; };
+  both(G.dt * 2);
+  assert.ok(a.v.web && near(a.v.web.slow, 10) && near(a.v.web.dmg, 5) && !c.v.web, 'the web landed');
+  assert.ok(!(a.v.poison && a.v.poison.length), 'no poison with it');
+  let [da, dc] = both(1);
+  assert.ok(a.v.web && a.v.web.t > 1.8 && a.v.web.t < 2.1 && a.v.slowT > 0 && near(a.v.slowMove, 10), `unpoisoned: the web counts down and slows (${a.v.web && a.v.web.t}, ${a.v.slowMove})`);
+  assert.ok(dc > 0.5 && near(da, dc * 0.9), `10% slower on the ground (${da} against ${dc})`);
+  both(1.5); assert.ok(a.v.web && a.v.slowT > 0, 'still on at 2.5 s');
+  both(1); assert.ok(!a.v.web && !(a.v.slowT > 0) && a.v.slowMove === 0, 'web and slow gone 3 s after');
+  [da, dc] = both(1);
+  assert.ok(dc > 0.5 && near(da, dc), `back to full speed (${da} against ${dc})`);
+  // a webbed attacker's hits: softer while the web lasts, full again after
+  const sp = spider(true), atk = body(E.withTraits({ name: 'A', cost: 1, bodies: 1, hp: 1e6, hit: 100, aps: 1, range: 40, speed: 0, splash: 0 }), 1, 0, 6, 60);
+  const bt = E.createBattle([sp], [atk], { ...G, sight: 100, minSight: 100 }), hits = [];
+  for (let k = 1; k <= Math.round(8 / G.dt); k++) { const hp = sp.hp; bt.step(); if (sp.hp < hp) hits.push([k * G.dt, hp - sp.hp]); }
+  const during = hits.filter(h => h[0] > 0.5 && h[0] < 2.9), after = hits.filter(h => h[0] > 3.3);
+  assert.ok(during.length >= 2 && during.every(h => near(h[1], 95)), `webbed: 5% softer hits (${JSON.stringify(hits)})`);
+  assert.ok(after.length >= 3 && after.every(h => near(h[1], 100)) && !atk.web, `full hits once the web is gone (${JSON.stringify(hits)})`);
+}
+
 // Eagle eye: +1.5 m and +5% attack speed for every unit; Snipers and the tower double. Mark Bounty: every unit
 {
   const units = roster.units.map(u => ({ ...u, cost: u.cost / 100, skillDefs: E.SLOTS.map(k => (u.skills || [])[k] ? skill(u.skills[k]) : null) }));
@@ -74,4 +104,4 @@ assert.strictEqual(withSkills('Frost Wizard', ['snowStorm']).storm.radius, 10);
   assert.ok(pick(bs, a.id).sniperMark > 0 && pick(bs, s.id).sniperMark > 0, 'all units hunt the mark');
   assert.ok(/All your units/.test(Game.TOWER_TYPES.find(t => t.id === 'sniper').mark.text));
 }
-console.log('spiders-towers-1103: Snow storm 10 m, Spiders skills and webs (one each, 10 m, stacks capped at 90%, 3 s, poison), Eagle eye for all, Mark Bounty for all ok');
+console.log('spiders-towers-1103: Snow storm 10 m, Spiders skills and webs (one each, 10 m, stacks capped at 90%, 3 s with or without poison, poison), Eagle eye for all, Mark Bounty for all ok');

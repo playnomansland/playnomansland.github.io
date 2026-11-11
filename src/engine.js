@@ -2950,15 +2950,15 @@ const Engine = (() => {
           }
           if (b.poison) b.poison = b.poison.filter(p => p.t > 0); // a body won over by a Gentleman just now lost its poison
           if (!b.alive) continue;
-          if (b.web) { // webbed (Web shots): slower while it lasts
-            b.web.t -= dt;
-            if (b.web.t <= 1e-9) b.web = null;
-            else if (!b.u.unstoppable) { if (!(b.slowT > 0)) { b.slowMove = 0; b.slowAtk = 0; } b.slowMove = Math.max(b.slowMove, b.web.slow); b.slowT = Math.max(b.slowT, dt * 1.5); }
-          }
-          if (b.poison && b.poison.length && !b.u.slime && !b.u.unstoppable) { // poison slows (see POISON_SLOW)
-            if (!(b.slowT > 0)) { b.slowMove = 0; b.slowAtk = 0; }
-            b.slowMove = Math.max(b.slowMove, POISON_SLOW); b.slowT = Math.max(b.slowT, dt * 1.5);
-          }
+        }
+        if (b.web) { // webbed (Web shots): slower while it lasts, poisoned or not
+          b.web.t -= dt;
+          if (b.web.t <= 1e-9) b.web = null;
+          else if (!b.u.unstoppable) { if (!(b.slowT > 0)) { b.slowMove = 0; b.slowAtk = 0; } b.slowMove = Math.max(b.slowMove, b.web.slow); b.slowT = Math.max(b.slowT, dt * 1.5); }
+        }
+        if (b.poison && b.poison.length && !b.u.slime && !b.u.unstoppable) { // poison slows (see POISON_SLOW)
+          if (!(b.slowT > 0)) { b.slowMove = 0; b.slowAtk = 0; }
+          b.slowMove = Math.max(b.slowMove, POISON_SLOW); b.slowT = Math.max(b.slowT, dt * 1.5);
         }
         if (b.bleed) { // every BLEED.pulse s: BLEED.dmg, doubled for each stack after the first, and a share of max health at 3 and 4 stacks
           const bl = b.bleed;

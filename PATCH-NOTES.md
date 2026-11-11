@@ -20,6 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 11 November 2026 – Webs wear off
+
+- **Spiders · Web-shots (fixed):** a web now always slows its target, and wears off 3 seconds after the newest web, as the skill says. Before, that only worked on a poisoned target. Against Spiders without Poisonous fangs, a webbed unit was never slowed and its attacks stayed weaker for the rest of the fight. Fights with Web-shots can go differently from before, and so can *Replay a round* of an older match with them.
+
+---
+
 ## 11 November 2026 – A tour of the menu
 
 - **Menu tour (PC):** the first time you come in as a guest, the main menu shows you around, one note at a time. It starts at How to play (*New here? Press here to learn how the game works.*), then Puzzles, Play, Units, Change battlefield, the music, your name and Settings. **Got it** brings the next note, and so does pressing the thing it points at. While the tour is on, it is the only note on screen: the island's own notes wait, and *Stay logged in?* is asked after it. *Turn off helpers* on any note ends it, and **Helpers** in Settings starts it again.
