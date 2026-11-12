@@ -1331,14 +1331,6 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <ol class="bz-lb" id="bz-lb" hidden></ol>
     </div>
   </section>
-  <!-- her attacks (2026-11-12): a smaller panel over her screen, from How to play's "Mommy's attacks" (drawBossAttacks) -->
-  <div class="bz-atk-back" id="bz-atk-back" hidden>
-    <section class="bz-atk" role="dialog" aria-modal="true" aria-labelledby="bz-atk-h">
-      <header><span class="k">The Mommy</span><h3 id="bz-atk-h">Her attacks</h3>
-        <button class="x" id="bz-atk-x" aria-label="Close"><svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></header>
-      <div class="bz-atk-body" id="bz-atk-body"></div>
-    </section>
-  </div>
 
   <!-- How to play (2026-11-10): the rules as chapters. Left: the title and the chapters as stencil words (The basics,
        then the rest); beside them the picked chapter's page (a line, the points, a row of words where there's a list:
@@ -2630,7 +2622,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         </div>
       </div>
       <div class="bar"><span class="hint">Friends</span><button class="btn small" id="fr-open2">Friends <b class="fr-badge" hidden></b></button></div>
-      ${m && m.boss ? '<button class="btn primary" id="boss-restart">Restart boss</button>' : ''}
+      ${m && m.boss ? '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div><button class="btn primary" id="boss-restart">Restart boss</button>' : ''}
       <button class="btn" id="to-menu">Main menu</button>` : ''}
       ${!inMatch ? `<div class="bar">
         <span class="hint">Stay logged in on this device</span>
@@ -2711,6 +2703,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       $('vol').value = snd.vol; $('vol-n').textContent = snd.vol; showOn();
     }));
     if ($('to-menu')) $('to-menu').addEventListener('click', askForfeit);
+    if ($('boss-atk')) $('boss-atk').addEventListener('click', () => openBossAttacks((bossView() || {}).round || m.round)); // over the Settings, which stays open
     if ($('boss-restart')) $('boss-restart').addEventListener('click', () => { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); startBoss(); }); // the Mommy boss puzzle: a new run at once, from round 1
     $('sheet').querySelectorAll('[data-stay]').forEach(b => b.addEventListener('click', () => {
       setStay(b.dataset.stay === '1');
@@ -3631,7 +3624,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   // the Mommy boss puzzle: while her rules or the nest map are open, the clocks stand still (it is played against nobody,
   // so nobody waits): the deploy countdown here, the fight in loop()
-  const bossReading = () => !!(m && m.boss) && !$('sheet-back').hidden && !!$('sheet').querySelector('[data-boss-read]');
+  const bossReading = () => !!(m && m.boss) && ((!$('sheet-back').hidden && !!$('sheet').querySelector('[data-boss-read]')) || bossAtkOpen());
   let bossReadT = 0; // when the deploy clock was last pushed on while reading (0: not reading)
   function tick() {
     const t = now();
@@ -7247,7 +7240,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     beginAiRound();
     openBossRules(); // what's new here, before the first deployment
   }
-  const BITE_NOTE = { fast: 'fast and light: health holds her', heavy: 'slow, heavy and acid (it leaves a green pool): many bodies, shields and wards hold her', sweep: 'a sweep: one big body holds her' };
+  const BITE_NOTE = { fast: 'Fast, quick and light: health holds her', heavy: 'Acid-Bite, slow and heavy (it leaves a green pool): many bodies, shields and wards hold her', sweep: 'Sweep, it hits all round its target: one big body holds her' };
   function bossLine() {
     const p = bossView(); if (!p) return;
     const low = p.nests.filter(n => n.low).length;
@@ -7272,7 +7265,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (ph !== 'dead') {
       const left = bs ? bs.nestsLeft : p ? p.nests.length : 0, all = bs ? bs.nests : p ? p.nests.length : 0;
       t.push([left ? '' : 'good', `NESTS ${left}/${all}`]);
-      const bite = bs ? bs.bite : p && p.bite; if (bite) t.push(['', `BITE: ${bite.toUpperCase()}${C.acid && C.acid.pct > 0 && C.mommy.bites[bite] && C.mommy.bites[bite].acid ? ' · ACID' : ''}`]);
+      const bite = bs ? bs.bite : p && p.bite; if (bite) t.push(['', `BITE: ${(BITE_NAME[bite] || bite).toUpperCase()}`]);
       if (bs && bs.mortarIn != null) t.push(['bad', `MORTAR ${s1(bs.mortarIn)}s`]);
       else if (bs && bs.holder) t.push(['', `HELD BY ${bs.holder.toUpperCase()}`]);
       if (bs && bs.moltIn != null) t.push(['', `MOLT ${Math.ceil(bs.moltIn)}s`]);
@@ -7310,7 +7303,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (!m || !m.boss || typeof Boss === 'undefined') return;
     const C = Boss.CFG, mo = C.mommy, p = bossView() || {}, r = p.round || m.round, b = (x) => `<b>${x}</b>`; // (p: the round on the board; in the fight m.round has moved on already)
     const hatch = Boss.byRound(C.hatch, r), bite = p.bite || Boss.byRound(C.biteByRound, r);
-    const BITES = { fast: ['Fast', 'quick, light bites: a unit with lots of health holds her best'], heavy: ['Heavy', 'slow, huge bites that splash a little and leave acid: many bodies, shields and wards hold her best'], sweep: ['Sweep', 'light bites that hit everything round the target: one big body holds her best (a swarm melts)'] };
+    const BITES = { fast: ['Fast', 'quick, light bites: a unit with lots of health holds her best'], heavy: ['Acid-Bite', 'slow, huge bites that splash a little and leave acid: many bodies, shields and wards hold her best'], sweep: ['Sweep', 'light bites that hit everything round the target: one big body holds her best (a swarm melts)'] };
     const acidBites = C.acid && C.acid.pct > 0 ? Object.keys(mo.bites).filter(k => mo.bites[k].acid) : [], acidRounds = C.biteByRound.map((x, k) => acidBites.includes(x) ? k + 1 : 0).filter(Boolean);
     const sec = (title, items) => `<h4 style="margin:10px 0 2px">${title}</h4><ul class="helplist">${items.filter(Boolean).map(x => `<li>${x}</li>`).join('')}</ul>`;
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h" data-boss-read>Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
@@ -7387,25 +7380,100 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   // The nest map (the deploy panel's Nest map): where her nests hang in each round, on five small boards. The places
   // are fixed (Boss.CFG.nests), the same in every run, so a round can be planned ahead
+  // her bites' names and colours (the boards draw each bite in its colour: render2d BITE_COL)
+  const BITE_NAME = { fast: 'Fast', heavy: 'Acid-Bite', sweep: 'Sweep' };
+  const BITE_COL = { fast: '#FFE15A', heavy: '#8BE04E', sweep: '#FF9A3D' };
+  // one round's nests on her board (12 by 16 tiles, Game.GRID): her zone at the top, her (the black dot) and her reach
+  // (the dashed ring), the nests (L low, H high). T: px a tile. -> an <svg>
+  function bossNestBoard(r, T) {
+    const C = Boss.CFG, G = Game.GRID, W = G.cols * T, H = G.rows * T, z = G.zone, reach = C.mommy.near / (Game.TILE || 6) * T;
+    const spots = Boss.byRound(C.nests, r), mx = (C.mommy.col + 0.5) * T, my = (C.mommy.row + 0.5) * T;
+    const nests = spots.map(([c, rw, kind]) => { const x = (c + 0.5) * T, y = (rw + 0.5) * T, low = kind === 'low';
+      return `<circle cx="${x}" cy="${y}" r="${T * 0.62}" fill="${low ? '#F4F0E6' : '#FFD23F'}" stroke="#10161A" stroke-width="1"/><text x="${x}" y="${y + T * 0.34}" text-anchor="middle" font-size="${T}" font-weight="800" font-family="IBM Plex Mono, monospace" fill="#10161A">${low ? 'L' : 'H'}</text>`; }).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Round ${r}: ${spots.length} nests">
+      <rect width="${W}" height="${z * T}" fill="#3A2A26"/><rect y="${z * T}" width="${W}" height="${(G.rows - 2 * z) * T}" fill="#1F2A2A"/><rect y="${(G.rows - z) * T}" width="${W}" height="${z * T}" fill="#1E3A44"/>
+      <circle cx="${mx}" cy="${my}" r="${reach}" fill="none" stroke="#FF7A6E" stroke-width="1" stroke-dasharray="3 3"/>
+      <circle cx="${mx}" cy="${my}" r="${T * 0.8}" fill="#151515" stroke="#FF7A6E" stroke-width="1.5"/>${nests}</svg>`;
+  }
+  // The nest map (the deploy panel's Nest map): where her nests hang in each round, on five small boards. The places
+  // are fixed (Boss.CFG.nests), the same in every run, so a round can be planned ahead
   function openBossMap() {
     if (!m || !m.boss || typeof Boss === 'undefined') return;
-    const C = Boss.CFG, T = 9, W = Game.COLS * T, H = Game.ROWS * T, cur = m.round, reach = C.mommy.near / (Game.TILE || 6) * T;
-    const BN = { fast: 'Fast bite', heavy: 'Heavy bite · acid', sweep: 'Sweep bite' };
-    const board = (r) => {
-      const spots = Boss.byRound(C.nests, r), bite = Boss.byRound(C.biteByRound, r), mx = (C.mommy.col + 0.5) * T, my = (C.mommy.row + 0.5) * T;
-      const nests = spots.map(([c, rw, kind]) => { const x = (c + 0.5) * T, y = (rw + 0.5) * T, low = kind === 'low';
-        return `<circle cx="${x}" cy="${y}" r="${T * 0.62}" fill="${low ? '#F4F0E6' : '#FFD23F'}" stroke="#10161A" stroke-width="1"/><text x="${x}" y="${y + 3}" text-anchor="middle" font-size="${T}" font-weight="800" font-family="IBM Plex Mono, monospace" fill="#10161A">${low ? 'L' : 'H'}</text>`; }).join('');
-      return `<figure style="margin:0;text-align:center"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Round ${r}: ${spots.length} nests" style="border-radius:4px;outline:${r === cur ? '2px solid var(--gold, #E6B84A)' : '1px solid #3A474D'}">
-        <rect width="${W}" height="${6 * T}" fill="#3A2A26"/><rect y="${6 * T}" width="${W}" height="${4 * T}" fill="#1F2A2A"/><rect y="${10 * T}" width="${W}" height="${6 * T}" fill="#1E3A44"/>
-        <circle cx="${mx}" cy="${my}" r="${reach}" fill="none" stroke="#FF7A6E" stroke-width="1" stroke-dasharray="3 3"/>
-        <circle cx="${mx}" cy="${my}" r="${T * 0.8}" fill="#151515" stroke="#FF7A6E" stroke-width="1.5"/>${nests}</svg>
-        <figcaption style="font-size:12px;margin-top:3px"><b>Round ${r}</b>${r === cur ? ' (now)' : ''}<br><span class="hint">${esc(BN[bite] || bite)}<br>a spider every ${Boss.byRound(C.hatch, r)} s</span></figcaption></figure>`;
-    };
+    const C = Boss.CFG, cur = m.round;
+    const board = (r) => `<figure style="margin:0;text-align:center"><span style="display:inline-block;border-radius:4px;outline:${r === cur ? '2px solid var(--gold, #E6B84A)' : '1px solid #3A474D'}">${bossNestBoard(r, 9)}</span>
+        <figcaption style="font-size:12px;margin-top:3px"><b>Round ${r}</b>${r === cur ? ' (now)' : ''}<br><span class="hint">${esc(BITE_NAME[Boss.byRound(C.biteByRound, r)] || '')} bite<br>a spider every ${Boss.byRound(C.hatch, r)} s</span></figcaption></figure>`;
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h" data-boss-read>Nest map</h3><button class="btn small" id="close">Close</button></div>
       <p style="margin:0">Her nests hang in the same places in every run: nothing about them is random. <b>L</b> is a LOW nest (melee units can hit it too), <b>H</b> a HIGH one (ranged units only). The black dot is Mommy, the dashed ring her reach; your zone is the blue part.</p>
       <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:10px">${Array.from({ length: m.boss.rounds || C.rounds }, (_, k) => board(k + 1)).join('')}</div>`;
     $('sheet-back').hidden = false;
     $('close').addEventListener('click', closeSheet);
+  }
+
+  // ---------- Mommy's attacks (2026-11-12): her attacks and her nests in one panel, over whatever is open ----------
+  // From her screen's How to play (the Diorama) and, in a run, the cog's Settings. Left: a card for each of her attacks
+  // (bite, with her bite in each round and its mark; web; web mortar; acid; shed), each with its symbol. Right: her
+  // nests, round by round (bossNestBoard). The numbers are Boss.CFG's. While it's open in a run the clock waits, as
+  // for her rules (bossReading). Made once, at the end of <body>, so it sits over the Diorama and the board alike
+  const ATK_ICON = {
+    bite: '<svg viewBox="0 0 24 24"><path d="M3 6h18l-2.2 4.2-2.2-3.4-2.3 4-2.3-4-2.3 4-2.2-3.4L5.2 10.2z M3 18h18l-2.2-4.2-2.2 3.4-2.3-4-2.3 4-2.3-4-2.2 3.4L5.2 13.8z" fill="currentColor"/></svg>',
+    web: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9L4.9 19.1"/><path d="M12 6.5l3.9 1.6 1.6 3.9-1.6 3.9-3.9 1.6-3.9-1.6L6.5 12l1.6-3.9z M12 10l1.4.6.6 1.4-.6 1.4-1.4.6-1.4-.6-.6-1.4.6-1.4z"/></svg>',
+    mortar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="15" r="7" stroke-dasharray="3 2"/><circle cx="12" cy="15" r="2.6" fill="currentColor" stroke="none"/><path d="M12 2.5v6M9.5 6.2L12 8.7l2.5-2.5"/></svg>',
+    acid: '<svg viewBox="0 0 24 24"><path d="M12 2.5c3.6 5 6 8.3 6 11.3a6 6 0 0 1-12 0c0-3 2.4-6.3 6-11.3z" fill="currentColor"/><path d="M9.2 14.2a2.8 2.8 0 0 0 2.8 2.8" fill="none" stroke="#10230A" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    shed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M19 8.5A7.5 7.5 0 0 0 5.6 7.4M5 15.5a7.5 7.5 0 0 0 13.4 1.1"/><path d="M5.2 3.6v4.2h4.2M18.8 20.4v-4.2h-4.2"/></svg>',
+  };
+  // a bite's symbol: her jaws snapping shut (Art.bossJaws, as the boards draw her bite) in its colour, on the bruise it
+  // leaves (bigger splash, bigger bruise), as a picture
+  const biteMarkPics = {};
+  function biteMarkPic(k) {
+    if (biteMarkPics[k] || typeof Art === 'undefined') return biteMarkPics[k] || '';
+    const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d'), col = BITE_COL[k] || '#FFE15A';
+    g.globalAlpha = 0.22; g.fillStyle = col; g.beginPath(); g.arc(48, 48, { fast: 30, heavy: 38, sweep: 46 }[k] || 34, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+    Art.bossJaws(g, 48, 48, 38, 0.12, col, 1);
+    return (biteMarkPics[k] = c.toDataURL());
+  }
+  let atkEl = null, atkRound = 1, atkFrom = null;
+  const bossAtkOpen = () => !!atkEl && !atkEl.hidden;
+  function openBossAttacks(round) {
+    if (typeof Boss === 'undefined') return;
+    if (!atkEl) {
+      atkEl = document.createElement('div'); atkEl.className = 'bz-atk-back'; atkEl.hidden = true;
+      atkEl.innerHTML = `<section class="bz-atk" role="dialog" aria-modal="true" aria-labelledby="bz-atk-h">
+        <header><span class="k">The Mommy</span><h3 id="bz-atk-h">Mommy’s attacks</h3><button class="x" aria-label="Close"><svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></header>
+        <div class="bz-atk-in"><div class="bz-atk-body"></div><aside class="bz-nests" aria-label="Nest spawns"></aside></div></section>`;
+      document.body.appendChild(atkEl);
+      atkEl.querySelector('.x').addEventListener('click', closeBossAttacks);
+      atkEl.addEventListener('click', (e) => { if (e.target === atkEl) closeBossAttacks(); const t = e.target.closest('[data-nr]'); if (t) { atkRound = +t.dataset.nr; drawBossNests(); } });
+      addEventListener('keydown', (e) => { if (e.key === 'Escape' && bossAtkOpen()) { e.preventDefault(); e.stopImmediatePropagation(); closeBossAttacks(); } }, true);
+    }
+    atkRound = Math.max(1, Math.min(Boss.CFG.rounds, round || 1)); atkFrom = document.activeElement;
+    drawBossAttacks(); drawBossNests(); atkEl.hidden = false; atkEl.querySelector('.x').focus();
+  }
+  function closeBossAttacks() { if (!bossAtkOpen()) return; atkEl.hidden = true; if (atkFrom && atkFrom.focus && document.contains(atkFrom)) atkFrom.focus(); atkFrom = null; }
+  function drawBossAttacks() {
+    const C = Boss.CFG, mo = C.mommy, b = (x) => `<b>${x}</b>`, acidOn = C.acid && C.acid.pct > 0;
+    const WHO = { fast: 'Quick, light bites. A unit with lots of health holds her best.', heavy: 'Slow, huge bites that splash a little and leave acid. Many bodies, shields and wards hold her best.', sweep: 'Light bites that hit everything round the target. One big body holds her best; a swarm melts.' };
+    const card = (k, h, body) => `<article class="atk ${k}"><h4><span class="ico" aria-hidden="true">${ATK_ICON[k]}</span>${h}</h4>${body}</article>`;
+    const acidBites = [...new Set(C.biteByRound)].filter(k => mo.bites[k] && mo.bites[k].acid);
+    atkEl.querySelector('.bz-atk-body').innerHTML =
+      card('bite', 'Bite', `<p>She bites the nearest of your units inside her reach (${mo.near} m). That unit ${b('holds')} her: she bites it, not the rest.${mo.biteSecs > 0 ? ` Her jaws open where it stands and snap shut ${mo.biteSecs} s later, so a unit that walks out is missed.` : ''}</p>
+        <ol class="rounds">${C.biteByRound.map((k, i) => `<li class="${k}" style="--bc:${BITE_COL[k] || '#FFC457'}"><img src="${biteMarkPic(k)}" alt=""><small>Round ${i + 1}</small><b>${esc(BITE_NAME[k] || k)}</b></li>`).join('')}</ol>
+        <dl>${[...new Set(C.biteByRound)].map(k => `<dt style="color:${BITE_COL[k]}">${esc(BITE_NAME[k] || k)}</dt><dd>${esc(WHO[k] || '')}</dd>`).join('')}</dl>`) +
+      card('web', 'Web', `<p>Your units within ${mo.web.r} m of her are caught in it: they walk ${b(mo.web.slow + '%')} slower and hit ${b(mo.web.dmg + '%')} softer.</p>`) +
+      card('mortar', 'Web mortar', `<p>No unit in her reach for ${mo.mortar.wind} s while she hangs, and she rips loose one of her nests and throws it at your biggest clump, then another every ${mo.mortar.every} s.</p>
+        <p>It lands ${mo.mortar.fly} s later in the ${b('red ring')}: ${b(mo.mortar.hit + ' damage')} and a slowing web, and its spiders burst out. Spread out, or move on.</p>`) +
+      (acidOn && acidBites.length ? card('acid', 'Acid', `<p>Her ${acidBites.map(k => esc(BITE_NAME[k] || k)).join(' and ')} leaves a ${b('green pool')} for ${C.acid.secs} s. Standing in it costs ${b(C.acid.pct + '% of max health')} a second and slows, for ${C.acid.linger} s after stepping out. Slime units drink it: it heals them.</p>`) : '') +
+      (mo.molt ? card('shed', 'Shed', `<p>Every ${mo.molt} s she molts: poison, bleed, burn, frost and slows fall off her. Hits that take a share of max health don’t work on her.</p>`) : '');
+  }
+  // the side panel: her nests in one round (tabs for the five), what hatches from them, and the key
+  function drawBossNests() {
+    const C = Boss.CFG, r = atkRound, spots = Boss.byRound(C.nests, r), low = spots.filter(x => x[2] === 'low').length, bite = Boss.byRound(C.biteByRound, r);
+    const now = m && m.boss && phase !== 'start' ? (bossView() || {}).round || m.round : 0;
+    atkEl.querySelector('.bz-nests').innerHTML = `<h4><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.5v4" stroke="currentColor" stroke-width="1.4"/><path d="M12 5.5c3.6 0 6.2 3.4 6.2 7.6 0 4.6-2.8 8.4-6.2 8.4s-6.2-3.8-6.2-8.4c0-4.2 2.6-7.6 6.2-7.6z" fill="currentColor"/><circle cx="10" cy="12" r="1.3" fill="#2E0E0A"/><circle cx="13.8" cy="15.4" r="1.1" fill="#2E0E0A"/><circle cx="11.2" cy="17.8" r=".9" fill="#2E0E0A"/></svg></span>Nest spawns</h4>
+      <div class="nr" role="tablist" aria-label="Round">${Array.from({ length: C.rounds }, (_, k) => `<button role="tab" data-nr="${k + 1}" aria-selected="${k + 1 === r}">R${k + 1}${k + 1 === now ? '<i>now</i>' : ''}</button>`).join('')}</div>
+      <div class="board">${bossNestBoard(r, 15)}</div>
+      <p><b>${spots.length} nests</b>: ${low} low, ${spots.length - low} high. Each hatches a spider every <b>${Boss.byRound(C.hatch, r)} s</b>, and bursts into ${C.nest.burst} when it falls.</p>
+      <ul class="key"><li><span class="l">L</span>Low nest: melee reaches it</li><li><span class="h">H</span>High nest: ranged only</li><li><span class="m"></span>The Mommy and her reach</li></ul>
+      <p class="bite">This round: <b style="color:${BITE_COL[bite]}">${esc(BITE_NAME[bite] || bite)}</b></p>`;
   }
   function bossResult(sum) {
     const r = sum.boss || (m.boss.log || []).slice(-1)[0];
