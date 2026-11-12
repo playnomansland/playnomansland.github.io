@@ -2547,6 +2547,14 @@ html.dock .panel.shut > .bar:last-child { margin-top: 0; padding-top: 0; }
 .uc2 .c.free { color: var(--win, #6FD08C); }
 .uc2 .st { position: absolute; top: 3px; right: 5px; font: 10px var(--font-data); color: var(--gold); }
 .uc2 .cap { position: absolute; top: 3px; left: 5px; font: 10px var(--font-data); color: var(--muted); }
+/* a full card tapped (3/3 on the board): it shakes, its count goes red, and a bubble says so (owner, 12 November) */
+.uc2.maxed { animation: uc-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+.uc2.maxed .cap { color: #FF8A80; font-weight: 700; }
+@keyframes uc-shake { 0%, 100% { transform: none; } 15% { transform: translateX(-5px) rotate(-2deg); } 30% { transform: translateX(5px) rotate(2deg); } 45% { transform: translateX(-4px) rotate(-1deg); } 60% { transform: translateX(4px) rotate(1deg); } 75% { transform: translateX(-2px); } 90% { transform: translateX(2px); } }
+.cap-toast { position: fixed; z-index: 60; transform: translate(-50%, -100%); padding: 6px 11px; border-radius: 8px; background: rgba(14, 16, 14, 0.88); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3); color: #FF8A80; font: 700 13px/1.2 var(--type, system-ui, sans-serif); white-space: nowrap; pointer-events: none; animation: cap-toast 1.8s ease forwards; }
+.cap-toast::after { content: ''; position: absolute; left: var(--ax, 50%); bottom: -5px; width: 10px; height: 10px; margin-left: -5px; background: inherit; transform: rotate(45deg); border-radius: 0 0 2px 0; }
+@keyframes cap-toast { 0% { opacity: 0; transform: translate(-50%, calc(-100% + 6px)); } 12% { opacity: 1; transform: translate(-50%, -100%); } 80% { opacity: 1; transform: translate(-50%, -100%); } 100% { opacity: 0; transform: translate(-50%, calc(-100% - 4px)); } }
+@media (prefers-reduced-motion: reduce) { .uc2.maxed { animation: none; } .cap-toast { animation-name: cap-toast-fade; } @keyframes cap-toast-fade { 0%, 100% { opacity: 0; } 10%, 80% { opacity: 1; } } }
 .uc2[aria-disabled="true"] { opacity: 0.45; }
 .uc2[aria-pressed="true"] { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45); }
 .uc2.lift { opacity: 0.3; }
@@ -2653,32 +2661,48 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 .hud.bossrun .side.foe .num, .hud.bossrun .side.foe .hp { visibility: hidden; }
 .hud.bossrun .side.you .num { white-space: nowrap; }
 .hud.bossrun #you-name { display: none; } /* (the phone's top line has no room for a name next to "Round 1 of 5"; the PC layout keeps it) */
-.boss-bar { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); width: min(94%, 560px); z-index: 3; pointer-events: none; text-align: center; font-family: "IBM Plex Mono", monospace; }
-.boss-bar .bb-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 8px; margin: 0 2px 3px; }
-.boss-bar .bb-top .bb-name { justify-self: start; } .boss-bar .bb-top .bb-phase { grid-column: 3; justify-self: end; }
-.boss-bar .bb-time { grid-column: 2; display: inline-flex; align-items: baseline; gap: 5px; padding: 0 10px; border-radius: 4px; background: rgba(10, 14, 16, 0.82); border: 1px solid #56646A; color: #fff; text-shadow: 0 1px 3px #000; }
+/* the boss bar (2026-11-12, owner: "cleaner, not so in your face"): one soft panel, the game's type in sentence case,
+   a slim health bar, the time as a plain number, and her state as a quiet line; colour only where something changes */
+.boss-bar { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); width: min(94%, 520px); z-index: 3; pointer-events: none; box-sizing: border-box; padding: 8px 12px 7px; border-radius: 10px; background: rgba(14, 16, 14, 0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); font-family: var(--type, system-ui, sans-serif); color: #F4EEDF; text-align: left; }
+.boss-bar .bb-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.boss-bar .bb-name { display: inline-flex; align-items: baseline; gap: 10px; font-size: 15px; font-weight: 700; }
+.boss-bar .bb-phase { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+.boss-bar .bb-phase::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.boss-bar .bb-phase.hanging { color: #B9A6F0; } .boss-bar .bb-phase.stunned { color: #F2D36B; } .boss-bar .bb-phase.down { color: #F08A7E; } .boss-bar .bb-phase.dead { color: #9AA6A2; }
+.boss-bar .bb-right { display: inline-flex; align-items: center; gap: 10px; }
+.boss-bar .bb-time:not([hidden]) + .bb-rs { padding-left: 10px; border-left: 1px solid rgba(244, 238, 223, 0.15); }
+.boss-bar .bb-rs { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; }
+.boss-bar .bb-rs button { display: inline-flex; align-items: center; gap: 5px; margin: 0; padding: 3px 10px; border: 1px solid rgba(244, 238, 223, 0.14); border-radius: 999px; background: rgba(244, 238, 223, 0.07); color: rgba(244, 238, 223, 0.82); font: 600 12px/1.2 var(--type, system-ui, sans-serif); cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s; }
+.boss-bar .bb-rs button svg { transition: transform 0.3s ease; }
+.boss-bar .bb-rs button:hover { background: rgba(244, 238, 223, 0.15); color: #fff; }
+.boss-bar .bb-rs .bb-rsb:hover { border-color: rgba(240, 138, 126, 0.6); }
+.boss-bar .bb-rs .bb-rsb:hover svg { transform: rotate(-120deg); }
+.boss-bar .bb-rs button:active { transform: scale(0.95); }
+.boss-bar .bb-rs button:focus-visible { outline: 2px solid #F4EEDF; outline-offset: 2px; }
+.boss-bar .bb-rs .yes { background: #D8574A; border-color: transparent; color: #fff; }
+.boss-bar .bb-rs .yes:hover { background: #E5685B; }
+.boss-bar .bb-rs .bb-ask { font-size: 12px; font-weight: 600; opacity: 0.85; margin-right: 2px; animation: bb-in 0.18s ease-out; }
+@keyframes bb-in { from { opacity: 0; transform: translateX(4px); } }
+.boss-bar .bb-time { display: inline-flex; align-items: baseline; gap: 1px; font-variant-numeric: tabular-nums; }
 .boss-bar .bb-time[hidden] { display: none; }
-.boss-bar .bb-time b { font-size: 34px; line-height: 1.1; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 2.6ch; text-align: right; }
-.boss-bar .bb-time small { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #C8D2D2; }
-.boss-bar .bb-time.low { border-color: #FF5A4E; color: #FF8A80; animation: bb-pulse 0.5s ease-in-out infinite alternate; }
-.boss-bar .bb-clock { height: 5px; margin-top: 2px; border-radius: 3px; background: rgba(10, 14, 16, 0.75); overflow: hidden; }
+.boss-bar .bb-time b { font-size: 20px; font-weight: 700; line-height: 1; }
+.boss-bar .bb-time small { font-size: 12px; font-weight: 600; opacity: 0.6; }
+.boss-bar .bb-time.low { color: #FF8A80; }
+.boss-bar .bb-bar { position: relative; height: 8px; border-radius: 4px; background: rgba(244, 238, 223, 0.1); overflow: hidden; }
+.boss-bar .bb-lost { position: absolute; left: 0; top: 0; bottom: 0; background: #F4EEDF; opacity: 0.35; transition: width 0.9s ease-out 0.25s; }
+.boss-bar .bb-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: #D8574A; transition: width 0.15s linear; }
+.boss-bar .bb-fill.hanging { background: #8E7BD0; }
+.boss-bar .bb-clock { height: 2px; margin-top: 3px; border-radius: 1px; overflow: hidden; }
 .boss-bar .bb-clock[hidden] { display: none; }
-.boss-bar .bb-clock i { display: block; height: 100%; background: #F4F1E8; }
-.boss-bar .bb-clock.low i { background: #FF5A4E; }
-.boss-bar .bb-name { color: #FF7A6E; font-weight: 800; letter-spacing: 0.18em; font-size: 13px; text-shadow: 0 1px 3px #000; }
-.boss-bar .bb-phase { font-weight: 800; letter-spacing: 0.08em; font-size: 11px; padding: 1px 8px; border-radius: 3px; color: #10161A; }
-.boss-bar .bb-phase.hanging { background: #B79CFF; } .boss-bar .bb-phase.stunned { background: #FFE15A; animation: bb-pulse 0.8s ease-in-out infinite alternate; }
-.boss-bar .bb-phase.down { background: #FF7A6E; } .boss-bar .bb-phase.dead { background: #8DA1A1; }
-.boss-bar .bb-bar { position: relative; height: 18px; border: 1px solid #FF7A6E; border-radius: 3px; background: rgba(10, 14, 16, 0.85); overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.6); }
-.boss-bar .bb-lost { position: absolute; left: 0; top: 0; bottom: 0; background: #F4F1E8; opacity: 0.55; transition: width 0.9s ease-out 0.25s; }
-.boss-bar .bb-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(180deg, #E8584B, #9E2A22); transition: width 0.15s linear; }
-.boss-bar .bb-fill.hanging { background: linear-gradient(180deg, #9C86D8, #5B4A92); }
-.boss-bar .bb-num { position: relative; z-index: 1; display: block; line-height: 18px; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
-.boss-bar .bb-tok { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 4px; }
-.boss-bar .bb-tok span { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 1px 6px; border-radius: 9px; background: rgba(10, 14, 16, 0.82); border: 1px solid #56646A; color: #E8EEEE; white-space: nowrap; }
-.boss-bar .bb-tok .bad { border-color: #FF5A4E; color: #FF8A80; animation: bb-pulse 0.5s ease-in-out infinite alternate; }
-.boss-bar .bb-tok .good { border-color: #6FD08C; color: #9BE8B0; }
-.boss-bar .bb-tok .fx { border-color: #E6B84A; color: #F2D27F; }
+.boss-bar .bb-clock i { display: block; height: 100%; background: rgba(244, 238, 223, 0.35); }
+.boss-bar .bb-clock.low i { background: #FF8A80; }
+.boss-bar .bb-foot { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 2px 12px; margin-top: 6px; font-size: 12px; }
+.boss-bar .bb-num { font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0.75; }
+.boss-bar .bb-tok { display: flex; flex-wrap: wrap; }
+.boss-bar .bb-num { margin-left: auto; }
+.boss-bar .bb-tok span { font-weight: 600; color: rgba(244, 238, 223, 0.72); white-space: nowrap; }
+.boss-bar .bb-tok span + span::before { content: '·'; margin: 0 6px; color: rgba(244, 238, 223, 0.4); }
+.boss-bar .bb-tok .bad { color: #FF8A80; } .boss-bar .bb-tok .good { color: #8FD9A4; } .boss-bar .bb-tok .fx { color: #F0C766; }
 @keyframes bb-pulse { from { opacity: 1; } to { opacity: 0.55; } }
 .board-banner { position: absolute; left: 0; right: 0; top: 42%; z-index: 4; pointer-events: none; text-align: center; padding: 14px 8px; background: linear-gradient(90deg, transparent, rgba(13, 19, 21, 0.88) 18%, rgba(13, 19, 21, 0.88) 82%, transparent); border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold); color: var(--gold); font-size: 26px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; animation: banner-in 3.2s ease both; }
 .board-banner small { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; color: var(--text, #e8e6df); }
@@ -19641,7 +19665,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 096cfdc'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 48f0ca8'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19876,7 +19900,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     }));
     if ($('to-menu')) $('to-menu').addEventListener('click', askForfeit);
     if ($('boss-atk')) $('boss-atk').addEventListener('click', () => openBossAttacks((bossView() || {}).round || m.round)); // over the Settings, which stays open
-    if ($('boss-restart')) $('boss-restart').addEventListener('click', () => { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); startBoss(); }); // the Mommy boss puzzle: a new run at once, from round 1
+    if ($('boss-restart')) $('boss-restart').addEventListener('click', restartBoss); // the Mommy boss puzzle: a new run at once, from round 1
     $('sheet').querySelectorAll('[data-stay]').forEach(b => b.addEventListener('click', () => {
       setStay(b.dataset.stay === '1');
       $('sheet').querySelectorAll('[data-stay]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
@@ -21187,6 +21211,21 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       <span class="n">${esc(u.name)}</span>
       <span class="c${free ? ' free' : ''}">${free ? `Free ×${free}` : Game.shopCost(m, me, i)}</span></button>`;
   }
+  // a full card tapped: it shakes and a red bubble over it says it is maxed out (the bubble lives on <body>, so a redraw
+  // of the shop doesn't cut it short)
+  let capToastT = 0;
+  function capBump(card) {
+    card.classList.remove('maxed'); void card.offsetWidth; card.classList.add('maxed');
+    card.addEventListener('animationend', () => card.classList.remove('maxed'), { once: true });
+    const old = document.querySelector('.cap-toast'); if (old) old.remove();
+    clearTimeout(capToastT);
+    const r = card.getBoundingClientRect(), t = document.createElement('div');
+    t.className = 'cap-toast'; t.setAttribute('role', 'status'); t.textContent = 'You have the max of this unit type';
+    document.body.appendChild(t);
+    const half = t.offsetWidth / 2 + 8, cx = r.left + r.width / 2, x = Math.min(innerWidth - half, Math.max(half, cx));
+    t.style.left = x + 'px'; t.style.top = (r.top - 8) + 'px'; t.style.setProperty('--ax', `calc(50% + ${cx - x}px)`);
+    capToastT = setTimeout(() => t.remove(), 1850);
+  }
   let scrollTo2 = null; // a card to bring into view on the next panelDeploy (just unlocked)
   // + Unlock: that tier's locked units, each with its unlock price; a name opens the unit's sheet
   function openUnlockSheet(t) {
@@ -21487,6 +21526,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       b.addEventListener('click', () => {
         if (performance.now() - cardDone < 400) return; // the end of a drag or a hold, not a tap
         const i = +b.dataset.i;
+        if (Game.capped(m, i) && Game.capFull(m, me, i)) { capBump(b); return; } // 3/3 on the board: shake, and say so
         if (b.getAttribute('aria-disabled') === 'true') { openSheet(i); return; }
         selected = selected === i ? null : i;
         panelDeploy(); render();
@@ -24484,6 +24524,22 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // tokens: how much she takes, nests left, this round's bite, the mortar's count or who holds her, the next molt, and
   // what is on her (poison, bleed, burn, frost, slow). In the fight it reads her body (mom.bs, src/boss.js); otherwise
   // the match. Drawn with every frame; the DOM only changes when its text does
+  // Restart, always on the boss bar (owner, 12 November): a quiet pill that asks "Restart? Yes / No" in its own spot
+  // before it throws the run away; the question goes back by itself after a few seconds
+  function restartBoss() { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); startBoss(); } // a new run at once, from any phase
+  let bossAskT = 0;
+  function bossRestartAsk(ask) {
+    const rs = document.querySelector('#boss-bar .bb-rs'); if (!rs) return;
+    clearTimeout(bossAskT);
+    rs.innerHTML = ask ? '<span class="bb-ask" id="bb-ask">Restart?</span><button class="yes" data-rs="yes" aria-describedby="bb-ask">Yes</button><button data-rs="no">No</button>'
+      : '<button class="bb-rsb" data-rs="ask" aria-label="Restart the boss fight"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg>Restart</button>';
+    if (ask) { rs.querySelector('[data-rs="no"]').focus({ preventScroll: true }); bossAskT = setTimeout(() => bossRestartAsk(false), 5000); }
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('#boss-bar [data-rs]'); if (!b) return;
+    e.stopPropagation();
+    if (b.dataset.rs === 'ask') bossRestartAsk(true); else if (b.dataset.rs === 'yes') { bossRestartAsk(false); restartBoss(); } else bossRestartAsk(false);
+  }, true);
   let bossBarHtml = '';
   function bossBar() {
     const el = $('boss-bar'); if (!el) return;
@@ -24492,28 +24548,28 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const C = Boss.CFG, max = v.boss.max, mom = bt && (phase === 'battle' || phase === 'result' || phase === 'end') ? bt.bodies.find(b => b.u.boss) : null;
     const hp = mom ? Math.max(0, mom.hp) : v.boss.hp, bs = mom && mom.alive ? mom.bs : null, p = bossView();
     const ph = hp <= 0 ? 'dead' : bs ? bs.phase : 'hanging';
-    const label = { hanging: 'HANGING', stunned: `FALLEN · STUNNED ${bs ? bs.stunLeft.toFixed(1) : ''}s`, down: 'ON THE GROUND', dead: 'DEAD' }[ph];
+    const label = { hanging: 'Hanging', stunned: `Fallen · stunned ${bs ? bs.stunLeft.toFixed(1) : ''}s`, down: 'On the ground', dead: 'Dead' }[ph];
     const t = [], s1 = (x) => x.toFixed(1);
-    if (ph === 'hanging') t.push(['', `TAKES ${Math.round((bs ? bs.take : C.mommy.hang) * 100)}%`], ['', 'UNSTOPPABLE']);
-    else if (ph !== 'dead') t.push(['good', `TAKES ${Math.round((bs ? bs.take : 1) * 100)}%`]);
+    if (ph === 'hanging') t.push(['', `Takes ${Math.round((bs ? bs.take : C.mommy.hang) * 100)}%`], ['', 'Unstoppable']);
+    else if (ph !== 'dead') t.push(['good', `Takes ${Math.round((bs ? bs.take : 1) * 100)}%`]);
     if (ph !== 'dead') {
       const left = bs ? bs.nestsLeft : p ? p.nests.length : 0, all = bs ? bs.nests : p ? p.nests.length : 0;
-      t.push([left ? '' : 'good', `NESTS ${left}/${all}`]);
-      const bite = bs ? bs.bite : p && p.bite; if (bite) t.push(['', `BITE: ${(BITE_NAME[bite] || bite).toUpperCase()}`]);
-      if (bs && bs.mortarIn != null) t.push(['bad', `MORTAR ${s1(bs.mortarIn)}s`]);
-      else if (bs && bs.holder) t.push(['', `HELD BY ${bs.holder.toUpperCase()}`]);
-      if (bs && bs.moltIn != null) t.push(['', `MOLT ${Math.ceil(bs.moltIn)}s`]);
+      t.push([left ? '' : 'good', `Nests ${left}/${all}`]);
+      const bite = bs ? bs.bite : p && p.bite; if (bite) t.push(['', `Bite: ${BITE_NAME[bite] || bite}`]);
+      if (bs && bs.mortarIn != null) t.push(['bad', `Mortar ${s1(bs.mortarIn)}s`]);
+      else if (bs && bs.holder) t.push(['', `Held by ${bs.holder}`]);
+      if (bs && bs.moltIn != null) t.push(['', `Molt ${Math.ceil(bs.moltIn)}s`]);
     }
     if (mom && mom.alive) { // what is on her right now
-      if (mom.poison && mom.poison.length) t.push(['fx', 'POISONED']);
-      if (mom.bleed && mom.bleed.n) t.push(['fx', `BLEED ×${mom.bleed.n}`]);
-      if (mom.burn && (mom.burn.left > 0 || mom.burn.amount > 0)) t.push(['fx', 'BURNING']);
-      if (mom.frost) t.push(['fx', 'FROST']);
-      if (mom.slowT > 0 && (mom.slowMove > 0 || mom.slowAtk > 0)) t.push(['fx', 'SLOWED']);
+      if (mom.poison && mom.poison.length) t.push(['fx', 'Poisoned']);
+      if (mom.bleed && mom.bleed.n) t.push(['fx', `Bleed ×${mom.bleed.n}`]);
+      if (mom.burn && (mom.burn.left > 0 || mom.burn.amount > 0)) t.push(['fx', 'Burning']);
+      if (mom.frost) t.push(['fx', 'Frost']);
+      if (mom.slowT > 0 && (mom.slowMove > 0 || mom.slowAtk > 0)) t.push(['fx', 'Slowed']);
     }
-    if (!el.querySelector('.bb-bar')) { el.innerHTML = `<div class="bb-top"><span class="bb-name">MOMMY</span><span class="bb-time" hidden><b></b><small>s left</small></span><span class="bb-phase"></span></div>
-      <div class="bb-bar"><i class="bb-lost"></i><i class="bb-fill"></i><span class="bb-num"></span></div><div class="bb-clock" hidden><i></i></div><div class="bb-tok"></div>`; bossBarHtml = ''; }
-    // the fight's time running out: a big count in the middle, and a strip under her health that drains with it
+    if (!el.querySelector('.bb-bar')) { el.innerHTML = `<div class="bb-top"><span class="bb-name">Mommy<span class="bb-phase"></span></span><span class="bb-right"><span class="bb-time" hidden><b></b><small>s</small></span><span class="bb-rs"></span></span></div>
+      <div class="bb-bar"><i class="bb-lost"></i><i class="bb-fill"></i></div><div class="bb-clock" hidden><i></i></div><div class="bb-foot"><span class="bb-tok"></span><span class="bb-num"></span></div>`; bossBarHtml = ''; bossRestartAsk(false); }
+    // the fight's time running out: a count at the right of her name, and a thin strip under her health that drains with it
     const inFight = !!bt && (phase === 'battle' || phase === 'result' || phase === 'end'), total = C.fightSecs, left = inFight ? Math.max(0, total - bt.time()) : total;
     const te = el.querySelector('.bb-time'), ce = el.querySelector('.bb-clock');
     if (te.hidden !== !inFight) { te.hidden = !inFight; ce.hidden = !inFight; }
