@@ -1331,7 +1331,7 @@
 
     // ── the weekly boss (2026-11-12): her screen before a run (the owner: "don't go into the game right away"). From her
     // Limited event note on the menu, a click on her on the island, or Puzzles' boss row. How to play (her rules in short,
-    // from Boss.CFG: the whole sheet is openBossRules, in the run), the rewards (bossRewardList: by round 5, 4 and 3) and her
+    // from Boss.CFG: bossHowHtml, shared with the run's ? panel, openBossInfo), the rewards (bossRewardList: by round 5, 4 and 3) and her
     // leaderboard (bossBoardLoad, the same board as Rankings' Mommy tab). FIGHT HER starts the run (startBoss); the end of
     // a run comes back here (home.back 'boss' → home.boss) ──
     let bzFrom = null, hollowOn = false; // where her screen was opened from, for Back: 'puz' (Puzzles) or the menu
@@ -1345,40 +1345,14 @@
       if (typeof Boss === 'undefined') return;
       const C = Boss.CFG, mo = C.mommy, b = (x) => `<b>${x}</b>`;
       $('bz-lede').textContent = `A giant spider hangs over their zone. You have ${C.rounds} rounds to kill her.`;
-      $('bz-how').innerHTML = [
-        `Her health carries over from round to round and never comes back. You have no health to lose: only the ${b(C.rounds + ' rounds')} run out.`,
-        `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage. Bring down her ${b('nests')} first: ${b('HIGH')} ones only ranged units can hit, ${b('LOW')} ones melee units too.`,
-        `Every nest down and she ${b('falls')}: stunned for ${mo.stun} s, then full damage for the rest of the ${C.fightSecs} s fight.`,
-        `Keep a unit in her reach, or she throws ${b('web mortars')} at your biggest clump. Her bite changes every round: see <button class="bz-inl" id="bz-atk-open" aria-haspopup="dialog">Mommy’s attacks<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9l6-6M4.5 3H9v4.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>.`,
-        `${C.startGold} gold to start, a treasury instead of a tower, one free move and one free extra deployment a round. At most ${C.maxPerType} squads of one unit.`,
-      ].map(x => `<li>${x}</li>`).join('');
-      $('bz-atk-open').addEventListener('click', () => openBossAttacks(1)); // (the game's panel: her attacks and nests)
-      // the rewards (bossRewardList): a tier a row, by round 5, 4 and 3, the fastest (the best) last and marked. A row:
-      // the round, a picture (a title's diamond in its colour, a skin's picture), its name and kind, and yours or locked
-      const lock = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1" fill="currentColor"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
-      const tick = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="currentColor"/><path d="M4.6 8.2l2.3 2.3 4.5-4.7" fill="none" stroke="#0E2A16" stroke-width="1.9"/></svg>';
-      const list = bossRewardList();
-      $('bz-rw').innerHTML = `<p class="bz-rw-lede">The faster she falls, the more you earn. A kill by a reward’s round earns it, and everything above it.</p>
-        <ol class="bz-tiers">${list.map((x, i) => {
-          const T = x.kind === 'title' ? TITLES[x.id] : null, K = x.kind === 'skin' ? SKIN[x.id] : null; if (!T && !K) return '';
-          const own = !!(A && (x.kind === 'title' ? (A.titles || []).includes(x.id) : (A.skins || []).some(k => k.id === x.id))), top = i === list.length - 1;
-          const pv = T ? `<span class="pv" style="--tc:${T.col};--tg:${T.glow}"><i></i></span>` : `<span class="pv">${K.pic ? `<img src="${esc(K.pic)}" alt="">` : ''}</span>`;
-          return `<li class="${[own ? 'own' : '', top ? 'top' : ''].filter(Boolean).join(' ')}"><span class="rd"><small>Round</small><b>${x.round}</b></span>${pv}
-            <span class="nm">${T ? `<b class="tn" style="--tc:${T.col}">${esc(T.name)}</b>` : `<b>${esc(K.name)}</b>`}<small>${T ? 'Title' : `${esc(K.unit)} skin`}${own ? '<em>· Yours</em>' : ''}</small>${top ? '<i class="best"><span>Epic</span> reward</i>' : ''}</span>
-            <span class="st" role="img" aria-label="${own ? 'Yours' : 'Not yours yet'}">${own ? tick : lock}</span></li>`; }).join('')}</ol>`;
+      $('bz-how').innerHTML = bossHowHtml(); // (shared with the run's ? panel: bossHowHtml, bossTiersHtml, bossBoardHtml)
+      $('bz-how').querySelector('[data-atk]').addEventListener('click', () => openBossAttacks(1)); // (the game's panel: her attacks and nests)
+      $('bz-rw').innerHTML = bossTiersHtml(A);
       drawBossBoard();
     }
     function drawBossBoard() {
-      const rows = bossBoard.rows, me = acct ? acct.id : '', list = $('bz-lb');
       if (!(bossBoard.at && Date.now() - bossBoard.at < 60e3)) bossBoardLoad().then(() => { if (body.classList.contains('bz')) drawBossBoard(); });
-      $('bz-leg').textContent = !rows ? (bossBoard.at ? 'The leaderboard comes from the game server, which can’t be reached right now.' : 'Loading…')
-        : !rows.length ? 'Nobody has finished a run against her yet. Be the first.' : 'Best runs: a kill in the earliest round first, then the most damage.';
-      list.hidden = !(rows && rows.length);
-      const at = rows ? rows.findIndex(r => me && r.id === me) : -1, top = (rows || []).slice(0, 8);
-      if (at >= 8) top.push(rows[at]); // your own run, under the top eight
-      list.innerHTML = top.map((r) => { const i = rows.indexOf(r), mine = !!me && r.id === me;
-        return `<li class="${[i === 0 ? 'first' : '', mine ? 'me' : ''].filter(Boolean).join(' ')}"><span class="r">${i + 1}</span><span class="who"><b>${esc(r.tag)}${mine ? ' <i class="you">you</i>' : ''}</b><small>${esc(bossRunText(r))}</small></span>
-          <span class="s">${r.won ? 'R' + r.round : Math.round(r.dmg / 1000) + 'k'}</span></li>`; }).join('');
+      const h = bossBoardHtml(acct); $('bz-leg').textContent = h.leg; $('bz-lb').hidden = !h.has; $('bz-lb').innerHTML = h.rows;
     }
     function openBoss() {
       if (!bossOpen()) return;

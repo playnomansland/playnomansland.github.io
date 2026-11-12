@@ -485,6 +485,12 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 .boss-bar .bb-rs .yes:hover { background: #E5685B; }
 .boss-bar .bb-rs .bb-ask { font-size: 12px; font-weight: 600; opacity: 0.85; margin-right: 2px; animation: bb-in 0.18s ease-out; }
 @keyframes bb-in { from { opacity: 0; transform: translateX(4px); } }
+/* the ? beside the boss bar: her screen (openBossInfo). Wide: just outside the panel's right edge; narrow: in its top row */
+.boss-bar .bb-q { pointer-events: auto; position: absolute; top: 6px; right: -40px; width: 30px; height: 30px; margin: 0; padding: 0; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(244, 238, 223, 0.18); background: rgba(14, 16, 14, 0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #F4EEDF; font: 700 15px/1 var(--type, system-ui, sans-serif); cursor: pointer; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); transition: background 0.15s, border-color 0.15s, transform 0.12s; }
+.boss-bar .bb-q:hover { background: rgba(232, 150, 46, 0.85); border-color: transparent; color: #23170F; }
+.boss-bar .bb-q:active { transform: scale(0.94); }
+.boss-bar .bb-q:focus-visible { outline: 2px solid #F4EEDF; outline-offset: 2px; }
+@media (max-width: 700px) { .boss-bar .bb-top { padding-right: 34px; } .boss-bar .bb-q { right: 10px; top: 7px; width: 26px; height: 26px; font-size: 13px; box-shadow: none; } }
 .boss-bar .bb-time { display: inline-flex; align-items: baseline; gap: 1px; font-variant-numeric: tabular-nums; }
 .boss-bar .bb-time[hidden] { display: none; }
 .boss-bar .bb-time b { font-size: 20px; font-weight: 700; line-height: 1; }
@@ -3648,7 +3654,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   // the Mommy boss puzzle: while her rules or the nest map are open, the clocks stand still (it is played against nobody,
   // so nobody waits): the deploy countdown here, the fight in loop()
-  const bossReading = () => !!(m && m.boss) && ((!$('sheet-back').hidden && !!$('sheet').querySelector('[data-boss-read]')) || bossAtkOpen());
+  const bossReading = () => !!(m && m.boss) && ((!$('sheet-back').hidden && !!$('sheet').querySelector('[data-boss-read]')) || bossAtkOpen() || bossInfoOpen());
   let bossReadT = 0; // when the deploy clock was last pushed on while reading (0: not reading)
   function tick() {
     const t = now();
@@ -4379,7 +4385,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (net.duo && mode === 'net') wireDuoRow();
     if (duoOn()) wireMpbPanel(); // 2v2: the artifact draft's cards
     if ($('boss-map')) $('boss-map').addEventListener('click', openBossMap); // the Mommy boss puzzle: where her nests hang, round by round
-    $('help-btn').addEventListener('click', () => { if (m && m.boss) openBossRules(); else openHelp(); }); // (the Mommy boss puzzle: her rules, with Game help inside)
+    $('help-btn').addEventListener('click', () => { if (m && m.boss) openBossInfo(); else openHelp(); }); // (the Mommy boss puzzle: her screen, as the ? on the boss bar)
     if ($('mage-gen')) $('mage-gen').addEventListener('click', () => openTowerSheet(me));
     if ($('loan')) $('loan').addEventListener('click', () => { if (editable() && Game.takeLoan(m, me)) changed(); });
     if ($('slot-open')) $('slot-open').addEventListener('click', openSlots);
@@ -4454,13 +4460,11 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         <div class="seg speeds" role="group" aria-label="Playback speed">
           ${SPEEDS.map(s => `<button data-s="${s}" aria-pressed="${playSpeed() === s}">${s}×</button>`).join('')}
         </div>
-        ${m && m.boss ? '<button class="btn small" id="boss-rules">Mommy’s rules</button>' : ''}
         <button class="btn small" id="skip">Skip to result</button>
       </div>
       ${net.duo && mode === 'net' ? duoRow(true) : ''}
       <span class="hint speed-ask" id="speed-ask" aria-live="polite" hidden></span>`;
     if (net.duo && mode === 'net') wireDuoRow();
-    if ($('boss-rules')) $('boss-rules').addEventListener('click', openBossRules);
     $('panel').querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => pickSpeed(+b.dataset.s)));
     showSpeed();
     // asks first, as selling does: the first tap turns it into "Tap again to skip" (gold) for a few seconds
@@ -7278,7 +7282,6 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     Boss.setup(m);
     nextReady = [false, false]; rematch = [false, false];
     beginAiRound();
-    openBossRules(); // what's new here, before the first deployment
   }
   const BITE_NOTE = { fast: 'Fast, quick and light: health holds her', heavy: 'Acid-Bite, slow and heavy (it leaves a green pool): many bodies, shields and wards hold her', sweep: 'Sweep, it hits all round its target: one big body holds her' };
   function bossLine() {
@@ -7302,6 +7305,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (ask) { rs.querySelector('[data-rs="no"]').focus({ preventScroll: true }); bossAskT = setTimeout(() => bossRestartAsk(false), 5000); }
   }
   document.addEventListener('click', (e) => {
+    if (e.target.closest && e.target.closest('#boss-bar [data-bq]')) { e.stopPropagation(); openBossInfo(); return; } // the ? : her screen
     const b = e.target.closest && e.target.closest('#boss-bar [data-rs]'); if (!b) return;
     e.stopPropagation();
     if (b.dataset.rs === 'ask') bossRestartAsk(true); else if (b.dataset.rs === 'yes') { bossRestartAsk(false); restartBoss(); } else bossRestartAsk(false);
@@ -7333,7 +7337,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (mom.frost) t.push(['fx', 'Frost']);
       if (mom.slowT > 0 && (mom.slowMove > 0 || mom.slowAtk > 0)) t.push(['fx', 'Slowed']);
     }
-    if (!el.querySelector('.bb-bar')) { el.innerHTML = `<div class="bb-top"><span class="bb-name">Mommy<span class="bb-phase"></span></span><span class="bb-right"><span class="bb-time" hidden><b></b><small>s</small></span><span class="bb-rs"></span></span></div>
+    if (!el.querySelector('.bb-bar')) { el.innerHTML = `<div class="bb-top"><span class="bb-name">Mommy<span class="bb-phase"></span></span><span class="bb-right"><span class="bb-time" hidden><b></b><small>s</small></span><span class="bb-rs"></span></span><button class="bb-q" data-bq aria-label="The Mommy: how to play, rewards and leaderboard" title="How to play">?</button></div>
       <div class="bb-bar"><i class="bb-lost"></i><i class="bb-fill"></i></div><div class="bb-clock" hidden><i></i></div><div class="bb-foot"><span class="bb-tok"></span><span class="bb-num"></span></div>`; bossBarHtml = ''; bossRestartAsk(false); }
     // the fight's time running out: a count at the right of her name, and a thin strip under her health that drains with it
     const inFight = !!bt && (phase === 'battle' || phase === 'result' || phase === 'end'), total = C.fightSecs, left = inFight ? Math.max(0, total - bt.time()) : total;
@@ -7353,58 +7357,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const num = `${Math.ceil(hp).toLocaleString('en')} / ${max.toLocaleString('en')}`; if (q('.bb-num').textContent !== num) q('.bb-num').textContent = num;
     const tok = t.map(([c, x]) => `<span class="${c}">${esc(x)}</span>`).join(''); if (tok !== bossBarHtml) { bossBarHtml = tok; q('.bb-tok').innerHTML = tok; }
   }
-  // Mommy's rules: every mechanic the boss adds, in one sheet. It opens by itself as a run starts; the ? while deploying
-  // and a button in the fight open it again. The numbers come from Boss.CFG and this round's layout
-  // the gold each round brings in a boss run, from the game's own income (Game.incomeFor): "+250 in round 2, +350 in round 3..."
-  function bossIncomeText() {
-    const n = (m && m.boss && m.boss.rounds) || Boss.CFG.rounds, parts = [];
-    for (let r = 2; r <= n; r++) parts.push(`+${Game.incomeFor(r)} in round ${r}`);
-    return parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts.join('');
-  }
-  function openBossRules() {
-    if (!m || !m.boss || typeof Boss === 'undefined') return;
-    const C = Boss.CFG, mo = C.mommy, p = bossView() || {}, r = p.round || m.round, b = (x) => `<b>${x}</b>`; // (p: the round on the board; in the fight m.round has moved on already)
-    const hatch = Boss.byRound(C.hatch, r), bite = p.bite || Boss.byRound(C.biteByRound, r);
-    const BITES = { fast: ['Fast', 'quick, light bites: a unit with lots of health holds her best'], heavy: ['Acid-Bite', 'slow, huge bites that splash a little and leave acid: many bodies, shields and wards hold her best'], sweep: ['Sweep', 'light bites that hit everything round the target: one big body holds her best (a swarm melts)'] };
-    const acidBites = C.acid && C.acid.pct > 0 ? Object.keys(mo.bites).filter(k => mo.bites[k].acid) : [], acidRounds = C.biteByRound.map((x, k) => acidBites.includes(x) ? k + 1 : 0).filter(Boolean);
-    const sec = (title, items) => `<h4 style="margin:10px 0 2px">${title}</h4><ul class="helplist">${items.filter(Boolean).map(x => `<li>${x}</li>`).join('')}</ul>`;
-    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h" data-boss-read>Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
-      <p class="hint" style="margin:0 0 6px">${phase === 'battle' ? 'The fight is paused while you read.' : 'No clock while you deploy: take your time.'}</p>
-      <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. The faster she falls, the more you earn: ${bossRewardList().map(x => `by round ${x.round}, ${bossRewardName(x)}`).join('; ')}. A faster kill earns the ones before it too.</p>
-      ${sec('Hanging', [
-        `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage, and she can’t be stunned, slowed, rooted or moved.`,
-        mo.lastPick ? 'Your units only shoot her while she hangs if none of her nests or spiders are left to hit.' : ''])}
-      ${sec('Nests', [
-        'Her nests hang in new places every round. While you deploy you see where this round’s hang.',
-        `${b('HIGH')} nests hang up in the air on a thread: only ranged units can hit them. ${b('LOW')} nests sit on the ground: melee units can hit them too.`,
-        `Each nest hatches a spiderling every ${b(hatch + ' s')} this round (faster in later rounds). A destroyed nest bursts into ${C.nest.burst} spiderlings.`])}
-      ${sec('The fall', [
-        `When every nest is down she ${b('falls')}: she and all her spiders are stunned for ${mo.stun} s, and she takes ${b('full damage')} for the rest of the fight.`,
-        `A fight lasts ${C.fightSecs} s, so the sooner the nests fall, the longer she lies there.`])}
-      ${sec('Her reach and her bite', [
-        `She bites the nearest of your units inside her reach (the dashed ring, ${mo.near} m). A unit in her reach ${b('holds')} her: she bites it, not the rest.`,
-        mo.biteSecs > 0 ? `Her ${b('jaws')} open on the ground where that unit stands and snap shut ${mo.biteSecs} s later. Whatever stands in the ring then is bitten; a unit that has walked out of it is missed. The bite mark stays on the ground for a moment.` : '',
-        `Her bite changes each round. This round: ${b(BITES[bite] ? BITES[bite][0] : bite)}, ${BITES[bite] ? BITES[bite][1] : ''}.`,
-        acidBites.length ? `Her ${acidBites.join(' and ')} bite is ${b('acid')} (green jaws; round${acidRounds.length === 1 ? '' : 's'} ${acidRounds.join(', ')}). Where it lands it leaves a ${b('green pool')} for ${C.acid.secs} s. Your units standing in one lose ${C.acid.pct}% of their max health a second and are slowed, and it lasts ${C.acid.linger} s after they step out. Her spiders don’t mind it. Slime units (Slime Wizard, Slimeshots) drink it: it heals them.` : '',
-        `Units close to her (${mo.web.r} m) are caught in her ${b('web')}: they walk ${mo.web.slow}% slower and hit ${mo.web.dmg}% softer.`])}
-      ${sec('The web mortar', [
-        `If none of your units is inside her reach for ${mo.mortar.wind} s while she hangs, she throws a web mortar at your biggest clump, then another every ${mo.mortar.every} s.`,
-        mo.mortar.fly > 0 ? `It is in the air for ${mo.mortar.fly} s and lands where the clump stood when she threw it: the ${b('red ring')}, which fills as it comes. Everything in the ring when it lands takes ${mo.mortar.hit} damage and is caught in a web that slows it. A squad that walks on gets out of the ring.` : `${mo.mortar.hit} damage to everything in the blast, and a web that slows them.`,
-        mo.mortar.ammo ? `Each shot is ${b('one of her own nests')}, ripped loose${mo.mortar.ammoReach ? ' (only a nest inside her reach)' : ''}: her thread shows which one she throws next. It is gone, and its spiders burst out where it hung. Leaving her alone is a way to play too: spread out, and let her spend her nests.` : ''])}
-      ${sec('She sheds', [
-        mo.molt ? `Every ${mo.molt} s she molts: poison, bleed, burn, frost and slows fall off her.` : '',
-        mo.bleedPct ? '' : 'Hits that take a share of max health (bleed’s big stacks, Deadeye) don’t work on her.'])}
-      ${sec('Your side', [
-        `${C.startGold} gold to start, then ${bossIncomeText()}.`,
-        `Every round: ${b('one free move')} for a squad from an earlier round, and ${b('one free extra deployment')}.`,
-        `At most ${b(m.boss.cap + ' squads')} of any one unit.`,
-        `No tower: a ${b('treasury')} instead. It pays 50 gold for each fight it stands through; her spiders go for it once your army is gone. You have no health to lose: only the rounds run out.`,
-        `Not allowed: ${esc((m.boss.banned || []).join(', '))}.`])}
-      <div class="bar"><span></span><button class="btn small" id="boss-help">Game help</button></div>`;
-    $('sheet-back').hidden = false;
-    $('close').addEventListener('click', closeSheet);
-    $('boss-help').addEventListener('click', () => { closeSheet(); openHelp(); });
-  }
+  // (Mommy's rules, the sheet with every mechanic, went on 12 November: the owner's call. Her screen says it now:
+  // openBossInfo, the ? on the boss bar and by the gold)
   // ---------- the weekly boss's leaderboard (2026-11-12; server/src/accounts.js BOSS) ----------
   // A finished run's record (m.boss.run: the seed and the player's side going into each fight, kept by Boss.record)
   // goes to the game server, which plays the run again with the game's own rules and ranks what its replay got: it
@@ -7475,6 +7429,75 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // From her screen's How to play (the Diorama) and, in a run, the cog's Settings. Left: a card for each of her attacks
   // (bite, with her bite in each round and its mark; web; web mortar; acid; shed), each with its symbol. Right: her
   // nests, round by round (bossNestBoard). The numbers are Boss.CFG's. While it's open in a run the clock waits, as
+  // ---------- the boss screen's words, shared (2026-11-12): the menu's boss screen (diorama.js drawBoss) and the same
+  // screen in a run (openBossInfo, the ? on the boss bar) say the same thing from the same place ----------
+  // How to play: her rules in five points, from Boss.CFG. The attacks link is a button with data-atk (each screen binds it)
+  function bossHowHtml() {
+    const C = Boss.CFG, mo = C.mommy, b = (x) => `<b>${x}</b>`;
+    return [
+      `Her health carries over from round to round and never comes back. You have no health to lose: only the ${b(C.rounds + ' rounds')} run out.`,
+      `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage. Bring down her ${b('nests')} first: ${b('HIGH')} ones only ranged units can hit, ${b('LOW')} ones melee units too.`,
+      `Every nest down and she ${b('falls')}: stunned for ${mo.stun} s, then full damage for the rest of the ${C.fightSecs} s fight.`,
+      `Keep a unit in her reach, or she throws ${b('web mortars')} at your biggest clump. Her bite changes every round: see <button class="bz-inl" data-atk aria-haspopup="dialog">Mommy’s attacks<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9l6-6M4.5 3H9v4.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>.`,
+      `${C.startGold} gold to start, a treasury instead of a tower, one free move and one free extra deployment a round. At most ${C.maxPerType} squads of one unit.`,
+    ].map(x => `<li>${x}</li>`).join('');
+  }
+  // the rewards ladder (bossRewardList): a tier a row, by round 5, 4 and 3, the fastest (the best) last and marked. A row:
+  // the round, a picture (a title's diamond in its colour, a skin's picture), its name and kind, and yours or locked
+  function bossTiersHtml(a) {
+    const lock = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1" fill="currentColor"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+    const tick = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="currentColor"/><path d="M4.6 8.2l2.3 2.3 4.5-4.7" fill="none" stroke="#0E2A16" stroke-width="1.9"/></svg>';
+    const list = bossRewardList(), SK = (typeof Shapes !== 'undefined' && Shapes.SKINS) || {};
+    return `<p class="bz-rw-lede">The faster she falls, the more you earn. A kill by a reward’s round earns it, and everything above it.</p>
+      <ol class="bz-tiers">${list.map((x, i) => {
+        const T = x.kind === 'title' ? TITLES[x.id] : null, K = x.kind === 'skin' ? SK[x.id] : null; if (!T && !K) return '';
+        const own = !!(a && (x.kind === 'title' ? (a.titles || []).includes(x.id) : (a.skins || []).some(k => k.id === x.id))), top = i === list.length - 1;
+        const pv = T ? `<span class="pv" style="--tc:${T.col};--tg:${T.glow}"><i></i></span>` : `<span class="pv">${K.pic ? `<img src="${esc(K.pic)}" alt="">` : ''}</span>`;
+        return `<li class="${[own ? 'own' : '', top ? 'top' : ''].filter(Boolean).join(' ')}"><span class="rd"><small>Round</small><b>${x.round}</b></span>${pv}
+          <span class="nm">${T ? `<b class="tn" style="--tc:${T.col}">${esc(T.name)}</b>` : `<b>${esc(K.name)}</b>`}<small>${T ? 'Title' : `${esc(K.unit)} skin`}${own ? '<em>· Yours</em>' : ''}</small>${top ? '<i class="best"><span>Epic</span> reward</i>' : ''}</span>
+          <span class="st" role="img" aria-label="${own ? 'Yours' : 'Not yours yet'}">${own ? tick : lock}</span></li>`; }).join('')}</ol>`;
+  }
+  // her leaderboard: the line over it and the top eight (and your own run under them)
+  function bossBoardHtml(a) {
+    const rows = bossBoard.rows, me = a ? a.id : '';
+    const leg = !rows ? (bossBoard.at ? 'The leaderboard comes from the game server, which can’t be reached right now.' : 'Loading…')
+      : !rows.length ? 'Nobody has finished a run against her yet. Be the first.' : 'Best runs: a kill in the earliest round first, then the most damage.';
+    const at = rows ? rows.findIndex(r => me && r.id === me) : -1, top = (rows || []).slice(0, 8);
+    if (at >= 8) top.push(rows[at]); // your own run, under the top eight
+    return { leg, has: !!(rows && rows.length), rows: top.map((r) => { const i = rows.indexOf(r), mine = !!me && r.id === me;
+      return `<li class="${[i === 0 ? 'first' : '', mine ? 'me' : ''].filter(Boolean).join(' ')}"><span class="r">${i + 1}</span><span class="who"><b>${esc(r.tag)}${mine ? ' <i class="you">you</i>' : ''}</b><small>${esc(bossRunText(r))}</small></span>
+        <span class="s">${r.won ? 'R' + r.round : Math.round(r.dmg / 1000) + 'k'}</span></li>`; }).join('') };
+  }
+  // ---------- the boss screen in a run (the ? on the boss bar, 2026-11-12): her screen as one scrolling panel over the
+  // board, in the attacks panel's look. The deploy has no clock and the fight waits while it is open (bossReading) ----------
+  let infoEl = null, infoFrom = null;
+  const bossInfoOpen = () => !!infoEl && !infoEl.hidden;
+  function openBossInfo() {
+    if (typeof Boss === 'undefined') return;
+    if (!infoEl) {
+      infoEl = document.createElement('div'); infoEl.className = 'bz-atk-back bz-info-back'; infoEl.hidden = true;
+      infoEl.innerHTML = `<section class="bz-atk bz-info" role="dialog" aria-modal="true" aria-labelledby="bz-info-h">
+        <header><span class="k">Limited event · weekly boss</span><h3 id="bz-info-h">The Mommy</h3><button class="x" aria-label="Close"><svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></header>
+        <p class="bz-lede"></p>
+        <div class="bz-info-in"><div class="bz-info-l"><h4 class="bz-h">How to play</h4><ol class="bz-how"></ol></div>
+          <div class="bz-info-r"><h4 class="bz-h">Rewards</h4><div class="bz-rw"></div><h4 class="bz-h">Leaderboard</h4><p class="bz-leg"></p><ol class="bz-lb"></ol></div></div>
+        <div class="bz-info-go"><button class="bz-info-back-btn">Back to the fight</button></div></section>`;
+      document.body.appendChild(infoEl);
+      infoEl.querySelector('.x').addEventListener('click', closeBossInfo);
+      infoEl.querySelector('.bz-info-back-btn').addEventListener('click', closeBossInfo);
+      infoEl.addEventListener('click', (e) => { if (e.target === infoEl) closeBossInfo(); if (e.target.closest('[data-atk]')) openBossAttacks((bossView() || {}).round || (m && m.round) || 1); });
+      addEventListener('keydown', (e) => { if (e.key === 'Escape' && bossInfoOpen() && !bossAtkOpen()) { e.preventDefault(); e.stopImmediatePropagation(); closeBossInfo(); } }, true);
+    }
+    const C = Boss.CFG, q = (c) => infoEl.querySelector(c);
+    q('.bz-lede').textContent = `A giant spider hangs over their zone. You have ${C.rounds} rounds to kill her.`;
+    q('.bz-how').innerHTML = bossHowHtml();
+    q('.bz-rw').innerHTML = bossTiersHtml(acct);
+    const board = () => { const h = bossBoardHtml(acct); q('.bz-leg').textContent = h.leg; q('.bz-lb').hidden = !h.has; q('.bz-lb').innerHTML = h.rows; };
+    board(); if (!(bossBoard.at && Date.now() - bossBoard.at < 60e3)) bossBoardLoad().then(() => { if (bossInfoOpen()) board(); });
+    q('.bz-info-back-btn').textContent = phase === 'battle' ? 'Back to the fight' : 'Back';
+    infoFrom = document.activeElement; infoEl.hidden = false; q('.bz-info').scrollTop = 0; q('.x').focus({ preventScroll: true });
+  }
+  function closeBossInfo() { if (!bossInfoOpen()) return; infoEl.hidden = true; if (infoFrom && infoFrom.focus && document.contains(infoFrom)) infoFrom.focus(); infoFrom = null; }
   // for her rules (bossReading). Made once, at the end of <body>, so it sits over the Diorama and the board alike
   const ATK_ICON = {
     bite: '<svg viewBox="0 0 24 24"><path d="M3 6h18l-2.2 4.2-2.2-3.4-2.3 4-2.3-4-2.3 4-2.2-3.4L5.2 10.2z M3 18h18l-2.2-4.2-2.2 3.4-2.3-4-2.3 4-2.3-4-2.2 3.4L5.2 13.8z" fill="currentColor"/></svg>',

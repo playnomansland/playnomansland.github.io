@@ -1955,12 +1955,12 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
 #dio .bz-left .bz-go { justify-self: start; }
 #dio .bz .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; color: #FFC457; }
 #dio .bz h2 { margin: 2px 0 0; font: 700 clamp(52px, 9.6vh, 92px)/.86 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; white-space: nowrap; }
-#dio .bz .bz-lede { margin: clamp(8px, 1.4vh, 12px) 0 0; font: 700 15px/1.35 var(--type); opacity: .92; }
-#dio .bz .bz-h { margin: clamp(14px, 2.6vh, 24px) 0 clamp(4px, .8vh, 8px); font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; color: #FFC457; }
-#dio .bz .bz-how { margin: 0; padding: 0; list-style: none; counter-reset: bz; display: grid; gap: clamp(5px, 1vh, 9px); }
-#dio .bz .bz-how li { counter-increment: bz; position: relative; padding-left: 30px; font: 500 14px/1.38 var(--type); }
-#dio .bz .bz-how li::before { content: counter(bz); position: absolute; left: 0; top: -1px; font: 700 18px/1 var(--stencil); color: #FF4A36; text-shadow: 0 0 6px rgba(255, 74, 54, .6); }
-#dio .bz .bz-how b { color: #F6DFA6; }
+:is(#dio .bz, .bz-info) .bz-lede { margin: clamp(8px, 1.4vh, 12px) 0 0; font: 700 15px/1.35 var(--type); opacity: .92; }
+:is(#dio .bz, .bz-info) .bz-h { margin: clamp(14px, 2.6vh, 24px) 0 clamp(4px, .8vh, 8px); font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; color: #FFC457; }
+:is(#dio .bz, .bz-info) .bz-how { margin: 0; padding: 0; list-style: none; counter-reset: bz; display: grid; gap: clamp(5px, 1vh, 9px); }
+:is(#dio .bz, .bz-info) .bz-how li { counter-increment: bz; position: relative; padding-left: 30px; font: 500 14px/1.38 var(--type); }
+:is(#dio .bz, .bz-info) .bz-how li::before { content: counter(bz); position: absolute; left: 0; top: -1px; font: 700 18px/1 var(--stencil); color: #FF4A36; text-shadow: 0 0 6px rgba(255, 74, 54, .6); }
+:is(#dio .bz, .bz-info) .bz-how b { color: #F6DFA6; }
 #dio .bz .bz-go { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin-top: clamp(16px, 3vh, 28px); }
 #dio .bz .create { margin: 0; font-size: clamp(28px, 4vh, 36.4px); padding: clamp(6px, 1.1vh, 10px) 22px clamp(5px, .9vh, 8px) 18px; }
 #dio .bz #bz-fight { background: #E8962E; color: #23170F; padding-left: 22px; padding-right: 18px; }
@@ -1969,38 +1969,38 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
 #dio .bz #bz-back svg { width: 20px; height: 20px; }
 /* the reward: the skin's picture, its name, and what earns it */
 /* the rewards: a panel of tiers, one a row (round, picture, name and kind, yours or locked), the fastest kill's last */
-#dio .bz .bz-rw { width: 100%; padding: 14px 14px 12px; background: rgba(0, 0, 0, .24); border: 1px solid rgba(232, 150, 46, .35); }
-#dio .bz .bz-rw-lede { margin: 0 0 12px; font: 600 13px/1.4 var(--type); opacity: .88; }
-#dio .bz .bz-tiers { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
-#dio .bz .bz-tiers li { display: grid; grid-template-columns: 42px 44px minmax(0, 1fr) 18px; align-items: center; gap: 12px; padding: 8px 12px 8px 6px; background: rgba(244, 236, 216, .04); border: 1px solid rgba(244, 236, 216, .08); }
-#dio .bz .bz-tiers li.top { background: linear-gradient(90deg, rgba(232, 150, 46, .2), rgba(232, 150, 46, .06)); border-color: rgba(232, 150, 46, .55); }
-#dio .bz .bz-tiers .rd { display: grid; justify-items: center; line-height: 1; padding-right: 10px; border-right: 1px solid rgba(244, 236, 216, .14); }
-#dio .bz .bz-tiers .rd small { font: 700 9px var(--type); letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
-#dio .bz .bz-tiers .rd b { margin-top: 3px; font: 700 26px/1 var(--stencil); color: #FFC457; }
-#dio .bz .bz-tiers .pv { display: grid; place-items: center; width: 44px; height: 44px; background: rgba(0, 0, 0, .35); }
-#dio .bz .bz-tiers .pv img { width: 40px; height: 40px; object-fit: contain; }
-#dio .bz .bz-tiers .pv i { width: 15px; height: 15px; background: var(--tc); transform: rotate(45deg); box-shadow: 0 0 10px var(--tg); }
-#dio .bz .bz-tiers .nm { display: grid; gap: 3px; min-width: 0; }
-#dio .bz .bz-tiers .nm b { font: 700 19px/1.02 var(--stencil); text-transform: uppercase; letter-spacing: .01em; color: #F4ECD8; }
-#dio .bz .bz-tiers .nm b.tn { color: var(--tc); }
-#dio .bz .bz-tiers .nm small { font: 600 12px var(--type); color: rgba(244, 236, 216, .75); }
-#dio .bz .bz-tiers .nm small em { margin-left: 5px; font-style: normal; font-weight: 700; color: #9FE0B0; }
-#dio .bz .bz-tiers .best { justify-self: start; margin-top: 2px; padding: 2px 6px 1px; font: 700 9px var(--type); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: #23170F; background: #E8962E; }
-#dio .bz .bz-tiers .st { display: grid; place-items: center; color: rgba(244, 236, 216, .34); }
-#dio .bz .bz-tiers .st svg { width: 16px; height: 16px; }
-#dio .bz .bz-tiers li.own .st { color: #9FE0B0; }
+:is(#dio .bz, .bz-info) .bz-rw { width: 100%; padding: 14px 14px 12px; background: rgba(0, 0, 0, .24); border: 1px solid rgba(232, 150, 46, .35); }
+:is(#dio .bz, .bz-info) .bz-rw-lede { margin: 0 0 12px; font: 600 13px/1.4 var(--type); opacity: .88; }
+:is(#dio .bz, .bz-info) .bz-tiers { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+:is(#dio .bz, .bz-info) .bz-tiers li { display: grid; grid-template-columns: 42px 44px minmax(0, 1fr) 18px; align-items: center; gap: 12px; padding: 8px 12px 8px 6px; background: rgba(244, 236, 216, .04); border: 1px solid rgba(244, 236, 216, .08); }
+:is(#dio .bz, .bz-info) .bz-tiers li.top { background: linear-gradient(90deg, rgba(232, 150, 46, .2), rgba(232, 150, 46, .06)); border-color: rgba(232, 150, 46, .55); }
+:is(#dio .bz, .bz-info) .bz-tiers .rd { display: grid; justify-items: center; line-height: 1; padding-right: 10px; border-right: 1px solid rgba(244, 236, 216, .14); }
+:is(#dio .bz, .bz-info) .bz-tiers .rd small { font: 700 9px var(--type); letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
+:is(#dio .bz, .bz-info) .bz-tiers .rd b { margin-top: 3px; font: 700 26px/1 var(--stencil); color: #FFC457; }
+:is(#dio .bz, .bz-info) .bz-tiers .pv { display: grid; place-items: center; width: 44px; height: 44px; background: rgba(0, 0, 0, .35); }
+:is(#dio .bz, .bz-info) .bz-tiers .pv img { width: 40px; height: 40px; object-fit: contain; }
+:is(#dio .bz, .bz-info) .bz-tiers .pv i { width: 15px; height: 15px; background: var(--tc); transform: rotate(45deg); box-shadow: 0 0 10px var(--tg); }
+:is(#dio .bz, .bz-info) .bz-tiers .nm { display: grid; gap: 3px; min-width: 0; }
+:is(#dio .bz, .bz-info) .bz-tiers .nm b { font: 700 19px/1.02 var(--stencil); text-transform: uppercase; letter-spacing: .01em; color: #F4ECD8; }
+:is(#dio .bz, .bz-info) .bz-tiers .nm b.tn { color: var(--tc); }
+:is(#dio .bz, .bz-info) .bz-tiers .nm small { font: 600 12px var(--type); color: rgba(244, 236, 216, .75); }
+:is(#dio .bz, .bz-info) .bz-tiers .nm small em { margin-left: 5px; font-style: normal; font-weight: 700; color: #9FE0B0; }
+:is(#dio .bz, .bz-info) .bz-tiers .best { justify-self: start; margin-top: 2px; padding: 2px 6px 1px; font: 700 9px var(--type); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: #23170F; background: #E8962E; }
+:is(#dio .bz, .bz-info) .bz-tiers .st { display: grid; place-items: center; color: rgba(244, 236, 216, .34); }
+:is(#dio .bz, .bz-info) .bz-tiers .st svg { width: 16px; height: 16px; }
+:is(#dio .bz, .bz-info) .bz-tiers li.own .st { color: #9FE0B0; }
 /* her leaderboard */
-#dio .bz .bz-leg { margin: 0 0 6px; font: 600 13px/1.35 var(--type); opacity: .85; }
-#dio .bz .bz-lb { margin: 0; padding: 0; list-style: none; width: 100%; display: grid; gap: 2px; }
-#dio .bz .bz-lb li { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 10px; padding: 5px 8px; background: rgba(0, 0, 0, .18); }
-#dio .bz .bz-lb li.first { background: rgba(232, 150, 46, .22); }
-#dio .bz .bz-lb li.me { outline: 1px solid #FFC457; outline-offset: -1px; }
-#dio .bz .bz-lb .r { font: 700 18px/1 var(--stencil); color: #FFC457; text-align: center; }
-#dio .bz .bz-lb .who { display: grid; min-width: 0; }
-#dio .bz .bz-lb .who b { font: 700 14px var(--type); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#dio .bz .bz-lb .who small { font: 500 12px var(--type); opacity: .78; }
-#dio .bz .bz-lb .you { font: 700 10px var(--type); font-style: normal; text-transform: uppercase; letter-spacing: .06em; padding: 1px 4px; color: #23170F; background: #FFC457; }
-#dio .bz .bz-lb .s { font: 700 18px/1 var(--stencil); }
+:is(#dio .bz, .bz-info) .bz-leg { margin: 0 0 6px; font: 600 13px/1.35 var(--type); opacity: .85; }
+:is(#dio .bz, .bz-info) .bz-lb { margin: 0; padding: 0; list-style: none; width: 100%; display: grid; gap: 2px; }
+:is(#dio .bz, .bz-info) .bz-lb li { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 10px; padding: 5px 8px; background: rgba(0, 0, 0, .18); }
+:is(#dio .bz, .bz-info) .bz-lb li.first { background: rgba(232, 150, 46, .22); }
+:is(#dio .bz, .bz-info) .bz-lb li.me { outline: 1px solid #FFC457; outline-offset: -1px; }
+:is(#dio .bz, .bz-info) .bz-lb .r { font: 700 18px/1 var(--stencil); color: #FFC457; text-align: center; }
+:is(#dio .bz, .bz-info) .bz-lb .who { display: grid; min-width: 0; }
+:is(#dio .bz, .bz-info) .bz-lb .who b { font: 700 14px var(--type); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:is(#dio .bz, .bz-info) .bz-lb .who small { font: 500 12px var(--type); opacity: .78; }
+:is(#dio .bz, .bz-info) .bz-lb .you { font: 700 10px var(--type); font-style: normal; text-transform: uppercase; letter-spacing: .06em; padding: 1px 4px; color: #23170F; background: #FFC457; }
+:is(#dio .bz, .bz-info) .bz-lb .s { font: 700 18px/1 var(--stencil); }
 /* phones: her screen in the same flow as Puzzles (main's phone Diorama): one column under the island */
 @media (max-width: 700px) {
   html.diorama #dio .bz { position: relative; left: auto; top: auto; width: auto; margin: 0 16px 32px; order: 3; grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "left" "right"; }
@@ -2015,27 +2015,41 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
 /* her screen never runs off a short window: the right column takes the room left, and the leaderboard scrolls in it */
 #dio .bz-right { align-self: stretch; display: flex; flex-direction: column; align-items: stretch; min-height: 0; }
 #dio .bz-right > * { flex: none; }
-#dio .bz .bz-lb { flex: 0 1 auto; min-height: 92px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(232, 150, 46, .5) transparent; }
+:is(#dio .bz, .bz-info) .bz-lb { flex: 0 1 auto; min-height: 92px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(232, 150, 46, .5) transparent; }
 @media (max-height: 780px) and (min-width: 701px) {
-  #dio .bz .bz-rw { padding: 10px 12px 8px; } #dio .bz .bz-rw-lede { margin-bottom: 8px; }
-  #dio .bz .bz-tiers { gap: 4px; } #dio .bz .bz-tiers li { padding-top: 5px; padding-bottom: 5px; }
-  #dio .bz .bz-tiers .pv { width: 38px; height: 38px; } #dio .bz .bz-tiers .pv img { width: 34px; height: 34px; }
+  :is(#dio .bz, .bz-info) .bz-rw { padding: 10px 12px 8px; } :is(#dio .bz, .bz-info) .bz-rw-lede { margin-bottom: 8px; }
+  :is(#dio .bz, .bz-info) .bz-tiers { gap: 4px; } :is(#dio .bz, .bz-info) .bz-tiers li { padding-top: 5px; padding-bottom: 5px; }
+  :is(#dio .bz, .bz-info) .bz-tiers .pv { width: 38px; height: 38px; } :is(#dio .bz, .bz-info) .bz-tiers .pv img { width: 34px; height: 34px; }
 }
-@media (max-width: 700px) { #dio .bz { bottom: auto; grid-template-rows: none; } #dio .bz .bz-lb { overflow: visible; } }
+@media (max-width: 700px) { #dio .bz { bottom: auto; grid-template-rows: none; } :is(#dio .bz, .bz-info) .bz-lb { overflow: visible; } }
 
 /* "Epic" in the rewards' top tier: purple, on its saffron tag */
-#dio .bz .bz-tiers .best { padding: 3px 7px 2px; font-size: 10px; color: #F6DFA6; background: #160806; box-shadow: inset 0 0 0 1px rgba(195, 139, 255, .45); }
-#dio .bz .bz-tiers .best span { color: #C38BFF; text-shadow: 0 0 6px rgba(195, 139, 255, .55); }
+:is(#dio .bz, .bz-info) .bz-tiers .best { padding: 3px 7px 2px; font-size: 10px; color: #F6DFA6; background: #160806; box-shadow: inset 0 0 0 1px rgba(195, 139, 255, .45); }
+:is(#dio .bz, .bz-info) .bz-tiers .best span { color: #C38BFF; text-shadow: 0 0 6px rgba(195, 139, 255, .55); }
 /* How to play's "Mommy's attacks": a word in the text that opens her attacks */
-#dio .bz .bz-inl { display: inline-flex; align-items: center; gap: 4px; padding: 0 0 1px; font: 700 14px/1.2 var(--type); color: #FFC457; border-bottom: 1.5px solid rgba(255, 196, 87, .6); cursor: pointer; }
-#dio .bz .bz-inl svg { width: 10px; height: 10px; }
-#dio .bz .bz-inl:hover, #dio .bz .bz-inl:focus-visible { color: #F4ECD8; border-color: #F4ECD8; outline: none; }
+:is(#dio .bz, .bz-info) .bz-inl { display: inline-flex; align-items: center; gap: 4px; padding: 0 0 1px; font: 700 14px/1.2 var(--type); color: #FFC457; border-bottom: 1.5px solid rgba(255, 196, 87, .6); cursor: pointer; }
+:is(#dio .bz, .bz-info) .bz-inl svg { width: 10px; height: 10px; }
+:is(#dio .bz, .bz-info) .bz-inl:hover, :is(#dio .bz, .bz-info) .bz-inl:focus-visible { color: #F4ECD8; border-color: #F4ECD8; outline: none; }
 /* Mommy's attacks (openBossAttacks): a panel over her screen or the board, the maroon a shade deeper with an amber edge.
    Left the attacks (cards in two columns, Bite across both), right her nests round by round. It sits in <body>, so its
    fonts are named here */
 .bz-atk-back { --stencil: "Big Shoulders Stencil", "Arial Narrow", Impact, sans-serif; --type: "Bricolage Grotesque", system-ui, sans-serif;
   position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px; background: rgba(20, 6, 4, .62); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
 .bz-atk-back[hidden] { display: none; }
+
+/* the boss screen in a run (openBossInfo, the ? on the boss bar): the attacks panel's look, her screen's words in one
+   scrolling column on a phone and two side by side wider. The words' rules are shared with #dio .bz above */
+.bz-info-back { z-index: 39; } /* (Mommy's attacks, opened from it, sits over it) */
+.bz-atk.bz-info { width: min(860px, 100%); }
+.bz-info .bz-lede { margin: 0 0 4px; font: 700 15px/1.35 var(--type); opacity: .92; }
+.bz-info-in { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 0 28px; }
+.bz-info .bz-h { margin: 18px 0 8px; font: 700 12px var(--type); letter-spacing: .08em; text-transform: uppercase; color: #FFC457; }
+.bz-info .bz-inl { background: none; border-width: 0 0 1.5px; border-style: solid; }
+.bz-info .bz-lb[hidden] { display: none; }
+.bz-info-go { display: flex; justify-content: flex-end; margin-top: 18px; }
+.bz-info-back-btn { padding: 8px 18px 7px; font: 700 20px/1 var(--stencil) !important; text-transform: uppercase; color: #23170F !important; background: #E8962E !important; }
+.bz-info-back-btn:hover, .bz-info-back-btn:focus-visible { background: #FFC457 !important; outline: none; }
+@media (max-width: 700px) { .bz-info-in { grid-template-columns: minmax(0, 1fr); } .bz-atk.bz-info { padding: 16px 16px 18px; } .bz-info-back-btn { width: 100%; } }
 .bz-atk { width: min(1000px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 20px 24px 22px; color: #F4ECD8; background: #2E0E0A; border: 1px solid rgba(232, 150, 46, .55); box-shadow: 0 24px 60px rgba(0, 0, 0, .55); font: 500 14px/1.4 var(--type); animation: ddrop-in .2s cubic-bezier(.2, .9, .25, 1); }
 .bz-atk header { position: relative; display: grid; margin-bottom: 14px; }
 .bz-atk header .k { font: 700 12px var(--type); letter-spacing: .08em; text-transform: uppercase; color: #FFC457; }
