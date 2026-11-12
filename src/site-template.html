@@ -2893,7 +2893,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       </div>
       <div class="bar"><span class="hint">Friends</span><button class="btn small" id="fr-open2">Friends <b class="fr-badge" hidden></b></button></div>
       ${m && m.boss ? (bossCtlOn() ? '' : '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div><button class="btn primary" id="boss-restart">Restart boss</button>'
-        + `<button class="btn" id="boss-replay" aria-expanded="false" aria-controls="boss-rounds">Replay round</button><div class="bar" id="boss-rounds" hidden><span class="hint">Play again from the start of</span><div class="seg" role="group" aria-label="Replay which round">${bossReplayable().map(r => `<button data-boss-round="${r}">Round ${r}${r === m.round ? ' (now)' : ''}</button>`).join('')}</div></div>`) : ''}
+        + `<button class="btn" id="boss-replay" aria-expanded="false" aria-controls="boss-rounds">Replay round</button><div class="bar" id="boss-rounds" hidden><span class="hint">Play again from the start of</span><div class="seg" role="group" aria-label="Replay which round">${bossReplayable().map(r => `<button data-boss-round="${r}">Round ${r}${r === m.round ? ' (now)' : ''}</button>`).join('')}</div></div>`
+        + `<button class="btn" id="boss-save"${bossBoardNow() ? '' : ' disabled'}>Save board</button><button class="btn" id="boss-load" aria-expanded="false" aria-controls="boss-loads"${bossSavedRounds().length ? '' : ' disabled'}>Load board</button><div class="bar" id="boss-loads" hidden><span class="hint">Load the board you saved for</span><div class="seg" role="group" aria-label="Load which round">${bossSavedRounds().map(r => `<button data-boss-load="${r}">Round ${r}</button>`).join('')}</div></div>`) : ''}
       <button class="btn" id="to-menu">Main menu</button>` : ''}
       ${!inMatch ? `<div class="bar">
         <span class="hint">Stay logged in on this device</span>
@@ -2979,6 +2980,12 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     // Replay round: shows the rounds this run has played; one of them goes back to its start (replayBossRound)
     if ($('boss-replay')) $('boss-replay').addEventListener('click', (e) => { const g = $('boss-rounds'); g.hidden = !g.hidden; $('boss-replay').setAttribute('aria-expanded', String(!g.hidden)); if (!g.hidden && e.detail === 0) { const b = g.querySelector('button'); if (b) b.focus(); } });
     $('sheet').querySelectorAll('[data-boss-round]').forEach(b => b.addEventListener('click', () => { bossLeave(); replayBossRound(+b.dataset.bossRound); }));
+    // Save board / Load board (saveBossBoard, loadBossBoard): the on-screen pair's, for the classic layout
+    if ($('boss-save')) $('boss-save').addEventListener('click', () => { const r = saveBossBoard(), b = $('boss-save'); b.textContent = r > 0 ? `Saved · round ${r}` : 'Couldn’t save';
+      const l = $('boss-load'); if (r > 0 && l) { l.disabled = false; $('boss-loads').querySelector('.seg').innerHTML = bossSavedRounds().map(k => `<button data-boss-load="${k}">Round ${k}</button>`).join(''); }
+      setTimeout(() => { if (document.contains(b)) b.textContent = 'Save board'; }, 2200); });
+    if ($('boss-load')) $('boss-load').addEventListener('click', (e) => { const g = $('boss-loads'); g.hidden = !g.hidden; $('boss-load').setAttribute('aria-expanded', String(!g.hidden)); if (!g.hidden && e.detail === 0) { const b = g.querySelector('button'); if (b) b.focus(); } });
+    if ($('boss-loads')) $('boss-loads').addEventListener('click', (e) => { const b = e.target.closest('[data-boss-load]'); if (b) loadBossBoard(+b.dataset.bossLoad); });
     $('sheet').querySelectorAll('[data-stay]').forEach(b => b.addEventListener('click', () => {
       setStay(b.dataset.stay === '1');
       $('sheet').querySelectorAll('[data-stay]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
@@ -7545,6 +7552,45 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   // out of whatever the run is showing (a fight, a round's card, a sheet), before Restart boss or Replay round
   function bossLeave() { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); closeBossAttacks(); }
+  // Save board / Load board (the owner, 2026-11-12): keep this round's board and come back to it later, in this run or
+  // another. One save per round, kept on this device (localStorage), under her rules' tag: a change to her numbers or the
+  // units drops the old saves. In the deploy it is the board as it stands now (squads placed, gold left); in the fight,
+  // on the round's card or at the end, the board as it went into that fight. The run's record (m.boss.run) and the
+  // rounds Replay round can go back to are saved with it, so a loaded board plays on as that run did, and the server's
+  // replay of the run (Boss.replay) still matches what was played
+  const BOSS_BOARDS = 'phonebellum.bossBoards.v1';
+  let bossBoardsMem = null; // (read once: bossCtl looks five times a second)
+  function bossBoards() {
+    if (!bossBoardsMem) { bossBoardsMem = {}; try { bossBoardsMem = JSON.parse(localStorage.getItem(BOSS_BOARDS) || '{}') || {}; } catch (e) {} }
+    const tag = bossRulesTag(), out = {};
+    for (const r of Object.keys(bossBoardsMem)) { const s = bossBoardsMem[r]; if (s && s.tag === tag && s.m && +r >= 1) out[r] = s; }
+    return out;
+  }
+  const bossSavedRounds = () => (m && m.boss ? Object.keys(bossBoards()).map(Number).sort((a, b) => a - b) : []);
+  // the board Save board would keep right now, or null (between runs, or nothing played yet)
+  function bossBoardNow() {
+    if (!m || !m.boss) return null;
+    if (phase === 'deploy') return snapshot(m);
+    return lastPre && lastPre.boss ? snapshot(lastPre) : null;
+  }
+  function saveBossBoard() {
+    const s = bossBoardNow(); if (!s) return 0;
+    const r = s.round, all = bossBoards();
+    all[r] = { tag: bossRulesTag(), at: Date.now(), m: s, saves: bossSaves.slice(0, r + 1).map(x => x || null) };
+    try { localStorage.setItem(BOSS_BOARDS, JSON.stringify(all)); } catch (e) { return -1; } // (full, or storage off: nothing saved, and the button says so)
+    bossBoardsMem = all; return r;
+  }
+  function loadBossBoard(r) {
+    const s = bossBoards()[r]; if (!s || !m || !m.boss) return;
+    bossLeave();
+    m = { ...JSON.parse(JSON.stringify(s.m)), units: m.units, matrix: m.matrix };
+    bossSaves = (s.saves || []).slice(0, m.round + 1).map(x => x || undefined);
+    if (!bossSaves[m.round]) bossSaves[m.round] = snapshot(m);
+    report = null; undoSnap = null; lastPre = null; lastSummary = null; lastAiLevels = []; nextReady = [false, false]; rematch = [false, false];
+    enterDeploy(0); bossLine();
+  }
+  const bossSavedAt = (t) => { const d = new Date(t), today = new Date().toDateString() === d.toDateString();
+    return 'Saved ' + (today ? d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })); };
 
   // ---------- Restart boss and Replay round on the screen (the owner, 2026-11-12) ----------
   // The Diorama's PC layout: two buttons at the top right through the whole run (deploy, fight, the round's card, the
@@ -7558,38 +7604,51 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     restart: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 12.5a7.4 7.4 0 1 0 2.3-5.6"/><path d="M4.6 3.6v4.6h4.6"/></svg>',
     replay: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M5 4.5v15" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M19.5 5.2v13.6L8.6 12z" fill="currentColor"/></svg>',
     attacks: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M3 6h18l-2.2 4.2-2.2-3.4-2.3 4-2.3-4-2.3 4-2.2-3.4L5.2 10.2z M3 18h18l-2.2-4.2-2.2 3.4-2.3-4-2.3 4-2.3-4-2.2 3.4L5.2 13.8z" fill="currentColor"/></svg>', // (her jaws: Mommy's attacks' Bite)
+    save: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v10.5"/><path d="M7.5 9.8 12 14.3l4.5-4.5"/><path d="M4 15.5v4.5h16v-4.5"/></svg>', // (into the tray: kept)
+    load: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.3V3.8"/><path d="M7.5 8.3 12 3.8l4.5 4.5"/><path d="M4 15.5v4.5h16v-4.5"/></svg>', // (out of the tray: back on the board)
   };
-  let ctlEl = null, ctlKey = '', ctlSure = 0, ctlOpen = false;
+  let ctlEl = null, ctlKey = '', ctlSure = 0, ctlOpen = false, ctlLoad = false, ctlSaved = 0, ctlSavedR = 0;
   function bossCtlOn() { return DIO && document.documentElement.classList.contains('pcwide') && !!m && !!m.boss && typeof Boss !== 'undefined' && ['deploy', 'battle', 'result', 'end'].includes(phase); }
   function bossCtl() {
     const show = bossCtlOn() && $('sheet-back').hidden && !bossAtkOpen() && !(infoEl && !infoEl.hidden); // (not over a sheet, her attacks or her screen's panel)
-    if (!show) { if (ctlEl && !ctlEl.hidden) { ctlEl.hidden = true; ctlKey = ''; } if (!bossCtlOn()) { ctlOpen = false; ctlSure = 0; } return; }
+    if (!show) { if (ctlEl && !ctlEl.hidden) { ctlEl.hidden = true; ctlKey = ''; } if (!bossCtlOn()) { ctlOpen = false; ctlLoad = false; ctlSure = 0; } return; }
     if (!ctlEl) {
       ctlEl = document.createElement('nav'); ctlEl.className = 'bz-ctl'; ctlEl.setAttribute('aria-label', 'Boss run'); document.body.appendChild(ctlEl);
       ctlEl.addEventListener('click', (e) => {
         const b = e.target.closest('button'); if (!b || !m || !m.boss) return;
         if (b.dataset.ctl === 'restart') {
           if (ctlSure > now()) { ctlSure = 0; ctlOpen = false; restartBoss(); } else { ctlSure = now() + 3000; ctlOpen = false; }
-        } else if (b.dataset.ctl === 'replay') { ctlOpen = !ctlOpen; ctlSure = 0; }
-        else if (b.dataset.ctl === 'attacks') { ctlOpen = false; ctlSure = 0; openBossAttacks((bossView() || {}).round || m.round); } // (moved here from Settings: owner, 2026-11-12)
+          ctlLoad = false;
+        } else if (b.dataset.ctl === 'replay') { ctlOpen = !ctlOpen; ctlLoad = false; ctlSure = 0; }
+        else if (b.dataset.ctl === 'attacks') { ctlOpen = false; ctlLoad = false; ctlSure = 0; openBossAttacks((bossView() || {}).round || m.round); } // (moved here from Settings: owner, 2026-11-12)
+        else if (b.dataset.ctl === 'save') { ctlOpen = false; ctlLoad = false; ctlSure = 0; const r = saveBossBoard(); if (r) { ctlSaved = now() + 2200; ctlSavedR = r; } } // (the owner, 2026-11-12)
+        else if (b.dataset.ctl === 'load') { ctlLoad = !ctlLoad; ctlOpen = false; ctlSure = 0; }
         else if (b.dataset.round) { const r = +b.dataset.round; ctlOpen = false; bossLeave(); replayBossRound(r); }
+        else if (b.dataset.load) { const r = +b.dataset.load; ctlLoad = false; loadBossBoard(r); }
         ctlKey = ''; bossCtl();
       });
-      document.addEventListener('pointerdown', (e) => { if (ctlOpen && ctlEl && !ctlEl.contains(e.target)) { ctlOpen = false; bossCtl(); } }, true);
-      addEventListener('keydown', (e) => { if (e.key === 'Escape' && ctlOpen) { ctlOpen = false; bossCtl(); } });
+      document.addEventListener('pointerdown', (e) => { if ((ctlOpen || ctlLoad) && ctlEl && !ctlEl.contains(e.target)) { ctlOpen = false; ctlLoad = false; bossCtl(); } }, true);
+      addEventListener('keydown', (e) => { if (e.key === 'Escape' && (ctlOpen || ctlLoad)) { ctlOpen = false; ctlLoad = false; bossCtl(); } });
     }
-    const rounds = bossReplayable(), sure = ctlSure > now();
-    const key = [m.round, phase, rounds.join(','), sure, ctlOpen].join('|');
+    const rounds = bossReplayable(), sure = ctlSure > now(), saved = ctlSaved > now(), boards = bossBoards(), loadable = Object.keys(boards).map(Number).sort((x, y) => x - y), canSave = !!(phase === 'deploy' || (lastPre && lastPre.boss));
+    const key = [m.round, phase, rounds.join(','), sure, ctlOpen, saved, ctlLoad, loadable.map(r => r + ':' + boards[r].at).join(','), canSave].join('|');
     if (key === ctlKey && !ctlEl.hidden) return;
     ctlKey = key; ctlEl.hidden = false;
-    const a = document.activeElement, focus = a && ctlEl.contains(a) ? (a.dataset.ctl ? `[data-ctl="${a.dataset.ctl}"]` : `[data-round="${a.dataset.round}"]`) : '';
+    const a = document.activeElement, focus = a && ctlEl.contains(a) ? (a.dataset.ctl ? `[data-ctl="${a.dataset.ctl}"]` : a.dataset.load ? `[data-load="${a.dataset.load}"]` : `[data-round="${a.dataset.round}"]`) : '';
+    const biteRow = (r, attr, sub, cur) => { const k = Boss.byRound(Boss.CFG.biteByRound, r);
+      return `<button ${attr}="${r}" style="--bc:${BITE_COL[k] || '#FFC457'}"><img src="${biteMarkPic(k)}" alt=""><b>Round ${r}</b><em>${esc(sub(k))}</em>${cur ? '<i>Now</i>' : ''}</button>`; };
+    const biteSub = (k) => /bite/i.test(BITE_NAME[k] || k) ? BITE_NAME[k] || k : (BITE_NAME[k] || k) + ' bite';
     ctlEl.innerHTML = `<div class="row">
         <button class="b restart${sure ? ' sure' : ''}" data-ctl="restart" aria-label="${sure ? 'Press again to restart the boss from round 1' : 'Restart boss: a new run from round 1'}">${CTL_ICON.restart}<span>${sure ? 'Sure? Restart' : 'Restart boss'}</span></button>
         <button class="b replay${ctlOpen ? ' open' : ''}" data-ctl="replay" aria-expanded="${ctlOpen}" aria-controls="bz-ctl-list">${CTL_ICON.replay}<span>Replay round</span><i class="car" aria-hidden="true"></i></button>
       </div>
-      <div class="list" id="bz-ctl-list"${ctlOpen ? '' : ' hidden'}><small>Play again from the start of</small>${rounds.map(r => { const k = Boss.byRound(Boss.CFG.biteByRound, r);
-        return `<button data-round="${r}" style="--bc:${BITE_COL[k] || '#FFC457'}"><img src="${biteMarkPic(k)}" alt=""><b>Round ${r}</b><em>${esc(/bite/i.test(BITE_NAME[k] || k) ? BITE_NAME[k] || k : (BITE_NAME[k] || k) + ' bite')}</em>${r === m.round ? '<i>Now</i>' : ''}</button>`; }).join('')}</div>
-      <button class="b attacks" data-ctl="attacks" aria-haspopup="dialog">${CTL_ICON.attacks}<span>Mommy’s attacks</span></button>`;
+      <div class="list" id="bz-ctl-list"${ctlOpen ? '' : ' hidden'}><small>Play again from the start of</small>${rounds.map(r => biteRow(r, 'data-round', biteSub, r === m.round)).join('')}</div>
+      <button class="b attacks" data-ctl="attacks" aria-haspopup="dialog">${CTL_ICON.attacks}<span>Mommy’s attacks</span></button>
+      <div class="row">
+        <button class="b save${saved ? ' sure' : ''}" data-ctl="save"${canSave ? '' : ' disabled'} aria-label="${saved ? ctlSavedR > 0 ? `Board saved for round ${ctlSavedR}` : 'This device couldn’t save the board' : 'Save board: keep this round’s board to load later'}">${CTL_ICON.save}<span>${saved ? ctlSavedR > 0 ? `Saved · round ${ctlSavedR}` : 'Couldn’t save' : 'Save board'}</span></button>
+        <button class="b load${ctlLoad ? ' open' : ''}" data-ctl="load"${loadable.length ? '' : ' disabled'} aria-expanded="${ctlLoad}" aria-controls="bz-ctl-load">${CTL_ICON.load}<span>Load board</span><i class="car" aria-hidden="true"></i></button>
+      </div>
+      <div class="list" id="bz-ctl-load"${ctlLoad && loadable.length ? '' : ' hidden'}><small>Load the board you saved for</small>${loadable.map(r => biteRow(r, 'data-load', () => bossSavedAt(boards[r].at), false)).join('')}</div>`;
     if (focus) { const f = ctlEl.querySelector(focus); if (f) f.focus(); } // (a keyboard player keeps their place)
   }
   setInterval(() => { if (m && m.boss || (ctlEl && !ctlEl.hidden)) bossCtl(); }, 200);

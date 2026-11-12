@@ -2133,7 +2133,10 @@ html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: sta
 .bz-ctl .b svg { color: var(--ac); flex: none; transition: transform .25s; }
 .bz-ctl .b.restart { --ac: #FF8F78; }
 .bz-ctl .b.attacks { --ac: #F4ECD8; width: 214px; } /* (her attacks, moved here from Settings: a plain cream edge, it only shows things) */
+.bz-ctl .b.save, .bz-ctl .b.load { --ac: #9FE0B0; } /* (Save board, Load board under her attacks: the owned green, they keep things) */
 .bz-ctl .b:hover { background: rgba(52, 45, 34, .94); }
+.bz-ctl .b:disabled { cursor: default; color: rgba(244, 236, 216, .45); background: rgba(23, 20, 15, .7); }
+.bz-ctl .b:disabled svg { color: rgba(159, 224, 176, .4); }
 .bz-ctl .b.restart:hover svg { transform: rotate(-50deg); }
 .bz-ctl .b:focus-visible { outline: 2px solid #F4ECD8; outline-offset: 2px; }
 .bz-ctl .b.sure, .bz-ctl .b.open { background: var(--ac); color: #17140F; }
