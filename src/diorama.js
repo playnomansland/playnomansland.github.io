@@ -1276,8 +1276,8 @@
       $('pz-title').innerHTML = hasInitiate() ? `The title is yours. ${tchip}` : `Solve the ${PUZ_TITLE.length} Easy ones for the title ${tchip}`;
       const shards = ['0,12 92,0 100,84 7,100', '3,0 100,10 96,100 0,88', '0,8 97,0 100,92 3,100', '2,0 100,12 97,96 0,100'];
       let n = 0;
-      // the weekly boss (developers only for now): the Mommy boss puzzle (startBoss)
-      $('pz-list').innerHTML = (devMode() && typeof Boss !== 'undefined' ? `<div class="pz-lv"><span class="k">Weekly boss</span><span class="pz-n">developers only</span></div><button class="item boss" data-boss="mommy"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[0]}"/></svg><span class="n">★</span>Weekly boss - The Mommy<small>5 rounds</small></button>` : '') + PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), got = ks.filter(k => done.includes(k)).length;
+      // the weekly boss (a limited event, for everyone): its row opens her screen (openBoss)
+      $('pz-list').innerHTML = (bossOpen() ? `<div class="pz-lv"><span class="k">Weekly boss</span><span class="pz-n">limited event</span></div><button class="item boss" data-boss="mommy"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[0]}"/></svg><span class="n">★</span>Weekly boss - The Mommy<small>5 rounds</small></button>` : '') + PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), got = ks.filter(k => done.includes(k)).length;
         return `<div class="pz-lv"><span class="k">${esc(L)}</span><span class="pz-n">${got} of ${ks.length} solved</span></div>` + ks.map(k => { n++;
           return `<button class="item${done.includes(k) ? ' done' : ''}${k === puzPick ? ' on' : ''}" data-puz="${k}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[k % 4]}"/></svg><span class="n">${String(n).padStart(2, '0')}</span>${esc(PUZZLES[k].name)}${done.includes(k) ? '<small>✓ solved</small>' : ''}</button>`; }).join(''); }).join('');
     }
@@ -1639,10 +1639,10 @@
     // Rankings: the line under STANDINGS (the Legend title and how long the month has left), then the whole
     // leaderboard right there (owner, 2026-11-11: no button to a separate sheet). The top Legend.top rows are the
     // Legend places; a row opens that player's menu (add a friend), as the old sheet's did
-    // Developers also get a second board here, the weekly boss's (the Mommy boss puzzle; bossBoardLoad): a Ranked / Mommy
-    // switch under STANDINGS (lbTab). Others see ranked only, as before
+    // A second board here, the weekly boss's (the Mommy boss puzzle; bossBoardLoad): a Ranked / Mommy switch under
+    // STANDINGS (lbTab), for everyone while she is open (bossOpen)
     function drawStandings() {
-      const st = body.querySelector('.standings'), bossTab = devMode() && typeof Boss !== 'undefined';
+      const st = body.querySelector('.standings'), bossTab = bossOpen();
       let tabs = st.querySelector('.lb-tabs');
       if (bossTab && !tabs) {
         st.querySelector('h2').insertAdjacentHTML('afterend', '<span class="lb-tabs"><button data-lb="ranked">Ranked</button><button data-lb="boss">Mommy</button></span>');
@@ -1669,8 +1669,8 @@
       if (!fresh) bossBoardLoad().then(() => { if (lbTab === 'boss') drawStandings(); });
       const rows = bossBoard.rows;
       el.textContent = !rows ? (bossBoard.at ? 'The standings come from the game server, which can’t be reached right now.' : 'Loading…')
-        : !rows.length ? 'Nobody has finished a run against her under her rules as they are now. Developer accounts only for now.'
-        : 'Best runs against the Mommy under her rules as they are now. Developer accounts only for now.';
+        : !rows.length ? 'Nobody has finished a run against her under her rules as they are now.'
+        : 'Best runs against the Mommy under her rules as they are now.';
       const key = JSON.stringify(['boss', me, rows]);
       if (key === lbKey) return fitBoardList(); lbKey = key;
       how.hidden = true; list.hidden = !(rows && rows.length);

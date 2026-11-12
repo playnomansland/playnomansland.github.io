@@ -19306,7 +19306,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · a723176'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 9e4a622'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -21850,10 +21850,9 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     $('tour-practice').addEventListener('click', () => { closeSheet(true); tourPractice(); });
   }
   // Leaderboard: ranked results from the server (wins, ties, losses), best first
-  // tab 'boss': the weekly boss's board (the Mommy boss puzzle, bossBoardLoad). Its tab shows to developers only, while
-  // the boss is a developer test
+  // tab 'boss': the weekly boss's board (the Mommy boss puzzle, bossBoardLoad), for everyone since 2026-11-12
   async function openLeaderboard(tab) {
-    const bossTab = devMode() && typeof Boss !== 'undefined';
+    const bossTab = bossOpen();
     tab = tab === 'boss' && bossTab ? 'boss' : 'ranked';
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Leaderboard</h3><button class="btn small" id="close">Close</button></div>
       ${bossTab ? `<div class="seg" id="lb-tabs" style="margin:0 0 8px"><button data-lbt="ranked" aria-pressed="${tab === 'ranked'}">Ranked</button><button data-lbt="boss" aria-pressed="${tab === 'boss'}">Weekly boss · Mommy</button></div>` : ''}
@@ -21865,7 +21864,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       const bb = await bossBoardLoad(true);
       if (!$('lb') || $('lb').dataset.tab !== 'boss') return;
       if (!bb.rows) { $('lb-msg').textContent = 'Couldn’t reach the game server. Check your connection and try again.'; return; }
-      $('lb-msg').textContent = (bb.rows.length ? 'Best runs against the Mommy under her rules as they are now. A kill in the earliest round comes first, then the earliest second of that round; without a kill, the most damage. The game server plays every run again before it counts.' : 'Nobody has finished a run against her under her rules as they are now. Finish one to get on the board.') + ' Developer accounts only for now.';
+      $('lb-msg').textContent = (bb.rows.length ? 'Best runs against the Mommy under her rules as they are now. A kill in the earliest round comes first, then the earliest second of that round; without a kill, the most damage. The game server plays every run again before it counts.' : 'Nobody has finished a run against her under her rules as they are now. Finish one to get on the board.');
       if (!bb.rows.length) return;
       $('lb').innerHTML = `<table class="lb"><thead><tr><th>#</th><th>Player</th><th>Best run</th></tr></thead><tbody>
         ${bb.rows.map((r, i) => `<tr class="${acct && r.id === acct.id ? 'me' : ''}"><td class="num">${i + 1}</td><td>${nameplate(r.tag, r.title, 'row')}</td><td>${esc(bossRunText(r))}</td></tr>`).join('')}
@@ -23895,7 +23894,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (DIO && typeof dio !== 'undefined' && dio.api && dio.api.puzzles && phase === 'start' && !m) { closeSheet(true); dio.api.puzzles(); return; } // the Diorama's Puzzles screen
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Tutorial puzzles</h3><button class="btn small" id="close">Close</button></div>
       <p class="hint" style="margin:0">One fight each. You see the whole enemy army; win with the gold you have.</p>
-      ${devMode() && typeof Boss !== 'undefined' ? `<h4 class="puz-level" style="margin:6px 0 0;display:flex;justify-content:space-between;gap:8px">Weekly boss<span class="hint" style="font-weight:normal">developers only</span></h4>
+      ${bossOpen() ? `<h4 class="puz-level" style="margin:6px 0 0;display:flex;justify-content:space-between;gap:8px">Weekly boss<span class="hint" style="font-weight:normal">limited event</span></h4>
       <button class="btn boss-btn" id="boss-weekly"><span><b>Weekly boss - The Mommy</b><br><span class="hint">Five rounds against a giant spider and her nests. Kill her by round 5.</span></span><i class="boss-eyes" aria-hidden="true"></i></button>` : ''}
       <p class="hint" style="margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${hasInitiate() ? 'The title is yours.' : `Solve the ${PUZ_TITLE.length} Easy puzzles for the title`} ${titleHtml('initiate')}</p>
       ${PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), done = ks.filter(k => puzSolvedAll().includes(k)).length;
@@ -24102,26 +24101,18 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // mortar did and who hurt her most.
   // developer status came or went (the server's answer about the account lands a moment after the page opens, on a slow
   // connection seconds later): a Puzzles list already open is drawn again, so its Weekly boss row comes or goes
-  // the weekly boss is open to this account: developers only for now (her leaderboard and reward take developer runs
-  // only, server/src/accounts.js). The Diorama's Limited event note, her screen and Puzzles' boss row all ask this
-  function bossOpen() { return devMode() && typeof Boss !== 'undefined'; }
+  // the weekly boss is open: to everyone since 2026-11-12 (the owner; it was a developer test, and the server's
+  // leaderboard and reward take everyone's runs now, server/src/accounts.js). The Diorama's Limited event note, her
+  // screen, Puzzles' boss row and the leaderboards' Mommy tab all ask this
+  function bossOpen() { return typeof Boss !== 'undefined'; }
   function bossRowChanged() {
     try {
       if (typeof dio !== 'undefined' && dio.api && dio.api.puzRedraw) dio.api.puzRedraw();
       if (!$('sheet-back').hidden && ($('sheet-h') || {}).textContent === 'Tutorial puzzles') openPuzzles();
     } catch (e) {}
   }
-  // ?mommy in the address (developers' test link): straight into Mommy on a developer account; on any other this says
-  // which account the page sees, so a missing Weekly boss button can be told apart from an old copy of the page. It waits
-  // up to 8 s for the server's answer about the account
-  if (/[?&]mommy\b/.test(location.search)) { let tries = 0; const go = () => {
-    if (devMode()) { startBoss(); return; }
-    if (++tries < 16) { setTimeout(go, 500); return; }
-    closeSheet(true);
-    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Mommy is for developers</h3><button class="btn small" id="close">Close</button></div>
-      <p style="margin:0">${acct ? `This page is signed in as <b>${esc(acct.tag || '?')}</b>${acct.google ? '' : ' (a guest account)'}, which isn’t a developer account.` : 'This page isn’t signed in.'} Developer status comes from the Google account you sign in with.</p>`;
-    $('sheet-back').hidden = false; $('close').addEventListener('click', closeSheet);
-  }; setTimeout(go, 500); }
+  // ?mommy in the address (a link to her): straight into a run against her, for anyone
+  if (/[?&]mommy\b/.test(location.search)) setTimeout(() => { if (bossOpen()) startBoss(); }, 500);
   function startBoss() {
     if (typeof Boss === 'undefined') return;
     leaveNet(); closeSheet(true);
@@ -24239,7 +24230,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // ---------- the weekly boss's leaderboard (2026-11-12; server/src/accounts.js BOSS) ----------
   // A finished run's record (m.boss.run: the seed and the player's side going into each fight, kept by Boss.record)
   // goes to the game server, which plays the run again with the game's own rules and ranks what its replay got: it
-  // takes nothing on the page's word. Developer accounts only, as the boss is a developer test. Runs are ranked per
+  // takes nothing on the page's word. Any account's run counts (a developer test until 2026-11-12). Runs are ranked per
   // set of her rules: Boss.rulesTag is a short tag made from her numbers and the units, so a change to either starts
   // a new board, and a page and a server on different versions don't mix their runs.
   const bossRulesTag = () => Boss.rulesTag(m && m.boss ? m.units : units);
@@ -24258,7 +24249,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   const bossRunText = (r) => r.won ? `Killed in round ${r.round}, ${(+r.secs).toFixed(1)} s in` : `${(+r.dmg).toLocaleString('en')} damage, not killed`;
   // a finished run's record goes to the server; its answer (what its replay got, and the board) fills the result card's line
   function bossReport(r) {
-    if (!acct || !devMode() || typeof Boss === 'undefined' || !m || !m.boss || !m.boss.run) return;
+    if (!acct || typeof Boss === 'undefined' || !m || !m.boss || !m.boss.run) return;
     const body = { boss: 'mommy', rules: bossRulesTag(), run: m.boss.run };
     acctCall('boss', body, true).then((res) => {
       const el = $('boss-rank'), say = (t) => { if (el) el.textContent = t; };
@@ -24309,11 +24300,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const won = r.dead, title = won && r.round <= Boss.CFG.titleRound;
     const head = won ? `Mommy is dead<br>round ${r.round}` : m.over ? 'She survived' : `Round&nbsp;${r.round}<br>done`;
     overlay(`<div class="card">
-      <span class="eyebrow">Mommy · developer test</span>
+      <span class="eyebrow">Mommy · weekly boss</span>
       <h2 class="${won ? 'you' : m.over ? 'foe' : ''}">${head}</h2>
       ${won ? `<p class="big">${title ? 'Within ' + Boss.CFG.titleRound + ' rounds: her brood’s look, the Hollow Brood skin for your Spiders, is the reward.' : 'Kill her within ' + Boss.CFG.titleRound + ' rounds for the Hollow Brood skin for your Spiders.'}</p>` : ''}
       ${lines}
-      ${m.over && acct && devMode() ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : ''}
+      ${m.over ? acct ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : '<p>Play as a guest or sign in (Profile) to get your runs on her leaderboard.</p>' : ''}
       <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>
     </div>`);
     if (m.over) bossReport(r);
@@ -30796,8 +30787,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       $('pz-title').innerHTML = hasInitiate() ? `The title is yours. ${tchip}` : `Solve the ${PUZ_TITLE.length} Easy ones for the title ${tchip}`;
       const shards = ['0,12 92,0 100,84 7,100', '3,0 100,10 96,100 0,88', '0,8 97,0 100,92 3,100', '2,0 100,12 97,96 0,100'];
       let n = 0;
-      // the weekly boss (developers only for now): the Mommy boss puzzle (startBoss)
-      $('pz-list').innerHTML = (devMode() && typeof Boss !== 'undefined' ? `<div class="pz-lv"><span class="k">Weekly boss</span><span class="pz-n">developers only</span></div><button class="item boss" data-boss="mommy"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[0]}"/></svg><span class="n">★</span>Weekly boss - The Mommy<small>5 rounds</small></button>` : '') + PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), got = ks.filter(k => done.includes(k)).length;
+      // the weekly boss (a limited event, for everyone): its row opens her screen (openBoss)
+      $('pz-list').innerHTML = (bossOpen() ? `<div class="pz-lv"><span class="k">Weekly boss</span><span class="pz-n">limited event</span></div><button class="item boss" data-boss="mommy"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[0]}"/></svg><span class="n">★</span>Weekly boss - The Mommy<small>5 rounds</small></button>` : '') + PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), got = ks.filter(k => done.includes(k)).length;
         return `<div class="pz-lv"><span class="k">${esc(L)}</span><span class="pz-n">${got} of ${ks.length} solved</span></div>` + ks.map(k => { n++;
           return `<button class="item${done.includes(k) ? ' done' : ''}${k === puzPick ? ' on' : ''}" data-puz="${k}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[k % 4]}"/></svg><span class="n">${String(n).padStart(2, '0')}</span>${esc(PUZZLES[k].name)}${done.includes(k) ? '<small>✓ solved</small>' : ''}</button>`; }).join(''); }).join('');
     }
@@ -31159,10 +31150,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     // Rankings: the line under STANDINGS (the Legend title and how long the month has left), then the whole
     // leaderboard right there (owner, 2026-11-11: no button to a separate sheet). The top Legend.top rows are the
     // Legend places; a row opens that player's menu (add a friend), as the old sheet's did
-    // Developers also get a second board here, the weekly boss's (the Mommy boss puzzle; bossBoardLoad): a Ranked / Mommy
-    // switch under STANDINGS (lbTab). Others see ranked only, as before
+    // A second board here, the weekly boss's (the Mommy boss puzzle; bossBoardLoad): a Ranked / Mommy switch under
+    // STANDINGS (lbTab), for everyone while she is open (bossOpen)
     function drawStandings() {
-      const st = body.querySelector('.standings'), bossTab = devMode() && typeof Boss !== 'undefined';
+      const st = body.querySelector('.standings'), bossTab = bossOpen();
       let tabs = st.querySelector('.lb-tabs');
       if (bossTab && !tabs) {
         st.querySelector('h2').insertAdjacentHTML('afterend', '<span class="lb-tabs"><button data-lb="ranked">Ranked</button><button data-lb="boss">Mommy</button></span>');
@@ -31189,8 +31180,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (!fresh) bossBoardLoad().then(() => { if (lbTab === 'boss') drawStandings(); });
       const rows = bossBoard.rows;
       el.textContent = !rows ? (bossBoard.at ? 'The standings come from the game server, which can’t be reached right now.' : 'Loading…')
-        : !rows.length ? 'Nobody has finished a run against her under her rules as they are now. Developer accounts only for now.'
-        : 'Best runs against the Mommy under her rules as they are now. Developer accounts only for now.';
+        : !rows.length ? 'Nobody has finished a run against her under her rules as they are now.'
+        : 'Best runs against the Mommy under her rules as they are now.';
       const key = JSON.stringify(['boss', me, rows]);
       if (key === lbKey) return fitBoardList(); lbKey = key;
       how.hidden = true; list.hidden = !(rows && rows.length);
