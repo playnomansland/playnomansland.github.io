@@ -3257,7 +3257,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 // the launch), 'pc' (the Diorama on a computer: a fine pointer that hovers and a window at least 900 px wide, the old
 // UI on phones and tablets, whose layouts aren't done) or 'diorama' (everywhere). Its two extra fonts load only when on.
 (() => {
-  const DEF = 'classic';
+  const DEF = 'pc';
   const pcLike = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches && innerWidth >= 900; } catch (e) { return false; } };
   let pick = '';
   if (DEF === 'force') pick = 'diorama'; // the Diorama's own test page (design/diorama/game.html): always on, and it never changes this device's choice for the game
@@ -19634,7 +19634,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 23e3353'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · cfc1633'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
