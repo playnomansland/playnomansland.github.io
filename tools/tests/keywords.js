@@ -63,7 +63,7 @@ const types = (kind) => [...new Set(all.filter(x => x.kind === kind).map(x => x.
 const unitsW1 = rosterNames.filter(n => UNITS[n].verb ? KW[UNITS[n].verb].wave === 1 : true);
 // ---------- role plates and the armor set ----------
 for (const r of own(ROLES)) assert(ROLES[r].plate && ROLES[r].glyph, `role ${r}: needs a plate and a glyph placement`);
-for (const a of own(reg.armor).filter(k => k !== 'color')) assert(reg.armor[a].name && reg.armor[a].icon, `armor ${a}: needs a name and an icon`);
+for (const set of ['armor', 'levels']) for (const a of own(reg[set]).filter(k => k !== 'color')) assert(reg[set][a].name && reg[set][a].icon, `${set} ${a}: needs a name and an icon`);
 const kitDone = wave1.filter(k => R.kit.every(p => KW[k][p]));
 
 const sum = {

@@ -31,7 +31,7 @@ Nothing in the game reads the registry yet. This page only shows how well a smal
 | Carry | Support | Carries a squad into the fight. | Just a horse | none |
 | Hide | Support | Unseen until it attacks. | none | 5: Stealth, Cavestalkers, Hunter, Shadowborn, Silent blade |
 | Reveal | Support | Sees hidden enemies. | none | 2: Overwatch, Hunter |
-| Spawn | Summon | Brings more bodies into the fight. | Necromancer | 6: Spawn goblins, Raise dead, Spiderlings, Summon water elemental, More where that came from, Summon hellfiend |
+| Spawn | Conjure | Brings more bodies into the fight. | Necromancer | 6: Spawn goblins, Raise dead, Spiderlings, Summon water elemental, More where that came from, Summon hellfiend |
 
 ## Units
 

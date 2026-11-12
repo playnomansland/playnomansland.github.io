@@ -32,13 +32,14 @@ const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 b{display:block;font-size:16px;text-transform:uppercase;letter-spacing:.03em}i{display:block;font-style:normal;font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin:2px 0 6px}p{margin:0;color:#B9B2A2;font-size:12.5px}
 @media(max-width:900px){.g{grid-template-columns:repeat(3,1fr)}}</style></head><body>
 <h1>Keyword icons, wave 1</h1><p class="sub">Drawn from src/keyword-registry.json. The bare glyph in its role's colour is the default, at 76, 30 and 18 px. The small plate on the right of each row is the sparing extra. Colours are placeholders.</p>
-<h2>To choose between</h2><p class="sub">Two drawings each for the ones being redone. A is what the registry uses now.</p>
+<h2>To choose between</h2><p class="sub">Candidates for the ones being redone. A is what the registry uses now.</p>
 <div class="g">${withAlts.map(cand).join('')}</div>
-<div class="g" style="margin-top:14px">${[0, ...A.none.alts.map((_, i) => i + 1)].map(armorRow).join('')}</div>
 <h2>Keywords</h2><p class="sub">Teleport appears twice: Control when it moves enemies, Support when it moves your own.</p>
 <div class="g">${w1.flatMap(k => rolesOf(k).map(r => card(k, r))).join('')}</div>
 <h2>Armor weight: a separate set</h2><p class="sub">Steel grey, never on a role plate.</p>
 <div class="g">${AIDS.map(armorCard).join('')}</div>
+<h2>Levels: an idea for later</h2><p class="sub">Stacked chevrons for a squad's level. Not decided.</p>
+<div class="g">${Object.keys(reg.levels).filter(k => k[0] !== '_' && k !== 'color').map(l => `<div class="k">${sizes(reg.levels[l].icon, reg.levels.color)}<b>${reg.levels[l].name}</b></div>`).join('')}</div>
 <h2>The six role plates</h2><p class="sub">Kept for the few places a plate is wanted. A plate with no glyph is the role alone.</p>
 <div class="g">${ROLE_IDS.map(roleCard).join('')}</div></body></html>`;
 fs.writeFileSync(path.join(ROOT, 'docs/keyword-icons.html'), html);
