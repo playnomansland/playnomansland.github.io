@@ -2963,13 +2963,17 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     stopTask(); dock();
   }
   let pcTilted = false; // the PC fight view went to the tilted view on its own (dock())
+  let dBoard = false, dBoardFrom = 1; // a phone's board mode (dioBoardMode, by dioSafe)
   let dockOpen = true, dockRound = 0, dockTask = null, dockH = 64, boardH = 0, dockDrag = null;
   const TAB_H = 28; // the pull tab's height, kept clear above the drawer's last row
   const CHEVRONS = (up) => `<svg width="20" height="9" viewBox="0 0 20 9" aria-hidden="true"><path d="${up ? 'M1 7.5 5 2.5 9 7.5M11 7.5 15 2.5 19 7.5' : 'M1 1.5 5 6.5 9 1.5M11 1.5 15 6.5 19 1.5'}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   function dock() {
     if (dockDrag) return; // the tab is being slid: dock() runs again when it lets go
     const root = document.documentElement, panel = $('panel');
-    const on = !root.classList.contains('pc') && phoneLayout === 'drawer' && ['deploy', 'battle', 'result', 'end'].includes(phase) && !!m;
+    // the Diorama on a phone with the 3D board (prototype, 2026-11-10): the Diorama's match screen (html.pcwide) with its
+    // column as a drawer along the bottom (src/diorama.css, "phones"), instead of the old UI's drawer (html.dock)
+    const dioPh = DIO && !root.classList.contains('pc') && !!board3d;
+    const on = !root.classList.contains('pc') && !dioPh && phoneLayout === 'drawer' && ['deploy', 'battle', 'result', 'end'].includes(phase) && !!m;
     const was = root.classList.contains('dock');
     root.classList.toggle('dock', on);
     const deploying = on && phase === 'deploy', picking = deploying && (choosingPack() || choosingTower());
@@ -2998,7 +3002,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       taskEl.setAttribute('aria-label', dockTask.x ? `${taskEl.querySelector('#task-text').textContent} Tap to cancel.` : taskEl.querySelector('#task-text').textContent);
     }
     // a PC in a match on the 3D board: the board takes the rest of the window beside the side panel, deploy and fights alike
-    const wide = root.classList.contains('pc') && !!board3d && ((!!m && ['deploy', 'battle', 'result', 'end'].includes(phase)) || dioRoomOn()), wasWide = root.classList.contains('pcwide');
+    const wide = (root.classList.contains('pc') || dioPh) && !!board3d && ((!!m && ['deploy', 'battle', 'result', 'end'].includes(phase)) || dioRoomOn()), wasWide = root.classList.contains('pcwide');
     root.classList.toggle('droom-on', wide && dioRoomOn()); // the Diorama's room (dioRoom)
     root.classList.toggle('pcwide', wide);
     const fight = wide && ['battle', 'result'].includes(phase), wasFight = root.classList.contains('pcfight');
@@ -3011,6 +3015,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       if (fight && cam.level() === 0) { cam.setLevel(1); pcTilted = true; }
       else if (!fight && pcTilted) { pcTilted = false; if (cam.level() === 1) cam.setLevel(0); }
     }
+    if (DIO && dBoard && !(dioPh && wide && phase === 'deploy' && $('pick').hidden)) dioBoardMode(false); // (a phone's board mode: only while deploying)
     let h = boardH;
     if (on) {
       dockH = panel.offsetHeight || dockH; // UI 2.0: the whole tray
@@ -4058,7 +4063,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     const l = f.querySelector('.l'); l.textContent = label; l.style.color = bad ? 'var(--foe)' : '';
   }
   function cardEnd(ok) {
-    const p = cpress, d = cdrag; cpress = null; cdrag = null; flyShow(null);
+    const p = cpress, d = cdrag; cpress = null; cdrag = null; flyShow(null); document.documentElement.classList.remove('dcard');
     if (p) { clearTimeout(p.t); if (p.el) p.el.classList.remove('lift'); if (p.pan) cardDone = performance.now(); } // a sideways mouse drag ends without a tap
     if (!d) return;
     cardDone = performance.now(); hoverTile = null;
@@ -4067,6 +4072,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (selected === d.i && d.prev !== d.i) selected = d.prev;
     if (phase === 'deploy') panelDeploy();
     render();
+    if (DIO && dBoard) setTimeout(() => { if (dBoard && !cdrag && !(dockTask && dockTask.x)) dioBoardMode(false); }, 260); // (a beat to see it land)
   }
   addEventListener('pointermove', (e) => {
     if (drag && drag.id != null && !drag.denied && phase === 'deploy') dropZone({ x: e.clientX, y: e.clientY });
@@ -4087,6 +4093,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       if (cpress.el.getAttribute('aria-disabled') === 'true' || !editable()) { cpress.scroll = true; return; }
       cdrag = { i: cpress.i, prev: selected, touch: e.pointerType !== 'mouse', t: null };
       selected = cpress.i; rangeOf = null; cpress.el.classList.add('lift');
+      if (DIO) { dioBoardMode(true); document.documentElement.classList.add('dcard'); } // a phone: the drawer drops and the board comes up from above to aim at
       try { cpress.el.setPointerCapture(e.pointerId); } catch (err) {}
       render();
     }
@@ -4623,7 +4630,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const WIZ_TURN = Math.PI * 1.75; // faces -z; this turns it three-quarters to the right, its staff on the fire's side
   async function wizPic() {
     await Promise.resolve(); // THREE_URL and V3D are set further down the script
-    const THREE = await import(THREE_URL);
+    const THREE = await import(threeSrc());
     if (typeof Models3D !== 'function') for (const f of ['kaykit3d', 'models3d']) await load3d(f);
     const W = 320, H = 400, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const ren = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: true, preserveDrawingBuffer: true });
@@ -7582,6 +7589,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // drag one of your squads: this round's squads move for free; an older one only with the Move ability.
   // Returns true when a drag starts.
   function boardPress(t) {
+    if (DIO && dioShopMode()) return false; // (shop mode: the tap that follows brings the board up)
     if (pingKind) return false; // 2v2: a ping goes down on the tap
     if (!t || phase !== 'deploy' || !m || !editable() || choosingPack() || placingTower()) return false;
     if (aimMode != null) { // a direction arrow: drag it out of the squad getting it
@@ -7685,6 +7693,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // a tap on a tile (2D or 3D board). It clears the range ring; tapping a squad shows its range and its sheet (a squad
   // of yours from this round is taken back with the X at its top right corner, see unplaceMarks)
   function boardTap(t) {
+    if (DIO && dioShopMode()) { dioBoardMode(true); return; } // a phone's shop mode: a tap on the board only brings it up
     if (pingKind && net.duo) { duoPlacePing(t); return; } // 2v2: the ping picked in the panel
     if (phase === 'battle') { // a fight: a tap on a unit shows its card, and where its squad is walking now (intentMarks)
       if (artifactTap(t)) return; // 2v2: an artifact's tile shows its card first (a second tap: what stands there)
@@ -8343,6 +8352,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
+  // import() of a relative address: resolved by hand against the page's <base> (the Diorama's test page in design/diorama/
+  // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
+  // <base>, so there it looked for design/diorama/vendor/... and failed: "Importing a module script failed" (2026-11-10)
+  const threeSrc = () => new URL(THREE_URL, document.baseURI).href;
   const V3D = '/*V3D*/'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
@@ -8371,7 +8384,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const el = document.createElement('div');
       let b = null, loaded = false;
       try {
-        const THREE = await import(THREE_URL);
+        const THREE = await import(threeSrc());
         if (typeof Render3D !== 'function') for (const f of ['camera3d', 'kaykit3d', 'models3d', 'scenery3d', 'render3d']) await load3d(f); // V3D: a new name each build, so a browser never runs an old copy
         loaded = true;
         if (!want3d) return; // switched back to 2D while loading
@@ -8505,8 +8518,55 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
   const dioWide = () => DIO && document.documentElement.classList.contains('pcwide');
   const dioPw = () => Math.round(Math.min(400, Math.max(318, innerWidth * 0.25))); // the left column's width (--dpw), as the prototype's clamp(318px, 25vw, 400px)
+  // a phone held upright (no html.pc, prototype 2026-11-10): the column is a drawer along the bottom, the board fits
+  // between the top line and the drawer's top (design/diorama/src/battle.js safeRect, the phone prototype)
+  const dioPhone = () => dioWide() && !document.documentElement.classList.contains('pc');
+  // Shop mode and board mode (a phone's deploy, prototype 2026-11-10, the owner: "dragging a unit from deployment
+  // zooms in to the battlefield ... releasing it moves you back to deployment mode; pressing the battlefield gives you
+  // the zoomed in tactical view"). Shop mode: the drawer up, the tilted overview. Board mode (html.dboard): the drawer
+  // down to its top row (gold, deployments, READY) with a SHOP tab, the board from straight above filling the screen
+  // (the strategic view, framed by dioFit; as wide as the phone allows). A card dragged up out of the drawer goes to board
+  // mode at once and the view holds still while it's aimed; letting go goes back to the shop (unless the squad wants
+  // something more: an aim, a move). A tap on the board in shop mode only goes to board mode (nothing is placed); the
+  // SHOP tab, a tap on the drawer or a swipe up on it comes back. A pick, the fight or leaving the deploy ends it.
+  const dioShopMode = () => dioPhone() && phase === 'deploy' && !!m && $('pick').hidden && !dBoard;
+  function dioBoardMode(on) {
+    on = !!on && dioPhone() && phase === 'deploy' && !!m && $('pick').hidden;
+    if (on === dBoard) return;
+    dBoard = on; document.documentElement.classList.toggle('dboard', on);
+    const cam = board3d && board3d.camera;
+    if (cam) {
+      if (on) { dBoardFrom = cam.level(); if (dBoardFrom !== 0) cam.setLevel(0); }
+      else { pcTilted = false; if (dBoardFrom !== 0) cam.setLevel(Math.min(1, dBoardFrom)); }
+    }
+    let tab = $('dshop');
+    if (!tab) {
+      tab = Object.assign(document.createElement('button'), { id: 'dshop', className: 'dshop', type: 'button', innerHTML: 'Shop <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 7.5L6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>' });
+      tab.setAttribute('aria-label', 'Back to the shop');
+      tab.addEventListener('click', () => dioBoardMode(false));
+      document.querySelector('.app').appendChild(tab);
+    }
+    tab.hidden = !on;
+    if (board3d) wake3d();
+    requestAnimationFrame(() => { dioSafe(); if (board3d) wake3d(); });
+  }
+  // the drawer in board mode: a tap on it (not on a button) or a swipe up brings the shop back
+  {
+    let sw = null;
+    $('panel').addEventListener('pointerdown', (e) => { sw = dBoard ? { y: e.clientY, id: e.pointerId } : null; });
+    $('panel').addEventListener('pointerup', (e) => { if (!sw || e.pointerId !== sw.id) return; const dy = e.clientY - sw.y; sw = null;
+      if (dy < -24 || (Math.abs(dy) < 10 && !e.target.closest('button'))) dioBoardMode(false); });
+  }
   function dioSafe() {
     const hb = document.querySelector('.hud').getBoundingClientRect(), pw = dioPw();
+    if (dioPhone()) {
+      const st = document.documentElement.style, pk = !$('pick').hidden; // (a pick takes the whole screen: the drawer steps aside)
+      const pr = $('panel').getBoundingClientRect(), top = pk ? innerHeight : Math.min(innerHeight, Math.max(pr.top, innerHeight * 0.4));
+      const r = { x0: 4, x1: innerWidth - 4, y0: Math.max(48, hb.bottom + 2), y1: top - (dBoard && !pk ? 46 : 2) }; // (board mode: above the SHOP tab)
+      const vs = [innerWidth, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
+      if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); st.setProperty('--dph', Math.round(innerHeight - pr.top) + 'px'); }
+      return r;
+    }
     // the board a bit more central (the owner, 2026-11-10): with the panel sliding away it frames past about half the
     // column (the panel covers that edge only while it's out, and tucks when the pointer goes to the board); always
     // shown, the board stays clear of it

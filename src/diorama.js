@@ -37,13 +37,23 @@
   function dioBoot() {
     return dio.boot || (dio.boot = dioStart().catch((e) => {
       console.warn('No Mans Land: the Diorama UI could not start; showing the old home.', e);
+      // the Diorama's test page (design/diorama/game.html): say so on screen, with the error, instead of quietly
+      // showing the old home (a phone has no console to look in)
+      if (/\/design\/diorama\//.test(location.pathname)) try {
+        const b = document.createElement('div'), msg = (e && (e.stack || e.message)) || String(e);
+        b.setAttribute('role', 'alert');
+        b.style.cssText = 'position:fixed;z-index:99;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top));padding:12px 14px;background:#7A1F17;color:#F4ECD8;font:600 13px/1.4 system-ui,sans-serif;border-radius:6px;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow:auto';
+        b.textContent = 'Test page: the new UI could not start on this device, so this is the old home. Send Claude a screenshot of this box.\n\n' + String(msg).slice(0, 900) + '\n\n' + navigator.userAgent;
+        b.addEventListener('click', () => b.remove());
+        document.body.appendChild(b);
+      } catch (er) {}
       DIO = false; document.documentElement.classList.remove('diorama'); $('dio').remove(); dio.shown = false; drawHome();
     }));
   }
   async function dioStart() {
     const body = $('dio');
     let lbKey = '', lbTab = 'ranked', boardAt = Date.now(); // Rankings: the leaderboard list drawn last, and when the board was fetched
-    const THREE = await import(THREE_URL);
+    const THREE = await import(threeSrc());
     if (typeof Models3D !== 'function') for (const f of ['kaykit3d', 'models3d']) await load3d(f);
     // the island's renderer: made when the home shows, freed while a match runs. No WebGL (or ?board=2d): flat
     let cv = document.getElementById('world'), renderer = null, running = false, raf = 0, flat = force2d;
@@ -333,6 +343,11 @@
           if (i === pop && !still) { f.userData.s = f.scale.x; f.userData.pop = performance.now() / 1000; f.scale.setScalar(0.001); } }
         g.userData = { u, t, i }; rosterHot.push(g);
       });
+      // a phone (diorama.css: shown only there, on Units): the tier's units as a list under the tabs, a tap opens the card
+      let ul = document.getElementById('ulist');
+      if (!ul) { ul = Object.assign(document.createElement('section'), { id: 'ulist', className: 'ulist' }); ul.setAttribute('aria-label', 'Units in this tier'); body.appendChild(ul);
+        ul.addEventListener('click', (e) => { const b = e.target.closest('[data-ui]'); if (b) pickUnit(rosterHot[+b.dataset.ui] || null); }); }
+      ul.innerHTML = `<span class="k">Tier ${t} · ${n} units · tap one for its card</span>` + list.map((u, i) => `<button data-ui="${i}"><b>${esc(u.name)}</b><small>${[(u.bodies || 1) > 1 ? `${u.bodies} bodies` : 'one body', `${u.range} m range`, `${u.hp} health`].join(' · ')}</small></button>`).join('');
     }
     buildTier(1);
 
@@ -549,7 +564,8 @@
       const ox = phone() ? 0 : now.off[0];
       cam.setViewOffset(w, h, -ox * w, (phone() ? 0.02 : now.off[1]) * h, w, h);
     }
-    function size() { const w = cv.clientWidth, h = cv.clientHeight; if (renderer) renderer.setSize(w, h, false); place(); }
+    let szW = 0, szH = 0; // the canvas's size when last fitted (phones change its height per screen: --isle in diorama.css)
+    function size() { const w = cv.clientWidth, h = cv.clientHeight; szW = w; szH = h; if (renderer) renderer.setSize(w, h, false); place(); }
     addEventListener('resize', () => { if (dio.shown) { size(); if (flat) paintFlat(); } });
 
     // ── notes follow their thing: [object, height of the dot, label offset in px (negative x: label to the left)] ──
@@ -862,7 +878,8 @@
       roster.position.y = lerp(roster.position.y, un ? 0 : -4, kk); roster.visible = roster.position.y > -3.6;
       for (const [key, g] of Object.entries(HOT)) g.position.y = lerp(g.position.y, g.userData.y0 + ((typeof hoverNow !== 'undefined' ? hoverNow : hovered) === key ? 0.18 : 0), still ? 1 : 0.25);
       rosterHot.forEach((g, i) => { g.position.y = lerp(g.position.y, (hovered === 'u:' + i || picked === g) ? 0.22 : 0, still ? 1 : 0.25); });
-      place(); if (renderer) renderer.render(scene, cam); notes();
+      if (cv.clientWidth !== szW || cv.clientHeight !== szH) size(); else place();
+      if (renderer) renderer.render(scene, cam); notes();
       raf = requestAnimationFrame(frame);
     }
     // ── the way in (the battle prototype's fly-in, 2026-11-08; the owner's wish): Create room, Join and Vs computer zoom
@@ -951,7 +968,7 @@
     }
     // (the menu hides under the pointer when Play or Profile opens: that leave keeps their view; owner's bug, 2026-11-10)
     body.querySelector('.menu').addEventListener('mouseleave', () => { if (['pinned', 'play', 'profile', 'puz', 'how'].some(c => body.classList.contains(c))) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
-    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); if (v === 'ranks') { fitBoardList(); refreshBoard(); } });
+    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); body.querySelector('.back').textContent = '← Menu'; if (v === 'ranks') { fitBoardList(); refreshBoard(); } });
     // Puzzles and How to play: the game's own calls, which hand over to their Diorama screens (dio.api.puzzles, .howto)
     $('puzzles-open').addEventListener('click', openPuzzles);
     $('how').addEventListener('click', openHowTo);
@@ -985,6 +1002,7 @@
     const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
       if (body.classList.contains('puz')) return closePuz();
       if (body.classList.contains('how')) return closeHow();
+      if (body.classList.contains('pinned')) return unpin(); // (a phone: Units and Rankings have the Back)
       if (body.classList.contains('in-rooms')) return closeRooms(); closePlay(); };
     backBtn.addEventListener('click', goBack);
 
@@ -1258,7 +1276,7 @@
     }
     function openPuz() {
       openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); closeHow(); leavePlay(); unpin();
-      body.classList.add('puz'); home.puz = true; hovered = null; setHover(null);
+      body.classList.add('puz'); home.puz = true; hovered = null; setHover(null); backBtn.textContent = '← Menu'; // (the phones' Back)
       drawPuz(); puzShow(puzPick >= 0 ? puzPick : firstOpen()); want = VIEWS.puz;
     }
     function closePuz() { if (!body.classList.contains('puz')) return; body.classList.remove('puz'); home.puz = false; want = VIEWS.play; body.querySelectorAll('.qnote').forEach(n => { n.style.display = 'none'; n._off = null; }); }
@@ -1573,7 +1591,7 @@
       if (tabs) tabs.querySelectorAll('[data-lb]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lb === lbTab)));
       st.querySelector('.k').textContent = lbTab === 'boss' ? 'Rankings · weekly boss · the Mommy' : 'Rankings · this month · ranked best-of-3';
       if (lbTab === 'boss') return drawBossStandings();
-      const j = home.board, lg = j && j.legend && j.legend.top ? j.legend : null, el = body.querySelector('.standings .leg');
+      const j = home.board && Array.isArray(home.board.rows) ? home.board : null, lg = j && j.legend && j.legend.top ? j.legend : null, el = body.querySelector('.standings .leg');
       let when = '';
       if (lg) { const left = Math.max(0, (lg.ends - Date.now()) / 864e5); when = left >= 1 ? `${Math.floor(left)} day${Math.floor(left) === 1 ? '' : 's'} left this month.` : left * 24 >= 1 ? `${Math.floor(left * 24)} hours left this month.` : 'The month ends within the hour.'; }
       el.textContent = (!j ? 'The standings come from the game server, which can’t be reached right now.'

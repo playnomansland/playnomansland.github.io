@@ -1735,6 +1735,197 @@ html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .overlay .card .btn,
 html.diorama.pcwide :is(.panel .xrow .btn, .pick .row .btn, .overlay .card .btn, .sheet .btn, .sheet #close):not(.primary):not(#to-menu):active:not(:disabled) { background: rgba(244, 236, 216, .24); }
 html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: none; width: auto; } /* (a squad's sheet put it in a grid cell, where it stretched) */
 
+/* ── phones (prototype, 2026-11-10): every home screen held upright, 700 px wide or less. The page scrolls: the
+   island sits in the top part (--isle tall), the screen's words flow under it, the music and credits only on the
+   menu. The PC layout above places everything with position: fixed; here it all goes back into the page's flow,
+   in the order set with `order`. Checked at 390×844 and 360×740 (design/diorama/PHONES.md). ── */
+@media (max-width: 700px) {
+  html.diorama #dio { --isle: clamp(250px, 42svh, 360px); --k: 0.7; }
+  html.diorama #dio:not([hidden]) { display: flex; flex-direction: column; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: calc(var(--isle) - 18px) 0 calc(28px + env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+  html.diorama #dio > * { flex: none; }
+  html.diorama #dio #world { position: absolute; top: 0; left: 0; right: auto; bottom: auto; width: 100%; height: var(--isle); }
+  html.diorama #dio .scrim, html.diorama #dio .pl-scrim { display: none; }
+  /* the top line: the logo and the account's icons, scrolling away with the page */
+  html.diorama #dio .logo { position: absolute; top: calc(14px + env(safe-area-inset-top)); left: 16px; width: 156px; z-index: 3; }
+  html.diorama #dio .acct { position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 10px; gap: 2px; z-index: 3; }
+  html.diorama #dio .acct button { width: 44px; height: 40px; justify-content: center; }
+  html.diorama #dio .acct span { display: none; }
+  html.diorama #dio .acct svg { width: 22px; height: 22px; }
+  /* Back: always in the same place on every screen but the menu, top left under the logo, and it stays there while the
+     page scrolls (the owner, 2026-11-10: "I never want to have to scroll down for the Back button"). The shared .back
+     (goBack: its label says where it goes); the screens' own Back buttons further down are hidden on a phone */
+  html.diorama #dio .back { position: fixed; top: calc(46px + env(safe-area-inset-top)); left: 10px; right: auto; z-index: 6; display: none; min-height: 40px;
+    padding: 11px 16px 7px 12px; font: 700 19px/1 var(--stencil); letter-spacing: .01em; text-transform: uppercase; color: #17140F; background: #F2B23A;
+    clip-path: polygon(0 8%, 97% 0, 100% 88%, 2% 100%); filter: drop-shadow(0 2px 0 rgba(0,0,0,.25)); }
+  html.diorama #dio:is(.play, .profile, .puz, .in-rooms, .in-create, .in-signin) .back { display: inline-block; }
+  html.diorama #dio.play .back { color: #F2B23A; background: #17140F; }
+  html.diorama #dio :is(#play-back, #pf-back, #pz-back) { display: none; }
+  html.diorama #dio .notes, html.diorama #dio .note, html.diorama #dio .zz { display: none !important; }
+  /* every screen's column: back in the flow, the page's width less 16 px a side */
+  html.diorama #dio :is(.menu, .orders, .devs, .rooms, .newroom, .pf, .history, .signin, .door, .standings, .music, .build, .phone-reward) {
+    position: relative; left: auto; right: auto; top: auto; bottom: auto; width: auto; max-width: none; margin: 0 16px; transform: none; }
+  html.diorama #dio .menu { order: 1; } html.diorama #dio .standings { order: 2; }
+  html.diorama #dio :is(.orders, .door, .signin, .pf, .history) { order: 3; } html.diorama #dio .devs { order: 4; margin-top: 30px; }
+  html.diorama #dio :is(.rooms, .newroom) { order: 3; }
+  html.diorama #dio:is(.in-rooms, .in-create) { --isle: clamp(190px, 28svh, 250px); } /* a smaller island: the list is the point */
+  html.diorama #dio .phone-reward { order: 6; display: block !important; margin-top: 26px; }
+  html.diorama #dio .music { order: 7; margin-top: 30px; justify-items: start; text-align: left; text-shadow: none; }
+  html.diorama #dio .build { order: 8; margin-top: 14px; display: block; }
+  /* the music, the reward and the credits belong to the menu */
+  html.diorama #dio:is(.play, .profile, .welcome, .ranks, .units) :is(.music, .build, .phone-reward) { display: none !important; }
+
+  /* the menu: PLAY on its shard, the four words two by two */
+  html.diorama #dio .menu { justify-items: stretch; }
+  html.diorama #dio .menu .item.play { font-size: clamp(76px, 24vw, 96px); justify-self: start; margin: 0 0 16px 4px; }
+  html.diorama #dio .menu .item.play .go { display: none; }
+  html.diorama #dio .menu .sub .item { font-size: clamp(18px, 5.5vw, 24px); white-space: nowrap; gap: 6px; min-height: 46px; }
+  html.diorama #dio .menu .sub .item small { position: absolute; left: 24px; top: calc(100% - 10px); margin: 0; font-size: 12px; }
+  html.diorama #dio .menu .sub { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 8px; }
+  html.diorama #dio .backto { margin-bottom: 8px; }
+  /* Rankings and Units on a phone: the island shows them, the words under it */
+  html.diorama #dio.ranks .menu .sub, html.diorama #dio.units .menu .sub { margin-bottom: 22px; }
+  html.diorama #dio .standings { display: none; } html.diorama #dio.ranks .standings { display: grid; }
+  html.diorama #dio .standings h2 { font-size: 48px; }
+  html.diorama #dio .standings li { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; padding: 10px 8px 10px 4px; }
+  html.diorama #dio .standings .r { font-size: 28px; } html.diorama #dio .standings .s { font-size: 26px; }
+  html.diorama #dio .tiers { left: 50% !important; top: calc(var(--isle) - 64px) !important; gap: 0; font-size: 14px; }
+  html.diorama #dio .tiers .k, html.diorama #dio .tiers .hint { display: none; }
+  html.diorama #dio .tiers button { font-size: 22px; padding: 6px 10px 3px; }
+  /* a unit's sheet: a bottom sheet */
+  html.diorama #dio #usheet { position: fixed; left: 0 !important; right: 0; top: auto !important; bottom: 0; width: auto; z-index: 8; max-height: 62svh; overflow-y: auto;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom)); }
+  html.diorama #dio #usheet::before { clip-path: polygon(0 18px, 64% 0, 100% 12px, 100% 100%, 0 100%); }
+  html.diorama #dio #usheet .x { width: 44px; height: 44px; top: 10px; right: 8px; }
+
+  /* Play: two big words, Multiplayer's kinds under them */
+  html.diorama #dio .orders .who .item { font-size: clamp(34px, 10.6vw, 46px); }
+  html.diorama #dio .orders .item small { display: block; font-size: 13px; margin: 4px 0 0 2px; }
+  html.diorama #dio .orders .who > .item { flex-wrap: wrap; row-gap: 0; }
+  html.diorama #dio .orders .mp { margin: 6px 0 0 12px; padding-left: 22px; }
+  html.diorama #dio .orders .mp li::after, html.diorama #dio .orders .mp li::before { left: -22px; }
+  html.diorama #dio .orders .mp .item { font-size: clamp(26px, 7.6vw, 34px); flex-wrap: wrap; }
+  html.diorama #dio .orders #play-back { font-size: 24px; margin-top: 26px; }
+  html.diorama #dio .devs { max-width: none; }
+  html.diorama #dio .devs .dk { flex-wrap: wrap; gap: 4px 10px; }
+  html.diorama #dio .devs .dv { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  html.diorama #dio .devs .lab { margin-top: 10px; }
+  html.diorama #dio .devs .seg button { font-size: 18px; padding: 8px 9px 4px; }
+  html.diorama #dio .devs .dn { margin: 10px 0 0; }
+
+  /* Rooms: the list in the page (the page scrolls, not the list) */
+  html.diorama #dio .rooms { grid-template-rows: none; }
+  html.diorama #dio :is(.rooms, .newroom, .pf, .history, .standings, .signin) h2 { font-size: clamp(44px, 13.5vw, 56px); margin-bottom: 12px; }
+  html.diorama #dio .plate h2 { font-size: clamp(40px, 12.5vw, 56px) !important; max-width: 100%; }
+  html.diorama #dio .pf-name-in { max-width: calc(100vw - 40px); }
+  html.diorama #dio .pf-opts { grid-template-columns: minmax(0, 1fr) !important; }
+  html.diorama #dio :is(.pf, .history) { justify-items: stretch; }
+  html.diorama #dio .rooms h2 small { display: block; margin: 6px 0 0; }
+  html.diorama #dio .rsearch input { font-size: 16px; } /* (16 px: iOS doesn't zoom in on it) */
+  html.diorama #dio .create { font-size: clamp(28px, 8.4vw, 36px); padding: 10px 18px 8px 14px; max-width: 100%; }
+  html.diorama #dio .rlist { overflow: visible; padding: 0; }
+  html.diorama #dio .rlist li { gap: 4px 10px; padding: 12px 0; }
+  html.diorama #dio .rlist b { font-size: 18px; }
+  html.diorama #dio .rlist .go { font-size: 22px; padding: 10px 12px 6px; }
+
+  /* New room: each row's label over its words */
+  html.diorama #dio .nr-opts { grid-template-columns: minmax(0, 1fr); gap: 2px; margin-bottom: 18px; }
+  html.diorama #dio .nr-opts .lab { margin-top: 12px; }
+  html.diorama #dio .nr-opts .seg { margin-left: -10px; }
+  html.diorama #dio .nr-opts .seg button { font-size: 24px; padding: 8px 10px 5px; }
+  html.diorama #dio .nr-opts .bf-step b { font-size: 24px; min-width: 7.4em; }
+  html.diorama #dio .nr-opts .bf-step button { padding: 8px 12px 5px; }
+  html.diorama #dio .nr-note { margin: 0 0 18px; }
+
+  /* the dropdowns (Friends, Settings): full width from the top, the page under them held still */
+  html.diorama #dio .drop { position: fixed; top: 0; left: 0; right: 0; width: auto; max-height: 86svh; padding: calc(18px + env(safe-area-inset-top)) 16px 22px; z-index: 9; }
+  html.diorama #dio .drop::before { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 18px), 60% 100%, 0 calc(100% - 10px)); }
+  html.diorama #dio .stay { position: relative; top: auto; right: auto; width: auto; margin: 0 16px 18px; order: 0; text-align: left; }
+  html.diorama #dio .stay::before, html.diorama #dio .stay::after { display: none; }
+  html.diorama #dio .stay .nts { justify-content: flex-start; }
+
+  /* the playlist: it opens under the player, in the page */
+  html.diorama #dio .pl { justify-items: start; margin: 0 0 16px; }
+  html.diorama #dio .pl-list { justify-items: stretch; }
+  html.diorama #dio .pl-row { grid-template-columns: 16px minmax(0, 1fr) auto; text-align: left; padding: 8px 0; }
+  html.diorama #dio .pl-row .n { display: none; }
+}
+
+/* ── the match on a phone (prototype, 2026-11-10: html.diorama.pcwide without html.pc, a phone with the 3D board). From
+   the phone prototype (design/diorama/src/battle.html, HANDOFF.md "Phones"): the world edge to edge, the top line one
+   compact row, the left column a drawer along the bottom over an ink scrim, the shop one strip that scrolls sideways,
+   READY bottom left. The board is framed between the top line and the drawer (dioSafe, --dsy0 / --dsy1); --dph is the
+   drawer's height. A pick (start, leader, tower) takes the whole screen and the drawer steps aside. ── */
+@media (max-width: 700px) {
+  html.diorama.pcwide:not(.pc) #wrap::before { left: 0; right: 0; top: auto; bottom: 0; width: auto; height: calc(var(--dph, 300px) + 90px);
+    background: linear-gradient(0deg, rgba(23,20,15,.9) 0, rgba(23,20,15,.8) calc(var(--dph, 300px) - 20px), rgba(23,20,15,0) 100%); opacity: 1; }
+  html.diorama.pcwide:not(.pc) #wrap::after { height: 96px; }
+  /* the top line: you, the round, the opponent; the name small, the health big with its bar */
+  html.diorama.pcwide:not(.pc) .hud { gap: 6px; padding: calc(8px + env(safe-area-inset-top)) 12px 0; }
+  html.diorama.pcwide:not(.pc) .hud .side { grid-template-columns: auto minmax(30px, 1fr); column-gap: 8px; }
+  html.diorama.pcwide:not(.pc) .hud .side.foe { grid-template-columns: minmax(30px, 1fr) auto; }
+  html.diorama.pcwide:not(.pc) .hud .side :is(#you-name, #foe-name) { font-size: 13px; }
+  html.diorama.pcwide:not(.pc) .hud .side :is(#you-name, #foe-name) .hud-tag { max-width: 26vw; }
+  html.diorama.pcwide:not(.pc) .hud .side .ptitle, html.diorama.pcwide:not(.pc) .hud .side .streak { display: none !important; }
+  html.diorama.pcwide:not(.pc) .hud .side .num { font-size: 30px; }
+  html.diorama.pcwide:not(.pc) .hud .side .foe-state { font-size: 11px; }
+  html.diorama.pcwide:not(.pc) .hud .round { max-width: 46vw; column-gap: 6px; }
+  html.diorama.pcwide:not(.pc) .hud .round::before { display: none; } /* (the map's name: in Settings) */
+  html.diorama.pcwide:not(.pc) .hud .round #round, html.diorama.pcwide:not(.pc) .hud .round #phase { font-size: 22px; white-space: nowrap; }
+  html.diorama.pcwide:not(.pc) .hud .round #round::before { content: "R"; }
+  html.diorama.pcwide:not(.pc) .hud .round .series-chip { display: none !important; }
+  html.diorama.pcwide:not(.pc) .hud .round .cog { min-width: 36px; min-height: 32px; display: inline-grid; place-items: center; }
+
+  /* the drawer: full width along the bottom; READY and the clock in its last row */
+  html.diorama.pcwide:not(.pc) .panel, html.dtuck.diorama.pcwide:not(.pc) .panel { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 50svh;
+    padding: 6px 14px calc(78px + env(safe-area-inset-bottom)) 14px; gap: 6px; transform: none; transition: none; }
+  html.diorama.pcwide:not(.pc) .panel:not(:has(#ready, #fight)) { padding-bottom: calc(14px + env(safe-area-inset-bottom)); } /* (the fight: no READY under it) */
+  html.dtuck.diorama.pcwide:not(.pc) #wrap::before { opacity: 1; }
+  html.diorama.pcwide:not(.pc) .app::after { display: none; } /* (the PC's tab where the tucked column went) */
+  html.diorama.pcwide:not(.pc) .panel #ready, html.diorama.pcwide:not(.pc) .panel #fight { left: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); font-size: 40px; padding: 10px 20px 3px 16px; }
+  html.diorama.pcwide:not(.pc) .panel .trow .timer { left: auto; right: 16px; bottom: calc(26px + env(safe-area-inset-bottom)); width: auto; font-size: 24px; text-align: right; }
+  /* the shop: one strip that scrolls sideways, tier after tier */
+  html.diorama.pcwide:not(.pc) .panel .shop2::before { top: 0; }
+  html.diorama.pcwide:not(.pc) .panel .shop2 { padding-top: 22px; margin-top: 4px; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-right: -14px; padding-right: 14px; overscroll-behavior-x: contain; flex: none; }
+  html.diorama.pcwide:not(.pc) .panel .shop2::-webkit-scrollbar { display: none; }
+  html.diorama.pcwide:not(.pc) .panel .shop2 > * { flex-shrink: 0; }
+  html.diorama.pcwide:not(.pc) .panel .xrow { margin-left: -6px; }
+  /* the music: the top line's note opens it (no player in the corner on a phone) */
+  html.diorama.pcwide:not(.pc) #mp-pop.dock { display: none; }
+  /* a pick (start, leader, tower): the whole screen, two options a row */
+  html.diorama.pcwide:not(.pc) #wrap > .pick { padding: calc(var(--dsy0, 70px) + 6px) 12px calc(16px + env(safe-area-inset-bottom)); justify-content: start; gap: 10px; overflow-y: auto; z-index: 8;
+    background: rgba(23,20,15,.78); }
+  html.diorama.pcwide:not(.pc) .pick .ph h2 { font-size: clamp(34px, 11vw, 48px); }
+  html.diorama.pcwide:not(.pc) .pick .ph .hint { font-size: 13px; }
+  html.diorama.pcwide:not(.pc) .pick .opts { gap: 8px; }
+  html.diorama.pcwide:not(.pc) .pick .opt { padding: 12px 6px 12px; }
+  html.diorama.pcwide:not(.pc) .pick .opt .nm { font-size: 13px; overflow-wrap: normal; word-break: normal; hyphens: auto; }
+  html.diorama.pcwide:not(.pc):has(#pick:not([hidden])) .panel { display: none; } /* the drawer steps aside for a pick */
+  html.diorama.pcwide:not(.pc):has(#pick:not([hidden])) #wrap::before { opacity: 0; }
+  html.diorama.pcwide:not(.pc) .pick .row { flex-wrap: wrap; justify-content: center; gap: 10px 16px; }
+  html.diorama.pcwide:not(.pc) .pick .row .btn.primary { font-size: 30px; }
+  html.diorama.pcwide:not(.pc) #wrap > .pick-peek { left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom)); }
+  /* a round's end and the match's end: over the board, above the drawer */
+  html.diorama.pcwide:not(.pc) #wrap > .overlay { padding: var(--dsy0, 70px) 12px var(--dsy1, 300px); }
+  html.diorama.pcwide:not(.pc) .overlay > .card h2 { font-size: clamp(52px, 17vw, 76px); }
+  html.diorama.pcwide:not(.pc) .overlay > .card .btn.primary { font-size: 30px; }
+  /* sheets (Unlock, a squad, Settings, Damage, Help) rise from the bottom, full width */
+  html.diorama.pcwide:not(.pc) .sheet { left: 0 !important; right: 0 !important; top: auto !important; bottom: 0 !important; width: auto !important; max-width: none !important; max-height: 82svh;
+    transform: none !important; border-radius: 0; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+  html.diorama.pcwide:not(.pc) .board-banner, html.diorama.pcwide:not(.pc) #wrap > .coach, html.diorama.pcwide:not(.pc) #wrap > .task { left: 10px; right: 10px; }
+}
+
+/* ── a phone's board mode (html.dboard, dioBoardMode): the drawer down to its top row (gold, deployments, READY), the
+   board from straight above filling the rest, a SHOP tab on the drawer's edge to come back ── */
+@media (max-width: 700px) {
+  html.dboard.diorama.pcwide:not(.pc) .panel > :not(.trow) { display: none !important; }
+  html.dboard.diorama.pcwide:not(.pc) .panel { padding-top: 12px; overflow: hidden; }
+  html.dboard.diorama.pcwide:not(.pc) #wrap::before { height: calc(var(--dph, 140px) + 40px); background: linear-gradient(0deg, rgba(23,20,15,.92) 0, rgba(23,20,15,.86) var(--dph, 140px), rgba(23,20,15,0) 100%); }
+  html.diorama.pcwide:not(.pc) .dshop { position: fixed; z-index: 7; left: 50%; bottom: calc(var(--dph, 140px) - 1px); transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px;
+    min-height: 40px; padding: 10px 22px 6px; border: 0; background: none; color: #17140F; font: 700 18px/1 var(--dstencil); letter-spacing: .04em; text-transform: uppercase; isolation: isolate; }
+  html.diorama.pcwide:not(.pc) .dshop::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(6% 0, 94% 4%, 100% 100%, 0 100%); }
+  html.diorama.pcwide:not(.pc) .dshop[hidden], html:not(.dboard) .dshop { display: none; }
+}
 /* ── Puzzles (2026-11-10): its own field colour, a deep teal (the fourth: ultramarine menu, saffron Play, ink Profile).
    The left column as Profile's: the title, a line, the title to earn, the puzzles by level as stencil words (the saffron
    shard on the pointed-at one), Back. The island shows the pointed-at puzzle ── */
@@ -1842,6 +2033,39 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
 #dio .hw .hw-keys kbd { display: inline-block; min-width: 20px; margin: 0 1px; padding: 1px 5px 0; font: inherit; text-align: center; border: 1.5px solid color-mix(in srgb, var(--cream) 55%, transparent); }
 #dio .note.hnote { max-width: 204px; cursor: default; }
 #dio .note.hnote:hover { color: var(--cream); }
+
+/* ── phones: the Puzzles screen (merged from main 2026-11-10) in the same flow as the other screens ── */
+@media (max-width: 700px) {
+  html.diorama #dio .pz { position: relative; left: auto; top: auto; width: auto; margin: 0 16px; order: 3; }
+  html.diorama #dio.puz :is(.music, .build, .phone-reward) { display: none !important; }
+  html.diorama #dio .pz h2 { font-size: clamp(44px, 13.5vw, 56px); }
+  html.diorama #dio .pz .item { font-size: clamp(24px, 7.4vw, 32px); min-height: 40px; white-space: normal; }
+  html.diorama #dio .pz .create { font-size: clamp(26px, 8vw, 32px); }
+}
+
+/* ── phones, the owner's notes (2026-11-10, on an iPhone) ── */
+@media (max-width: 700px) {
+  /* Units and Rankings: no PLAY or menu words under the island, the pinned Back instead; Units: the tier tabs under the
+     island and the tier's units as a list (#ulist, a tap opens the card) */
+  html.diorama #dio.pinned .menu { display: none; }
+  html.diorama #dio.pinned .back { display: inline-block; }
+  html.diorama #dio .tiers { position: relative !important; left: auto !important; top: auto !important; transform: none; order: 1; display: none; flex-wrap: nowrap; justify-content: space-between; gap: 0; margin: 0 16px 8px; white-space: normal; text-shadow: none; }
+  html.diorama #dio.units .tiers { display: flex; }
+  html.diorama #dio .tiers button { font-size: clamp(17px, 5.2vw, 24px); padding: 8px 8px 5px; min-height: 42px; white-space: nowrap; }
+  html.diorama #dio .ulist { position: relative; order: 2; display: none; margin: 4px 16px 0; } /* (positioned, as every column: the field's grain, fixed, paints over static text) */
+  html.diorama #dio.units .ulist { display: grid; }
+  html.diorama #dio .ulist .k { font: 700 12px var(--type); letter-spacing: .06em; text-transform: uppercase; opacity: .85; margin-bottom: 4px; }
+  html.diorama #dio .ulist button { color: var(--cream); opacity: 1; display: grid; justify-items: start; gap: 2px; padding: 11px 0 10px; text-align: left; border-bottom: 1px dashed color-mix(in srgb, var(--cream) 28%, transparent); }
+  html.diorama #dio .ulist button:last-child { border-bottom: 0; }
+  html.diorama #dio .ulist b { color: var(--cream); opacity: 1; -webkit-text-fill-color: currentColor; background: none; font: 700 22px/1.05 var(--stencil); text-transform: uppercase; letter-spacing: -.005em; }
+  html.diorama #dio .ulist small { font: 700 13px var(--type); opacity: .82; }
+  /* the match's shop strip: no line breaks between the tiers (the PC's rows), so tier after tier sits close */
+  html.diorama.pcwide:not(.pc) .panel .shop2 .br2 { display: none !important; }
+  html.diorama.pcwide:not(.pc) .panel .tier2.gap { margin-left: 10px; }
+  /* board mode: the SHOP tab steps aside while a card is dragged (html.dcard) */
+  html.dcard .dshop { display: none !important; }
+}
+@media (min-width: 701px) { #dio .ulist { display: none; } }
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -19215,7 +19439,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 67f4571'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · cdcf8f1'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19738,13 +19962,17 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     stopTask(); dock();
   }
   let pcTilted = false; // the PC fight view went to the tilted view on its own (dock())
+  let dBoard = false, dBoardFrom = 1; // a phone's board mode (dioBoardMode, by dioSafe)
   let dockOpen = true, dockRound = 0, dockTask = null, dockH = 64, boardH = 0, dockDrag = null;
   const TAB_H = 28; // the pull tab's height, kept clear above the drawer's last row
   const CHEVRONS = (up) => `<svg width="20" height="9" viewBox="0 0 20 9" aria-hidden="true"><path d="${up ? 'M1 7.5 5 2.5 9 7.5M11 7.5 15 2.5 19 7.5' : 'M1 1.5 5 6.5 9 1.5M11 1.5 15 6.5 19 1.5'}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   function dock() {
     if (dockDrag) return; // the tab is being slid: dock() runs again when it lets go
     const root = document.documentElement, panel = $('panel');
-    const on = !root.classList.contains('pc') && phoneLayout === 'drawer' && ['deploy', 'battle', 'result', 'end'].includes(phase) && !!m;
+    // the Diorama on a phone with the 3D board (prototype, 2026-11-10): the Diorama's match screen (html.pcwide) with its
+    // column as a drawer along the bottom (src/diorama.css, "phones"), instead of the old UI's drawer (html.dock)
+    const dioPh = DIO && !root.classList.contains('pc') && !!board3d;
+    const on = !root.classList.contains('pc') && !dioPh && phoneLayout === 'drawer' && ['deploy', 'battle', 'result', 'end'].includes(phase) && !!m;
     const was = root.classList.contains('dock');
     root.classList.toggle('dock', on);
     const deploying = on && phase === 'deploy', picking = deploying && (choosingPack() || choosingTower());
@@ -19773,7 +20001,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       taskEl.setAttribute('aria-label', dockTask.x ? `${taskEl.querySelector('#task-text').textContent} Tap to cancel.` : taskEl.querySelector('#task-text').textContent);
     }
     // a PC in a match on the 3D board: the board takes the rest of the window beside the side panel, deploy and fights alike
-    const wide = root.classList.contains('pc') && !!board3d && ((!!m && ['deploy', 'battle', 'result', 'end'].includes(phase)) || dioRoomOn()), wasWide = root.classList.contains('pcwide');
+    const wide = (root.classList.contains('pc') || dioPh) && !!board3d && ((!!m && ['deploy', 'battle', 'result', 'end'].includes(phase)) || dioRoomOn()), wasWide = root.classList.contains('pcwide');
     root.classList.toggle('droom-on', wide && dioRoomOn()); // the Diorama's room (dioRoom)
     root.classList.toggle('pcwide', wide);
     const fight = wide && ['battle', 'result'].includes(phase), wasFight = root.classList.contains('pcfight');
@@ -19786,6 +20014,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       if (fight && cam.level() === 0) { cam.setLevel(1); pcTilted = true; }
       else if (!fight && pcTilted) { pcTilted = false; if (cam.level() === 1) cam.setLevel(0); }
     }
+    if (DIO && dBoard && !(dioPh && wide && phase === 'deploy' && $('pick').hidden)) dioBoardMode(false); // (a phone's board mode: only while deploying)
     let h = boardH;
     if (on) {
       dockH = panel.offsetHeight || dockH; // UI 2.0: the whole tray
@@ -20833,7 +21062,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     const l = f.querySelector('.l'); l.textContent = label; l.style.color = bad ? 'var(--foe)' : '';
   }
   function cardEnd(ok) {
-    const p = cpress, d = cdrag; cpress = null; cdrag = null; flyShow(null);
+    const p = cpress, d = cdrag; cpress = null; cdrag = null; flyShow(null); document.documentElement.classList.remove('dcard');
     if (p) { clearTimeout(p.t); if (p.el) p.el.classList.remove('lift'); if (p.pan) cardDone = performance.now(); } // a sideways mouse drag ends without a tap
     if (!d) return;
     cardDone = performance.now(); hoverTile = null;
@@ -20842,6 +21071,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (selected === d.i && d.prev !== d.i) selected = d.prev;
     if (phase === 'deploy') panelDeploy();
     render();
+    if (DIO && dBoard) setTimeout(() => { if (dBoard && !cdrag && !(dockTask && dockTask.x)) dioBoardMode(false); }, 260); // (a beat to see it land)
   }
   addEventListener('pointermove', (e) => {
     if (drag && drag.id != null && !drag.denied && phase === 'deploy') dropZone({ x: e.clientX, y: e.clientY });
@@ -20862,6 +21092,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       if (cpress.el.getAttribute('aria-disabled') === 'true' || !editable()) { cpress.scroll = true; return; }
       cdrag = { i: cpress.i, prev: selected, touch: e.pointerType !== 'mouse', t: null };
       selected = cpress.i; rangeOf = null; cpress.el.classList.add('lift');
+      if (DIO) { dioBoardMode(true); document.documentElement.classList.add('dcard'); } // a phone: the drawer drops and the board comes up from above to aim at
       try { cpress.el.setPointerCapture(e.pointerId); } catch (err) {}
       render();
     }
@@ -21398,7 +21629,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   const WIZ_TURN = Math.PI * 1.75; // faces -z; this turns it three-quarters to the right, its staff on the fire's side
   async function wizPic() {
     await Promise.resolve(); // THREE_URL and V3D are set further down the script
-    const THREE = await import(THREE_URL);
+    const THREE = await import(threeSrc());
     if (typeof Models3D !== 'function') for (const f of ['kaykit3d', 'models3d']) await load3d(f);
     const W = 320, H = 400, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const ren = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: true, preserveDrawingBuffer: true });
@@ -24419,6 +24650,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // drag one of your squads: this round's squads move for free; an older one only with the Move ability.
   // Returns true when a drag starts.
   function boardPress(t) {
+    if (DIO && dioShopMode()) return false; // (shop mode: the tap that follows brings the board up)
     if (pingKind) return false; // 2v2: a ping goes down on the tap
     if (!t || phase !== 'deploy' || !m || !editable() || choosingPack() || placingTower()) return false;
     if (aimMode != null) { // a direction arrow: drag it out of the squad getting it
@@ -24522,6 +24754,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // a tap on a tile (2D or 3D board). It clears the range ring; tapping a squad shows its range and its sheet (a squad
   // of yours from this round is taken back with the X at its top right corner, see unplaceMarks)
   function boardTap(t) {
+    if (DIO && dioShopMode()) { dioBoardMode(true); return; } // a phone's shop mode: a tap on the board only brings it up
     if (pingKind && net.duo) { duoPlacePing(t); return; } // 2v2: the ping picked in the panel
     if (phase === 'battle') { // a fight: a tap on a unit shows its card, and where its squad is walking now (intentMarks)
       if (artifactTap(t)) return; // 2v2: an artifact's tile shows its card first (a second tap: what stands there)
@@ -25180,6 +25413,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
+  // import() of a relative address: resolved by hand against the page's <base> (the Diorama's test page in design/diorama/
+  // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
+  // <base>, so there it looked for design/diorama/vendor/... and failed: "Importing a module script failed" (2026-11-10)
+  const threeSrc = () => new URL(THREE_URL, document.baseURI).href;
   const V3D = '74cf940821'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
@@ -25208,7 +25445,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const el = document.createElement('div');
       let b = null, loaded = false;
       try {
-        const THREE = await import(THREE_URL);
+        const THREE = await import(threeSrc());
         if (typeof Render3D !== 'function') for (const f of ['camera3d', 'kaykit3d', 'models3d', 'scenery3d', 'render3d']) await load3d(f); // V3D: a new name each build, so a browser never runs an old copy
         loaded = true;
         if (!want3d) return; // switched back to 2D while loading
@@ -25342,8 +25579,55 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   try { if (/[?&]test\b/.test(location.search)) window.__dfit = dfit; } catch (e) {} // (UI checks)
   const dioWide = () => DIO && document.documentElement.classList.contains('pcwide');
   const dioPw = () => Math.round(Math.min(400, Math.max(318, innerWidth * 0.25))); // the left column's width (--dpw), as the prototype's clamp(318px, 25vw, 400px)
+  // a phone held upright (no html.pc, prototype 2026-11-10): the column is a drawer along the bottom, the board fits
+  // between the top line and the drawer's top (design/diorama/src/battle.js safeRect, the phone prototype)
+  const dioPhone = () => dioWide() && !document.documentElement.classList.contains('pc');
+  // Shop mode and board mode (a phone's deploy, prototype 2026-11-10, the owner: "dragging a unit from deployment
+  // zooms in to the battlefield ... releasing it moves you back to deployment mode; pressing the battlefield gives you
+  // the zoomed in tactical view"). Shop mode: the drawer up, the tilted overview. Board mode (html.dboard): the drawer
+  // down to its top row (gold, deployments, READY) with a SHOP tab, the board from straight above filling the screen
+  // (the strategic view, framed by dioFit; as wide as the phone allows). A card dragged up out of the drawer goes to board
+  // mode at once and the view holds still while it's aimed; letting go goes back to the shop (unless the squad wants
+  // something more: an aim, a move). A tap on the board in shop mode only goes to board mode (nothing is placed); the
+  // SHOP tab, a tap on the drawer or a swipe up on it comes back. A pick, the fight or leaving the deploy ends it.
+  const dioShopMode = () => dioPhone() && phase === 'deploy' && !!m && $('pick').hidden && !dBoard;
+  function dioBoardMode(on) {
+    on = !!on && dioPhone() && phase === 'deploy' && !!m && $('pick').hidden;
+    if (on === dBoard) return;
+    dBoard = on; document.documentElement.classList.toggle('dboard', on);
+    const cam = board3d && board3d.camera;
+    if (cam) {
+      if (on) { dBoardFrom = cam.level(); if (dBoardFrom !== 0) cam.setLevel(0); }
+      else { pcTilted = false; if (dBoardFrom !== 0) cam.setLevel(Math.min(1, dBoardFrom)); }
+    }
+    let tab = $('dshop');
+    if (!tab) {
+      tab = Object.assign(document.createElement('button'), { id: 'dshop', className: 'dshop', type: 'button', innerHTML: 'Shop <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 7.5L6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>' });
+      tab.setAttribute('aria-label', 'Back to the shop');
+      tab.addEventListener('click', () => dioBoardMode(false));
+      document.querySelector('.app').appendChild(tab);
+    }
+    tab.hidden = !on;
+    if (board3d) wake3d();
+    requestAnimationFrame(() => { dioSafe(); if (board3d) wake3d(); });
+  }
+  // the drawer in board mode: a tap on it (not on a button) or a swipe up brings the shop back
+  {
+    let sw = null;
+    $('panel').addEventListener('pointerdown', (e) => { sw = dBoard ? { y: e.clientY, id: e.pointerId } : null; });
+    $('panel').addEventListener('pointerup', (e) => { if (!sw || e.pointerId !== sw.id) return; const dy = e.clientY - sw.y; sw = null;
+      if (dy < -24 || (Math.abs(dy) < 10 && !e.target.closest('button'))) dioBoardMode(false); });
+  }
   function dioSafe() {
     const hb = document.querySelector('.hud').getBoundingClientRect(), pw = dioPw();
+    if (dioPhone()) {
+      const st = document.documentElement.style, pk = !$('pick').hidden; // (a pick takes the whole screen: the drawer steps aside)
+      const pr = $('panel').getBoundingClientRect(), top = pk ? innerHeight : Math.min(innerHeight, Math.max(pr.top, innerHeight * 0.4));
+      const r = { x0: 4, x1: innerWidth - 4, y0: Math.max(48, hb.bottom + 2), y1: top - (dBoard && !pk ? 46 : 2) }; // (board mode: above the SHOP tab)
+      const vs = [innerWidth, r.x0, innerWidth - r.x1, r.y0, innerHeight - r.y1].map(x => Math.round(x) + 'px');
+      if (st.getPropertyValue('--dsafe') !== vs.join(' ')) { st.setProperty('--dsafe', vs.join(' ')); ['--dpw', '--dsx0', '--dsx1', '--dsy0', '--dsy1'].forEach((k, i) => st.setProperty(k, vs[i])); st.setProperty('--dph', Math.round(innerHeight - pr.top) + 'px'); }
+      return r;
+    }
     // the board a bit more central (the owner, 2026-11-10): with the panel sliding away it frames past about half the
     // column (the panel covers that edge only while it's out, and tucks when the pointer goes to the board); always
     // shown, the board stays clear of it
@@ -29447,13 +29731,23 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function dioBoot() {
     return dio.boot || (dio.boot = dioStart().catch((e) => {
       console.warn('No Mans Land: the Diorama UI could not start; showing the old home.', e);
+      // the Diorama's test page (design/diorama/game.html): say so on screen, with the error, instead of quietly
+      // showing the old home (a phone has no console to look in)
+      if (/\/design\/diorama\//.test(location.pathname)) try {
+        const b = document.createElement('div'), msg = (e && (e.stack || e.message)) || String(e);
+        b.setAttribute('role', 'alert');
+        b.style.cssText = 'position:fixed;z-index:99;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top));padding:12px 14px;background:#7A1F17;color:#F4ECD8;font:600 13px/1.4 system-ui,sans-serif;border-radius:6px;white-space:pre-wrap;word-break:break-word;max-height:60vh;overflow:auto';
+        b.textContent = 'Test page: the new UI could not start on this device, so this is the old home. Send Claude a screenshot of this box.\n\n' + String(msg).slice(0, 900) + '\n\n' + navigator.userAgent;
+        b.addEventListener('click', () => b.remove());
+        document.body.appendChild(b);
+      } catch (er) {}
       DIO = false; document.documentElement.classList.remove('diorama'); $('dio').remove(); dio.shown = false; drawHome();
     }));
   }
   async function dioStart() {
     const body = $('dio');
     let lbKey = '', lbTab = 'ranked', boardAt = Date.now(); // Rankings: the leaderboard list drawn last, and when the board was fetched
-    const THREE = await import(THREE_URL);
+    const THREE = await import(threeSrc());
     if (typeof Models3D !== 'function') for (const f of ['kaykit3d', 'models3d']) await load3d(f);
     // the island's renderer: made when the home shows, freed while a match runs. No WebGL (or ?board=2d): flat
     let cv = document.getElementById('world'), renderer = null, running = false, raf = 0, flat = force2d;
@@ -29743,6 +30037,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
           if (i === pop && !still) { f.userData.s = f.scale.x; f.userData.pop = performance.now() / 1000; f.scale.setScalar(0.001); } }
         g.userData = { u, t, i }; rosterHot.push(g);
       });
+      // a phone (diorama.css: shown only there, on Units): the tier's units as a list under the tabs, a tap opens the card
+      let ul = document.getElementById('ulist');
+      if (!ul) { ul = Object.assign(document.createElement('section'), { id: 'ulist', className: 'ulist' }); ul.setAttribute('aria-label', 'Units in this tier'); body.appendChild(ul);
+        ul.addEventListener('click', (e) => { const b = e.target.closest('[data-ui]'); if (b) pickUnit(rosterHot[+b.dataset.ui] || null); }); }
+      ul.innerHTML = `<span class="k">Tier ${t} · ${n} units · tap one for its card</span>` + list.map((u, i) => `<button data-ui="${i}"><b>${esc(u.name)}</b><small>${[(u.bodies || 1) > 1 ? `${u.bodies} bodies` : 'one body', `${u.range} m range`, `${u.hp} health`].join(' · ')}</small></button>`).join('');
     }
     buildTier(1);
 
@@ -29959,7 +30258,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const ox = phone() ? 0 : now.off[0];
       cam.setViewOffset(w, h, -ox * w, (phone() ? 0.02 : now.off[1]) * h, w, h);
     }
-    function size() { const w = cv.clientWidth, h = cv.clientHeight; if (renderer) renderer.setSize(w, h, false); place(); }
+    let szW = 0, szH = 0; // the canvas's size when last fitted (phones change its height per screen: --isle in diorama.css)
+    function size() { const w = cv.clientWidth, h = cv.clientHeight; szW = w; szH = h; if (renderer) renderer.setSize(w, h, false); place(); }
     addEventListener('resize', () => { if (dio.shown) { size(); if (flat) paintFlat(); } });
 
     // ── notes follow their thing: [object, height of the dot, label offset in px (negative x: label to the left)] ──
@@ -30272,7 +30572,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       roster.position.y = lerp(roster.position.y, un ? 0 : -4, kk); roster.visible = roster.position.y > -3.6;
       for (const [key, g] of Object.entries(HOT)) g.position.y = lerp(g.position.y, g.userData.y0 + ((typeof hoverNow !== 'undefined' ? hoverNow : hovered) === key ? 0.18 : 0), still ? 1 : 0.25);
       rosterHot.forEach((g, i) => { g.position.y = lerp(g.position.y, (hovered === 'u:' + i || picked === g) ? 0.22 : 0, still ? 1 : 0.25); });
-      place(); if (renderer) renderer.render(scene, cam); notes();
+      if (cv.clientWidth !== szW || cv.clientHeight !== szH) size(); else place();
+      if (renderer) renderer.render(scene, cam); notes();
       raf = requestAnimationFrame(frame);
     }
     // ── the way in (the battle prototype's fly-in, 2026-11-08; the owner's wish): Create room, Join and Vs computer zoom
@@ -30361,7 +30662,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     }
     // (the menu hides under the pointer when Play or Profile opens: that leave keeps their view; owner's bug, 2026-11-10)
     body.querySelector('.menu').addEventListener('mouseleave', () => { if (['pinned', 'play', 'profile', 'puz', 'how'].some(c => body.classList.contains(c))) return; items.forEach(x => x.classList.toggle('on', x.id === 'play')); want = VIEWS.play; viewName = 'play'; setMode('play'); });
-    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); if (v === 'ranks') { fitBoardList(); refreshBoard(); } });
+    for (const v of Object.keys(MODES)) body.querySelector(`.menu .item[data-cam="${v}"]`).addEventListener('click', () => { if (body.classList.contains('pinned') && viewName === v) return unpin(); items.forEach(x => x.classList.toggle('on', x.dataset.cam === v)); viewName = v; want = VIEWS[v]; setMode(v); body.classList.add('pinned'); body.querySelector('.back').textContent = '← Menu'; if (v === 'ranks') { fitBoardList(); refreshBoard(); } });
     // Puzzles and How to play: the game's own calls, which hand over to their Diorama screens (dio.api.puzzles, .howto)
     $('puzzles-open').addEventListener('click', openPuzzles);
     $('how').addEventListener('click', openHowTo);
@@ -30395,6 +30696,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
       if (body.classList.contains('puz')) return closePuz();
       if (body.classList.contains('how')) return closeHow();
+      if (body.classList.contains('pinned')) return unpin(); // (a phone: Units and Rankings have the Back)
       if (body.classList.contains('in-rooms')) return closeRooms(); closePlay(); };
     backBtn.addEventListener('click', goBack);
 
@@ -30668,7 +30970,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     }
     function openPuz() {
       openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); closeHow(); leavePlay(); unpin();
-      body.classList.add('puz'); home.puz = true; hovered = null; setHover(null);
+      body.classList.add('puz'); home.puz = true; hovered = null; setHover(null); backBtn.textContent = '← Menu'; // (the phones' Back)
       drawPuz(); puzShow(puzPick >= 0 ? puzPick : firstOpen()); want = VIEWS.puz;
     }
     function closePuz() { if (!body.classList.contains('puz')) return; body.classList.remove('puz'); home.puz = false; want = VIEWS.play; body.querySelectorAll('.qnote').forEach(n => { n.style.display = 'none'; n._off = null; }); }
@@ -30983,7 +31285,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (tabs) tabs.querySelectorAll('[data-lb]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lb === lbTab)));
       st.querySelector('.k').textContent = lbTab === 'boss' ? 'Rankings · weekly boss · the Mommy' : 'Rankings · this month · ranked best-of-3';
       if (lbTab === 'boss') return drawBossStandings();
-      const j = home.board, lg = j && j.legend && j.legend.top ? j.legend : null, el = body.querySelector('.standings .leg');
+      const j = home.board && Array.isArray(home.board.rows) ? home.board : null, lg = j && j.legend && j.legend.top ? j.legend : null, el = body.querySelector('.standings .leg');
       let when = '';
       if (lg) { const left = Math.max(0, (lg.ends - Date.now()) / 864e5); when = left >= 1 ? `${Math.floor(left)} day${Math.floor(left) === 1 ? '' : 's'} left this month.` : left * 24 >= 1 ? `${Math.floor(left * 24)} hours left this month.` : 'The month ends within the hour.'; }
       el.textContent = (!j ? 'The standings come from the game server, which can’t be reached right now.'
