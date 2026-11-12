@@ -20,6 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 12 November 2026 – A Skills tab on the picked unit
+
+- **Shop:** pick a unit in the deploy panel and a gold **Skills** tab slides out on the left of its card, with the unit sheet's symbol (a sheet with a skill star). Tap it to open the unit's sheet: its stats, skills and what it's strong and weak against. Holding a card still opens it as well, but you no longer have to know that.
+
+---
+
 ## 12 November 2026 – The Hollow's brood: a look for the Mommy and her spiders, and a skin to win (developers only)
 
 - **Their look:** the Mommy and her spiderlings are no longer plain black spiders. They carry their lair on them: bark-brown bodies, the Hollow's orange shelf fungus growing in a ridge down their backs, red eyes in a cluster and feet pale with silk. The Mommy has more of all of it: a crown of fungus shelves, eight eyes, fangs, amber sacs along her sides and silk wound round her knees.

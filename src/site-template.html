@@ -352,6 +352,19 @@ html.dock .panel.shut > .bar:last-child { margin-top: 0; padding-top: 0; }
 .uc2[aria-disabled="true"] { opacity: 0.45; }
 .uc2[aria-pressed="true"] { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45); }
 .uc2.lift { opacity: 0.3; }
+/* the picked card's Skills tab: pulled out from behind its left edge (a zero-width slot before the card, the tab hangs
+   left of it over the gap and the card before), the sheet symbol over "Skills" read top to bottom. A tap opens the sheet */
+.sk2 { flex: 0 0 0; width: 0; margin-right: -7px; position: relative; align-self: stretch; z-index: 1; }
+.sk2t { position: absolute; right: -6px; top: 8px; bottom: 6px; width: 30px; padding: 7px 6px 7px 0; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  border: 0; border-radius: 7px 0 0 7px; background: var(--gold); color: var(--bg); font: inherit; cursor: pointer; box-shadow: -3px 4px 10px rgba(0, 0, 0, 0.45); transform: translateY(-5px); }
+.sk2t svg { flex: none; }
+.sk2t b { writing-mode: vertical-rl; font: 700 10px/1 var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
+.sk2t:hover { background: color-mix(in srgb, var(--gold), #fff 14%); }
+.sk2t:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.sk2t.out { animation: sk2out 0.22s cubic-bezier(.2, .8, .3, 1.2) both; }
+@keyframes sk2out { from { transform: translate(24px, -5px); } to { transform: translateY(-5px); } }
+.uc2[aria-pressed="true"] { z-index: 2; }
+@media (prefers-reduced-motion: reduce) { .sk2t.out { animation: none; } }
 .add2 { flex: 0 0 74px; height: 104px; border-radius: 10px; border: 1.5px dashed color-mix(in srgb, var(--tier) 60%, var(--line)); color: var(--tier); background: none;
   display: grid; align-content: center; justify-items: center; gap: 2px; scroll-snap-align: start; font: inherit; }
 .add2 .p { font-size: 28px; line-height: 1; font-weight: 300; }
@@ -4004,10 +4017,18 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
           <button class="info" data-info="${i}" aria-label="About ${esc(u.name)}">i</button>
         </div>`;
   }
-  // UI 2.0: a unit's card in the tray (disabled: it can't be bought now; a tap opens its sheet)
+  // the unit sheet's symbol: a sheet with a folded corner, a skill star and lines of text (one path, cut out, so it takes
+  // the colour of whatever it sits on)
+  const SHEET_SVG = '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M2.5 1.5h7.6v3.9h3.9v9.1h-11.5z'
+    + 'M6 3.8L6.59 5.29L8.19 5.39L6.95 6.41L7.35 7.96L6 7.1L4.65 7.96L5.05 6.41L3.81 5.39L5.41 5.29z M9.2 5.9h2.6v1.4h-2.6z M4.6 9.3h7.2v1.4h-7.2z M4.6 11.8h7.2v1.4h-7.2z'
+    + 'M11.2 1.5l2.8 2.8h-2.8z"/></svg>';
+  let skTabFor = null; // the card whose Skills tab last slid out (it slides out once per pick, not on every redraw)
+  // UI 2.0: a unit's card in the tray (disabled: it can't be bought now; a tap opens its sheet). The picked card has a
+  // Skills tab pulled out on its left: a tap on it opens the unit's sheet (holding the card still does too)
   function shopCard2(i, disabled) {
     const u = units[i], free = Game.freeLeft(m, me).filter(x => x === i).length, stars = Engine.SLOTS.filter(k => Game.hasSkill(m, me, i, k)).length;
-    return `<button class="uc2" data-i="${i}" style="--tier:${tierColor(tierOf(i))}" aria-pressed="${selected === i}" aria-disabled="${disabled}" aria-label="${esc(u.name)}, ${free ? `${free} free` : `${Game.shopCost(m, me, i)} gold`}">
+    const tab = selected === i ? `<span class="sk2"><button class="sk2t${skTabFor === i ? '' : ' out'}" type="button" data-sk="${i}" aria-label="Skills: open the unit sheet of ${esc(u.name)}">${SHEET_SVG}<b>Skills</b></button></span>` : '';
+    return `${tab}<button class="uc2" data-i="${i}" style="--tier:${tierColor(tierOf(i))}" aria-pressed="${selected === i}" aria-disabled="${disabled}" aria-label="${esc(u.name)}, ${free ? `${free} free` : `${Game.shopCost(m, me, i)} gold`}">
       ${stars ? `<span class="st">${'★'.repeat(stars)}</span>` : ''}
       ${Game.capped(m, i) ? `<span class="cap" aria-label="${Game.capCount(m, me, i)} of ${Game.capOf(m)} squads">${Game.capCount(m, me, i)}/${Game.capOf(m)}</span>` : ''}
       ${Game.mpbLocked(m, me, i) ? '<span class="mpb-x" aria-label="Sabotaged: can’t be deployed this round">✕</span>' : ''}
@@ -4277,7 +4298,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     const showShop = !((choosingPack() || choosingTower() || devPicking()) && can);
     const tip = inline || (selected !== null ? hint : !solo() || (mode === 'ai' && ready[foe()]) ? status : !can ? hint
       : left <= 0 ? 'No deployments left · tap a squad to level it up or buy skills'
-      : fresh ? `Drag a squad to move it · drag it ${pcLayout() ? 'onto the shop' : 'down here'} to take it back` : `Drag a card ${pcLayout() ? 'onto' : 'up onto'} your zone · hold a card for details`);
+      : fresh ? `Drag a squad to move it · drag it ${pcLayout() ? 'onto the shop' : 'down here'} to take it back` : `Drag a card ${pcLayout() ? 'onto' : 'up onto'} your zone · pick one to see its Skills`);
     const pips = Array.from({ length: Math.max(allowed, 0) }, (_, k) => `<i class="${k < left ? 'on' : ''}"></i>`).join('');
     const xb = showShop ? extraBtns : '';
     const tiers = [...new Set(units.map((u, i) => Game.isOff(m, i, me) ? 0 : tierOf(i)))].filter(t => t > 0).sort((a, b) => a - b); // units left out of the match aren't in the shop
@@ -4321,6 +4342,11 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       });
     });
     shop.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => openUnlockSheet(+b.dataset.add)));
+    skTabFor = selected; // (drawn: a redraw with the same pick keeps the tab out without sliding it again)
+    shop.querySelectorAll('[data-sk]').forEach(b => {
+      b.addEventListener('pointerdown', (e) => e.stopPropagation()); // (not a swipe of the tray or the drawer)
+      b.addEventListener('click', () => openSheet(+b.dataset.sk));
+    });
     // a mouse: the wheel scrolls the tray sideways, and dragging its empty space or a tier tab moves it
     shop.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && shop.scrollWidth > shop.clientWidth) { shop.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
     shop.addEventListener('pointerdown', (e) => {
