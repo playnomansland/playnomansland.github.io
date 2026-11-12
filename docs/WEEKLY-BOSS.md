@@ -20,7 +20,7 @@ Every boss has all of these, in this order of discovery. Do not add a surface or
 | B | **The boss screen** (before a run), opened from the note, a click on the model, or Puzzles' "Weekly boss" row | HTML `section.bz` in `src/site-template.html`; `openBoss` / `drawBoss` / `drawBossBoard` / `bzView` / `buildBossStage` in `src/diorama.js`; CSS `#dio.bz`, `#dio .bz…` in `src/diorama.css` |
 | C | **Rewards ladder** on the boss screen (three tiers by round) | `bossRewardList` (page), `drawBoss` (Diorama), `Boss.REWARDS` (`src/boss.js`), `bossRewards` / `bossBackfill` (server) |
 | D | **"<Boss>'s attacks" panel**: attack cards + spawn map side panel; from How to play point 4 and, in a run, the on-screen **<Boss>'s attacks** button (the cog's Settings on phones) | `openBossAttacks` / `drawBossAttacks` / `drawBossNests` / `bossNestBoard` / `ATK_ICON` / `BITE_NAME` / `BITE_COL` in `src/site-template.html`; CSS `.bz-atk…`, `.bz-nests…` |
-| E | **In the run**: boss bar (with a ? that opens the boss screen as a panel, and Restart on phones), round banner, spawn map in the deploy panel, Restart boss, Replay round, <Boss>'s attacks, Save board and Load board on the screen (`bossCtl`; in Settings on phones), a "! Next round" bite line on the round card | `startBoss`, `openBossInfo`, `restartBoss`, `replayBossRound`, `bossCtl`, `bossNextBite`, `bossBar`, `bossLine`, `openBossMap`, `openSoundSheet` |
+| E | **In the run**: boss bar (with a ? that opens the boss screen as a panel, and Restart on phones), round banner, spawn map in the deploy panel, Restart boss, Replay round, <Boss>'s attacks and Save/Load board on the screen, a replay mark left of Next round on the round card (`bossCtl`; in Settings on phones), a "! Next round" bite line on the round card | `startBoss`, `openBossInfo`, `restartBoss`, `replayBossRound`, `bossCtl`, `bossNextBite`, `bossBar`, `bossLine`, `openBossMap`, `openSoundSheet` |
 | F | **Result card** after each fight / at the end | `bossResult` |
 | G | **Leaderboard**: replayed by the server; on the boss screen, Rankings' boss tab, and the leaderboard sheet | `bossBoardLoad`, `bossReport`, `bossRunText`, `drawBossStandings`, `openLeaderboard('boss')`; server `bossBoard` / `bossRows` / route `boss` in `server/src/accounts.js`, replay in `server/src/room.js` `bossCheck` |
 
@@ -104,13 +104,15 @@ One panel, made once at the end of `<body>`, so it opens over the boss screen an
   coloured top edge and a cut corner, Restart coral, Replay gold (`bossCtl`, `.bz-ctl`). Restart asks once more on the
   button ("Sure? Restart", 3 s). Replay drops the rounds this run has reached, each with its bite's mark and name, the
   current one marked NOW. Under them **<Boss>'s attacks** (her jaws, a cream edge) opens surface D on this round
-  (moved off Settings, 12 November). Under that **Save board** and **Load board** (green edge, 12 November): Save keeps
-  this round's board on the device (in the deploy as it stands now; in the fight, on the round's card or at the end, as
-  it went into that fight), one save per round, and says "Saved · round n" for a moment; Load drops the rounds saved,
-  each with its bite's mark and when it was saved, and puts that board back in the deploy (`saveBossBoard`,
+  (moved off Settings, 12 November). Under that **Save/Load board** (green edge, 12 November), one button that drops a
+  list: on top **Save round n** keeps this round's board on the device (in the deploy as it stands now; in the fight, on
+  the round's card or at the end, as it went into that fight), one save per round; under it the rounds saved, each
+  with its bite's mark and when it was saved, and a pick puts that board back in the deploy (`saveBossBoard`,
   `loadBossBoard`, localStorage `phonebellum.bossBoards.v1`, under `bossRulesTag()` so new rules drop old saves; the
   run's record goes with it, so the server's replay still matches). They step aside for a sheet, surface D or her
-  screen's panel. The classic layout (phones) keeps all five in the cog's Settings.
+  screen's panel. The classic layout (phones) keeps all four in the cog's Settings.
+- The round card: left of **Next round** a replay mark with no words (aria-label and title "Play this round again",
+  `againBossRound`): the round just fought again, from its board as it went into the fight.
 - The round card (between rounds): "! Next round" with the next round's attack mark and name, in its colour.
 - The result card's eyebrow: `<Boss> · weekly boss`. After a kill: "Killed in round n:" and the rewards earned; the
   next reward to chase.

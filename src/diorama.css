@@ -1008,6 +1008,10 @@ html.diorama.pcwide .overlay > .card .btn:hover:not(:disabled) { opacity: 1; }
 html.diorama.pcwide .overlay > .card .btn.primary { order: -1; flex: 0 0 auto; opacity: 1; color: #17140F; text-shadow: none; font-size: 46px; padding: 12px 24px 4px 18px; }
 html.diorama.pcwide .overlay > .card .btn.primary::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 12%, 97% 0, 100% 84%, 2% 100%); }
 html.diorama.pcwide .overlay > .card .btn.primary:disabled { opacity: .5; }
+/* the Mommy's round card: Play this round again, a replay mark left of Next round (the primary goes first: order -1),
+   in the card's own plain button look (below), as tall as Next round, the mark in gold */
+html.diorama.pcwide .overlay > .card .btn.boss-retry { order: -2; align-self: stretch; padding: 0 12px; opacity: 1; }
+html.diorama.pcwide .overlay > .card .btn.boss-retry svg { width: 18px; height: 18px; color: #F2B23A; }
 html.diorama.pcwide .overlay > .card .status { font: 700 15px var(--dtype); color: #F4ECD8; }
 html.diorama.pcwide .board-banner { left: var(--dsx0, 380px); right: var(--dsx1, 24px); background: linear-gradient(90deg, transparent, rgba(23,20,15,.86) 18%, rgba(23,20,15,.86) 82%, transparent); font-family: var(--dstencil); }
 html.diorama.pcwide .board-banner small { font-family: var(--dtype); font-weight: 700; }
@@ -2133,10 +2137,14 @@ html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: sta
 .bz-ctl .b svg { color: var(--ac); flex: none; transition: transform .25s; }
 .bz-ctl .b.restart { --ac: #FF8F78; }
 .bz-ctl .b.attacks { --ac: #F4ECD8; width: 214px; } /* (her attacks, moved here from Settings: a plain cream edge, it only shows things) */
-.bz-ctl .b.save, .bz-ctl .b.load { --ac: #9FE0B0; } /* (Save board, Load board under her attacks: the owned green, they keep things) */
+.bz-ctl .b.store { --ac: #9FE0B0; width: 214px; } /* (Save/Load board under her attacks: the owned green, it keeps things) */
+.bz-ctl .list .ic { grid-row: 1 / 3; display: grid; place-items: center; width: 34px; height: 34px; color: var(--bc); }
+.bz-ctl .list .ic svg { width: 22px; height: 22px; }
+.bz-ctl .list .sv.done { background: rgba(159, 224, 176, .16); }
+.bz-ctl .list button:disabled { cursor: default; opacity: .45; background: rgba(244, 236, 216, .04); }
+.bz-ctl .list small + small, .bz-ctl .list button + small { margin-top: 6px; }
+.bz-ctl .list .none { margin: 0; padding: 2px 4px 0; font: 500 12.5px/1.3 var(--dtype); opacity: .7; }
 .bz-ctl .b:hover { background: rgba(52, 45, 34, .94); }
-.bz-ctl .b:disabled { cursor: default; color: rgba(244, 236, 216, .45); background: rgba(23, 20, 15, .7); }
-.bz-ctl .b:disabled svg { color: rgba(159, 224, 176, .4); }
 .bz-ctl .b.restart:hover svg { transform: rotate(-50deg); }
 .bz-ctl .b:focus-visible { outline: 2px solid #F4ECD8; outline-offset: 2px; }
 .bz-ctl .b.sure, .bz-ctl .b.open { background: var(--ac); color: #17140F; }

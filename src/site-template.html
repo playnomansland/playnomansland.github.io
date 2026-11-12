@@ -46,6 +46,8 @@ html:not(.pc) #panel .btn.small { padding: 5px 10px; }
 .code { font-family: var(--font-data); font-size: clamp(30px, 10vw, 44px); letter-spacing: 0.22em; color: var(--gold); padding-left: 0.22em; }
 .linkbox { font-family: var(--font-data); font-size: 12px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; word-break: break-all; user-select: all; -webkit-user-select: all; }
 .btnrow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.btn.boss-retry { display: inline-grid; place-items: center; padding-left: 12px; padding-right: 12px; } /* (the Mommy's round card: Play this round again, a replay mark only) */
+.btn.boss-retry svg { width: 20px; height: 20px; }
 .joinrow { display: flex; gap: 8px; justify-content: center; }
 .joinrow input { width: 9ch; font: 500 18px var(--font-data); letter-spacing: 0.16em; text-transform: uppercase; text-align: center; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 8px; }
 .card .stack { display: grid; gap: 8px; justify-items: center; width: 100%; }
@@ -2894,7 +2896,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <div class="bar"><span class="hint">Friends</span><button class="btn small" id="fr-open2">Friends <b class="fr-badge" hidden></b></button></div>
       ${m && m.boss ? (bossCtlOn() ? '' : '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div><button class="btn primary" id="boss-restart">Restart boss</button>'
         + `<button class="btn" id="boss-replay" aria-expanded="false" aria-controls="boss-rounds">Replay round</button><div class="bar" id="boss-rounds" hidden><span class="hint">Play again from the start of</span><div class="seg" role="group" aria-label="Replay which round">${bossReplayable().map(r => `<button data-boss-round="${r}">Round ${r}${r === m.round ? ' (now)' : ''}</button>`).join('')}</div></div>`
-        + `<button class="btn" id="boss-save"${bossBoardNow() ? '' : ' disabled'}>Save board</button><button class="btn" id="boss-load" aria-expanded="false" aria-controls="boss-loads"${bossSavedRounds().length ? '' : ' disabled'}>Load board</button><div class="bar" id="boss-loads" hidden><span class="hint">Load the board you saved for</span><div class="seg" role="group" aria-label="Load which round">${bossSavedRounds().map(r => `<button data-boss-load="${r}">Round ${r}</button>`).join('')}</div></div>`) : ''}
+        + `<button class="btn" id="boss-store" aria-expanded="false" aria-controls="boss-loads">Save/Load board</button><div id="boss-loads" hidden><div class="bar"><span class="hint">This round’s board</span><button class="btn small" id="boss-save"${bossSaveRound() ? '' : ' disabled'}>${bossSaveRound() ? `Save round ${bossSaveRound()}` : 'Nothing to save yet'}</button></div><div class="bar"><span class="hint">Load the board you saved for</span><div class="seg" role="group" aria-label="Load which round" id="boss-load-seg">${bossLoadSeg()}</div></div></div>`) : ''}
       <button class="btn" id="to-menu">Main menu</button>` : ''}
       ${!inMatch ? `<div class="bar">
         <span class="hint">Stay logged in on this device</span>
@@ -2981,10 +2983,11 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if ($('boss-replay')) $('boss-replay').addEventListener('click', (e) => { const g = $('boss-rounds'); g.hidden = !g.hidden; $('boss-replay').setAttribute('aria-expanded', String(!g.hidden)); if (!g.hidden && e.detail === 0) { const b = g.querySelector('button'); if (b) b.focus(); } });
     $('sheet').querySelectorAll('[data-boss-round]').forEach(b => b.addEventListener('click', () => { bossLeave(); replayBossRound(+b.dataset.bossRound); }));
     // Save board / Load board (saveBossBoard, loadBossBoard): the on-screen pair's, for the classic layout
+    // Save/Load board: one button that shows Save (this round) and the rounds saved to load
+    if ($('boss-store')) $('boss-store').addEventListener('click', (e) => { const g = $('boss-loads'); g.hidden = !g.hidden; $('boss-store').setAttribute('aria-expanded', String(!g.hidden)); if (!g.hidden && e.detail === 0) { const b = g.querySelector('button:not(:disabled)'); if (b) b.focus(); } });
     if ($('boss-save')) $('boss-save').addEventListener('click', () => { const r = saveBossBoard(), b = $('boss-save'); b.textContent = r > 0 ? `Saved · round ${r}` : 'Couldn’t save';
-      const l = $('boss-load'); if (r > 0 && l) { l.disabled = false; $('boss-loads').querySelector('.seg').innerHTML = bossSavedRounds().map(k => `<button data-boss-load="${k}">Round ${k}</button>`).join(''); }
-      setTimeout(() => { if (document.contains(b)) b.textContent = 'Save board'; }, 2200); });
-    if ($('boss-load')) $('boss-load').addEventListener('click', (e) => { const g = $('boss-loads'); g.hidden = !g.hidden; $('boss-load').setAttribute('aria-expanded', String(!g.hidden)); if (!g.hidden && e.detail === 0) { const b = g.querySelector('button'); if (b) b.focus(); } });
+      if (r > 0) $('boss-load-seg').innerHTML = bossLoadSeg();
+      setTimeout(() => { if (document.contains(b)) b.textContent = `Save round ${bossSaveRound()}`; }, 2200); });
     if ($('boss-loads')) $('boss-loads').addEventListener('click', (e) => { const b = e.target.closest('[data-boss-load]'); if (b) loadBossBoard(+b.dataset.bossLoad); });
     $('sheet').querySelectorAll('[data-stay]').forEach(b => b.addEventListener('click', () => {
       setStay(b.dataset.stay === '1');
@@ -7567,6 +7570,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     return out;
   }
   const bossSavedRounds = () => (m && m.boss ? Object.keys(bossBoards()).map(Number).sort((a, b) => a - b) : []);
+  const bossLoadSeg = () => bossSavedRounds().map(r => `<button data-boss-load="${r}">Round ${r}</button>`).join('') || '<span class="hint">Nothing saved yet</span>'; // (Settings, the classic layout)
   // the board Save board would keep right now, or null (between runs, or nothing played yet)
   function bossBoardNow() {
     if (!m || !m.boss) return null;
@@ -7580,15 +7584,22 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     try { localStorage.setItem(BOSS_BOARDS, JSON.stringify(all)); } catch (e) { return -1; } // (full, or storage off: nothing saved, and the button says so)
     bossBoardsMem = all; return r;
   }
-  function loadBossBoard(r) {
-    const s = bossBoards()[r]; if (!s || !m || !m.boss) return;
+  // a board back in the deploy: board (a snapshot of the match, no units) and the round starts Replay round can go back to
+  function putBossBoard(board, saves) {
     bossLeave();
-    m = { ...JSON.parse(JSON.stringify(s.m)), units: m.units, matrix: m.matrix };
-    bossSaves = (s.saves || []).slice(0, m.round + 1).map(x => x || undefined);
+    m = { ...JSON.parse(JSON.stringify(board)), units: m.units, matrix: m.matrix };
+    bossSaves = (saves || []).slice(0, m.round + 1).map(x => x || undefined);
     if (!bossSaves[m.round]) bossSaves[m.round] = snapshot(m);
     report = null; undoSnap = null; lastPre = null; lastSummary = null; lastAiLevels = []; nextReady = [false, false]; rematch = [false, false];
     enterDeploy(0); bossLine();
   }
+  function loadBossBoard(r) { const s = bossBoards()[r]; if (s && m && m.boss) putBossBoard(s.m, s.saves); }
+  // Play this round again (the round's card, left of Next round; the owner, 2026-11-12): the round just fought, with the
+  // board as it went into that fight, so one thing can be changed and the fight tried again. (Replay round goes back to
+  // the round's start instead)
+  function againBossRound() { if (m && m.boss && lastPre && lastPre.boss) putBossBoard(snapshot(lastPre), bossSaves); }
+  // the round Save board would keep right now, or 0
+  const bossSaveRound = () => (!m || !m.boss ? 0 : phase === 'deploy' ? m.round : lastPre && lastPre.boss ? lastPre.round : 0);
   const bossSavedAt = (t) => { const d = new Date(t), today = new Date().toDateString() === d.toDateString();
     return 'Saved ' + (today ? d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })); };
 
@@ -7605,9 +7616,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     replay: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M5 4.5v15" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M19.5 5.2v13.6L8.6 12z" fill="currentColor"/></svg>',
     attacks: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M3 6h18l-2.2 4.2-2.2-3.4-2.3 4-2.3-4-2.3 4-2.2-3.4L5.2 10.2z M3 18h18l-2.2-4.2-2.2 3.4-2.3-4-2.3 4-2.3-4-2.2 3.4L5.2 13.8z" fill="currentColor"/></svg>', // (her jaws: Mommy's attacks' Bite)
     save: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v10.5"/><path d="M7.5 9.8 12 14.3l4.5-4.5"/><path d="M4 15.5v4.5h16v-4.5"/></svg>', // (into the tray: kept)
-    load: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14.3V3.8"/><path d="M7.5 8.3 12 3.8l4.5 4.5"/><path d="M4 15.5v4.5h16v-4.5"/></svg>', // (out of the tray: back on the board)
+    store: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.5v9M5 9.5l3 3 3-3"/><path d="M16 12.5v-9M13 6.5l3-3 3 3"/><path d="M4 15.5v4.5h16v-4.5"/></svg>', // (Save/Load board: into the tray and out of it)
   };
-  let ctlEl = null, ctlKey = '', ctlSure = 0, ctlOpen = false, ctlLoad = false, ctlSaved = 0, ctlSavedR = 0;
+  let ctlEl = null, ctlKey = '', ctlSure = 0, ctlOpen = false, ctlLoad = false, ctlSaved = 0, ctlSavedR = 0, ctlAt = '';
   function bossCtlOn() { return DIO && document.documentElement.classList.contains('pcwide') && !!m && !!m.boss && typeof Boss !== 'undefined' && ['deploy', 'battle', 'result', 'end'].includes(phase); }
   function bossCtl() {
     const show = bossCtlOn() && $('sheet-back').hidden && !bossAtkOpen() && !(infoEl && !infoEl.hidden); // (not over a sheet, her attacks or her screen's panel)
@@ -7621,8 +7632,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
           ctlLoad = false;
         } else if (b.dataset.ctl === 'replay') { ctlOpen = !ctlOpen; ctlLoad = false; ctlSure = 0; }
         else if (b.dataset.ctl === 'attacks') { ctlOpen = false; ctlLoad = false; ctlSure = 0; openBossAttacks((bossView() || {}).round || m.round); } // (moved here from Settings: owner, 2026-11-12)
-        else if (b.dataset.ctl === 'save') { ctlOpen = false; ctlLoad = false; ctlSure = 0; const r = saveBossBoard(); if (r) { ctlSaved = now() + 2200; ctlSavedR = r; } } // (the owner, 2026-11-12)
-        else if (b.dataset.ctl === 'load') { ctlLoad = !ctlLoad; ctlOpen = false; ctlSure = 0; }
+        else if (b.dataset.ctl === 'store') { ctlLoad = !ctlLoad; ctlOpen = false; ctlSure = 0; } // Save/Load board (the owner, 2026-11-12)
+        else if (b.dataset.save) { const r = saveBossBoard(); if (r) { ctlSaved = now() + 2200; ctlSavedR = r; } } // (the list stays open: the save shows up under Load)
         else if (b.dataset.round) { const r = +b.dataset.round; ctlOpen = false; bossLeave(); replayBossRound(r); }
         else if (b.dataset.load) { const r = +b.dataset.load; ctlLoad = false; loadBossBoard(r); }
         ctlKey = ''; bossCtl();
@@ -7630,11 +7641,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       document.addEventListener('pointerdown', (e) => { if ((ctlOpen || ctlLoad) && ctlEl && !ctlEl.contains(e.target)) { ctlOpen = false; ctlLoad = false; bossCtl(); } }, true);
       addEventListener('keydown', (e) => { if (e.key === 'Escape' && (ctlOpen || ctlLoad)) { ctlOpen = false; ctlLoad = false; bossCtl(); } });
     }
-    const rounds = bossReplayable(), sure = ctlSure > now(), saved = ctlSaved > now(), boards = bossBoards(), loadable = Object.keys(boards).map(Number).sort((x, y) => x - y), canSave = !!(phase === 'deploy' || (lastPre && lastPre.boss));
-    const key = [m.round, phase, rounds.join(','), sure, ctlOpen, saved, ctlLoad, loadable.map(r => r + ':' + boards[r].at).join(','), canSave].join('|');
+    if (ctlAt !== m.round + phase) { ctlAt = m.round + phase; ctlOpen = false; ctlLoad = false; } // (a drop-down closes when the round or its phase moves on)
+    const rounds = bossReplayable(), sure = ctlSure > now(), saved = ctlSaved > now(), boards = bossBoards(), loadable = Object.keys(boards).map(Number).sort((x, y) => x - y), saveR = bossSaveRound();
+    const key = [m.round, phase, rounds.join(','), sure, ctlOpen, saved, ctlLoad, loadable.map(r => r + ':' + boards[r].at).join(','), saveR].join('|');
     if (key === ctlKey && !ctlEl.hidden) return;
     ctlKey = key; ctlEl.hidden = false;
-    const a = document.activeElement, focus = a && ctlEl.contains(a) ? (a.dataset.ctl ? `[data-ctl="${a.dataset.ctl}"]` : a.dataset.load ? `[data-load="${a.dataset.load}"]` : `[data-round="${a.dataset.round}"]`) : '';
+    const a = document.activeElement, focus = a && ctlEl.contains(a) ? (a.dataset.ctl ? `[data-ctl="${a.dataset.ctl}"]` : a.dataset.load ? `[data-load="${a.dataset.load}"]` : a.dataset.save ? '[data-save]' : `[data-round="${a.dataset.round}"]`) : '';
     const biteRow = (r, attr, sub, cur) => { const k = Boss.byRound(Boss.CFG.biteByRound, r);
       return `<button ${attr}="${r}" style="--bc:${BITE_COL[k] || '#FFC457'}"><img src="${biteMarkPic(k)}" alt=""><b>Round ${r}</b><em>${esc(sub(k))}</em>${cur ? '<i>Now</i>' : ''}</button>`; };
     const biteSub = (k) => /bite/i.test(BITE_NAME[k] || k) ? BITE_NAME[k] || k : (BITE_NAME[k] || k) + ' bite';
@@ -7644,11 +7656,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       </div>
       <div class="list" id="bz-ctl-list"${ctlOpen ? '' : ' hidden'}><small>Play again from the start of</small>${rounds.map(r => biteRow(r, 'data-round', biteSub, r === m.round)).join('')}</div>
       <button class="b attacks" data-ctl="attacks" aria-haspopup="dialog">${CTL_ICON.attacks}<span>Mommy’s attacks</span></button>
-      <div class="row">
-        <button class="b save${saved ? ' sure' : ''}" data-ctl="save"${canSave ? '' : ' disabled'} aria-label="${saved ? ctlSavedR > 0 ? `Board saved for round ${ctlSavedR}` : 'This device couldn’t save the board' : 'Save board: keep this round’s board to load later'}">${CTL_ICON.save}<span>${saved ? ctlSavedR > 0 ? `Saved · round ${ctlSavedR}` : 'Couldn’t save' : 'Save board'}</span></button>
-        <button class="b load${ctlLoad ? ' open' : ''}" data-ctl="load"${loadable.length ? '' : ' disabled'} aria-expanded="${ctlLoad}" aria-controls="bz-ctl-load">${CTL_ICON.load}<span>Load board</span><i class="car" aria-hidden="true"></i></button>
-      </div>
-      <div class="list" id="bz-ctl-load"${ctlLoad && loadable.length ? '' : ' hidden'}><small>Load the board you saved for</small>${loadable.map(r => biteRow(r, 'data-load', () => bossSavedAt(boards[r].at), false)).join('')}</div>`;
+      <button class="b store${ctlLoad ? ' open' : ''}" data-ctl="store" aria-expanded="${ctlLoad}" aria-controls="bz-ctl-store">${CTL_ICON.store}<span>Save/Load board</span><i class="car" aria-hidden="true"></i></button>
+      <div class="list store" id="bz-ctl-store"${ctlLoad ? '' : ' hidden'}><small>Save</small>
+        <button class="sv${saved ? ' done' : ''}" data-save="1"${saveR ? '' : ' disabled'} style="--bc:#9FE0B0"><span class="ic">${CTL_ICON.save}</span><b>${saveR ? `Save round ${saveR}` : 'Save board'}</b><em>${saved ? ctlSavedR > 0 ? 'Saved' : 'This device couldn’t save it' : !saveR ? 'Nothing to save yet' : phase === 'deploy' ? 'The board as it is now' : 'The board as it went into the fight'}</em></button>
+        <small>Load the board you saved for</small>${loadable.length ? loadable.map(r => biteRow(r, 'data-load', () => bossSavedAt(boards[r].at), false)).join('') : '<p class="none">Nothing saved yet.</p>'}</div>`;
     if (focus) { const f = ctlEl.querySelector(focus); if (f) f.focus(); } // (a keyboard player keeps their place)
   }
   setInterval(() => { if (m && m.boss || (ctlEl && !ctlEl.hidden)) bossCtl(); }, 200);
@@ -7970,11 +7981,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       ${lines}
       ${!m.over && !won ? bossNextBite(r.round + 1) : ''}
       ${m.over ? acct ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : '<p>Play as a guest or sign in (Profile) to get your runs on her leaderboard.</p>' : ''}
-      <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>
+      <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : `<button class="btn boss-retry" id="boss-retry" aria-label="Play this round again" title="Play this round again">${CTL_ICON.replay}</button><button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>`}</div>
     </div>`);
     if (m.over) bossReport(r);
     if ($('boss-board')) $('boss-board').addEventListener('click', () => openLeaderboard('boss'));
     if ($('boss-next')) $('boss-next').addEventListener('click', () => { overlay(null); beginAiRound(); });
+    if ($('boss-retry')) $('boss-retry').addEventListener('click', againBossRound); // (the round just fought, from its board as it went in)
     if ($('boss-again')) $('boss-again').addEventListener('click', () => { overlay(null); startBoss(); });
     if ($('boss-menu')) $('boss-menu').addEventListener('click', () => { overlay(null); m = null; showStart(); });
   }
