@@ -19618,7 +19618,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 492e83b'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 018794c'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -24572,7 +24572,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     })();
     return bossBoard.busy;
   }
-  const bossRunText = (r) => r.won ? `Killed in round ${r.round}, ${(+r.secs).toFixed(1)} s in` : `${(+r.dmg).toLocaleString('en')} damage, not killed`;
+  const bossRunText = (r) => r.won ? `Finished round ${r.round}, ${(+r.secs).toFixed(1)} seconds` : `${(+r.dmg).toLocaleString('en')} damage, not killed`;
   // a finished run's record goes to the server; its answer (what its replay got, and the board) fills the result card's line
   function bossReport(r) {
     if (!acct || typeof Boss === 'undefined' || !m || !m.boss || !m.boss.run) return;

@@ -7369,7 +7369,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     })();
     return bossBoard.busy;
   }
-  const bossRunText = (r) => r.won ? `Killed in round ${r.round}, ${(+r.secs).toFixed(1)} s in` : `${(+r.dmg).toLocaleString('en')} damage, not killed`;
+  const bossRunText = (r) => r.won ? `Finished round ${r.round}, ${(+r.secs).toFixed(1)} seconds` : `${(+r.dmg).toLocaleString('en')} damage, not killed`;
   // a finished run's record goes to the server; its answer (what its replay got, and the board) fills the result card's line
   function bossReport(r) {
     if (!acct || typeof Boss === 'undefined' || !m || !m.boss || !m.boss.run) return;
