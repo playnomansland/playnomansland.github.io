@@ -3587,8 +3587,13 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     return false;
   }
 
+  // the Mommy boss puzzle: while her rules or the nest map are open, the clocks stand still (it is played against nobody,
+  // so nobody waits): the deploy countdown here, the fight in loop()
+  const bossReading = () => !!(m && m.boss) && !$('sheet-back').hidden && !!$('sheet').querySelector('[data-boss-read]');
+  let bossReadT = 0; // when the deploy clock was last pushed on while reading (0: not reading)
   function tick() {
     const t = now();
+    if (phase === 'deploy' && deadline && bossReading()) { if (bossReadT) deadline += t - bossReadT; bossReadT = t; } else bossReadT = 0;
     pickTick(t);
     if (aiReadyTick(t)) return;
     if (phase === 'deploy') {
@@ -3598,7 +3603,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       if (deadline) {
         const left = deadline - t;
         if (el) { el.textContent = fmtClock(left); el.classList.toggle('low', left <= 5000); }
-        $('clock').textContent = left > 0 ? `${fmtClock(left)} to deploy` : 'Time’s up';
+        $('clock').textContent = left > 0 ? `${fmtClock(left)} to deploy${bossReadT ? ' · paused' : ''}` : 'Time’s up';
         // Lock both players at the same effective deadline. The guest's local deadline is offset by 300 ms
         // to account for message transit; the host must lock at that same point, not keep editing until -500.
         // The host still waits until -500 before a fallback fight, giving the guest's final side packet time to arrive.
@@ -7247,7 +7252,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const BITES = { fast: ['Fast', 'quick, light bites: a unit with lots of health holds her best'], heavy: ['Heavy', 'slow, huge bites that splash a little and leave acid: many bodies, shields and wards hold her best'], sweep: ['Sweep', 'light bites that hit everything round the target: one big body holds her best (a swarm melts)'] };
     const acidBites = C.acid && C.acid.pct > 0 ? Object.keys(mo.bites).filter(k => mo.bites[k].acid) : [], acidRounds = C.biteByRound.map((x, k) => acidBites.includes(x) ? k + 1 : 0).filter(Boolean);
     const sec = (title, items) => `<h4 style="margin:10px 0 2px">${title}</h4><ul class="helplist">${items.filter(Boolean).map(x => `<li>${x}</li>`).join('')}</ul>`;
-    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
+    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h" data-boss-read>Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
+      <p class="hint" style="margin:0 0 6px">The clock is paused while you read.</p>
       <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. Kill her within ${b(C.titleRound + ' rounds')} and her brood’s look is yours: the ${b('Hollow Brood')} skin for your Spiders.</p>
       ${sec('Hanging', [
         `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage, and she can’t be stunned, slowed, rooted or moved.`,
@@ -7334,7 +7340,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         <circle cx="${mx}" cy="${my}" r="${T * 0.8}" fill="#151515" stroke="#FF7A6E" stroke-width="1.5"/>${nests}</svg>
         <figcaption style="font-size:12px;margin-top:3px"><b>Round ${r}</b>${r === cur ? ' (now)' : ''}<br><span class="hint">${esc(BN[bite] || bite)}<br>a spider every ${Boss.byRound(C.hatch, r)} s</span></figcaption></figure>`;
     };
-    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Nest map</h3><button class="btn small" id="close">Close</button></div>
+    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h" data-boss-read>Nest map</h3><button class="btn small" id="close">Close</button></div>
       <p style="margin:0">Her nests hang in the same places in every run: nothing about them is random. <b>L</b> is a LOW nest (melee units can hit it too), <b>H</b> a HIGH one (ranged units only). The black dot is Mommy, the dashed ring her reach; your zone is the blue part.</p>
       <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:10px">${Array.from({ length: m.boss.rounds || C.rounds }, (_, k) => board(k + 1)).join('')}</div>`;
     $('sheet-back').hidden = false;
@@ -7520,6 +7526,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function loop(ts) {
     if (phase !== 'battle') return;
     const dtReal = lastTs ? Math.min(0.1, (ts - lastTs) / 1000) : 0.016; lastTs = ts;
+    if (bossReading()) { raf = requestAnimationFrame(loop); return; } // (the Mommy boss puzzle: the fight waits while her rules are read)
     if (cam && !cam.decided && cam.end != null && bt.time() >= cam.end - CAM.secs) {
       cam.decided = true; cam.on = cam.end > CAM.secs + 1 && highStakes();
       if (cam.on) camFollow(dtReal, true);
