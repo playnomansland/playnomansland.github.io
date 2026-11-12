@@ -1142,7 +1142,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <!-- notes. data-home: shown on the menu; data-hover: shown while that thing is pointed at; data-btn: shown while that menu word is -->
   <div class="note rw-note" data-anchor="golem" data-home role="button" tabindex="0" aria-label="Rewards: invite a friend"><span class="tag">Limited reward</span><br>This golem’s skin is yours<br>when a friend joins. <span class="rw-row"><span class="rw-btn">Invite a friend</span></span></div>
-  <div class="note" data-anchor="skeleton" data-home>Hover over stuff on the island with your mouse!</div>
+  <div class="note" data-anchor="skeleton" data-home data-hint>Hover over stuff on the island with your mouse!</div>
+  <!-- the weekly boss's Limited event (2026-11-12): on the Mommy herself, in the hover hint's place while she is open (bossOpen) -->
+  <div class="note ev-note" data-anchor="mommy" data-home data-event role="button" tabindex="0" aria-label="Limited event: fight the Mommy"><span class="tag">Limited event</span><br>A giant spider holds their zone.<br>Kill her for her brood’s skin. <span class="rw-row"><span class="rw-btn">Fight the Mommy</span></span></div>
   <div class="note" data-anchor="sniper" data-hover="sniper">Sniper.<small>Unit · Long range · Good against single targets</small></div>
   <div class="note" data-anchor="mage" data-hover="mage">Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
   <div class="note" data-anchor="ent" data-hover="ent">Sleeping Ent.<small>Sshhhh!</small></div>
@@ -1302,6 +1304,29 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button class="create" id="pz-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
   </section>
   <div class="note qnote" data-q="foe" style="display:none"></div>
+
+  <!-- the weekly boss (2026-11-12): the screen before a run, as Puzzles but on her lair's maroon. Left: the title, a
+       line, how to play, FIGHT HER and Back. Right: the reward and her leaderboard. The island shows her and her nests -->
+  <section class="bz" aria-label="Weekly boss: the Mommy">
+    <div class="bz-top">
+      <span class="k">Limited event · weekly boss</span>
+      <h2>The Mommy</h2>
+      <p class="bz-lede" id="bz-lede"></p>
+    </div>
+    <div class="bz-left">
+      <h3 class="bz-h">How to play</h3>
+      <ol class="bz-how" id="bz-how"></ol>
+      <div class="bz-go"><button class="create" id="bz-fight">Fight her<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+        <button class="create" id="bz-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button></div>
+    </div>
+    <div class="bz-right">
+      <h3 class="bz-h">Reward</h3>
+      <div class="bz-rw" id="bz-rw"></div>
+      <h3 class="bz-h">Leaderboard</h3>
+      <p class="bz-leg" id="bz-leg"></p>
+      <ol class="bz-lb" id="bz-lb" hidden></ol>
+    </div>
+  </section>
 
   <!-- How to play (2026-11-10): the rules as chapters. Left: the title and the chapters as stencil words (The basics,
        then the rest); beside them the picked chapter's page (a line, the points, a row of words where there's a list:
@@ -3357,7 +3382,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     firstRun = { welcome: true, stay: true };
     helpers = { off: false, seen: [], done: false, menu: [] }; for (const T of MENU_TIPS) T.cramped = false; saveHelpers();
     helpCur = null; helperDraw(null); tourWas = true;
-    closeSheet(true); home.pop = false; home.puz = false; home.screen = 'welcome'; home.msg = '';
+    closeSheet(true); home.pop = false; home.puz = false; home.boss = false; home.screen = 'welcome'; home.msg = '';
     drawHome(); helperWake();
   }
   function menuPick(t) {
@@ -4482,6 +4507,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (!home.screen || home.screen === 'menu' || !home.welcomeNeeded()) home.screen = home.welcomeNeeded() ? 'welcome' : 'menu';
     if (home.back === 'lobby' && home.screen === 'menu') { home.screen = 'lobby'; home.pop = false; } // a match from the lobby: back to the Rooms list
     if (home.back === 'puzzles' && home.screen === 'menu') { home.pop = false; home.puz = true; } // a puzzle: back to the Diorama's Puzzles
+    if (home.back === 'boss' && home.screen === 'menu') { home.pop = false; home.boss = true; } // a run against the Mommy: back to her screen
     home.back = '';
     drawHome();
     size(); render();
@@ -7173,6 +7199,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // mortar did and who hurt her most.
   // developer status came or went (the server's answer about the account lands a moment after the page opens, on a slow
   // connection seconds later): a Puzzles list already open is drawn again, so its Weekly boss row comes or goes
+  // the weekly boss is open to this account: developers only for now (her leaderboard and reward take developer runs
+  // only, server/src/accounts.js). The Diorama's Limited event note, her screen and Puzzles' boss row all ask this
+  function bossOpen() { return devMode() && typeof Boss !== 'undefined'; }
   function bossRowChanged() {
     try {
       if (typeof dio !== 'undefined' && dio.api && dio.api.puzRedraw) dio.api.puzRedraw();

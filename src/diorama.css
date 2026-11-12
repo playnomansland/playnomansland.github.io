@@ -1701,3 +1701,63 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn#forfeit-yes { color: #FF8F
 html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn#forfeit-yes::before { content: none; }
 html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn#forfeit-no { color: #F4ECD8; opacity: .75; }
 html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-no):hover:not(:disabled):not(.x) { background: none; border: 0; opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+
+/* ── the weekly boss (2026-11-12) ──
+   On the menu: her Limited event note, in the golem's note's style, on the Mommy at the back of their zone (it takes the
+   hover hint's place while she is open). Her screen (#dio.bz): as Puzzles, on her lair's maroon (the dark red earth of
+   Puzzles' boss row), amber where Puzzles has saffron. Left: the title, a line, How to play, FIGHT HER and Back. Right:
+   the reward and her leaderboard. The island shows her lair ── */
+#dio .ev-note { cursor: pointer; }
+#dio .ev-note .rw-row { display: block; margin-top: 8px; }
+#dio .ev-note .rw-btn { display: inline-flex; align-items: center; height: 26px; padding: 2px 12px 0 10px; font: 700 17px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); background: var(--saffron); clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; transition: transform .15s ease; }
+#dio .ev-note:hover .rw-btn, #dio .ev-note:focus-visible .rw-btn { transform: rotate(-1.5deg) scale(1.04); }
+#dio .ev-note:focus-visible { outline: none; }
+
+#dio.bz { --field: #4A1A14; --field-lo: #2E0E0A; }
+#dio.bz .menu, #dio.bz .zz, #dio.bz .standings, #dio.bz #dio-backto, #dio.bz .tiers { display: none; }
+#dio.bz .acct { display: flex; }
+#dio .bz { position: fixed; left: 48px; top: clamp(100px, 14.2vh, 128px); display: none; grid-template-columns: clamp(320px, 28vw, 430px) clamp(260px, 21vw, 330px); grid-template-areas: "top top" "left right"; column-gap: clamp(28px, 3vw, 48px); align-items: start; }
+#dio .bz-top { grid-area: top; display: grid; justify-items: start; }
+#dio .bz-left { grid-area: left; } #dio .bz-right { grid-area: right; }
+#dio.bz .bz { display: grid; }
+#dio .bz-left, #dio .bz-right { display: grid; justify-items: stretch; align-content: start; min-width: 0; }
+#dio .bz-left .bz-go { justify-self: start; }
+#dio .bz .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; color: #FFC457; }
+#dio .bz h2 { margin: 2px 0 0; font: 700 clamp(52px, 9.6vh, 92px)/.86 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; white-space: nowrap; }
+#dio .bz .bz-lede { margin: clamp(8px, 1.4vh, 12px) 0 0; font: 700 15px/1.35 var(--type); opacity: .92; }
+#dio .bz .bz-h { margin: clamp(14px, 2.6vh, 24px) 0 clamp(4px, .8vh, 8px); font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; color: #FFC457; }
+#dio .bz .bz-how { margin: 0; padding: 0; list-style: none; counter-reset: bz; display: grid; gap: clamp(5px, 1vh, 9px); }
+#dio .bz .bz-how li { counter-increment: bz; position: relative; padding-left: 30px; font: 500 14px/1.38 var(--type); }
+#dio .bz .bz-how li::before { content: counter(bz); position: absolute; left: 0; top: -1px; font: 700 18px/1 var(--stencil); color: #FF4A36; text-shadow: 0 0 6px rgba(255, 74, 54, .6); }
+#dio .bz .bz-how b { color: #F6DFA6; }
+#dio .bz .bz-go { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin-top: clamp(16px, 3vh, 28px); }
+#dio .bz .create { margin: 0; font-size: clamp(28px, 4vh, 36.4px); padding: clamp(6px, 1.1vh, 10px) 22px clamp(5px, .9vh, 8px) 18px; }
+#dio .bz #bz-fight { background: #E8962E; color: #23170F; padding-left: 22px; padding-right: 18px; }
+#dio .bz #bz-fight:hover, #dio .bz #bz-fight:focus-visible { background: #FFC457; }
+#dio .bz #bz-back { background: none; color: var(--cream); font-size: clamp(22px, 3vh, 28px); padding-left: 4px; }
+#dio .bz #bz-back svg { width: 20px; height: 20px; }
+/* the reward: the skin's picture, its name, and what earns it */
+#dio .bz .bz-rw { display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 14px 10px 10px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(232, 150, 46, .45); clip-path: polygon(0 4%, 99% 0, 100% 96%, 1% 100%); }
+#dio .bz .bz-rw img { width: 72px; height: 72px; object-fit: contain; flex: none; }
+#dio .bz .bz-rw span { display: grid; gap: 2px; }
+#dio .bz .bz-rw b { font: 700 22px/1 var(--stencil); text-transform: uppercase; color: #FFC457; }
+#dio .bz .bz-rw small { font: 600 13px var(--type); opacity: .85; }
+#dio .bz .bz-rw em { margin-top: 4px; font: 700 13px var(--type); font-style: normal; color: #F6DFA6; }
+#dio .bz .bz-rw em.own { color: #9FE0B0; }
+/* her leaderboard */
+#dio .bz .bz-leg { margin: 0 0 6px; font: 600 13px/1.35 var(--type); opacity: .85; }
+#dio .bz .bz-lb { margin: 0; padding: 0; list-style: none; width: 100%; display: grid; gap: 2px; }
+#dio .bz .bz-lb li { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 10px; padding: 5px 8px; background: rgba(0, 0, 0, .18); }
+#dio .bz .bz-lb li.first { background: rgba(232, 150, 46, .22); }
+#dio .bz .bz-lb li.me { outline: 1px solid #FFC457; outline-offset: -1px; }
+#dio .bz .bz-lb .r { font: 700 18px/1 var(--stencil); color: #FFC457; text-align: center; }
+#dio .bz .bz-lb .who { display: grid; min-width: 0; }
+#dio .bz .bz-lb .who b { font: 700 14px var(--type); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#dio .bz .bz-lb .who small { font: 500 12px var(--type); opacity: .78; }
+#dio .bz .bz-lb .you { font: 700 10px var(--type); font-style: normal; text-transform: uppercase; letter-spacing: .06em; padding: 1px 4px; color: #23170F; background: #FFC457; }
+#dio .bz .bz-lb .s { font: 700 18px/1 var(--stencil); }
+@media (max-width: 700px) { /* a phone: one column under the island, as a page that scrolls */
+  #dio .bz { position: relative; left: auto; top: auto; margin: 370px 16px 40px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "left" "right"; }
+  #dio.bz .bz { display: grid; }
+  #dio .bz h2 { font-size: 48px; white-space: normal; }
+}

@@ -249,6 +249,10 @@
       hb.position.set(-2.55, 0.45, -3.95); hb.castShadow = hb.receiveShadow = false; goblins.add(hb); }
     const mammoth = unit('mammoth', '#8E7A68', FOE, 3.4, -4.6, s * 0.8, Y - 0.3);
     const skeleton = unit('skeleton', '#E9E3CF', FOE, -5.0, -5.6, s * 0.9, Y + 0.3);
+    // the weekly boss's Limited event (2026-11-12): the Mommy herself (the game's own 'spider:mommy') at the back of their
+    // zone, a nest of hers hanging beside her. Only while she is open (bossOpen); her note and a click on her open her screen
+    const mommy = unit('spider:mommy', '#1A1A1A', FOE, 3.0, -7.3, 1.15, Y - 0.4);
+    const mommyNest = unit('nest', '#E6DED0', FOE, 1.0, -8.1, 0.22); mommyNest.position.y = mommyNest.userData.y0 = 0.6;
     const pieces = new THREE.Group(); island.add(pieces);
     for (const c of [...island.children]) if (!base.has(c) && c !== pieces) pieces.add(c);
 
@@ -365,6 +369,22 @@
         b.position.set(0, 0.07, 0.3); g.add(b);
         squad(u, YOU, 0, -0.3, 0.25, g, 1.15); for (const f of g.children) if (f !== b) f.position.y = 0.14;
       });
+    }
+
+    // ── the weekly boss (2026-11-12): her screen's island is her lair as round 1 sets it (Boss.CFG): the Mommy big at the
+    // front of their zone, round 1's nests (a HIGH one hanging on its thread, a LOW one on the ground) and a few of her
+    // spiders. Her board is 12 by 16 tiles, the island 14 by 18: her places are stretched onto it. It rises as the menu's
+    // pieces sink (as Puzzles) ──
+    const bossStage = new THREE.Group(); island.add(bossStage); bossStage.position.y = -4; bossStage.visible = false;
+    let bossBuilt = false;
+    function buildBossStage() {
+      if (bossBuilt || typeof Boss === 'undefined') return; bossBuilt = true;
+      const C = Boss.CFG, bx = (c) => (c + 0.5) * W / 12 - W / 2, bz = (r) => (r + 0.5) * D / 16 - D / 2;
+      const mo = unit('spider:mommy', '#1A1A1A', FOE, bx(C.mommy.col), bz(C.mommy.row) - 0.6, 1.25, Y + 0.12, bossStage);
+      for (const sd of [-1, 1]) { const th = mesh(new THREE.CylinderGeometry(0.025, 0.025, 3.4, 4), mat('#EDEDED'), false); th.position.set(mo.position.x + sd * 0.7, 2.6, mo.position.z + 0.4); bossStage.add(th); } // the silk she hangs by
+      for (const [c, r, kind] of Boss.byRound(C.nests, 1)) { const n = unit('nest', '#E6DED0', FOE, bx(c), bz(r), 0.3, 0, bossStage); if (kind !== 'low') n.position.y = 1.5; }
+      for (const [x, z, ry] of [[-2.2, -1.2, 2.6], [-1.2, -0.3, 3.4], [1.9, -0.6, 3.0], [3.1, 0.6, 3.6], [-3.4, 0.4, 2.8]]) unit('spider:hollow', '#4A3A2B', FOE, x, z, 0.32, ry, bossStage);
+      unit('treasury', '#D9B95B', YOU, bx(C.treasury.col), bz(C.treasury.row), 0.28, Y, bossStage); // your side: no tower, a treasury
     }
 
     // ── How to play (2026-11-10): the island is the diagram. Each chapter stands its own pieces on the board (as Puzzles
@@ -556,7 +576,7 @@
     const anchors = {
       golem: [golem, 1.35, [-190, -170]], golemW: [golem, 1.35, [-200, -80]], sniper: [sniper, 1.0, [170, 120]], mage: [mage, 1.05, [-300, 40]],
       keepYou: [keepYou, 2.3, [-260, -40]], keepFoe: [keepFoe, 2.4, [-200, -120]], vaultYou: [vaultYou, 0.7, [-230, 70]], vaultFoe: [vaultFoe, 0.7, [180, -110]], mammoth: [mammoth, 1.3, [200, -120]],
-      skeleton: [skeleton, 1.1, [80, -110]], ent: [ent, 0.6, [190, 60]], goblins: [gobDot, 0.9, [-200, -90]],
+      skeleton: [skeleton, 1.1, [80, -110]], ent: [ent, 0.6, [190, 60]], goblins: [gobDot, 0.9, [-200, -90]], mommy: [mommy, 1.0, [150, -150]],
     };
     // the battlefield note's dot: the island's right corner in the menu's view, the middle of its near edge in the plan view
     const bfMenu = new THREE.Object3D(); bfMenu.position.set(7, 0, -9); island.add(bfMenu);
@@ -570,7 +590,7 @@
     const dotSvg = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="currentColor"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="currentColor" stroke-width="1" opacity=".5"/>`;
     // (each tower and treasury shows only its own note: owner, 2026-11-08)
     // (a menu word's white note stays away while the menu guide's tour is on: helpTour. One note at a time)
-    const showing = (el, hovered) => el.dataset.anchor === 'btn' && helpTour() ? false : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
+    const showing = (el, hovered) => el.dataset.anchor === 'btn' && helpTour() ? false : el.hasAttribute('data-event') ? !body.classList.contains('welcome') && bossOpen() && viewName === 'play' && !hovered : el.hasAttribute('data-hint') && bossOpen() ? false : body.classList.contains('welcome') ? el.hasAttribute('data-welcome') && door.invited && !body.classList.contains('in-signin') : el.hasAttribute('data-welcome') ? false : viewName !== 'play' ? el.dataset.btn === viewName : hovered ? el.dataset.hover === hovered : el.hasAttribute('data-home');
     // a label off the point (x, y): a line out to it and under it, kept on screen. Returns the line's svg
     let placed = []; // the island notes' boxes laid out so far this frame (notes() empties it)
     let pinFading = false, pinOverFading = false; // the note being laid out is fading; it may sit over fading boxes
@@ -632,7 +652,7 @@
           }
           continue;
         }
-        let show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el, hovered) && !inPlay && !inProf && !body.classList.contains('puz') && !body.classList.contains('how') && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
+        let show = !phone() && (bf ? $('dio-stay').hidden && !body.classList.contains('welcome') && (inPlay || (inProf ? !body.classList.contains('in-history') && !body.classList.contains('units') : viewName === 'play' && !hovered)) : showing(el, hovered) && !inPlay && !inProf && !body.classList.contains('puz') && !body.classList.contains('how') && !body.classList.contains('bz') && !(body.classList.contains('music-open') && el.dataset.anchor === 'sniper'));
         // every island note on the menu fades out over a second once it isn't wanted (owner, 2026-11-08: a quick sweep
         // over the island leaves each note readable for a second); a pointed-at piece's note shows at once, the menu's
         // own notes (the golem's, the skeleton's) come back in a quarter of a second
@@ -766,7 +786,7 @@
       if (e.target === cv && !body.classList.contains('play')) {
         if (body.classList.contains('units')) { const i = hitOf(e, rosterHot); if (i >= 0) key = 'u:' + i; }
         else if (body.classList.contains('how')) { if (howHot.length && hitOf(e, howHot) >= 0) unitHot = true; }
-        else if (viewName === 'play' && !body.classList.contains('profile') && !body.classList.contains('puz')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; else if (!body.classList.contains('welcome') && hitOf(e, UNIT_MODELS) >= 0) unitHot = true; }
+        else if (viewName === 'play' && !body.classList.contains('profile') && !body.classList.contains('puz') && !body.classList.contains('bz')) { const keys = Object.keys(HOT), i = hitOf(e, Object.values(HOT)); if (i >= 0) key = keys[i]; else if (!body.classList.contains('welcome') && (hitOf(e, UNIT_MODELS) >= 0 || (bossOpen() && hitOf(e, [mommy, mommyNest]) >= 0))) unitHot = true; }
       }
       if (e.target === cv && body.classList.contains('play') && !body.classList.contains('profile') && hitOf(e, [island]) >= 0) unitHot = true; // Play: the island switches its view
       setHover(key); cv.classList.toggle('world-hot', !!key || unitHot);
@@ -784,7 +804,8 @@
       if (!key || !key.startsWith('u:')) notes();
     }
     body.addEventListener('click', (e) => { // the main menu: a unit model opens Units (its note doesn't: notes are their own elements)
-      if (e.target !== cv || viewName !== 'play' || ['play', 'profile', 'welcome', 'units', 'ranks', 'pinned', 'puz', 'how'].some(c => body.classList.contains(c))) return;
+      if (e.target !== cv || viewName !== 'play' || ['play', 'profile', 'welcome', 'units', 'ranks', 'pinned', 'puz', 'how', 'bz'].some(c => body.classList.contains(c))) return;
+      if (bossOpen() && hitOf(e, [mommy, mommyNest]) >= 0) { openBoss(); return; }
       if (hitOf(e, UNIT_MODELS) < 0) return;
       items.forEach(x => x.classList.toggle('on', x.dataset.cam === 'units')); viewName = 'units'; want = VIEWS.units; setMode('units'); body.classList.add('pinned'); setHover(null); cv.classList.remove('world-hot');
     });
@@ -851,10 +872,13 @@
       champ.rotation.y = -0.3 + Math.sin(t * 0.6) * 0.1;
       const rk = body.classList.contains('ranks'), un = body.classList.contains('units'), pz = body.classList.contains('puz');
       puzArmy.position.y = lerp(puzArmy.position.y, pz ? 0 : -4, kk); puzArmy.visible = puzArmy.position.y > -3.6;
-      const hw = body.classList.contains('how');
+      const hw = body.classList.contains('how'), bzo = body.classList.contains('bz');
       howStage.position.y = lerp(howStage.position.y, hw ? 0 : -4, kk); howStage.visible = howStage.position.y > -3.6;
+      bossStage.position.y = lerp(bossStage.position.y, bzo ? 0 : -4, kk); bossStage.visible = bossStage.position.y > -3.6;
+      mommy.visible = mommyNest.visible = bossOpen();
+      mommy.rotation.y = Y - 0.4 + Math.sin(t * 0.5) * 0.08; mommyNest.position.y = mommyNest.userData.y0 + Math.sin(t * 1.1) * 0.05;
       for (const g of howHot) g.position.y = lerp(g.position.y, g.userData.up ? 0.42 : 0, still ? 1 : 0.2);
-      pieces.position.y = lerp(pieces.position.y, rk || un || pz || hw ? -2.6 : 0, kk); pieces.visible = pieces.position.y > -2.4;
+      pieces.position.y = lerp(pieces.position.y, rk || un || pz || hw || bzo ? -2.6 : 0, kk); pieces.visible = pieces.position.y > -2.4;
       const tn = performance.now() / 1000;
       for (const g of rosterHot) for (const f of g.children) if (f.userData.pop) { const p = Math.min(1, (tn - f.userData.pop) / 0.34), e = 1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2);
         f.scale.setScalar(Math.max(0.001, f.userData.s * (p >= 1 ? 1 : e))); if (p >= 1) f.userData.pop = 0; }
@@ -959,7 +983,7 @@
     { const rn = body.querySelector('.rw-note'); rn.addEventListener('click', () => openRewardsSheet()); rn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRewardsSheet(); } }); }
     const unpin = () => { body.classList.remove('pinned'); setMode('play'); picked = null; items.forEach(x => x.classList.toggle('on', x.id === 'play')); viewName = 'play'; want = VIEWS.play; };
     // the Play screen is the old PLAY popup: home.pop says it's open (it stays open across a match, and ?test opens it at once)
-    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); if (typeof closePuz === 'function') closePuz(); if (typeof closeHow === 'function') closeHow(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = playView(); home.pop = true; };
+    const openPlay = () => { if (typeof openDrop === 'function') openDrop(''); if (body.classList.contains('profile')) closeProfile(); if (typeof closePuz === 'function') closePuz(); if (typeof closeHow === 'function') closeHow(); if (typeof closeBoss === 'function') closeBoss(); unpin(); body.classList.add('play'); body.classList.remove('music-open'); want = playView(); home.pop = true; };
     const closePlay = () => { body.classList.remove('play', 'mp-open'); setMp(false); unpin(); home.pop = false; };
     document.getElementById('play').addEventListener('click', openPlay);
     document.getElementById('play-back').addEventListener('click', () => { leavePlay(); unpin(); }); // Play's Back: the menu (owner, 2026-11-10)
@@ -969,7 +993,7 @@
       if (body.classList.contains('welcome')) return;
       openDrop(''); closeMusic();
       if (body.classList.contains('profile')) closeProfile();
-      closePuz(); closeHow(); leavePlay(); unpin();
+      closePuz(); closeHow(); closeBoss(); leavePlay(); unpin();
     }
     // off the Play side (Play, Rooms, New room) to the plain menu: the logo and Profile, which opens over the menu only
     function leavePlay() {
@@ -984,6 +1008,7 @@
       else if (w === 'welcome') goScreen('welcome'); });
     const goBack = () => { if (body.classList.contains('welcome')) return body.classList.contains('in-signin') ? goScreen('welcome') : undefined; if (body.classList.contains('in-history')) return closeHistory(); if (body.classList.contains('profile')) return body.classList.contains('units') ? profileUnits(false) : closeProfile();
       if (body.classList.contains('puz')) return closePuz();
+      if (body.classList.contains('bz')) return closeBoss(true);
       if (body.classList.contains('how')) return closeHow();
       if (body.classList.contains('in-rooms')) return closeRooms(); closePlay(); };
     backBtn.addEventListener('click', goBack);
@@ -1230,7 +1255,7 @@
     // where Profile was opened from, for its Back: the Play screen, Rooms (and New room), or the menu
     let pfFrom = null;
     function openProfile() { if (!body.classList.contains('profile')) pfFrom = body.classList.contains('in-create') ? 'create' : home.screen === 'lobby' ? 'rooms' : body.classList.contains('play') || home.pop ? 'play' : null;
-      openDrop(''); closePuz(); closeHow(); leavePlay(); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
+      openDrop(''); closePuz(); closeHow(); closeBoss(); leavePlay(); unpin(); closeMusic(); body.classList.add('profile'); backBtn.textContent = '← Menu'; pf.outSure = pf.sure = false; pf.msg = ''; drawProfile();
       if (acct && !sampleAcct) acctCall('me', {}, true).then(r => { if (r.status === 200) { acctTake(r); A = acct; buildTier(tier); drawProfile(); } else if (r.status === 401) { acctFail(r); A = acct; drawProfile(); } }); }
     function closeProfile() { body.classList.remove('profile', 'in-history', 'units'); picked = null; hovered = null; want = VIEWS.play; backBtn.textContent = '← Menu'; acctUi.after = null; drawProfile(); }
     acctBtn.addEventListener('click', openProfile);
@@ -1257,15 +1282,70 @@
           return `<button class="item${done.includes(k) ? ' done' : ''}${k === puzPick ? ' on' : ''}" data-puz="${k}"><svg class="shard" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${shards[k % 4]}"/></svg><span class="n">${String(n).padStart(2, '0')}</span>${esc(PUZZLES[k].name)}${done.includes(k) ? '<small>✓ solved</small>' : ''}</button>`; }).join(''); }).join('');
     }
     function openPuz() {
-      openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); closeHow(); leavePlay(); unpin();
+      openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); closeHow(); closeBoss(); leavePlay(); unpin();
       body.classList.add('puz'); home.puz = true; hovered = null; setHover(null);
       drawPuz(); puzShow(puzPick >= 0 ? puzPick : firstOpen()); want = VIEWS.puz;
     }
     function closePuz() { if (!body.classList.contains('puz')) return; body.classList.remove('puz'); home.puz = false; want = VIEWS.play; body.querySelectorAll('.qnote').forEach(n => { n.style.display = 'none'; n._off = null; }); }
     $('pz-list').addEventListener('mouseover', (e) => { const b = e.target.closest('[data-puz]'); if (b && +b.dataset.puz !== puzPick) puzShow(+b.dataset.puz); });
     $('pz-list').addEventListener('focusin', (e) => { const b = e.target.closest('[data-puz]'); if (b && +b.dataset.puz !== puzPick) puzShow(+b.dataset.puz); });
-    $('pz-list').addEventListener('click', (e) => { if (e.target.closest('[data-boss]')) { startBoss(); return; } const b = e.target.closest('[data-puz]'); if (b) startPuzzle(+b.dataset.puz); });
+    $('pz-list').addEventListener('click', (e) => { if (e.target.closest('[data-boss]')) { openBoss(); return; } const b = e.target.closest('[data-puz]'); if (b) startPuzzle(+b.dataset.puz); });
     $('pz-back').addEventListener('click', closePuz);
+
+    // ── the weekly boss (2026-11-12): her screen before a run (the owner: "don't go into the game right away"). From her
+    // Limited event note on the menu, a click on her on the island, or Puzzles' boss row. How to play (her rules in short,
+    // from Boss.CFG: the whole sheet is openBossRules, in the run), the reward (the Hollow Brood skin) and her
+    // leaderboard (bossBoardLoad, the same board as Rankings' Mommy tab). FIGHT HER starts the run (startBoss); the end of
+    // a run comes back here (home.back 'boss' → home.boss) ──
+    let bzFrom = null; // where her screen was opened from, for Back: 'puz' (Puzzles) or the menu
+    function bzView() {
+      const pr = body.querySelector('.bz').getBoundingClientRect(), sw = innerWidth, sh = innerHeight;
+      const L = Math.min(pr.right + 24, sw * 0.72), R = sw - 24, T = 96, B = sh - 130, fw = Math.max(0.2, (R - L) / sw), fh = Math.max(0.3, (B - T) / sh);
+      return { az: 0.42, el: 0.6, zoom: Math.max(19 / (2 * (sw / sh) * fw), 12 / (2 * fh)), at: [0.6, 0.6, -1.2], off: [(L + R) / 2 / sw - 0.5, 0.5 - (T + B) / 2 / sh] };
+    }
+    function drawBoss() {
+      if (typeof Boss === 'undefined') return;
+      const C = Boss.CFG, mo = C.mommy, b = (x) => `<b>${x}</b>`;
+      $('bz-lede').textContent = `A giant spider hangs over their zone. You have ${C.rounds} rounds to kill her.`;
+      $('bz-how').innerHTML = [
+        `Her health carries over from round to round and never comes back. You have no health to lose: only the ${b(C.rounds + ' rounds')} run out.`,
+        `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage. Bring down her ${b('nests')} first: ${b('HIGH')} ones only ranged units can hit, ${b('LOW')} ones melee units too.`,
+        `Every nest down and she ${b('falls')}: stunned for ${mo.stun} s, then full damage for the rest of the ${C.fightSecs} s fight.`,
+        `Keep a unit in her reach, or she throws ${b('web mortars')} at your biggest clump. Her bite changes every round.`,
+        `${C.startGold} gold to start, a treasury instead of a tower, one free move and one free extra deployment a round. At most ${C.maxPerType} squads of one unit.`,
+      ].map(x => `<li>${x}</li>`).join('');
+      const k = SKIN['spiders-hollow'], own = !!(A && (A.skins || []).some(x => x.id === 'spiders-hollow'));
+      $('bz-rw').innerHTML = k ? `${k.pic ? `<img src="${esc(k.pic)}" alt="">` : ''}<span><b>${esc(k.name)}</b><small>A skin for your ${esc(k.unit)}</small>
+        <em${own ? ' class="own"' : ''}>${own ? '✓ Yours' : `Kill her within ${C.titleRound} rounds`}</em></span>` : '';
+      drawBossBoard();
+    }
+    function drawBossBoard() {
+      const rows = bossBoard.rows, me = acct ? acct.id : '', list = $('bz-lb');
+      if (!(bossBoard.at && Date.now() - bossBoard.at < 60e3)) bossBoardLoad().then(() => { if (body.classList.contains('bz')) drawBossBoard(); });
+      $('bz-leg').textContent = !rows ? (bossBoard.at ? 'The leaderboard comes from the game server, which can’t be reached right now.' : 'Loading…')
+        : !rows.length ? 'Nobody has finished a run against her yet. Be the first.' : 'Best runs: a kill in the earliest round first, then the most damage.';
+      list.hidden = !(rows && rows.length);
+      const at = rows ? rows.findIndex(r => me && r.id === me) : -1, top = (rows || []).slice(0, 8);
+      if (at >= 8) top.push(rows[at]); // your own run, under the top eight
+      list.innerHTML = top.map((r) => { const i = rows.indexOf(r), mine = !!me && r.id === me;
+        return `<li class="${[i === 0 ? 'first' : '', mine ? 'me' : ''].filter(Boolean).join(' ')}"><span class="r">${i + 1}</span><span class="who"><b>${esc(r.tag)}${mine ? ' <i class="you">you</i>' : ''}</b><small>${esc(bossRunText(r))}</small></span>
+          <span class="s">${r.won ? 'R' + r.round : Math.round(r.dmg / 1000) + 'k'}</span></li>`; }).join('');
+    }
+    function openBoss() {
+      if (!bossOpen()) return;
+      bzFrom = body.classList.contains('puz') ? 'puz' : null;
+      openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); closePuz(); closeHow(); leavePlay(); unpin();
+      body.classList.add('bz'); home.boss = true; hovered = null; setHover(null);
+      buildBossStage(); drawBoss(); want = bzView();
+    }
+    function closeBoss(back) {
+      if (!body.classList.contains('bz')) return; body.classList.remove('bz'); home.boss = false; want = VIEWS.play;
+      if (back && bzFrom === 'puz') openPuz(); bzFrom = null;
+    }
+    addEventListener('resize', () => { if (body.classList.contains('bz')) want = bzView(); });
+    $('bz-back').addEventListener('click', () => closeBoss(true));
+    $('bz-fight').addEventListener('click', () => { if (!bossOpen()) return; home.back = 'boss'; startBoss(); });
+    { const en = body.querySelector('.ev-note'); en.addEventListener('click', openBoss); en.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBoss(); } }); }
 
     // ── How to play (2026-11-10): the rules as chapters (the old sheet's, said for a PC and for the Standard map everyone
     // plays). The basics first, then the rest in the order a match brings it up. A click on a chapter opens its page
@@ -1393,7 +1473,7 @@
       hwNotes(C); buildHow(C.id, k); hwLead(); notes();
     }
     function openHow() {
-      openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); closePuz(); leavePlay(); unpin();
+      openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); closePuz(); closeBoss(); leavePlay(); unpin();
       body.classList.add('how'); hovered = null; setHover(null);
       HOWS = howChapters(); drawHowToc(); howShow(Math.min(hwAt, HOWS.length - 1));
     }
@@ -1931,6 +2011,8 @@
       else if ((!onMenu || !home.pop) && body.classList.contains('play') && !body.classList.contains('in-rooms')) closePlay();
       if (onMenu && home.puz && !body.classList.contains('puz') && !body.classList.contains('profile') && !home.pop) openPuz();
       else if (body.classList.contains('puz')) { if (!onMenu || home.pop) closePuz(); else drawPuz(); }
+      if (onMenu && home.boss && !body.classList.contains('bz') && !body.classList.contains('profile') && !home.pop) openBoss();
+      else if (body.classList.contains('bz')) { if (!onMenu || home.pop || !bossOpen()) closeBoss(); else drawBoss(); }
       if (body.classList.contains('how') && (!onMenu || home.pop)) closeHow();
       drawBackTo();
       if (onMenu) { // what the old drawMenu did quietly on the menu: ranked's switch (and the leaderboard), a fresh account, Discord's answer
@@ -1960,7 +2042,7 @@
       skinPick = ''; try { const v = localStorage.getItem('pb-skin') || ''; if (v === 'random' || Game.SKINS.some(x => x.id === v)) skinPick = v; } catch (e) {}
       homeLook = lookIndex(); if (lookI !== homeLook && !body.classList.contains('in-create')) setLook(homeLook, false);
     }
-    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms, puzzles: openPuz, puzRedraw: () => { if (body.classList.contains('puz')) drawPuz(); }, howto: openHow, isle: () => bfDots.slice(0, 4).map(o => proj(o, 0)) }; // (isle: the island's four corners on screen, for the menu guide's labels)
+    dio.api = { music: () => { drawPlayer(); if (!pl.edit) drawList(); }, friends: () => { frBadge(); if (dd.open === 'friends' && !fr.thread) drawFriends(); }, history: () => { openProfile(); openHistory(); }, pause, resume: () => { flyEnd(true); restoreLook(); resume(); }, fly: flyStart, flyStop: () => flyEnd(true), flying: () => !!fly, draw: dioPaint, board: () => { drawStandings(); drawKinds(); drawRooms(); }, rooms: drawRooms, puzzles: openPuz, puzRedraw: () => { if (body.classList.contains('puz')) drawPuz(); if (body.classList.contains('bz') && !bossOpen()) closeBoss(); }, boss: openBoss, howto: openHow, isle: () => bfDots.slice(0, 4).map(o => proj(o, 0)) }; // (isle: the island's four corners on screen, for the menu guide's labels)
     dioPaint();
     if (dio.shown) resume();
     window.__dio = { ready: true, units: () => rosterHot.map(g => g.userData.u.name), pick: (i) => pickUnit(rosterHot[i] || null) }; if (TEST) { window.__dio.sync = dioSync; window.__dio.pts = () => Object.fromEntries(Object.entries(HOT).map(([k, g]) => [k, k === 'goblins' ? proj(gobDot, 0.3) : proj(g, 0.5)])); window.__dio.cam = () => ({ want: Object.keys(VIEWS).find(k => VIEWS[k] === want) || 'other', el: +now.el.toFixed(2) }); } // the tests: the roster standing; show / hide the home by hand
