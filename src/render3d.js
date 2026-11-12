@@ -885,7 +885,9 @@ const Render3D = (THREE, el, view, opts = {}) => {
   // reach and this round's nests, see-through, each nest marked HIGH (only ranged units reach it) or LOW
   function collectBoss(v, f, deploying) {
     const bs = v.boss, foe = 1 - v.me, pool = color('#7FD13B'), tc = teamColor(foe, v.me), ink = color(css('--ink') || '#E8EEEE');
-    const thread = (wx, wz, t, y0 = 5, w = 0.18) => beam(wx + Math.sin(t * 1.3) * 0.4, 60, wz, wx, y0, wz, w, color('#EDEDED'), 0.8); // a silk thread, up off the board
+    // a silk thread, up off the board; in her lair (the Hollow) hers is tied to the root bridge over her (scenery.anchor: its height there)
+    const tieAt = (wx, wz) => (scenery && scenery.anchor && scenery.anchor(wx, wz)) || 0;
+    const thread = (wx, wz, t, y0 = 5, w = 0.18) => { const top = tieAt(wx, wz); beam(wx + Math.sin(t * 1.3) * (top ? 0.12 : 0.4), top || 60, wz, wx, y0, wz, w, color('#EDEDED'), 0.8); };
     // she hangs HANG m off the ground until she falls. Her nests are egg sacs, drawn NEST_SC times the model: a LOW
     // one sits on the ground, a HIGH one hangs NEST_UP m up on its own thread, out of a melee unit's reach
     const HANG = 3.5, NEST_UP = 3.5, NEST_SC = 1.8, LS = 1.5 * fxWide(); // LS: how tall her labels are (bigger from further up)
@@ -914,6 +916,16 @@ const Render3D = (THREE, el, view, opts = {}) => {
         }
       }
       if (st.phase === 'hanging') thread(wx, wz, t, momUp + 3);
+      const tie = tieAt(wx, wz); if (scenery && scenery.whip) scenery.whip(fallEv ? fa : null); // the Hollow: the bridge whips up as her weight leaves it
+      if (tie && st.phase !== 'hanging') { // the snapped end of her thread, swinging under the bridge; dirt and leaves shaken off it
+        const sw = Math.sin(t * 1.6) * Math.min(1.5, 0.4 + fa * 0.3);
+        scene_(() => beam(wx, tie, wz, wx + sw, tie - 5.5, wz + sw * 0.3, 0.1, color('#EDEDED'), 0.7));
+        if (fa < 2.4) for (let k = 0; k < 26; k++) {
+          const ph = fa - (k % 6) * 0.12; if (ph < 0) continue;
+          const an = k * 2.399, rd = 1.5 + (k * 7 % 11) * 0.9, y = tie - 0.5 * 9.8 * ph * ph * (k % 3 ? 1 : 0.35); if (y < 0.2) continue; // (a third are leaves, floating down slower)
+          scene_(() => icon('dot', wx + Math.cos(an) * rd + (k % 3 ? 0 : Math.sin(ph * 5 + k) * 0.8), y, wz + Math.sin(an) * rd, k % 3 ? 0.8 : 1.1, color(k % 3 ? '#6B5440' : '#9A7B4E'), 0.95));
+        }
+      }
       // her reach: a body inside it holds her. Red while nobody is (the mortar is coming)
       scene_(() => arc(wx, wz, bs.mommy.reach, st.mortarIn != null ? color('#FF5A4E') : tc, st.mortarIn != null ? 0.6 + 0.3 * Math.sin(t * 8) : 0.5, 1, 0.04 * 22 / bs.mommy.reach, 28));
       // her web round her (inside it, slower and softer): rings and spokes of silk on the ground
@@ -998,6 +1010,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
       return;
     }
     const mo = bs.mommy, [mx, mz] = world(f, mo.x, mo.y);
+    if (scenery && scenery.whip) scenery.whip(null);
     thread(mx, mz, 0, HANG + 3);
     arc(mx, mz, mo.reach, tc, 0.55, 1, 0.04, 28);
     bodies.push({ u: mo.u, side: foe, x: mo.x, y: mo.y, look: 'ghost', raise: HANG });

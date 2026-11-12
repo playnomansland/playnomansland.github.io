@@ -24,6 +24,11 @@ Floors.FLOORS = {
   // frozen: something huge lies frozen under the ice in the middle (a woolly mammoth)
   glacier: { base: '#EEF3F8', patch: ['#F4F8FB', '#DDE7F1', '#F8FAFD', '#D7E3EF'], mid: ['#5FAED6', '#4A9BCB', '#79C2E0'], strokes: ['#FFFFFF', '#9DB3CB'], ripples: false,
     glacier: ['#3F8FC4', '#8FD3E8'], wind: [1, -0.35], frozen: 'mammoth' },
+  // the Hollow (the Mommy boss's lair, 2026-11-12): the floor of a sinkhole in an old forest. Packed dusty earth, dry
+  // leaves fallen from the rim, roots creeping in from both walls, a warm pool of light from the hole above (pool:
+  // colour), and silk strands drifting over the ground, thicker toward her end (silk: colour)
+  hollow: { base: '#54473A', patch: ['#5C4F40', '#4A3F33', '#635545', '#463B30'], mid: ['#4A3E31', '#43382C', '#524536'], strokes: ['#6A5A47', '#3A3027'], ripples: false,
+    leaves: ['#7A5A3A', '#8C6B44', '#5E4730', '#9A7B4E', '#6B5236'], leafN: 1.3, roots: '#3A2D22', pool: '#F2D69C', silk: '#EEE6D8' },
   sand: { base: '#B39A6C', patch: ['#BDA478', '#A88F62', '#C2AA7E', '#A38A5F'], mid: ['#9E8457', '#A78D60', '#94794E'], strokes: ['#C9B288', '#8F7650'], ripples: true },
 };
 // Looks: what each draws (its biome round the board, and its floor: one painted here, or a map's painted ground in the
@@ -32,8 +37,11 @@ Floors.LOOKS = {
   meadow: { biome: 'meadow', floor: 'meadow' }, autumn: { biome: 'autumn', floor: 'autumn' }, desert: { biome: 'desert', floor: 'sand' },
   snow: { biome: 'snow', floor: 'glacier' }, frost: { biome: 'frost', floor: 'darkwoods' }, forest: { biome: 'forest', bg: 'forest' }, cavern: { biome: 'cavern', bg: 'cavern' },
   ash: { biome: 'ash', floor: 'ash' }, moonlit: { biome: 'moonlit', floor: 'moonlit' }, savanna: { biome: 'savanna', floor: 'savanna' },
+  hollow: { biome: 'hollow', floor: 'hollow' }, // the Mommy boss's lair (Floors.lookOf gives it to every boss run; not a pickable look)
 };
-Floors.lookOf = (src) => { const k = Game.lookOf(src); return Floors.LOOKS[k] ? k : 'meadow'; };
+// (the Mommy boss puzzle is always drawn in her lair, the Hollow, whatever look is picked; kept out of Game.lookOf so the
+// game's rules, the server and the music don't change)
+Floors.lookOf = (src) => { if (src && src.boss) return 'hollow'; const k = Game.lookOf(src); return Floors.LOOKS[k] ? k : 'meadow'; };
 Floors.floor = (() => {
   const cache = {};
   return (ctx, W, H, t, look) => {
@@ -141,6 +149,25 @@ Floors.floor = (() => {
         const x = rr() * W, y = rr() * H, r = t * (0.035 + rr() * 0.03);
         c.globalAlpha = 0.5 + rr() * 0.35; c.fillStyle = L.leaves[Math.floor(rr() * L.leaves.length)];
         c.beginPath(); c.ellipse(x, y, r, r * 0.6, rr() * 3, 0, Math.PI * 2); c.fill();
+      }
+      if (L.pool) { // the light from the hole above: one wide warm pool on the middle of the board, a little toward her end
+        const px = W * 0.5, py = H * 0.44, r = Math.max(W, H) * 0.42, g = c.createRadialGradient(px, py, 0, px, py, r);
+        g.addColorStop(0, L.pool); g.addColorStop(0.55, L.pool + '66'); g.addColorStop(1, L.pool + '00');
+        c.globalAlpha = 0.2; c.fillStyle = g; c.fillRect(0, 0, W, H);
+      }
+      if (L.silk) { // silk drifting over the ground: long loose strands (more toward her end, the top), and a few small cobweb tufts
+        c.lineCap = 'round';
+        for (let k = 0; k < W / t * 7; k++) {
+          const y = H * Math.pow(rr(), 1.6) * 0.8, x = rr() * W, l = t * (0.8 + rr() * 2.2), a = (rr() - 0.5) * 1.2, bend = (rr() - 0.5) * t * 0.6;
+          c.globalAlpha = 0.1 + rr() * 0.16; c.strokeStyle = L.silk; c.lineWidth = 0.5 + rr() * 0.7;
+          c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + Math.cos(a) * l * 0.5 - Math.sin(a) * bend, y + Math.sin(a) * l * 0.5 + Math.cos(a) * bend, x + Math.cos(a) * l, y + Math.sin(a) * l); c.stroke();
+        }
+        for (let k = 0; k < W / t * 1.4; k++) {
+          const x = rr() * W, y = H * Math.pow(rr(), 1.4) * 0.75, r = t * (0.15 + rr() * 0.25), n = 6 + Math.floor(rr() * 4);
+          c.globalAlpha = 0.16 + rr() * 0.12; c.strokeStyle = L.silk; c.lineWidth = 0.6;
+          c.beginPath(); for (let i = 0; i < n; i++) { const an = i / n * Math.PI * 2 + rr() * 0.3; c.moveTo(x, y); c.lineTo(x + Math.cos(an) * r, y + Math.sin(an) * r * 0.8); } c.stroke();
+          c.beginPath(); for (let i = 0; i <= n; i++) { const an = i / n * Math.PI * 2, q = r * 0.55; i ? c.lineTo(x + Math.cos(an) * q, y + Math.sin(an) * q * 0.8) : c.moveTo(x + q, y); } c.stroke();
+        }
       }
       }
       c.globalAlpha = 1;

@@ -20,6 +20,19 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 12 November 2026 – The Mommy's lair: the Hollow (prototype, developers only)
+
+The weekly boss now has a home of her own. Every Mommy run is drawn in **the Hollow**, whatever look you've picked: an old forest whose floor caved in long ago.
+
+- **The pit:** the board is the bottom of a sinkhole. Steep earth walls rise past both sides and the far end (the far one highest), with roots breaking out of them and the forest standing on the rim high above. At your end the walls give way to the slope you came down.
+- **The root bridge:** one giant root spans the pit right over her, and her thread is now tied to it. Seen from straight above it thins into a fine pattern, so it never hides her or the fight. When she falls, her thread snaps, the bridge whips up and dirt and leaves rain down.
+- **Silk that grows:** orb webs in the far corners, tangled sheets on the walls and on the ground past the board's edges, loose strands everywhere, and cocoons hanging off roots. Every round adds more, until by round 5 the walls are half covered.
+- **Her victims:** cocoons lying under the walls with a shield, a sword or a spear poking out, bones round them. One hanging cocoon has a frying pan and a tin cup dangling under it.
+- **The light:** one warm column of light falls through the hole onto the middle of the board, with dust glinting in it. The floor is packed earth with dry leaves, roots and silk strands.
+- Only the look has changed: the board, her rules and her numbers are exactly the same. The 3D board has it all; the 2D board gets the new floor.
+
+---
+
 ## 11 November 2026 – A tour of the menu
 
 - **2v2: tapping the Vault (or any 2v2 building) did nothing** while a unit from the shop was still picked, which it stays after you place one. It now opens the building's sheet and lets go of the pick, as buildings do in 1v1. A ranged unit can still be placed into a Tree kojja's Nest.

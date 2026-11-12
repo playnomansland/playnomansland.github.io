@@ -35,6 +35,8 @@ Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, me
 1. The round-3 title at 54,000: the best plan known wins by 1% (54.6k by round 3). Search further before a real launch (already agreed).
 2. Not built: the "Mommy" title (the win screen mentions it), a weekly rotation (it is the one boss), a model of her own (the spider model drawn big), opening her to everyone (the leaderboard's server check no longer stands in the way).
 
+**Her lair (12 November, a separate session):** every boss run is drawn in the Hollow, a forest sinkhole with a root bridge her thread is tied to, silk growing per round and a warm light column (README, "Her lair, the Hollow"). Looks only; nothing in her rules changed. Ideas and next steps: the project doc `claude/mommy-lair-ideas.md`.
+
 **Things that bit this session (read before working):**
 - Build like live: `PB_UI_DEFAULT=pc node src/build.js` (live's `index.html` has `const DEF = 'pc'`; a plain build makes 'classic' and the merge then changes PC players' menu).
 - Merging: `git checkout -B main origin/main && git merge --no-ff claude/charming-allen-kjik08`; `index.html` conflicts are the built file: rebuild with the line above and add it. Then `git checkout claude/charming-allen-kjik08 && git merge --ff-only main` so the next merge is clean.

@@ -41,6 +41,17 @@ const Scenery3D = (THREE, scene, opts = {}) => {
     light: { hemi: ['#B8CBB5', '#1B251F', 1.15], sun: ['#F5E8C2', 1.8], pos: [-28, 62, -24] }, farLight: 0.72,
     shade: [0.86, 1, 16], night: [0.3, 0.56, 0.42, 0.3], deep: [0.9, 9, 36],
     fall: 'spores', giants: true, gate: true, mist: 44, eyes: [7, 2], shafts: 3, explorer: true };
+  // the Hollow (2026-11-12): the Mommy boss's lair, the one look of every boss run (Floors.lookOf). An old forest whose
+  // floor caved in long ago: the board is the bottom of the pit, earth walls rise past its flanks and far end (the
+  // slope you came down at your end), the forest stands on the rim high above, one giant root spans the pit over her
+  // spot and she hangs from it, silk grows over the walls round by round, and one warm column of light falls through
+  // the hole onto the board. pit: { flank, far } how high the walls rise (m); hollow: the roots, silk and light
+  // (showHollow below)
+  BIOMES.hollow = { sky: '#55493A', land: '#2A2219', tint: [0.8, 0.76, 0.68], low: 'hollow',
+    trees: ['TwistedTree_1', 'TwistedTree_2', 'TwistedTree_3', 'TwistedTree_4', 'TwistedTree_5', 'Pine_4', 'Pine_5', 'DeadTree_3', 'DeadTree_1'], grow: 1, dress: 0.3,
+    tints: [[/^TwistedTree/, [0.78, 0.84, 0.68]], [/^Pine/, [0.62, 0.66, 0.54]], [/^DeadTree/, [0.7, 0.62, 0.52]], [/^Fern|^Plant|^Grass/, [0.85, 0.82, 0.62]], [/^Mushroom/, [1.1, 1.02, 0.9]]],
+    light: { hemi: ['#E8D2A6', '#2B2016', 1.1], sun: ['#FFD89C', 2.1], pos: [-16, 74, -12] }, farLight: 0.72,
+    shade: [0.58, 3, 18], night: [0.55, 0.42, 0.3, 0.5], fall: 'motes', pit: { flank: 17, far: 27 }, hollow: true };
   BIOMES.ice.snow = 0.75; // snow on everything that faces up, drifts round the board and falling snow
   // Looks added 2026-11-07. light: the scene's lights for this look (render3d; default the day sun) as hemi [sky,
   // ground, intensity], sun [colour, intensity], pos (the sun's position); fall: what drifts through the air (FALL
@@ -474,6 +485,14 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     dress: [['Grass_Common_Short', 6], ['Clover_1', 1], ['Mushroom_Common', 1], ['Pebble_Round_1', 1.5], ['Pebble_Round_2', 1.5], ['Pebble_Square_2', 1]],
     rocks: ROCKS,
   };
+  // the Hollow's lists: ferns and tall wispy grass under the walls, shelf fungus, rocks fallen from the walls; pebbles
+  // and a few mushrooms on the board
+  const HOLLOW = {
+    low: [['Fern_1', 2], ['Grass_Wispy_Tall', 1.2], ['Rock_Medium_1', 0.45], ['Rock_Medium_2', 0.45], ['Rock_Medium_3', 0.45], ['Mushroom_Laetiporus', 0.8], ['Plant_1_Big', 0.6]],
+    tuft: [['Pebble_Round_1', 2], ['Pebble_Round_2', 2], ['Pebble_Square_2', 1.5], ['Mushroom_Common', 1], ['Grass_Wispy_Short', 1], ['Fern_1', 0.6]],
+    dress: [['Pebble_Round_1', 2], ['Pebble_Round_2', 2], ['Pebble_Square_2', 1], ['Mushroom_Common', 0.5]],
+    rocks: ROCKS,
+  };
   // the desert's lists (low things, tufts, the board's dressing, boulders)
   const DESERT = {
     low: [['DesertRock_1', 1], ['DesertRock_2', 1], ['DesertRock_3', 1], ['Grass_Wispy_Short', 3], ['PalmTree_5', 1]],
@@ -563,6 +582,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     embers: { col: [1.0, 0.58, 0.26], dir: -1, spd: 0.75, keep: 0.5, size: 1.2, flick: 0.8, sway: 1.8 },
     ash: { col: [0.66, 0.63, 0.6], dir: 1, spd: 0.32, keep: 0.5, size: 0.95, flick: 0, sway: 2.4 }, // grey ash drifting down (Ashlands, with the embers)
     dust: { col: [1.0, 0.9, 0.66], dir: 1, spd: 0.07, keep: 0.3, size: 0.75, flick: 0.35, sway: 3.2 }, // dust and grass seed hanging in the low sun (Savanna)
+    motes: { col: [1.0, 0.84, 0.58], dir: 1, spd: 0.035, keep: 0.34, size: 0.7, flick: 0.7, sway: 2.2, add: true }, // dust motes glinting in the light from the hole (the Hollow)
     spores: { col: [0.82, 1.0, 0.6], dir: -1, spd: 0.06, keep: 0.32, size: 0.8, flick: 0.9, sway: 2.6, add: true }, // glowing spores rising slowly (Darkwoods)
     // Snow (2026-11-07). stream: [speed m/s along the wind, how high (0 to 1 of the box)]: the points race sideways along
     // the wind (biome .wind) low over the ground, in gusts (bands of thicker drift sweeping downwind), each drawn as a
@@ -723,6 +743,12 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     __spear: () => colGeo([[new THREE.CylinderGeometry(0.045, 0.05, 3.2, 5), '#6B4E35', M4(0, 1.6, 0)], [new THREE.ConeGeometry(0.1, 0.45, 4), '#8C9096', M4(0, 3.42, 0)]]),
     __stake: () => colGeo([[new THREE.CylinderGeometry(0.12, 0.14, 1.9, 6), '#4A3828', M4(0, 0.95, 0)], [new THREE.ConeGeometry(0.12, 0.4, 6), '#3A2A1E', M4(0, 2.1, 0)]]),
     __banner_red: () => banner('#7A3A30'), __banner_blue: () => banner('#3A4A6A'),
+    // the Hollow: a cocoon of silk (2.2 m, its foot at 0), wound round with a few thicker bands; the lost explorer's
+    // frying pan and tin cup (Forest Glade), dangling under one
+    __cocoon: () => { const prof = []; for (let i = 0; i <= 12; i++) { const t = i / 12; prof.push(new THREE.Vector2(0.02 + 0.56 * Math.pow(Math.sin(Math.PI * t), 0.75) * (1 - 0.18 * t), t * 2.2)); }
+      return colGeo([[new THREE.LatheGeometry(prof, 9), '#D8CFBF'], ...[0.55, 0.95, 1.35, 1.7].map((y, i) => [new THREE.TorusGeometry(0.5 * Math.pow(Math.sin(Math.PI * y / 2.2), 0.75), 0.06, 4, 10), i % 2 ? '#C9BFAD' : '#E6DED0', M4(0, y, 0, Math.PI / 2 + (i - 1.5) * 0.25, 0, 0.2)])]); },
+    __pan: () => colGeo([[new THREE.CylinderGeometry(0.42, 0.36, 0.12, 10), '#34312F', M4(0, 0, 0, Math.PI / 2, 0, 0)], [new THREE.CylinderGeometry(0.04, 0.04, 0.6, 5), '#2A2826', M4(0, 0.7, 0)]]),
+    __cup: () => colGeo([[new THREE.CylinderGeometry(0.13, 0.11, 0.24, 8), '#8E9398'], [new THREE.TorusGeometry(0.07, 0.02, 4, 8), '#8E9398', M4(0.14, 0.02, 0)]]),
   };
   const geoOf = (name) => { if (!(name in kkCache) && MADE[name]) kkCache[name] = MADE[name](); return kkGeo(name); };
   // props: [{ kind: 'lantern' | 'snowman' | 'model' | 'ember', model, mat 'soot', x, z, y, ang, s, tilt, roll, glow, light }];
@@ -1217,6 +1243,119 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     flagMesh = new THREE.Mesh(fg, flagMat); flagMesh.castShadow = true; flagMesh.raycast = () => {}; flagMesh.name = 'flags'; summit.add(flagMesh);
   }
   // the wind for this round: more and faster spindrift, the haze closing in (bi.haze), plumes and flags livelier
+  // ---------- the Hollow (the Mommy boss's lair, 2026-11-12): the giant root bridge she hangs from, roots breaking out
+  // of the walls with tendrils hanging off them, silk (orb webs, tangled sheets and loose strands) that grows over the
+  // walls round by round, and one warm column of light falling through the hole onto the board. update() works out
+  // the layout (it knows the pit's walls); showHollow builds it, hollowRound shows the silk up to a round, tickHollow
+  // breathes the light and sways the tendrils, whip(a) shakes the bridge as she falls. ----------
+  const hollow = new THREE.Group(); hollow.visible = false; scene.add(hollow);
+  let hol = null, holT = 0, holRound = 0;
+  // bark: vertex colours, flat shaded, darkened like the scenery round it. Over the board, seen from high up (the
+  // strategic and tilted views) it thins into a screen-door dither, so the bridge and tendrils never hide the fight
+  const barkMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  barkMat.onBeforeCompile = (sh) => {
+    shadeLit(sh);
+    sh.vertexShader = 'varying vec3 vHoW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vHoW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = 'varying vec3 vHoW;\n' + sh.fragmentShader.replace('void main() {', `void main() {
+      if (vHoW.y > 4.0 && abs(vHoW.x) < uHalf.x + 1.5 && abs(vHoW.z) < uHalf.y + 1.5) {
+        float dn = normalize(cameraPosition - vHoW).y, k = smoothstep(0.62, 0.9, dn) * 0.9;
+        if (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < k) discard; }`);
+  };
+  barkMat.customProgramCacheKey = () => 'pb-bark';
+  // the pit's earth: the same, without the dither (walls never stand over the board)
+  const pitMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  pitMat.onBeforeCompile = shadeLit; pitMat.customProgramCacheKey = () => 'pb-pit';
+  const BARK_D = new THREE.Color('#3A2D23'), BARK_L = new THREE.Color('#6E5946'), SILK_C = new THREE.Color('#D9D1C2');
+  // silk: an orb web (spokes and a sagging spiral, a few threads torn) and a tangled sheet (crossing threads over a milky film)
+  const orbTex = softTex(256, 256, (g, w, h) => { let sd = 31; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+    const cx = w / 2, cy = h / 2, R = w * 0.47, sp = []; for (let i = 0; i < 17; i++) sp.push(i / 17 * Math.PI * 2 + (r() - 0.5) * 0.18);
+    g.lineCap = 'round'; g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = 1.6; g.beginPath();
+    for (const a of sp) { const L = R * (0.82 + r() * 0.18); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * L, cy + Math.sin(a) * L); } g.stroke();
+    g.lineWidth = 1.15;
+    for (let q = 0.07; q < 0.92; q += 0.042 + r() * 0.012) {
+      g.strokeStyle = `rgba(255,255,255,${0.55 + r() * 0.3})`; g.beginPath();
+      sp.forEach((a, i) => { const b = sp[(i + 1) % sp.length], rad = R * q * (0.97 + r() * 0.06); if (r() < 0.06) return; // a torn gap
+        const x0 = cx + Math.cos(a) * rad, y0 = cy + Math.sin(a) * rad, x1 = cx + Math.cos(b) * rad, y1 = cy + Math.sin(b) * rad, m = (a + b) / 2 + (b < a ? Math.PI : 0);
+        g.moveTo(x0, y0); g.quadraticCurveTo(cx + Math.cos(m) * rad * 0.93, cy + Math.sin(m) * rad * 0.93, x1, y1); });
+      g.stroke();
+    } });
+  const tangleTex = softTex(256, 256, (g, w, h) => { let sd = 57; const r = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+    const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.44); gr.addColorStop(0, 'rgba(255,255,255,0.26)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.lineCap = 'round';
+    for (let i = 0; i < 150; i++) { const a = r() * 6.28, d = Math.sqrt(r()) * w * 0.36, x = w / 2 + Math.cos(a) * d, y = h / 2 + Math.sin(a) * d * 0.8, b = r() * 6.28, l = 18 + r() * 60;
+      g.strokeStyle = `rgba(255,255,255,${0.22 + r() * 0.45})`; g.lineWidth = 0.7 + r() * 0.9; g.beginPath(); g.moveTo(x, y);
+      g.quadraticCurveTo(x + Math.cos(b) * l * 0.5, y + Math.sin(b) * l * 0.5 + l * 0.12, x + Math.cos(b) * l, y + Math.sin(b) * l); g.stroke(); } });
+  const webMats = [orbTex, tangleTex].map((map) => new THREE.MeshBasicMaterial({ map, color: '#F2E9DA', transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide }));
+  const strandMat = new THREE.LineBasicMaterial({ color: '#EFE6D6', transparent: true, opacity: 0.4, depthWrite: false });
+  // the light from the hole: an open cone, brightest where you look straight through it, fading at its sides, at the
+  // ground and high up; seen from straight above it is all side, so the strategic view isn't washed out
+  const beamMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    uniforms: { uCol: { value: new THREE.Color('#FFD69A') }, uA: { value: 0.15 } },
+    vertexShader: `varying float vF; varying float vY; void main() { vec4 wp = modelMatrix * vec4(position, 1.0); vec3 n = normalize(mat3(modelMatrix) * normal);
+      vF = abs(dot(n, normalize(cameraPosition - wp.xyz))); vY = uv.y; gl_Position = projectionMatrix * viewMatrix * wp; }`,
+    fragmentShader: `uniform vec3 uCol; uniform float uA; varying float vF; varying float vY;
+      void main() { float a = uA * pow(vF, 1.7) * smoothstep(0.0, 0.07, vY) * (1.0 - smoothstep(0.45, 1.0, vY)); gl_FragColor = vec4(uCol, a); }` });
+  // a tube along pts (scene coordinates), its radius rad(u) along it (0 to 1) and its colour col(u, around, colour)
+  const tubeOf = (pts, segs, radial, rad, col) => {
+    const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)));
+    const g = new THREE.TubeGeometry(curve, segs, 1, radial, false), pos = g.attributes.position, cl = new Float32Array(pos.count * 3), c = new THREE.Color(), P = new THREE.Vector3(), C = new THREE.Vector3();
+    for (let i = 0; i <= segs; i++) { const u = i / segs, r = rad(u); curve.getPointAt(u, C);
+      for (let j = 0; j <= radial; j++) { const k = i * (radial + 1) + j; P.fromBufferAttribute(pos, k).sub(C).multiplyScalar(r).add(C); pos.setXYZ(k, P.x, P.y, P.z); col(u, j / radial, c); cl.set([c.r, c.g, c.b], k * 3); } }
+    g.setAttribute('color', new THREE.BufferAttribute(cl, 3)); g.computeVertexNormals(); return { g, curve };
+  };
+  const barkCol = (seed, silkAt = -1) => (u, a, c) => { const s = 0.5 + 0.5 * Math.sin(a * Math.PI * 2 * 5 + u * 31 + seed + Math.sin(u * 77 + seed) * 0.9);
+    c.copy(BARK_D).lerp(BARK_L, 0.12 + s * 0.62 + hashf(u * 53 + seed, a * 9, 3) * 0.3); if (silkAt >= 0 && Math.abs(u - silkAt) < 0.016) c.lerp(SILK_C, 0.85); };
+  function clearHollow() {
+    for (const o of [...hollow.children]) { hollow.remove(o); o.traverse((q) => { if (q.geometry) q.geometry.dispose(); }); }
+    hol = null; holRound = 0;
+  }
+  // h: { bridge: [[x, y, z]...], silkAt (u where her thread is tied), anchor: [x, y, z], roots: [[pts, r0]], tendrils:
+  // [[x, y, z, length, lean]], webs: [[kind 0 orb | 1 tangle, x, y, z, size, rotY, rotX, round]], strands: [[a, b, round]],
+  // beam: [x, z, top radius, bottom radius], sun }
+  function showHollow(h) {
+    clearHollow(); hollow.visible = !!h; if (!h) return;
+    const add = (o) => { o.raycast = () => {}; hollow.add(o); return o; };
+    const bridge = new THREE.Group(); add(bridge);
+    // the bridge: a giant root, thick where it grows out of the walls, with a thinner one winding round it
+    const main = tubeOf(h.bridge, 90, 10, (u) => (1.35 + 1.9 * Math.pow(Math.abs(2 * u - 1), 2.2)) * (1 + 0.14 * Math.sin(u * 47) + 0.08 * Math.sin(u * 131)), barkCol(1.3, h.silkAt));
+    const bm = new THREE.Mesh(main.g, barkMat); bridge.add(bm); // (no shadow: a dark band across her and the middle of the board hurt reading the fight)
+    const wind = []; for (let i = 0; i <= 60; i++) { const u = 0.04 + i / 60 * 0.92, p = main.curve.getPointAt(u), r = (1.35 + 1.9 * Math.pow(Math.abs(2 * u - 1), 2.2)) * 0.95, a = u * 15;
+      wind.push([p.x, p.y + Math.cos(a) * r, p.z + Math.sin(a) * r]); }
+    const wm = new THREE.Mesh(tubeOf(wind, 80, 6, (u) => 0.42 + 0.25 * Math.sin(u * 9) ** 2, barkCol(4.1)).g, barkMat); bridge.add(wm);
+    for (const [x, y, z, len, lean] of h.tendrils) { // roots hanging off the bridge, swaying a little (pivot at the top)
+      const g = new THREE.Group(); g.position.set(x, y, z);
+      const pts = [[0, 0, 0], [lean * 0.3, -len * 0.35, lean * 0.2], [lean * 0.8, -len * 0.7, -lean * 0.1], [lean, -len, lean * 0.3]];
+      g.add(new THREE.Mesh(tubeOf(pts, 14, 5, (u) => 0.32 * (1 - u * 0.85), barkCol(x)).g, barkMat)); bridge.add(g);
+      (h.sway || (h.sway = [])).push([g, x * 0.3 + z]);
+    }
+    // roots breaking out of the walls and drooping down their faces
+    for (const [pts, r0] of h.roots) { const m = new THREE.Mesh(tubeOf(pts, 20, 7, (u) => r0 * (1 - u * 0.88) * (1 + 0.1 * Math.sin(u * 23)), barkCol(pts[0][0] + pts[0][2])).g, barkMat); m.castShadow = true; add(m); }
+    // silk: webs and strands, each with the round it appears in
+    const webGeo = new THREE.PlaneGeometry(1, 1), webs = [];
+    for (const [kind, x, y, z, s, ry, rx, round] of h.webs) {
+      const m = new THREE.Mesh(webGeo, webMats[kind]); m.position.set(x, y, z); m.rotation.set(rx || 0, ry || 0, 0, 'YXZ'); m.scale.set(s, s * (kind ? 0.8 : 1), 1); m.renderOrder = 2; add(m); webs.push([m, round]);
+    }
+    const byRound = {}; for (const [a, b, round] of h.strands) (byRound[round] || (byRound[round] = [])).push(...a, ...b);
+    for (const [round, list] of Object.entries(byRound)) {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(list, 3));
+      const l = new THREE.LineSegments(g, strandMat); l.renderOrder = 2; add(l); webs.push([l, +round]);
+    }
+    // the light: an open cone along the sun's way, from high above the hole down onto the board
+    const [bx, bz, rt, rb] = h.beam, dir = new THREE.Vector3(...h.sun).normalize(), H = 92;
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, H, 40, 1, true), beamMat);
+    beam.quaternion.setFromUnitVectors(upY, dir); beam.position.set(bx, 0, bz).addScaledVector(dir, H / 2); beam.renderOrder = 5; add(beam);
+    hol = { bridge, webs, anchor: h.anchor, sway: h.sway || [] };
+  }
+  function hollowRound(r) { if (!hol || r === holRound) return; holRound = r; for (const [o, k] of hol.webs) o.visible = k <= r; }
+  function tickHollow(dt) {
+    holT += dt; beamMat.uniforms.uA.value = 0.15 + 0.02 * Math.sin(holT * 0.31) + 0.01 * Math.sin(holT * 1.13);
+    for (const [g, ph] of hol.sway) { g.rotation.z = Math.sin(holT * 0.55 + ph) * 0.045; g.rotation.x = Math.sin(holT * 0.4 + ph * 1.7) * 0.03; }
+    webMats.forEach((m, i) => { m.opacity = 0.52 + 0.06 * Math.sin(holT * 0.7 + i * 2); }); // the silk catching the light now and then
+  }
+  // the height her thread is tied at, if she hangs under the bridge at (x, z) (render3d draws her thread up to it); 0: no bridge there
+  const anchor = (x, z) => hol && hollow.visible && hol.anchor && Math.hypot(x - hol.anchor[0], z - hol.anchor[2]) < 6 ? hol.anchor[1] : 0;
+  // she falls: the bridge whips up as her weight leaves it, and settles (a: seconds since the fall; null when not falling)
+  function whip(a) { if (!hol) return; const y = a == null || a > 3 ? 0 : 1.3 * Math.exp(-2.2 * a) * Math.sin(a * 11); if (hol.bridge.position.y !== y) hol.bridge.position.y = y; }
   function applyWind(bi, k) {
     windK = k; sumK.value = k;
     if (bi.haze) { const [col, str, from, to1, to2] = bi.haze; shadeU.uHaze.value.set(...new THREE.Color(col).toArray(), str * (0.12 + 0.88 * Math.pow(k, 1.4))); shadeU.uHazeD.value.set(from, to1 + (to2 - to1) * k); }
@@ -1233,6 +1372,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     lampFlick.forEach(([i, base, fl, ph]) => { if (fl) shadeU.uLamps.value[i].w = base * (1 - fl * 0.35 * (0.5 + 0.5 * Math.sin(lampT * 7.3 + ph) * Math.sin(lampT * 3.1 + ph * 2))); });
     emberGlows.forEach(([sp, base, ph]) => { const f = 0.8 + 0.2 * Math.sin(lampT * 6.1 + ph) * Math.sin(lampT * 2.3 + ph); sp.scale.setScalar(base * f); });
     if (woods.visible) tickWoods(dt);
+    if (hol && hollow.visible) tickHollow(dt);
     if (summit.visible) { // Snow: the clouds drift, plumes stream, flags snap, glints flash; far things fade into the sky as it is now
       sumT.value += dt; if (opts.renderer) sumH.value = opts.renderer.domElement.height;
       if (scene.background && scene.background.isColor) { cloudMat.uniforms.uSky.value.copy(scene.background); if (peakMat.userData.sky) peakMat.userData.sky.value.copy(scene.background); }
@@ -1308,7 +1448,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     const k = [id, look, v.me, Game.COLS, Game.ROWS, castShadows].join('|');
     // Snow: the wind gets up every round, on the same steps as the light (biome .dusk, render3d)
     const b1 = biomeOf(look), wk = b1.dusk && b1.summit ? Math.min(1, Math.max(0, ((src.round || 1) - 1) * b1.dusk.per)) : 0;
-    if (k === key) { if (wk !== windK) applyWind(b1, wk); return; }
+    if (k === key) { if (wk !== windK) applyWind(b1, wk); hollowRound(src.round || 1); return; }
     key = k; clear();
     const bi = biomeOf(look), hF = v.me === 1 ? -1 : 1;
     // seeded per map, not per side: both players get the same land, each seeing it from their own end
@@ -1417,6 +1557,20 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
       return h + fall(out) * open + (X > hw + 56 ? fall(X - (hw + 58)) : 0);
     };
     const onPlateau = (x, z) => { const h = sheetH(x, z); return h > -0.4 && h < 2.4; };
+    // the Hollow: the pit. Steep earth walls rise a few metres past the flanks and the far end (the far one highest),
+    // the rim rolls on beyond them, and toward your end the walls give way to the long slope you came down
+    const PIT = bi.pit;
+    const pitH = PIT ? (x, z) => {
+      const dx = Math.max(0, Math.abs(x) - hw), dF = Math.max(0, -z - hd), dN = Math.max(0, z - hd), d = Math.hypot(dx, dF);
+      if (d <= 0 && dN <= 0) return 0;
+      const farK = smoothstep(-hd * 0.2, hd + 6, -z), H = (PIT.flank + (PIT.far - PIT.flank) * farK) * (0.86 + 0.28 * vnoise(x * 0.03 + 4.1, z * 0.03 - 2.2));
+      const w0 = 5 + 4 * vnoise(x * 0.05 + 1.3, z * 0.05 + 7.7), steep = smoothstep(w0, w0 + 6.5, d);
+      let wall = H * steep + steep * (2.5 * vnoise(x * 0.04 + 9.1, z * 0.04) + 4 * smoothstep(w0 + 10, w0 + 45, d)); // the rim rolls on, rising a little
+      wall += 1.6 * (vnoise(x * 0.35, z * 0.35) - 0.5) * smoothstep(0, 1, steep * (1 - steep) * 4); // ledges and bulges on the wall face
+      const nearK = smoothstep(hd - 8, hd + 22, z), ramp = 9 * smoothstep(5, 60, dN + dx * 0.5) + 0.6 * vnoise(x * 0.15, z * 0.15) * smoothstep(1, 6, dN + dx);
+      return Math.max(0, wall * (1 - nearK) + ramp * nearK);
+    } : null;
+    const steepAt = (x, z) => PIT ? Math.abs(pitH(x + 1.5, z) - pitH(x - 1.5, z)) + Math.abs(pitH(x, z + 1.5) - pitH(x, z - 1.5)) : 0;
     // Snow: the summit's layout. The yeti's rocks (big boulders he hides behind), cliff walls along the far half of
     // both sides (facing the board; the left ones lower, the low sun throws their shadows over it) and at the far
     // corners, seracs and crystal clusters, flags on cairns (two at the crest of the pass), drifts along the wind
@@ -1458,10 +1612,10 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     const put = (name, x, z, s, y = 0, wet = false, real = false, ang = null) => { // ang: its turn (else a random one)
       if (!lib[name] || (!wet && inPond(x, z))) return;
       const d = outside(x, z), k = name + (!real && (d > 16 || (d > 6 && /^Bush/.test(name))) ? '~' : ''), sh = 0.85 + rr() * 0.3, t = tintFor(name);
-      y += groundH(x, z) * 0.7; // on deep snow (Moonlit Snow) things stand a little sunk in
+      y += groundH(x, z) * (PIT ? 0.97 : 0.7); // on deep snow (Moonlit Snow) things stand a little sunk in (on the Hollow's rim, on it)
       (placed.get(k) || placed.set(k, []).get(k)).push([x, y, z, ang == null ? rr() * Math.PI * 2 : ang, s, [bi.tint[0] * t[0] * sh, bi.tint[1] * t[1] * sh, bi.tint[2] * t[2] * sh], squashOf(name)]);
     };
-    const L = { desert: DESERT, autumn: AUTUMN, darkwoods: DARK, ash: ASH, savanna: SAVANNA, moonlit: SNOWY, summit: SUMMIT, rocks: { low: ROCKS, tuft: PEBBLES, rocks: ROCKS, dress: DRESS } }[bi.low] || { low: LOW, tuft: TUFT, rocks: ROCKS, dress: DRESS };
+    const L = { desert: DESERT, autumn: AUTUMN, darkwoods: DARK, ash: ASH, savanna: SAVANNA, moonlit: SNOWY, summit: SUMMIT, hollow: HOLLOW, rocks: { low: ROCKS, tuft: PEBBLES, rocks: ROCKS, dress: DRESS } }[bi.low] || { low: LOW, tuft: TUFT, rocks: ROCKS, dress: DRESS };
     const low = () => pickOf(L.low), tuft = () => pickOf(L.tuft);
     const outside = (x, z) => Math.max(Math.abs(x) - hw, Math.abs(z) - hd, 0) > 0 ? Math.hypot(Math.max(0, Math.abs(x) - hw), Math.max(0, Math.abs(z) - hd)) : 0;
     // deep snow (biome .deepSnow): the height of the snow at a spot, 0 on the board, rising over its first metres
@@ -1472,12 +1626,80 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
       h *= bi.deepSnow * smoothstep(0.3, 7, d);
       if (cab) h *= 0.15 + 0.85 * smoothstep(cab.r * 1.05, cab.r * 1.5, Math.hypot(x - cab.x, z - cab.z));
       return h;
-    } : sum ? (x, z) => sheetH(x, z) : bi.craters ? (x, z) => { // churned ground: low rolling ash, shell craters with raised rims and pits
+    } : sum ? (x, z) => sheetH(x, z) : PIT ? pitH : bi.craters ? (x, z) => { // churned ground: low rolling ash, shell craters with raised rims and pits
       const d = outside(x, z); if (d <= 0) return 0;
       let h = 0.3 + 0.45 * vnoise(x * 0.06 + 1.7, z * 0.06 - 3.1) + 0.15 * vnoise(x * 0.2, z * 0.2);
       for (const c of craters) { const q = Math.hypot(x - c.x, z - c.z) / c.r; if (q > 1.8) continue; h += (q < 1 ? -c.depth * (1 - q * q) : 0) + c.depth * 0.32 * Math.exp(-(((q - 1) / 0.28) ** 2)); }
       return Math.max(0.02, h * smoothstep(0.3, 4, d));
     } : () => 0;
+    // the Hollow's layout: her spot, the root bridge over it, roots out of the walls (cocoons hanging off some), the
+    // victims lying in their cocoons under the walls, silk by round, and the column of light
+    let holo = null;
+    if (bi.hollow) {
+      const mo = v.boss && v.boss.mommy, tw = !mo && typeof Boss !== 'undefined' ? Game.tileToWorld(Boss.CFG.mommy.col, Boss.CFG.mommy.row) : null;
+      const mx = mo ? mo.x * hF : tw ? tw.x * hF : 0, mz = mo ? -mo.y * hF : tw ? -tw.y * hF : -hd * 0.3;
+      // where a wall's face reaches height y: going out from the board's side (sd -1 left, 1 right) at z, or past the far end at x
+      const faceX = (sd, z, y) => { for (let X = hw + 1; X < hw + 40; X += 0.4) if (groundH(sd * X, z) >= y) return X; return hw + 12; };
+      const faceZ = (x, y) => { for (let Z = hd + 1; Z < hd + 45; Z += 0.4) if (groundH(x, -Z) >= y) return Z; return hd + 14; };
+      const bp = [[-(faceX(-1, mz + 4, 14) + 3.5), 12.5, mz + 4], [-(faceX(-1, mz + 2, 16) - 0.8), 16.5, mz + 2], [mx - hw * 0.5, 21.6, mz + 0.7], [mx, 23, mz],
+        [mx + hw * 0.5, 21.9, mz - 0.8], [faceX(1, mz - 2.4, 16) - 0.8, 17, mz - 2.4], [faceX(1, mz - 4, 14) + 3.5, 12.8, mz - 4]];
+      const bc = new THREE.CatmullRomCurve3(bp.map((p) => new THREE.Vector3(...p))), at = (u) => bc.getPointAt(u);
+      let silkAt = 0.5; for (let u = 0, best = 1e9; u <= 1; u += 0.002) { const e = Math.abs(at(u).x - mx); if (e < best) { best = e; silkAt = u; } }
+      const top = at(silkAt), radAt = (u) => 1.35 + 1.9 * Math.pow(Math.abs(2 * u - 1), 2.2);
+      const webs = [], strands = [], roots = [], tendrils = [];
+      const S = (a, b, round) => strands.push([a, b, round]);
+      for (const u of [0.1, 0.17, 0.27, 0.37, 0.63, 0.73, 0.83, 0.9]) { const p = at(u + (rr() - 0.5) * 0.02); tendrils.push([p.x, p.y - radAt(u) * 0.7, p.z, 3 + rr() * 4.5, (rr() - 0.5) * 2]); }
+      S([top.x - 3.2, top.y - 0.6, top.z], [top.x, top.y - radAt(silkAt) - 0.6, top.z], 1); S([top.x + 3.2, top.y - 0.4, top.z], [top.x, top.y - radAt(silkAt) - 0.6, top.z], 1); // her thread's knot
+      const hang = (x, y, z, s, round, extra) => { // a cocoon hanging on silk from (x, y, z)
+        const cy = y - 1 - 2.2 * s; props.push({ kind: 'model', model: '__cocoon', x, z, y: cy, ang: rr() * 6.28, s, hang: true, tilt: (rr() - 0.5) * 0.12 }); S([x, y, z], [x, cy + 2.2 * s, z], round);
+        if (extra) for (const [m, dy, sc] of extra) props.push({ kind: 'model', model: m, x: x + 0.15, z: z + 0.1, y: cy - dy, ang: rr() * 6.28, s: sc, hang: true, tilt: 0.3 });
+      };
+      // roots out of the walls: out a little, then drooping down the face; n: the way out of the wall
+      const root = (ox, oz, nx, nz, y0, r0, round) => {
+        const tx = -nz, tz = nx, w = (rr() - 0.5) * 2, P = (o, dy, sw) => [ox + nx * o + tx * sw * w, y0 + dy, oz + nz * o + tz * sw * w];
+        const drop = 6 + rr() * 5, pts = [P(-3, 0.6, 0), P(0.3, 0, 0.2), P(2, -1.1, 0.5), P(2.5, -3.3, 0.9), P(2.1, -drop * 0.75, 1.2), P(1.6, -drop, 1.4)];
+        roots.push([pts, r0]); const tip = pts[pts.length - 1];
+        if (rr() < 0.45) hang(tip[0] + nx * 0.4, tip[1] - 0.2, tip[2] + nz * 0.4, 0.75 + rr() * 0.35, round);
+        if (rr() < 0.5) S(pts[2], [ox - nx * 0.2 + tx * 4, y0 - 4 - rr() * 4, oz - nz * 0.2 + tz * 4], round);
+        return pts;
+      };
+      let k = 0;
+      for (const sd of [-1, 1]) for (let z = -hd + 3 + rr() * 4; z < hd * 0.4; z += 11 + rr() * 6) { const y0 = 7 + rr() * 6.5, X = faceX(sd, z, y0); root(sd * X, z, -sd, 0, y0, 0.55 + rr() * 0.5, 1 + (k++ % 5)); }
+      for (let x = -hw + 4 + rr() * 5; x < hw - 3; x += 10 + rr() * 6) { const y0 = 9 + rr() * 9, Z = faceZ(x, y0); root(x, -Z, 0, 1, y0, 0.6 + rr() * 0.55, 1 + (k++ % 5)); }
+      // cocoons hanging under the bridge where it leaves the walls (one with a frying pan and a tin cup dangling under it)
+      { const p = at(0.1); hang(p.x + 1, p.y - radAt(0.1) * 0.8, p.z, 1.05, 1, [['__pan', 0.9, 1], ['__cup', 1.6, 1]]); }
+      for (const u of [0.15, 0.86, 0.92]) { const p = at(u); hang(p.x + (rr() - 0.5) * 2, p.y - radAt(u) * 0.8, p.z + (rr() - 0.5), 0.8 + rr() * 0.4, u < 0.5 ? 2 : 3); }
+      // victims: cocoons lying under the walls with what they carried poking out (and bones round them)
+      const victim = (x, z, ang) => {
+        props.push({ kind: 'model', model: '__cocoon', x, z, y: 0.35, ang, s: 1.05, tilt: Math.PI / 2 - 0.08 });
+        const ca = Math.cos(ang), sa = Math.sin(ang), side = (o, f) => ({ x: x + ca * o + sa * f, z: z - sa * o + ca * f });
+        const pick = Math.floor(rr() * 3);
+        if (pick === 0) props.push({ kind: 'model', model: 'Skeleton_Shield_Large_A', ...side(1.4, 0.4), ang: ang + 0.6, s: 1.4, tilt: 1.3, sink: 0.1 });
+        else if (pick === 1) props.push({ kind: 'model', model: 'Skeleton_Blade', ...side(-0.6, -1.6), ang: ang + 1.2, s: 1.5, tilt: -1.15, sink: 0.1 });
+        else props.push({ kind: 'model', model: '__spear', ...side(0.4, -1.4), ang, s: 1, tilt: 1.2, sink: 0.05 });
+        props.push({ kind: 'model', model: 'skull', ...side(-1.6, 0.9), ang: rr() * 6.28, s: 0.65, tilt: 0.3 });
+        for (let i = 0; i < 2; i++) props.push({ kind: 'model', model: 'bone_A', ...side((rr() - 0.5) * 4, (rr() - 0.5) * 3), ang: rr() * 6.28, s: 1.3 });
+      };
+      [[-(hw + 3.6), -hd * 0.62, 0.3], [hw + 3.2, -hd * 0.18, 2.2], [-hw * 0.38, -hd - 3.4, 1.4], [hw * 0.52, -hd - 3.8, 4.4], [-(hw + 3.3), hd * 0.12, 5.2]].forEach(([x, z, a]) => victim(x, z, a));
+      // silk by round. Round 1: the far corners and a few sheets; every round more, until by round 5 the walls are half veiled
+      for (const sd of [-1, 1]) { const X = faceX(sd, -hd - 3, 9) - 1, Z = faceZ(sd * (hw - 2), 9) - 1;
+        webs.push([0, sd * (hw + 4.2), 8, -(hd + 4.2), 13, -sd * Math.PI / 4, 0, 1]);
+        S([sd * X, 15, -hd - 2], [sd * (hw - 1), 14, -Z], 1); S([sd * X, 4, -hd - 4], [sd * (hw + 2), 1.5, -Z], 2); }
+      for (const sd of [-1, 1]) { const X = faceX(sd, mz, 12) - 2.5; webs.push([0, sd * X, 10.5, mz + 1.5 * sd, 10.5, 0, 0, sd < 0 ? 2 : 3]); }
+      let wk = 0;
+      for (const sd of [-1, 1]) for (let z = -hd + 6 + rr() * 5; z < hd * 0.5; z += 9 + rr() * 5) {
+        const y = 6 + rr() * 6, X = faceX(sd, z, y) - 0.7; webs.push([1, sd * X, y, z, 9 + rr() * 5, sd > 0 ? -Math.PI / 2 : Math.PI / 2, (rr() - 0.5) * 0.4, 1 + (wk++ % 5)]);
+      }
+      for (let x = -hw + 7 + rr() * 6; x < hw - 5; x += 11 + rr() * 6) { const y = 7 + rr() * 9, Z = faceZ(x, y) - 0.7; webs.push([1, x, y, -Z, 10 + rr() * 5, 0, (rr() - 0.5) * 0.3, 2 + (wk++ % 4)]); }
+      for (let n = 0, t = 0; n < 14 && t < 200; t++) { // sheets on the ground just past the board's edges (never at your end)
+        const sd = rr() < 0.5 ? -1 : 1, onFar = rr() < 0.35, x = onFar ? (rr() * 2 - 1) * hw : sd * (hw + 2 + rr() * 2.5), z = onFar ? -hd - 2 - rr() * 2.5 : -hd + rr() * BD * 0.72;
+        webs.push([1, x, 0.22 + n * 0.01, z, 5 + rr() * 4, rr() * 6.28, -Math.PI / 2, 2 + (n % 4)]); n++;
+      }
+      for (let i = 0; i < 18; i++) { const u = 0.05 + rr() * 0.9, p = at(u); if (Math.abs(p.x) < hw + 1) continue; // guy lines from the bridge to the walls
+        const sd = p.x < 0 ? -1 : 1, y = 4 + rr() * 9, X = faceX(sd, p.z + (rr() - 0.5) * 16, y); S([p.x, p.y - 1, p.z], [sd * (X - 0.3), y, p.z + (rr() - 0.5) * 16], 1 + (i % 5)); }
+      const sun = (bi.light && bi.light.pos) || [-16, 74, -12];
+      holo = { bridge: bp, silkAt, anchor: [top.x, top.y - radAt(silkAt) * 0.9, top.z], roots, tendrils, webs, strands, beam: [mx * 0.15, -hd * 0.06, 14, 23], sun };
+    }
     // 1. the edge: a frame of bushes, rocks and tall grass hugging the board, so its edge doesn't end in a hard line
     for (let s = 0; s < 2 * (BW + BD); s += 2.6) {
       if (rr() > 0.8 * bi.grow) continue;
@@ -1492,6 +1714,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     for (let gx = -hw - 50; gx < hw + 50; gx += CELL) for (let gz = -hd - 70; gz < hd + 40; gz += CELL) {
       const x = gx + rr() * CELL, z = gz + rr() * CELL, d = outside(x, z);
       if (d < 4) continue;
+      if (PIT && steepAt(x, z) > 2.4) { if (rr() < 0.25) put(pickOf(L.rocks), x, z, 1.2 + rr() * 1.6); continue; } // the Hollow: nothing grows on the wall faces (a rock juts out now and then)
       const nearBoard = d < 16; // real models here: keep them fewer
       const behindMe = z > hd - 4 && Math.abs(x) < hw + 14;
       if (behindMe) { if (d < 22 && rr() < 0.35 * bi.grow) put(low(), x, z, 0.9 + rr() * 0.8); continue; }
@@ -1523,7 +1746,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     // 3. grass round the board's edge, out in the open land
     for (let n = 0; n < 220 * bi.grow; n++) {
       const x = (rr() * 2 - 1) * (hw + 24), z = (rr() * 2 - 1) * (hd + 24), d = outside(x, z);
-      if (d > 0.3 && d < 14) put(tuft(), x, z, 1.1 + rr() * 0.9);
+      if (d > 0.3 && d < 14 && !(PIT && steepAt(x, z) > 2.4)) put(tuft(), x, z, 1.1 + rr() * 0.9);
     }
     // 4. on the board: a light dressing of small plants (not on walls or water), low enough to stay out of the way
     if (bi.dress) {
@@ -1572,6 +1795,30 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
       scene.add(sheet); meshes.push(sheet);
     }
 
+    // 7b. the Hollow's pit: one faceted sheet of earth. Packed floor round the board, banded earth and rock up the
+    // steep walls (strata), the forest floor on the rim; jittered off the grid outside the board so it doesn't read as a mesh
+    if (PIT) {
+      const g = new THREE.PlaneGeometry(BW + 300, BD + 300, 150, 170).rotateX(-Math.PI / 2), pos = g.attributes.position;
+      for (let k = 0; k < pos.count; k++) {
+        let x = pos.getX(k), z = pos.getZ(k); if (outside(x, z) > 2) { x += hashf(x, z, 1) * 1.6; z += hashf(z, x, 2) * 1.6; }
+        pos.setXYZ(k, x, outside(x, z) > 0 ? pitH(x, z) : -0.2, z);
+      }
+      g.computeVertexNormals();
+      const nrm = g.attributes.normal, col = new Float32Array(pos.count * 3), c = new THREE.Color();
+      const FLOOR = ['#4E4234', '#56493A', '#473C30'].map((h) => new THREE.Color(h)), EARTH = ['#5C4634', '#4A392B', '#67503B', '#3F3227', '#5A5450'].map((h) => new THREE.Color(h));
+      const RIM = ['#363822', '#2F321E', '#3D3B25'].map((h) => new THREE.Color(h));
+      for (let k = 0; k < pos.count; k++) {
+        const x = pos.getX(k), y = pos.getY(k), z = pos.getZ(k), ny = nrm.getY(k), n = vnoise(x * 0.12 + 3, z * 0.12 - 5);
+        if (ny < 0.72) { const band = Math.floor(y / 2.3 + vnoise(x * 0.05, z * 0.05) * 1.5); c.copy(EARTH[(band % 5 + 5) % 5]).lerp(EARTH[(band + 2) % 5], n * 0.35); } // the wall face: strata
+        else if (y > 9) c.copy(RIM[Math.floor(n * 2.99)]).lerp(EARTH[1], smoothstep(0.86, 0.72, ny)); // the rim's forest floor
+        else c.copy(FLOOR[Math.floor(n * 2.99)]).lerp(EARTH[3], smoothstep(0.92, 0.72, ny) * 0.6);
+        col.set([c.r, c.g, c.b], k * 3);
+      }
+      g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      const sheet = new THREE.Mesh(g, pitMat); sheet.position.y = -0.03; sheet.receiveShadow = true; sheet.raycast = () => {}; sheet.name = 'hollow pit';
+      pitMat.color.setRGB(...bi.tint); scene.add(sheet); meshes.push(sheet);
+    }
+    showHollow(holo); hollowRound(src.round || 1);
     // 8. Savanna: the kopjes, termite mounds, the land's colours and the sea of grass
     for (const q of kopjes) {
       [[0, 0, 4.2, 0], [3.6, 1.4, 3.1, 0], [-3.3, 1.9, 2.7, 0], [1.4, -3.4, 2.4, 0], [5.6, -1.6, 1.8, 0], [-1.2, 0.6, 2.3, 2.9], [1.8, 0.2, 1.6, 4.6], [-5.2, -1.2, 1.4, 0]]
@@ -1651,7 +1898,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     shadeU.uNight.value.set(...(bi.night || [0, 0, 0, 0])); shadeU.uDeep.value.set(...(bi.deep || [0, 1, 2]));
     if (bi.fire) shadeU.uFire.value.set(...new THREE.Color(bi.fire[0]).toArray(), bi.fire[1]); else shadeU.uFire.value.set(0, 0, 0, 0); shadeU.uWarm.value.set(cab ? cab.x : 0, cab ? cab.z : 0, cab ? cab.r * 1.5 : 0);
     snowU.value = bi.snow || 0; showFall(bi.fall || (bi.snow ? 'snow' : null), bi.fall2); showCabin(cab);
-    for (const p of props) p.y = (p.y || 0) + groundH(p.x, p.z) * (p.sink !== undefined ? 1 - p.sink * 0.5 : 0.85) - (p.sink || 0) * (p.s || 1) * 0.3;
+    for (const p of props) if (!p.hang) p.y = (p.y || 0) + groundH(p.x, p.z) * (p.sink !== undefined ? 1 - p.sink * 0.5 : 0.85) - (p.sink || 0) * (p.s || 1) * 0.3;
     showProps(props);
     // Snow: the land sheet, the clouds and far peaks, plumes off the ridges, glints on the ice, the flags' cloth
     if (sum) {
@@ -1711,9 +1958,9 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
     }
   }
   function shadows(on) { if (on !== castShadows) { castShadows = on; key = ''; } }
-  function dispose() { clear(); clearWoods(); showSummit(null); scene.remove(summit, yetiG); yetiG.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); for (const m of ytMats) m.dispose(); cloudSea.geometry.dispose(); cloudMat.dispose(); cloudTex.dispose(); peakMat.dispose(); plumeMat.dispose(); glintMat.dispose(); flagMat.dispose(); summitMat.dispose(); scene.remove(woods, explorer); explorer.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.isSprite) { o.material.map.dispose(); o.material.dispose(); } }); for (const m of exMats) m.dispose(); eyeMat.dispose(); shaftMat.dispose(); shaftGeo.dispose(); mistTex.dispose(); shaftTex.dispose(); for (const m of Object.values(glowMats)) m.dispose();
+  function dispose() { clear(); clearWoods(); clearHollow(); scene.remove(hollow); for (const m of [barkMat, pitMat, strandMat, beamMat, ...webMats]) m.dispose(); orbTex.dispose(); tangleTex.dispose(); showSummit(null); scene.remove(summit, yetiG); yetiG.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); for (const m of ytMats) m.dispose(); cloudSea.geometry.dispose(); cloudMat.dispose(); cloudTex.dispose(); peakMat.dispose(); plumeMat.dispose(); glintMat.dispose(); flagMat.dispose(); summitMat.dispose(); scene.remove(woods, explorer); explorer.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.isSprite) { o.material.map.dispose(); o.material.dispose(); } }); for (const m of exMats) m.dispose(); eyeMat.dispose(); shaftMat.dispose(); shaftGeo.dispose(); mistTex.dispose(); shaftTex.dispose(); for (const m of Object.values(glowMats)) m.dispose();
     scene.remove(flakes, flakes2, cabin, cabinLight, veil, xmas, horizon, dragonShadow, smokeCols, vultures); dragonTex.dispose(); dragonShadow.geometry.dispose(); smokeCols.children.forEach((o) => o.material.dispose()); grassGeo.dispose(); grassMat.dispose(); groundMat.dispose(); vultureMat.dispose(); vultures.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); flake2Mat.dispose(); sootMat.dispose(); emberGlowMat.dispose(); horizonMat.dispose(); horizonTex.dispose(); horizon.geometry.dispose(); dragonMat.dispose(); for (const g of Object.values(kkCache)) if (g) g.dispose(); propMat.dispose(); lampGlowMat.dispose(); lampGlowTex.dispose(); veil.geometry.dispose(); veilMat.dispose(); snowGroundMat.dispose(); cabin.userData.dispose(); cabinLight.dispose(); flakeGeo.dispose(); flakeMat.dispose(); driftGeo.dispose(); driftMat.dispose(); pondGeo.dispose(); for (const m of pondMats) m.dispose(); if (atlas) atlas.dispose(); if (impMat) { impMat.dispose(); impGeo.dispose(); blobMat.map.dispose(); blobMat.dispose(); blobGeo.dispose(); } for (const m of mats) { if (m.map) m.map.dispose(); m.dispose(); } if (lib) for (const md of Object.values(lib)) for (const p of md.parts) p.geo.dispose(); }
-  return { _lib: () => lib, _meshes: () => meshes, _yeti: () => yt.P.root && { on: yt.on, s: yt.s, vis: yetiG.visible, at: yt.at, pos: yt.P.root.position.toArray() }, /* (tests) */ update, biome, shadows, dispose, ready, tick, alive, prey, roost, birds, flyover, foeReady, explore, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
+  return { _lib: () => lib, _meshes: () => meshes, _yeti: () => yt.P.root && { on: yt.on, s: yt.s, vis: yetiG.visible, at: yt.at, pos: yt.P.root.position.toArray() }, /* (tests) */ update, biome, shadows, dispose, ready, tick, alive, prey, roost, birds, flyover, foeReady, explore, anchor, whip, snowing: () => flakes.visible, count: () => meshes.reduce((s, m) => s + m.count, 0) };
 };
 
 // The painted floors and the looks live in src/floors.js (loaded with the main page, before this file)
