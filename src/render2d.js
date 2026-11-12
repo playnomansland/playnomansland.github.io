@@ -759,11 +759,11 @@ const Render2D = (cv, view, opts = {}) => {
     }
   }
 
-  // the Mommy boss puzzle (view.boss from the page: Boss.preview): this round's poison pools, and while deploying her,
+  // the Mommy boss puzzle (view.boss from the page: Boss.preview): her acid pools in the fight, and while deploying her,
   // her reach and this round's nests, see-through, each nest marked HIGH (only ranged units reach it) or LOW
   const BOSS_POOL = '#7FD13B';
   // her state in the fight (mom.bs, src/boss.js): hanging on her thread, the mortar winding up, stunned on the ground
-  const BITE_COL = { fast: '#FFE15A', heavy: '#FF5A4E', sweep: '#FF9A3D' }; // her bite's colour, by style
+  const BITE_COL = { fast: '#FFE15A', heavy: '#8BE04E', sweep: '#FF9A3D' }; // her bite's colour, by style (the heavy one is acid: green)
   function drawBossState() {
     const mom = bt && bt.bodies.find(b => b.u.boss && b.alive); if (!mom || !mom.bs) return;
     const bs = mom.bs, x = PX(mom.x), y = PY(mom.y), R = radius(mom.u), time = bt.time();
@@ -884,13 +884,14 @@ const Render2D = (cv, view, opts = {}) => {
     ctx.beginPath(); ctx.moveTo(x, y - R * 0.3); ctx.quadraticCurveTo(x + sway, y / 2, x + sway * 0.5, 0); ctx.stroke(); ctx.globalAlpha = 1;
   }
   const BITE_STAYS = 4; // seconds a bite mark stays on the ground
+  // her acid pools (mom.acid, src/boss.js: where her acid bite landed): green on the ground, under the bodies
   function drawBossPools() {
-    const t = tilePx(), time = phase === 'battle' && bt ? bt.time() : 0;
-    for (const [c0, r0, c1, r1] of boss.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
-      const x = scol(c) * t, y = srow(r) * t;
-      ctx.fillStyle = BOSS_POOL; ctx.globalAlpha = 0.2 + 0.05 * Math.sin(time * 2 + c + r); ctx.fillRect(x + 1, y + 1, t - 2, t - 2);
-      ctx.fillStyle = '#C6F27A'; ctx.globalAlpha = 0.5; // a few bubbles
-      for (let k = 0; k < 3; k++) { const ph = (time * 0.6 + k * 0.37 + (c * 7 + r * 3) * 0.13) % 1; ctx.beginPath(); ctx.arc(x + t * (0.25 + 0.25 * k), y + t * (0.8 - 0.5 * ph), t * 0.05, 0, Math.PI * 2); ctx.fill(); }
+    const mom = bt && phase !== 'deploy' ? bt.bodies.find(b => b.u.boss) : null; if (!mom || !mom.acid) return;
+    const time = bt.time();
+    for (const q of mom.acid) {
+      const a = Math.max(0, Math.min(1, (q.until - time) / 1.5)), x = PX(q.x), y = PY(q.y), r = q.r * S;
+      ctx.fillStyle = BOSS_POOL; ctx.globalAlpha = 0.3 * a; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#C6F27A'; ctx.globalAlpha = 0.8 * a; ctx.lineWidth = 1.5; ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }

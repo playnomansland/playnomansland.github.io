@@ -881,11 +881,10 @@ const Render3D = (THREE, el, view, opts = {}) => {
     }
   }
 
-  // the Mommy boss puzzle (v.boss from the page: Boss.preview): this round's poison pools, and while deploying her, her
+  // the Mommy boss puzzle (v.boss from the page: Boss.preview): her acid pools in the fight, and while deploying her, her
   // reach and this round's nests, see-through, each nest marked HIGH (only ranged units reach it) or LOW
   function collectBoss(v, f, deploying) {
     const bs = v.boss, foe = 1 - v.me, pool = color('#7FD13B'), tc = teamColor(foe, v.me), ink = color(css('--ink') || '#E8EEEE');
-    for (const [c0, r0, c1, r1] of bs.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const st = tileCenter(v, c, r); tileSq(st.c, st.r, pool, 0.4, 0.5, 0, 0.03); }
     const thread = (wx, wz, t, y0 = 5, w = 0.18) => beam(wx + Math.sin(t * 1.3) * 0.4, 60, wz, wx, y0, wz, w, color('#EDEDED'), 0.8); // a silk thread, up off the board
     // she hangs HANG m off the ground until she falls. Her nests are egg sacs, drawn NEST_SC times the model: a LOW
     // one sits on the ground, a HIGH one hangs NEST_UP m up on its own thread, out of a melee unit's reach
@@ -894,7 +893,8 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (!deploying) { // her state in the fight (mom.bs, src/boss.js)
       const mom = v.bt && v.bt.bodies.find(b => b.u.boss && b.alive); if (!mom || !mom.bs) return;
       const st = mom.bs, [wx, wz] = world(f, mom.x, mom.y), t = v.bt.time(), R = size(mom.u) * 1.4;
-      const BC = { fast: '#FFE15A', heavy: '#FF5A4E', sweep: '#FF9A3D' }, silk = color('#EDEDED'), webR = typeof Boss !== 'undefined' ? Boss.CFG.mommy.web.r : 14;
+      const BC = { fast: '#FFE15A', heavy: '#8BE04E', sweep: '#FF9A3D' }, // (the heavy bite is acid: green)
+         silk = color('#EDEDED'), webR = typeof Boss !== 'undefined' ? Boss.CFG.mommy.web.r : 14;
       // she hangs on her thread, and drops when her last nest goes
       const fallEv = (mom.ev || []).find(e => e.k === 'fall'), fa = fallEv ? t - fallEv.t : 1e9;
       const momUp = st.phase === 'hanging' ? HANG + Math.sin(t * 1.3) * 0.25 : fa < 0.3 ? HANG * (1 - (fa / 0.3) * (fa / 0.3)) : 0;
@@ -948,6 +948,12 @@ const Render3D = (THREE, el, view, opts = {}) => {
         scene_(() => arc(ax, az, Math.max(1, st.aim.r), color(hex), 0.3 + 0.4 * k, 1, 0.08, 14));
         jaws(ax, az, Math.max(3, st.aim.r * 1.15), 1.25, hex, 0.25 + 0.3 * k);
       }
+      // her acid pools (mom.acid: where her acid bite landed): green on the ground, bubbling, for as long as they burn
+      for (const q of mom.acid || []) scene_(() => {
+        const [qx, qz] = world(f, q.x, q.y), a = Math.max(0, Math.min(1, (q.until - t) / 1.5)), grow = Math.min(1, 0.5 + (t - q.t0) * 2);
+        disc(qx, qz, q.r * grow, pool, 0.42 * a); arc(qx, qz, q.r * grow, color('#C6F27A'), 0.85 * a, 1, 0.07);
+        for (let k = 0; k < 5; k++) { const ph = (t * 0.7 + k * 0.23 + q.x * 0.11) % 1, an = k * 2.4 + q.y; icon('dot', qx + Math.cos(an) * q.r * 0.55, 0.2 + ph * 1.6, qz + Math.sin(an) * q.r * 0.55, 0.35 + 0.25 * ph, color('#C6F27A'), 0.8 * a * (1 - ph)); }
+      });
       // the web mortar. Before: her thread on the nest she is about to rip loose, and a ring on the clump she aims at.
       // Thrown: the nest flies in an arc to the red ring, which fills as it comes. Landed: a web that stays
       if (st.mortarIn != null) {

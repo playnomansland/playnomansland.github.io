@@ -42,7 +42,7 @@
   }
   async function dioStart() {
     const body = $('dio');
-    let lbKey = '', boardAt = Date.now(); // Rankings: the leaderboard list drawn last, and when the board was fetched
+    let lbKey = '', lbTab = 'ranked', boardAt = Date.now(); // Rankings: the leaderboard list drawn last, and when the board was fetched
     const THREE = await import(THREE_URL);
     if (typeof Models3D !== 'function') for (const f of ['kaykit3d', 'models3d']) await load3d(f);
     // the island's renderer: made when the home shows, freed while a match runs. No WebGL (or ?board=2d): flat
@@ -1559,7 +1559,20 @@
     // Rankings: the line under STANDINGS (the Legend title and how long the month has left), then the whole
     // leaderboard right there (owner, 2026-11-11: no button to a separate sheet). The top Legend.top rows are the
     // Legend places; a row opens that player's menu (add a friend), as the old sheet's did
+    // Developers also get a second board here, the weekly boss's (the Mommy boss puzzle; bossBoardLoad): a Ranked / Mommy
+    // switch under STANDINGS (lbTab). Others see ranked only, as before
     function drawStandings() {
+      const st = body.querySelector('.standings'), bossTab = devMode() && typeof Boss !== 'undefined';
+      let tabs = st.querySelector('.lb-tabs');
+      if (bossTab && !tabs) {
+        st.querySelector('h2').insertAdjacentHTML('afterend', '<span class="lb-tabs"><button data-lb="ranked">Ranked</button><button data-lb="boss">Mommy</button></span>');
+        tabs = st.querySelector('.lb-tabs');
+        tabs.addEventListener('click', (e) => { const b = e.target.closest('[data-lb]'); if (!b || lbTab === b.dataset.lb) return; lbTab = b.dataset.lb; lbKey = ''; drawStandings(); });
+      }
+      if (!bossTab && tabs) { tabs.remove(); tabs = null; if (lbTab !== 'ranked') { lbTab = 'ranked'; lbKey = ''; } }
+      if (tabs) tabs.querySelectorAll('[data-lb]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lb === lbTab)));
+      st.querySelector('.k').textContent = lbTab === 'boss' ? 'Rankings · weekly boss · the Mommy' : 'Rankings · this month · ranked best-of-3';
+      if (lbTab === 'boss') return drawBossStandings();
       const j = home.board, lg = j && j.legend && j.legend.top ? j.legend : null, el = body.querySelector('.standings .leg');
       let when = '';
       if (lg) { const left = Math.max(0, (lg.ends - Date.now()) / 864e5); when = left >= 1 ? `${Math.floor(left)} day${Math.floor(left) === 1 ? '' : 's'} left this month.` : left * 24 >= 1 ? `${Math.floor(left * 24)} hours left this month.` : 'The month ends within the hour.'; }
@@ -1568,6 +1581,25 @@
         : lg ? `The top ${lg.top} when the month ends earn the gold Legend title. ${when}` : 'Ranked best-of-3 series.') + (j && !j.on ? ' Ranked is switched off right now.' : '');
       buildPodium(j && j.rows);
       drawBoardList(j, lg ? lg.top : 0);
+    }
+    // the weekly boss's board: best runs under her rules as they are now (a kill in the earliest round first)
+    function drawBossStandings() {
+      const el = body.querySelector('.standings .leg'), list = body.querySelector('.standings .lb-list'), how = body.querySelector('.standings .lb-how'), me = acct ? acct.id : '';
+      const fresh = bossBoard.at && Date.now() - bossBoard.at < 60e3;
+      if (!fresh) bossBoardLoad().then(() => { if (lbTab === 'boss') drawStandings(); });
+      const rows = bossBoard.rows;
+      el.textContent = !rows ? (bossBoard.at ? 'The standings come from the game server, which can’t be reached right now.' : 'Loading…')
+        : !rows.length ? 'Nobody has finished a run against her under her rules as they are now. Developer accounts only for now.'
+        : 'Best runs against the Mommy under her rules as they are now. Developer accounts only for now.';
+      const key = JSON.stringify(['boss', me, rows]);
+      if (key === lbKey) return fitBoardList(); lbKey = key;
+      how.hidden = true; list.hidden = !(rows && rows.length);
+      const tt = (t) => TITLES[t] ? `<span class="tt" style="--tc:${TITLES[t].col}">${esc(TITLES[t].name)}</span>` : '';
+      list.innerHTML = (rows || []).map((r, i) => { const mine = !!me && r.id === me;
+        return `<li class="${[i === 0 ? 'first' : '', 'me'].filter(Boolean).join(' ')}"><span class="r">${i + 1}</span>
+          <span class="who"><b>${esc(r.tag)}${mine ? ' <i class="you">you</i>' : ''}${tt(r.title)}</b><small>${esc(bossRunText(r))}</small></span>
+          <span class="s">${r.won ? r.round : Math.round(r.dmg / 1000) + 'k'}<small>${r.won ? 'round' : 'damage'}</small></span></li>`; }).join('');
+      fitBoardList();
     }
     function drawBoardList(j, top) {
       const list = body.querySelector('.standings .lb-list'), how = body.querySelector('.standings .lb-how'), rows = j ? j.rows : [], me = acct ? acct.id : '';
@@ -1592,7 +1624,7 @@
     }
     addEventListener('resize', fitBoardList);
     { const list = body.querySelector('.standings .lb-list');
-      const open = (li) => { const r = home.board && home.board.rows.find(x => x.id === li.dataset.pid); if (r && !(acct && r.id === acct.id)) frPlayerMenu({ id: r.id, tag: r.tag, title: r.title }); };
+      const open = (li) => { const r = lbTab === 'ranked' && home.board && home.board.rows.find(x => x.id === li.dataset.pid); if (r && !(acct && r.id === acct.id)) frPlayerMenu({ id: r.id, tag: r.tag, title: r.title }); };
       list.addEventListener('click', (e) => { const li = e.target.closest('li[data-pid]'); if (li) open(li); });
       list.addEventListener('keydown', (e) => { const li = e.target.closest('li[data-pid]'); if (li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(li); } }); }
     // the standings come fresh each time Rankings opens (at most once a minute)

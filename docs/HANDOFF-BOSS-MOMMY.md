@@ -1,6 +1,6 @@
 # Handoff: the Mommy boss puzzle
 
-Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, merged into `main` (live) after each step. Written 11 November 2026 over one long day; sections are in the order the work happened. **Start with section 0 (where things stand now)**, then section 7 (working with the owner); the rest is history and evidence. Section 12 is the session before last (her attacks reworked, difficulty measured again, unit priorities measured); section 13 the latest (the owner's answers, the 3D board first).
+Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, merged into `main` (live) after each step. Written 11 November 2026 over one long day; sections are in the order the work happened. **Start with section 0 (where things stand now)**, then section 7 (working with the owner); the rest is history and evidence. Section 12 is the session before last (her attacks reworked, difficulty measured again, unit priorities measured); section 13 the owner's answers and the 3D board first; section 14 the latest (countdown, acid in place of the poison tiles, nest map, leaderboard).
 
 ## 0. Where things stand now (12 November)
 
@@ -10,25 +10,30 @@ Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, me
 
 **What a player sees** (all built and checked in a browser, 2D and 3D, classic menu and the new PC/Diorama menu):
 - a rules popup (*Mommy's rules*) as a run starts; the ? while deploying and a button in the fight open it again
-- a banner per round; her reach (dashed ring), the nests marked LOW / HIGH and the poison pools on the board while deploying
+- a banner per round; her reach (dashed ring) and the nests marked LOW / HIGH on the board while deploying; **Nest map** in the deploy panel shows every round's nests (they are fixed, not random)
 - a boss bar over the board: name, phase (HANGING / FALLEN · STUNNED n s / ON THE GROUND / DEAD), health with numbers, a white strip for the latest damage, tokens (damage taken %, nests left, bite, mortar countdown or who holds her, molt countdown, poison / bleed / burn / frost / slow on her)
 - on the board: her silk thread while she hangs, her web ring, a dust ring and SHE FALLS when she falls, stars while stunned, MOLT when she sheds something
 - **her bite** (reworked, section 12): her jaws open on the ground where her target stands, with a ring the size of the bite (yellow fast, red heavy, orange sweep), close for 0.5 s and snap shut. Whoever stands in the ring then is bitten; a unit that walked out is missed. The bite mark stays 4 s
 - **her mortar** (reworked, section 12): her thread lies on the nest she will throw (THROWS IN n s), a dashed ring follows the clump she aims at; the nest then flies in an arc for 1.6 s to a red ring (WEB MORTAR) that fills as it comes, lands on whoever stands there then, and leaves a web on the ground
 - **the 3D board is the one that counts** (owner, 12 November: "put all effort into the 3d version and keep some small functionality for 2d"). There she hangs off the ground and drops when she falls, lies on her back while stunned, her nests are egg sacs (LOW on the ground, HIGH hanging on a thread) that keep their label through the fight, her reach ring shows through the fight (red while nobody is in it), her web is silk on the ground. The 2D board has a simple version; don't spend effort on it
-- the top left says Round n of 5 (no player health), the top right only her name
+- the top left says Round n of 5 (no player health), the top right only her name; the fight's time left is a big count in the middle of the boss bar
+- **no poison tiles any more** (owner, 12 November): her heavy bite is acid (green) and leaves a pool where it lands
+- a finished run goes on **the boss leaderboard** (developer accounts; the server takes the page's word for now); the result card has a Leaderboard button and the menu's leaderboard a Mommy tab
 - shop cards show n/3 (the squad cap); Settings in a match has *Restart Mommy*; a report after every fight
 
-**Numbers in force** (`Boss.CFG`): health 54,000 (owner agreed, 12 November); start 450 gold; 30 s fights; hang 15%; reach 22 m; web 14 m; bites fast 150×0.8/s, heavy 480×0.25/s splash 2.5, sweep 70×1/s splash 5, order fast, heavy, sweep, heavy, sweep, each landing 0.5 s after her jaws open, where they opened (owner, 12 November); mortar after 5 s with nobody in reach, every 4 s, 1.6 s in the air, 120 damage, only rips nests within her reach; nests 500 health, burst 3, hatch 6/5/4/3/3 s, lure 12 m; spiderlings 90 health; pools 4%/s, linger 2 s; wing-nest layouts and pools per round as in CFG; molt 6 s; no share-of-max-health damage on her; banned Meteor Caller, Assassin, Rogue, Truespear, Sun Priest; at most 3 squads of a type; one free move and one free extra deployment a round; a treasury, no tower.
+**Numbers in force** (`Boss.CFG`): health 54,000 (owner agreed, 12 November); start 450 gold; 30 s fights; hang 15%; reach 22 m; web 14 m; bites fast 150×0.8/s, heavy 480×0.25/s splash 2.5, sweep 70×1/s splash 5, order fast, heavy, sweep, heavy, sweep, each landing 0.5 s after her jaws open, where they opened (owner, 12 November); mortar after 5 s with nobody in reach, every 4 s, 1.6 s in the air, 120 damage, only rips nests within her reach; nests 500 health, burst 3, hatch 6/5/4/3/3 s, lure 12 m; spiderlings 90 health; acid: the heavy bite leaves a pool 3 m across (half) for 8 s, 4%/s, linger 2 s; wing-nest layouts per round as in CFG; molt 6 s; no share-of-max-health damage on her; banned Meteor Caller, Assassin, Rogue, Truespear, Sun Priest; at most 3 squads of a type; one free move and one free extra deployment a round; a treasury, no tower.
 
 **Owner decisions since section 8:** questions 1-5 there agreed; health 46,000 with no late-round rule; leave Goblins as they are; pools at 4% for now; the round-3 ceiling should be searched further before a real launch; poison pools back (in place of "spiders go for the biggest clump"); wing nests (5b); the Puzzles button is named "Weekly boss - The Mommy".
 
 **Owner decisions on 12 November** (the section-12 questions): health 54,000; unit priorities left as they are; jaws shut after 0.5 s; mortar 1.6 s in the air; Round n of 5 in place of the player's health; her reach ring in the fight; nests as egg sacs that keep LOW / HIGH; her health not repeated top right. All built (section 13).
 
+**Owner requests on 12 November, later** (all built, section 14): the time ticking down central and obvious; a Leaderboard button on the result screen and a Mommy tab in the menu's leaderboard; the green tiles and their effects removed, one bite made green with an acid pool instead; "Restart boss"; a button in the deploy panel showing every round's nest places (confirmed: they are fixed).
+
 **Open, waiting on the owner:**
-1. Her health again: with the 0.5 s jaws a knowing player wins less often at 54,000 than the target (section 13 has the numbers and the in-between healths).
-2. The round-3 title at 54,000: the best plan known wins with half a second of round 3 left. Search further before a real launch (already agreed).
-3. Not built: the "Mommy" title (the win screen mentions it), the server checking a win, a weekly rotation (it is the one boss), a model of her own (the spider model drawn big).
+1. The leaderboard takes the page's word for a run. Fine while only developers can report one; the server has to replay a run before the boss opens to everyone (section 14).
+2. The round-3 title at 54,000: the best plan known wins by 1% (54.6k by round 3). Search further before a real launch (already agreed).
+3. Which bite is the acid one was my choice (the heavy bite, rounds 2 and 4); the numbers (8 s, 4% a second) are the old tiles'.
+4. Not built: the "Mommy" title (the win screen mentions it), a weekly rotation (it is the one boss), a model of her own (the spider model drawn big).
 
 **Things that bit this session (read before working):**
 - Build like live: `PB_UI_DEFAULT=pc node src/build.js` (live's `index.html` has `const DEF = 'pc'`; a plain build makes 'classic' and the merge then changes PC players' menu).
@@ -39,6 +44,8 @@ Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, me
 - Looking at a fight: `tools/boss/watch.js` plays one in a headless browser and saves screenshots at exact fight times (it steps the frames itself; with real time a slow machine shoots the wrong moment). The 3D board is slow there (software rendering): keep the window small.
 - The PC layout (`html.diorama.pcwide`) lays the round line over the top of the board, so anything pinned to the top of the board (`#wrap`) sits behind it unless it is moved down (`diorama.css`).
 - The boss hook runs before the tick's attacks, so the engine's `shots` are empty there; her bites are read from `api.projectiles` the tick after.
+- Server tests (`cd server && node test/accounts.test.js`) start a local server with `npx wrangler`; a test that fails or is cut short leaves it running on its port, and the next run then talks to the old one (odd 429s and 503s). `pkill -f workerd; pkill -f "wrangler dev"` first.
+- Pushing `server/**` to main deploys the game server (`.github/workflows/server-deploy.yml`, after its tests).
 - The page plays each fight twice (headless for the result, then on screen from the same snapshot); `Boss.battle` must stay deterministic and never change `m`. Her visual events (`mom.ev`, `mom.bs.aim`, `mom.bs.mortarAim`) are recorded only when `o.record` is set (the shown fight).
 
 The prototype tools live in `tools/boss/` and run the game's own `src/boss.js`. Run them from the repo root:
@@ -113,7 +120,7 @@ Numbers are the prototype's (`CFG` in `tools/boss/mommy.js`) and are starting po
 | Nest health that grows by round | It is a damage check; replaced by position (low/high, where they hang) |
 | Melee double damage on the fallen Mommy | Not needed once her body is big on the ground (see findings) |
 | Player health | One way to lose is enough |
-| Poison pools on the firing line | Cut from the first version to keep the rule count down. May come back only if she proves too easy |
+| Poison pools on the firing line | Cut from the first version, brought back by the owner (section 10), then removed again by the owner on 12 November: the heavy bite leaves acid instead (section 14) |
 | The mortar hurting nests inside its blast | It never came into play (see findings); replaced by "each shot is a nest" |
 
 ---
@@ -551,4 +558,35 @@ The owner answered the section-12 questions (all agreed, the jaws at 0.5 s in pl
 Median damage by round 5 (thousands), jaws 1 s → 0.5 s: statmax 33.4 → 31.6, +100 gold 40.8 → 39.3, +200 gold 58.1 → 55.5, aware 49.8 → 49.0. The shorter jaws cost the stat-max players about 4% and the knowing one under 2%, but at 54,000 many knowing games sat just above her health, so its wins fell from 30% to 15%.
 
 **The round-3 title at 54,000.** The best plan known does 8.0 / 30.4 / 54.4k by rounds 1 / 2 / 3: it kills her at 29.5 s of round 3's 30. Lines (by R3 / R4 / R5): A 30.8 / 46.4 / 65.5, B 30.8 / 43.4 / 70.1, C 20.9 / 27.7 / 51.4, search best five rounds 33.5 / 49.4 / 79.8.
+
+
+---
+
+## 14. Countdown, acid in place of the poison tiles, nest map, leaderboard (12 November, later)
+
+### Built
+
+- **Countdown.** The boss bar's middle is the fight's time left, large, with a strip under her health that drains with it; both turn red in the last 10 s. (The PC layout hides the board's small clock, so before this there was none there.)
+- **Acid in place of the poison tiles.** The scripted green tiles and their poison are gone (`CFG.pools` removed). The heavy bite (rounds 2 and 4) is acid: green jaws, and where it lands a green pool stays 8 s (`CFG.acid`: 3 m, 4% of max health a second, linger 2 s; her spiders don't mind it, slime units drink it). Why the heavy bite: it comes every 4 s, so at most three pools lie on the board; the fast and sweep bites come every second and would carpet it.
+- **Restart boss** (was Restart Mommy).
+- **Nest map** in the deploy panel: five small boards, one a round, with the nests (L / H), her reach, the bite and the hatch time. The places are fixed (`CFG.nests`), the same every run.
+- **Leaderboard.** Server: table `boss_runs`, POST /account/boss, GET /leaderboard/boss (docs/SERVER.md). Page: `bossReport` when a run ends, a line on the result card (where the run landed), a Leaderboard button there, and a Mommy tab in the menu's leaderboard (classic sheet and the PC menu's Rankings), for developers only while the boss is. Best first: a kill in the earliest round, then the earliest second; without a kill, the most damage. One row a player; each set of her rules has its own board.
+  - **Not checked by the server.** The page reports the result; the server only checks its shape and that the account is a developer's. Before the boss opens to everyone the server has to replay the run (each round's purchases, moves, levels and arrows, as `puzzleWon` does for one fight).
+
+### Difficulty now (no tiles, acid heavy bite, 0.5 s jaws; 40 games each; win by round 4 / by round 5)
+
+| Player | 50,000 | 52,000 | 54,000 (in force) | 56,000 | 58,000 | 62,000 |
+|---|---|---|---|---|---|---|
+| random | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% |
+| statmax | 0 / 3% | 0 / 3% | 0 / 3% | 0 / 3% | 0 / 0% | 0 / 0% |
+| statmax + 100 gold | 0 / 30% | 0 / 20% | 0 / 18% | 0 / 13% | 0 / 8% | 0 / 3% |
+| statmax + 200 gold | 5 / 80% | 5 / 68% | 5 / 55% | 5 / 50% | 3 / 45% | 0 / 30% |
+| aware | 0 / 43% | 0 / 35% | 0 / 33% | 0 / 30% | 0 / 23% | 0 / 15% |
+| Line B nudged a tile | 0 / 73% | 0 / 70% | 0 / 65% | 0 / 60% | 0 / 55% | 0 / 38% |
+
+Median damage by round 5 (thousands): random 19.1, statmax 30.5, +100 gold 40.3, +200 gold 56.3, aware 46.0. Without the acid (and without tiles): 19.5 / 31.7 / 42.2 / 57.2 / 48.2, so the acid costs 2 to 5%. With the tiles (section 13): statmax 31.6, +100 39.3, +200 55.5, aware 49.0.
+
+At 54,000 this is the picture 46,000 gave when it was first agreed (aware 35% by round 5 and none by round 4, statmax and random none, statmax + 100 gold above its 5-10% target). Win rates from 40 games move by several points between runs with the same medians (aware at 54,000 read 15% in section 13).
+
+**The round-3 title at 54,000.** The best plan known does 8.0 / 29.3 / 54.6k by rounds 1 / 2 / 3. Lines (by R3 / R4 / R5): A 32.5 / 41.6 / 59.5, B 32.5 / 47.5 / 77.4, C 21.2 / 30.7 / 55.5, search best five rounds 34.6 / 51.0 / 82.0.
 
