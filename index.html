@@ -1158,7 +1158,7 @@ html.diorama.pcwide .overlay > .card .btn.primary:disabled { opacity: .5; }
 /* the Mommy's round card: Play this round again, a replay mark left of Next round (the primary goes first: order -1),
    in the card's own plain button look (below), as tall as Next round, the mark in gold */
 html.diorama.pcwide .overlay > .card .btn.boss-retry { order: -2; align-self: stretch; padding: 0 12px; opacity: 1; }
-html.diorama.pcwide .overlay > .card .btn.boss-retry svg { width: 18px; height: 18px; color: #F2B23A; }
+html.diorama.pcwide .overlay > .card .btn.boss-retry svg { width: 22px; height: 22px; color: #F2B23A; }
 html.diorama.pcwide .overlay > .card .status { font: 700 15px var(--dtype); color: #F4ECD8; }
 html.diorama.pcwide .board-banner { left: var(--dsx0, 380px); right: var(--dsx1, 24px); background: linear-gradient(90deg, transparent, rgba(23,20,15,.86) 18%, rgba(23,20,15,.86) 82%, transparent); font-family: var(--dstencil); }
 html.diorama.pcwide .board-banner small { font-family: var(--dtype); font-weight: 700; }
@@ -2334,7 +2334,7 @@ html:not(.pc) #panel .btn.small { padding: 5px 10px; }
 .linkbox { font-family: var(--font-data); font-size: 12px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; word-break: break-all; user-select: all; -webkit-user-select: all; }
 .btnrow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .btn.boss-retry { display: inline-grid; place-items: center; padding-left: 12px; padding-right: 12px; } /* (the Mommy's round card: Play this round again, a replay mark only) */
-.btn.boss-retry svg { width: 20px; height: 20px; }
+.btn.boss-retry svg { width: 22px; height: 22px; }
 .joinrow { display: flex; gap: 8px; justify-content: center; }
 .joinrow input { width: 9ch; font: 500 18px var(--font-data); letter-spacing: 0.16em; text-transform: uppercase; text-align: center; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 8px; }
 .card .stack { display: grid; gap: 8px; justify-items: center; width: 100%; }
@@ -20009,7 +20009,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · a76e930'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 4b0680f'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -24946,6 +24946,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     replay: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M5 4.5v15" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M19.5 5.2v13.6L8.6 12z" fill="currentColor"/></svg>',
     attacks: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M3 6h18l-2.2 4.2-2.2-3.4-2.3 4-2.3-4-2.3 4-2.2-3.4L5.2 10.2z M3 18h18l-2.2-4.2-2.2 3.4-2.3-4-2.3 4-2.3-4-2.2 3.4L5.2 13.8z" fill="currentColor"/></svg>', // (her jaws: Mommy's attacks' Bite)
     save: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v10.5"/><path d="M7.5 9.8 12 14.3l4.5-4.5"/><path d="M4 15.5v4.5h16v-4.5"/></svg>', // (into the tray: kept)
+    again: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5.07 17A8 8 0 1 0 8 6.07"/><path d="M9.29 1.24 8 6.07l4.83 1.29"/></svg>', // (a circle arrow, turning back: Play this round again on the round card)
     store: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.5v9M5 9.5l3 3 3-3"/><path d="M16 12.5v-9M13 6.5l3-3 3 3"/><path d="M4 15.5v4.5h16v-4.5"/></svg>', // (Save/Load board: into the tray and out of it)
   };
   let ctlEl = null, ctlKey = '', ctlSure = 0, ctlOpen = false, ctlLoad = false, ctlSaved = 0, ctlSavedR = 0, ctlAt = '';
@@ -25311,7 +25312,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       ${lines}
       ${!m.over && !won ? bossNextBite(r.round + 1) : ''}
       ${m.over ? acct ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : '<p>Play as a guest or sign in (Profile) to get your runs on her leaderboard.</p>' : ''}
-      <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : `<button class="btn boss-retry" id="boss-retry" aria-label="Play this round again" title="Play this round again">${CTL_ICON.replay}</button><button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>`}</div>
+      <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : `<button class="btn boss-retry" id="boss-retry" aria-label="Play this round again" title="Play this round again">${CTL_ICON.again}</button><button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>`}</div>
     </div>`);
     if (m.over) bossReport(r);
     if ($('boss-board')) $('boss-board').addEventListener('click', () => openLeaderboard('boss'));

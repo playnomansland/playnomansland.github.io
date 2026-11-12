@@ -1011,7 +1011,7 @@ html.diorama.pcwide .overlay > .card .btn.primary:disabled { opacity: .5; }
 /* the Mommy's round card: Play this round again, a replay mark left of Next round (the primary goes first: order -1),
    in the card's own plain button look (below), as tall as Next round, the mark in gold */
 html.diorama.pcwide .overlay > .card .btn.boss-retry { order: -2; align-self: stretch; padding: 0 12px; opacity: 1; }
-html.diorama.pcwide .overlay > .card .btn.boss-retry svg { width: 18px; height: 18px; color: #F2B23A; }
+html.diorama.pcwide .overlay > .card .btn.boss-retry svg { width: 22px; height: 22px; color: #F2B23A; }
 html.diorama.pcwide .overlay > .card .status { font: 700 15px var(--dtype); color: #F4ECD8; }
 html.diorama.pcwide .board-banner { left: var(--dsx0, 380px); right: var(--dsx1, 24px); background: linear-gradient(90deg, transparent, rgba(23,20,15,.86) 18%, rgba(23,20,15,.86) 82%, transparent); font-family: var(--dstencil); }
 html.diorama.pcwide .board-banner small { font-family: var(--dtype); font-weight: 700; }
