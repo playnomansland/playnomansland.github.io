@@ -446,6 +446,12 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 @keyframes hp-blink { 0%, 100% { opacity: 1; } 50% { opacity: .28; } }
 @media (prefers-reduced-motion: reduce) { .helper.line .hp-ln, .helper.line .hp-ring { animation: none !important; } }
 /* tutorial: the coach line over the board, a ring on what it talks about, and a glow on the next thing to tap */
+/* the Puzzles sheet's weekly boss button: her lair's colours (dark earth, amber light, red eyes), unlike any other button */
+.btn.boss-btn { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; color: #F6E7C8; background: linear-gradient(135deg, #3A2618 0%, #23170F 55%, #3D1612 100%); border: 1px solid #E8962E; box-shadow: inset 0 0 0 1px rgba(232, 150, 46, 0.25), 0 0 14px rgba(232, 150, 46, 0.18); }
+.btn.boss-btn b { color: #FFC457; letter-spacing: 0.02em; } .btn.boss-btn .hint { color: #D8C6A6; }
+.btn.boss-btn:hover, .btn.boss-btn:focus-visible { border-color: #FFC457; box-shadow: inset 0 0 0 1px rgba(255, 196, 87, 0.4), 0 0 18px rgba(232, 150, 46, 0.35); }
+.btn.boss-btn .boss-eyes { flex: none; width: 34px; height: 12px; background: radial-gradient(circle at 6px 6px, #FF4A36 0 4px, transparent 5px), radial-gradient(circle at 28px 6px, #FF4A36 0 4px, transparent 5px); filter: drop-shadow(0 0 4px #FF4A36); animation: boss-blink 4.2s infinite; }
+@keyframes boss-blink { 0%, 92%, 100% { opacity: 1; } 95% { opacity: 0.1; } }
 .hud.bossrun .side.foe .num, .hud.bossrun .side.foe .hp { visibility: hidden; }
 .hud.bossrun .side.you .num { white-space: nowrap; }
 .hud.bossrun #you-name { display: none; } /* (the phone's top line has no room for a name next to "Round 1 of 5"; the PC layout keeps it) */
@@ -6941,7 +6947,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Tutorial puzzles</h3><button class="btn small" id="close">Close</button></div>
       <p class="hint" style="margin:0">One fight each. You see the whole enemy army; win with the gold you have.</p>
       ${devMode() && typeof Boss !== 'undefined' ? `<h4 class="puz-level" style="margin:6px 0 0;display:flex;justify-content:space-between;gap:8px">Weekly boss<span class="hint" style="font-weight:normal">developers only</span></h4>
-      <button class="btn" id="boss-weekly" style="display:flex;justify-content:space-between;gap:8px;text-align:left"><span><b>Weekly boss - The Mommy</b><br><span class="hint">Five rounds against a giant spider and her nests. Kill her by round 5.</span></span></button>` : ''}
+      <button class="btn boss-btn" id="boss-weekly"><span><b>Weekly boss - The Mommy</b><br><span class="hint">Five rounds against a giant spider and her nests. Kill her by round 5.</span></span><i class="boss-eyes" aria-hidden="true"></i></button>` : ''}
       <p class="hint" style="margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${hasInitiate() ? 'The title is yours.' : `Solve the ${PUZ_TITLE.length} Easy puzzles for the title`} ${titleHtml('initiate')}</p>
       ${PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), done = ks.filter(k => puzSolvedAll().includes(k)).length;
         return `<h4 class="puz-level" style="margin:6px 0 0;display:flex;justify-content:space-between;gap:8px">${esc(L)}<span class="hint" style="font-weight:normal">${done} of ${ks.length} solved</span></h4>
@@ -7242,7 +7248,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const acidBites = C.acid && C.acid.pct > 0 ? Object.keys(mo.bites).filter(k => mo.bites[k].acid) : [], acidRounds = C.biteByRound.map((x, k) => acidBites.includes(x) ? k + 1 : 0).filter(Boolean);
     const sec = (title, items) => `<h4 style="margin:10px 0 2px">${title}</h4><ul class="helplist">${items.filter(Boolean).map(x => `<li>${x}</li>`).join('')}</ul>`;
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
-      <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. Beat her within ${C.titleRound} rounds for the “Mommy” title.</p>
+      <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. Kill her within ${b(C.titleRound + ' rounds')} and her brood’s look is yours: the ${b('Hollow Brood')} skin for your Spiders.</p>
       ${sec('Hanging', [
         `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage, and she can’t be stunned, slowed, rooted or moved.`,
         mo.lastPick ? 'Your units only shoot her while she hangs if none of her nests or spiders are left to hit.' : ''])}
@@ -7307,8 +7313,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (res.status === 422) return say(`The game server played this run again and its rules didn’t allow it, so it is not on the leaderboard${res.why ? ' (' + res.why + ')' : ''}.`);
       if (res.status !== 200 || !Array.isArray(res.rows) || !res.run) return say('This run couldn’t be sent to the leaderboard.');
       bossBoard.rows = res.rows; bossBoard.at = now();
+      if (res.reward && res.player) acctTake(res); // the Hollow Brood skin: the account has it now (the menu shows the new-skin note)
       const at = res.rows.findIndex(x => x.id === acct.id), same = res.run.won === !!r.dead && res.run.round === r.round;
-      say(`The game server played your run again${same ? '' : ' and got: ' + bossRunText(res.run).toLowerCase()}. ${res.improved ? 'It is your best so far' : 'Your best stays: ' + bossRunText(res.best).toLowerCase()}${at >= 0 ? `, number ${at + 1} of ${res.rows.length} on the leaderboard.` : '.'}`);
+      say(`The game server played your run again${same ? '' : ' and got: ' + bossRunText(res.run).toLowerCase()}. ${res.improved ? 'It is your best so far' : 'Your best stays: ' + bossRunText(res.best).toLowerCase()}${at >= 0 ? `, number ${at + 1} of ${res.rows.length} on the leaderboard.` : '.'}${res.reward && Shapes.SKINS[res.reward] ? ` The ${Shapes.SKINS[res.reward].name} skin for your ${Shapes.SKINS[res.reward].unit} is yours now.` : ''}`);
     });
   }
   // The nest map (the deploy panel's Nest map): where her nests hang in each round, on five small boards. The places
@@ -7351,7 +7358,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     overlay(`<div class="card">
       <span class="eyebrow">Mommy · developer test</span>
       <h2 class="${won ? 'you' : m.over ? 'foe' : ''}">${head}</h2>
-      ${won ? `<p class="big">${title ? 'Within ' + Boss.CFG.titleRound + ' rounds: that is the “Mommy” title (not given out yet).' : 'Beat her within ' + Boss.CFG.titleRound + ' rounds for the “Mommy” title.'}</p>` : ''}
+      ${won ? `<p class="big">${title ? 'Within ' + Boss.CFG.titleRound + ' rounds: her brood’s look, the Hollow Brood skin for your Spiders, is the reward.' : 'Kill her within ' + Boss.CFG.titleRound + ' rounds for the Hollow Brood skin for your Spiders.'}</p>` : ''}
       ${lines}
       ${m.over && acct && devMode() ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : ''}
       <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>

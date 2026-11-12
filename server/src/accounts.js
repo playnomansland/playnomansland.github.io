@@ -164,7 +164,7 @@ export async function recordGG(env, giver, receiver, match, fights) {
 // Owned = a row with src 'grant' (SKIN_GRANTS) or 'invite' (INVITE: the reward for inviting a friend).
 // One skin per unit at a time: the part of the id before the first '-' names the unit (brute-..., golem-...), and
 // wearing a skin takes off the player's other skins for that unit (Omni-Per Brute, 2026-11-05: a second Brute skin).
-export const SKINS = ['brute-champion', 'golem-aquamarine', 'brute-omniper', 'firemage-ember'];
+export const SKINS = ['brute-champion', 'golem-aquamarine', 'brute-omniper', 'firemage-ember', 'spiders-hollow']; // (spiders-hollow: the weekly boss's reward, BOSS below)
 const skinUnit = (k) => k.split('-')[0];
 export const SKIN_GRANTS = [{ skin: 'brute-champion', tag: 'Gubbolas Cage' }];
 let grantsDone = false;
@@ -599,7 +599,9 @@ export async function leaderboard(env, cors) {
 // rules: only a better run replaces it. Developer accounts only while the boss is a developer test.
 // A run is five fights, too much processor time for the Worker itself, so the replay runs in a Durable Object (a Room
 // named bosscheck-<x>, its /bosscheck).
-export const BOSS = { mommy: { rounds: 5, secs: 30 }, rows: 100, maxBytes: 40000, perPlayer: [20, 600e3] };
+// The reward: a run the replay finds she was killed in within Boss.CFG.titleRound rounds (3) gives the player the
+// Spiders skin BOSS.skin, her own brood's look, for good (a 'grant' row, worn; a developer's on/off choice is kept).
+export const BOSS = { mommy: { rounds: 5, secs: 30 }, rows: 100, maxBytes: 40000, perPlayer: [20, 600e3], skin: 'spiders-hollow' };
 export const bossRules = () => Boss.rulesTag(builtin().units);
 async function bossCheck(env, player, run) {
   const r = await env.ROOM.getByName('bosscheck-' + player.slice(-1)).fetch(new Request('https://room/bosscheck', { method: 'POST', body: JSON.stringify(run) }));
@@ -1154,8 +1156,17 @@ export async function handleAccount(request, env, cors) {
       if (improved) await db.prepare(`INSERT INTO boss_runs (player, boss, rules, won, round, secs, dmg, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (player, boss, rules) DO UPDATE SET won = excluded.won, round = excluded.round, secs = excluded.secs, dmg = excluded.dmg, created = excluded.created`)
         .bind(me.player, 'mommy', rules, run.won, run.round, run.secs, run.dmg, now).run();
+      // the reward for a kill within the title rounds: her brood's look for the player's Spiders, once
+      let reward = null;
+      if (run.won && run.round <= Boss.CFG.titleRound) {
+        const own = await db.prepare(`SELECT src FROM skins WHERE player = ? AND skin = ?`).bind(me.player, BOSS.skin).first();
+        if (!own || own.src === 'dev') {
+          await db.prepare(`INSERT INTO skins (player, skin, src, worn, created) VALUES (?1, ?2, 'grant', 1, ?3) ON CONFLICT (player, skin) DO UPDATE SET src = 'grant'`).bind(me.player, BOSS.skin, now).run();
+          reward = BOSS.skin;
+        }
+      }
       const out = (x) => ({ won: !!x.won, round: x.round, secs: x.secs, dmg: x.dmg });
-      return json({ improved, run: out(run), best: out(improved ? run : had), rules, rows: await bossRows(db, 'mommy', rules) }, 200, cors);
+      return json({ improved, run: out(run), best: out(improved ? run : had), rules, rows: await bossRows(db, 'mommy', rules), ...(reward ? { reward, player: await playerOut(db, me.player) } : {}) }, 200, cors);
     }
     if (route === 'me') {
       try { await grantSkins(env, now); } catch (e) { console.warn('skins', e && e.message); }
