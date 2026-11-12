@@ -11274,7 +11274,13 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (!mpbOn() || !t) return false;
     if (mpbPicking) { const f = mpbPicking; mpbPicking = null; if (phase === 'deploy' && f(t)) return true; }
     if (phase === 'deploy') for (const x of Object.values(MPB_SHEET)) if (x.tap && x.tap(t)) return true; // a kind's own tile to tap (MPB_SHEET[kind].tap)
-    if (sel !== null) return false;
+    if (sel !== null) { // a building with a shop unit picked (it stays picked after placing one): its sheet, and the pick let go,
+      // as a 1v1 building's; unless the unit may go in (a ranged squad into a Tree kojja's Nest): then it is placed
+      // (the owner's friend, 2026-11-11: "when I press vault nothing happens")
+      const x = phase === 'deploy' && Mpb.recAt(m, t.col, t.row);
+      if (!x || (editable() && Game.canPlaceAt(m, me, t.col, t.row, sel) && Game.spotFree(m, me, t.col, t.row, sel))) return false;
+      unselect(); openMpbSheet(x.side, x.rec.key); return true;
+    }
     const h = phase === 'deploy' && Mpb.voteEntry(m, me, duoMyLane());
     if (h && Mpb.spotOk(m, me, h.kind, h.part, t.col, t.row)) { if (editable() && Game.mpbVote(m, me, t.col, t.row)) changed(); return true; }
     const x = Mpb.recAt(m, t.col, t.row);
