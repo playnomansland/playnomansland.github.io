@@ -6,9 +6,12 @@ is level with `main` as of 2026-11-07; merge `main` in again before starting, th
 
 **2026-11-10: LAUNCHED ON PC.** The Diorama is the default on computers (`57015d3`, on `main` since about 12:30 UTC
 2026-11-10); phones and tablets keep the old UI; `?ui=classic` / `?ui=diorama` still choose per device.
-**Every build from now on: `PB_UI_DEFAULT=pc node src/build.js`.** A plain `node src/build.js` builds `'classic'` and
-takes the Diorama away from computers: that happened once (`181209e`, 13:17 UTC, the hover hint), and was put back in
-the next commit. Check `grep "const DEF = " index.html` says `'pc'` before every commit of `index.html`.
+**2026-11-12: the default lives in the source, and the deploy builds.** `UI_DEFAULT = 'pc'` in `src/build.js`; a plain
+`node src/build.js` builds it (`PB_UI_DEFAULT` still overrides it for a local test build). The Pages deploy
+(`.github/workflows/pages.yml`) rebuilds `index.html` from `src/` and fails if the default isn't `'pc'`, so a committed
+`index.html` built the old way can't reach players. Before, a plain build made `'classic'`, and builds or merges of
+such an `index.html` switched every computer's menu 5 times from 9 to 12 November. To change the default on purpose,
+change `UI_DEFAULT` and the check in `pages.yml` together.
 
 ## Next session: start here (handoff, 2026-11-08)
 

@@ -295,7 +295,7 @@ project skill `weekly-boss` points there). What follows is how the Mommy was bui
 
 ## Editing
 
-The source is in `src/`. After changing it, run `node src/build.js` from the repo root. This rebuilds `index.html`, `lab.html` and `lab3d.html`.
+The source is in `src/`. After changing it, run `node src/build.js` from the repo root. This rebuilds `index.html`, `lab.html` and `lab3d.html`. The Pages deploy (`.github/workflows/pages.yml`) runs the same build before it publishes, so the live site always matches `src/`, and it fails if the main menu's default (`UI_DEFAULT` in `src/build.js`) isn't `'pc'`.
 
 - `engine.js`: the battle engine. Plain arithmetic only, so both phones in a live match play the same fight. Draws nothing.
 - `game.js`: match rules (gold, rounds, maps, characters, the AI, what each player may see of the other). Draws nothing.

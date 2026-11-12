@@ -20,8 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
-## 12 November 2026 – The battlefield's label counts the right rows
+## 12 November 2026 – No more surprise switches: the main menu and the 3D board stay as you left them
 
+- **Main menu:** some players saw the main menu switch between the island menu and the old one over the last few days. Every time, it was our mistake in how the site was put together, not anything on your side, and the site now builds itself in a way that can't do it again. On a computer, the island menu no longer depends on how wide the browser window is (or how far it's zoomed in) when the page opens, so a reload after resizing the window keeps the same menu.
+- **3D board:** when fights ran slowly, the game lowered the 3D quality and kept it lowered forever, and after a few slow fights it switched the board to 2D. That's why the Mommy's lair, the heaviest scene in the game, could turn a fight 2D out of nowhere. Now a lowered quality, or 2D because 3D was too slow or couldn't start, lasts only until you close the tab, and your next visit is back on 3D at the quality you chose in Settings. A quality saved before today is cleared once, because the game may have set it rather than you.
+- **The Mommy:** her fight never switches to 2D for being slow. It stays 3D at low quality.
+- **The note:** when the board does go back to 2D, its note stays on the board until you tap it (it used to vanish after 8 seconds).
 - **Fix:** the battlefield's label (what a screen reader says for the board) still described the old board: zones of 6 rows. It now reads the map in play, so on Standard it says zones of 7 rows with 4 rows of no man's land between, as the map description and the guide do, and on Rush 8 and 2.
 
 ---

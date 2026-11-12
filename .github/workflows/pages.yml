@@ -26,6 +26,19 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The pages are built here from src/, not taken from the commit: a committed index.html built from an older
+      # branch, or without PB_UI_DEFAULT, used to switch every player's main menu (5 times from 9 to 12 November).
+      - name: Build the pages from src/
+        run: env -u PB_UI_DEFAULT node src/build.js
+      # The main menu's default must be the one in src/build.js (UI_DEFAULT). When it changes on purpose (the
+      # Diorama on phones too), change both lines.
+      - name: Check the main menu's default
+        run: |
+          grep -q "const DEF = 'pc';" index.html || { echo "::error::index.html's main menu default is not 'pc': see UI_DEFAULT in src/build.js"; grep -o "const DEF = '[a-z]*'" index.html; exit 1; }
+          grep -q "const UI_DEFAULT = 'pc';" src/build.js || { echo "::error::UI_DEFAULT in src/build.js is not 'pc'"; exit 1; }
       - name: Copy the site, without the files it doesn't need
         run: |
           rsync -a ./ _site/ \

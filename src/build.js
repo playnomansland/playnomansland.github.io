@@ -33,8 +33,14 @@ ${lab.slice(cut)
 `;
 fs.writeFileSync('lab.html', labDoc);
 // Game
+// Which main menu players get (the <head> switch in site-template.html): 'pc' (the Diorama on computers, the old UI on
+// phones), 'diorama' (everywhere) or 'classic' (the old UI everywhere). The live site's choice is this line: the Pages
+// deploy (.github/workflows/pages.yml) rebuilds index.html from src/ and checks it. PB_UI_DEFAULT overrides it for a
+// local test build only. 2026-11-12: it used to come from PB_UI_DEFAULT alone (unset: 'classic'), so every build made
+// without it, and every merge of an index.html built that way, switched everyone's menu (5 times from 9 to 12 Nov).
+const UI_DEFAULT = 'pc';
 const game0 = src('site-template.html').replace('/*BASECSS*/', () => src('game.css'))
-  .replace('/*UI_DEFAULT*/', () => ['diorama', 'pc', 'classic'].includes(process.env.PB_UI_DEFAULT) ? process.env.PB_UI_DEFAULT : 'pc').replace('/*DIORAMA_CSS*/', () => src('diorama.css')).replace('/*DIORAMA*/', () => src('diorama.js')) // the Diorama UI (?ui=diorama)
+  .replace('/*UI_DEFAULT*/', () => ['diorama', 'pc', 'classic'].includes(process.env.PB_UI_DEFAULT) ? process.env.PB_UI_DEFAULT : UI_DEFAULT).replace('/*DIORAMA_CSS*/', () => src('diorama.css')).replace('/*DIORAMA*/', () => src('diorama.js')) // the Diorama UI (?ui=diorama)
   .replace('/*SHAPES*/', () => shapes).replace('/*ENGINE*/', () => eng)
   .replace('/*GAME*/', () => src('game.js')).replace('/*BOSS*/', () => src('boss.js')).replace('/*REFEREE*/', () => src('referee.js')).replace('/*MPB*/', () => src('mpb.js')).replace('/*DUO*/', () => src('duo.js')).replace('/*TOUR*/', () => src('tournament.js'))
   .replace('/*EXPLOITBOT*/', () => src('exploit-bot.js'))

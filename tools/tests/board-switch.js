@@ -1,13 +1,16 @@
 // The Board setting (2D / 3D in the in-match Settings) and the 3D board's fall back to 2D. 3D by default (no meter),
 // ?board=2d starts on 2D, a saved 2D stays 2D; the switch starts and stops the 3D board mid-match (stopping frees its
 // WebGL context) and is saved on this device; the 3D quality in Settings; a lost WebGL context, fights that are too
-// slow (quality steps down first) and no WebGL at all each go back to 2D with one line on the board (no WebGL on a
-// first visit saves 2D); ?board=3d still forces 3D, with the speed meter.
+// slow (quality steps down first) and no WebGL at all each go back to 2D with one line on the board, which stays until
+// it's tapped; ?board=3d still forces 3D, with the speed meter.
+// 2026-11-12: only Settings saves. The game's own fallbacks (a quality step-down, too slow, couldn't start) last this
+// visit only (sessionStorage), a boss run never drops to 2D for slowness, and a quality saved before then is cleared
+// once (step-downs used to be saved, so one heavy fight left a device on low, then on 2D).
 // Headless Chromium needs software WebGL (the args below).
 const { chromium } = require('playwright-core');
 const URL = 'http://127.0.0.1:8766/?test';
 (async () => {
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=angle', '--use-angle=swiftshader'] });
+  const b = await chromium.launch({ executablePath: process.env.PB_CHROME || '/opt/pw-browsers/chromium', args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   let fails = 0;
   const check = (ok, what) => { console.log(ok ? 'ok  ' : 'FAIL', what); if (!ok) fails++; };
   const open = async (init) => {
@@ -21,6 +24,7 @@ const URL = 'http://127.0.0.1:8766/?test';
   const on3d = (p) => p.waitForFunction(() => window.__pb && window.__pb().board3d, null, { timeout: 15000 });
   const on2d = (p) => p.waitForFunction(() => window.__pb && !window.__pb().board3d, null, { timeout: 60000 });
   const stored = (p) => p.evaluate(() => [localStorage.getItem('phone-bellum-board'), localStorage.getItem('phone-bellum-3d-quality')]);
+  const visit = (p) => p.evaluate(() => [sessionStorage.getItem('phone-bellum-board'), sessionStorage.getItem('phone-bellum-3d-quality')]);
   const note = async (p) => (await p.locator('#note3d').isVisible()) ? (await p.locator('#note3d').textContent()) : '';
   const solo = async (p) => { await p.click('#settings summary'); await p.click('[data-tm="0"]'); await p.click('#go'); await p.waitForTimeout(400); await p.dblclick('[data-pack="0"]'); await p.waitForTimeout(800); };
   const settings = async (p) => { await p.click('#cog'); await p.waitForTimeout(150); };
@@ -82,12 +86,38 @@ const URL = 'http://127.0.0.1:8766/?test';
   await solo(p);
   await slowPhone();
   await fight(p);
-  check(await is3d(p) && (await stored(p))[1] === 'low' && await p.evaluate(() => window.__pb().board3d.pixelRatio()) === 1, `slow fight at medium: still 3D, quality now ${(await stored(p))[1]}`);
+  check(await is3d(p) && (await visit(p))[1] === 'low' && await p.evaluate(() => window.__pb().board3d.pixelRatio()) === 1, `slow fight at medium: still 3D, quality now ${(await visit(p))[1]} for this visit`);
+  check((await stored(p))[1] === 'medium', `the quality picked in Settings stays saved: ${(await stored(p))[1]}`);
   await p.click('#next'); await p.waitForTimeout(800);
   await fight(p); await on2d(p).catch(() => {});
   check(!(await is3d(p)) && /too slow/.test(await note(p)), `slow fight at low -> 2D: "${await note(p)}"`);
-  check((await stored(p))[0] === '3d' && await p.evaluate(() => sessionStorage.getItem('phone-bellum-board')) === '2d', 'too slow: 2D for this visit only, the setting stays 3D');
-  await p.screenshot({ path: 'board-switch-slow.png' });
+  check((await stored(p))[0] === '3d' && (await visit(p))[0] === '2d', 'too slow: 2D for this visit only, the setting stays 3D');
+  await p.waitForTimeout(9000);
+  check(/too slow/.test(await note(p)), 'the line is still there 9 s later (it used to go after 8 s)');
+  // the next visit (a new tab: a new sessionStorage): 3D again, at the quality picked in Settings
+  { const p2 = await p.context().newPage(); p2.on('pageerror', e => { console.log('PAGE ERROR', e.message); fails++; });
+    await p2.goto(URL); await p2.waitForFunction(() => window.__pb && window.__pb().board3d, null, { timeout: 15000 });
+    check(await p2.evaluate(() => window.__pb().board3d.pixelRatio()) === 1.5, 'next visit: 3D again, at medium (the Settings pick)'); }
+  await p.context().close();
+
+  // a boss run (the Mommy) at low: a slow fight keeps the 3D board
+  p = await open(() => { try { sessionStorage.setItem('phone-bellum-3d-quality', 'low'); } catch (e) {} });
+  await p.goto(URL.replace('?test', '?mommy&test')); await on3d(p);
+  await p.waitForFunction(() => { const x = window.__pb(); return x.m && x.m.boss && x.phase === 'deploy'; }, null, { timeout: 15000 });
+  await slowPhone();
+  await p.click('#ready'); await p.waitForFunction(() => window.__pb().phase === 'battle', null, { timeout: 15000 });
+  await p.waitForFunction(() => window.__pb().phase !== 'battle', null, { timeout: 180000 });
+  await p.waitForTimeout(500);
+  check(await is3d(p) && !(await note(p)) && (await visit(p))[0] === null, 'boss run: a slow fight at low stays 3D');
+  await p.context().close();
+
+  // a quality saved before 2026-11-12 (maybe the too-slow rule's) is cleared once; a later pick is kept
+  p = await open(() => { Object.defineProperty(navigator, 'webdriver', { get: () => false }); try { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('phone-bellum-3d-quality', 'low'); sessionStorage.setItem('seeded', '1'); } } catch (e) {} });
+  await p.goto(URL); await on3d(p);
+  check((await stored(p))[1] === null && await p.evaluate(() => window.__pb().board3d.pixelRatio()) === 2, 'an old saved low is cleared once: high');
+  await p.evaluate(() => localStorage.setItem('phone-bellum-3d-quality', 'medium'));
+  await p.reload(); await on3d(p);
+  check((await stored(p))[1] === 'medium', 'a quality saved after the reset is kept');
   await p.context().close();
 
   // no WebGL on a first visit: 3D (the default) can't start, so 2D with a line, and the setting becomes 2D
@@ -97,8 +127,8 @@ const URL = 'http://127.0.0.1:8766/?test';
   });
   await p.goto(URL); await p.waitForFunction(() => window.__pb, null, { timeout: 15000 });
   await p.waitForSelector('#note3d', { timeout: 15000 }).catch(() => {});
-  check(!(await is3d(p)) && /can’t run/.test(await note(p)) && await p.locator('#board').isVisible(), `no WebGL -> 2D: "${await note(p)}"`);
-  check(await p.evaluate(() => localStorage.getItem('phone-bellum-board')) === '2d', 'the setting goes back to 2D');
+  check(!(await is3d(p)) && /couldn’t start/.test(await note(p)) && await p.locator('#board').isVisible(), `no WebGL -> 2D: "${await note(p)}"`);
+  check((await stored(p))[0] === null && (await visit(p))[0] === '2d', 'couldn’t start: 2D for this visit only, nothing saved');
   await p.context().close();
 
   // ?board=3d forces 3D over a saved 2D, with the speed meter

@@ -3399,11 +3399,15 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 <script>
 // The Diorama UI (2026-11-07, design/diorama/). ?ui=diorama / ?ui=classic choose it on this device (kept as pb-ui);
 // without a choice the build's default decides (src/build.js, PB_UI_DEFAULT): 'classic' (the old UI everywhere, until
-// the launch), 'pc' (the Diorama on a computer: a fine pointer that hovers and a window at least 900 px wide, the old
-// UI on phones and tablets, whose layouts aren't done) or 'diorama' (everywhere). Its two extra fonts load only when on.
+// the launch), 'pc' (the Diorama on a computer: a fine pointer that hovers, the old UI on phones and tablets, whose
+// layouts aren't done) or 'diorama' (everywhere). Its two extra fonts load only when on.
+// 2026-11-12: 'pc' asks for a screen 900 px across (its longer side), not a window. The window's width was read once,
+// at load, so browser zoom or a half-screen window gave a computer the old menu, and a reload after a resize swapped
+// them. The screen's size is the device's: it doesn't change with the window or the zoom. A narrow window on a
+// computer gets the Diorama's phone layout (the 'pc' class below still follows the window's width).
 (() => {
   const DEF = 'pc';
-  const pcLike = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches && innerWidth >= 900; } catch (e) { return false; } };
+  const pcLike = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches && Math.max(screen.width, screen.height) >= 900; } catch (e) { return false; } };
   let pick = '';
   if (DEF === 'force') pick = 'diorama'; // the Diorama's own test page (design/diorama/game.html): always on, and it never changes this device's choice for the game
   else try { const q = new URLSearchParams(location.search).get('ui'); if (q === 'diorama' || q === 'classic') localStorage.setItem('pb-ui', q); pick = localStorage.getItem('pb-ui') || ''; }
@@ -19990,7 +19994,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · dbe595a'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 88c53b2'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -26199,9 +26203,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // inlined it) load only then, so the 2D game opens as fast as without 3D.
   // ?board=3d in the address, or a build that sets PB_FORCE3D (the phone-test artifact), forces it on for testing:
   // that also shows the speed meter and skips the too-slow rule. ?board=2d starts on the 2D board (the 2D checks).
-  // Saved 2D (chosen in Settings, or after 3D couldn't start) stays 2D; too slow is 2D for this visit only.
-  // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
-  // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
+  // Only a 2D chosen in Settings is saved. The game's own fallbacks last this visit only (2026-11-12: they used to be
+  // saved, so one slow boss fight or one error in the 3D code kept a device on 2D, or on low quality, for good).
+  // It falls back to the 2D board when it can't start (no WebGL, an error), when the phone drops the WebGL context,
+  // and when fights run under 20 fps at low quality (slower fights step the quality down first; never in a boss run,
+  // which stays 3D at low), with one line on the board that stays until it's tapped.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
   // import() of a relative address: resolved by hand against the page's <base> (the Diorama's test page in design/diorama/
   // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
@@ -26276,23 +26282,23 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     want3d = on; save3d(on);
     if (on) start3d(); else stop3d();
   }
-  // 3D can't run here: back to 2D, and one line on the board to say so. When it failed to start, the setting goes back
-  // to 2D; too slow is 2D for this visit only; a lost context or a failed download (offline) may work next time.
+  // 3D can't run here: back to 2D, and one line on the board to say so. Too slow or failed to start: 2D for this visit
+  // only (sessionStorage), 3D again next time, so a bug in the 3D code can't keep a device on 2D for good; a lost
+  // context or a failed download (offline) may work in the next match. Settings' Board choice is never changed.
   function fallback2d(why) {
     want3d = false;
-    if (why === 'slow' && !force3d) { try { sessionStorage.setItem(B3D_STORE, '2d'); } catch (e) {} } // this visit only: 3D again next time
-    else if (why !== 'lost' && why !== 'load' && !force3d) save3d(false);
+    if ((why === 'slow' || why === 'failed') && !force3d) { try { sessionStorage.setItem(B3D_STORE, '2d'); } catch (e) {} }
     stop3d();
-    note3d(why === 'slow' ? '3D was too slow here, so the board is back to 2D.'
+    note3d(why === 'slow' ? '3D was too slow here, so the board is 2D for this visit. Settings › Board turns 3D back on.'
       : why === 'lost' ? 'The 3D board stopped, so it’s back to 2D.'
       : why === 'load' ? 'The 3D board couldn’t load, so it’s 2D for now.'
-      : '3D can’t run on this device, so the board is 2D.');
+      : '3D couldn’t start here, so the board is 2D for this visit.');
   }
+  // the line stays until it's tapped (it used to go after 8 s, so the switch to 2D looked like it came from nowhere)
   function note3d(text) {
     let n = $('note3d');
-    if (!n) { n = document.createElement('button'); n.id = 'note3d'; n.type = 'button'; n.className = 'note3d'; n.setAttribute('role', 'status'); n.addEventListener('click', () => { n.hidden = true; }); $('wrap').appendChild(n); }
-    n.textContent = text; n.hidden = false;
-    clearTimeout(n.timer); n.timer = setTimeout(() => { n.hidden = true; }, 8000);
+    if (!n) { n = document.createElement('button'); n.id = 'note3d'; n.type = 'button'; n.className = 'note3d'; n.setAttribute('role', 'status'); n.title = 'Close'; n.addEventListener('click', () => { n.hidden = true; }); $('wrap').appendChild(n); }
+    n.textContent = text + ' ✕'; n.hidden = false;
   }
   if (want3d) start3d();
   // Unlike the 2D board, which draws only when render() is called, the 3D board draws in frames. To spare the battery
@@ -26523,10 +26529,20 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   const meter = { el: null, timer: 0, n: 0, last: 0, worst: 0, fight: null, lastFight: '', q: 'high' };
   const Q3D_STORE = 'phone-bellum-3d-quality';
   const Q3D = ['high', 'medium', 'low'];
-  try { const q = localStorage.getItem(Q3D_STORE); if (Q3D.includes(q)) meter.q = q; } catch (e) {}
-  function setQuality(q) {
+  // A quality picked in Settings is saved (localStorage); the too-slow rule's step-downs last this visit only
+  // (sessionStorage), so a heavy fight (the Mommy's Hollow) doesn't leave every later match on low. 2026-11-12: those
+  // step-downs used to be saved too, and never stepped back up, so a saved quality is cleared once (Q3D_RESET).
+  const Q3D_RESET = 'phone-bellum-3d-quality-reset1';
+  try {
+    if (!navigator.webdriver && !localStorage.getItem(Q3D_RESET)) { localStorage.removeItem(Q3D_STORE); localStorage.setItem(Q3D_RESET, '1'); }
+    const q = sessionStorage.getItem(Q3D_STORE) || localStorage.getItem(Q3D_STORE); if (Q3D.includes(q)) meter.q = q;
+  } catch (e) {}
+  function setQuality(q, auto) {
     meter.q = Q3D.includes(q) ? q : 'high';
-    try { localStorage.setItem(Q3D_STORE, meter.q); } catch (e) {}
+    try {
+      if (auto) sessionStorage.setItem(Q3D_STORE, meter.q); // the too-slow rule: this visit only
+      else { localStorage.setItem(Q3D_STORE, meter.q); sessionStorage.removeItem(Q3D_STORE); } // picked by the player
+    } catch (e) {}
     if (board3d) { board3d.quality(meter.q); wake3d(); }
     showMeter();
   }
@@ -26562,10 +26578,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       const avg = f.n * 1000 / Math.max(1, f.end - f.t0), low = f.secs.length ? Math.min(...f.secs) : avg;
       meter.lastFight = `last fight ${Math.round(avg)} fps · slowest second ${Math.round(low)} · ${f.bodies} bodies`;
       console.log('No Mans Land 3D:', meter.lastFight, '·', meter.q);
-      // too slow: a fight of 4 s or more, on screen the whole time, under 20 fps: a step down in quality, then 2D
+      // too slow: a fight of 4 s or more, on screen the whole time, under 20 fps: a step down in quality (this visit),
+      // then 2D (this visit), except in a boss run: the Mommy's lair is the heaviest scene, and her fight stays 3D at low
       if (!force3d && !f.paused && f.end - f.t0 >= 4000 && avg < 20) {
-        if (meter.q === 'low') fallback2d('slow');
-        else setQuality(Q3D[Q3D.indexOf(meter.q) + 1]);
+        if (meter.q !== 'low') setQuality(Q3D[Q3D.indexOf(meter.q) + 1], true);
+        else if (!(m && m.boss)) fallback2d('slow');
       }
     }
   }

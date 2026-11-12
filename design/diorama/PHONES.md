@@ -83,6 +83,6 @@ Screenshots: `screens/phone-game-home.jpg` (menu, Play, Rooms, New room, Units, 
 
 ## Try it
 
-Rebuild with `PB_UI_DEFAULT=pc node src/build.js --diorama-page` (keeps `index.html` on `pc` and writes the test
-page). Serve the repo root (`python3 -m http.server 8766 --bind 127.0.0.1`) and open
+Rebuild with `node src/build.js --diorama-page` (keeps `index.html` on `pc`, the default since 2026-11-12, and writes
+the test page). Serve the repo root (`python3 -m http.server 8766 --bind 127.0.0.1`) and open
 `/design/diorama/game.html?test&fly=off` in a phone-sized window with touch.

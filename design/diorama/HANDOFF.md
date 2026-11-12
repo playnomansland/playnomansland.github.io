@@ -7,7 +7,7 @@ screen, below) with `main` merged in, the owner's fixes from their test on the t
 **`index.html` built with `PB_UI_DEFAULT=pc`** (the Diorama on computers, the old UI on phones and tablets). So the
 launch is: merge this branch into `main` and push, **only on the owner's word**. That push also changes `server/`, so
 the server deploys itself (`.github/workflows/server-deploy.yml`). If anything changes on the branch before then,
-rebuild with `PB_UI_DEFAULT=pc node src/build.js --diorama-page` (not a plain build, which goes back to `classic`).
+rebuild with `node src/build.js --diorama-page` (2026-11-12: a plain build is `pc` now, `UI_DEFAULT` in `src/build.js`).
 
 **Fixed from the owner's test (2026-11-10):**
 - The room: the column ends above its foot (`--drgo`, measured in `dioRoom`), so + Invite a friend no longer sits on
