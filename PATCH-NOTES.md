@@ -20,6 +20,15 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 12 November 2026 – Keywords, step one: a registry (branch `design/keywords`, nothing changes in the game)
+
+- **For players: nothing yet.** No rule, screen or number changes.
+- **Keyword registry:** `src/keyword-registry.json` lists 17 first keywords (Strike, Shoot, Splash, Pierce, Shred, Tank, Rush, Pull, Burn, Slow, Poison, Bleed, Heal, Carry, Hide, Reveal, Spawn), each with a role and a line of at most 8 words, and tags every unit and skill in today's game with them.
+- **What it shows:** 27 of 28 units have one of the 17 as their verb. Of 85 skills, 26 read with these keywords alone, 28 are plain stat changes, 19 need a keyword from a later wave and 12 fit none. The full lists are in `docs/KEYWORDS-TAGGING.md`.
+- **A check:** `node tools/tests/keywords.js` fails when a unit has no verb, a skill is not sorted, or a keyword line is too long.
+
+---
+
 ## 12 November 2026 – Replay a round of the Mommy, and a Skills tab on the picked unit
 
 - **The Mommy:** **Restart boss** and **Replay round** are on the screen for the whole run, even mid-fight, at the top right under her name. Replay round lists every round you've reached with its bite: pick one to play it again from its start. Restart asks "Sure?" first. (On phones they are in Settings.) The card between rounds now warns you what's coming: **! Next round** with her next bite's mark and name.
