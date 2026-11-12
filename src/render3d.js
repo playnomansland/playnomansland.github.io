@@ -893,7 +893,9 @@ const Render3D = (THREE, el, view, opts = {}) => {
     const HANG = 3.5, NEST_UP = 3.5, NEST_SC = 1.8, LS = 1.5 * fxWide(); // LS: how tall her labels are (bigger from further up)
     const nestLabel = (wx, wz, low, a = 0.95) => { arc(wx, wz, 2.8, tc, 0.9, 1, 0.1); icon('label|' + (low ? 'LOW' : 'HIGH'), wx + camDown.x * (3 + LS * 0.5), 0.3, wz + camDown.z * (3 + LS * 0.5), LS, low ? ink : color('#FFD23F'), a); }; // its ring on the ground, and LOW (white) or HIGH (yellow) under it
     if (!deploying) { // her state in the fight (mom.bs, src/boss.js)
-      const mom = v.bt && v.bt.bodies.find(b => b.u.boss && b.alive); if (!mom || !mom.bs) return;
+      const mom = v.bt && v.bt.bodies.find(b => b.u.boss && b.alive);
+      if (scenery && scenery.bossState) scenery.bossState({ fight: true, hpK: mom ? Math.max(0, mom.hp) / (bs.max || 1) : 0 }); // the Hollow: the spiderlings, her webs, the light
+      if (!mom || !mom.bs) return;
       const st = mom.bs, [wx, wz] = world(f, mom.x, mom.y), t = v.bt.time(), R = size(mom.u) * 1.4;
       const BC = { fast: '#FFE15A', heavy: '#8BE04E', sweep: '#FF9A3D' }, // (the heavy bite is acid: green)
          silk = color('#EDEDED'), webR = typeof Boss !== 'undefined' ? Boss.CFG.mommy.web.r : 14;
@@ -916,7 +918,11 @@ const Render3D = (THREE, el, view, opts = {}) => {
         }
       }
       if (st.phase === 'hanging') thread(wx, wz, t, momUp + 3);
-      const tie = tieAt(wx, wz); if (scenery && scenery.whip) scenery.whip(fallEv ? fa : null); // the Hollow: the bridge whips up as her weight leaves it
+      const tie = tieAt(wx, wz);
+      if (tie && st.phase === 'hanging' && mom.hp / (bs.max || 1) < 0.34) for (let k = 0; k < 4; k++) { // the bridge creaks under her: bark chips fall now and then
+        const ph = (t * 0.45 + k * 0.29) % 1 * 2.2, x0 = wx + (k - 1.5) * 4.5 + Math.sin(k * 3.1) * 2;
+        const cy = tie + 0.5 - 0.5 * 9.8 * ph * ph * 0.55; if (cy > 0.3) scene_(() => icon('dot', x0 + Math.sin(ph * 4 + k) * 0.5, cy, wz + (k - 1.5) * 0.6, 0.7, color('#5C4636'), 0.9)); }
+      if (scenery && scenery.whip) scenery.whip(fallEv ? fa : null); // the Hollow: the bridge whips up as her weight leaves it
       if (tie && st.phase !== 'hanging') { // the snapped end of her thread, swinging under the bridge; dirt and leaves shaken off it
         const sw = Math.sin(t * 1.6) * Math.min(1.5, 0.4 + fa * 0.3);
         scene_(() => beam(wx, tie, wz, wx + sw, tie - 5.5, wz + sw * 0.3, 0.1, color('#EDEDED'), 0.7));
@@ -1011,6 +1017,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     }
     const mo = bs.mommy, [mx, mz] = world(f, mo.x, mo.y);
     if (scenery && scenery.whip) scenery.whip(null);
+    if (scenery && scenery.bossState) scenery.bossState({ fight: false, hpK: bs.hp / (bs.max || 1) });
     thread(mx, mz, 0, HANG + 3);
     arc(mx, mz, mo.reach, tc, 0.55, 1, 0.04, 28);
     bodies.push({ u: mo.u, side: foe, x: mo.x, y: mo.y, look: 'ghost', raise: HANG });
@@ -1321,6 +1328,6 @@ const Render3D = (THREE, el, view, opts = {}) => {
     renderer.forceContextLoss();
   }
   return { size: sizeTo, draw, tileAt, thumb: (match) => floor2d.thumb(match), camera: cam, cam3: camera, info: () => renderer.info.render,
-    still: () => !cam.busy(), alive: () => !!(scenery && scenery.alive && scenery.alive()), explore: (x0) => scenery && scenery.explore && scenery.explore(x0), // (tests: send Forest Glade's explorer out) // alive: the scenery moves on its own (Savanna's vultures) kinds: () => [...new Set(Object.keys(groups).filter(k => used.has(groups[k])).map(k => k.split('#')[0]))], // the models drawn in the last frame (UI tests)
+    still: () => !cam.busy(), alive: () => !!(scenery && scenery.alive && scenery.alive()), explore: (x0) => scenery && scenery.explore && scenery.explore(x0), _scenery: () => scenery, // (tests) // (tests: send Forest Glade's explorer out) // alive: the scenery moves on its own (Savanna's vultures) kinds: () => [...new Set(Object.keys(groups).filter(k => used.has(groups[k])).map(k => k.split('#')[0]))], // the models drawn in the last frame (UI tests)
     quality, pixelRatio: () => renderer.getPixelRatio(), dispose, drawn, screenAt, pickAt, scenery };
 };
