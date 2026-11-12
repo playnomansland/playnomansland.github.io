@@ -1856,8 +1856,8 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
    the reward and her leaderboard. The island shows her lair ── */
 #dio .ev-note { cursor: pointer; }
 #dio .ev-note .rw-row { display: block; margin-top: 8px; }
-#dio .ev-note .rw-btn { display: inline-flex; align-items: center; height: 26px; padding: 2px 12px 0 10px; font: 700 17px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); background: var(--saffron); clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; transition: transform .15s ease; }
-#dio .ev-note:hover .rw-btn, #dio .ev-note:focus-visible .rw-btn { transform: rotate(-1.5deg) scale(1.04); }
+#dio .ev-note .rw-btn { display: inline-flex; align-items: center; height: 26px; padding: 2px 12px 0 10px; font: 700 17px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: #F4ECD8; background: #8E2216; /* her lair's red, not the reward's saffron (the owner, 2026-11-12) */ clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; transition: transform .15s ease; }
+#dio .ev-note:hover .rw-btn, #dio .ev-note:focus-visible .rw-btn { transform: rotate(-1.5deg) scale(1.04); background: #A82A1C; }
 #dio .ev-note:focus-visible { outline: none; }
 
 #dio.bz { --field: #4A1A14; --field-lo: #2E0E0A; }
@@ -3023,7 +3023,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <div class="note rw-note" data-anchor="golem" data-home role="button" tabindex="0" aria-label="Rewards: invite a friend"><span class="tag">Limited reward</span><br>This golem’s skin is yours<br>when a friend joins. <span class="rw-row"><span class="rw-btn">Invite a friend</span></span></div>
   <div class="note" data-anchor="skeleton" data-home data-hint>Hover over stuff on the island with your mouse!</div>
   <!-- the weekly boss's Limited event (2026-11-12): on the Mommy herself, in the hover hint's place while she is open (bossOpen) -->
-  <div class="note ev-note" data-anchor="mommy" data-home data-event role="button" tabindex="0" aria-label="Limited event: fight the Mommy"><span class="tag">Limited event</span><br>A giant spider holds their zone.<br>Kill her for her brood’s skin. <span class="rw-row"><span class="rw-btn">Fight the Mommy</span></span></div>
+  <div class="note ev-note" data-anchor="mommy" data-home data-event role="button" tabindex="0" aria-label="Limited event: go to the boss fight"><span class="tag">Limited event</span><br>A giant spider holds their zone.<br>Kill her for her brood’s skin. <span class="rw-row"><span class="rw-btn">Go to boss fight</span></span></div>
   <div class="note" data-anchor="sniper" data-hover="sniper">Sniper.<small>Unit · Long range · Good against single targets</small></div>
   <div class="note" data-anchor="mage" data-hover="mage">Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
   <div class="note" data-anchor="ent" data-hover="ent">Sleeping Ent.<small>Sshhhh!</small></div>
@@ -19306,7 +19306,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 9e4a622'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · ca7a42f'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches

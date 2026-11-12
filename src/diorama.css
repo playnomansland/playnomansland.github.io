@@ -1709,8 +1709,8 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
    the reward and her leaderboard. The island shows her lair ── */
 #dio .ev-note { cursor: pointer; }
 #dio .ev-note .rw-row { display: block; margin-top: 8px; }
-#dio .ev-note .rw-btn { display: inline-flex; align-items: center; height: 26px; padding: 2px 12px 0 10px; font: 700 17px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: var(--ink); background: var(--saffron); clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; transition: transform .15s ease; }
-#dio .ev-note:hover .rw-btn, #dio .ev-note:focus-visible .rw-btn { transform: rotate(-1.5deg) scale(1.04); }
+#dio .ev-note .rw-btn { display: inline-flex; align-items: center; height: 26px; padding: 2px 12px 0 10px; font: 700 17px/1 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; color: #F4ECD8; background: #8E2216; /* her lair's red, not the reward's saffron (the owner, 2026-11-12) */ clip-path: polygon(0 10%, 97% 0, 100% 88%, 2% 100%); text-shadow: none; transition: transform .15s ease; }
+#dio .ev-note:hover .rw-btn, #dio .ev-note:focus-visible .rw-btn { transform: rotate(-1.5deg) scale(1.04); background: #A82A1C; }
 #dio .ev-note:focus-visible { outline: none; }
 
 #dio.bz { --field: #4A1A14; --field-lo: #2E0E0A; }
