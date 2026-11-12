@@ -698,8 +698,10 @@ const Models3D = (THREE) => {
     P(cyl(0.07, 0.07, 0.5, 5), IRON, [0.25, 1.3, 0.3])];
   BUILD.building = BUILD['building:factory']; // any other building, until it has a model of its own
   // the Mommy boss puzzle's nest: a pale egg sac of silk hanging on a thread
-  BUILD.nest = () => [P(ball(0.85), 'tint', [0, 1.7, 0]), P(ball(0.55), 'tint', [0.45, 1.25, 0.3]), P(ball(0.5), 'tint', [-0.4, 1.3, -0.25]),
-    P(cyl(0.035, 0.035, 2.4, 4), '#EDEDED', [0, 3.6, 0]), P(cyl(0.5, 0.7, 0.12, 8), DARK, [0, 0.06, 0])];
+  // (a teardrop of silk, big below and narrow on top, with eggs showing through; no foot, so it can hang in the air)
+  BUILD.nest = () => [P(ball(1.0), 'tint', [0, 1.5, 0]), P(ball(0.68), 'tint', [0, 2.45, 0]),
+    P(ball(0.34), '#A99F86', [0.74, 1.25, 0.38]), P(ball(0.3), '#A99F86', [-0.72, 1.5, -0.3]), P(ball(0.28), '#A99F86', [0.12, 0.85, -0.8]), P(ball(0.3), '#A99F86', [-0.28, 1.05, 0.82]), P(ball(0.26), '#A99F86', [0.5, 2.3, -0.4]),
+    P(cyl(0.035, 0.035, 1.9, 4), '#EDEDED', [0, 3.85, 0])];
   // ---------- 2v2 buildings (src/mpb.js): one model per kind, 'mpb:<kind>' (a part: 'mpb:<kind>:<part>'; a walker
   // with a look: 'mpb:<kind>:<look>'), drawn at their real size like towers. Kinds without one get BUILD.mpb (a plain
   // block in the kind's colour, 'tint', with a roof in the team colour) and parts BUILD['mpb:part']. B groups add

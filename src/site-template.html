@@ -446,6 +446,9 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 @keyframes hp-blink { 0%, 100% { opacity: 1; } 50% { opacity: .28; } }
 @media (prefers-reduced-motion: reduce) { .helper.line .hp-ln, .helper.line .hp-ring { animation: none !important; } }
 /* tutorial: the coach line over the board, a ring on what it talks about, and a glow on the next thing to tap */
+.hud.bossrun .side.foe .num, .hud.bossrun .side.foe .hp { visibility: hidden; }
+.hud.bossrun .side.you .num { white-space: nowrap; }
+.hud.bossrun #you-name { display: none; } /* (the phone's top line has no room for a name next to "Round 1 of 5"; the PC layout keeps it) */
 .boss-bar { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); width: min(94%, 560px); z-index: 3; pointer-events: none; text-align: center; font-family: "IBM Plex Mono", monospace; }
 .boss-bar .bb-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 2px 2px; }
 .boss-bar .bb-name { color: #FF7A6E; font-weight: 800; letter-spacing: 0.18em; font-size: 13px; text-shadow: 0 1px 3px #000; }
@@ -3185,7 +3188,12 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     const hpFull = net.duo && mode === 'net' ? Duo.HP : Game.startHp(v); // 2v2: the team's shared health
     $('hpbar-you').style.width = Math.min(100, hpMe / hpFull * 100) + '%';
     $('hpbar-foe').style.width = Math.min(100, hpFoe / hpFull * 100) + '%';
-    if (v && v.boss) { $('hp-foe').textContent = Math.round(v.boss.hp).toLocaleString('en'); $('hpbar-foe').style.width = Math.min(100, v.boss.hp / v.boss.max * 100) + '%'; } // the Mommy boss puzzle: her health
+    // the Mommy boss puzzle: no player health, so the player's corner says the round out of her rounds (its bar: the
+    // rounds left), and her health is only on the boss bar (the opponent's corner keeps her name)
+    const hudEl = document.querySelector('.hud'), bossRun = !!(v && v.boss);
+    if (hudEl && hudEl.classList.contains('bossrun') !== bossRun) hudEl.classList.toggle('bossrun', bossRun);
+    if (bossRun) { const R = v.boss.rounds || 5, r = Math.min(v.round, R); $('hp-you').textContent = `Round ${r} of ${R}`; $('hpbar-you').style.width = ((R - r + 1) / R * 100) + '%';
+      $('hp-foe').textContent = Math.round(v.boss.hp).toLocaleString('en'); $('hpbar-foe').style.width = Math.min(100, v.boss.hp / v.boss.max * 100) + '%'; }
     $('round').textContent = v ? v.round : 1;
     for (const [id, sd] of [['streak-you', me], ['streak-foe', foe()]]) { // a live shutdown bounty on a win streak
       const n = v && v.streak ? v.streak[sd] || 0 : 0, el = $(id), b = Game.shutdownGold(n);
@@ -7200,7 +7208,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         mo.lastPick ? 'Your units only shoot her while she hangs if none of her nests or spiders are left to hit.' : ''])}
       ${sec('Nests', [
         'Her nests hang in new places every round. While you deploy you see where this round’s hang.',
-        `${b('HIGH')} nests can only be hit by ranged units. ${b('LOW')} nests can be hit by melee units too.`,
+        `${b('HIGH')} nests hang up in the air on a thread: only ranged units can hit them. ${b('LOW')} nests sit on the ground: melee units can hit them too.`,
         `Each nest hatches a spiderling every ${b(hatch + ' s')} this round (faster in later rounds). A destroyed nest bursts into ${C.nest.burst} spiderlings.`])}
       ${sec('The fall', [
         `When every nest is down she ${b('falls')}: she and all her spiders are stunned for ${mo.stun} s, and she takes ${b('full damage')} for the rest of the fight.`,

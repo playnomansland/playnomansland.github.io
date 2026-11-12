@@ -1,8 +1,8 @@
 # Handoff: the Mommy boss puzzle
 
-Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, merged into `main` (live) after each step. Written 11 November 2026 over one long day; sections are in the order the work happened. **Start with section 0 (where things stand now)**, then section 7 (working with the owner); the rest is history and evidence. Section 12 is the latest session (her attacks reworked, difficulty measured again, unit priorities measured).
+Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, merged into `main` (live) after each step. Written 11 November 2026 over one long day; sections are in the order the work happened. **Start with section 0 (where things stand now)**, then section 7 (working with the owner); the rest is history and evidence. Section 12 is the session before last (her attacks reworked, difficulty measured again, unit priorities measured); section 13 the latest (the owner's answers, the 3D board first).
 
-## 0. Where things stand now (11 November, night)
+## 0. Where things stand now (12 November)
 
 **Live for developer accounts, phone and PC.** Puzzles → *Weekly boss - The Mommy* (a "Weekly boss · developers only" section at the top), the Developer menu → *Mommy*, or the test link `playnomansland.github.io/?mommy` (opens her straight away on a developer account; on any other it says which account the page sees). It runs on the device against nobody: no server, no AI.
 
@@ -13,20 +13,22 @@ Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, me
 - a banner per round; her reach (dashed ring), the nests marked LOW / HIGH and the poison pools on the board while deploying
 - a boss bar over the board: name, phase (HANGING / FALLEN · STUNNED n s / ON THE GROUND / DEAD), health with numbers, a white strip for the latest damage, tokens (damage taken %, nests left, bite, mortar countdown or who holds her, molt countdown, poison / bleed / burn / frost / slow on her)
 - on the board: her silk thread while she hangs, her web ring, a dust ring and SHE FALLS when she falls, stars while stunned, MOLT when she sheds something
-- **her bite** (reworked, section 12): her jaws open on the ground where her target stands, with a ring the size of the bite (yellow fast, red heavy, orange sweep), close for 1 s and snap shut. Whoever stands in the ring then is bitten; a unit that walked out is missed. The bite mark stays 4 s
+- **her bite** (reworked, section 12): her jaws open on the ground where her target stands, with a ring the size of the bite (yellow fast, red heavy, orange sweep), close for 0.5 s and snap shut. Whoever stands in the ring then is bitten; a unit that walked out is missed. The bite mark stays 4 s
 - **her mortar** (reworked, section 12): her thread lies on the nest she will throw (THROWS IN n s), a dashed ring follows the clump she aims at; the nest then flies in an arc for 1.6 s to a red ring (WEB MORTAR) that fills as it comes, lands on whoever stands there then, and leaves a web on the ground
+- **the 3D board is the one that counts** (owner, 12 November: "put all effort into the 3d version and keep some small functionality for 2d"). There she hangs off the ground and drops when she falls, lies on her back while stunned, her nests are egg sacs (LOW on the ground, HIGH hanging on a thread) that keep their label through the fight, her reach ring shows through the fight (red while nobody is in it), her web is silk on the ground. The 2D board has a simple version; don't spend effort on it
+- the top left says Round n of 5 (no player health), the top right only her name
 - shop cards show n/3 (the squad cap); Settings in a match has *Restart Mommy*; a report after every fight
 
-**Numbers in force** (`Boss.CFG`): health 46,000 (owner agreed); start 450 gold; 30 s fights; hang 15%; reach 22 m; web 14 m; bites fast 150×0.8/s, heavy 480×0.25/s splash 2.5, sweep 70×1/s splash 5, order fast, heavy, sweep, heavy, sweep, each landing 1 s after her jaws open, where they opened; mortar after 5 s with nobody in reach, every 4 s, 1.6 s in the air, 120 damage, only rips nests within her reach; nests 500 health, burst 3, hatch 6/5/4/3/3 s, lure 12 m; spiderlings 90 health; pools 4%/s, linger 2 s; wing-nest layouts and pools per round as in CFG; molt 6 s; no share-of-max-health damage on her; banned Meteor Caller, Assassin, Rogue, Truespear, Sun Priest; at most 3 squads of a type; one free move and one free extra deployment a round; a treasury, no tower.
+**Numbers in force** (`Boss.CFG`): health 54,000 (owner agreed, 12 November); start 450 gold; 30 s fights; hang 15%; reach 22 m; web 14 m; bites fast 150×0.8/s, heavy 480×0.25/s splash 2.5, sweep 70×1/s splash 5, order fast, heavy, sweep, heavy, sweep, each landing 0.5 s after her jaws open, where they opened (owner, 12 November); mortar after 5 s with nobody in reach, every 4 s, 1.6 s in the air, 120 damage, only rips nests within her reach; nests 500 health, burst 3, hatch 6/5/4/3/3 s, lure 12 m; spiderlings 90 health; pools 4%/s, linger 2 s; wing-nest layouts and pools per round as in CFG; molt 6 s; no share-of-max-health damage on her; banned Meteor Caller, Assassin, Rogue, Truespear, Sun Priest; at most 3 squads of a type; one free move and one free extra deployment a round; a treasury, no tower.
 
 **Owner decisions since section 8:** questions 1-5 there agreed; health 46,000 with no late-round rule; leave Goblins as they are; pools at 4% for now; the round-3 ceiling should be searched further before a real launch; poison pools back (in place of "spiders go for the biggest clump"); wing nests (5b); the Puzzles button is named "Weekly boss - The Mommy".
 
-**Open, waiting on the owner** (put to the owner at the end of the section-12 session; numbers in section 12):
-1. Her health: 46,000 no longer meets the targets (a knowing player wins 65% by round 5, was 35% when it was agreed). Recommended 54,000: the same picture as when 46,000 was agreed, and the best plan known still wins in round 3 (55.2k by round 3).
-2. Unit priorities: recommended to leave them as they are (option 4). Pointing shooters at a nest (option 1) was measured and did not help; the engine switch for it (`sq.focus`) is in, with no button.
-3. The new bite and mortar: agree, or change the times (`CFG.mommy.biteSecs` 1 s, `CFG.mommy.mortar.fly` 1.6 s).
-4. Clarity fixes noticed while playing, not built: the "100" health top left (there is no player health here), her reach ring in the fight, nests that look like nests and keep their LOW / HIGH label in the fight.
-5. Not built: the "Mommy" title (the win screen mentions it), the server checking a win, a weekly rotation (it is the one boss), a model of her own (the spider model drawn big).
+**Owner decisions on 12 November** (the section-12 questions): health 54,000; unit priorities left as they are; jaws shut after 0.5 s; mortar 1.6 s in the air; Round n of 5 in place of the player's health; her reach ring in the fight; nests as egg sacs that keep LOW / HIGH; her health not repeated top right. All built (section 13).
+
+**Open, waiting on the owner:**
+1. Her health again: with the 0.5 s jaws a knowing player wins less often at 54,000 than the target (section 13 has the numbers and the in-between healths).
+2. The round-3 title at 54,000: the best plan known wins with half a second of round 3 left. Search further before a real launch (already agreed).
+3. Not built: the "Mommy" title (the win screen mentions it), the server checking a win, a weekly rotation (it is the one boss), a model of her own (the spider model drawn big).
 
 **Things that bit this session (read before working):**
 - Build like live: `PB_UI_DEFAULT=pc node src/build.js` (live's `index.html` has `const DEF = 'pc'`; a plain build makes 'classic' and the merge then changes PC players' menu).
@@ -520,4 +522,33 @@ Pointing shooters at a nest did not help the knowing test player in any of three
 - Her reach (the dashed ring) shows only while deploying. In the fight only the web ring (14 m) shows, which reads as her reach.
 - Nests are little houses tagged NES on the 2D board and small grey lumps on the 3D one, and lose their LOW / HIGH label when the fight starts.
 - The top right repeats her health next to the boss bar.
+
+
+---
+
+## 13. The owner's answers, and the 3D board first (12 November)
+
+The owner answered the section-12 questions (all agreed, the jaws at 0.5 s in place of 1 s) and said: "No need to focus on animation for the old 2d version. Put all effort into the 3d version and keep some small functionality for 2d."
+
+### Built
+
+- `CFG.mommy.hp` 54,000, `CFG.mommy.biteSecs` 0.5.
+- The HUD in her fights: top left **Round n of 5** with a bar of the rounds left; top right only her name.
+- The 3D board (`render3d.js collectBoss`): she hangs off the ground and drops when she falls; stunned, she lies on her back; nests are egg sacs (`models3d.js BUILD.nest`), LOW on the ground, HIGH hanging on a thread, with their ring and label through the fight; the nest she is about to throw strains at her thread; her reach ring through the fight (red while nobody is inside); her web as silk on the ground.
+- The 2D board, kept simple: the reach ring, nests as pale discs with LOW / HIGH. Its attack pictures from section 12 stay as they are.
+
+### Difficulty with the 0.5 s jaws (40 games each; win by round 4 / by round 5)
+
+| Player | 50,000 | 51,000 | 52,000 | 53,000 | 54,000 (in force) | 58,000 |
+|---|---|---|---|---|---|---|
+| random | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% | 0 / 0% |
+| statmax | 0 / 3% | 0 / 3% | 0 / 3% | 0 / 3% | 0 / 3% | 0 / 0% |
+| statmax + 100 gold | 0 / 18% | 0 / 13% | 0 / 13% | 0 / 13% | 0 / 13% | 0 / 3% |
+| statmax + 200 gold | 8 / 73% | 8 / 65% | 8 / 63% | 5 / 60% | 3 / 55% | 0 / 45% |
+| aware | 3 / 40% | 3 / 33% | 3 / 25% | 0 / 20% | 0 / 15% | 0 / 15% |
+| Line B nudged a tile | 0 / 73% | | | | 0 / 63% | 0 / 45% |
+
+Median damage by round 5 (thousands), jaws 1 s → 0.5 s: statmax 33.4 → 31.6, +100 gold 40.8 → 39.3, +200 gold 58.1 → 55.5, aware 49.8 → 49.0. The shorter jaws cost the stat-max players about 4% and the knowing one under 2%, but at 54,000 many knowing games sat just above her health, so its wins fell from 30% to 15%.
+
+**The round-3 title at 54,000.** The best plan known does 8.0 / 30.4 / 54.4k by rounds 1 / 2 / 3: it kills her at 29.5 s of round 3's 30. Lines (by R3 / R4 / R5): A 30.8 / 46.4 / 65.5, B 30.8 / 43.4 / 70.1, C 20.9 / 27.7 / 51.4, search best five rounds 33.5 / 49.4 / 79.8.
 

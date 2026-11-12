@@ -130,7 +130,7 @@ const PLANS = {
     [['buy', 'Wisps', 8, 10, { as: 'wispB' }], ['buy', 'Wisps', 7, 10, { as: 'wispC' }], ['buy', 'Sniper', 10, 12, { as: 'snipB' }], ['skill', 'Goblin Swarm', 0], ['skill', 'Wisps', 0], ['levels']],
   ],
   // found by hill climbs (a few hundred random changes to Line B, kept when she took more damage; squads named x123456
-  // are ones the climb added): the best found for rounds 1-3 (it wins in round 3 at 46,000: three Goblin squads, one
+  // are ones the climb added): the best found for rounds 1-3 (it wins in round 3 at 54,000, with half a second to spare: three Goblin squads, one
   // kept through the sweep) and for all five rounds
   'Search best, rounds 1-3': require('./best-r1-3.json'),
   'Search best, five rounds': require('./best-r1-5.json'),
