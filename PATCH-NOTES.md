@@ -41,6 +41,7 @@ The wizards used to be one model in eight colours, told apart only by the top of
 - **For players: nothing yet.** No rule, screen or number changes.
 - **Keyword registry:** `src/keyword-registry.json` lists 17 first keywords (Strike, Shoot, Splash, Pierce, Shred, Tank, Rush, Pull, Burn, Slow, Poison, Bleed, Heal, Carry, Hide, Reveal, Spawn), each with a role and a line of at most 8 words, and tags every unit and skill in today's game with them.
 - **What it shows:** 27 of 28 units have one of the 17 as their verb. Of 85 skills, 26 read with these keywords alone, 28 are plain stat changes, 19 need a keyword from a later wave and 12 fit none. The full lists are in `docs/KEYWORDS-TAGGING.md`.
+- **Icons, first drawings:** each of the 17 keywords has an icon in the registry, drawn in one colour so its role colour comes from the page. `node tools/keyword-sheet.js` writes `docs/keyword-icons.html`, a page that shows them all at three sizes. No screen in the game uses them yet.
 - **A check:** `node tools/tests/keywords.js` fails when a unit has no verb, a skill is not sorted, or a keyword line is too long.
 
 ---
