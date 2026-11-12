@@ -7638,6 +7638,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function bossBar() {
     bossCtl(); // (Restart boss and Replay round on the screen)
     const el = $('boss-bar'); if (!el) return;
+    if (!el.dataset.ro && window.ResizeObserver) { el.dataset.ro = 1; new ResizeObserver(() => { if (el.offsetHeight) document.documentElement.style.setProperty('--bbh', el.offsetHeight + 'px'); }).observe(el); } // (its height: the PC layout stacks Restart boss / Replay round under it)
     const v = phase === 'battle' && battlePre ? battlePre : m;
     if (!v || !v.boss || typeof Boss === 'undefined' || !['deploy', 'battle', 'result', 'end'].includes(phase)) { if (!el.hidden) { el.hidden = true; bossBarHtml = ''; } return; }
     const C = Boss.CFG, max = v.boss.max, mom = bt && (phase === 'battle' || phase === 'result' || phase === 'end') ? bt.bodies.find(b => b.u.boss) : null;
