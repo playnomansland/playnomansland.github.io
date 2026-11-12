@@ -420,7 +420,10 @@
   // Spiders (the Sporespreader Spider skin), by round 3 the black Widowmaker title. Kept out of CFG so a change here
   // doesn't start a new leaderboard (rulesTag hashes CFG). The game server gives them (server/src/accounts.js)
   const REWARDS = { crawler: 5, skin: 4, widowmaker: 3 };
-  const api = { CFG, REWARDS, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
+  // skills that do nothing in her fight (owner, 12 November: a red cross over them in the unit sheet, and they can't be
+  // bought): skill id -> why. Hunter's mark needs an enemy squad, and her side has none. Kept out of CFG like REWARDS
+  const NO_USE = { hunter: 'Nothing to mark: her side has no squads' };
+  const api = { CFG, REWARDS, NO_USE, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Boss = api;
 })(typeof window !== 'undefined' ? window : globalThis);

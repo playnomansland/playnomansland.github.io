@@ -1523,6 +1523,7 @@ const Game = (() => {
   function canBuySkill(m, side, ui, k) {
     const d = skillDef(m, ui, k);
     if (!d || hasSkill(m, side, ui, k)) return false;
+    if (bossNoUse(m, ui, k)) return false; // the Mommy boss puzzle: no use in her fight (Boss.NO_USE)
     if (charOf(m, side) === 'enzo') return false; // Enzo's squads come with their skill instead
     if (isAwaken(m, ui, k)) return false; // bought for one squad at a time: see awaken
     if (isEvolve(m, ui, k)) return false; // never bought: see evolveReady
@@ -1587,9 +1588,12 @@ const Game = (() => {
   // why a squad can't be awakened now ('' = it can): 'none' (no Awaken skill or already awake), 'enzo', 'type' (another
   // unit type is the one awakened this match), 'needs', 'glut', 'or', 'gold'. An Awaken skill with needs: 'glutMax' (the
   // Obelisk's) needs the squad at its most Glut
+  // the Mommy boss puzzle: why a skill does nothing in her fight ('' when it does something, or outside her fight)
+  const bossNoUse = (m, ui, k) => { if (!m || !m.boss || typeof Boss === 'undefined' || !Boss.NO_USE) return ''; const d = skillDef(m, ui, k); return (d && Boss.NO_USE[d.id]) || ''; };
   function awakenBlock(m, side, sq) {
     const k = sq ? awakenSlot(m, sq.unit) : -1;
     if (k < 0 || sq.awaken > 0) return 'none';
+    if (bossNoUse(m, sq.unit, k)) return 'boss'; // the Mommy boss puzzle: no use in her fight (Boss.NO_USE)
     if (charOf(m, side) === 'enzo') return 'enzo'; // Enzo's squads come with their skill instead
     if (wokeUnit(m, side) != null && wokeUnit(m, side) !== sq.unit) return 'type';
     if (skillNeedsMissing(m, side, sq.unit, k).length) return 'needs';
@@ -3554,7 +3558,7 @@ const Game = (() => {
   const api = {
     MAX_ROUND_DMG, TIER_DMG, bankBusy, seenAt, charShown, towerTypeShown, altarShown, elfOwnShown, shroomShown, removingShroom, movedId, canMove, moveSquad, undoMove,
     COLS, ROWS, TILE, ZONE, START_HP, LATE, startHp, capped, capOf, capCount, capFull, START_GOLD, INCOME, incomeFor, LOSER_BONUS, LOSER_BONUS_ROUND, TOWER_FALL_HP, CARRY_CAP, SHUTDOWN, shutdownGold, CREDIT_LINE, loanTerms, loanTaken, treasurySteal, SQUAD_COST, SETTINGS, XP_STEPS, xpNeeded, unitCostOf,
-    levelCost, isReady, levelUp, undoLevel, levelAllPlan, levelAll, upgradeOffer, seenLevel, aiLevel, AI, CONFIG,
+    bossNoUse, levelCost, isReady, levelUp, undoLevel, levelAllPlan, levelAll, upgradeOffer, seenLevel, aiLevel, AI, CONFIG,
     deploysAllowed, deploysLeft, deployedThisRound, canBuyDeploy, buyDeploy, refundDeploy, musterOn, deployBuyable,
     PACKAGE, allPackages, packOf, needsPack, startSeen, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
     unlockCost, tierOf, startLevel, shopCost, mapFreeOf, mapFreeLeft, isUnlocked, unlockVisible, unlock, undoUnlock,

@@ -209,6 +209,13 @@ html.pc .panel > .bar:last-child { margin: -6px -12px -12px; padding: 6px 12px 1
    under it; press and hold the row (or Enter on it) for the whole text and details (upRow) */
 .up { display: grid; gap: 1px; border-top: 1px solid var(--line); padding: 6px 4px 2px; margin: 0 -4px; border-radius: 6px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: background 0.15s; }
 .up-h { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+/* a skill with no use in this mode (the Mommy boss puzzle, Game.bossNoUse): a red cross over the row, and nothing to press */
+.up.up-off { position: relative; opacity: 0.62; cursor: default; }
+.up.up-off .up-h > b, .up.up-off .up-s { text-decoration: line-through; text-decoration-color: rgba(229, 87, 74, 0.7); }
+.up-x { position: absolute; inset: 4px 0; pointer-events: none; }
+.up-x::before, .up-x::after { content: ''; position: absolute; left: 50%; top: 50%; width: min(84%, 260px); height: 2px; border-radius: 1px; background: #E5574A; box-shadow: 0 0 6px rgba(229, 87, 74, 0.45); }
+.up-x::before { transform: translate(-50%, -50%) rotate(14deg); } .up-x::after { transform: translate(-50%, -50%) rotate(-14deg); }
+.up-no { font-size: 12px; font-weight: 700; color: #E5574A; white-space: nowrap; }
 .up-h > b { flex: 1; min-width: 0; font: 600 14px/1.2 var(--font-display); }
 .up-h > b .lab { color: var(--gold); }
 .up-h > .up-a { flex: none; display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
@@ -8996,6 +9003,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         : [anyOf.length ? `<b style="color:var(--gold)">Needs</b> ${esc(anyOf.join(' or '))} first.` : '',
         wake ? 'Bought for one squad at a time, on its own sheet. You can awaken only one unit type a match.' : label ? 'For all your squads of this unit.' : '', Game.isFlat(m, i, k) ? 'Always this price.' : ''].filter(Boolean).join(' ');
       const more = [detail, more0].filter(Boolean).join('<br>');
+      const off = Game.bossNoUse(m, i, k); // the Mommy boss puzzle: no use in her fight, crossed out and not for sale
+      if (off) return upRow({ name: d.name, label, act: '<span class="up-no">No use here</span>', text: esc(off) + '.', off });
       return upRow({ name: d.name, label, act, text: esc(Engine.describeSkill(d)), more });
     };
     // in slot order; either-or skills (owning one rules out the others) boxed together where the first of them comes
@@ -9052,7 +9061,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       return chip('Awakened', 'var(--gold)') + (phase === 'deploy' && editable() && sq.awaken === m.round ? ` <button class="btn small" data-act="unawaken">Undo</button>` : '') + hunt;
     }
     if (phase !== 'deploy') return `<span class="hint">${cost} gold</span>`;
-    const why = { enzo: 'Not with Enzo', type: other ? `Only ${esc(units[woke].name)} this match` : '', glut: `Needs ${Game.glutMax(m, me, sq)} Glut (${Game.glutOf(sq)} now)`, needs: `Needs ${Game.skillNeedsMissing(m, me, i, k).map(j => units[i].skillDefs[j].name).join(' or ')}`, or: 'Not with your skills', gold: `Need ${cost} gold` }[Game.awakenBlock(m, me, sq)] || '';
+    const why = { enzo: 'Not with Enzo', type: other ? `Only ${esc(units[woke].name)} this match` : '', glut: `Needs ${Game.glutMax(m, me, sq)} Glut (${Game.glutOf(sq)} now)`, needs: `Needs ${Game.skillNeedsMissing(m, me, i, k).map(j => units[i].skillDefs[j].name).join(' or ')}`, or: 'Not with your skills', boss: 'No use here', gold: `Need ${cost} gold` }[Game.awakenBlock(m, me, sq)] || '';
     return why || !editable() ? `<button class="btn small" disabled>${why || `Awaken · ${cost} gold`}</button>` : `<button class="btn small primary" data-act="awaken">Awaken · ${cost} gold</button>`;
   }
 
@@ -9305,7 +9314,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function wireFactoryLearn(root) { root.querySelectorAll('[data-fac-learn]').forEach(d => d.addEventListener('toggle', () => { factoryLearnOpen[d.dataset.facLearn] = d.open; })); }
   // an upgrade's row (see .up): name (esc'd here; label: a gold prefix like Master), act: its button or chip (HTML),
   // text: what it does (HTML, cut to one line until the row is held), more: details shown only once held (HTML)
-  const upRow = ({ name, label = '', act = '', text = '', more = '' }) => `<div class="up" tabindex="0" aria-expanded="false" aria-label="${esc(name)}: hold for details">
+  const upRow = ({ name, label = '', act = '', text = '', more = '', off = '' }) => `<div class="up${off ? ' up-off' : ''}" tabindex="0" aria-expanded="false" aria-label="${esc(name)}${off ? `: ${esc(off)}` : ''}: hold for details">${off ? '<i class="up-x" aria-hidden="true"></i>' : ''}
       <div class="up-h"><b>${label ? `<span class="lab">${label}:</span> ` : ''}${esc(name)}</b><span class="up-a">${act}</span></div>
       ${text ? `<span class="up-s">${text}</span>` : ''}${more ? `<span class="up-more">${more}</span>` : ''}</div>`;
   const abilityRow = (name, act, text, more) => upRow({ name, act, text, more });

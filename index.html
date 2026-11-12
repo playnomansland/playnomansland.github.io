@@ -2421,6 +2421,13 @@ html.pc .panel > .bar:last-child { margin: -6px -12px -12px; padding: 6px 12px 1
    under it; press and hold the row (or Enter on it) for the whole text and details (upRow) */
 .up { display: grid; gap: 1px; border-top: 1px solid var(--line); padding: 6px 4px 2px; margin: 0 -4px; border-radius: 6px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: background 0.15s; }
 .up-h { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+/* a skill with no use in this mode (the Mommy boss puzzle, Game.bossNoUse): a red cross over the row, and nothing to press */
+.up.up-off { position: relative; opacity: 0.62; cursor: default; }
+.up.up-off .up-h > b, .up.up-off .up-s { text-decoration: line-through; text-decoration-color: rgba(229, 87, 74, 0.7); }
+.up-x { position: absolute; inset: 4px 0; pointer-events: none; }
+.up-x::before, .up-x::after { content: ''; position: absolute; left: 50%; top: 50%; width: min(84%, 260px); height: 2px; border-radius: 1px; background: #E5574A; box-shadow: 0 0 6px rgba(229, 87, 74, 0.45); }
+.up-x::before { transform: translate(-50%, -50%) rotate(14deg); } .up-x::after { transform: translate(-50%, -50%) rotate(-14deg); }
+.up-no { font-size: 12px; font-weight: 700; color: #E5574A; white-space: nowrap; }
 .up-h > b { flex: 1; min-width: 0; font: 600 14px/1.2 var(--font-display); }
 .up-h > b .lab { color: var(--gold); }
 .up-h > .up-a { flex: none; display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
@@ -8854,6 +8861,7 @@ const Game = (() => {
   function canBuySkill(m, side, ui, k) {
     const d = skillDef(m, ui, k);
     if (!d || hasSkill(m, side, ui, k)) return false;
+    if (bossNoUse(m, ui, k)) return false; // the Mommy boss puzzle: no use in her fight (Boss.NO_USE)
     if (charOf(m, side) === 'enzo') return false; // Enzo's squads come with their skill instead
     if (isAwaken(m, ui, k)) return false; // bought for one squad at a time: see awaken
     if (isEvolve(m, ui, k)) return false; // never bought: see evolveReady
@@ -8918,9 +8926,12 @@ const Game = (() => {
   // why a squad can't be awakened now ('' = it can): 'none' (no Awaken skill or already awake), 'enzo', 'type' (another
   // unit type is the one awakened this match), 'needs', 'glut', 'or', 'gold'. An Awaken skill with needs: 'glutMax' (the
   // Obelisk's) needs the squad at its most Glut
+  // the Mommy boss puzzle: why a skill does nothing in her fight ('' when it does something, or outside her fight)
+  const bossNoUse = (m, ui, k) => { if (!m || !m.boss || typeof Boss === 'undefined' || !Boss.NO_USE) return ''; const d = skillDef(m, ui, k); return (d && Boss.NO_USE[d.id]) || ''; };
   function awakenBlock(m, side, sq) {
     const k = sq ? awakenSlot(m, sq.unit) : -1;
     if (k < 0 || sq.awaken > 0) return 'none';
+    if (bossNoUse(m, sq.unit, k)) return 'boss'; // the Mommy boss puzzle: no use in her fight (Boss.NO_USE)
     if (charOf(m, side) === 'enzo') return 'enzo'; // Enzo's squads come with their skill instead
     if (wokeUnit(m, side) != null && wokeUnit(m, side) !== sq.unit) return 'type';
     if (skillNeedsMissing(m, side, sq.unit, k).length) return 'needs';
@@ -10885,7 +10896,7 @@ const Game = (() => {
   const api = {
     MAX_ROUND_DMG, TIER_DMG, bankBusy, seenAt, charShown, towerTypeShown, altarShown, elfOwnShown, shroomShown, removingShroom, movedId, canMove, moveSquad, undoMove,
     COLS, ROWS, TILE, ZONE, START_HP, LATE, startHp, capped, capOf, capCount, capFull, START_GOLD, INCOME, incomeFor, LOSER_BONUS, LOSER_BONUS_ROUND, TOWER_FALL_HP, CARRY_CAP, SHUTDOWN, shutdownGold, CREDIT_LINE, loanTerms, loanTaken, treasurySteal, SQUAD_COST, SETTINGS, XP_STEPS, xpNeeded, unitCostOf,
-    levelCost, isReady, levelUp, undoLevel, levelAllPlan, levelAll, upgradeOffer, seenLevel, aiLevel, AI, CONFIG,
+    bossNoUse, levelCost, isReady, levelUp, undoLevel, levelAllPlan, levelAll, upgradeOffer, seenLevel, aiLevel, AI, CONFIG,
     deploysAllowed, deploysLeft, deployedThisRound, canBuyDeploy, buyDeploy, refundDeploy, musterOn, deployBuyable,
     PACKAGE, allPackages, packOf, needsPack, startSeen, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
     unlockCost, tierOf, startLevel, shopCost, mapFreeOf, mapFreeLeft, isUnlocked, unlockVisible, unlock, undoUnlock,
@@ -11343,7 +11354,10 @@ if (typeof module !== 'undefined') module.exports = Game;
   // Spiders (the Sporespreader Spider skin), by round 3 the black Widowmaker title. Kept out of CFG so a change here
   // doesn't start a new leaderboard (rulesTag hashes CFG). The game server gives them (server/src/accounts.js)
   const REWARDS = { crawler: 5, skin: 4, widowmaker: 3 };
-  const api = { CFG, REWARDS, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
+  // skills that do nothing in her fight (owner, 12 November: a red cross over them in the unit sheet, and they can't be
+  // bought): skill id -> why. Hunter's mark needs an enemy squad, and her side has none. Kept out of CFG like REWARDS
+  const NO_USE = { hunter: 'Nothing to mark: her side has no squads' };
+  const api = { CFG, REWARDS, NO_USE, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Boss = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -19685,7 +19699,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 0410a39'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 1835dd8'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -25811,7 +25825,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
   // <base>, so there it looked for design/diorama/vendor/... and failed: "Importing a module script failed" (2026-11-10)
   const threeSrc = () => new URL(THREE_URL, document.baseURI).href;
-  const V3D = '9483a29a37'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '5d2e77409c'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
@@ -26244,6 +26258,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         : [anyOf.length ? `<b style="color:var(--gold)">Needs</b> ${esc(anyOf.join(' or '))} first.` : '',
         wake ? 'Bought for one squad at a time, on its own sheet. You can awaken only one unit type a match.' : label ? 'For all your squads of this unit.' : '', Game.isFlat(m, i, k) ? 'Always this price.' : ''].filter(Boolean).join(' ');
       const more = [detail, more0].filter(Boolean).join('<br>');
+      const off = Game.bossNoUse(m, i, k); // the Mommy boss puzzle: no use in her fight, crossed out and not for sale
+      if (off) return upRow({ name: d.name, label, act: '<span class="up-no">No use here</span>', text: esc(off) + '.', off });
       return upRow({ name: d.name, label, act, text: esc(Engine.describeSkill(d)), more });
     };
     // in slot order; either-or skills (owning one rules out the others) boxed together where the first of them comes
@@ -26300,7 +26316,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       return chip('Awakened', 'var(--gold)') + (phase === 'deploy' && editable() && sq.awaken === m.round ? ` <button class="btn small" data-act="unawaken">Undo</button>` : '') + hunt;
     }
     if (phase !== 'deploy') return `<span class="hint">${cost} gold</span>`;
-    const why = { enzo: 'Not with Enzo', type: other ? `Only ${esc(units[woke].name)} this match` : '', glut: `Needs ${Game.glutMax(m, me, sq)} Glut (${Game.glutOf(sq)} now)`, needs: `Needs ${Game.skillNeedsMissing(m, me, i, k).map(j => units[i].skillDefs[j].name).join(' or ')}`, or: 'Not with your skills', gold: `Need ${cost} gold` }[Game.awakenBlock(m, me, sq)] || '';
+    const why = { enzo: 'Not with Enzo', type: other ? `Only ${esc(units[woke].name)} this match` : '', glut: `Needs ${Game.glutMax(m, me, sq)} Glut (${Game.glutOf(sq)} now)`, needs: `Needs ${Game.skillNeedsMissing(m, me, i, k).map(j => units[i].skillDefs[j].name).join(' or ')}`, or: 'Not with your skills', boss: 'No use here', gold: `Need ${cost} gold` }[Game.awakenBlock(m, me, sq)] || '';
     return why || !editable() ? `<button class="btn small" disabled>${why || `Awaken · ${cost} gold`}</button>` : `<button class="btn small primary" data-act="awaken">Awaken · ${cost} gold</button>`;
   }
 
@@ -26553,7 +26569,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function wireFactoryLearn(root) { root.querySelectorAll('[data-fac-learn]').forEach(d => d.addEventListener('toggle', () => { factoryLearnOpen[d.dataset.facLearn] = d.open; })); }
   // an upgrade's row (see .up): name (esc'd here; label: a gold prefix like Master), act: its button or chip (HTML),
   // text: what it does (HTML, cut to one line until the row is held), more: details shown only once held (HTML)
-  const upRow = ({ name, label = '', act = '', text = '', more = '' }) => `<div class="up" tabindex="0" aria-expanded="false" aria-label="${esc(name)}: hold for details">
+  const upRow = ({ name, label = '', act = '', text = '', more = '', off = '' }) => `<div class="up${off ? ' up-off' : ''}" tabindex="0" aria-expanded="false" aria-label="${esc(name)}${off ? `: ${esc(off)}` : ''}: hold for details">${off ? '<i class="up-x" aria-hidden="true"></i>' : ''}
       <div class="up-h"><b>${label ? `<span class="lab">${label}:</span> ` : ''}${esc(name)}</b><span class="up-a">${act}</span></div>
       ${text ? `<span class="up-s">${text}</span>` : ''}${more ? `<span class="up-more">${more}</span>` : ''}</div>`;
   const abilityRow = (name, act, text, more) => upRow({ name, act, text, more });
