@@ -20000,7 +20000,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · dbfd9bc'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · c09fe4a'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -25181,18 +25181,18 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function closeBossAttacks() { if (!bossAtkOpen()) return; atkEl.hidden = true; if (atkFrom && atkFrom.focus && document.contains(atkFrom)) atkFrom.focus(); atkFrom = null; }
   function drawBossAttacks() {
     const C = Boss.CFG, mo = C.mommy, b = (x) => `<b>${x}</b>`, acidOn = C.acid && C.acid.pct > 0;
-    const WHO = { fast: 'Quick, light bites. A unit with lots of health holds her best.', heavy: 'Slow, huge bites that splash a little and leave acid. Many bodies, shields and wards hold her best.', sweep: 'Light bites that hit everything round the target. One big body holds her best; a swarm melts.' };
+    const WHO = { fast: 'Quick, light bites. Best: one unit with lots of health.', heavy: 'Slow, huge bites that leave acid. Best: many bodies, shields, wards.', sweep: 'Hits everything around the target. Best: one big unit. Swarms melt.' };
     const card = (k, h, body) => `<article class="atk ${k}"><h4><span class="ico" aria-hidden="true">${ATK_ICON[k]}</span>${h}</h4>${body}</article>`;
     const acidBites = [...new Set(C.biteByRound)].filter(k => mo.bites[k] && mo.bites[k].acid);
     atkEl.querySelector('.bz-atk-body').innerHTML =
-      card('bite', 'Bite', `<p>She bites the nearest of your units inside her reach (${mo.near} m). That unit ${b('holds')} her: she bites it, not the rest.${mo.biteSecs > 0 ? ` Her jaws open where it stands and snap shut ${mo.biteSecs} s later, so a unit that walks out is missed.` : ''}</p>
+      card('bite', 'Bite', `<p>She bites your closest unit in her reach (${b(mo.near + ' m')}). Only that unit gets bitten.${mo.biteSecs > 0 ? ` Her jaws shut ${b(mo.biteSecs + ' s')} later: walk out to dodge.` : ''}</p>
         <ol class="rounds">${C.biteByRound.map((k, i) => `<li class="${k}" style="--bc:${BITE_COL[k] || '#FFC457'}"><img src="${biteMarkPic(k)}" alt=""><small>Round ${i + 1}</small><b>${esc(BITE_NAME[k] || k)}</b></li>`).join('')}</ol>
         <dl>${[...new Set(C.biteByRound)].map(k => `<dt style="color:${BITE_COL[k]}">${esc(BITE_NAME[k] || k)}</dt><dd>${esc(WHO[k] || '')}</dd>`).join('')}</dl>`) +
-      card('web', 'Web', `<p>Your units within ${mo.web.r} m of her are caught in it: they walk ${b(mo.web.slow + '%')} slower and hit ${b(mo.web.dmg + '%')} softer.</p>`) +
-      card('mortar', 'Web mortar', `<p>No unit in her reach for ${mo.mortar.wind} s while she hangs, and she rips loose one of her nests and throws it at your biggest clump, then another every ${mo.mortar.every} s.</p>
-        <p>It lands ${mo.mortar.fly} s later in the ${b('red ring')}: ${b(mo.mortar.hit + ' damage')} and a slowing web, and its spiders burst out. Spread out, or move on.</p>`) +
-      (acidOn && acidBites.length ? card('acid', 'Acid', `<p>Her ${acidBites.map(k => esc(BITE_NAME[k] || k)).join(' and ')} leaves a ${b('green pool')} for ${C.acid.secs} s. Standing in it costs ${b(C.acid.pct + '% of max health')} a second and slows, for ${C.acid.linger} s after stepping out. Slime units drink it: it heals them.</p>`) : '') +
-      (mo.molt ? card('shed', 'Shed', `<p>Every ${mo.molt} s she molts: poison, bleed, burn, frost and slows fall off her. Hits that take a share of max health don’t work on her.</p>`) : '');
+      card('web', 'Web', `<p>Your units within ${b(mo.web.r + ' m')} of her: ${b(mo.web.slow + '%')} slower, ${b(mo.web.dmg + '%')} less damage.</p>`) +
+      card('mortar', 'Web mortar', `<p>Nobody in her reach for ${b(mo.mortar.wind + ' s')}? She throws one of her nests at your biggest group, then another every ${b(mo.mortar.every + ' s')}.</p>
+        <p>It lands in the ${b('red ring')}: ${b(mo.mortar.hit + ' damage')}, a slowing web, and spiders. ${b('Spread out.')}</p>`) +
+      (acidOn && acidBites.length ? card('acid', 'Acid', `<p>Her ${acidBites.map(k => esc(BITE_NAME[k] || k)).join(' and ')} leaves a ${b('green pool')} for ${C.acid.secs} s. Units in it lose ${b(C.acid.pct + '% max health')} a second and move slower. ${b('Slimes')} heal in it.</p>`) : '') +
+      (mo.molt ? card('shed', 'Shed', `<p>Every ${b(mo.molt + ' s')} she shakes off poison, bleed, burn, frost and slows. “% of max health” hits don’t work on her.</p>`) : '');
   }
   // the side panel: her nests in one round (tabs for the five), what hatches from them, and the key
   function drawBossNests() {
@@ -25201,8 +25201,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     atkEl.querySelector('.bz-nests').innerHTML = `<h4><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 1.5v4" stroke="currentColor" stroke-width="1.4"/><path d="M12 5.5c3.6 0 6.2 3.4 6.2 7.6 0 4.6-2.8 8.4-6.2 8.4s-6.2-3.8-6.2-8.4c0-4.2 2.6-7.6 6.2-7.6z" fill="currentColor"/><circle cx="10" cy="12" r="1.3" fill="#2E0E0A"/><circle cx="13.8" cy="15.4" r="1.1" fill="#2E0E0A"/><circle cx="11.2" cy="17.8" r=".9" fill="#2E0E0A"/></svg></span>Nest spawns</h4>
       <div class="nr" role="tablist" aria-label="Round">${Array.from({ length: C.rounds }, (_, k) => `<button role="tab" data-nr="${k + 1}" aria-selected="${k + 1 === r}">R${k + 1}${k + 1 === now ? '<i>now</i>' : ''}</button>`).join('')}</div>
       <div class="board">${bossNestBoard(r, 15)}</div>
-      <p><b>${spots.length} nests</b>: ${low} low, ${spots.length - low} high. Each hatches a spider every <b>${Boss.byRound(C.hatch, r)} s</b>, and bursts into ${C.nest.burst} when it falls.</p>
-      <ul class="key"><li><span class="l">L</span>Low nest: melee reaches it</li><li><span class="h">H</span>High nest: ranged only</li><li><span class="m"></span>The Mommy and her reach</li></ul>
+      <p><b>${spots.length} nests</b>: ${low} low, ${spots.length - low} high. Each spawns a spider every <b>${Boss.byRound(C.hatch, r)} s</b>, and <b>${C.nest.burst}</b> when it breaks.</p>
+      <ul class="key"><li><span class="l">L</span>Low nest: anyone</li><li><span class="h">H</span>High nest: ranged only</li><li><span class="m"></span>Mommy and her reach</li></ul>
       <p class="bite">This round: <b style="color:${BITE_COL[bite]}">${esc(BITE_NAME[bite] || bite)}</b></p>`;
   }
   // the round card's warning for the next round (the owner, 2026-11-12): "! Next round:" and that round's bite, its mark
