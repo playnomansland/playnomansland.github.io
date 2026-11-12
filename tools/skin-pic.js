@@ -1,7 +1,8 @@
 // Renders a skin's menu picture (img/skins/<id>.png, 192x192, transparent) from its 3D model (src/models3d.js BUILD),
 // with headless Chromium and vendor/three, lit like the 3D board. Shapes.SKINS pic points at the file.
 // Run: node tools/skin-pic.js brute-omniper [out.png]   (any id from Shapes.SKINS; default out: img/skins/<id>.png)
-const { chromium } = require('playwright-core');
+let pw; try { pw = require('playwright-core'); } catch (e) { pw = require('playwright'); } // (whichever this machine has)
+const { chromium } = pw;
 const fs = require('fs'), path = require('path'), http = require('http');
 const ROOT = path.join(__dirname, '..');
 const EXE = ['/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'].find(f => fs.existsSync(f));
@@ -38,7 +39,7 @@ window.done = r.domElement.toDataURL('image/png');
     if (!f.startsWith(ROOT) || !fs.existsSync(f)) { s.statusCode = 404; return s.end(); }
     s.setHeader('content-type', f.endsWith('.js') ? 'text/javascript' : 'application/octet-stream'); s.end(fs.readFileSync(f));
   }).listen(8764);
-  const b = await chromium.launch({ executablePath: EXE, args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+  const b = await chromium.launch({ ...(EXE ? { executablePath: EXE } : {}), args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
   try {
     const pg = await b.newPage();
     pg.on('pageerror', e => console.error('PAGE ERROR', e.message));

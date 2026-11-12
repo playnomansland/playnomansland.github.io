@@ -410,6 +410,9 @@ const Shapes = (() => {
     'brute-omniper': { unit: 'Brute', name: 'Omni-Per', text: 'A chrome war machine with a power fist.', model: 'brute:omniper', pic: 'img/skins/brute-omniper.png' },
     // 2026-11-05 (Model Forge): developers only, kept for later; the Fire Mage's own model is unchanged.
     'firemage-ember': { unit: 'Fire Mage', name: 'Ember Robe', text: 'A Fire Mage in an ember-trimmed robe, a flame in each hand.', model: 'wizard:fire:ember', pic: 'img/skins/firemage-ember.png' },
+    // 2026-11-12: the Mommy boss's own brood. The reward for killing her within three rounds (server accounts.js BOSS:
+    // given when the server's replay of the run agrees)
+    'spiders-hollow': { unit: 'Spiders', name: 'Hollow Brood', text: 'Spiders from the Mommy’s lair: bark-brown, shelf fungus down their backs, red eyes and feet pale with silk.', model: 'spider:hollow', pic: 'img/skins/spiders-hollow.png', boss: 'mommy' },
   };
   let worn = [{}, {}]; // per side: unit name -> skin
   function useSkins(lists) {
@@ -10609,6 +10612,45 @@ const Models3D = (THREE) => {
       ...[-0.55, -0.2, 0.15, 0.5].flatMap((z) => [-1, 1].flatMap((sd) => [
         P(box(0.7, 0.08, 0.08), DARK, [sd * 0.5, 0.82, z - 0.1], [0, sd * z * 0.6, sd * 0.6]),
         P(box(0.08, 0.75, 0.08), DARK, [sd * 0.95, 0.42, z - 0.1], [0, 0, sd * 0.25])]))],
+    // ---------- the Hollow's brood (2026-11-12): the Mommy boss and her spiders, as their lair (the Hollow) made them.
+    // What marks them: bark-brown bodies, the Hollow's orange shelf fungus growing in a ridge down the back, red eyes in
+    // a cluster (the eyes in the nursery tunnel), and feet pale with silk. 'spider:hollow' is her spiderlings in the
+    // fight and the Spiders skin 'spiders-hollow' (Shapes.SKINS: the reward for killing her within three rounds);
+    // 'spider:mommy' is her own: more fungus, eight eyes, fangs, amber sacs along her sides, silk wound round her knees
+    'spider:hollow': () => {
+      const BARK = '#4A3A2B', BARK_L = '#66523E', LEG = '#2E241B', FUNGUS = '#E8962E', RIM = '#F6DFA6', EYE = '#FF4A36', SILK = '#E6DED0';
+      return [
+        P(ball(0.6), BARK, [0, 0.7, 0.45], [0, 0, 0], [1, 0.8, 1.1]),
+        P(ball(0.38), BARK_L, [0, 0.6, -0.35]),
+        P(cyl(0.3, 0.3, 0.16, 6), 'team', [0, 0.66, 0.02], [Math.PI / 2, 0, 0]), // a waist band in the team colour
+        ...[[0.22, 1.02, 0.28], [0.54, 1.16, 0.42], [0.9, 1.0, 0.3]].flatMap(([z, y, r]) => [ // three fungus shelves, stepping up the back: orange on top, a pale rim showing round each
+          P(cyl(r * 1.12, r * 0.8, 0.07, 7), RIM, [0, y, z], [0.35, 0, 0], [1.25, 1, 0.7]),
+          P(cyl(r * 0.94, r * 0.94, 0.05, 7), FUNGUS, [0, y + 0.055, z + 0.02], [0.35, 0, 0], [1.25, 1, 0.7])]),
+        P(ball(0.08), EYE, [-0.13, 0.72, -0.68]), P(ball(0.08), EYE, [0.13, 0.72, -0.68]),
+        P(ball(0.055), EYE, [-0.26, 0.8, -0.56]), P(ball(0.055), EYE, [0.26, 0.8, -0.56]),
+        ...[-0.55, -0.2, 0.15, 0.5].flatMap((z) => [-1, 1].flatMap((sd) => [
+          P(box(0.7, 0.08, 0.08), LEG, [sd * 0.5, 0.82, z - 0.1], [0, sd * z * 0.6, sd * 0.6]),
+          P(box(0.08, 0.75, 0.08), LEG, [sd * 0.95, 0.42, z - 0.1], [0, 0, sd * 0.25]),
+          P(box(0.11, 0.22, 0.11), SILK, [sd * 1.02, 0.14, z - 0.1], [0, 0, sd * 0.25])]))];
+    },
+    'spider:mommy': () => {
+      const BARK = '#30261C', PLATE = '#4E3D2D', LEG = '#231B14', FUNGUS = '#E8962E', RIM = '#F6DFA6', EYE = '#FF4A36', SILK = '#E6DED0', AMBER = '#FFC457';
+      return [
+        P(ball(0.62), BARK, [0, 0.72, 0.45], [0, 0, 0], [1, 0.82, 1.14]), // abdomen
+        P(ball(0.4), PLATE, [0, 0.62, -0.35]), // head
+        P(cyl(0.32, 0.32, 0.16, 6), 'team', [0, 0.68, 0.02], [Math.PI / 2, 0, 0]),
+        ...[[0.16, 1.0, 0.24], [0.36, 1.13, 0.36], [0.6, 1.24, 0.46], [0.86, 1.1, 0.36], [1.06, 0.92, 0.24]].flatMap(([z, y, r]) => [ // a crown of fungus shelves down her back
+          P(cyl(r * 1.12, r * 0.8, 0.07, 8), RIM, [0, y, z], [0.3, 0, 0], [1.3, 1, 0.7]),
+          P(cyl(r * 0.94, r * 0.94, 0.045, 8), FUNGUS, [0, y + 0.05, z + 0.02], [0.3, 0, 0], [1.3, 1, 0.7])]),
+        ...[-1, 1].flatMap((sd) => [[0.2, 0.09], [0.5, 0.11], [0.8, 0.09]].map(([z, r]) => P(ball(r), AMBER, [sd * 0.56, 0.78, z]))), // amber sacs along her sides (the lair's light)
+        ...[-1, 1].flatMap((sd) => [P(ball(0.085), EYE, [sd * 0.12, 0.74, -0.71]), P(ball(0.06), EYE, [sd * 0.27, 0.82, -0.62]), P(ball(0.05), EYE, [sd * 0.1, 0.9, -0.6]), P(ball(0.045), EYE, [sd * 0.34, 0.68, -0.52])]), // eight eyes
+        ...[-1, 1].map((sd) => P(cone(0.07, 0.34, 5), BONE, [sd * 0.13, 0.4, -0.68], [Math.PI + 0.25, 0, 0])), // fangs
+        ...[-0.55, -0.2, 0.15, 0.5].flatMap((z) => [-1, 1].flatMap((sd) => [
+          P(box(0.72, 0.1, 0.1), LEG, [sd * 0.5, 0.82, z - 0.1], [0, sd * z * 0.6, sd * 0.6]),
+          P(box(0.1, 0.78, 0.1), LEG, [sd * 0.95, 0.42, z - 0.1], [0, 0, sd * 0.25]),
+          P(box(0.15, 0.13, 0.15), SILK, [sd * 0.84, 0.8, z - 0.1]), // silk wound round each knee
+          P(box(0.13, 0.22, 0.13), SILK, [sd * 1.02, 0.14, z - 0.1], [0, 0, sd * 0.25])]))];
+    },
     // ---------- units of the default roster with their own models (NAMED) ----------
     // Ent: a walking tree, root legs, a band in the team colour, a crown of leaves in the unit's colour, leafy hands
     ent: () => [
@@ -11381,6 +11423,8 @@ const Models3D = (THREE) => {
     if (u.mech) return 'leafmech'; // the Leafblade suit
     if (NAMED[u.name]) { const k = NAMED[u.name]; return u.awake && BUILD[k + ':awake'] ? k + ':awake' : u.eye && BUILD[k + ':eye'] ? k + ':eye' : u.unfolded && BUILD[k + ':unfolded'] ? k + ':unfolded' : k; } // Core Awoken, Unfold: their own versions
     if (u.shape === 'horse') return 'horse';
+    if (u.boss === 'mommy') return 'spider:mommy'; // the Mommy boss puzzle: her own model
+    if (u.shape === 'spider' && u.name === 'Spiderling') return 'spider:hollow'; // ...and her spiders' (also the Spiders skin 'spiders-hollow')
     if (u.shape === 'spider') return 'spider';
     if (u.shape === 'imp' || u.shape === 'ring' || u.shape === 'wisp') return 'flier';
     const n = Math.round(u.bodies || 1);

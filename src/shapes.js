@@ -238,6 +238,9 @@ const Shapes = (() => {
     'brute-omniper': { unit: 'Brute', name: 'Omni-Per', text: 'A chrome war machine with a power fist.', model: 'brute:omniper', pic: 'img/skins/brute-omniper.png' },
     // 2026-11-05 (Model Forge): developers only, kept for later; the Fire Mage's own model is unchanged.
     'firemage-ember': { unit: 'Fire Mage', name: 'Ember Robe', text: 'A Fire Mage in an ember-trimmed robe, a flame in each hand.', model: 'wizard:fire:ember', pic: 'img/skins/firemage-ember.png' },
+    // 2026-11-12: the Mommy boss's own brood. The reward for killing her within three rounds (server accounts.js BOSS:
+    // given when the server's replay of the run agrees)
+    'spiders-hollow': { unit: 'Spiders', name: 'Hollow Brood', text: 'Spiders from the Mommy’s lair: bark-brown, shelf fungus down their backs, red eyes and feet pale with silk.', model: 'spider:hollow', pic: 'img/skins/spiders-hollow.png', boss: 'mommy' },
   };
   let worn = [{}, {}]; // per side: unit name -> skin
   function useSkins(lists) {

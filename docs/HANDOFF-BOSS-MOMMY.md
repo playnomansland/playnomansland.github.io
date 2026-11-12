@@ -1,6 +1,6 @@
 # Handoff: the Mommy boss puzzle
 
-Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, merged into `main` (live) after each step. Written 11 November 2026 over one long day; sections are in the order the work happened. **Start with section 0 (where things stand now)**, then section 7 (working with the owner); the rest is history and evidence. Section 12 is the session before last (her attacks reworked, difficulty measured again, unit priorities measured); section 13 the owner's answers and the 3D board first; section 14 the countdown, acid in place of the poison tiles, nest map and leaderboard; section 15 the latest (the server replays a run).
+Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, merged into `main` (live) after each step. Written 11 November 2026 over one long day; sections are in the order the work happened. **Start with section 0 (where things stand now)**, then section 7 (working with the owner); the rest is history and evidence. Section 12 is the session before last (her attacks reworked, difficulty measured again, unit priorities measured); section 13 the owner's answers and the 3D board first; section 14 the countdown, acid in place of the poison tiles, nest map and leaderboard; section 15 the server replaying a run; section 16 the latest (her and her spiders' look, the skin reward, the Puzzles button).
 
 ## 0. Where things stand now (12 November)
 
@@ -29,11 +29,13 @@ Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, me
 
 **Owner requests on 12 November, later** (all built, section 14): the time ticking down central and obvious; a Leaderboard button on the result screen and a Mommy tab in the menu's leaderboard; the green tiles and their effects removed, one bite made green with an acid pool instead; "Restart boss"; a button in the deploy panel showing every round's nest places (confirmed: they are fixed).
 
+**Owner on 12 November, after the Hollow:** give the Mommy and her spiders a unique element to their look, taken from the Hollow; the spider variant is the reward for clearing her by round 3; the weekly boss button in Puzzles in its own colour (all built: section 16).
+
 **Owner on 12 November, last:** acid on the heavy bite agreed; the Mommy tab stays developers only until the boss opens up; build the server-side replay (built: section 15).
 
 **Open, waiting on the owner:**
 1. The round-3 title at 54,000: the best plan known wins by 1% (54.6k by round 3). Search further before a real launch (already agreed).
-2. Not built: the "Mommy" title (the win screen mentions it), a weekly rotation (it is the one boss), a model of her own (the spider model drawn big), opening her to everyone (the leaderboard's server check no longer stands in the way).
+2. Not built: the "Mommy" title (the round-3 reward is the Hollow Brood skin now; the title is no longer mentioned on the page), a weekly rotation (it is the one boss), a model of her own (the spider model drawn big), opening her to everyone (the leaderboard's server check no longer stands in the way).
 
 **Her lair (12 November, a separate session):** every boss run is drawn in the Hollow, a forest sinkhole with a root bridge her thread is tied to, silk growing per round and a warm light column (README, "Her lair, the Hollow"). Looks only; nothing in her rules changed. Ideas and next steps: the project doc `claude/mommy-lair-ideas.md`.
 
@@ -604,4 +606,17 @@ The owner agreed to the three questions of section 14's message: acid on the hea
 - **The server** (`accounts.js` BOSS, `room.js` bossCheck): POST /account/boss takes `{ boss, rules, run }`, refuses a page whose rules tag isn't its own (409), replays the run in a Durable Object (about a second of processor time, too much for the Worker itself) and ranks what the replay got; a claimed result isn't even read. `src/boss.js` is now in the server deploy's paths.
 - **Checked.** 131 recorded runs replay to exactly the same damage every round: the 11 hand lines and search plans, and 40 games each of the random, stat-max and aware players (`tools/tests/boss.js` keeps one, with five cheats that must fail). A run played on the page (an Undo all, a loan, a skill, a sale, a move, level-ups, arrows) replays the same in the page and in node, and the page's rules tag is the server's. The server's test sends the tools' runs and cheats (a level not earned, squads the gold doesn't reach, a banned unit, a squad in her zone).
 - **What would make an honest run fail:** a page and a server on different versions (answered as "other rules", not as a failure), and anything the page lets a player do that the replay doesn't know to derive. Carriers (a squad riding Just a horse: boarding, stepping out, another boarding) were tried in one run and replayed the same. The result card says why when a run fails, so it can be found.
+
+
+---
+
+## 16. The Hollow's brood: her look, the skin reward, the Puzzles button (12 November)
+
+The owner: "a small redesign that gives the Mommy and her spiders some unique element to their look. Check the new Hollow map for inspiration since that is Mommy's battlefield. The spider variant will be able to be unlocked when clearing the Mommy on Round 3 as a reward. Also make the weekly boss battle button distinct from other buttons in colour inside of the Puzzles screen."
+
+- **The element.** Taken from the lair: the orange shelf fungus that grows on the Hollow's walls (Laetiporus) grows in a ridge down their backs. With it: bark-brown bodies (the roots), red eyes in a cluster (the eyes in the nursery tunnel), feet pale with silk. From straight above, where the fight is watched from, each one reads as stacked orange shelves with a pale rim; nothing else in the game has that.
+- **Models** (`src/models3d.js`): `spider:hollow` for her spiderlings, `spider:mommy` for her (a crown of five shelves, eight eyes, fangs, amber sacs along her sides, silk wound round her knees). Both keep a waist band in the team colour. The 2D board is unchanged.
+- **The skin.** `spiders-hollow`, *Hollow Brood*, for the Spiders unit: the spiderlings' model. The server gives it when its replay of a reported run finds a kill within 3 rounds (`CFG.titleRound`), once, worn. The page's result card says so, and the menu's new-skin note shows it. The rules sheet and result card now name this reward in place of the "Mommy" title, which is still not built.
+- **The Puzzles button.** Classic sheet: dark earth with an amber border and glow, amber title, two red eyes that blink. PC screen: the row always sits on a dark red earth shard with amber letters and a red star, and turns amber under the pointer.
+- **Checked.** Both models rendered large from the side and from above, and in a fight on the Hollow map; both Puzzles screens in a browser. Server tests: a developer's replayed round-3 kill gets the skin worn, the same kill again gives nothing new, a round-5 kill gives nothing (`server/test/accounts.test.js`); the skin list tests know the fifth skin (`skins.test.js`). Not checked: a real account earning it on the live server.
 

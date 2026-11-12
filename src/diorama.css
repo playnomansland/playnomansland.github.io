@@ -1599,6 +1599,16 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
 #dio .pz .item { font-size: clamp(28px, 4.6vh, 42px); margin: clamp(1px, .45vh, 4px) 0 clamp(1px, .45vh, 4px) 4px; padding: 3px 4px 0; }
 #dio .pz .item small { margin-left: 4px; font: 700 13px var(--type); text-transform: none; letter-spacing: 0; color: #9FE0B0; transform: translateY(-3px); }
 #dio .pz .item.on small, #dio .pz .item:hover small { color: var(--ink); }
+/* the weekly boss's row: her lair's colours, always lit (dark red earth behind amber letters), unlike the puzzles' rows */
+#dio .pz .item.boss { color: #FFC457; font-size: clamp(22px, 3.7vh, 34px); white-space: nowrap; margin-bottom: clamp(6px, 1.2vh, 12px); }
+#dio .pz .item.boss .shard { opacity: 1; transform: none; fill: #4A1A14; stroke: #E8962E; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+#dio .pz .item.boss .shard polygon { vector-effect: non-scaling-stroke; }
+#dio .pz .item.boss .n { color: #FF4A36; opacity: 1; text-shadow: 0 0 6px #FF4A36; }
+#dio .pz .item.boss small { color: #F6DFA6; }
+#dio .pz .item.boss:hover, #dio .pz .item.boss:focus-visible { color: #23170F; }
+#dio .pz .item.boss:hover .shard, #dio .pz .item.boss:focus-visible .shard { fill: #E8962E; stroke: #FFC457; }
+#dio .pz .item.boss:hover small, #dio .pz .item.boss:focus-visible small { color: #23170F; }
+#dio .pz .item.boss:hover .n, #dio .pz .item.boss:focus-visible .n { color: #7A1A10; text-shadow: none; }
 #dio .pz .create { background: var(--saffron); color: var(--ink); font-size: clamp(28px, 4vh, 36.4px); padding: clamp(6px, 1.1vh, 10px) 22px clamp(5px, .9vh, 8px) 18px; }
 #dio .pz .create svg { margin-right: -2px; }
 #dio .note.qnote { max-width: 260px; cursor: default; }

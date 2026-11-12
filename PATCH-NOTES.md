@@ -20,6 +20,14 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 12 November 2026 – The Hollow's brood: a look for the Mommy and her spiders, and a skin to win (developers only)
+
+- **Their look:** the Mommy and her spiderlings are no longer plain black spiders. They carry their lair on them: bark-brown bodies, the Hollow's orange shelf fungus growing in a ridge down their backs, red eyes in a cluster and feet pale with silk. The Mommy has more of all of it: a crown of fungus shelves, eight eyes, fangs, amber sacs along her sides and silk wound round her knees.
+- **The reward:** kill her within **3 rounds** and her brood's look is yours: the **Hollow Brood** skin for your Spiders. The game server plays your run again before it hands it over.
+- **Puzzles:** the *Weekly boss - The Mommy* button has its own colours (dark red earth, amber letters, a pair of red eyes), so it stands apart from the tutorial puzzles.
+
+---
+
 ## 12 November 2026 – The Mommy's lair: the Hollow (prototype, developers only)
 
 The weekly boss now has a home of her own. Every Mommy run is drawn in **the Hollow**, whatever look you've picked: an old forest whose floor caved in long ago.
