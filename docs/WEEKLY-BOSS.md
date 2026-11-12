@@ -20,7 +20,7 @@ Every boss has all of these, in this order of discovery. Do not add a surface or
 | B | **The boss screen** (before a run), opened from the note, a click on the model, or Puzzles' "Weekly boss" row | HTML `section.bz` in `src/site-template.html`; `openBoss` / `drawBoss` / `drawBossBoard` / `bzView` / `buildBossStage` in `src/diorama.js`; CSS `#dio.bz`, `#dio .bz…` in `src/diorama.css` |
 | C | **Rewards ladder** on the boss screen (three tiers by round) | `bossRewardList` (page), `drawBoss` (Diorama), `Boss.REWARDS` (`src/boss.js`), `bossRewards` / `bossBackfill` (server) |
 | D | **"<Boss>'s attacks" panel**: attack cards + spawn map side panel; from How to play point 4 and from the fight's cog Settings | `openBossAttacks` / `drawBossAttacks` / `drawBossNests` / `bossNestBoard` / `ATK_ICON` / `BITE_NAME` / `BITE_COL` in `src/site-template.html`; CSS `.bz-atk…`, `.bz-nests…` |
-| E | **In the run**: rules sheet as the run starts, boss bar, round banner, spawn map in the deploy panel, cog Settings with "<Boss>'s attacks" and "Restart boss" | `startBoss`, `openBossRules`, `bossBar`, `bossLine`, `openBossMap`, `openSoundSheet` |
+| E | **In the run**: boss bar (with Restart and a ? that opens the boss screen as a panel), round banner, spawn map in the deploy panel, cog Settings with "<Boss>'s attacks" and "Restart boss" | `startBoss`, `openBossInfo`, `restartBoss`, `bossBar`, `bossLine`, `openBossMap`, `openSoundSheet` |
 | F | **Result card** after each fight / at the end | `bossResult` |
 | G | **Leaderboard**: replayed by the server; on the boss screen, Rankings' boss tab, and the leaderboard sheet | `bossBoardLoad`, `bossReport`, `bossRunText`, `drawBossStandings`, `openLeaderboard('boss')`; server `bossBoard` / `bossRows` / route `boss` in `server/src/accounts.js`, replay in `server/src/room.js` `bossCheck` |
 
@@ -89,7 +89,13 @@ One panel, made once at the end of `<body>`, so it opens over the boss screen an
   outside closes it; Esc closes only it.
 
 ### E-G. In the run, result card, leaderboard
-- The rules sheet opens as the run starts. No deploy clock in a boss run (PvE); the fight waits while the sheet is read (`data-boss-read`).
+- No rules sheet (removed 12 November): the boss screen says it all. In the run, the ? beside the boss bar (and the ? by
+  the gold) opens it as one scrolling panel (`openBossInfo`; its words come from `bossHowHtml`, `bossTiersHtml`,
+  `bossBoardHtml`, shared with the menu's screen). No deploy clock in a boss run (PvE); the fight waits while it is open.
+- The boss bar: one soft panel, sentence case, a slim health bar, the time as a number, her state as a quiet line, and
+  Restart (asks Restart? Yes / No in place). A full card (n/n) tapped shakes and says You have the max of this unit type.
+- Skills with no use in the boss's fight go in `Boss.NO_USE` (id → why): crossed out in the unit sheet, not for sale.
+- The round card's headline is X damage dealt.
 - Cog Settings in a run: a row "The Mommy · <Boss>'s attacks", and "Restart boss".
 - The result card's eyebrow: `<Boss> · weekly boss`. After a kill: "Killed in round n:" and the rewards earned; the
   next reward to chase.
@@ -182,7 +188,7 @@ Places that name the Mommy today and would read the registry instead:
 
 - **Page** (`src/site-template.html`): `bossOpen`, `startBoss` (`Boss.setup`), `bossBoardLoad` (`?boss=mommy`),
   `bossReport` (`boss: 'mommy'`), `bossRewardList`, `BITE_NAME` / `BITE_COL` / `BITE_NOTE`, `ATK_ICON`,
-  `drawBossAttacks` (her cards), `drawBossNests` / `bossNestBoard`, `openBossRules`, `openBossMap`, `bossBar`
+  `drawBossAttacks` (her cards), `drawBossNests` / `bossNestBoard`, `openBossInfo`, `openBossMap`, `bossBar`
   (`MOMMY`), `bossLine`, `bossResult` (eyebrow, copy), the `.ev-note` HTML, the `section.bz` HTML (`THE MOMMY`),
   `TITLES.crawler` / `.widowmaker`, `openLeaderboard` (tab label), the cog row "The Mommy".
 - **Diorama** (`src/diorama.js`): the menu island's `mommy` / `mommyNest` and anchor `mommy`, `HOLLOW` and
