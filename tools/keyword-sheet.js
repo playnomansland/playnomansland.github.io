@@ -27,10 +27,14 @@ const armorRow = (i) => `<div class="k wide"><div class="strip" style="color:${A
 const withAlts = w1.filter(k => (KW[k].alts || []).length);
 // an idea, drawn from the keywords' own icons: Splash with the weapon that delivers it, striking or aiming at the ring.
 // wide = the weapon turned to point right, beside the ring (48 by 24); compact = the weapon small at the lower left, its tip on the ring (24 by 24)
-const wide = (wk) => `<g transform="rotate(45 12 12)">${KW[wk].icon}</g><g transform="translate(25 0)">${KW.splash.icon}</g>`;
-const compact = (wk) => `<g transform="translate(0 10.6) scale(.56)">${KW[wk].icon}</g><g transform="translate(8.4 0) scale(.65)">${KW.splash.icon}</g>`;
-const wbox = (h, inner) => `<svg width="${h * 49 / 24}" height="${h}" viewBox="0 0 49 24" fill="currentColor" aria-hidden="true">${inner}</svg>`;
-const combo = (wk, label) => { const c = ROLES.damage.color; return `<div class="k wide"><div class="strip" style="color:${c};align-items:center">${wbox(64, wide(wk))}${wbox(30, wide(wk))}${wbox(18, wide(wk))}<span style="width:26px"></span>${box(64, compact(wk))}${box(30, compact(wk))}${box(18, compact(wk))}</div><b>${label}</b><p>wide on the left, compact on the right</p></div>`; };
+// the weapon is smaller than the ring and never touches it (owner, 2026-11-12). The sword comes down from the upper
+// left as if striking from above; the arrow flies level at the ring. wide = 41 by 24, square = 24 by 24
+const turn = { strike: 90, shoot: 45 };
+const weapon = (wk, x, y, sc) => `<g transform="translate(${x} ${y}) scale(${sc}) rotate(${turn[wk]} 12 12)">${KW[wk].icon}</g>`;
+const wide = (wk) => weapon(wk, 0, wk === 'strike' ? 0.5 : 4.6, 0.62) + `<g transform="translate(17 0)">${KW.splash.icon}</g>`;
+const square = (wk) => weapon(wk, 0, wk === 'strike' ? 0 : 1.6, 0.4) + `<g transform="translate(7.6 7.6) scale(.68)">${KW.splash.icon}</g>`;
+const wbox = (h, inner) => `<svg width="${h * 41 / 24}" height="${h}" viewBox="0 0 41 24" fill="currentColor" aria-hidden="true">${inner}</svg>`;
+const combo = (wk, label) => { const c = ROLES.damage.color; return `<div class="k wide"><div class="strip" style="color:${c};align-items:center">${wbox(64, wide(wk))}${wbox(30, wide(wk))}${wbox(18, wide(wk))}<span style="width:26px"></span>${box(64, square(wk))}${box(30, square(wk))}${box(18, square(wk))}</div><b>${label}</b><p>wide on the left, square on the right</p></div>`; };
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>No Mans Land: keyword icons</title>
 <style>body{margin:0;padding:28px;background:#17140F;color:#EEF3F1;font:14px/1.35 system-ui,sans-serif}h1{font-size:22px;margin:0 0 4px;text-transform:uppercase;letter-spacing:.02em}h2{font-size:15px;margin:26px 0 4px;text-transform:uppercase;letter-spacing:.08em;color:#F2B23A}
 .sub{color:#B9B2A2;margin:0 0 14px;max-width:900px}.g{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}.k{background:#211D16;border:1px solid #3A3327;padding:16px 12px 12px;text-align:center}
