@@ -2304,7 +2304,7 @@ html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: sta
 
 /* buy and place feedback (2026-11-12): a squad placed this round as a square pip with its unit, not a diamond */
 html.diorama.pcwide .panel .trow .pips i.u { width: 20px; height: 20px; transform: none; border: 2px solid #F4ECD8; border-radius: 0; background: rgba(244,236,216,.12); display: grid; place-items: center; }
-html.diorama.pcwide .panel .trow .g2.pfx-spend { color: #FFE59A; }
+html.diorama.pcwide .panel .trow .g2.pfx-spend { color: var(--foe); }
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -2831,16 +2831,15 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 /* buy and place feedback (prototype, 2026-11-12): the page's effect layer (pfx*), squads placed this round (.fresh), the deploy pips as a receipt */
 .pfx { position: fixed; inset: 0; z-index: 30; pointer-events: none; overflow: hidden; }
 .pfx svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.pfx-coin { position: absolute; left: 0; top: 0; padding: 3px 8px 3px 20px; border-radius: 999px; background: #17140F; border: 1.5px solid var(--gold); color: var(--gold); font: 700 14px/1 var(--font-data); white-space: nowrap; box-shadow: 0 3px 10px rgba(0,0,0,.55); will-change: transform; }
-.pfx-coin::before { content: ''; position: absolute; left: 5px; top: 50%; width: 11px; height: 11px; margin-top: -5.5px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #FFE59A, var(--gold) 60%, #9A6E12); }
+.pfx-loss { position: absolute; left: 0; top: 0; color: var(--foe); font: 700 16px/1 var(--font-data); white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,.8); will-change: transform; }
 .pfx-back { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--bg); border: 1.5px solid var(--foe); box-shadow: 0 4px 12px rgba(0,0,0,.5); will-change: transform; }
 .pfx-tagbg { fill: var(--you); stroke: #0A0E10; stroke-width: 1.5; }
 .pfx-tagbg.foe { fill: var(--foe); }
 .pfx-tag { fill: #0A0E10; font: 800 8.5px var(--font-body, sans-serif); letter-spacing: .06em; text-anchor: middle; }
 .marks .fresh { fill: var(--you); fill-opacity: .12; stroke: var(--you); stroke-width: 2.5; stroke-linejoin: round; animation: fresh-breathe 1.6s ease-in-out infinite; }
 @keyframes fresh-breathe { 0%, 100% { stroke-opacity: 1; fill-opacity: .16; } 50% { stroke-opacity: .45; fill-opacity: .04; } }
-.trow .g2 { transition: color .15s; }
-.trow .g2.pfx-spend { color: #FFE59A; text-shadow: 0 0 10px rgba(230,184,74,.7); }
+.trow .g2 { transition: color .2s, transform .2s ease-out; }
+.trow .g2.pfx-spend { color: var(--foe); transform: translateY(3px); text-shadow: 0 0 10px rgba(229,83,61,.45); transition: color .06s, transform .1s ease-in; }
 .pips i.u { width: 19px; height: 19px; border-radius: 6px; border: 1.5px solid var(--you); background: color-mix(in srgb, var(--you) 16%, var(--bg)); display: grid; place-items: center; cursor: pointer; }
 .pips i.u svg { width: 13px; height: 13px; }
 .uc2 .nw { position: absolute; top: 3px; left: 50%; transform: translateX(-50%); padding: 1px 6px; border-radius: 999px; background: var(--you); color: #0A0E10; font: 800 10px/1.3 var(--font-data); box-shadow: 0 1px 4px rgba(0,0,0,.5); }
@@ -19807,7 +19806,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (!el) return;
     const k = a ? (performance.now() - a.t0) / a.dur : 2;
     if (el.firstChild && el.firstChild.nodeType === 3 && m) { const s = String(pfxGold(m.gold[me])); if (el.firstChild.nodeValue !== s) el.firstChild.nodeValue = s; }
-    el.classList.toggle('pfx-spend', !!a && k > -0.1 && k < 1.15);
+    el.classList.toggle('pfx-spend', !!a && k < 1.25);
   }
   const pfxSquare = (at, c, d) => [[-d, -d], [d, -d], [d, d], [-d, d]].map(([x, y]) => at(c.x + x, c.y + y).map(v => v.toFixed(1)).join(',')).join(' ');
   const pfxCircle = (at, c, r) => Array.from({ length: 48 }, (_, k) => { const a = k / 48 * Math.PI * 2; return at(c.x + Math.cos(a) * r, c.y + Math.sin(a) * r).map(v => v.toFixed(1)).join(','); }).join(' ');
@@ -19854,26 +19853,23 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (pfx.list.length || pfx.gold) pfx.raf = requestAnimationFrame(pfxFrame);
     else document.querySelector('#panel .g2') && document.querySelector('#panel .g2').classList.remove('pfx-spend');
   }
-  // the price, flying from the tile to the gold in the tray; the gold counts down once it lands
-  function pfxCoin(c, cost) {
+  // gold spent: the gold in the tray turns red, dips and counts down, and the price falls away below it in red
+  function pfxLoss(cost) {
     const g = document.querySelector('#panel .g2'), r = g && g.getBoundingClientRect();
     if (!r || !r.width) return;
-    const [x0, y0] = pfxAt()(c.x, c.y), x1 = r.left + r.width / 2, y1 = r.top + r.height / 2;
-    const el = document.createElement('div'); el.className = 'pfx-coin'; el.textContent = `−${cost}`;
+    const el = document.createElement('div'); el.className = 'pfx-loss'; el.textContent = `−${cost}`;
     pfxLayer().appendChild(el);
-    const lift = Math.min(60, Math.abs(y1 - y0) * 0.25) + 24, D = 560 * pfxSlow();
-    const mx = x0 + (x1 - x0) * 0.25, my = Math.min(y0, y1) - lift;
+    const x = r.left + r.width / 2, y = r.top + r.height * 0.55;
     el.animate([
-      { transform: `translate(${x0}px, ${y0}px) translate(-50%, -50%) scale(0.6)`, opacity: 0 },
-      { transform: `translate(${x0}px, ${y0 - 26}px) translate(-50%, -50%) scale(1.25)`, opacity: 1, offset: 0.18 },
-      { transform: `translate(${mx}px, ${my}px) translate(-50%, -50%) scale(1.1)`, opacity: 1, offset: 0.45 },
-      { transform: `translate(${x1}px, ${y1}px) translate(-50%, -50%) scale(0.55)`, opacity: 0.4 },
-    ], { duration: D, easing: 'cubic-bezier(.45,.05,.55,.95)', fill: 'forwards' }).onfinish = () => el.remove();
+      { transform: `translate(${x}px, ${y - 6}px) translate(-50%, 0)`, opacity: 0 },
+      { transform: `translate(${x}px, ${y}px) translate(-50%, 0)`, opacity: 1, offset: 0.15 },
+      { transform: `translate(${x}px, ${y + 30}px) translate(-50%, 0)`, opacity: 0 },
+    ], { duration: 750 * pfxSlow(), easing: 'cubic-bezier(.5,0,.75,.6)', fill: 'forwards' }).onfinish = () => el.remove();
   }
-  // the tray keeps showing the gold from before until the coin lands (set at once, before the tray is built again)
+  // the tray's gold counts down from the amount before (set at once, before the tray is built again)
   function pfxHoldGold(cost) {
     const from = pfx.gold ? pfxGold(pfx.gold.to) : m.gold[me] + cost;
-    pfx.gold = { from, to: m.gold[me], t0: performance.now() + 560 * 0.85 * pfxSlow(), dur: 380 * pfxSlow() };
+    pfx.gold = { from, to: m.gold[me], t0: performance.now() + 60 * pfxSlow(), dur: 450 * pfxSlow() };
   }
   // a card bumps when one of its squads is bought
   function pfxBump(ui) {
@@ -19890,12 +19886,12 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     for (const id of Object.keys(landAt)) if (performance.now() - landAt[id] > 1500) delete landAt[id];
     if (cost > 0) pfxHoldGold(cost);
     pfxAdd({ kind: 'stamp', col: sq.col, row: sq.row, n, life: 650 });
-    pfxQueue(() => { if (cost > 0) { Game.useGrid(m); pfxCoin(pfxMid(sq.col, sq.row, n), cost); } pfxBump(ui); if (!pfx.raf) pfx.raf = requestAnimationFrame(pfxFrame); });
+    pfxQueue(() => { if (cost > 0) pfxLoss(cost); pfxBump(ui); if (!pfx.raf) pfx.raf = requestAnimationFrame(pfxFrame); });
   }
   function pfxMoved(sq, cost) {
     if (cost > 0) pfxHoldGold(cost);
     pfxAdd({ kind: 'move', col: sq.col, row: sq.row, n: Game.footprint(m, sq.unit), life: 420 });
-    if (cost > 0) pfxQueue(() => { Game.useGrid(m); pfxCoin(pfxMid(sq.col, sq.row, Game.footprint(m, sq.unit)), cost); });
+    if (cost > 0) pfxQueue(() => { pfxLoss(cost); if (!pfx.raf) pfx.raf = requestAnimationFrame(pfxFrame); });
   }
   // a drop on a tile it can't go on: a red cross there, and the card flies back from the finger to its place in the tray
   function pfxBad(t, ui, from) {
@@ -20000,7 +19996,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · c09fe4a'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · f1d9859'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches

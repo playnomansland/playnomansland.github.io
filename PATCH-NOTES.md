@@ -31,7 +31,7 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 Placing a squad is now obvious at a glance, even with your thumb over the tile. Sounds are unchanged.
 
-- **The moment it lands:** a soft ring runs out on the ground from the tile, and on the 3D board the squad drops onto it. The price flies off as a coin into your gold, which counts down once the coin arrives. The card you bought from gives a little bump.
+- **The moment it lands:** a soft ring runs out on the ground from the tile, and on the 3D board the squad drops onto it. Your gold turns red and counts down, and the price falls away below it, so you can see what it cost. The card you bought from gives a little bump.
 - **New until the fight:** every squad you bought this round has a gently pulsing outline and a **NEW** tag until the fight starts (your free starting squads in round 1 get the outline only). The shop card shows how many you've bought from it this round (×1, ×2…).
 - **The deploy pips are a receipt:** each used pip now shows the unit you placed with it, followed by the deployments you have left. Tap one to find that squad on the board.
 - **A drop that doesn't work:** dropping a card where it can't go puts a red cross on the tile and sends the card back to the tray.

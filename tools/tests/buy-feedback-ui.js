@@ -1,5 +1,5 @@
-// Buy and place feedback (prototype, 2026-11-12): a card dragged onto the board stamps its tile, the price flies to the
-// gold and the gold counts down, the squad is outlined with a NEW tag until the fight, the deploy pips list it, the
+// Buy and place feedback (2026-11-12): a card dragged onto the board stamps its tile, the gold turns red and counts
+// down with the price falling away below it, the squad is outlined with a NEW tag until the fight, the deploy pips list it, the
 // shop card shows ×1; a drop on a bad tile shows a red cross; the fight's start locks the squads in.
 // SHOTS=dir saves screenshots along the way. PB_BOARD=3d for the 3D board.
 const { chromium } = require('playwright-core');
@@ -33,12 +33,14 @@ let bad = 0; const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + msg)
     await p.mouse.up(); }
   await sleep(90); await shot('1-stamp');
   const mid = await p.evaluate(() => document.querySelector('#panel .g2').firstChild.nodeValue);
+  const loss = await p.evaluate(() => ({ red: document.querySelector('#panel .g2').classList.contains('pfx-spend'), label: (document.querySelector('#pfx .pfx-loss') || {}).textContent || '', coin: !!document.querySelector('#pfx .pfx-coin') }));
   if (!TAP) { await sleep(160); await shot('2-stamp-250ms'); await sleep(300); await shot('3-coin-550ms'); await sleep(700); }
   else await p.waitForFunction(() => !document.querySelector('#pfx svg').innerHTML && !document.querySelector('#pfx .pfx-coin') && !document.querySelector('#panel .g2.pfx-spend'), null, { timeout: 120000, polling: 1000 });
   await shot('4-settled');
   const st = await p.evaluate(() => { const { m, me } = window.__pb(); return { gold: m.gold[me], shown: document.querySelector('#panel .g2').firstChild.nodeValue, fresh: document.querySelectorAll('#marks .fresh').length, tags: document.querySelectorAll('#marks .fresh-t').length, pips: document.querySelectorAll('#panel .pips i.u[data-find]').length, nw: [...document.querySelectorAll('#panel .uc2 .nw')].map(e => e.textContent) }; });
   ok(st.gold < g0, `bought: gold ${g0} -> ${st.gold}`);
-  ok(+mid === g0 || +mid > st.gold, `gold still shows the old amount while the coin flies (${mid})`);
+  ok(+mid <= g0 && +mid >= st.gold, `gold counts down from ${g0} (shown ${mid})`);
+  ok(loss.red && /^−\d+$/.test(loss.label) && !loss.coin, `the gold turns red and the price falls away below it (${loss.label}); no coin from the squad`);
   ok(+st.shown === st.gold, `gold then shows the new amount (${st.shown})`);
   ok(st.fresh >= 1 && st.tags >= 1, `outlined with a NEW tag (${st.fresh} outlines, ${st.tags} tags)`);
   ok(st.pips === 1, `one receipt pip (${st.pips})`);
