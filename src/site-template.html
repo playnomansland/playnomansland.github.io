@@ -1091,7 +1091,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   <div class="net" id="net" hidden aria-live="polite"><i></i><span id="net-text"></span></div>
 
   <div class="board-wrap" id="wrap">
-    <canvas id="board" aria-label="Battlefield. Your zone is the bottom six rows, the enemy zone the top six, with four rows of no man's land between."></canvas>
+    <canvas id="board" aria-label="Battlefield. Your zone is the bottom seven rows, the enemy zone the top seven, with four rows of no man's land between."></canvas>
     <span class="tag-clock" id="clock"></span>
     <div class="overlay" id="overlay"></div>
     <div class="pick" id="pick" role="dialog" aria-modal="false" aria-labelledby="pick-h" hidden></div>
@@ -3123,7 +3123,11 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     Game.useGrid(m);
     const key = Game.COLS + 'x' + Game.ROWS;
     const ar = Game.COLS / Game.ROWS; // the board's shape on screen
-
+    { // the board's label says this map's rows (Standard: zones of 7, 4 of no man's land; Rush: 8 and 2)
+      const W = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'], w = (n) => W[n] || String(n);
+      const z = w(Game.ZONE), nml = Game.ROWS - 2 * Game.ZONE;
+      $('board').setAttribute('aria-label', `Battlefield. Your zone is the bottom ${z} rows, the enemy zone the top ${z}, with ${w(nml)} row${nml === 1 ? '' : 's'} of no man's land between.`);
+    }
     if (String(ar) !== arKey) { arKey = String(ar); document.documentElement.style.setProperty('--board-ar', arKey); if (key === gridKey) size(); }
     if (key === gridKey) return;
     gridKey = key;

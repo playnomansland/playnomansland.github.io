@@ -20,6 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 12 November 2026 – The battlefield's label counts the right rows
+
+- **Fix:** the battlefield's label (what a screen reader says for the board) still described the old board: zones of 6 rows. It now reads the map in play, so on Standard it says zones of 7 rows with 4 rows of no man's land between, as the map description and the guide do, and on Rush 8 and 2.
+
+---
+
 ## 12 November 2026 – The Hollow's brood: a look for the Mommy and her spiders, and a skin to win (developers only)
 
 - **Their look:** the Mommy and her spiderlings are no longer plain black spiders. They carry their lair on them: bark-brown bodies, the Hollow's orange shelf fungus growing in a ridge down their backs, red eyes in a cluster and feet pale with silk. The Mommy has more of all of it: a crown of fungus shelves, eight eyes, fangs, amber sacs along her sides and silk wound round her knees.
