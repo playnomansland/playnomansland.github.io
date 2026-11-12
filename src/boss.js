@@ -114,6 +114,7 @@
     m.units.forEach((u, k) => { if (!cfg.banned.includes(u.name) && !u.building) m.unlocks[0][k] = 1; });
     m.extraDeploys[0] = 1;
     m.gold = [cfg.startGold, 0];
+    m.boss.run = { seed: m.seed, rounds: [] }; // the run's record, for the leaderboard (record, replay below)
     return m;
   }
   // what the boards draw for this round, while deploying and in the fight: her and the nests
@@ -324,7 +325,90 @@
     return rep;
   }
 
-  const api = { CFG, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit };
+  // ---------- a run's record, and playing it again (the leaderboard: the game server replays a reported run) ----------
+  // The record is m.boss.run = { seed, rounds: [snapshot, ...] }: the match's seed and, for each round, the player's side
+  // as it went into the fight (record(m), called by Game.resolve before it pays the fight out). replay(run, units,
+  // matrix) starts the same match, and for each round works out what the player did between the last fight and this
+  // snapshot (squads sold, moved, bought, skills, level-ups, a loan, arrows), does it through the game's own rules
+  // (so gold, deployments, the cap and the free move are all enforced), checks that its side then looks exactly like
+  // the snapshot, and plays the fight. The result is what the replay got, not what anyone claims.
+  // a snapshot: { army: [[id, unit name, col, row, level, aim ([dc, dr] or 0), carrier id or 0], ...], tech: { unit
+  // name: [skill slots owned] }, loan: 1 when a loan was taken this round }
+  const techOf = (m) => { const out = {}, t = (m.tech && m.tech[0]) || {};
+    for (const ui of Object.keys(t)) { const own = t[ui].map((v, k) => v ? k : -1).filter((k) => k >= 0); if (own.length && m.units[ui]) out[m.units[ui].name] = own; }
+    return out; };
+  const snapshot = (m) => ({ army: m.armies[0].map((q) => [q.id, m.units[q.unit].name, q.col, q.row, q.level | 0, q.aim ? [q.aim.dc, q.aim.dr] : 0, q.in != null ? q.in : 0]),
+    tech: techOf(m), loan: G().loanNow(m, 0) ? 1 : 0 });
+  function record(m) { if (!m.boss) return; if (!m.boss.run) m.boss.run = { seed: m.seed, rounds: [] }; m.boss.run.rounds[m.round - 1] = snapshot(m); }
+  const sameSnap = (a, b) => { const norm = (x) => JSON.stringify([x.army, Object.keys(x.tech).sort().map((k) => [k, x.tech[k]]), x.loan ? 1 : 0]); return norm(a) === norm(b); };
+  const int = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+  // make m's player side look like snap, through the game's own rules. Returns '' when it does, else what went wrong
+  function applySnapshot(m, snap) {
+    const Gm = G(), ix = (n) => m.units.findIndex((u) => u.name === n);
+    if (!snap || !Array.isArray(snap.army) || snap.army.length > 80 || !snap.tech || typeof snap.tech !== 'object' || Array.isArray(snap.tech)) return 'a bad snapshot';
+    const want = new Map();
+    for (const a of snap.army) {
+      if (!Array.isArray(a) || a.length !== 7 || !int(a[0], 1, 1e6) || typeof a[1] !== 'string' || ix(a[1]) < 0 || !int(a[2], 0, Gm.COLS - 1) || !int(a[3], 0, Gm.ROWS - 1) || !int(a[4], 0, 20)
+        || !(a[5] === 0 || (Array.isArray(a[5]) && a[5].length === 2 && int(a[5][0], -20, 20) && int(a[5][1], -20, 20))) || !int(a[6], 0, 1e6) || want.has(a[0])) return 'a bad squad';
+      want.set(a[0], a);
+    }
+    const army = () => m.armies[0], have = (id) => army().find((q) => q.id === id);
+    for (const q of army()) { const a = want.get(q.id); if (a && (ix(a[1]) !== q.unit || a[4] < (q.level | 0))) return `squad ${q.id} isn't the squad it was`; }
+    // what is left to do. Gold only comes from the loan and from selling, so those go first, except a sale that
+    // would take the last squad of a unit whose skill is still to be bought (a skill needs one on the board)
+    const todo = [];
+    if (snap.loan && !Gm.loanNow(m, 0)) todo.push(['loan']);
+    if (!snap.loan && Gm.loanNow(m, 0)) return 'a loan it does not show';
+    for (const q of army()) if (!want.has(q.id)) todo.push(['sell', q.id, q.unit]);
+    const mine = (m.tech && m.tech[0]) || {};
+    for (const n of Object.keys(snap.tech)) { const ui = ix(n), own = snap.tech[n];
+      if (ui < 0 || !Array.isArray(own) || own.length > 8 || own.some((k) => !int(k, 0, 7))) return 'a bad skill';
+      for (const k of own) if (!(mine[ui] && mine[ui][k])) todo.push(['skill', ui, k]); }
+    for (const ui of Object.keys(mine)) mine[ui].forEach((v, k) => { if (v && !((snap.tech[m.units[ui].name] || []).includes(k))) todo.push(['bad']); });
+    if (todo.some((t) => t[0] === 'bad')) return 'a skill it had is gone';
+    for (const a of snap.army) { const q = have(a[0]); if (q && (q.col !== a[2] || q.row !== a[3] || (q.in != null ? q.in : 0) !== a[6])) todo.push(['move', a[0], a[2], a[3]]); }
+    for (const a of snap.army.filter((x) => !have(x[0])).sort((x, y) => (x[6] ? 1 : 0) - (y[6] ? 1 : 0) || x[0] - y[0])) todo.push(['buy', a[0], ix(a[1]), a[2], a[3]]); // (riders after what they ride)
+    for (const a of snap.army) { const q = have(a[0]), from = q ? q.level | 0 : 0; for (let k = from; k < a[4]; k++) todo.push(['level', a[0]]); }
+    const lastOfSkillUnit = (t) => t[0] === 'sell' && todo.some((x) => x[0] === 'skill' && x[1] === t[2]) && army().filter((q) => q.unit === t[2]).length <= 1;
+    const act = (t) => t[0] === 'loan' ? Gm.takeLoan(m, 0) : t[0] === 'sell' ? Gm.sell(m, 0, t[1]) > 0 || !have(t[1]) : t[0] === 'skill' ? Gm.buySkill(m, 0, t[1], t[2])
+      : t[0] === 'move' ? !!Gm.moveSquad(m, 0, t[1], t[2], t[3]) : t[0] === 'level' ? Gm.levelUp(m, 0, t[1])
+      : (() => { if (have(t[1])) return false; const next = m.nextId[0]; m.nextId[0] = t[1]; const sq = Gm.place(m, 0, t[2], t[3], t[4]); m.nextId[0] = Math.max(next, sq ? t[1] + 1 : 0); return !!sq; })(); // (a new squad gets the id it had: ids order the bodies in a fight; gaps are squads bought and taken back, and a rider is placed after what it rides whatever its id)
+    const ORDER = [(t) => t[0] === 'loan', (t) => t[0] === 'sell' && !lastOfSkillUnit(t), (t) => t[0] === 'skill', (t) => t[0] === 'move', (t) => t[0] === 'buy', (t) => t[0] === 'level', (t) => t[0] === 'sell'];
+    for (let guard = 0; todo.length && guard < 2000; guard++) {
+      let done = -1;
+      for (const pick of ORDER) { done = todo.findIndex((t) => pick(t) && act(t)); if (done >= 0) break; }
+      if (done < 0) return `it can't ${todo[0][0]} (${todo.length} thing${todo.length === 1 ? '' : 's'} left that the rules don't allow)`;
+      todo.splice(done, 1);
+    }
+    for (const a of snap.army) { const q = have(a[0]); if (!q) return 'a squad is missing';
+      if (a[5]) Gm.setAim(m, 0, q.id, a[5][0], a[5][1]); else if (q.aim) Gm.clearAim(m, 0, q.id); }
+    const at = new Map(snap.army.map((a, k) => [a[0], k]));
+    army().sort((x, y) => at.get(x.id) - at.get(y.id)); // (the order they stand in the list is the snapshot's)
+    return sameSnap(snapshot(m), snap) ? '' : 'its side does not come out as the snapshot shows';
+  }
+  // play a recorded run again. Returns { ok: true, won, round, secs, dmg, log } or { ok: false, why }
+  function replay(run, units, matrix, cfg = CFG) {
+    const Gm = G(), fail = (why) => ({ ok: false, why });
+    if (!run || !int(run.seed, 0, 4294967295) || !Array.isArray(run.rounds) || !run.rounds.length || run.rounds.length > cfg.rounds) return fail('a bad record');
+    const m = Gm.createMatch(units, matrix, run.seed, 'standard', null, [], { draft: false });
+    setup(m, cfg);
+    for (let r = 0; r < run.rounds.length; r++) {
+      if (m.over) return fail('rounds after the end');
+      const why = applySnapshot(m, run.rounds[r]);
+      if (why) return fail(`round ${r + 1}: ${why}`);
+      const sim = battle(m, { cfg });
+      while (sim.step()) { /* the fight */ }
+      Gm.resolve(m, sim.result());
+    }
+    if (!m.over) return fail('the run is not finished');
+    const last = m.boss.log[m.boss.log.length - 1];
+    return { ok: true, won: !!last.dead, round: last.round, secs: Math.round(last.end * 100) / 100, dmg: Math.round(m.boss.max - m.boss.hp), log: m.boss.log };
+  }
+  // a short tag for one set of her rules and the units they are played with: runs are only ranked together under the
+  // same tag, and the page and the server only agree on a run when theirs are the same
+  const rulesTag = (units, cfg = CFG) => { const t = JSON.stringify(cfg) + JSON.stringify(units); let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
+
+  const api = { CFG, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Boss = api;
 })(typeof window !== 'undefined' ? window : globalThis);

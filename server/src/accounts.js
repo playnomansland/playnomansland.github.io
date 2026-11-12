@@ -42,6 +42,7 @@
 import { json, secret } from './limits.js';
 import Game from '../../src/game.js';
 import Ref from '../../src/referee.js';
+import Boss from '../../src/boss.js';
 import puzzleData from './puzzle-data.cjs';
 const { PUZZLES, builtin } = puzzleData;
 
@@ -589,21 +590,20 @@ export async function leaderboard(env, cors) {
 }
 
 // ---------- the weekly boss's leaderboard (2026-11-12; the page's Mommy boss puzzle, src/boss.js) ----------
-// A run's result as the page reports it: { boss, rules, won, round, secs, dmg }. rules: a short tag the page makes from
-// the boss's numbers, so runs under different rules (her health changed, say) are never ranked together. Best first: a
-// kill before no kill; the earlier round; the earlier second of that round; without a kill, the more damage. One row
-// per player, boss and rules: only a better run replaces it.
-// NOT CHECKED YET: the server does not replay the run, so a result is the page's word. That is why only developer
-// accounts may report one (the boss is a developer test). Replay it here (as puzzleWon does) before others may.
-export const BOSS = { mommy: { rounds: 5, secs: 30 }, rows: 100 };
-export function cleanBossRun(b) {
-  const B = b && typeof b.boss === 'string' && Object.prototype.hasOwnProperty.call(BOSS, b.boss) && b.boss !== 'rows' ? BOSS[b.boss] : null;
-  if (!B || typeof b.rules !== 'string' || !/^[a-z0-9]{1,16}$/.test(b.rules)) return null;
-  if (!Number.isInteger(b.round) || b.round < 1 || b.round > B.rounds) return null;
-  if (typeof b.secs !== 'number' || !Number.isFinite(b.secs) || b.secs < 0 || b.secs > B.secs + 1) return null;
-  if (!Number.isInteger(b.dmg) || b.dmg < 0 || b.dmg > 1e7) return null;
-  if (!b.won && b.round !== B.rounds) return null; // a run she survived went all her rounds
-  return { boss: b.boss, rules: b.rules, won: b.won ? 1 : 0, round: b.round, secs: Math.round(b.secs * 100) / 100, dmg: b.dmg };
+// The page sends a finished run's record: { boss: 'mommy', rules, run: { seed, rounds: [the player's side going into
+// each fight] } }. The server doesn't take the page's word for anything: it plays the run again with the game's own
+// rules (Boss.replay: every purchase, sale, move, level-up, skill and loan between two fights has to be allowed) and
+// ranks what the replay got. rules: a short tag made from the boss's numbers and the units (Boss.rulesTag); the page's
+// has to be the server's, and runs are only ranked together under the same tag. Best first: a kill before no kill; the
+// earlier round; the earlier second of that round; without a kill, the more damage. One row per player, boss and
+// rules: only a better run replaces it. Developer accounts only while the boss is a developer test.
+// A run is five fights, too much processor time for the Worker itself, so the replay runs in a Durable Object (a Room
+// named bosscheck-<x>, its /bosscheck).
+export const BOSS = { mommy: { rounds: 5, secs: 30 }, rows: 100, maxBytes: 40000, perPlayer: [20, 600e3] };
+export const bossRules = () => Boss.rulesTag(builtin().units);
+async function bossCheck(env, player, run) {
+  const r = await env.ROOM.getByName('bosscheck-' + player.slice(-1)).fetch(new Request('https://room/bosscheck', { method: 'POST', body: JSON.stringify(run) }));
+  return r.json();
 }
 // is run a better than run b? (both { won, round, secs, dmg })
 export const bossBetter = (a, b) => a.won !== b.won ? a.won > b.won : a.won ? (a.round !== b.round ? a.round < b.round : a.secs < b.secs) : a.dmg > b.dmg;
@@ -615,8 +615,8 @@ async function bossRows(db, boss, rules) {
 }
 // GET /leaderboard/boss?boss=mommy&rules=<tag>: the board for one boss under one set of rules
 export async function bossBoard(env, cors, url) {
-  const db = env.ACCOUNTS, boss = url.searchParams.get('boss') || '', rules = url.searchParams.get('rules') || '';
-  if (!Object.prototype.hasOwnProperty.call(BOSS, boss) || boss === 'rows' || !/^[a-z0-9]{1,16}$/.test(rules)) return json({ error: 'no such board' }, 400, cors);
+  const db = env.ACCOUNTS, boss = url.searchParams.get('boss') || '', rules = url.searchParams.get('rules') || bossRules(); // (no rules given: the server's own, as they are now)
+  if (boss !== 'mommy' || !/^[a-z0-9]{1,16}$/.test(rules)) return json({ error: 'no such board' }, 400, cors);
   if (!db) return json({ boss, rules, rows: [] }, 200, cors);
   try {
     await ensureSchema(db);
@@ -1136,18 +1136,26 @@ export async function handleAccount(request, env, cors) {
       const out = await playerOut(db, me.player);
       return json({ player: out, won, solved: out.puzzles }, 200, cors);
     }
-    if (route === 'boss') { // a run against the weekly boss, for her leaderboard (BOSS above: developers only, not replayed yet)
+    if (route === 'boss') { // a finished run against the weekly boss, for her leaderboard (BOSS above): replayed here, then ranked
       const p = await db.prepare('SELECT dev FROM players WHERE id = ? AND deleted IS NULL').bind(me.player).first();
       if (!p || !p.dev) return json({ error: 'developers only' }, 403, cors);
-      const run = cleanBossRun(body);
-      if (!run) return json({ error: 'bad run' }, 400, cors);
-      const had = await db.prepare('SELECT won, round, secs, dmg FROM boss_runs WHERE player = ? AND boss = ? AND rules = ?').bind(me.player, run.boss, run.rules).first();
+      if (body.boss !== 'mommy') return json({ error: 'no such boss' }, 400, cors);
+      const rules = bossRules();
+      if (body.rules !== rules) return json({ error: 'other rules', rules }, 409, cors); // the page and the server aren't on the same version of her
+      let size = 1e9; try { size = JSON.stringify(body.run).length; } catch (e) { /* not a record */ }
+      if (!body.run || typeof body.run !== 'object' || size > BOSS.maxBytes) return json({ error: 'bad run' }, 400, cors);
+      if (!(await hitPlayer(db, 'boss:' + me.player, BOSS.perPlayer[0], BOSS.perPlayer[1], now))) return json({ error: 'slow down' }, 429, cors);
+      let res = null;
+      try { res = await bossCheck(env, me.player, body.run); } catch (e) { console.warn('boss check', e && e.message); return json({ error: 'check unavailable' }, 503, cors); }
+      if (!res || !res.ok) return json({ error: 'not a run the rules allow', why: res && typeof res.why === 'string' ? res.why.slice(0, 200) : '' }, 422, cors);
+      const run = { won: res.won ? 1 : 0, round: res.round, secs: res.secs, dmg: res.dmg };
+      const had = await db.prepare('SELECT won, round, secs, dmg FROM boss_runs WHERE player = ? AND boss = ? AND rules = ?').bind(me.player, 'mommy', rules).first();
       const improved = !had || bossBetter(run, had);
       if (improved) await db.prepare(`INSERT INTO boss_runs (player, boss, rules, won, round, secs, dmg, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (player, boss, rules) DO UPDATE SET won = excluded.won, round = excluded.round, secs = excluded.secs, dmg = excluded.dmg, created = excluded.created`)
-        .bind(me.player, run.boss, run.rules, run.won, run.round, run.secs, run.dmg, now).run();
-      const best = improved ? run : had;
-      return json({ improved, best: { won: !!best.won, round: best.round, secs: best.secs, dmg: best.dmg }, rows: await bossRows(db, run.boss, run.rules) }, 200, cors);
+        .bind(me.player, 'mommy', rules, run.won, run.round, run.secs, run.dmg, now).run();
+      const out = (x) => ({ won: !!x.won, round: x.round, secs: x.secs, dmg: x.dmg });
+      return json({ improved, run: out(run), best: out(improved ? run : had), rules, rows: await bossRows(db, 'mommy', rules) }, 200, cors);
     }
     if (route === 'me') {
       try { await grantSkins(env, now); } catch (e) { console.warn('skins', e && e.message); }

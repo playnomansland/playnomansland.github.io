@@ -81,9 +81,9 @@ function play(plan, cfg = CFG) {
     plan(act(run), r, run);
     const f = endRound(run);
     f.goldLeft = run.m.gold[0];
-    if (f.dead) return { won: true, rounds: r, log: run.log };
+    if (f.dead) return { won: true, rounds: r, log: run.log, m: run.m };
   }
-  return { won: false, rounds: cfg.rounds, hpLeft: run.st.hp, log: run.log };
+  return { won: false, rounds: cfg.rounds, hpLeft: run.st.hp, log: run.log, m: run.m }; // (m.boss.run: the run's record, which Boss.replay plays again)
 }
 const fmt = (f) => `R${f.round}: nests ${f.fallAt == null ? `not cleared (${f.nestsLeft} left)` : 'down at ' + f.fallAt.toFixed(1) + ' s'}, mortar ${f.mortars}${f.mortarAt != null ? ' (first at ' + f.mortarAt.toFixed(1) + ' s)' : ''}${f.mortarNests ? ', ' + f.mortarNests + ' nest(s) by mortar' : ''}, damage ${Math.round(f.hang)} hanging + ${Math.round(f.ground)} on the ground, army left ${f.left}, spiders left ${f.spiders}, treasury ${f.treasury ? 'stands' : 'lost'}${f.dead ? ', MOMMY DEAD at ' + f.end.toFixed(1) + ' s' : ''}`;
 

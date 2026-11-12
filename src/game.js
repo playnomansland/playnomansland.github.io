@@ -2535,6 +2535,7 @@ const Game = (() => {
 
   // Apply a finished battle to the match. Returns a summary for the results screen.
   function resolve(m, res) {
+    if (m.boss && res && res.boss && bossApi() && bossApi().record) bossApi().record(m); // the Mommy boss puzzle: the player's side as it went into this fight, for the leaderboard's replay
     const dmg = [0, 0]; // damage taken by each side
     // Zoe: a fight with a squad on one of her buff tiles makes the buff stronger from the next round on
     if (!m.zoeUses) m.zoeUses = [0, 0];
