@@ -1615,12 +1615,18 @@
           <span class="s">${r.score != null ? Math.round(r.score) : '–'}<small>score</small></span></li>`; }).join('');
       fitBoardList();
     }
-    // on a computer the list fits between STANDINGS and the menu and scrolls; on a phone it runs on down the page
+    // on a computer the list fits between STANDINGS and the menu (PLAY's top) and scrolls, never over PLAY (owner's bug,
+    // 2026-11-12: a floor of 150 px ran it into PLAY on a short window). The score line under it goes when it would
+    // leave less than four rows. On a phone it runs on down the page
     function fitBoardList() {
-      const list = body.querySelector('.standings .lb-list'), menu = body.querySelector('.menu');
+      const list = body.querySelector('.standings .lb-list'), menu = body.querySelector('.menu'), how = body.querySelector('.standings .lb-how');
+      how.classList.remove('lb-tight');
       if (phone() || !menu) { list.style.maxHeight = ''; return; }
-      const st = body.querySelector('.standings'), y = st.offsetTop + list.offsetTop, h = body.querySelector('.standings .lb-how');
-      list.style.maxHeight = Math.max(150, menu.getBoundingClientRect().top - y - (h.hidden ? 0 : h.offsetHeight + 6) - 36) + 'px';
+      const st = body.querySelector('.standings'), y = st.offsetTop + list.offsetTop;
+      const room = Math.floor(menu.getBoundingClientRect().top - y - 28), li = list.querySelector('li'), row = li ? li.offsetHeight : 48;
+      const tight = !how.hidden && room - how.offsetHeight - 6 < row * 4;
+      how.classList.toggle('lb-tight', tight);
+      list.style.maxHeight = Math.max(0, tight || how.hidden ? room : room - how.offsetHeight - 6) + 'px';
     }
     addEventListener('resize', fitBoardList);
     { const list = body.querySelector('.standings .lb-list');
