@@ -25,6 +25,12 @@ const armorCard = (a) => `<div class="k">${sizes(A[a].icon, A.color)}<b>${A[a].n
 const cand = (k) => [KW[k].icon, ...(KW[k].alts || [])].map((ic, i) => `<div class="k">${sizes(ic, ROLES[rolesOf(k)[0]].color)}<b>${KW[k].name} ${'ABCD'[i]}</b></div>`).join('');
 const armorRow = (i) => `<div class="k wide"><div class="strip" style="color:${A.color}">${AIDS.map(a => box(54, i ? A[a].alts[i - 1] : A[a].icon)).join('')}</div><div class="strip" style="color:${A.color}">${AIDS.map(a => box(20, i ? A[a].alts[i - 1] : A[a].icon)).join('')}</div><b>Armor ${'ABCD'[i]}</b><p>none, light, medium, heavy, fortified</p></div>`;
 const withAlts = w1.filter(k => (KW[k].alts || []).length);
+// an idea, drawn from the keywords' own icons: Splash with the weapon that delivers it, striking or aiming at the ring.
+// wide = the weapon turned to point right, beside the ring (48 by 24); compact = the weapon small at the lower left, its tip on the ring (24 by 24)
+const wide = (wk) => `<g transform="rotate(45 12 12)">${KW[wk].icon}</g><g transform="translate(25 0)">${KW.splash.icon}</g>`;
+const compact = (wk) => `<g transform="translate(0 10.6) scale(.56)">${KW[wk].icon}</g><g transform="translate(8.4 0) scale(.65)">${KW.splash.icon}</g>`;
+const wbox = (h, inner) => `<svg width="${h * 49 / 24}" height="${h}" viewBox="0 0 49 24" fill="currentColor" aria-hidden="true">${inner}</svg>`;
+const combo = (wk, label) => { const c = ROLES.damage.color; return `<div class="k wide"><div class="strip" style="color:${c};align-items:center">${wbox(64, wide(wk))}${wbox(30, wide(wk))}${wbox(18, wide(wk))}<span style="width:26px"></span>${box(64, compact(wk))}${box(30, compact(wk))}${box(18, compact(wk))}</div><b>${label}</b><p>wide on the left, compact on the right</p></div>`; };
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>No Mans Land: keyword icons</title>
 <style>body{margin:0;padding:28px;background:#17140F;color:#EEF3F1;font:14px/1.35 system-ui,sans-serif}h1{font-size:22px;margin:0 0 4px;text-transform:uppercase;letter-spacing:.02em}h2{font-size:15px;margin:26px 0 4px;text-transform:uppercase;letter-spacing:.08em;color:#F2B23A}
 .sub{color:#B9B2A2;margin:0 0 14px;max-width:900px}.g{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}.k{background:#211D16;border:1px solid #3A3327;padding:16px 12px 12px;text-align:center}
@@ -32,8 +38,10 @@ const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 b{display:block;font-size:16px;text-transform:uppercase;letter-spacing:.03em}i{display:block;font-style:normal;font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin:2px 0 6px}p{margin:0;color:#B9B2A2;font-size:12.5px}
 @media(max-width:900px){.g{grid-template-columns:repeat(3,1fr)}}</style></head><body>
 <h1>Keyword icons, wave 1</h1><p class="sub">Drawn from src/keyword-registry.json. The bare glyph in its role's colour is the default, at 76, 30 and 18 px. The small plate on the right of each row is the sparing extra. Colours are placeholders.</p>
-<h2>To choose between</h2><p class="sub">Candidates for the ones being redone. A is what the registry uses now.</p>
-<div class="g">${withAlts.map(cand).join('')}</div>
+${withAlts.length ? `<h2>To choose between</h2><p class="sub">Candidates for the ones being redone. A is what the registry uses now.</p>
+<div class="g">${withAlts.map(cand).join('')}</div>` : ''}
+<h2>Idea: Splash with its weapon</h2><p class="sub">The sword or the arrow, striking or aiming at the Splash ring. Built from the keywords' own icons, so it follows them when they change.</p>
+<div class="g">${combo('strike', 'Melee splash')}${combo('shoot', 'Ranged splash')}</div>
 <h2>Keywords</h2><p class="sub">Teleport appears twice: Control when it moves enemies, Support when it moves your own.</p>
 <div class="g">${w1.flatMap(k => rolesOf(k).map(r => card(k, r))).join('')}</div>
 <h2>Armor weight: a separate set</h2><p class="sub">Steel grey, never on a role plate.</p>
