@@ -19999,7 +19999,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 4c1e07b'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · f476665'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -25075,11 +25075,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function bossHowHtml() {
     const C = Boss.CFG, mo = C.mommy, b = (x) => `<b>${x}</b>`;
     return [
-      `Her health carries over from round to round and never comes back. You have no health to lose: only the ${b(C.rounds + ' rounds')} run out.`,
-      `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage. Bring down her ${b('nests')} first: ${b('HIGH')} ones only ranged units can hit, ${b('LOW')} ones melee units too.`,
-      `Every nest down and she ${b('falls')}: stunned for ${mo.stun} s, then full damage for the rest of the ${C.fightSecs} s fight.`,
-      `Keep a unit in her reach, or she throws ${b('web mortars')} at your biggest clump. Her bite changes every round: see <button class="bz-inl" data-atk aria-haspopup="dialog">Mommy’s attacks<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9l6-6M4.5 3H9v4.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>.`,
-      `${C.startGold} gold to start, a treasury instead of a tower, one free move and one free extra deployment a round. At most ${C.maxPerType} squads of one unit.`,
+      `You have ${b(C.rounds + ' rounds')} to kill her. Her health never heals.`,
+      `Break her ${b('nests')} first. Until then she takes only ${b(Math.round(mo.hang * 100) + '%')} damage. ${b('HIGH')} nests: ranged only. ${b('LOW')} nests: anyone.`,
+      `All nests down: she ${b('falls')}, stunned ${b(mo.stun + ' s')}. Now hit her hard.`,
+      `Keep a unit ${b('near her')}, or she throws ${b('web mortars')}. Her bite changes each round: <button class="bz-inl" data-atk aria-haspopup="dialog">Mommy’s attacks<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9l6-6M4.5 3H9v4.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>.`,
+      `Start with ${b(C.startGold + ' gold')}. Each round: ${b('1 free move')}, ${b('1 free extra deploy')}. Max ${b(C.maxPerType)} squads per unit.`,
     ].map(x => `<li>${x}</li>`).join('');
   }
   // the rewards ladder (bossRewardList): a tier a row, by round 5, 4 and 3, the fastest (the best) last and marked. A row:
