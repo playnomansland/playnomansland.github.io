@@ -914,7 +914,6 @@ html.diorama.pcwide .panel .uc2[aria-pressed="true"] { transform: none; color: #
 html.diorama.pcwide .panel .uc2[aria-pressed="true"] .c, html.diorama.pcwide .panel .uc2[aria-pressed="true"] .st { color: #17140F; }
 html.diorama.pcwide .panel .uc2[aria-disabled="true"] { opacity: .5; }
 /* the picked card's Skills tab (the game's .sk2): square, gold like the picked card, ink symbol and stencil letters, its top corner cut */
-html.diorama.pcwide .panel .sk2 { margin-right: -8px; }
 html.diorama.pcwide .panel .sk2t { --skc: #F2B23A; right: -4px; top: 9px; bottom: 9px; width: 28px; border-radius: 0; color: #17140F;
   background: linear-gradient(to left, var(--skc) 4px, rgba(23,20,15,.4) 4px 6px, var(--skc) 6px); /* (a seam where it meets the gold card) */ transform: none; box-shadow: -4px 0 0 rgba(13,19,21,.55);
   clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px); padding-top: 9px; }
@@ -1306,7 +1305,6 @@ html.diorama.pcwide .droom .say .invite { justify-self: start; margin: 3px 0 5px
   html.diorama.pcwide .panel .uc2, html.diorama.pcwide .panel .add2 { flex-basis: 62px; height: 82px; }
   html.diorama.pcwide .panel .tier2 { height: 82px; }
   html.diorama.pcwide .panel .uc2 .ic svg { width: 24px; height: 24px; }
-  html.diorama.pcwide .panel .sk2 { margin-right: -6px; }
   html.diorama.pcwide .panel .sk2t { top: 5px; bottom: 5px; padding-top: 7px; gap: 4px; }
   html.diorama.pcwide .panel .sk2t b { letter-spacing: .06em; font-size: 10px; }
   html.diorama.pcwide .panel #ready, html.diorama.pcwide .panel #fight { font-size: 44px; bottom: 18px; padding: 10px 20px 4px 16px; }
@@ -2125,6 +2123,7 @@ html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: sta
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%); filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .4)); transition: background-color .12s, color .12s; }
 .bz-ctl .b svg { color: var(--ac); flex: none; transition: transform .25s; }
 .bz-ctl .b.restart { --ac: #FF8F78; }
+.bz-ctl .b.attacks { --ac: #F4ECD8; width: 214px; } /* (her attacks, moved here from Settings: a plain cream edge, it only shows things) */
 .bz-ctl .b:hover { background: rgba(52, 45, 34, .94); }
 .bz-ctl .b.restart:hover svg { transform: rotate(-50deg); }
 .bz-ctl .b:focus-visible { outline: 2px solid #F4ECD8; outline-offset: 2px; }

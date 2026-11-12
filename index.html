@@ -1061,7 +1061,6 @@ html.diorama.pcwide .panel .uc2[aria-pressed="true"] { transform: none; color: #
 html.diorama.pcwide .panel .uc2[aria-pressed="true"] .c, html.diorama.pcwide .panel .uc2[aria-pressed="true"] .st { color: #17140F; }
 html.diorama.pcwide .panel .uc2[aria-disabled="true"] { opacity: .5; }
 /* the picked card's Skills tab (the game's .sk2): square, gold like the picked card, ink symbol and stencil letters, its top corner cut */
-html.diorama.pcwide .panel .sk2 { margin-right: -8px; }
 html.diorama.pcwide .panel .sk2t { --skc: #F2B23A; right: -4px; top: 9px; bottom: 9px; width: 28px; border-radius: 0; color: #17140F;
   background: linear-gradient(to left, var(--skc) 4px, rgba(23,20,15,.4) 4px 6px, var(--skc) 6px); /* (a seam where it meets the gold card) */ transform: none; box-shadow: -4px 0 0 rgba(13,19,21,.55);
   clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px); padding-top: 9px; }
@@ -1453,7 +1452,6 @@ html.diorama.pcwide .droom .say .invite { justify-self: start; margin: 3px 0 5px
   html.diorama.pcwide .panel .uc2, html.diorama.pcwide .panel .add2 { flex-basis: 62px; height: 82px; }
   html.diorama.pcwide .panel .tier2 { height: 82px; }
   html.diorama.pcwide .panel .uc2 .ic svg { width: 24px; height: 24px; }
-  html.diorama.pcwide .panel .sk2 { margin-right: -6px; }
   html.diorama.pcwide .panel .sk2t { top: 5px; bottom: 5px; padding-top: 7px; gap: 4px; }
   html.diorama.pcwide .panel .sk2t b { letter-spacing: .06em; font-size: 10px; }
   html.diorama.pcwide .panel #ready, html.diorama.pcwide .panel #fight { font-size: 44px; bottom: 18px; padding: 10px 20px 4px 16px; }
@@ -2272,6 +2270,7 @@ html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: sta
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%); filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .4)); transition: background-color .12s, color .12s; }
 .bz-ctl .b svg { color: var(--ac); flex: none; transition: transform .25s; }
 .bz-ctl .b.restart { --ac: #FF8F78; }
+.bz-ctl .b.attacks { --ac: #F4ECD8; width: 214px; } /* (her attacks, moved here from Settings: a plain cream edge, it only shows things) */
 .bz-ctl .b:hover { background: rgba(52, 45, 34, .94); }
 .bz-ctl .b.restart:hover svg { transform: rotate(-50deg); }
 .bz-ctl .b:focus-visible { outline: 2px solid #F4ECD8; outline-offset: 2px; }
@@ -2636,9 +2635,11 @@ html.dock .panel.shut > .bar:last-child { margin-top: 0; padding-top: 0; }
 .uc2[aria-disabled="true"] { opacity: 0.45; }
 .uc2[aria-pressed="true"] { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45); }
 .uc2.lift { opacity: 0.3; }
-/* the picked card's Skills tab: pulled out from behind its left edge (a zero-width slot before the card, the tab hangs
-   left of it over the gap and the card before), the sheet symbol over "Skills" read top to bottom. A tap opens the sheet */
-.sk2 { flex: 0 0 0; width: 0; margin-right: -7px; position: relative; align-self: stretch; z-index: 1; }
+/* the picked card's Skills tab: pulled out from behind its left edge (the card and a zero-width slot at its left share a
+   wrapper, .uc2w, so they always sit on one row; the tab hangs left of the slot over the gap and the card before), the
+   sheet symbol over "Skills" read top to bottom. A tap opens the sheet */
+.uc2w { position: relative; display: flex; flex: none; scroll-snap-align: start; }
+.sk2 { position: absolute; left: 0; top: 0; bottom: 0; width: 0; z-index: 1; }
 .sk2t { position: absolute; right: -6px; top: 8px; bottom: 6px; width: 30px; padding: 7px 6px 7px 0; display: flex; flex-direction: column; align-items: center; gap: 5px;
   border: 0; border-radius: 7px 0 0 7px; background: var(--gold); color: var(--bg); font: inherit; cursor: pointer; box-shadow: -3px 4px 10px rgba(0, 0, 0, 0.45); transform: translateY(-5px); }
 .sk2t svg { flex: none; }
@@ -19990,7 +19991,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 3d6a941'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · fbe4923'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -20143,7 +20144,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         </div>
       </div>
       <div class="bar"><span class="hint">Friends</span><button class="btn small" id="fr-open2">Friends <b class="fr-badge" hidden></b></button></div>
-      ${m && m.boss ? '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div>' + (bossCtlOn() ? '' : '<button class="btn primary" id="boss-restart">Restart boss</button>'
+      ${m && m.boss ? (bossCtlOn() ? '' : '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div><button class="btn primary" id="boss-restart">Restart boss</button>'
         + `<button class="btn" id="boss-replay" aria-expanded="false" aria-controls="boss-rounds">Replay round</button><div class="bar" id="boss-rounds" hidden><span class="hint">Play again from the start of</span><div class="seg" role="group" aria-label="Replay which round">${bossReplayable().map(r => `<button data-boss-round="${r}">Round ${r}${r === m.round ? ' (now)' : ''}</button>`).join('')}</div></div>`) : ''}
       <button class="btn" id="to-menu">Main menu</button>` : ''}
       ${!inMatch ? `<div class="bar">
@@ -21535,18 +21536,19 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     + '<path d="M5.8 4.1l.7 1.4 1.5.2-1.1 1 .3 1.5-1.4-.7-1.4.7.3-1.5-1.1-1 1.5-.2z" fill="currentColor"/><path d="M9 6.3h2M4.8 10h6.4M4.8 12.3h6.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
   let skTabFor = null; // the card whose Skills tab last slid out (it slides out once per pick, not on every redraw)
   // UI 2.0: a unit's card in the tray (disabled: it can't be bought now; a tap opens its sheet). The picked card has a
-  // Skills tab pulled out on its left: a tap on it opens the unit's sheet (holding the card still does too)
+  // Skills tab pulled out on its left: a tap on it opens the unit's sheet (holding the card still does too). The two
+  // share one wrapper (.uc2w), so they wrap onto a new row together (a tab left alone at the end of the row above: the owner, 2026-11-12)
   function shopCard2(i, disabled) {
     const u = units[i], free = Game.freeLeft(m, me).filter(x => x === i).length, stars = Engine.SLOTS.filter(k => Game.hasSkill(m, me, i, k)).length;
     const tab = selected === i ? `<span class="sk2"><button class="sk2t${skTabFor === i ? '' : ' out'}" type="button" data-sk="${i}" aria-label="Skills: open the unit sheet of ${esc(u.name)}">${SHEET_SVG}<b>Skills</b></button></span>` : '';
-    return `${tab}<button class="uc2" data-i="${i}" style="--tier:${tierColor(tierOf(i))}" aria-pressed="${selected === i}" aria-disabled="${disabled}" aria-label="${esc(u.name)}, ${free ? `${free} free` : `${Game.shopCost(m, me, i)} gold`}">
+    return `${tab ? '<span class="uc2w">' + tab : ''}<button class="uc2" data-i="${i}" style="--tier:${tierColor(tierOf(i))}" aria-pressed="${selected === i}" aria-disabled="${disabled}" aria-label="${esc(u.name)}, ${free ? `${free} free` : `${Game.shopCost(m, me, i)} gold`}">
       ${stars ? `<span class="st">${'★'.repeat(stars)}</span>` : ''}
       ${Game.capped(m, i) ? `<span class="cap" aria-label="${Game.capCount(m, me, i)} of ${Game.capOf(m)} squads">${Game.capCount(m, me, i)}/${Game.capOf(m)}</span>` : ''}
       ${(() => { const n = m.armies[me].filter(s => s.unit === i && s.round === m.round && !s.free).length; /* bought this round; package squads aren't */ return n ? `<span class="nw" aria-label="${n} placed this round">×${n}</span>` : ''; })()}
       ${Game.mpbLocked(m, me, i) ? '<span class="mpb-x" aria-label="Sabotaged: can’t be deployed this round">✕</span>' : ''}
       <span class="ic" style="color:${u.color}">${Shapes.svg(u.shape, 30)}</span>
       <span class="n">${esc(u.name)}</span>
-      <span class="c${free ? ' free' : ''}">${free ? `Free ×${free}` : Game.shopCost(m, me, i)}</span></button>`;
+      <span class="c${free ? ' free' : ''}">${free ? `Free ×${free}` : Game.shopCost(m, me, i)}</span></button>${tab ? '</span>' : ''}`;
   }
   // a full card tapped: it shakes and a red bubble over it says it is maxed out (the bubble lives on <body>, so a redraw
   // of the shop doesn't cut it short)
@@ -24860,7 +24862,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
   // ---------- Restart boss and Replay round on the screen (the owner, 2026-11-12) ----------
   // The Diorama's PC layout: two buttons at the top right through the whole run (deploy, fight, the round's card, the
-  // end), under her name. Restart boss asks once more on the button itself ("Sure? Restart", 3 s). Replay round drops a
+  // end), under her name, and Mommy's attacks under them (moved off Settings). Restart boss asks once more on the button itself ("Sure? Restart", 3 s). Replay round drops a
   // list of the rounds this run has reached, each with its bite's mark and name; a pick goes back to that round's start
   // (replayBossRound). Over a sheet, Mommy's attacks or her screen's panel (openBossInfo) they step aside. The boss bar's
   // own Restart (bossRestartAsk) is hidden on this layout: this one stands in for it. The classic layout keeps them in Settings
@@ -24869,6 +24871,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   const CTL_ICON = {
     restart: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 12.5a7.4 7.4 0 1 0 2.3-5.6"/><path d="M4.6 3.6v4.6h4.6"/></svg>',
     replay: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M5 4.5v15" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M19.5 5.2v13.6L8.6 12z" fill="currentColor"/></svg>',
+    attacks: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M3 6h18l-2.2 4.2-2.2-3.4-2.3 4-2.3-4-2.3 4-2.2-3.4L5.2 10.2z M3 18h18l-2.2-4.2-2.2 3.4-2.3-4-2.3 4-2.3-4-2.2 3.4L5.2 13.8z" fill="currentColor"/></svg>', // (her jaws: Mommy's attacks' Bite)
   };
   let ctlEl = null, ctlKey = '', ctlSure = 0, ctlOpen = false;
   function bossCtlOn() { return DIO && document.documentElement.classList.contains('pcwide') && !!m && !!m.boss && typeof Boss !== 'undefined' && ['deploy', 'battle', 'result', 'end'].includes(phase); }
@@ -24882,6 +24885,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         if (b.dataset.ctl === 'restart') {
           if (ctlSure > now()) { ctlSure = 0; ctlOpen = false; restartBoss(); } else { ctlSure = now() + 3000; ctlOpen = false; }
         } else if (b.dataset.ctl === 'replay') { ctlOpen = !ctlOpen; ctlSure = 0; }
+        else if (b.dataset.ctl === 'attacks') { ctlOpen = false; ctlSure = 0; openBossAttacks((bossView() || {}).round || m.round); } // (moved here from Settings: owner, 2026-11-12)
         else if (b.dataset.round) { const r = +b.dataset.round; ctlOpen = false; bossLeave(); replayBossRound(r); }
         ctlKey = ''; bossCtl();
       });
@@ -24898,7 +24902,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         <button class="b replay${ctlOpen ? ' open' : ''}" data-ctl="replay" aria-expanded="${ctlOpen}" aria-controls="bz-ctl-list">${CTL_ICON.replay}<span>Replay round</span><i class="car" aria-hidden="true"></i></button>
       </div>
       <div class="list" id="bz-ctl-list"${ctlOpen ? '' : ' hidden'}><small>Play again from the start of</small>${rounds.map(r => { const k = Boss.byRound(Boss.CFG.biteByRound, r);
-        return `<button data-round="${r}" style="--bc:${BITE_COL[k] || '#FFC457'}"><img src="${biteMarkPic(k)}" alt=""><b>Round ${r}</b><em>${esc(/bite/i.test(BITE_NAME[k] || k) ? BITE_NAME[k] || k : (BITE_NAME[k] || k) + ' bite')}</em>${r === m.round ? '<i>Now</i>' : ''}</button>`; }).join('')}</div>`;
+        return `<button data-round="${r}" style="--bc:${BITE_COL[k] || '#FFC457'}"><img src="${biteMarkPic(k)}" alt=""><b>Round ${r}</b><em>${esc(/bite/i.test(BITE_NAME[k] || k) ? BITE_NAME[k] || k : (BITE_NAME[k] || k) + ' bite')}</em>${r === m.round ? '<i>Now</i>' : ''}</button>`; }).join('')}</div>
+      <button class="b attacks" data-ctl="attacks" aria-haspopup="dialog">${CTL_ICON.attacks}<span>Mommy’s attacks</span></button>`;
     if (focus) { const f = ctlEl.querySelector(focus); if (f) f.focus(); } // (a keyboard player keeps their place)
   }
   setInterval(() => { if (m && m.boss || (ctlEl && !ctlEl.hidden)) bossCtl(); }, 200);
