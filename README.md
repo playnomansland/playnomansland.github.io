@@ -254,6 +254,12 @@ From `docs/EXPLOITS-2026-11.md`: `mark`, `loanT`, `pack` and `vote` are in `UNDO
 
 ## The Mommy boss puzzle (developer test, 2026-11-11)
 
+**The weekly boss event (2026-11-12):** open to everyone as a Limited event. A note on the menu leads to her screen
+(how to play, a rewards ladder, her leaderboard), her attacks panel (also in the fight's Settings), and the server
+replays every run. Rewards: the Crawler title by round 5, the Sporespreader Spider skin by round 4, the black
+Widowmaker title by round 3. **Every future boss follows the same template: `docs/WEEKLY-BOSS.md`** (Claude Code's
+project skill `weekly-boss` points there). What follows is how the Mommy was built.
+
 - Five rounds against one boss, a giant spider hanging at the front of her zone, played on the phone (no server, no AI). Developers start it from Puzzles (**Weekly boss - The Mommy**, `#boss-weekly`; on PC the Puzzles screen's `[data-boss]` row) or the Developer menu (**Mommy**: `#boss-ai`, Diorama `data-dv="mommy"`). The design, the numbers behind it and the owner's decisions: [docs/HANDOFF-BOSS-MOMMY.md](docs/HANDOFF-BOSS-MOMMY.md).
 - Rules in `src/boss.js` (global `Boss`, page slot `/*BOSS*/` after the game): `Boss.CFG` (every number), `Boss.setup(m)` (sets `m.boss`: her health, the cap, the banned units; every allowed unit unlocked, 450 gold, the free extra deployment, no towers), `Boss.battle(m, o)` (her fight: Mommy, the nests, the treasury, the per-tick hook with the fall, attention, the mortar, the web, the molt and the poison pools; it stops when she dies and its `result().boss` reports the round), `Boss.afterFight` (her health carries on, no player health, the match ends when she dies or after round 5), `Boss.preview(m)` (what the boards draw).
 - Game hooks, all only when `m.boss` is set: `Game.startBattle` hands the fight to `Boss.battle`, `Game.resolve` calls `Boss.afterFight`; no tower (`needsTower`, `ensureTower`), one free move a round (`shoeMoves`), at most `m.boss.cap` squads of a type (`place`), banned units can't be unlocked, the free deployment can't be refunded. Engine features she uses, inert unless a body asks: `u.rangedOnly` (high nests), `takeMul`, `bossTag`/`bossDealt`, `noPct` (no share of max health: bleed, Deadeye), `lastPick`, `dodgeable`, `u.projSecs` (a shot that lands that many seconds after it is fired, however far), `b.focus` (prototype: the body its squad was pointed at comes first), `opts.toTimer`, `opts.bossTick` (its api also carries `projectiles`).

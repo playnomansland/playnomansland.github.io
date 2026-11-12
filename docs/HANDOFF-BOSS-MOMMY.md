@@ -4,6 +4,10 @@ Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, me
 
 ## 0. Where things stand now (12 November)
 
+> **Later on 12 November:** she is open to everyone as the weekly Limited event, with her own screen, rewards ladder,
+> attacks panel and a server-replayed leaderboard for every account. The layout and the checklist for the next bosses
+> are in `docs/WEEKLY-BOSS.md`; where this section says "developer accounts", that is no longer so.
+
 **Live for developer accounts, phone and PC.** Puzzles → *Weekly boss - The Mommy* (a "Weekly boss · developers only" section at the top), the Developer menu → *Mommy*, or the test link `playnomansland.github.io/?mommy` (opens her straight away on a developer account; on any other it says which account the page sees). It runs on the device against nobody: no server, no AI.
 
 **Code:** her rules are `src/boss.js` (global `Boss`), shared by the page and the prototype tools in `tools/boss/`; engine features she uses are opt-in properties in `src/engine.js`; game hooks in `src/game.js` act only when `m.boss` is set. README section "The Mommy boss puzzle" lists every hook. Check: `node tools/tests/boss.js`.
