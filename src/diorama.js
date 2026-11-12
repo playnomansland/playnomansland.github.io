@@ -1331,7 +1331,7 @@
 
     // ── the weekly boss (2026-11-12): her screen before a run (the owner: "don't go into the game right away"). From her
     // Limited event note on the menu, a click on her on the island, or Puzzles' boss row. How to play (her rules in short,
-    // from Boss.CFG: the whole sheet is openBossRules, in the run), the rewards (Boss.REWARDS: the Widowmaker title, the Sporespreader Spider skin) and her
+    // from Boss.CFG: the whole sheet is openBossRules, in the run), the rewards (bossRewardList: by round 5, 4 and 3) and her
     // leaderboard (bossBoardLoad, the same board as Rankings' Mommy tab). FIGHT HER starts the run (startBoss); the end of
     // a run comes back here (home.back 'boss' → home.boss) ──
     let bzFrom = null, hollowOn = false; // where her screen was opened from, for Back: 'puz' (Puzzles) or the menu
@@ -1349,15 +1349,23 @@
         `Her health carries over from round to round and never comes back. You have no health to lose: only the ${b(C.rounds + ' rounds')} run out.`,
         `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage. Bring down her ${b('nests')} first: ${b('HIGH')} ones only ranged units can hit, ${b('LOW')} ones melee units too.`,
         `Every nest down and she ${b('falls')}: stunned for ${mo.stun} s, then full damage for the rest of the ${C.fightSecs} s fight.`,
-        `Keep a unit in her reach, or she throws ${b('web mortars')} at your biggest clump. Her bite changes every round.`,
+        `Keep a unit in her reach, or she throws ${b('web mortars')} at your biggest clump. Her bite changes every round: see <button class="bz-inl" id="bz-atk-open" aria-haspopup="dialog">Mommy’s attacks<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9l6-6M4.5 3H9v4.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>.`,
         `${C.startGold} gold to start, a treasury instead of a tower, one free move and one free extra deployment a round. At most ${C.maxPerType} squads of one unit.`,
       ].map(x => `<li>${x}</li>`).join('');
-      // the rewards (Boss.REWARDS): the black Widowmaker title within 3 rounds, the Sporespreader Spider skin within 4
-      const RW = Boss.REWARDS, k = SKIN['spiders-hollow'], own = !!(A && (A.skins || []).some(x => x.id === 'spiders-hollow')), T = TITLES.widowmaker, ownT = !!(A && (A.titles || []).includes('widowmaker'));
-      $('bz-rw').innerHTML = `<div class="bz-rw-t"><span class="ptitle" style="--tc:${T.col};--tg:${T.glow}"><i></i>${esc(T.name)}<i></i></span><span><small>A title under your name</small>
-          <em${ownT ? ' class="own"' : ''}>${ownT ? '✓ Yours' : `Kill her within ${RW.title} rounds`}</em></span></div>` +
-        (k ? `<div class="bz-rw-s">${k.pic ? `<img src="${esc(k.pic)}" alt="">` : ''}<span><b>${esc(k.name)}</b><small>A skin for your ${esc(k.unit)}</small>
-          <em${own ? ' class="own"' : ''}>${own ? '✓ Yours' : `Kill her within ${RW.skin} rounds`}</em></span></div>` : '');
+      $('bz-atk-open').addEventListener('click', openBossAttacks);
+      // the rewards (bossRewardList): a tier a row, by round 5, 4 and 3, the fastest (the best) last and marked. A row:
+      // the round, a picture (a title's diamond in its colour, a skin's picture), its name and kind, and yours or locked
+      const lock = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1" fill="currentColor"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+      const tick = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="currentColor"/><path d="M4.6 8.2l2.3 2.3 4.5-4.7" fill="none" stroke="#0E2A16" stroke-width="1.9"/></svg>';
+      const list = bossRewardList();
+      $('bz-rw').innerHTML = `<p class="bz-rw-lede">The faster she falls, the more you earn. A kill by a reward’s round earns it, and everything above it.</p>
+        <ol class="bz-tiers">${list.map((x, i) => {
+          const T = x.kind === 'title' ? TITLES[x.id] : null, K = x.kind === 'skin' ? SKIN[x.id] : null; if (!T && !K) return '';
+          const own = !!(A && (x.kind === 'title' ? (A.titles || []).includes(x.id) : (A.skins || []).some(k => k.id === x.id))), top = i === list.length - 1;
+          const pv = T ? `<span class="pv" style="--tc:${T.col};--tg:${T.glow}"><i></i></span>` : `<span class="pv">${K.pic ? `<img src="${esc(K.pic)}" alt="">` : ''}</span>`;
+          return `<li class="${[own ? 'own' : '', top ? 'top' : ''].filter(Boolean).join(' ')}"><span class="rd"><small>Round</small><b>${x.round}</b></span>${pv}
+            <span class="nm">${T ? `<b class="tn" style="--tc:${T.col}">${esc(T.name)}</b>` : `<b>${esc(K.name)}</b>`}<small>${T ? 'Title' : `${esc(K.unit)} skin`}${own ? '<em>· Yours</em>' : ''}</small>${top ? '<i class="best"><span>Epic</span> reward</i>' : ''}</span>
+            <span class="st" role="img" aria-label="${own ? 'Yours' : 'Not yours yet'}">${own ? tick : lock}</span></li>`; }).join('')}</ol>`;
       drawBossBoard();
     }
     function drawBossBoard() {
@@ -1372,6 +1380,28 @@
         return `<li class="${[i === 0 ? 'first' : '', mine ? 'me' : ''].filter(Boolean).join(' ')}"><span class="r">${i + 1}</span><span class="who"><b>${esc(r.tag)}${mine ? ' <i class="you">you</i>' : ''}</b><small>${esc(bossRunText(r))}</small></span>
           <span class="s">${r.won ? 'R' + r.round : Math.round(r.dmg / 1000) + 'k'}</span></li>`; }).join('');
     }
+    // her attacks: what she does to your army, from Boss.CFG (openBossRules has the same, in the run). Her bite by round
+    // as a strip of five, then her web, the web mortar, acid and her molt, each a short card
+    function drawBossAttacks() {
+      const C = Boss.CFG, mo = C.mommy, b = (x) => `<b>${x}</b>`, acidOn = C.acid && C.acid.pct > 0;
+      const BITE = { fast: ['Fast', 'Quick, light bites. A unit with lots of health holds her best.'], heavy: ['Heavy', 'Slow, huge bites that splash a little. Many bodies, shields and wards hold her best.'], sweep: ['Sweep', 'Light bites that hit everything round the target. One big body holds her best; a swarm melts.'] };
+      const kinds = [...new Set(C.biteByRound)];
+      const card = (cls, h, body) => `<article class="atk ${cls}"><h4>${h}</h4>${body}</article>`;
+      $('bz-atk-body').innerHTML =
+        card('bite', 'Her bite', `<p>She bites the nearest of your units inside her reach (${mo.near} m). That unit ${b('holds')} her: she bites it, not the rest.${mo.biteSecs > 0 ? ` Her jaws open where it stands and snap shut ${mo.biteSecs} s later, so a unit that walks out is missed.` : ''}</p>
+          <ol class="rounds">${C.biteByRound.map((k, i) => `<li class="${k}"><small>Round ${i + 1}</small><b>${esc(BITE[k] ? BITE[k][0] : k)}</b>${acidOn && mo.bites[k] && mo.bites[k].acid ? '<i>acid</i>' : ''}</li>`).join('')}</ol>
+          <dl>${kinds.map(k => `<dt>${esc(BITE[k] ? BITE[k][0] : k)}</dt><dd>${esc(BITE[k] ? BITE[k][1] : '')}</dd>`).join('')}</dl>`) +
+        card('web', 'Her web', `<p>Your units within ${mo.web.r} m of her are caught in it: they walk ${b(mo.web.slow + '%')} slower and hit ${b(mo.web.dmg + '%')} softer.</p>`) +
+        card('mortar', 'Web mortar', `<p>If none of your units is in her reach for ${mo.mortar.wind} s while she hangs, she rips loose one of her nests and throws it at your biggest clump, then another every ${mo.mortar.every} s.</p>
+          <p>It lands ${mo.mortar.fly} s later inside the ${b('red ring')}: ${b(mo.mortar.hit + ' damage')} and a slowing web on everything there, and the nest’s spiders burst out. Spread out, or move on.</p>`) +
+        (acidOn ? card('acid', 'Acid', `<p>Her ${C.biteByRound.filter((k, i, a) => mo.bites[k] && mo.bites[k].acid && a.indexOf(k) === i).map(k => esc(BITE[k] ? BITE[k][0] : k).toLowerCase()).join(' and ')} bite leaves a ${b('green pool')} for ${C.acid.secs} s. Standing in it costs ${b(C.acid.pct + '% of max health')} a second and slows, for ${C.acid.linger} s after stepping out. Slime units drink it: it heals them.</p>`) : '') +
+        (mo.molt ? card('molt', 'She sheds', `<p>Every ${mo.molt} s she molts: poison, bleed, burn, frost and slows fall off her. Hits that take a share of max health don’t work on her.</p>`) : '');
+    }
+    const atkOpen = () => !$('bz-atk-back').hidden;
+    function openBossAttacks() { drawBossAttacks(); $('bz-atk-back').hidden = false; $('bz-atk-x').focus(); }
+    function closeBossAttacks() { if (!atkOpen()) return; $('bz-atk-back').hidden = true; const o = $('bz-atk-open'); if (o) o.focus(); }
+    $('bz-atk-x').addEventListener('click', closeBossAttacks);
+    $('bz-atk-back').addEventListener('click', (e) => { if (e.target === $('bz-atk-back')) closeBossAttacks(); });
     function openBoss() {
       if (!bossOpen()) return;
       bzFrom = body.classList.contains('puz') ? 'puz' : null;
@@ -1381,7 +1411,7 @@
       if (!hollowOn) { hollowOn = true; paintLook(HOLLOW, !still, 41); } // her lair: the only battlefield she is fought on
     }
     function closeBoss(back) {
-      if (!body.classList.contains('bz')) return; body.classList.remove('bz'); home.boss = false; want = VIEWS.play;
+      if (!body.classList.contains('bz')) return; body.classList.remove('bz'); home.boss = false; want = VIEWS.play; $('bz-atk-back').hidden = true;
       if (hollowOn) { hollowOn = false; setLook(lookI, !still); } // your own battlefield again
       if (back && bzFrom === 'puz') openPuz(); bzFrom = null;
     }
@@ -1997,7 +2027,7 @@
     $('pl').addEventListener('input', (e) => { if (e.target.id === 'pl-name' && pl.edit) { pl.edit.name = e.target.value; const sv = body.querySelector('[data-save]'); if (sv) sv.disabled = !(pl.edit.name.trim() && pl.edit.songs.length); } });
     $('pl').addEventListener('keydown', (e) => { if (e.target.id === 'pl-name') { if (e.key === 'Escape') { e.stopPropagation(); pl.edit = null; drawList(); } if (e.key === 'Enter') { const sv = body.querySelector('[data-save]'); if (sv && !sv.disabled) sv.click(); } } });
     drawPlayer();
-    addEventListener('keydown', e => { if (e.key === 'Escape' && dio.shown && $('sheet-back').hidden && !typingIn(e.target)) { if (dd.open) return openDrop(''); if (picked) return pickUnit(null); if (!document.getElementById('r-menu').hidden) return tokMenu(false); closeMusic(); goBack(); } }, true); // capture: runs before the game's own Escape, so an open sheet takes the key alone
+    addEventListener('keydown', e => { if (e.key === 'Escape' && dio.shown && $('sheet-back').hidden && !typingIn(e.target)) { if (dd.open) return openDrop(''); if (typeof atkOpen === 'function' && atkOpen()) return closeBossAttacks(); if (picked) return pickUnit(null); if (!document.getElementById('r-menu').hidden) return tokMenu(false); closeMusic(); goBack(); } }, true); // capture: runs before the game's own Escape, so an open sheet takes the key alone
     addEventListener('pointerdown', e => { if (dio.shown && !e.target.closest('.rsearch')) tokMenu(false); });
     addEventListener('pointerdown', e => { if (dio.shown && body.classList.contains('music-open') && !e.target.closest('.music')) closeMusic(); });
     // states for screenshots: #play, #music, #view=<word>, #pin, #tier=<n>, #unit=<n>, #hover=<piece>

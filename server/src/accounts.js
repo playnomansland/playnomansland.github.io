@@ -95,8 +95,8 @@ function ensureSchema(db) {
     // players.initiate (2026-11-03): when the last tutorial puzzle was solved (the Initiate title)
     // players.goodsport (2026-11-04): when the player reached GG.need GGs (the Good sport title)
     // players.music (2026-11-07): the music player's settings and playlists, as JSON (cleanMusic)
-    // players.widowmaker (2026-11-12): when the player first killed the weekly boss within Boss.REWARDS.title rounds
-    .then(() => Promise.all(['title TEXT', 'tag_changed INTEGER', 'legend INTEGER', 'online INTEGER', 'discord INTEGER', 'initiate INTEGER', 'goodsport INTEGER', 'widowmaker INTEGER', 'music TEXT', ...FRIEND_COLUMNS].map((c) => db.prepare('ALTER TABLE players ADD COLUMN ' + c).run().catch((e) => { if (!/duplicate column/i.test(String(e && e.message))) throw e; }))))
+    // players.widowmaker, players.crawler (2026-11-12): when the player first killed the weekly boss within Boss.REWARDS.widowmaker / .crawler rounds
+    .then(() => Promise.all(['title TEXT', 'tag_changed INTEGER', 'legend INTEGER', 'online INTEGER', 'discord INTEGER', 'initiate INTEGER', 'goodsport INTEGER', 'widowmaker INTEGER', 'crawler INTEGER', 'music TEXT', ...FRIEND_COLUMNS].map((c) => db.prepare('ALTER TABLE players ADD COLUMN ' + c).run().catch((e) => { if (!/duplicate column/i.test(String(e && e.message))) throw e; }))))
     // the weekly boss's rewards for kills reported before they were given out (idempotent: only what's missing)
     .then(() => db.batch(bossBackfill().map((q) => db.prepare(q))))
     .catch((e) => { schemaReady = null; throw e; });
@@ -111,9 +111,10 @@ function ensureSchema(db) {
 //   bababa "BABABABA" (orange, 2026-11-03): joined the game's Discord server, checked with Discord (players.discord).
 //   initiate "Initiate" (light blue, 2026-11-03): solved every tutorial puzzle (players.initiate; see PUZZLE below).
 //   goodsport "Good sport" (pale sky blue, 2026-11-04): got GG.need GGs from opponents (players.goodsport; see GG below).
-//   widowmaker "Widowmaker" (black, 2026-11-12): killed the weekly boss within Boss.REWARDS.title rounds (players.widowmaker; see BOSS below).
+//   widowmaker "Widowmaker" (black, 2026-11-12): killed the weekly boss within Boss.REWARDS.widowmaker rounds (players.widowmaker; see BOSS below).
+//   crawler "Crawler" (her fungus amber, 2026-11-12): killed the weekly boss within Boss.REWARDS.crawler rounds (players.crawler; see BOSS below).
 // The player picks which one shows (players.title); none picked = the first earned one in the order DEV, Legend,
-// Widowmaker, BABABABA, Initiate, Good sport, Day 1.
+// Widowmaker, BABABABA, Initiate, Good sport, Crawler, Day 1.
 // Gamertags: one change a week (TAG_EVERY), any time for developers. Naming a brand-new account (in its first
 // TAG_FRESH, e.g. sign-up's gamertag after Google) doesn't count.
 export const TAG_EVERY = 7 * 24 * 3600e3;
@@ -128,6 +129,7 @@ export function titlesOf(p) {
   if (p && p.discord) out.push('bababa');
   if (p && p.initiate) out.push('initiate');
   if (p && p.goodsport) out.push('goodsport');
+  if (p && p.crawler) out.push('crawler');
   if (p && p.created < DAY1_END) out.push('day1');
   return out;
 }
@@ -457,7 +459,7 @@ export async function sessionPlayer(env, token) {
   await ensureSchema(db);
   const s = await db.prepare(`SELECT s.player, s.expires, p.tag, p.deleted, p.dev FROM sessions s JOIN players p ON p.id = s.player WHERE s.hash = ?`).bind(await sha256(token)).first();
   if (!s || s.expires < Date.now() || s.deleted) return null;
-  const p = await db.prepare('SELECT created, dev, title, legend, discord, initiate, goodsport, widowmaker FROM players WHERE id = ?').bind(s.player).first();
+  const p = await db.prepare('SELECT created, dev, title, legend, discord, initiate, goodsport, widowmaker, crawler FROM players WHERE id = ?').bind(s.player).first();
   let skins = [];
   try { skins = await wornSkins(db, s.player, !!s.dev); } catch (e) { skins = []; } // a look only: never in the way of playing
   let google = false;
@@ -478,7 +480,7 @@ async function onlinePlayers(db, players) {
   const ids = players.map((p) => p.id).slice(0, 1000), rows = new Map();
   for (let i = 0; i < ids.length; i += 90) {
     const part = ids.slice(i, i + 90);
-    const r = await db.prepare(`SELECT p.id, p.tag, p.created, p.dev, p.title, p.legend, p.discord, p.initiate, p.goodsport, p.widowmaker, p.deleted,
+    const r = await db.prepare(`SELECT p.id, p.tag, p.created, p.dev, p.title, p.legend, p.discord, p.initiate, p.goodsport, p.widowmaker, p.crawler, p.deleted,
       EXISTS (SELECT 1 FROM logins l WHERE l.player = p.id AND l.provider = 'google') AS google
       FROM players p WHERE p.id IN (${part.map(() => '?').join(',')})`).bind(...part).all();
     for (const x of r.results) rows.set(x.id, x);
@@ -537,7 +539,7 @@ export async function recordSeries(env, ids, winner) {
 // the board (the leader in wins gets the full 75); the win share counts a tie as half a win. Then wins, then fewest
 // losses. score is 0 to 100. Deleted accounts drop off.
 export const BOARD_WEIGHTS = { wins: 0.75, share: 0.25 };
-const BOARD_SQL = `WITH b AS (SELECT p.id, p.tag, p.created, p.dev, p.title, p.legend, p.discord, p.initiate, p.goodsport, p.widowmaker, r.w, r.t, r.l FROM ranked r JOIN players p ON p.id = r.player
+const BOARD_SQL = `WITH b AS (SELECT p.id, p.tag, p.created, p.dev, p.title, p.legend, p.discord, p.initiate, p.goodsport, p.widowmaker, p.crawler, r.w, r.t, r.l FROM ranked r JOIN players p ON p.id = r.player
     WHERE p.deleted IS NULL AND (r.w + r.t + r.l) > 0), top AS (SELECT MAX(w) AS mw FROM b)
   SELECT b.*, 100.0 * (${BOARD_WEIGHTS.wins} * (CASE WHEN top.mw > 0 THEN b.w * 1.0 / top.mw ELSE 0 END)
     + ${BOARD_WEIGHTS.share} * (b.w + 0.5 * b.t) * 1.0 / (b.w + b.t + b.l)) AS score
@@ -604,20 +606,19 @@ export async function leaderboard(env, cors) {
 // rules: only a better run replaces it. Any account's run counts (developers only until 2026-11-12, while she was a test).
 // A run is five fights, too much processor time for the Worker itself, so the replay runs in a Durable Object (a Room
 // named bosscheck-<x>, its /bosscheck).
-// The rewards (2026-11-12), by the round the replay finds she was killed in (Boss.REWARDS): within 3 rounds the black
-// Widowmaker title (players.widowmaker); within 4 the Spiders skin BOSS.skin, her own brood's look (a 'grant' row,
-// worn; a developer's on/off choice is kept). Both for good, and from the player's best kill under any of her rules,
+// The rewards (2026-11-12), by the round the replay finds she was killed in (Boss.REWARDS), each for a kill by its
+// round (a faster kill earns the slower ones too): by round 5 the Crawler title (players.crawler); by 4 the Spiders skin
+// BOSS.skin, her own brood's look (a 'grant' row, worn; a developer's on/off choice is kept); by 3 the black
+// Widowmaker title (players.widowmaker). Both for good, and from the player's best kill under any of her rules,
 // so a run already on a board counts (bossRewards; ensureSchema gives them to runs from before).
-export const BOSS = { mommy: { rounds: 5, secs: 30 }, rows: 100, maxBytes: 40000, perPlayer: [20, 600e3], skin: 'spiders-hollow', title: 'widowmaker' };
-// the player's earliest kill of her under any rules decides; gives what's missing. -> { title, skin }: true where new
+export const BOSS = { mommy: { rounds: 5, secs: 30 }, rows: 100, maxBytes: 40000, perPlayer: [20, 600e3], skin: 'spiders-hollow', titles: ['crawler', 'widowmaker'] }; // (each title is a players column of its name; Boss.REWARDS[its name] is its round)
+// the player's earliest kill of her under any rules decides; gives what's missing. -> { titles: [new ones], skin: true if new }
 async function bossRewards(db, player, now) {
   const k = await db.prepare(`SELECT MIN(round) AS round FROM boss_runs WHERE player = ? AND boss = 'mommy' AND won = 1`).bind(player).first();
-  const round = k && k.round, got = { title: false, skin: false };
+  const round = k && k.round, got = { titles: [], skin: false };
   if (!round) return got;
-  if (round <= Boss.REWARDS.title) {
-    const p = await db.prepare('SELECT widowmaker FROM players WHERE id = ?').bind(player).first();
-    if (p && !p.widowmaker) { await db.prepare('UPDATE players SET widowmaker = ? WHERE id = ?').bind(now, player).run(); got.title = true; }
-  }
+  const p = await db.prepare(`SELECT ${BOSS.titles.join(', ')} FROM players WHERE id = ?`).bind(player).first();
+  for (const t of BOSS.titles) if (p && !p[t] && round <= Boss.REWARDS[t]) { await db.prepare(`UPDATE players SET ${t} = ? WHERE id = ?`).bind(now, player).run(); got.titles.push(t); }
   if (round <= Boss.REWARDS.skin) {
     const own = await db.prepare(`SELECT src FROM skins WHERE player = ? AND skin = ?`).bind(player, BOSS.skin).first();
     if (!own || own.src === 'dev') {
@@ -630,8 +631,8 @@ async function bossRewards(db, player, now) {
 // the same for every kill already on a board, once the columns are there (ensureSchema)
 function bossBackfill() {
   return [
-    `UPDATE players SET widowmaker = (SELECT MIN(r.created) FROM boss_runs r WHERE r.player = players.id AND r.boss = 'mommy' AND r.won = 1 AND r.round <= ${+Boss.REWARDS.title})
-      WHERE widowmaker IS NULL AND id IN (SELECT player FROM boss_runs WHERE boss = 'mommy' AND won = 1 AND round <= ${+Boss.REWARDS.title})`,
+    ...BOSS.titles.map((t) => `UPDATE players SET ${t} = (SELECT MIN(r.created) FROM boss_runs r WHERE r.player = players.id AND r.boss = 'mommy' AND r.won = 1 AND r.round <= ${+Boss.REWARDS[t]})
+      WHERE ${t} IS NULL AND id IN (SELECT player FROM boss_runs WHERE boss = 'mommy' AND won = 1 AND round <= ${+Boss.REWARDS[t]})`),
     `INSERT INTO skins (player, skin, src, worn, created) SELECT player, '${BOSS.skin}', 'grant', 1, MIN(created) FROM boss_runs WHERE boss = 'mommy' AND won = 1 AND round <= ${+Boss.REWARDS.skin} GROUP BY player
       ON CONFLICT (player, skin) DO UPDATE SET src = 'grant' WHERE src = 'dev'`,
   ];
@@ -645,7 +646,7 @@ async function bossCheck(env, player, run) {
 export const bossBetter = (a, b) => a.won !== b.won ? a.won > b.won : a.won ? (a.round !== b.round ? a.round < b.round : a.secs < b.secs) : a.dmg > b.dmg;
 const BOSS_ORDER = 'r.won DESC, CASE WHEN r.won = 1 THEN r.round END ASC, CASE WHEN r.won = 1 THEN r.secs END ASC, r.dmg DESC, r.created ASC';
 async function bossRows(db, boss, rules) {
-  const res = await db.prepare(`SELECT p.id, p.tag, p.created, p.dev, p.title, p.legend, p.discord, p.initiate, p.goodsport, p.widowmaker, r.won, r.round, r.secs, r.dmg FROM boss_runs r JOIN players p ON p.id = r.player
+  const res = await db.prepare(`SELECT p.id, p.tag, p.created, p.dev, p.title, p.legend, p.discord, p.initiate, p.goodsport, p.widowmaker, p.crawler, r.won, r.round, r.secs, r.dmg FROM boss_runs r JOIN players p ON p.id = r.player
     WHERE r.boss = ? AND r.rules = ? AND p.deleted IS NULL ORDER BY ${BOSS_ORDER} LIMIT ${BOSS.rows}`).bind(boss, rules).all();
   return res.results.map((r) => ({ id: r.id, tag: r.tag || 'Player', title: titleShown(r), won: !!r.won, round: r.round, secs: r.secs, dmg: r.dmg }));
 }
@@ -695,7 +696,7 @@ export function cleanMusic(m) {
 const musicOut = (s) => { try { return s ? cleanMusic(JSON.parse(s)) : null; } catch (e) { return null; } };
 
 async function playerOut(db, id) {
-  const p = await db.prepare('SELECT id, tag, created, dev, title, tag_changed, legend, discord, initiate, goodsport, widowmaker, music FROM players WHERE id = ?').bind(id).first();
+  const p = await db.prepare('SELECT id, tag, created, dev, title, tag_changed, legend, discord, initiate, goodsport, widowmaker, crawler, music FROM players WHERE id = ?').bind(id).first();
   const logins = await db.prepare('SELECT provider FROM logins WHERE player = ?').bind(id).all();
   return { id: p.id, tag: p.tag, created: p.created, google: logins.results.some((r) => r.provider === 'google'), dev: !!p.dev, titles: titlesOf(p), title: titleShown(p), tagNext: tagNext(p) > Date.now() ? tagNext(p) : 0, skins: await skinsOf(db, id, !!p.dev), discord: !!p.discord, puzzles: (await db.prepare('SELECT k FROM puzzles WHERE player = ? ORDER BY k').bind(id).all()).results.map((r) => r.k), gg: await ggCount(db, id), music: musicOut(p.music) };
 }
@@ -781,7 +782,7 @@ const FRIEND_ROUTES = ['friends', 'friend/add', 'friend/accept', 'friend/decline
 const ID_RE = /^p[0-9a-f]{16}$/;
 export const pairOf = (x, y) => (x < y ? [x, y] : [y, x]);
 export const pairKey = (x, y) => pairOf(x, y).join(':');
-const PUB = 'p.id, p.tag, p.created, p.dev, p.title, p.legend, p.discord, p.initiate, p.goodsport, p.widowmaker';
+const PUB = 'p.id, p.tag, p.created, p.dev, p.title, p.legend, p.discord, p.initiate, p.goodsport, p.widowmaker, p.crawler';
 const pubOut = (r) => ({ id: r.id, tag: r.tag || 'Player', title: titleShown(r) });
 // what friends see of a status: where and the round, never a room's code
 export function statusOut(r, now = Date.now()) {
@@ -1091,7 +1092,7 @@ export async function handleAccount(request, env, cors) {
 
     if (route === 'title') {
       const t = typeof body.title === 'string' ? body.title : '';
-      const p = await db.prepare('SELECT created, dev, legend, discord, initiate, goodsport, widowmaker FROM players WHERE id = ?').bind(me.player).first();
+      const p = await db.prepare('SELECT created, dev, legend, discord, initiate, goodsport, widowmaker, crawler FROM players WHERE id = ?').bind(me.player).first();
       if (t && !titlesOf(p).includes(t)) return json({ error: 'not your title' }, 400, cors);
       await db.prepare('UPDATE players SET title = ? WHERE id = ?').bind(t || 'none', me.player).run();
       return json({ player: await playerOut(db, me.player) }, 200, cors);
@@ -1190,10 +1191,10 @@ export async function handleAccount(request, env, cors) {
       if (improved) await db.prepare(`INSERT INTO boss_runs (player, boss, rules, won, round, secs, dmg, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (player, boss, rules) DO UPDATE SET won = excluded.won, round = excluded.round, secs = excluded.secs, dmg = excluded.dmg, created = excluded.created`)
         .bind(me.player, 'mommy', rules, run.won, run.round, run.secs, run.dmg, now).run();
-      // the rewards for a kill (Boss.REWARDS): what's new this time (reward: the skin; title: Widowmaker)
-      const got = await bossRewards(db, me.player, now), reward = got.skin ? BOSS.skin : null, title = got.title ? BOSS.title : null;
+      // the rewards for a kill (Boss.REWARDS): what's new this time (reward: the skin; titles: Crawler, Widowmaker)
+      const got = await bossRewards(db, me.player, now), reward = got.skin ? BOSS.skin : null, titles = got.titles.length ? got.titles : null;
       const out = (x) => ({ won: !!x.won, round: x.round, secs: x.secs, dmg: x.dmg });
-      return json({ improved, run: out(run), best: out(improved ? run : had), rules, rows: await bossRows(db, 'mommy', rules), ...(reward ? { reward } : {}), ...(title ? { title } : {}), ...(reward || title ? { player: await playerOut(db, me.player) } : {}) }, 200, cors);
+      return json({ improved, run: out(run), best: out(improved ? run : had), rules, rows: await bossRows(db, 'mommy', rules), ...(reward ? { reward } : {}), ...(titles ? { titles } : {}), ...(reward || titles ? { player: await playerOut(db, me.player) } : {}) }, 200, cors);
     }
     if (route === 'me') {
       try { await grantSkins(env, now); } catch (e) { console.warn('skins', e && e.message); }
