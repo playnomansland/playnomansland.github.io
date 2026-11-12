@@ -22,7 +22,7 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ## 12 November 2026 – Replay a round of the Mommy, and a Skills tab on the picked unit
 
-- **The Mommy:** **Restart boss** and **Replay round** are on the screen for the whole run, even mid-fight, at the top right under her name. Replay round lists every round you've reached with its bite: pick one to play it again from its start. Restart asks "Sure?" first. (On phones they are in Settings.) The card between rounds now warns you what's coming: **! Next round** with her next bite's mark and name.
+- **The Mommy:** **Restart boss** and **Replay round** are on the screen for the whole run, even mid-fight, at the top right under her name. Replay round lists every round you've reached with its bite: pick one to play it again from its start. Restart asks "Sure?" first. **Mommy's attacks** has moved there too, from Settings. (On phones they are all in Settings.) The card between rounds now warns you what's coming: **! Next round** with her next bite's mark and name.
 - **Shop:** pick a unit in the deploy panel and a gold **Skills** tab slides out on the left of its card, with the unit sheet's symbol (a sheet with a skill star). Tap it to open the unit's sheet: its stats, skills and what it's strong and weak against. Holding a card still opens it as well, but you no longer have to know that.
 
 ---

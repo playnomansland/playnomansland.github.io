@@ -19,8 +19,8 @@ Every boss has all of these, in this order of discovery. Do not add a surface or
 | A | **Limited event note on the main menu**, pinned to the boss's own 3D model standing on the menu island | `src/site-template.html` `.ev-note`; model + anchor `mommy` in `src/diorama.js` (pieces), note shown by `showing()` |
 | B | **The boss screen** (before a run), opened from the note, a click on the model, or Puzzles' "Weekly boss" row | HTML `section.bz` in `src/site-template.html`; `openBoss` / `drawBoss` / `drawBossBoard` / `bzView` / `buildBossStage` in `src/diorama.js`; CSS `#dio.bz`, `#dio .bz…` in `src/diorama.css` |
 | C | **Rewards ladder** on the boss screen (three tiers by round) | `bossRewardList` (page), `drawBoss` (Diorama), `Boss.REWARDS` (`src/boss.js`), `bossRewards` / `bossBackfill` (server) |
-| D | **"<Boss>'s attacks" panel**: attack cards + spawn map side panel; from How to play point 4 and from the fight's cog Settings | `openBossAttacks` / `drawBossAttacks` / `drawBossNests` / `bossNestBoard` / `ATK_ICON` / `BITE_NAME` / `BITE_COL` in `src/site-template.html`; CSS `.bz-atk…`, `.bz-nests…` |
-| E | **In the run**: boss bar (with a ? that opens the boss screen as a panel, and Restart on phones), round banner, spawn map in the deploy panel, Restart boss and Replay round on the screen (`bossCtl`; in Settings on phones), a "! Next round" bite line on the round card, cog Settings with "<Boss>'s attacks" | `startBoss`, `openBossInfo`, `restartBoss`, `replayBossRound`, `bossCtl`, `bossNextBite`, `bossBar`, `bossLine`, `openBossMap`, `openSoundSheet` |
+| D | **"<Boss>'s attacks" panel**: attack cards + spawn map side panel; from How to play point 4 and, in a run, the on-screen **<Boss>'s attacks** button (the cog's Settings on phones) | `openBossAttacks` / `drawBossAttacks` / `drawBossNests` / `bossNestBoard` / `ATK_ICON` / `BITE_NAME` / `BITE_COL` in `src/site-template.html`; CSS `.bz-atk…`, `.bz-nests…` |
+| E | **In the run**: boss bar (with a ? that opens the boss screen as a panel, and Restart on phones), round banner, spawn map in the deploy panel, Restart boss, Replay round and <Boss>'s attacks on the screen (`bossCtl`; in Settings on phones), a "! Next round" bite line on the round card | `startBoss`, `openBossInfo`, `restartBoss`, `replayBossRound`, `bossCtl`, `bossNextBite`, `bossBar`, `bossLine`, `openBossMap`, `openSoundSheet` |
 | F | **Result card** after each fight / at the end | `bossResult` |
 | G | **Leaderboard**: replayed by the server; on the boss screen, Rankings' boss tab, and the leaderboard sheet | `bossBoardLoad`, `bossReport`, `bossRunText`, `drawBossStandings`, `openLeaderboard('boss')`; server `bossBoard` / `bossRows` / route `boss` in `server/src/accounts.js`, replay in `server/src/room.js` `bossCheck` |
 
@@ -96,13 +96,15 @@ One panel, made once at the end of `<body>`, so it opens over the boss screen an
   on phones Restart (asks Restart? Yes / No in place; the PC layout has the on-screen Restart boss below instead). A full card (n/n) tapped shakes and says You have the max of this unit type.
 - Skills with no use in the boss's fight go in `Boss.NO_USE` (id → why): crossed out in the unit sheet, not for sale.
 - The round card's headline is X damage dealt.
-- Cog Settings in a run: a row "The Mommy · <Boss>'s attacks" (and, on phones, Restart boss and Replay round).
+- Cog Settings in a run: nothing of the boss's on the PC layout; on phones a row "The Mommy · <Boss>'s attacks", Restart
+  boss and Replay round.
 - **Restart boss** and **Replay round** on the screen through the whole run (deploy, fight, round card, end) on the PC
   layout: stacked at the top right under her name (top left when the deploy panel is on the right), ink chips with a
   coloured top edge and a cut corner, Restart coral, Replay gold (`bossCtl`, `.bz-ctl`). Restart asks once more on the
   button ("Sure? Restart", 3 s). Replay drops the rounds this run has reached, each with its bite's mark and name, the
-  current one marked NOW. They step aside for a sheet or the attacks panel. The classic layout (phones) keeps both in
-  the cog's Settings, under "The Mommy · <Boss>'s attacks".
+  current one marked NOW. Under them **<Boss>'s attacks** (her jaws, a cream edge) opens surface D on this round
+  (moved off Settings, 12 November). They step aside for a sheet, surface D or her screen's panel. The classic layout
+  (phones) keeps all three in the cog's Settings.
 - The round card (between rounds): "! Next round" with the next round's attack mark and name, in its colour.
 - The result card's eyebrow: `<Boss> · weekly boss`. After a kill: "Killed in round n:" and the rewards earned; the
   next reward to chase.
