@@ -2727,7 +2727,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if ($('boss-atk')) $('boss-atk').addEventListener('click', () => openBossAttacks((bossView() || {}).round || m.round)); // over the Settings, which stays open
     if ($('boss-restart')) $('boss-restart').addEventListener('click', () => { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); startBoss(); }); // the Mommy boss puzzle: a new run at once, from round 1
     // Replay round: shows the rounds this run has played; one of them goes back to its start (replayBossRound)
-    if ($('boss-replay')) $('boss-replay').addEventListener('click', () => { const g = $('boss-rounds'); g.hidden = !g.hidden; $('boss-replay').setAttribute('aria-expanded', String(!g.hidden)); if (!g.hidden) { const b = g.querySelector('button'); if (b) b.focus(); } });
+    if ($('boss-replay')) $('boss-replay').addEventListener('click', (e) => { const g = $('boss-rounds'); g.hidden = !g.hidden; $('boss-replay').setAttribute('aria-expanded', String(!g.hidden)); if (!g.hidden && e.detail === 0) { const b = g.querySelector('button'); if (b) b.focus(); } });
     $('sheet').querySelectorAll('[data-boss-round]').forEach(b => b.addEventListener('click', () => { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); replayBossRound(+b.dataset.bossRound); }));
     $('sheet').querySelectorAll('[data-stay]').forEach(b => b.addEventListener('click', () => {
       setStay(b.dataset.stay === '1');
