@@ -596,7 +596,7 @@ export async function leaderboard(env, cors) {
 // ranks what the replay got. rules: a short tag made from the boss's numbers and the units (Boss.rulesTag); the page's
 // has to be the server's, and runs are only ranked together under the same tag. Best first: a kill before no kill; the
 // earlier round; the earlier second of that round; without a kill, the more damage. One row per player, boss and
-// rules: only a better run replaces it. Developer accounts only while the boss is a developer test.
+// rules: only a better run replaces it. Any account's run counts (developers only until 2026-11-12, while she was a test).
 // A run is five fights, too much processor time for the Worker itself, so the replay runs in a Durable Object (a Room
 // named bosscheck-<x>, its /bosscheck).
 // The reward: a run the replay finds she was killed in within Boss.CFG.titleRound rounds (3) gives the player the
@@ -1139,8 +1139,8 @@ export async function handleAccount(request, env, cors) {
       return json({ player: out, won, solved: out.puzzles }, 200, cors);
     }
     if (route === 'boss') { // a finished run against the weekly boss, for her leaderboard (BOSS above): replayed here, then ranked
-      const p = await db.prepare('SELECT dev FROM players WHERE id = ? AND deleted IS NULL').bind(me.player).first();
-      if (!p || !p.dev) return json({ error: 'developers only' }, 403, cors);
+      const p = await db.prepare('SELECT id FROM players WHERE id = ? AND deleted IS NULL').bind(me.player).first();
+      if (!p) return json({ error: 'no such player' }, 403, cors);
       if (body.boss !== 'mommy') return json({ error: 'no such boss' }, 400, cors);
       const rules = bossRules();
       if (body.rules !== rules) return json({ error: 'other rules', rules }, 409, cors); // the page and the server aren't on the same version of her

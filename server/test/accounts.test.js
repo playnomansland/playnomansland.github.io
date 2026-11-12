@@ -97,7 +97,7 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 4 * 60 *
     const dv = await ok('google', { credential: idToken({ sub: devSub, email: 'dev@example.COM', email_verified: true }) });
     assert.strictEqual(dv.player.dev, true, 'a listed, verified email is a developer (case ignored)');
     assert.strictEqual((await ok('me', {}, dv.session)).player.dev, true, 'and stays one');
-    // the weekly boss's leaderboard (2026-11-12): developers only. The page sends a run's record and the server plays it
+    // the weekly boss's leaderboard (2026-11-12): any account (developers only at first). The page sends a run's record and the server plays it
     // again (Boss.replay, in a Durable Object): the board holds what the replay got. Only a better run replaces a
     // player's row; best first (a kill, the earlier round, the earlier second; else the more damage). The runs here are
     // the prototype's own plans, played by tools/boss with the same rules
@@ -110,7 +110,6 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 4 * 60 *
       const rules = BT.Boss.rulesTag(BT.units);
       const board = async (q) => { const r = await fetch(`${srv.base}/leaderboard/boss?${q}`, { headers: { Origin: ORIGIN } }); return { status: r.status, ...(await r.json()) }; };
       const send = (x, o) => ({ boss: 'mommy', rules, run: x.run, ...o });
-      assert.strictEqual((await call('boss', send(lineB), s1.session)).status, 403, 'an account that isn\'t a developer\'s can\'t report a boss run');
       assert.strictEqual((await call('boss', send(lineB))).status, 401, 'nor can nobody');
       assert.strictEqual((await call('boss', send(lineB, { boss: 'daddy' }), dv.session)).status, 400, 'an unknown boss is refused');
       const other = await call('boss', send(lineB, { rules: 'abc1' }), dv.session);
@@ -150,6 +149,11 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 4 * 60 *
       assert.strictEqual((await board(`boss=mommy&rules=${rules}`)).rows.length, 2, 'the same board by its rules');
       assert.strictEqual((await board('boss=mommy&rules=none')).rows.length, 0, 'another set of rules is another (empty) board');
       assert.strictEqual((await board('boss=daddy')).status, 400, 'an unknown boss is refused');
+      // open to everyone: an account that isn't a developer's reports a run too, and it goes on the board
+      assert.strictEqual(s1.player.dev, false, 'the test\'s plain account isn\'t a developer');
+      br = await ok('boss', send(coast), s1.session);
+      assert.ok(br.improved && br.run.won === false && br.rows.some((r) => r.id === s1.player.id), 'a plain account\'s run is on the board');
+      assert.deepStrictEqual((await board('boss=mommy')).rows.map((r) => r.id), [d2.player.id, dv.player.id, s1.player.id], 'after the kills, as the runs rank');
     }
     const unv = await ok('google', { credential: idToken({ email: 'other@example.com', email_verified: false }) });
     assert.strictEqual(unv.player.dev, false, 'an unverified email is not');

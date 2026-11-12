@@ -1142,7 +1142,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   <!-- notes. data-home: shown on the menu; data-hover: shown while that thing is pointed at; data-btn: shown while that menu word is -->
   <div class="note rw-note" data-anchor="golem" data-home role="button" tabindex="0" aria-label="Rewards: invite a friend"><span class="tag">Limited reward</span><br>This golem’s skin is yours<br>when a friend joins. <span class="rw-row"><span class="rw-btn">Invite a friend</span></span></div>
-  <div class="note" data-anchor="skeleton" data-home>Hover over stuff on the island with your mouse!</div>
+  <div class="note" data-anchor="skeleton" data-home data-hint>Hover over stuff on the island with your mouse!</div>
+  <!-- the weekly boss's Limited event (2026-11-12): on the Mommy herself, in the hover hint's place while she is open (bossOpen) -->
+  <div class="note ev-note" data-anchor="mommy" data-home data-event role="button" tabindex="0" aria-label="Limited event: go to the boss fight"><span class="tag">Limited event</span><br>A giant spider holds their zone.<br>Kill her for her brood’s skin. <span class="rw-row"><span class="rw-btn">Go to boss fight</span></span></div>
   <div class="note" data-anchor="sniper" data-hover="sniper">Sniper.<small>Unit · Long range · Good against single targets</small></div>
   <div class="note" data-anchor="mage" data-hover="mage">Fire Mage.<small>Unit · Shoots fireballs · Good against swarms</small></div>
   <div class="note" data-anchor="ent" data-hover="ent">Sleeping Ent.<small>Sshhhh!</small></div>
@@ -1302,6 +1304,29 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button class="create" id="pz-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button>
   </section>
   <div class="note qnote" data-q="foe" style="display:none"></div>
+
+  <!-- the weekly boss (2026-11-12): the screen before a run, as Puzzles but on her lair's maroon. Left: the title, a
+       line, how to play, FIGHT HER and Back. Right: the reward and her leaderboard. The island shows her and her nests -->
+  <section class="bz" aria-label="Weekly boss: the Mommy">
+    <div class="bz-top">
+      <span class="k">Limited event · weekly boss</span>
+      <h2>The Mommy</h2>
+      <p class="bz-lede" id="bz-lede"></p>
+    </div>
+    <div class="bz-left">
+      <h3 class="bz-h">How to play</h3>
+      <ol class="bz-how" id="bz-how"></ol>
+      <div class="bz-go"><button class="create" id="bz-fight">Fight her<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h13M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg></button>
+        <button class="create" id="bz-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button></div>
+    </div>
+    <div class="bz-right">
+      <h3 class="bz-h">Reward</h3>
+      <div class="bz-rw" id="bz-rw"></div>
+      <h3 class="bz-h">Leaderboard</h3>
+      <p class="bz-leg" id="bz-leg"></p>
+      <ol class="bz-lb" id="bz-lb" hidden></ol>
+    </div>
+  </section>
 
   <!-- How to play (2026-11-10): the rules as chapters. Left: the title and the chapters as stencil words (The basics,
        then the rest); beside them the picked chapter's page (a line, the points, a row of words where there's a list:
@@ -3362,7 +3387,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     firstRun = { welcome: true, stay: true };
     helpers = { off: false, seen: [], done: false, menu: [] }; for (const T of MENU_TIPS) T.cramped = false; saveHelpers();
     helpCur = null; helperDraw(null); tourWas = true;
-    closeSheet(true); home.pop = false; home.puz = false; home.screen = 'welcome'; home.msg = '';
+    closeSheet(true); home.pop = false; home.puz = false; home.boss = false; home.screen = 'welcome'; home.msg = '';
     drawHome(); helperWake();
   }
   function menuPick(t) {
@@ -4489,6 +4514,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (!home.screen || home.screen === 'menu' || !home.welcomeNeeded()) home.screen = home.welcomeNeeded() ? 'welcome' : 'menu';
     if (home.back === 'lobby' && home.screen === 'menu') { home.screen = 'lobby'; home.pop = false; } // a match from the lobby: back to the Rooms list
     if (home.back === 'puzzles' && home.screen === 'menu') { home.pop = false; home.puz = true; } // a puzzle: back to the Diorama's Puzzles
+    if (home.back === 'boss' && home.screen === 'menu') { home.pop = false; home.boss = true; } // a run against the Mommy: back to her screen
     home.back = '';
     drawHome();
     size(); render();
@@ -4990,10 +5016,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     $('tour-practice').addEventListener('click', () => { closeSheet(true); tourPractice(); });
   }
   // Leaderboard: ranked results from the server (wins, ties, losses), best first
-  // tab 'boss': the weekly boss's board (the Mommy boss puzzle, bossBoardLoad). Its tab shows to developers only, while
-  // the boss is a developer test
+  // tab 'boss': the weekly boss's board (the Mommy boss puzzle, bossBoardLoad), for everyone since 2026-11-12
   async function openLeaderboard(tab) {
-    const bossTab = devMode() && typeof Boss !== 'undefined';
+    const bossTab = bossOpen();
     tab = tab === 'boss' && bossTab ? 'boss' : 'ranked';
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Leaderboard</h3><button class="btn small" id="close">Close</button></div>
       ${bossTab ? `<div class="seg" id="lb-tabs" style="margin:0 0 8px"><button data-lbt="ranked" aria-pressed="${tab === 'ranked'}">Ranked</button><button data-lbt="boss" aria-pressed="${tab === 'boss'}">Weekly boss · Mommy</button></div>` : ''}
@@ -5005,7 +5030,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       const bb = await bossBoardLoad(true);
       if (!$('lb') || $('lb').dataset.tab !== 'boss') return;
       if (!bb.rows) { $('lb-msg').textContent = 'Couldn’t reach the game server. Check your connection and try again.'; return; }
-      $('lb-msg').textContent = (bb.rows.length ? 'Best runs against the Mommy under her rules as they are now. A kill in the earliest round comes first, then the earliest second of that round; without a kill, the most damage. The game server plays every run again before it counts.' : 'Nobody has finished a run against her under her rules as they are now. Finish one to get on the board.') + ' Developer accounts only for now.';
+      $('lb-msg').textContent = (bb.rows.length ? 'Best runs against the Mommy under her rules as they are now. A kill in the earliest round comes first, then the earliest second of that round; without a kill, the most damage. The game server plays every run again before it counts.' : 'Nobody has finished a run against her under her rules as they are now. Finish one to get on the board.');
       if (!bb.rows.length) return;
       $('lb').innerHTML = `<table class="lb"><thead><tr><th>#</th><th>Player</th><th>Best run</th></tr></thead><tbody>
         ${bb.rows.map((r, i) => `<tr class="${acct && r.id === acct.id ? 'me' : ''}"><td class="num">${i + 1}</td><td>${nameplate(r.tag, r.title, 'row')}</td><td>${esc(bossRunText(r))}</td></tr>`).join('')}
@@ -5241,9 +5266,24 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   }
 
   // ---------- Main menu from the in-match settings: leaving a match that is still on forfeits it ----------
+  // (the owner, 2026-11-12: "don't switch out the screen"): the Settings sheet stays as it is and only its Main menu
+  // button turns into "Are you sure?" Yes / No, in the same spot; No puts the button back. What leaving costs (a
+  // forfeit, the ranked series) is the question's tooltip.
   function askForfeit() {
     if (mode === 'sandbox') { sbxExit(); return; } // Replay a round: back to the real match's result
     if (!m || phase === 'end' || mode === 'tutorial') { quitToMenu(); return; }
+    const why = foeAwayNow() ? `Your opponent is disconnected, so leaving doesn’t count as a loss for you${mode === 'net' && net.ranked ? ': they lose the ranked series' : ''}.` : mode === 'net' && net.ranked ? 'You will forfeit and lose the ranked series.' : 'You will forfeit the match.';
+    const btn = $('to-menu');
+    if (btn) {
+      const ask = document.createElement('div');
+      ask.className = 'bar to-menu-ask'; ask.title = why;
+      ask.innerHTML = `<span class="hint" id="forfeit-q">Are you sure?</span><span class="btnrow"><button class="btn primary" id="forfeit-yes" aria-describedby="forfeit-q">Yes</button><button class="btn" id="forfeit-no">No</button></span>`;
+      btn.replaceWith(ask);
+      $('forfeit-yes').addEventListener('click', forfeit);
+      $('forfeit-no').addEventListener('click', () => { ask.replaceWith(btn); btn.focus(); });
+      $('forfeit-no').focus();
+      return;
+    }
     $('sheet').innerHTML = `
       <div class="bar" data-keep><h3 id="sheet-h">Main menu</h3></div>
       <p class="big" style="margin:0">${foeAwayNow() ? `Your opponent is disconnected, so leaving doesn’t count as a loss for you${mode === 'net' && net.ranked ? ': they lose the ranked series' : ''}. Leave the match?` : mode === 'net' && net.ranked ? 'You will forfeit and lose the ranked series. Are you sure?' : 'You will forfeit the match. Are you sure?'}</p>
@@ -6958,7 +6998,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (DIO && typeof dio !== 'undefined' && dio.api && dio.api.puzzles && phase === 'start' && !m) { closeSheet(true); dio.api.puzzles(); return; } // the Diorama's Puzzles screen
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Tutorial puzzles</h3><button class="btn small" id="close">Close</button></div>
       <p class="hint" style="margin:0">One fight each. You see the whole enemy army; win with the gold you have.</p>
-      ${devMode() && typeof Boss !== 'undefined' ? `<h4 class="puz-level" style="margin:6px 0 0;display:flex;justify-content:space-between;gap:8px">Weekly boss<span class="hint" style="font-weight:normal">developers only</span></h4>
+      ${bossOpen() ? `<h4 class="puz-level" style="margin:6px 0 0;display:flex;justify-content:space-between;gap:8px">Weekly boss<span class="hint" style="font-weight:normal">limited event</span></h4>
       <button class="btn boss-btn" id="boss-weekly"><span><b>Weekly boss - The Mommy</b><br><span class="hint">Five rounds against a giant spider and her nests. Kill her by round 5.</span></span><i class="boss-eyes" aria-hidden="true"></i></button>` : ''}
       <p class="hint" style="margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${hasInitiate() ? 'The title is yours.' : `Solve the ${PUZ_TITLE.length} Easy puzzles for the title`} ${titleHtml('initiate')}</p>
       ${PUZ_LEVELS.map(L => { const ks = puzOfLevel(L), done = ks.filter(k => puzSolvedAll().includes(k)).length;
@@ -7165,23 +7205,18 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // mortar did and who hurt her most.
   // developer status came or went (the server's answer about the account lands a moment after the page opens, on a slow
   // connection seconds later): a Puzzles list already open is drawn again, so its Weekly boss row comes or goes
+  // the weekly boss is open: to everyone since 2026-11-12 (the owner; it was a developer test, and the server's
+  // leaderboard and reward take everyone's runs now, server/src/accounts.js). The Diorama's Limited event note, her
+  // screen, Puzzles' boss row and the leaderboards' Mommy tab all ask this
+  function bossOpen() { return typeof Boss !== 'undefined'; }
   function bossRowChanged() {
     try {
       if (typeof dio !== 'undefined' && dio.api && dio.api.puzRedraw) dio.api.puzRedraw();
       if (!$('sheet-back').hidden && ($('sheet-h') || {}).textContent === 'Tutorial puzzles') openPuzzles();
     } catch (e) {}
   }
-  // ?mommy in the address (developers' test link): straight into Mommy on a developer account; on any other this says
-  // which account the page sees, so a missing Weekly boss button can be told apart from an old copy of the page. It waits
-  // up to 8 s for the server's answer about the account
-  if (/[?&]mommy\b/.test(location.search)) { let tries = 0; const go = () => {
-    if (devMode()) { startBoss(); return; }
-    if (++tries < 16) { setTimeout(go, 500); return; }
-    closeSheet(true);
-    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Mommy is for developers</h3><button class="btn small" id="close">Close</button></div>
-      <p style="margin:0">${acct ? `This page is signed in as <b>${esc(acct.tag || '?')}</b>${acct.google ? '' : ' (a guest account)'}, which isn’t a developer account.` : 'This page isn’t signed in.'} Developer status comes from the Google account you sign in with.</p>`;
-    $('sheet-back').hidden = false; $('close').addEventListener('click', closeSheet);
-  }; setTimeout(go, 500); }
+  // ?mommy in the address (a link to her): straight into a run against her, for anyone
+  if (/[?&]mommy\b/.test(location.search)) setTimeout(() => { if (bossOpen()) startBoss(); }, 500);
   function startBoss() {
     if (typeof Boss === 'undefined') return;
     leaveNet(); closeSheet(true);
@@ -7299,7 +7334,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // ---------- the weekly boss's leaderboard (2026-11-12; server/src/accounts.js BOSS) ----------
   // A finished run's record (m.boss.run: the seed and the player's side going into each fight, kept by Boss.record)
   // goes to the game server, which plays the run again with the game's own rules and ranks what its replay got: it
-  // takes nothing on the page's word. Developer accounts only, as the boss is a developer test. Runs are ranked per
+  // takes nothing on the page's word. Any account's run counts (a developer test until 2026-11-12). Runs are ranked per
   // set of her rules: Boss.rulesTag is a short tag made from her numbers and the units, so a change to either starts
   // a new board, and a page and a server on different versions don't mix their runs.
   const bossRulesTag = () => Boss.rulesTag(m && m.boss ? m.units : units);
@@ -7318,7 +7353,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   const bossRunText = (r) => r.won ? `Killed in round ${r.round}, ${(+r.secs).toFixed(1)} s in` : `${(+r.dmg).toLocaleString('en')} damage, not killed`;
   // a finished run's record goes to the server; its answer (what its replay got, and the board) fills the result card's line
   function bossReport(r) {
-    if (!acct || !devMode() || typeof Boss === 'undefined' || !m || !m.boss || !m.boss.run) return;
+    if (!acct || typeof Boss === 'undefined' || !m || !m.boss || !m.boss.run) return;
     const body = { boss: 'mommy', rules: bossRulesTag(), run: m.boss.run };
     acctCall('boss', body, true).then((res) => {
       const el = $('boss-rank'), say = (t) => { if (el) el.textContent = t; };
@@ -7369,11 +7404,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const won = r.dead, title = won && r.round <= Boss.CFG.titleRound;
     const head = won ? `Mommy is dead<br>round ${r.round}` : m.over ? 'She survived' : `Round&nbsp;${r.round}<br>done`;
     overlay(`<div class="card">
-      <span class="eyebrow">Mommy · developer test</span>
+      <span class="eyebrow">Mommy · weekly boss</span>
       <h2 class="${won ? 'you' : m.over ? 'foe' : ''}">${head}</h2>
       ${won ? `<p class="big">${title ? 'Within ' + Boss.CFG.titleRound + ' rounds: her brood’s look, the Hollow Brood skin for your Spiders, is the reward.' : 'Kill her within ' + Boss.CFG.titleRound + ' rounds for the Hollow Brood skin for your Spiders.'}</p>` : ''}
       ${lines}
-      ${m.over && acct && devMode() ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : ''}
+      ${m.over ? acct ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : '<p>Play as a guest or sign in (Profile) to get your runs on her leaderboard.</p>' : ''}
       <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>
     </div>`);
     if (m.over) bossReport(r);

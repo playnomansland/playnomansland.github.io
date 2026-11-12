@@ -1,4 +1,5 @@
-// Main menu from the in-match cog: it asks first (No keeps the match), Yes forfeits. Vs the AI the match just ends;
+// Main menu from the in-match cog: it asks first, in place of the button on the same Settings sheet (No puts the button
+// back and keeps the match), Yes forfeits. Vs the AI the match just ends;
 // in a live match the other player wins, and the host's saved match is cleared so the link can't resume it.
 const { chromium } = require('playwright-core');
 const ctx2d = require('./board2d'); // these checks are for the 2D board
@@ -13,9 +14,9 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   await ai.click('#cog');
   console.log('cog sheet:', await text(ai, '#sheet-h'), '| Main menu button:', await ai.isVisible('#to-menu'));
   await ai.click('#to-menu');
-  console.log('asks:', await text(ai, '#sheet p'));
+  console.log('asks in place:', await text(ai, '.to-menu-ask'), '| still Settings:', await text(ai, '#sheet-h'), '| Main menu button gone:', !(await ai.isVisible('#to-menu')), '| why:', await ai.getAttribute('.to-menu-ask', 'title'));
   await ai.click('#forfeit-no');
-  console.log('No: back to', await text(ai, '#sheet-h'), '| phase', await text(ai, '#phase'));
+  console.log('No: Main menu back:', await ai.isVisible('#to-menu'), '| asking gone:', !(await ai.isVisible('.to-menu-ask')), '| on', await text(ai, '#sheet-h'), '| phase', await text(ai, '#phase'));
   await ai.click('#to-menu'); await ai.click('#forfeit-yes'); await sleep(300);
   console.log('Yes vs AI: start screen', await ai.isVisible('#go'), '| sheet closed', !(await ai.isVisible('#sheet')));
   // live match: the host forfeits, the guest wins
