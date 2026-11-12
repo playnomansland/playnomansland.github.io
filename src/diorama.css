@@ -610,6 +610,14 @@ html.diorama.pcwide #mp-pop.dock .mplayer .mp-vol { --vl: #F4ECD8; --vt: #F2B23A
 #dio .standings .lb-list .s { font-size: 24px; text-align: right; }
 #dio .standings .lb-list .s small { display: block; margin: 0; font-size: 10px; }
 #dio .standings .lb-how { margin: 4px 0 0; font: 700 11px/1.4 var(--type); opacity: .65; }
+#dio .standings .lb-how.lb-tight { display: none; }
+/* a short window (a laptop): STANDINGS higher and smaller, so the list has room above PLAY */
+@media (min-width: 701px) and (max-height: 820px) {
+  #dio .standings { top: 108px; gap: 4px; }
+  #dio .standings h2 { margin-bottom: 4px; font-size: 54px; }
+  #dio .standings .lb-list { margin-top: 4px; }
+  #dio .standings .lb-list li { padding-top: 6px; padding-bottom: 6px; }
+}
 #dio .stay .tagnew { display: inline-block; padding: 3px 8px 2px; font-style: normal; color: var(--ink); background: var(--saffron); clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
 #dio .stay .nts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin: 10px 0 4px; }
 #dio .stay .nts .ptitle { margin: 0; font-size: 22px; }
