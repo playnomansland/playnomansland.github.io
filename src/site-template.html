@@ -5234,9 +5234,24 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   }
 
   // ---------- Main menu from the in-match settings: leaving a match that is still on forfeits it ----------
+  // (the owner, 2026-11-12: "don't switch out the screen"): the Settings sheet stays as it is and only its Main menu
+  // button turns into "Are you sure?" Yes / No, in the same spot; No puts the button back. What leaving costs (a
+  // forfeit, the ranked series) is the question's tooltip.
   function askForfeit() {
     if (mode === 'sandbox') { sbxExit(); return; } // Replay a round: back to the real match's result
     if (!m || phase === 'end' || mode === 'tutorial') { quitToMenu(); return; }
+    const why = foeAwayNow() ? `Your opponent is disconnected, so leaving doesn’t count as a loss for you${mode === 'net' && net.ranked ? ': they lose the ranked series' : ''}.` : mode === 'net' && net.ranked ? 'You will forfeit and lose the ranked series.' : 'You will forfeit the match.';
+    const btn = $('to-menu');
+    if (btn) {
+      const ask = document.createElement('div');
+      ask.className = 'bar to-menu-ask'; ask.title = why;
+      ask.innerHTML = `<span class="hint" id="forfeit-q">Are you sure?</span><span class="btnrow"><button class="btn primary" id="forfeit-yes" aria-describedby="forfeit-q">Yes</button><button class="btn" id="forfeit-no">No</button></span>`;
+      btn.replaceWith(ask);
+      $('forfeit-yes').addEventListener('click', forfeit);
+      $('forfeit-no').addEventListener('click', () => { ask.replaceWith(btn); btn.focus(); });
+      $('forfeit-no').focus();
+      return;
+    }
     $('sheet').innerHTML = `
       <div class="bar" data-keep><h3 id="sheet-h">Main menu</h3></div>
       <p class="big" style="margin:0">${foeAwayNow() ? `Your opponent is disconnected, so leaving doesn’t count as a loss for you${mode === 'net' && net.ranked ? ': they lose the ranked series' : ''}. Leave the match?` : mode === 'net' && net.ranked ? 'You will forfeit and lose the ranked series. Are you sure?' : 'You will forfeit the match. Are you sure?'}</p>

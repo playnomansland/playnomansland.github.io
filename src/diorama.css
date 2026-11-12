@@ -1687,3 +1687,17 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
 #dio .hw .hw-keys kbd { display: inline-block; min-width: 20px; margin: 0 1px; padding: 1px 5px 0; font: inherit; text-align: center; border: 1.5px solid color-mix(in srgb, var(--cream) 55%, transparent); }
 #dio .note.hnote { max-width: 204px; cursor: default; }
 #dio .note.hnote:hover { color: var(--cream); }
+
+/* Main menu in the match's Settings asks in place (the owner, 2026-11-12: "keep the same screen"): the button turns into
+   "Are you sure?" Yes / No where it stood (.to-menu-ask, askForfeit); No puts the button back */
+html.diorama.pcwide .sheet .to-menu-ask { order: 30; margin-top: 4px; justify-content: space-between; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) > .bar.to-menu-ask > .hint { color: #FF8F78; font-weight: 700; }
+/* version B: beside the title, where Main menu was, as stencil words (Yes in Main menu's coral, No cream) */
+html.dsetmenu.diorama.pcwide #sheet > .bar.to-menu-ask { position: absolute; top: 22px; right: 18px; display: flex; flex-wrap: nowrap; align-items: center; gap: 4px 8px; min-height: 0; margin: 0; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask > .hint { font: 700 14px var(--dtype); color: #FF8F78; white-space: nowrap; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btnrow { flex-wrap: nowrap; gap: 4px; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-no) { padding: 4px 9px 1px; border: 0; background: none; box-shadow: none; font: 700 18px/1 var(--dstencil); text-transform: uppercase; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn#forfeit-yes { color: #FF8F78; opacity: 1; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn#forfeit-yes::before { content: none; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn#forfeit-no { color: #F4ECD8; opacity: .75; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-no):hover:not(:disabled):not(.x) { background: none; border: 0; opacity: 1; text-decoration: underline; text-underline-offset: 4px; }

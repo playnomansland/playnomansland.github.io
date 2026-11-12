@@ -1835,6 +1835,20 @@ html.diorama.pcwide .sheet #close { justify-self: end; align-self: start; flex: 
 #dio .note.hnote { max-width: 204px; cursor: default; }
 #dio .note.hnote:hover { color: var(--cream); }
 
+/* Main menu in the match's Settings asks in place (the owner, 2026-11-12: "keep the same screen"): the button turns into
+   "Are you sure?" Yes / No where it stood (.to-menu-ask, askForfeit); No puts the button back */
+html.diorama.pcwide .sheet .to-menu-ask { order: 30; margin-top: 4px; justify-content: space-between; }
+html.diorama.pcwide .sheet:has(#spk-music, [data-board]) > .bar.to-menu-ask > .hint { color: #FF8F78; font-weight: 700; }
+/* version B: beside the title, where Main menu was, as stencil words (Yes in Main menu's coral, No cream) */
+html.dsetmenu.diorama.pcwide #sheet > .bar.to-menu-ask { position: absolute; top: 22px; right: 18px; display: flex; flex-wrap: nowrap; align-items: center; gap: 4px 8px; min-height: 0; margin: 0; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask > .hint { font: 700 14px var(--dtype); color: #FF8F78; white-space: nowrap; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btnrow { flex-wrap: nowrap; gap: 4px; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-no) { padding: 4px 9px 1px; border: 0; background: none; box-shadow: none; font: 700 18px/1 var(--dstencil); text-transform: uppercase; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn#forfeit-yes { color: #FF8F78; opacity: 1; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn#forfeit-yes::before { content: none; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn#forfeit-no { color: #F4ECD8; opacity: .75; }
+html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-no):hover:not(:disabled):not(.x) { background: none; border: 0; opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -2860,7 +2874,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 // the launch), 'pc' (the Diorama on a computer: a fine pointer that hovers and a window at least 900 px wide, the old
 // UI on phones and tablets, whose layouts aren't done) or 'diorama' (everywhere). Its two extra fonts load only when on.
 (() => {
-  const DEF = 'pc';
+  const DEF = 'classic';
   const pcLike = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches && innerWidth >= 900; } catch (e) { return false; } };
   let pick = '';
   if (DEF === 'force') pick = 'diorama'; // the Diorama's own test page (design/diorama/game.html): always on, and it never changes this device's choice for the game
@@ -19207,7 +19221,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 3d50604'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 602ab48'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -22001,9 +22015,24 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   }
 
   // ---------- Main menu from the in-match settings: leaving a match that is still on forfeits it ----------
+  // (the owner, 2026-11-12: "don't switch out the screen"): the Settings sheet stays as it is and only its Main menu
+  // button turns into "Are you sure?" Yes / No, in the same spot; No puts the button back. What leaving costs (a
+  // forfeit, the ranked series) is the question's tooltip.
   function askForfeit() {
     if (mode === 'sandbox') { sbxExit(); return; } // Replay a round: back to the real match's result
     if (!m || phase === 'end' || mode === 'tutorial') { quitToMenu(); return; }
+    const why = foeAwayNow() ? `Your opponent is disconnected, so leaving doesn’t count as a loss for you${mode === 'net' && net.ranked ? ': they lose the ranked series' : ''}.` : mode === 'net' && net.ranked ? 'You will forfeit and lose the ranked series.' : 'You will forfeit the match.';
+    const btn = $('to-menu');
+    if (btn) {
+      const ask = document.createElement('div');
+      ask.className = 'bar to-menu-ask'; ask.title = why;
+      ask.innerHTML = `<span class="hint" id="forfeit-q">Are you sure?</span><span class="btnrow"><button class="btn primary" id="forfeit-yes" aria-describedby="forfeit-q">Yes</button><button class="btn" id="forfeit-no">No</button></span>`;
+      btn.replaceWith(ask);
+      $('forfeit-yes').addEventListener('click', forfeit);
+      $('forfeit-no').addEventListener('click', () => { ask.replaceWith(btn); btn.focus(); });
+      $('forfeit-no').focus();
+      return;
+    }
     $('sheet').innerHTML = `
       <div class="bar" data-keep><h3 id="sheet-h">Main menu</h3></div>
       <p class="big" style="margin:0">${foeAwayNow() ? `Your opponent is disconnected, so leaving doesn’t count as a loss for you${mode === 'net' && net.ranked ? ': they lose the ranked series' : ''}. Leave the match?` : mode === 'net' && net.ranked ? 'You will forfeit and lose the ranked series. Are you sure?' : 'You will forfeit the match. Are you sure?'}</p>
