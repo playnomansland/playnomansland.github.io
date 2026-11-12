@@ -1968,9 +1968,14 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
 #dio .bz #bz-back { background: none; color: var(--cream); font-size: clamp(22px, 3vh, 28px); padding-left: 4px; }
 #dio .bz #bz-back svg { width: 20px; height: 20px; }
 /* the reward: the skin's picture, its name, and what earns it */
-#dio .bz .bz-rw { display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 14px 10px 10px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(232, 150, 46, .45); clip-path: polygon(0 4%, 99% 0, 100% 96%, 1% 100%); }
+#dio .bz .bz-rw { display: grid; gap: 10px; width: 100%; padding: 12px 14px 12px 10px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(232, 150, 46, .45); clip-path: polygon(0 4%, 99% 0, 100% 96%, 1% 100%); }
 #dio .bz .bz-rw img { width: 72px; height: 72px; object-fit: contain; flex: none; }
-#dio .bz .bz-rw span { display: grid; gap: 2px; }
+#dio .bz .bz-rw > div { display: flex; align-items: center; gap: 14px; }
+#dio .bz .bz-rw > div + div { padding-top: 10px; border-top: 1px dashed rgba(232, 150, 46, .35); }
+#dio .bz .bz-rw > div > span:not(.ptitle) { display: grid; gap: 2px; }
+#dio .bz .bz-rw .ptitle { margin: 0 0 2px 4px; font-size: 26px; letter-spacing: .03em; gap: 10px; white-space: nowrap; }
+#dio .bz .bz-rw .ptitle i { width: 7px; height: 7px; }
+#dio .bz .bz-rw > .bz-rw-t { flex-direction: column; align-items: flex-start; gap: 4px; padding: 2px 0 0; }
 #dio .bz .bz-rw b { font: 700 22px/1 var(--stencil); text-transform: uppercase; color: #FFC457; }
 #dio .bz .bz-rw small { font: 600 13px var(--type); opacity: .85; }
 #dio .bz .bz-rw em { margin-top: 4px; font: 700 13px var(--type); font-style: normal; color: #F6DFA6; }
@@ -1994,3 +1999,6 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
   html.diorama #dio .bz h2 { font-size: clamp(44px, 13.5vw, 56px); white-space: normal; }
   html.diorama #dio .bz .create { font-size: clamp(26px, 8vw, 32px); }
 }
+
+/* the black Widowmaker title (2026-11-12): picked in Profile, its shard is black, so its word turns cream */
+#dio .pf-opts .seg button[style*="#0B0B0B" i][aria-pressed="true"] { color: #F4ECD8; }

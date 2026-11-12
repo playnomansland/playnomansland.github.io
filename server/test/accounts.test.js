@@ -138,10 +138,15 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 4 * 60 *
       assert.ok(br.improved && br.run.round === best3.round, 'another developer\'s earlier kill');
       // the reward: a kill within three rounds gives her brood's look for the Spiders, once; a later kill gives nothing
       const hollow = (pl) => pl.skins.find((k) => k.id === 'spiders-hollow');
-      assert.ok(best3.round <= 3 && br.reward === 'spiders-hollow' && hollow(br.player) && hollow(br.player).worn === true, 'a kill within three rounds gives the Hollow Brood skin, worn');
+      assert.ok(best3.round <= 3 && br.reward === 'spiders-hollow' && hollow(br.player) && hollow(br.player).worn === true, 'a kill within three rounds gives the Sporespreader Spider skin, worn');
       assert.ok(hollow((await ok('me', {}, d2.session)).player).worn === true, 'and it stays');
+      assert.ok(br.title === 'widowmaker' && br.player.titles.includes('widowmaker'), 'a kill within three rounds gives the black Widowmaker title too');
+      assert.ok((await ok('me', {}, d2.session)).player.titles.includes('widowmaker'), 'and it stays');
+      assert.strictEqual((await ok('title', { title: 'widowmaker' }, d2.session)).player.title, 'widowmaker', 'and it can be picked to show');
       const again = await ok('boss', send(best3), d2.session);
-      assert.ok(!again.reward && !again.player, 'the same kill again gives nothing new');
+      assert.ok(!again.reward && !again.title && !again.player, 'the same kill again gives nothing new');
+      assert.ok(!(await ok('me', {}, dv.session)).player.titles.includes('widowmaker'), 'a kill in round ' + lineB.round + ' doesn\'t give the title');
+      assert.strictEqual((await call('title', { title: 'widowmaker' }, dv.session)).status, 400, 'nor can it be picked without it');
       assert.ok(lineB.round > 3 && hollow((await ok('me', {}, dv.session)).player).worn === false, 'a kill in a later round didn\'t give it (a developer only has it to try, off)');
       const bb = await board('boss=mommy');
       assert.deepStrictEqual(bb.rows.map((r) => [r.id, r.won, r.round]), [[d2.player.id, true, best3.round], [dv.player.id, true, lineB.round]], 'the board: the earlier round first');

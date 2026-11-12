@@ -855,6 +855,10 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   text-shadow: 0 0 8px var(--tg), 0 0 2px var(--tg); animation: tglow 2.6s ease-in-out infinite; }
 .ptitle i { width: 5px; height: 5px; background: var(--tc); transform: rotate(45deg); box-shadow: 0 0 6px var(--tg); }
 .ptitle.big { font-size: 22px; gap: 12px; padding: 6px 22px; }
+/* the black Widowmaker title (2026-11-12): black letters need an edge on the dark screens, so a thin cream line and her
+   eyes' red glow, wherever a title is drawn (its colour is set inline as --tc, so this finds it by that colour) */
+[style*="--tc:#0B0B0B" i], [style*="--tc: #0B0B0B" i] { text-shadow: 0 0 1px rgba(244, 236, 216, .95), 0 0 1px rgba(244, 236, 216, .95), 0 0 7px rgba(255, 74, 54, .9), 0 0 14px rgba(255, 74, 54, .55) !important; }
+:is([style*="--tc:#0B0B0B" i], [style*="--tc: #0B0B0B" i]) i { box-shadow: 0 0 0 1px rgba(244, 236, 216, .9), 0 0 7px rgba(255, 74, 54, .9) !important; }
 .ptitle.big i { width: 9px; height: 9px; }
 @keyframes tglow { 50% { text-shadow: 0 0 14px var(--tg), 0 0 4px var(--tg); } }
 .vs-row { display: flex; justify-content: center; align-items: center; gap: 12px; }
@@ -1320,7 +1324,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         <button class="create" id="bz-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button></div>
     </div>
     <div class="bz-right">
-      <h3 class="bz-h">Reward</h3>
+      <h3 class="bz-h">Rewards</h3>
       <div class="bz-rw" id="bz-rw"></div>
       <h3 class="bz-h">Leaderboard</h3>
       <p class="bz-leg" id="bz-leg"></p>
@@ -4532,8 +4536,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     bababa: { name: 'BABABABA', col: '#FF8A2A', glow: 'rgba(255, 138, 42, 0.6)' },
     initiate: { name: 'Initiate', col: '#7FD3FF', glow: 'rgba(127, 211, 255, 0.6)' },
     goodsport: { name: 'Good sport', col: '#C6ECFF', glow: 'rgba(198, 236, 255, 0.55)' }, // 2026-11-04: GGs from opponents (a paler blue than Initiate)
+    widowmaker: { name: 'Widowmaker', col: '#0B0B0B', glow: 'rgba(255, 74, 54, 0.75)' }, // 2026-11-12: killed the weekly boss within Boss.REWARDS.title rounds. Black, with her eyes' red glow (.ptitle halo below: black on the dark screens)
   };
-  const TITLE_WHY = { day1: 'Day 1: you were here in the very first week.', dev: 'DEV: you make this game.', legend: 'Legend: you ended a month in the top 5 of the leaderboard.', bababa: 'BABABABA: you joined the No Mans Land Discord.', initiate: 'Initiate: you solved every puzzle.', goodsport: 'Good sport: opponents said GG to you 10 times.' };
+  const TITLE_WHY = { day1: 'Day 1: you were here in the very first week.', dev: 'DEV: you make this game.', legend: 'Legend: you ended a month in the top 5 of the leaderboard.', bababa: 'BABABABA: you joined the No Mans Land Discord.', initiate: 'Initiate: you solved every puzzle.', goodsport: 'Good sport: opponents said GG to you 10 times.', widowmaker: 'Widowmaker: you killed the Mommy within 3 rounds.' };
   const titleHtml = (id, big) => TITLES[id] ? `<span class="ptitle${big ? ' big' : ''}" style="--tc:${TITLES[id].col};--tg:${TITLES[id].glow}"><i aria-hidden="true"></i>${esc(TITLES[id].name)}<i aria-hidden="true"></i></span>` : '';
   // a username with its title under it
   const nameplate = (tag, title, cls = '') => `<span class="nameplate ${cls}"><span class="np-tag">${esc(tag)}</span>${titleHtml(title)}</span>`;
@@ -7296,7 +7301,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const sec = (title, items) => `<h4 style="margin:10px 0 2px">${title}</h4><ul class="helplist">${items.filter(Boolean).map(x => `<li>${x}</li>`).join('')}</ul>`;
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h" data-boss-read>Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
       <p class="hint" style="margin:0 0 6px">The clock is paused while you read.</p>
-      <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. Kill her within ${b(C.titleRound + ' rounds')} and her brood’s look is yours: the ${b('Hollow Brood')} skin for your Spiders.</p>
+      <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. Kill her within ${b(Boss.REWARDS.skin + ' rounds')} and her brood’s look is yours: the ${b('Sporespreader Spider')} skin for your Spiders. Within ${b(Boss.REWARDS.title + ' rounds')}, the black ${b('Widowmaker')} title too.</p>
       ${sec('Hanging', [
         `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage, and she can’t be stunned, slowed, rooted or moved.`,
         mo.lastPick ? 'Your units only shoot her while she hangs if none of her nests or spiders are left to hit.' : ''])}
@@ -7361,9 +7366,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (res.status === 422) return say(`The game server played this run again and its rules didn’t allow it, so it is not on the leaderboard${res.why ? ' (' + res.why + ')' : ''}.`);
       if (res.status !== 200 || !Array.isArray(res.rows) || !res.run) return say('This run couldn’t be sent to the leaderboard.');
       bossBoard.rows = res.rows; bossBoard.at = now();
-      if (res.reward && res.player) acctTake(res); // the Hollow Brood skin: the account has it now (the menu shows the new-skin note)
+      if ((res.reward || res.title) && res.player) acctTake(res); // the Sporespreader Spider skin, the Widowmaker title: the account has them now (the menu shows the new-skin note and the new-title popup)
       const at = res.rows.findIndex(x => x.id === acct.id), same = res.run.won === !!r.dead && res.run.round === r.round;
-      say(`The game server played your run again${same ? '' : ' and got: ' + bossRunText(res.run).toLowerCase()}. ${res.improved ? 'It is your best so far' : 'Your best stays: ' + bossRunText(res.best).toLowerCase()}${at >= 0 ? `, number ${at + 1} of ${res.rows.length} on the leaderboard.` : '.'}${res.reward && Shapes.SKINS[res.reward] ? ` The ${Shapes.SKINS[res.reward].name} skin for your ${Shapes.SKINS[res.reward].unit} is yours now.` : ''}`);
+      say(`The game server played your run again${same ? '' : ' and got: ' + bossRunText(res.run).toLowerCase()}. ${res.improved ? 'It is your best so far' : 'Your best stays: ' + bossRunText(res.best).toLowerCase()}${at >= 0 ? `, number ${at + 1} of ${res.rows.length} on the leaderboard.` : '.'}${res.title && TITLES[res.title] ? ` The ${TITLES[res.title].name} title is yours now.` : ''}${res.reward && Shapes.SKINS[res.reward] ? ` The ${Shapes.SKINS[res.reward].name} skin for your ${Shapes.SKINS[res.reward].unit} is yours now.` : ''}`);
     });
   }
   // The nest map (the deploy panel's Nest map): where her nests hang in each round, on five small boards. The places
@@ -7401,12 +7406,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       `Her health: <b class="num">${r.hpLeft.toLocaleString('en')}</b> of ${m.boss.max.toLocaleString('en')}.`,
       r.treasury === false ? 'Her spiders broke your treasury.' : '',
     ].filter(Boolean).map(x => `<p>${x}</p>`).join('');
-    const won = r.dead, title = won && r.round <= Boss.CFG.titleRound;
+    const won = r.dead, RW = Boss.REWARDS, title = won && r.round <= RW.title, skin = won && r.round <= RW.skin;
     const head = won ? `Mommy is dead<br>round ${r.round}` : m.over ? 'She survived' : `Round&nbsp;${r.round}<br>done`;
     overlay(`<div class="card">
       <span class="eyebrow">Mommy · weekly boss</span>
       <h2 class="${won ? 'you' : m.over ? 'foe' : ''}">${head}</h2>
-      ${won ? `<p class="big">${title ? 'Within ' + Boss.CFG.titleRound + ' rounds: her brood’s look, the Hollow Brood skin for your Spiders, is the reward.' : 'Kill her within ' + Boss.CFG.titleRound + ' rounds for the Hollow Brood skin for your Spiders.'}</p>` : ''}
+      ${won ? `<p class="big">${title ? `Within ${RW.title} rounds: the ${titleHtml('widowmaker')} title and her brood’s look, the Sporespreader Spider skin for your Spiders.` : skin ? `Within ${RW.skin} rounds: her brood’s look, the Sporespreader Spider skin for your Spiders. Kill her within ${RW.title} for the ${titleHtml('widowmaker')} title.` : `Kill her within ${RW.skin} rounds for the Sporespreader Spider skin for your Spiders, within ${RW.title} for the ${titleHtml('widowmaker')} title.`}</p>` : ''}
       ${lines}
       ${m.over ? acct ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : '<p>Play as a guest or sign in (Profile) to get your runs on her leaderboard.</p>' : ''}
       <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>

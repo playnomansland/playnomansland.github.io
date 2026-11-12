@@ -1385,7 +1385,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
       const cur = new THREE.Mesh(webGeo, webMats[1]); cur.position.set(w * 0.18, ht * 0.45, back(ht * 0.45) + 0.8); cur.rotation.set(-lean, 0.08, 0.1, 'YXZ'); cur.scale.set(w * 0.62, ht * 0.75, 1); cur.renderOrder = 3; tg.add(cur);
       tg.traverse((o) => { o.raycast = () => {}; });
       // the spiderlings wear the same look as her spiders in the fight: the game's 'spider:hollow' model (opts.models;
-      // the Hollow Brood skin), its band in the enemy's colour; it faces -z, so lingFlip turns it round (tickLings)
+      // the Sporespreader Spider skin), its band in the enemy's colour; it faces -z, so lingFlip turns it round (tickLings)
       const pt = opts.models && opts.models.parts('spider:hollow');
       if (pt && !lingMats.team) lingMats.team = new THREE.MeshLambertMaterial({ flatShading: true });
       if (pt) lingMats.team.color.set(h.teamCol || '#D9534F').multiplyScalar(0.8);

@@ -31,7 +31,7 @@
     fightSecs: 30,
     banned: ['Meteor Caller', 'Assassin', 'Rogue', 'Truespear', 'Sun Priest'],
     maxPerType: 3,      // squads of one unit type at a time
-    titleRound: 3,      // beating her by this round earns the "Mommy" title (not given out yet)
+    titleRound: 3,      // (kept for the rules tag: what a kill earns is REWARDS below, outside it)
     mommy: {
       hp: 54000, col: 5.5, row: 5, // the front edge of her zone
       hang: 0.15,       // share of damage she takes while hanging
@@ -408,7 +408,11 @@
   // same tag, and the page and the server only agree on a run when theirs are the same
   const rulesTag = (units, cfg = CFG) => { const t = JSON.stringify(cfg) + JSON.stringify(units); let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
 
-  const api = { CFG, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
+  // what a kill earns, by the round she died in (2026-11-12, the owner): within `title` rounds the black Widowmaker title,
+  // within `skin` rounds her brood's look for your Spiders (the Sporespreader Spider skin). Kept out of CFG so a change here
+  // doesn't start a new leaderboard (rulesTag hashes CFG). The game server gives both (server/src/accounts.js)
+  const REWARDS = { title: 3, skin: 4 };
+  const api = { CFG, REWARDS, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Boss = api;
 })(typeof window !== 'undefined' ? window : globalThis);

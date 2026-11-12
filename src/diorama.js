@@ -201,24 +201,43 @@
         tree: (i) => { const g = G(); put(g, kk(['acacia_A', 'acacia_B', 'acacia_C'][i % 3], 1.9), 0, 0, 0); return g; },
         accent: () => { const g = G(); const m = mesh(new THREE.ConeGeometry(0.24, 1.0, 7), mat('#A9603C')); m.position.y = 0.5; m.rotation.z = 0.12; g.add(m); put(g, cone(0.14, 0.45, '#9A5634'), 0.25, 0.22, 0.1); put(g, cone(0.1, 0.3, '#B0683F'), -0.2, 0.15, 0.12); return g; },
       },
+      // the Hollow (2026-11-12): the Mommy's lair, only on her screen (HOLLOW below; the fight's own is src/scenery3d.js).
+      // A root arched out of the ground with shelf fungus on it, dead trunks with the orange fungus, silk cocoons
+      hollow: {
+        hero: () => { const g = G(); const BARK = '#3B2E22', FUN = '#E8962E', RIM = '#F6DFA6';
+          for (const [x, r, rz] of [[0, 1.05, 0], [0.5, 0.75, 0.2]]) { const a = mesh(new THREE.TorusGeometry(r, 0.15, 5, 12, Math.PI), mat(BARK)); a.position.set(x, 0, x * 0.6); a.rotation.set(0, 0.4, rz); g.add(a); }
+          for (const [x, y, z, w] of [[-0.62, 0.7, 0.05, 0.3], [0.2, 1.0, -0.1, 0.24], [0.62, 0.52, 0.2, 0.2]]) { put(g, cyl(w * 1.1, w * 0.8, 0.06, RIM, 8), x, y, z).scale.set(1.3, 1, 0.7); put(g, cyl(w * 0.92, w * 0.92, 0.045, FUN, 8), x, y + 0.045, z).scale.set(1.3, 1, 0.7); }
+          put(g, blob(0.26, '#E6DED0', 1), -0.2, 0.4, 0.55).scale.set(0.8, 1.5, 0.8); return g; }, // a cocoon in its shadow
+        tree: (i) => { const g = G(); trunk(g, 0.16, 1.4 + (i % 3) * 0.25, '#33281E', (i % 2 ? 1 : -1) * 0.05);
+          for (const [y, a, w] of [[0.45, 0.4, 0.22], [0.8, 2.6, 0.17], [1.1, 4.8, 0.14]]) { const f = put(g, cyl(w, w * 0.85, 0.05, '#E8962E', 7), Math.cos(a) * 0.17, y, Math.sin(a) * 0.17); f.scale.set(1.2, 1, 0.8); f.rotation.y = -a; }
+          return g; },
+        accent: () => { const g = G(); put(g, blob(0.22, '#E6DED0', 1), 0, 0.32, 0).scale.set(0.8, 1.6, 0.8); put(g, blob(0.16, '#D9D0BF', 1), 0.3, 0.22, 0.12).scale.set(0.8, 1.5, 0.8);
+          put(g, glow(0.05, '#FFC457'), -0.25, 0.08, 0.15); put(g, glow(0.04, '#FFC457'), -0.32, 0.06, -0.05); return g; },
+      },
     };
+    // the Hollow's island for her screen (not a battlefield you can pick: the board's look of every boss run is hers)
+    const HOLLOW = { id: 'hollow', name: 'The Hollow', side: '#3E3226', soil: ['#4A3A2B', '#3A2E22', '#2C2219'], kit: 'hollow' };
     // the slots, the same on every battlefield: round the edges, clear of the keeps, treasuries and units
     const SLOTS = { hero: [[4.7, -7.3, 1, -0.4]], tree: [[-6.25, 8.2, 1.1], [6.35, 8.35, 0.95], [6.35, 3.1, 0.8], [-6.3, 3.3, 0.75], [-6.2, -8.0, 1.0], [6.35, -4.4, 0.85]], accent: [[-6.35, 6.0, 1], [6.3, 0.7, 1], [-6.3, -4.0, 1]] };
     const kit = G();
     let lookI = 0, kitGrow = [];
     function setLook(i, animate) {
-      lookI = (i + LOOKS.length) % LOOKS.length; const L = LOOKS[lookI], c = floorCv.getContext('2d');
+      lookI = (i + LOOKS.length) % LOOKS.length; paintLook(LOOKS[lookI], animate, 11 + lookI);
+      document.dispatchEvent(new CustomEvent('battlefield'));
+    }
+    // the island in a look: its ground (Floors), rim and soil colours and its miniatures
+    function paintLook(L, animate, sd) {
+      const c = floorCv.getContext('2d');
       c.clearRect(0, 0, floorCv.width, floorCv.height);
       // the game's own painter for the look's ground, on the Standard map's grid (as lookThumb does)
       Game.useGrid(STD_MAP); try { Floors.floor(c, floorCv.width, floorCv.height, FT, (Floors.LOOKS[L.id] || {}).floor || 'meadow'); } finally { Game.useGrid(m); }
       if (flat) paintFlat();
       floorTex.needsUpdate = true; top.material.color.set(L.side); soil.forEach((b, k) => b.material.color.set(L.soil[k])); root.material.color.set(L.soil[2]);
       for (const o of [...kit.children]) { kit.remove(o); o.traverse(m => { if (m.geometry && !Object.values(kkCache).includes(m.geometry)) m.geometry.dispose(); }); }
-      seed = 11 + lookI; const K = KITS[L.kit]; kitGrow = [];
+      seed = sd; const K = KITS[L.kit]; kitGrow = [];
       for (const [kind, list] of Object.entries(SLOTS)) list.forEach(([x, z, s, ry], k) => { const o = K[kind](k); o.position.set(x, 0, z); o.rotation.y = ry ?? rnd() * 6; o.userData.s = s; o.scale.setScalar(animate ? 0.001 : s); kit.add(o); kitGrow.push(o); });
       kitGrow.forEach((o, k) => { o.userData.t0 = animate ? k * 0.045 : -1; });
       changedAt = animate ? performance.now() / 1000 : -9;
-      document.dispatchEvent(new CustomEvent('battlefield'));
     }
     let changedAt = -9;
     // the golem's rock (it stands on it), the same on every battlefield
@@ -649,7 +668,7 @@
       for (const el of [...body.querySelectorAll('.note:not(.pnote):not(.qnote):not(.hnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
-          const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
+          const on = !body.classList.contains('welcome') && !body.classList.contains('bz') && $('dio-stay').hidden; el.style.display = on ? '' : 'none'; // (not on her screen: she is fought in the Hollow only)
           if (on && !phone() && !helpTour() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf') && !body.classList.contains('how-over-bf')) { // (no line to the island while the menu guide's tour is on: its note is the only one. The button stays)
             const r = el.getBoundingClientRect(), ty = r.top - 4;
             // the point is picked where the camera is heading and kept while it moves, so the line glides with the island
@@ -1312,10 +1331,10 @@
 
     // ── the weekly boss (2026-11-12): her screen before a run (the owner: "don't go into the game right away"). From her
     // Limited event note on the menu, a click on her on the island, or Puzzles' boss row. How to play (her rules in short,
-    // from Boss.CFG: the whole sheet is openBossRules, in the run), the reward (the Hollow Brood skin) and her
+    // from Boss.CFG: the whole sheet is openBossRules, in the run), the rewards (Boss.REWARDS: the Widowmaker title, the Sporespreader Spider skin) and her
     // leaderboard (bossBoardLoad, the same board as Rankings' Mommy tab). FIGHT HER starts the run (startBoss); the end of
     // a run comes back here (home.back 'boss' → home.boss) ──
-    let bzFrom = null; // where her screen was opened from, for Back: 'puz' (Puzzles) or the menu
+    let bzFrom = null, hollowOn = false; // where her screen was opened from, for Back: 'puz' (Puzzles) or the menu
     function bzView() {
       if (phone()) return { az: 0.42, el: 0.6, zoom: 9.5, at: [0.6, 0.6, -1.2], off: [0, 0] }; // (a phone: the island over the page, as Puzzles)
       const pr = body.querySelector('.bz').getBoundingClientRect(), sw = innerWidth, sh = innerHeight;
@@ -1333,9 +1352,12 @@
         `Keep a unit in her reach, or she throws ${b('web mortars')} at your biggest clump. Her bite changes every round.`,
         `${C.startGold} gold to start, a treasury instead of a tower, one free move and one free extra deployment a round. At most ${C.maxPerType} squads of one unit.`,
       ].map(x => `<li>${x}</li>`).join('');
-      const k = SKIN['spiders-hollow'], own = !!(A && (A.skins || []).some(x => x.id === 'spiders-hollow'));
-      $('bz-rw').innerHTML = k ? `${k.pic ? `<img src="${esc(k.pic)}" alt="">` : ''}<span><b>${esc(k.name)}</b><small>A skin for your ${esc(k.unit)}</small>
-        <em${own ? ' class="own"' : ''}>${own ? '✓ Yours' : `Kill her within ${C.titleRound} rounds`}</em></span>` : '';
+      // the rewards (Boss.REWARDS): the black Widowmaker title within 3 rounds, the Sporespreader Spider skin within 4
+      const RW = Boss.REWARDS, k = SKIN['spiders-hollow'], own = !!(A && (A.skins || []).some(x => x.id === 'spiders-hollow')), T = TITLES.widowmaker, ownT = !!(A && (A.titles || []).includes('widowmaker'));
+      $('bz-rw').innerHTML = `<div class="bz-rw-t"><span class="ptitle" style="--tc:${T.col};--tg:${T.glow}"><i></i>${esc(T.name)}<i></i></span><span><small>A title under your name</small>
+          <em${ownT ? ' class="own"' : ''}>${ownT ? '✓ Yours' : `Kill her within ${RW.title} rounds`}</em></span></div>` +
+        (k ? `<div class="bz-rw-s">${k.pic ? `<img src="${esc(k.pic)}" alt="">` : ''}<span><b>${esc(k.name)}</b><small>A skin for your ${esc(k.unit)}</small>
+          <em${own ? ' class="own"' : ''}>${own ? '✓ Yours' : `Kill her within ${RW.skin} rounds`}</em></span></div>` : '');
       drawBossBoard();
     }
     function drawBossBoard() {
@@ -1356,9 +1378,11 @@
       openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); closePuz(); closeHow(); leavePlay(); unpin();
       body.classList.add('bz'); home.boss = true; hovered = null; setHover(null); backBtn.textContent = '← Menu'; // (the phones' Back)
       buildBossStage(); drawBoss(); want = bzView();
+      if (!hollowOn) { hollowOn = true; paintLook(HOLLOW, !still, 41); } // her lair: the only battlefield she is fought on
     }
     function closeBoss(back) {
       if (!body.classList.contains('bz')) return; body.classList.remove('bz'); home.boss = false; want = VIEWS.play;
+      if (hollowOn) { hollowOn = false; setLook(lookI, !still); } // your own battlefield again
       if (back && bzFrom === 'puz') openPuz(); bzFrom = null;
     }
     addEventListener('resize', () => { if (body.classList.contains('bz')) want = bzView(); });

@@ -2115,9 +2115,14 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
 #dio .bz #bz-back { background: none; color: var(--cream); font-size: clamp(22px, 3vh, 28px); padding-left: 4px; }
 #dio .bz #bz-back svg { width: 20px; height: 20px; }
 /* the reward: the skin's picture, its name, and what earns it */
-#dio .bz .bz-rw { display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 14px 10px 10px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(232, 150, 46, .45); clip-path: polygon(0 4%, 99% 0, 100% 96%, 1% 100%); }
+#dio .bz .bz-rw { display: grid; gap: 10px; width: 100%; padding: 12px 14px 12px 10px; background: rgba(0, 0, 0, .22); border: 1px solid rgba(232, 150, 46, .45); clip-path: polygon(0 4%, 99% 0, 100% 96%, 1% 100%); }
 #dio .bz .bz-rw img { width: 72px; height: 72px; object-fit: contain; flex: none; }
-#dio .bz .bz-rw span { display: grid; gap: 2px; }
+#dio .bz .bz-rw > div { display: flex; align-items: center; gap: 14px; }
+#dio .bz .bz-rw > div + div { padding-top: 10px; border-top: 1px dashed rgba(232, 150, 46, .35); }
+#dio .bz .bz-rw > div > span:not(.ptitle) { display: grid; gap: 2px; }
+#dio .bz .bz-rw .ptitle { margin: 0 0 2px 4px; font-size: 26px; letter-spacing: .03em; gap: 10px; white-space: nowrap; }
+#dio .bz .bz-rw .ptitle i { width: 7px; height: 7px; }
+#dio .bz .bz-rw > .bz-rw-t { flex-direction: column; align-items: flex-start; gap: 4px; padding: 2px 0 0; }
 #dio .bz .bz-rw b { font: 700 22px/1 var(--stencil); text-transform: uppercase; color: #FFC457; }
 #dio .bz .bz-rw small { font: 600 13px var(--type); opacity: .85; }
 #dio .bz .bz-rw em { margin-top: 4px; font: 700 13px var(--type); font-style: normal; color: #F6DFA6; }
@@ -2141,6 +2146,9 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
   html.diorama #dio .bz h2 { font-size: clamp(44px, 13.5vw, 56px); white-space: normal; }
   html.diorama #dio .bz .create { font-size: clamp(26px, 8vw, 32px); }
 }
+
+/* the black Widowmaker title (2026-11-12): picked in Profile, its shard is black, so its word turns cream */
+#dio .pf-opts .seg button[style*="#0B0B0B" i][aria-pressed="true"] { color: #F4ECD8; }
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -2967,6 +2975,10 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   text-shadow: 0 0 8px var(--tg), 0 0 2px var(--tg); animation: tglow 2.6s ease-in-out infinite; }
 .ptitle i { width: 5px; height: 5px; background: var(--tc); transform: rotate(45deg); box-shadow: 0 0 6px var(--tg); }
 .ptitle.big { font-size: 22px; gap: 12px; padding: 6px 22px; }
+/* the black Widowmaker title (2026-11-12): black letters need an edge on the dark screens, so a thin cream line and her
+   eyes' red glow, wherever a title is drawn (its colour is set inline as --tc, so this finds it by that colour) */
+[style*="--tc:#0B0B0B" i], [style*="--tc: #0B0B0B" i] { text-shadow: 0 0 1px rgba(244, 236, 216, .95), 0 0 1px rgba(244, 236, 216, .95), 0 0 7px rgba(255, 74, 54, .9), 0 0 14px rgba(255, 74, 54, .55) !important; }
+:is([style*="--tc:#0B0B0B" i], [style*="--tc: #0B0B0B" i]) i { box-shadow: 0 0 0 1px rgba(244, 236, 216, .9), 0 0 7px rgba(255, 74, 54, .9) !important; }
 .ptitle.big i { width: 9px; height: 9px; }
 @keyframes tglow { 50% { text-shadow: 0 0 14px var(--tg), 0 0 4px var(--tg); } }
 .vs-row { display: flex; justify-content: center; align-items: center; gap: 12px; }
@@ -3432,7 +3444,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         <button class="create" id="bz-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H7M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4"/></svg>Back</button></div>
     </div>
     <div class="bz-right">
-      <h3 class="bz-h">Reward</h3>
+      <h3 class="bz-h">Rewards</h3>
       <div class="bz-rw" id="bz-rw"></div>
       <h3 class="bz-h">Leaderboard</h3>
       <p class="bz-leg" id="bz-leg"></p>
@@ -3716,7 +3728,7 @@ const Shapes = (() => {
     'firemage-ember': { unit: 'Fire Mage', name: 'Ember Robe', text: 'A Fire Mage in an ember-trimmed robe, a flame in each hand.', model: 'wizard:fire:ember', pic: 'img/skins/firemage-ember.png' },
     // 2026-11-12: the Mommy boss's own brood. The reward for killing her within three rounds (server accounts.js BOSS:
     // given when the server's replay of the run agrees)
-    'spiders-hollow': { unit: 'Spiders', name: 'Hollow Brood', text: 'Spiders from the Mommy’s lair: bark-brown, shelf fungus down their backs, red eyes and feet pale with silk.', model: 'spider:hollow', pic: 'img/skins/spiders-hollow.png', boss: 'mommy' },
+    'spiders-hollow': { unit: 'Spiders', name: 'Sporespreader Spider', text: 'Spiders from the Mommy’s lair: bark-brown, shelf fungus down their backs, red eyes and feet pale with silk.', model: 'spider:hollow', pic: 'img/skins/spiders-hollow.png', boss: 'mommy' },
   };
   let worn = [{}, {}]; // per side: unit name -> skin
   function useSkins(lists) {
@@ -10820,7 +10832,7 @@ if (typeof module !== 'undefined') module.exports = Game;
     fightSecs: 30,
     banned: ['Meteor Caller', 'Assassin', 'Rogue', 'Truespear', 'Sun Priest'],
     maxPerType: 3,      // squads of one unit type at a time
-    titleRound: 3,      // beating her by this round earns the "Mommy" title (not given out yet)
+    titleRound: 3,      // (kept for the rules tag: what a kill earns is REWARDS below, outside it)
     mommy: {
       hp: 54000, col: 5.5, row: 5, // the front edge of her zone
       hang: 0.15,       // share of damage she takes while hanging
@@ -11197,7 +11209,11 @@ if (typeof module !== 'undefined') module.exports = Game;
   // same tag, and the page and the server only agree on a run when theirs are the same
   const rulesTag = (units, cfg = CFG) => { const t = JSON.stringify(cfg) + JSON.stringify(units); let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
 
-  const api = { CFG, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
+  // what a kill earns, by the round she died in (2026-11-12, the owner): within `title` rounds the black Widowmaker title,
+  // within `skin` rounds her brood's look for your Spiders (the Sporespreader Spider skin). Kept out of CFG so a change here
+  // doesn't start a new leaderboard (rulesTag hashes CFG). The game server gives both (server/src/accounts.js)
+  const REWARDS = { title: 3, skin: 4 };
+  const api = { CFG, REWARDS, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Boss = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -19539,7 +19555,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 1eabfc0'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · b6cb368'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -21606,8 +21622,9 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     bababa: { name: 'BABABABA', col: '#FF8A2A', glow: 'rgba(255, 138, 42, 0.6)' },
     initiate: { name: 'Initiate', col: '#7FD3FF', glow: 'rgba(127, 211, 255, 0.6)' },
     goodsport: { name: 'Good sport', col: '#C6ECFF', glow: 'rgba(198, 236, 255, 0.55)' }, // 2026-11-04: GGs from opponents (a paler blue than Initiate)
+    widowmaker: { name: 'Widowmaker', col: '#0B0B0B', glow: 'rgba(255, 74, 54, 0.75)' }, // 2026-11-12: killed the weekly boss within Boss.REWARDS.title rounds. Black, with her eyes' red glow (.ptitle halo below: black on the dark screens)
   };
-  const TITLE_WHY = { day1: 'Day 1: you were here in the very first week.', dev: 'DEV: you make this game.', legend: 'Legend: you ended a month in the top 5 of the leaderboard.', bababa: 'BABABABA: you joined the No Mans Land Discord.', initiate: 'Initiate: you solved every puzzle.', goodsport: 'Good sport: opponents said GG to you 10 times.' };
+  const TITLE_WHY = { day1: 'Day 1: you were here in the very first week.', dev: 'DEV: you make this game.', legend: 'Legend: you ended a month in the top 5 of the leaderboard.', bababa: 'BABABABA: you joined the No Mans Land Discord.', initiate: 'Initiate: you solved every puzzle.', goodsport: 'Good sport: opponents said GG to you 10 times.', widowmaker: 'Widowmaker: you killed the Mommy within 3 rounds.' };
   const titleHtml = (id, big) => TITLES[id] ? `<span class="ptitle${big ? ' big' : ''}" style="--tc:${TITLES[id].col};--tg:${TITLES[id].glow}"><i aria-hidden="true"></i>${esc(TITLES[id].name)}<i aria-hidden="true"></i></span>` : '';
   // a username with its title under it
   const nameplate = (tag, title, cls = '') => `<span class="nameplate ${cls}"><span class="np-tag">${esc(tag)}</span>${titleHtml(title)}</span>`;
@@ -24432,7 +24449,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const sec = (title, items) => `<h4 style="margin:10px 0 2px">${title}</h4><ul class="helplist">${items.filter(Boolean).map(x => `<li>${x}</li>`).join('')}</ul>`;
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h" data-boss-read>Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
       <p class="hint" style="margin:0 0 6px">The clock is paused while you read.</p>
-      <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. Kill her within ${b(C.titleRound + ' rounds')} and her brood’s look is yours: the ${b('Hollow Brood')} skin for your Spiders.</p>
+      <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. Kill her within ${b(Boss.REWARDS.skin + ' rounds')} and her brood’s look is yours: the ${b('Sporespreader Spider')} skin for your Spiders. Within ${b(Boss.REWARDS.title + ' rounds')}, the black ${b('Widowmaker')} title too.</p>
       ${sec('Hanging', [
         `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage, and she can’t be stunned, slowed, rooted or moved.`,
         mo.lastPick ? 'Your units only shoot her while she hangs if none of her nests or spiders are left to hit.' : ''])}
@@ -24497,9 +24514,9 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (res.status === 422) return say(`The game server played this run again and its rules didn’t allow it, so it is not on the leaderboard${res.why ? ' (' + res.why + ')' : ''}.`);
       if (res.status !== 200 || !Array.isArray(res.rows) || !res.run) return say('This run couldn’t be sent to the leaderboard.');
       bossBoard.rows = res.rows; bossBoard.at = now();
-      if (res.reward && res.player) acctTake(res); // the Hollow Brood skin: the account has it now (the menu shows the new-skin note)
+      if ((res.reward || res.title) && res.player) acctTake(res); // the Sporespreader Spider skin, the Widowmaker title: the account has them now (the menu shows the new-skin note and the new-title popup)
       const at = res.rows.findIndex(x => x.id === acct.id), same = res.run.won === !!r.dead && res.run.round === r.round;
-      say(`The game server played your run again${same ? '' : ' and got: ' + bossRunText(res.run).toLowerCase()}. ${res.improved ? 'It is your best so far' : 'Your best stays: ' + bossRunText(res.best).toLowerCase()}${at >= 0 ? `, number ${at + 1} of ${res.rows.length} on the leaderboard.` : '.'}${res.reward && Shapes.SKINS[res.reward] ? ` The ${Shapes.SKINS[res.reward].name} skin for your ${Shapes.SKINS[res.reward].unit} is yours now.` : ''}`);
+      say(`The game server played your run again${same ? '' : ' and got: ' + bossRunText(res.run).toLowerCase()}. ${res.improved ? 'It is your best so far' : 'Your best stays: ' + bossRunText(res.best).toLowerCase()}${at >= 0 ? `, number ${at + 1} of ${res.rows.length} on the leaderboard.` : '.'}${res.title && TITLES[res.title] ? ` The ${TITLES[res.title].name} title is yours now.` : ''}${res.reward && Shapes.SKINS[res.reward] ? ` The ${Shapes.SKINS[res.reward].name} skin for your ${Shapes.SKINS[res.reward].unit} is yours now.` : ''}`);
     });
   }
   // The nest map (the deploy panel's Nest map): where her nests hang in each round, on five small boards. The places
@@ -24537,12 +24554,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       `Her health: <b class="num">${r.hpLeft.toLocaleString('en')}</b> of ${m.boss.max.toLocaleString('en')}.`,
       r.treasury === false ? 'Her spiders broke your treasury.' : '',
     ].filter(Boolean).map(x => `<p>${x}</p>`).join('');
-    const won = r.dead, title = won && r.round <= Boss.CFG.titleRound;
+    const won = r.dead, RW = Boss.REWARDS, title = won && r.round <= RW.title, skin = won && r.round <= RW.skin;
     const head = won ? `Mommy is dead<br>round ${r.round}` : m.over ? 'She survived' : `Round&nbsp;${r.round}<br>done`;
     overlay(`<div class="card">
       <span class="eyebrow">Mommy · weekly boss</span>
       <h2 class="${won ? 'you' : m.over ? 'foe' : ''}">${head}</h2>
-      ${won ? `<p class="big">${title ? 'Within ' + Boss.CFG.titleRound + ' rounds: her brood’s look, the Hollow Brood skin for your Spiders, is the reward.' : 'Kill her within ' + Boss.CFG.titleRound + ' rounds for the Hollow Brood skin for your Spiders.'}</p>` : ''}
+      ${won ? `<p class="big">${title ? `Within ${RW.title} rounds: the ${titleHtml('widowmaker')} title and her brood’s look, the Sporespreader Spider skin for your Spiders.` : skin ? `Within ${RW.skin} rounds: her brood’s look, the Sporespreader Spider skin for your Spiders. Kill her within ${RW.title} for the ${titleHtml('widowmaker')} title.` : `Kill her within ${RW.skin} rounds for the Sporespreader Spider skin for your Spiders, within ${RW.title} for the ${titleHtml('widowmaker')} title.`}</p>` : ''}
       ${lines}
       ${m.over ? acct ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : '<p>Play as a guest or sign in (Profile) to get your runs on her leaderboard.</p>' : ''}
       <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>
@@ -25527,7 +25544,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
   // <base>, so there it looked for design/diorama/vendor/... and failed: "Importing a module script failed" (2026-11-10)
   const threeSrc = () => new URL(THREE_URL, document.baseURI).href;
-  const V3D = '74cf940821'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '391a81a22b'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
@@ -30005,24 +30022,43 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         tree: (i) => { const g = G(); put(g, kk(['acacia_A', 'acacia_B', 'acacia_C'][i % 3], 1.9), 0, 0, 0); return g; },
         accent: () => { const g = G(); const m = mesh(new THREE.ConeGeometry(0.24, 1.0, 7), mat('#A9603C')); m.position.y = 0.5; m.rotation.z = 0.12; g.add(m); put(g, cone(0.14, 0.45, '#9A5634'), 0.25, 0.22, 0.1); put(g, cone(0.1, 0.3, '#B0683F'), -0.2, 0.15, 0.12); return g; },
       },
+      // the Hollow (2026-11-12): the Mommy's lair, only on her screen (HOLLOW below; the fight's own is src/scenery3d.js).
+      // A root arched out of the ground with shelf fungus on it, dead trunks with the orange fungus, silk cocoons
+      hollow: {
+        hero: () => { const g = G(); const BARK = '#3B2E22', FUN = '#E8962E', RIM = '#F6DFA6';
+          for (const [x, r, rz] of [[0, 1.05, 0], [0.5, 0.75, 0.2]]) { const a = mesh(new THREE.TorusGeometry(r, 0.15, 5, 12, Math.PI), mat(BARK)); a.position.set(x, 0, x * 0.6); a.rotation.set(0, 0.4, rz); g.add(a); }
+          for (const [x, y, z, w] of [[-0.62, 0.7, 0.05, 0.3], [0.2, 1.0, -0.1, 0.24], [0.62, 0.52, 0.2, 0.2]]) { put(g, cyl(w * 1.1, w * 0.8, 0.06, RIM, 8), x, y, z).scale.set(1.3, 1, 0.7); put(g, cyl(w * 0.92, w * 0.92, 0.045, FUN, 8), x, y + 0.045, z).scale.set(1.3, 1, 0.7); }
+          put(g, blob(0.26, '#E6DED0', 1), -0.2, 0.4, 0.55).scale.set(0.8, 1.5, 0.8); return g; }, // a cocoon in its shadow
+        tree: (i) => { const g = G(); trunk(g, 0.16, 1.4 + (i % 3) * 0.25, '#33281E', (i % 2 ? 1 : -1) * 0.05);
+          for (const [y, a, w] of [[0.45, 0.4, 0.22], [0.8, 2.6, 0.17], [1.1, 4.8, 0.14]]) { const f = put(g, cyl(w, w * 0.85, 0.05, '#E8962E', 7), Math.cos(a) * 0.17, y, Math.sin(a) * 0.17); f.scale.set(1.2, 1, 0.8); f.rotation.y = -a; }
+          return g; },
+        accent: () => { const g = G(); put(g, blob(0.22, '#E6DED0', 1), 0, 0.32, 0).scale.set(0.8, 1.6, 0.8); put(g, blob(0.16, '#D9D0BF', 1), 0.3, 0.22, 0.12).scale.set(0.8, 1.5, 0.8);
+          put(g, glow(0.05, '#FFC457'), -0.25, 0.08, 0.15); put(g, glow(0.04, '#FFC457'), -0.32, 0.06, -0.05); return g; },
+      },
     };
+    // the Hollow's island for her screen (not a battlefield you can pick: the board's look of every boss run is hers)
+    const HOLLOW = { id: 'hollow', name: 'The Hollow', side: '#3E3226', soil: ['#4A3A2B', '#3A2E22', '#2C2219'], kit: 'hollow' };
     // the slots, the same on every battlefield: round the edges, clear of the keeps, treasuries and units
     const SLOTS = { hero: [[4.7, -7.3, 1, -0.4]], tree: [[-6.25, 8.2, 1.1], [6.35, 8.35, 0.95], [6.35, 3.1, 0.8], [-6.3, 3.3, 0.75], [-6.2, -8.0, 1.0], [6.35, -4.4, 0.85]], accent: [[-6.35, 6.0, 1], [6.3, 0.7, 1], [-6.3, -4.0, 1]] };
     const kit = G();
     let lookI = 0, kitGrow = [];
     function setLook(i, animate) {
-      lookI = (i + LOOKS.length) % LOOKS.length; const L = LOOKS[lookI], c = floorCv.getContext('2d');
+      lookI = (i + LOOKS.length) % LOOKS.length; paintLook(LOOKS[lookI], animate, 11 + lookI);
+      document.dispatchEvent(new CustomEvent('battlefield'));
+    }
+    // the island in a look: its ground (Floors), rim and soil colours and its miniatures
+    function paintLook(L, animate, sd) {
+      const c = floorCv.getContext('2d');
       c.clearRect(0, 0, floorCv.width, floorCv.height);
       // the game's own painter for the look's ground, on the Standard map's grid (as lookThumb does)
       Game.useGrid(STD_MAP); try { Floors.floor(c, floorCv.width, floorCv.height, FT, (Floors.LOOKS[L.id] || {}).floor || 'meadow'); } finally { Game.useGrid(m); }
       if (flat) paintFlat();
       floorTex.needsUpdate = true; top.material.color.set(L.side); soil.forEach((b, k) => b.material.color.set(L.soil[k])); root.material.color.set(L.soil[2]);
       for (const o of [...kit.children]) { kit.remove(o); o.traverse(m => { if (m.geometry && !Object.values(kkCache).includes(m.geometry)) m.geometry.dispose(); }); }
-      seed = 11 + lookI; const K = KITS[L.kit]; kitGrow = [];
+      seed = sd; const K = KITS[L.kit]; kitGrow = [];
       for (const [kind, list] of Object.entries(SLOTS)) list.forEach(([x, z, s, ry], k) => { const o = K[kind](k); o.position.set(x, 0, z); o.rotation.y = ry ?? rnd() * 6; o.userData.s = s; o.scale.setScalar(animate ? 0.001 : s); kit.add(o); kitGrow.push(o); });
       kitGrow.forEach((o, k) => { o.userData.t0 = animate ? k * 0.045 : -1; });
       changedAt = animate ? performance.now() / 1000 : -9;
-      document.dispatchEvent(new CustomEvent('battlefield'));
     }
     let changedAt = -9;
     // the golem's rock (it stands on it), the same on every battlefield
@@ -30453,7 +30489,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       for (const el of [...body.querySelectorAll('.note:not(.pnote):not(.qnote):not(.hnote)')].sort((p, q) => rank(q) - rank(p))) { // the menu's own notes first, then those already up, then new ones
         const bf = el.dataset.anchor === 'bf', inPlay = body.classList.contains('play');
         if (bf) { // fixed in place (CSS): the same spot on every screen, with a line up to the island
-          const on = !body.classList.contains('welcome') && $('dio-stay').hidden; el.style.display = on ? '' : 'none';
+          const on = !body.classList.contains('welcome') && !body.classList.contains('bz') && $('dio-stay').hidden; el.style.display = on ? '' : 'none'; // (not on her screen: she is fought in the Hollow only)
           if (on && !phone() && !helpTour() && !body.classList.contains('music-open') && !body.classList.contains('sheet-over-bf') && !body.classList.contains('how-over-bf')) { // (no line to the island while the menu guide's tour is on: its note is the only one. The button stays)
             const r = el.getBoundingClientRect(), ty = r.top - 4;
             // the point is picked where the camera is heading and kept while it moves, so the line glides with the island
@@ -31116,10 +31152,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
     // ── the weekly boss (2026-11-12): her screen before a run (the owner: "don't go into the game right away"). From her
     // Limited event note on the menu, a click on her on the island, or Puzzles' boss row. How to play (her rules in short,
-    // from Boss.CFG: the whole sheet is openBossRules, in the run), the reward (the Hollow Brood skin) and her
+    // from Boss.CFG: the whole sheet is openBossRules, in the run), the rewards (Boss.REWARDS: the Widowmaker title, the Sporespreader Spider skin) and her
     // leaderboard (bossBoardLoad, the same board as Rankings' Mommy tab). FIGHT HER starts the run (startBoss); the end of
     // a run comes back here (home.back 'boss' → home.boss) ──
-    let bzFrom = null; // where her screen was opened from, for Back: 'puz' (Puzzles) or the menu
+    let bzFrom = null, hollowOn = false; // where her screen was opened from, for Back: 'puz' (Puzzles) or the menu
     function bzView() {
       if (phone()) return { az: 0.42, el: 0.6, zoom: 9.5, at: [0.6, 0.6, -1.2], off: [0, 0] }; // (a phone: the island over the page, as Puzzles)
       const pr = body.querySelector('.bz').getBoundingClientRect(), sw = innerWidth, sh = innerHeight;
@@ -31137,9 +31173,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         `Keep a unit in her reach, or she throws ${b('web mortars')} at your biggest clump. Her bite changes every round.`,
         `${C.startGold} gold to start, a treasury instead of a tower, one free move and one free extra deployment a round. At most ${C.maxPerType} squads of one unit.`,
       ].map(x => `<li>${x}</li>`).join('');
-      const k = SKIN['spiders-hollow'], own = !!(A && (A.skins || []).some(x => x.id === 'spiders-hollow'));
-      $('bz-rw').innerHTML = k ? `${k.pic ? `<img src="${esc(k.pic)}" alt="">` : ''}<span><b>${esc(k.name)}</b><small>A skin for your ${esc(k.unit)}</small>
-        <em${own ? ' class="own"' : ''}>${own ? '✓ Yours' : `Kill her within ${C.titleRound} rounds`}</em></span>` : '';
+      // the rewards (Boss.REWARDS): the black Widowmaker title within 3 rounds, the Sporespreader Spider skin within 4
+      const RW = Boss.REWARDS, k = SKIN['spiders-hollow'], own = !!(A && (A.skins || []).some(x => x.id === 'spiders-hollow')), T = TITLES.widowmaker, ownT = !!(A && (A.titles || []).includes('widowmaker'));
+      $('bz-rw').innerHTML = `<div class="bz-rw-t"><span class="ptitle" style="--tc:${T.col};--tg:${T.glow}"><i></i>${esc(T.name)}<i></i></span><span><small>A title under your name</small>
+          <em${ownT ? ' class="own"' : ''}>${ownT ? '✓ Yours' : `Kill her within ${RW.title} rounds`}</em></span></div>` +
+        (k ? `<div class="bz-rw-s">${k.pic ? `<img src="${esc(k.pic)}" alt="">` : ''}<span><b>${esc(k.name)}</b><small>A skin for your ${esc(k.unit)}</small>
+          <em${own ? ' class="own"' : ''}>${own ? '✓ Yours' : `Kill her within ${RW.skin} rounds`}</em></span></div>` : '');
       drawBossBoard();
     }
     function drawBossBoard() {
@@ -31160,9 +31199,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       openDrop(''); closeMusic(); if (body.classList.contains('profile')) closeProfile(); closePuz(); closeHow(); leavePlay(); unpin();
       body.classList.add('bz'); home.boss = true; hovered = null; setHover(null); backBtn.textContent = '← Menu'; // (the phones' Back)
       buildBossStage(); drawBoss(); want = bzView();
+      if (!hollowOn) { hollowOn = true; paintLook(HOLLOW, !still, 41); } // her lair: the only battlefield she is fought on
     }
     function closeBoss(back) {
       if (!body.classList.contains('bz')) return; body.classList.remove('bz'); home.boss = false; want = VIEWS.play;
+      if (hollowOn) { hollowOn = false; setLook(lookI, !still); } // your own battlefield again
       if (back && bzFrom === 'puz') openPuz(); bzFrom = null;
     }
     addEventListener('resize', () => { if (body.classList.contains('bz')) want = bzView(); });
