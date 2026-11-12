@@ -2078,9 +2078,19 @@ const Game = (() => {
     return true;
   }
 
+  // The order a side's squads go into a fight (bodiesFor): by where they stand, never by when they were bought. Bodies
+  // that tie (on a target, on who acts first in a tick) go by their place in the fight's list, so a list in buying order
+  // let the same army on the same tiles fight differently (owner, 12 November: "I dont want purchase order to affect it
+  // at all"). Front row first (from the side's own front, so side 1 is side 0 mirrored), then left to right; riders after
+  // what they ride; unit, level and id only part squads that would otherwise tie.
+  function fightOrder(m, side) {
+    const front = (sq) => side === 0 ? sq.row : ROWS - 1 - sq.row;
+    return m.armies[side].slice().sort((a, b) => (isRider(a) - isRider(b)) || (front(a) - front(b)) || (a.col - b.col) || (a.unit - b.unit) || ((a.level || 0) - (b.level || 0)) || (a.id - b.id));
+  }
   function bodiesFor(m, side) {
     const out = [];
     let idx = 0;
+    const army = fightOrder(m, side);
     // tower skills in force: Eagle eye (sniper tower), Home ground (bastion: a band across this side's zone)
     const eagle = towerSkillOn(m, side, 'sniper');
     const home = towerSkillOn(m, side, 'bastion') ? (() => {
@@ -2088,7 +2098,7 @@ const Game = (() => {
       return { y0: Math.min(...ys) - TILE / 2, y1: Math.max(...ys) + TILE / 2, armor: TOWER_SKILL.homeArmor, hpPct: TOWER_SKILL.homeHp, on: false };
     })() : null;
     const fx = buildingEffects(m, side);
-    for (const sq of m.armies[side]) {
+    for (const sq of army) {
       if (m.units[sq.unit].building) continue; // a building: see buildingBodies
       const w = tileToWorld(sq.col, sq.row);
       const ch = charOf(m, side), forward = isFlank(side, sq.col, sq.row) || inNoMans(sq.row);
@@ -2134,7 +2144,7 @@ const Game = (() => {
       out.push(...b);
     }
     // riders sit inside their carrier's first body until it dies
-    for (const sq of m.armies[side]) {
+    for (const sq of army) {
       if (!isRider(sq)) continue;
       const c = out.find(x => x.squad === sq.in);
       for (const x of out) if (x.squad === sq.id) { if (c) { x.boarded = true; x.alive = false; x.carrier = c; x.x = c.x; x.y = c.y; x.delay = 0; } }
@@ -2216,7 +2226,7 @@ const Game = (() => {
     idx += bb.length; out.push(...bb);
     // Overwatch: a squad on a building's tile sits in it; any other squad of it gets a watchtower of its own
     let watch = 0;
-    for (const sq of m.armies[side]) {
+    for (const sq of army) {
       if (isRider(sq)) continue;
       const mine = out.filter(x => x.squad === sq.id && x.u.overwatch);
       if (!mine.length) continue;
@@ -3577,7 +3587,7 @@ const Game = (() => {
     FACTION_MODE, FACTIONS: () => FACTIONS, setFactions, factionInfo, factionsOf, factionTowers, towerTypeById, ownsUnit, withFactionTrait, factionSet,
     createDraft, draftTurn, draftOpen, draftAct, draftDone, draftPossible, aiDraftChoice,
     mpbLocked, buildingMakes,
-    zoneRows, inZone, tileToWorld, withXOff, VIEW_MAPS, TEAM_MAPS, findMap, teamArmy, teamSeen, teamBuildings, squadRange, squadReach, towerReach, fightTowerUnit, createMatch, place, unplace, bodiesFor, startBattle, battleSetup, seenBy, intentPreview, INTENT, AWARENESS, AIM, canAim, setAim, clearAim, aimEnd, aimTo, aimCap, aimUse, resolve, aiDeploy, occupied, setMpb, mpbApi,
+    zoneRows, inZone, tileToWorld, withXOff, VIEW_MAPS, TEAM_MAPS, findMap, teamArmy, teamSeen, teamBuildings, squadRange, squadReach, towerReach, fightTowerUnit, createMatch, place, unplace, bodiesFor, fightOrder, startBattle, battleSetup, seenBy, intentPreview, INTENT, AWARENESS, AIM, canAim, setAim, clearAim, aimEnd, aimTo, aimCap, aimUse, resolve, aiDeploy, occupied, setMpb, mpbApi,
     GRID, useGrid,
     DEV, CAT_NAMES, LESSER_SQ, WALL_SQ, setDevData, devBuilding, devPower, devSpell, isDev, towerUp, pickCat, devOffer, pickNow, needsDevPick, devPick, undoDevPick, devShown,
     lessersOf, placedLessers, unplacedLesser, lesserAt, lesserSpotOk, placeLesser, lesserUnit, auraFor, modUnit, powersOf, devGold, devDeploys,

@@ -379,7 +379,7 @@
     const lastOfSkillUnit = (t) => t[0] === 'sell' && todo.some((x) => x[0] === 'skill' && x[1] === t[2]) && army().filter((q) => q.unit === t[2]).length <= 1;
     const act = (t) => t[0] === 'loan' ? Gm.takeLoan(m, 0) : t[0] === 'sell' ? Gm.sell(m, 0, t[1]) > 0 || !have(t[1]) : t[0] === 'skill' ? Gm.buySkill(m, 0, t[1], t[2])
       : t[0] === 'move' ? !!Gm.moveSquad(m, 0, t[1], t[2], t[3]) : t[0] === 'level' ? Gm.levelUp(m, 0, t[1])
-      : (() => { if (have(t[1])) return false; const next = m.nextId[0]; m.nextId[0] = t[1]; const sq = Gm.place(m, 0, t[2], t[3], t[4]); m.nextId[0] = Math.max(next, sq ? t[1] + 1 : 0); return !!sq; })(); // (a new squad gets the id it had: ids order the bodies in a fight; gaps are squads bought and taken back, and a rider is placed after what it rides whatever its id)
+      : (() => { if (have(t[1])) return false; const next = m.nextId[0]; m.nextId[0] = t[1]; const sq = Gm.place(m, 0, t[2], t[3], t[4]); m.nextId[0] = Math.max(next, sq ? t[1] + 1 : 0); return !!sq; })(); // (a new squad gets the id it had, so the replayed side looks exactly like the record; gaps are squads bought and taken back. A fight no longer depends on ids or buying order: Game.fightOrder)
     const ORDER = [(t) => t[0] === 'loan', (t) => t[0] === 'sell' && !lastOfSkillUnit(t), (t) => t[0] === 'skill', (t) => t[0] === 'move', (t) => t[0] === 'buy', (t) => t[0] === 'level', (t) => t[0] === 'sell'];
     for (let guard = 0; todo.length && guard < 2000; guard++) {
       let done = -1;

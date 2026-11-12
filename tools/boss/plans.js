@@ -9,6 +9,7 @@ const B = require('./mommy.js');
 //   ['aim', who, col, row]      set (or change) the arrow of a squad already on the board; ['unaim', who] clears it
 //   ['move', who, col, row]     the free reposition (one a round, for a squad from an earlier round)
 //   ['sell', who] | ['level', who] | ['levels'] (every ready squad, while gold lasts) | ['skill', unit, slot]
+//   ['loan']                    the round's loan (Game.takeLoan): +100 gold now, 200 off the next round's gold
 // A step that doesn't go through is listed in the run's `fails` (so a plan can't silently do less than it says).
 function runPlan(plan, cfg = B.CFG, o = {}) {
   const fails = [];
@@ -22,6 +23,7 @@ function runPlan(plan, cfg = B.CFG, o = {}) {
         if (sq && s[4] && s[4].as) sq.tag = s[4].as;
         if (sq && s[4] && s[4].aim) ok = B.Game.setAim(run.m, 0, sq.id, s[4].aim[0] - sq.col, s[4].aim[1] - sq.row);
       } else if (s[0] === 'skill') ok = a.skill(s[1], s[2]);
+      else if (s[0] === 'loan') ok = B.Game.takeLoan(run.m, 0); // +100 now, 200 off the next round's gold (free in the round she dies)
       else if (s[0] === 'sell') { const q = find(s[1]); ok = !!q && a.sell(q); }
       else if (s[0] === 'unaim') { const q = find(s[1]); ok = !!q && B.Game.clearAim(run.m, 0, q.id); }
       else if (s[0] === 'aim') { const q = find(s[1]); ok = !!q && B.Game.setAim(run.m, 0, q.id, s[2] - q.col, s[3] - q.row); }
@@ -129,9 +131,10 @@ const PLANS = {
     [['buy', 'Goblin Swarm', 4, 10, { as: 'gobA' }], ['buy', 'Goblin Swarm', 5, 10, { as: 'gobB' }], ['buy', 'Goblin Swarm', 6, 10, { as: 'gobC' }], ['levels']],
     [['buy', 'Wisps', 8, 10, { as: 'wispB' }], ['buy', 'Wisps', 7, 10, { as: 'wispC' }], ['buy', 'Sniper', 10, 12, { as: 'snipB' }], ['skill', 'Goblin Swarm', 0], ['skill', 'Wisps', 0], ['levels']],
   ],
-  // found by hill climbs (a few hundred random changes to Line B, kept when she took more damage; squads named x123456
-  // are ones the climb added): the best found for rounds 1-3 (it wins in round 3 at 54,000, with half a second to spare: three Goblin squads, one
-  // kept through the sweep) and for all five rounds
+  // found by hill climbs (random changes kept when she took more damage; squads named x123456 are ones a climb added):
+  // the best found for rounds 1-3 (12 November, with the fight order by tile, Game.fightOrder: she dies at 24.6 s of
+  // round 3; three Goblin squads, one kept through the sweep, and round 3's loan, free since she dies before it is paid
+  // back) and for all five rounds
   'Search best, rounds 1-3': require('./best-r1-3.json'),
   'Search best, five rounds': require('./best-r1-5.json'),
 };

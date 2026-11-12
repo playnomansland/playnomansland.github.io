@@ -20,6 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 12 November 2026 – Buying order no longer matters
+
+- **Fights:** the order you buy squads in no longer changes a fight. The same squads on the same tiles, with the same levels, skills and arrows, now always fight the same way. Before, a squad bought earlier could act first when two units tied (on a target, or on who moves first), so the same army could do noticeably different damage (up to about 15% against the Mommy). This is in every mode, including the Mommy and her leaderboard.
+
+---
+
 ## 12 November 2026 – Replay a round of the Mommy, and a Skills tab on the picked unit
 
 - **The Mommy:** **Restart boss** and **Replay round** are on the screen for the whole run, even mid-fight, at the top right under her name. Replay round lists every round you've reached with its bite: pick one to play it again from its start. Restart asks "Sure?" first. **Mommy's attacks** has moved there too, from Settings. (On phones they are all in Settings.) The card between rounds now warns you what's coming: **! Next round** with her next bite's mark and name.

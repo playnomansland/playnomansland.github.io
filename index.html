@@ -9519,9 +9519,19 @@ const Game = (() => {
     return true;
   }
 
+  // The order a side's squads go into a fight (bodiesFor): by where they stand, never by when they were bought. Bodies
+  // that tie (on a target, on who acts first in a tick) go by their place in the fight's list, so a list in buying order
+  // let the same army on the same tiles fight differently (owner, 12 November: "I dont want purchase order to affect it
+  // at all"). Front row first (from the side's own front, so side 1 is side 0 mirrored), then left to right; riders after
+  // what they ride; unit, level and id only part squads that would otherwise tie.
+  function fightOrder(m, side) {
+    const front = (sq) => side === 0 ? sq.row : ROWS - 1 - sq.row;
+    return m.armies[side].slice().sort((a, b) => (isRider(a) - isRider(b)) || (front(a) - front(b)) || (a.col - b.col) || (a.unit - b.unit) || ((a.level || 0) - (b.level || 0)) || (a.id - b.id));
+  }
   function bodiesFor(m, side) {
     const out = [];
     let idx = 0;
+    const army = fightOrder(m, side);
     // tower skills in force: Eagle eye (sniper tower), Home ground (bastion: a band across this side's zone)
     const eagle = towerSkillOn(m, side, 'sniper');
     const home = towerSkillOn(m, side, 'bastion') ? (() => {
@@ -9529,7 +9539,7 @@ const Game = (() => {
       return { y0: Math.min(...ys) - TILE / 2, y1: Math.max(...ys) + TILE / 2, armor: TOWER_SKILL.homeArmor, hpPct: TOWER_SKILL.homeHp, on: false };
     })() : null;
     const fx = buildingEffects(m, side);
-    for (const sq of m.armies[side]) {
+    for (const sq of army) {
       if (m.units[sq.unit].building) continue; // a building: see buildingBodies
       const w = tileToWorld(sq.col, sq.row);
       const ch = charOf(m, side), forward = isFlank(side, sq.col, sq.row) || inNoMans(sq.row);
@@ -9575,7 +9585,7 @@ const Game = (() => {
       out.push(...b);
     }
     // riders sit inside their carrier's first body until it dies
-    for (const sq of m.armies[side]) {
+    for (const sq of army) {
       if (!isRider(sq)) continue;
       const c = out.find(x => x.squad === sq.in);
       for (const x of out) if (x.squad === sq.id) { if (c) { x.boarded = true; x.alive = false; x.carrier = c; x.x = c.x; x.y = c.y; x.delay = 0; } }
@@ -9657,7 +9667,7 @@ const Game = (() => {
     idx += bb.length; out.push(...bb);
     // Overwatch: a squad on a building's tile sits in it; any other squad of it gets a watchtower of its own
     let watch = 0;
-    for (const sq of m.armies[side]) {
+    for (const sq of army) {
       if (isRider(sq)) continue;
       const mine = out.filter(x => x.squad === sq.id && x.u.overwatch);
       if (!mine.length) continue;
@@ -11018,7 +11028,7 @@ const Game = (() => {
     FACTION_MODE, FACTIONS: () => FACTIONS, setFactions, factionInfo, factionsOf, factionTowers, towerTypeById, ownsUnit, withFactionTrait, factionSet,
     createDraft, draftTurn, draftOpen, draftAct, draftDone, draftPossible, aiDraftChoice,
     mpbLocked, buildingMakes,
-    zoneRows, inZone, tileToWorld, withXOff, VIEW_MAPS, TEAM_MAPS, findMap, teamArmy, teamSeen, teamBuildings, squadRange, squadReach, towerReach, fightTowerUnit, createMatch, place, unplace, bodiesFor, startBattle, battleSetup, seenBy, intentPreview, INTENT, AWARENESS, AIM, canAim, setAim, clearAim, aimEnd, aimTo, aimCap, aimUse, resolve, aiDeploy, occupied, setMpb, mpbApi,
+    zoneRows, inZone, tileToWorld, withXOff, VIEW_MAPS, TEAM_MAPS, findMap, teamArmy, teamSeen, teamBuildings, squadRange, squadReach, towerReach, fightTowerUnit, createMatch, place, unplace, bodiesFor, fightOrder, startBattle, battleSetup, seenBy, intentPreview, INTENT, AWARENESS, AIM, canAim, setAim, clearAim, aimEnd, aimTo, aimCap, aimUse, resolve, aiDeploy, occupied, setMpb, mpbApi,
     GRID, useGrid,
     DEV, CAT_NAMES, LESSER_SQ, WALL_SQ, setDevData, devBuilding, devPower, devSpell, isDev, towerUp, pickCat, devOffer, pickNow, needsDevPick, devPick, undoDevPick, devShown,
     lessersOf, placedLessers, unplacedLesser, lesserAt, lesserSpotOk, placeLesser, lesserUnit, auraFor, modUnit, powersOf, devGold, devDeploys,
@@ -11416,7 +11426,7 @@ if (typeof module !== 'undefined') module.exports = Game;
     const lastOfSkillUnit = (t) => t[0] === 'sell' && todo.some((x) => x[0] === 'skill' && x[1] === t[2]) && army().filter((q) => q.unit === t[2]).length <= 1;
     const act = (t) => t[0] === 'loan' ? Gm.takeLoan(m, 0) : t[0] === 'sell' ? Gm.sell(m, 0, t[1]) > 0 || !have(t[1]) : t[0] === 'skill' ? Gm.buySkill(m, 0, t[1], t[2])
       : t[0] === 'move' ? !!Gm.moveSquad(m, 0, t[1], t[2], t[3]) : t[0] === 'level' ? Gm.levelUp(m, 0, t[1])
-      : (() => { if (have(t[1])) return false; const next = m.nextId[0]; m.nextId[0] = t[1]; const sq = Gm.place(m, 0, t[2], t[3], t[4]); m.nextId[0] = Math.max(next, sq ? t[1] + 1 : 0); return !!sq; })(); // (a new squad gets the id it had: ids order the bodies in a fight; gaps are squads bought and taken back, and a rider is placed after what it rides whatever its id)
+      : (() => { if (have(t[1])) return false; const next = m.nextId[0]; m.nextId[0] = t[1]; const sq = Gm.place(m, 0, t[2], t[3], t[4]); m.nextId[0] = Math.max(next, sq ? t[1] + 1 : 0); return !!sq; })(); // (a new squad gets the id it had, so the replayed side looks exactly like the record; gaps are squads bought and taken back. A fight no longer depends on ids or buying order: Game.fightOrder)
     const ORDER = [(t) => t[0] === 'loan', (t) => t[0] === 'sell' && !lastOfSkillUnit(t), (t) => t[0] === 'skill', (t) => t[0] === 'move', (t) => t[0] === 'buy', (t) => t[0] === 'level', (t) => t[0] === 'sell'];
     for (let guard = 0; todo.length && guard < 2000; guard++) {
       let done = -1;
@@ -19996,7 +20006,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · f1d9859'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 8117433'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -26214,7 +26224,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
   // <base>, so there it looked for design/diorama/vendor/... and failed: "Importing a module script failed" (2026-11-10)
   const threeSrc = () => new URL(THREE_URL, document.baseURI).href;
-  const V3D = '5fa24aa798'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '0eff17f43b'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
