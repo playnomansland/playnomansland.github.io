@@ -1060,6 +1060,15 @@ html.diorama.pcwide .panel .uc2:hover:not([aria-disabled="true"]):not([aria-pres
 html.diorama.pcwide .panel .uc2[aria-pressed="true"] { transform: none; color: #17140F; background: #F2B23A; border-top-color: #17140F; box-shadow: none; }
 html.diorama.pcwide .panel .uc2[aria-pressed="true"] .c, html.diorama.pcwide .panel .uc2[aria-pressed="true"] .st { color: #17140F; }
 html.diorama.pcwide .panel .uc2[aria-disabled="true"] { opacity: .5; }
+/* the picked card's Skills tab (the game's .sk2): square, gold like the picked card, ink symbol and stencil letters, its top corner cut */
+html.diorama.pcwide .panel .sk2 { margin-right: -8px; }
+html.diorama.pcwide .panel .sk2t { --skc: #F2B23A; right: -4px; top: 9px; bottom: 9px; width: 28px; border-radius: 0; color: #17140F;
+  background: linear-gradient(to left, var(--skc) 4px, rgba(23,20,15,.4) 4px 6px, var(--skc) 6px); /* (a seam where it meets the gold card) */ transform: none; box-shadow: -4px 0 0 rgba(13,19,21,.55);
+  clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px); padding-top: 9px; }
+html.diorama.pcwide .panel .sk2t b { font: 700 11px/1 var(--dstencil); letter-spacing: .12em; }
+html.diorama.pcwide .panel .sk2t:hover { --skc: #F7C65C; }
+html.diorama.pcwide .panel .sk2t.out { animation-name: sk2outD; }
+@keyframes sk2outD { from { transform: translateX(24px); } to { transform: none; } }
 html.diorama.pcwide .panel .add2 { flex: 0 0 70px; height: 96px; border-radius: 0; border: 0; background: none; position: relative; color: var(--tier); }
 html.diorama.pcwide .panel .add2::before { content: ""; position: absolute; inset: 0; border: 1.5px dashed var(--tier); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%); }
 html.diorama.pcwide .panel .add2 .p { font: 700 30px/1 var(--dstencil); }
@@ -1444,6 +1453,9 @@ html.diorama.pcwide .droom .say .invite { justify-self: start; margin: 3px 0 5px
   html.diorama.pcwide .panel .uc2, html.diorama.pcwide .panel .add2 { flex-basis: 62px; height: 82px; }
   html.diorama.pcwide .panel .tier2 { height: 82px; }
   html.diorama.pcwide .panel .uc2 .ic svg { width: 24px; height: 24px; }
+  html.diorama.pcwide .panel .sk2 { margin-right: -6px; }
+  html.diorama.pcwide .panel .sk2t { top: 5px; bottom: 5px; padding-top: 7px; gap: 4px; }
+  html.diorama.pcwide .panel .sk2t b { letter-spacing: .06em; font-size: 10px; }
   html.diorama.pcwide .panel #ready, html.diorama.pcwide .panel #fight { font-size: 44px; bottom: 18px; padding: 10px 20px 4px 16px; }
   html.diorama.pcwide .panel #ready:not(.primary) { font-size: 32px; }
   html.diorama.pcwide .panel .trow .timer { bottom: 38px; font-size: 26px; }
@@ -1685,6 +1697,10 @@ html.dsetmenu.diorama.pcwide #sheet .bar:is(:has(#spk-music), :has([data-board])
 html.dsetmenu.diorama.pcwide #sheet .bar:has(#spk-music)::before { margin-top: 0; }
 html.dsetmenu.diorama.pcwide #sheet > .bar { display: grid; grid-template-columns: 130px 1fr; align-items: center; justify-content: start; column-gap: 12px; min-height: 30px; }
 html.dsetmenu.diorama.pcwide #sheet > .bar::before { grid-column: 1 / -1; }
+/* the Mommy's Replay round: its line over the rounds, which wrap and never break inside one */
+html.dsetmenu.diorama.pcwide #sheet > #boss-rounds { grid-template-columns: 1fr; row-gap: 2px; margin: 4px 0 10px; }
+html.dsetmenu.diorama.pcwide #sheet #boss-rounds .seg { flex-wrap: wrap; row-gap: 2px; }
+html.dsetmenu.diorama.pcwide #sheet #boss-rounds .seg button { white-space: nowrap; }
 html.dsetmenu.diorama.pcwide #sheet > .bar > .hint { font: 700 15px var(--dtype); color: #F4ECD8; opacity: 1; }
 /* choices: stencil words, the picked one on the shard */
 html.dsetmenu.diorama.pcwide #sheet .seg { justify-self: start; display: inline-flex; gap: 6px; padding: 0; margin-left: -9px; border: 0; border-radius: 0; background: none; }
@@ -2102,12 +2118,12 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
 #dio .bz-left .bz-go { justify-self: start; }
 #dio .bz .k { font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; color: #FFC457; }
 #dio .bz h2 { margin: 2px 0 0; font: 700 clamp(52px, 9.6vh, 92px)/.86 var(--stencil); text-transform: uppercase; letter-spacing: -.01em; white-space: nowrap; }
-#dio .bz .bz-lede { margin: clamp(8px, 1.4vh, 12px) 0 0; font: 700 15px/1.35 var(--type); opacity: .92; }
-#dio .bz .bz-h { margin: clamp(14px, 2.6vh, 24px) 0 clamp(4px, .8vh, 8px); font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; color: #FFC457; }
-#dio .bz .bz-how { margin: 0; padding: 0; list-style: none; counter-reset: bz; display: grid; gap: clamp(5px, 1vh, 9px); }
-#dio .bz .bz-how li { counter-increment: bz; position: relative; padding-left: 30px; font: 500 14px/1.38 var(--type); }
-#dio .bz .bz-how li::before { content: counter(bz); position: absolute; left: 0; top: -1px; font: 700 18px/1 var(--stencil); color: #FF4A36; text-shadow: 0 0 6px rgba(255, 74, 54, .6); }
-#dio .bz .bz-how b { color: #F6DFA6; }
+:is(#dio .bz, .bz-info) .bz-lede { margin: clamp(8px, 1.4vh, 12px) 0 0; font: 700 15px/1.35 var(--type); opacity: .92; }
+:is(#dio .bz, .bz-info) .bz-h { margin: clamp(14px, 2.6vh, 24px) 0 clamp(4px, .8vh, 8px); font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; color: #FFC457; }
+:is(#dio .bz, .bz-info) .bz-how { margin: 0; padding: 0; list-style: none; counter-reset: bz; display: grid; gap: clamp(5px, 1vh, 9px); }
+:is(#dio .bz, .bz-info) .bz-how li { counter-increment: bz; position: relative; padding-left: 30px; font: 500 14px/1.38 var(--type); }
+:is(#dio .bz, .bz-info) .bz-how li::before { content: counter(bz); position: absolute; left: 0; top: -1px; font: 700 18px/1 var(--stencil); color: #FF4A36; text-shadow: 0 0 6px rgba(255, 74, 54, .6); }
+:is(#dio .bz, .bz-info) .bz-how b { color: #F6DFA6; }
 #dio .bz .bz-go { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin-top: clamp(16px, 3vh, 28px); }
 #dio .bz .create { margin: 0; font-size: clamp(28px, 4vh, 36.4px); padding: clamp(6px, 1.1vh, 10px) 22px clamp(5px, .9vh, 8px) 18px; }
 #dio .bz #bz-fight { background: #E8962E; color: #23170F; padding-left: 22px; padding-right: 18px; }
@@ -2116,38 +2132,38 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
 #dio .bz #bz-back svg { width: 20px; height: 20px; }
 /* the reward: the skin's picture, its name, and what earns it */
 /* the rewards: a panel of tiers, one a row (round, picture, name and kind, yours or locked), the fastest kill's last */
-#dio .bz .bz-rw { width: 100%; padding: 14px 14px 12px; background: rgba(0, 0, 0, .24); border: 1px solid rgba(232, 150, 46, .35); }
-#dio .bz .bz-rw-lede { margin: 0 0 12px; font: 600 13px/1.4 var(--type); opacity: .88; }
-#dio .bz .bz-tiers { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
-#dio .bz .bz-tiers li { display: grid; grid-template-columns: 42px 44px minmax(0, 1fr) 18px; align-items: center; gap: 12px; padding: 8px 12px 8px 6px; background: rgba(244, 236, 216, .04); border: 1px solid rgba(244, 236, 216, .08); }
-#dio .bz .bz-tiers li.top { background: linear-gradient(90deg, rgba(232, 150, 46, .2), rgba(232, 150, 46, .06)); border-color: rgba(232, 150, 46, .55); }
-#dio .bz .bz-tiers .rd { display: grid; justify-items: center; line-height: 1; padding-right: 10px; border-right: 1px solid rgba(244, 236, 216, .14); }
-#dio .bz .bz-tiers .rd small { font: 700 9px var(--type); letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
-#dio .bz .bz-tiers .rd b { margin-top: 3px; font: 700 26px/1 var(--stencil); color: #FFC457; }
-#dio .bz .bz-tiers .pv { display: grid; place-items: center; width: 44px; height: 44px; background: rgba(0, 0, 0, .35); }
-#dio .bz .bz-tiers .pv img { width: 40px; height: 40px; object-fit: contain; }
-#dio .bz .bz-tiers .pv i { width: 15px; height: 15px; background: var(--tc); transform: rotate(45deg); box-shadow: 0 0 10px var(--tg); }
-#dio .bz .bz-tiers .nm { display: grid; gap: 3px; min-width: 0; }
-#dio .bz .bz-tiers .nm b { font: 700 19px/1.02 var(--stencil); text-transform: uppercase; letter-spacing: .01em; color: #F4ECD8; }
-#dio .bz .bz-tiers .nm b.tn { color: var(--tc); }
-#dio .bz .bz-tiers .nm small { font: 600 12px var(--type); color: rgba(244, 236, 216, .75); }
-#dio .bz .bz-tiers .nm small em { margin-left: 5px; font-style: normal; font-weight: 700; color: #9FE0B0; }
-#dio .bz .bz-tiers .best { justify-self: start; margin-top: 2px; padding: 2px 6px 1px; font: 700 9px var(--type); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: #23170F; background: #E8962E; }
-#dio .bz .bz-tiers .st { display: grid; place-items: center; color: rgba(244, 236, 216, .34); }
-#dio .bz .bz-tiers .st svg { width: 16px; height: 16px; }
-#dio .bz .bz-tiers li.own .st { color: #9FE0B0; }
+:is(#dio .bz, .bz-info) .bz-rw { width: 100%; padding: 14px 14px 12px; background: rgba(0, 0, 0, .24); border: 1px solid rgba(232, 150, 46, .35); }
+:is(#dio .bz, .bz-info) .bz-rw-lede { margin: 0 0 12px; font: 600 13px/1.4 var(--type); opacity: .88; }
+:is(#dio .bz, .bz-info) .bz-tiers { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+:is(#dio .bz, .bz-info) .bz-tiers li { display: grid; grid-template-columns: 42px 44px minmax(0, 1fr) 18px; align-items: center; gap: 12px; padding: 8px 12px 8px 6px; background: rgba(244, 236, 216, .04); border: 1px solid rgba(244, 236, 216, .08); }
+:is(#dio .bz, .bz-info) .bz-tiers li.top { background: linear-gradient(90deg, rgba(232, 150, 46, .2), rgba(232, 150, 46, .06)); border-color: rgba(232, 150, 46, .55); }
+:is(#dio .bz, .bz-info) .bz-tiers .rd { display: grid; justify-items: center; line-height: 1; padding-right: 10px; border-right: 1px solid rgba(244, 236, 216, .14); }
+:is(#dio .bz, .bz-info) .bz-tiers .rd small { font: 700 9px var(--type); letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
+:is(#dio .bz, .bz-info) .bz-tiers .rd b { margin-top: 3px; font: 700 26px/1 var(--stencil); color: #FFC457; }
+:is(#dio .bz, .bz-info) .bz-tiers .pv { display: grid; place-items: center; width: 44px; height: 44px; background: rgba(0, 0, 0, .35); }
+:is(#dio .bz, .bz-info) .bz-tiers .pv img { width: 40px; height: 40px; object-fit: contain; }
+:is(#dio .bz, .bz-info) .bz-tiers .pv i { width: 15px; height: 15px; background: var(--tc); transform: rotate(45deg); box-shadow: 0 0 10px var(--tg); }
+:is(#dio .bz, .bz-info) .bz-tiers .nm { display: grid; gap: 3px; min-width: 0; }
+:is(#dio .bz, .bz-info) .bz-tiers .nm b { font: 700 19px/1.02 var(--stencil); text-transform: uppercase; letter-spacing: .01em; color: #F4ECD8; }
+:is(#dio .bz, .bz-info) .bz-tiers .nm b.tn { color: var(--tc); }
+:is(#dio .bz, .bz-info) .bz-tiers .nm small { font: 600 12px var(--type); color: rgba(244, 236, 216, .75); }
+:is(#dio .bz, .bz-info) .bz-tiers .nm small em { margin-left: 5px; font-style: normal; font-weight: 700; color: #9FE0B0; }
+:is(#dio .bz, .bz-info) .bz-tiers .best { justify-self: start; margin-top: 2px; padding: 2px 6px 1px; font: 700 9px var(--type); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: #23170F; background: #E8962E; }
+:is(#dio .bz, .bz-info) .bz-tiers .st { display: grid; place-items: center; color: rgba(244, 236, 216, .34); }
+:is(#dio .bz, .bz-info) .bz-tiers .st svg { width: 16px; height: 16px; }
+:is(#dio .bz, .bz-info) .bz-tiers li.own .st { color: #9FE0B0; }
 /* her leaderboard */
-#dio .bz .bz-leg { margin: 0 0 6px; font: 600 13px/1.35 var(--type); opacity: .85; }
-#dio .bz .bz-lb { margin: 0; padding: 0; list-style: none; width: 100%; display: grid; gap: 2px; }
-#dio .bz .bz-lb li { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 10px; padding: 5px 8px; background: rgba(0, 0, 0, .18); }
-#dio .bz .bz-lb li.first { background: rgba(232, 150, 46, .22); }
-#dio .bz .bz-lb li.me { outline: 1px solid #FFC457; outline-offset: -1px; }
-#dio .bz .bz-lb .r { font: 700 18px/1 var(--stencil); color: #FFC457; text-align: center; }
-#dio .bz .bz-lb .who { display: grid; min-width: 0; }
-#dio .bz .bz-lb .who b { font: 700 14px var(--type); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#dio .bz .bz-lb .who small { font: 500 12px var(--type); opacity: .78; }
-#dio .bz .bz-lb .you { font: 700 10px var(--type); font-style: normal; text-transform: uppercase; letter-spacing: .06em; padding: 1px 4px; color: #23170F; background: #FFC457; }
-#dio .bz .bz-lb .s { font: 700 18px/1 var(--stencil); }
+:is(#dio .bz, .bz-info) .bz-leg { margin: 0 0 6px; font: 600 13px/1.35 var(--type); opacity: .85; }
+:is(#dio .bz, .bz-info) .bz-lb { margin: 0; padding: 0; list-style: none; width: 100%; display: grid; gap: 2px; }
+:is(#dio .bz, .bz-info) .bz-lb li { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 10px; padding: 5px 8px; background: rgba(0, 0, 0, .18); }
+:is(#dio .bz, .bz-info) .bz-lb li.first { background: rgba(232, 150, 46, .22); }
+:is(#dio .bz, .bz-info) .bz-lb li.me { outline: 1px solid #FFC457; outline-offset: -1px; }
+:is(#dio .bz, .bz-info) .bz-lb .r { font: 700 18px/1 var(--stencil); color: #FFC457; text-align: center; }
+:is(#dio .bz, .bz-info) .bz-lb .who { display: grid; min-width: 0; }
+:is(#dio .bz, .bz-info) .bz-lb .who b { font: 700 14px var(--type); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:is(#dio .bz, .bz-info) .bz-lb .who small { font: 500 12px var(--type); opacity: .78; }
+:is(#dio .bz, .bz-info) .bz-lb .you { font: 700 10px var(--type); font-style: normal; text-transform: uppercase; letter-spacing: .06em; padding: 1px 4px; color: #23170F; background: #FFC457; }
+:is(#dio .bz, .bz-info) .bz-lb .s { font: 700 18px/1 var(--stencil); }
 /* phones: her screen in the same flow as Puzzles (main's phone Diorama): one column under the island */
 @media (max-width: 700px) {
   html.diorama #dio .bz { position: relative; left: auto; top: auto; width: auto; margin: 0 16px 32px; order: 3; grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "left" "right"; }
@@ -2162,27 +2178,41 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
 /* her screen never runs off a short window: the right column takes the room left, and the leaderboard scrolls in it */
 #dio .bz-right { align-self: stretch; display: flex; flex-direction: column; align-items: stretch; min-height: 0; }
 #dio .bz-right > * { flex: none; }
-#dio .bz .bz-lb { flex: 0 1 auto; min-height: 92px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(232, 150, 46, .5) transparent; }
+:is(#dio .bz, .bz-info) .bz-lb { flex: 0 1 auto; min-height: 92px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(232, 150, 46, .5) transparent; }
 @media (max-height: 780px) and (min-width: 701px) {
-  #dio .bz .bz-rw { padding: 10px 12px 8px; } #dio .bz .bz-rw-lede { margin-bottom: 8px; }
-  #dio .bz .bz-tiers { gap: 4px; } #dio .bz .bz-tiers li { padding-top: 5px; padding-bottom: 5px; }
-  #dio .bz .bz-tiers .pv { width: 38px; height: 38px; } #dio .bz .bz-tiers .pv img { width: 34px; height: 34px; }
+  :is(#dio .bz, .bz-info) .bz-rw { padding: 10px 12px 8px; } :is(#dio .bz, .bz-info) .bz-rw-lede { margin-bottom: 8px; }
+  :is(#dio .bz, .bz-info) .bz-tiers { gap: 4px; } :is(#dio .bz, .bz-info) .bz-tiers li { padding-top: 5px; padding-bottom: 5px; }
+  :is(#dio .bz, .bz-info) .bz-tiers .pv { width: 38px; height: 38px; } :is(#dio .bz, .bz-info) .bz-tiers .pv img { width: 34px; height: 34px; }
 }
-@media (max-width: 700px) { #dio .bz { bottom: auto; grid-template-rows: none; } #dio .bz .bz-lb { overflow: visible; } }
+@media (max-width: 700px) { #dio .bz { bottom: auto; grid-template-rows: none; } :is(#dio .bz, .bz-info) .bz-lb { overflow: visible; } }
 
 /* "Epic" in the rewards' top tier: purple, on its saffron tag */
-#dio .bz .bz-tiers .best { padding: 3px 7px 2px; font-size: 10px; color: #F6DFA6; background: #160806; box-shadow: inset 0 0 0 1px rgba(195, 139, 255, .45); }
-#dio .bz .bz-tiers .best span { color: #C38BFF; text-shadow: 0 0 6px rgba(195, 139, 255, .55); }
+:is(#dio .bz, .bz-info) .bz-tiers .best { padding: 3px 7px 2px; font-size: 10px; color: #F6DFA6; background: #160806; box-shadow: inset 0 0 0 1px rgba(195, 139, 255, .45); }
+:is(#dio .bz, .bz-info) .bz-tiers .best span { color: #C38BFF; text-shadow: 0 0 6px rgba(195, 139, 255, .55); }
 /* How to play's "Mommy's attacks": a word in the text that opens her attacks */
-#dio .bz .bz-inl { display: inline-flex; align-items: center; gap: 4px; padding: 0 0 1px; font: 700 14px/1.2 var(--type); color: #FFC457; border-bottom: 1.5px solid rgba(255, 196, 87, .6); cursor: pointer; }
-#dio .bz .bz-inl svg { width: 10px; height: 10px; }
-#dio .bz .bz-inl:hover, #dio .bz .bz-inl:focus-visible { color: #F4ECD8; border-color: #F4ECD8; outline: none; }
+:is(#dio .bz, .bz-info) .bz-inl { display: inline-flex; align-items: center; gap: 4px; padding: 0 0 1px; font: 700 14px/1.2 var(--type); color: #FFC457; border-bottom: 1.5px solid rgba(255, 196, 87, .6); cursor: pointer; }
+:is(#dio .bz, .bz-info) .bz-inl svg { width: 10px; height: 10px; }
+:is(#dio .bz, .bz-info) .bz-inl:hover, :is(#dio .bz, .bz-info) .bz-inl:focus-visible { color: #F4ECD8; border-color: #F4ECD8; outline: none; }
 /* Mommy's attacks (openBossAttacks): a panel over her screen or the board, the maroon a shade deeper with an amber edge.
    Left the attacks (cards in two columns, Bite across both), right her nests round by round. It sits in <body>, so its
    fonts are named here */
 .bz-atk-back { --stencil: "Big Shoulders Stencil", "Arial Narrow", Impact, sans-serif; --type: "Bricolage Grotesque", system-ui, sans-serif;
   position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px; background: rgba(20, 6, 4, .62); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
 .bz-atk-back[hidden] { display: none; }
+
+/* the boss screen in a run (openBossInfo, the ? on the boss bar): the attacks panel's look, her screen's words in one
+   scrolling column on a phone and two side by side wider. The words' rules are shared with #dio .bz above */
+.bz-info-back { z-index: 39; } /* (Mommy's attacks, opened from it, sits over it) */
+.bz-atk.bz-info { width: min(860px, 100%); }
+.bz-info .bz-lede { margin: 0 0 4px; font: 700 15px/1.35 var(--type); opacity: .92; }
+.bz-info-in { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 0 28px; }
+.bz-info .bz-h { margin: 18px 0 8px; font: 700 12px var(--type); letter-spacing: .08em; text-transform: uppercase; color: #FFC457; }
+.bz-info .bz-inl { background: none; border-width: 0 0 1.5px; border-style: solid; }
+.bz-info .bz-lb[hidden] { display: none; }
+.bz-info-go { display: flex; justify-content: flex-end; margin-top: 18px; }
+.bz-info-back-btn { padding: 8px 18px 7px; font: 700 20px/1 var(--stencil) !important; text-transform: uppercase; color: #23170F !important; background: #E8962E !important; }
+.bz-info-back-btn:hover, .bz-info-back-btn:focus-visible { background: #FFC457 !important; outline: none; }
+@media (max-width: 700px) { .bz-info-in { grid-template-columns: minmax(0, 1fr); } .bz-atk.bz-info { padding: 16px 16px 18px; } .bz-info-back-btn { width: 100%; } }
 .bz-atk { width: min(1000px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 20px 24px 22px; color: #F4ECD8; background: #2E0E0A; border: 1px solid rgba(232, 150, 46, .55); box-shadow: 0 24px 60px rgba(0, 0, 0, .55); font: 500 14px/1.4 var(--type); animation: ddrop-in .2s cubic-bezier(.2, .9, .25, 1); }
 .bz-atk header { position: relative; display: grid; margin-bottom: 14px; }
 .bz-atk header .k { font: 700 12px var(--type); letter-spacing: .08em; text-transform: uppercase; color: #FFC457; }
@@ -2227,6 +2257,46 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
 .bz-nests .bite { margin-top: 8px; font-size: 12.5px; } .bz-nests .bite b { font: 700 16px/1 var(--stencil); text-transform: uppercase; }
 @media (max-width: 860px) { .bz-atk-in { grid-template-columns: 1fr; } .bz-nests .board svg { width: 180px; } }
 @media (max-width: 700px) { .bz-atk-body { grid-template-columns: 1fr; } .bz-atk .rounds { grid-template-columns: repeat(3, 1fr); } .bz-atk h3 { font-size: 32px; } }
+
+/* ── the Mommy run: Restart boss and Replay round at the top right, through the whole run (bossCtl). Ink chips like the
+   shop's cards (a coloured top edge, the bottom right corner cut), stencil words; Restart's edge is the danger coral,
+   Replay's the gold. Replay drops the rounds reached, each on its bite's colour with its mark ─────────────────────── */
+.bz-ctl { display: none; }
+html.diorama.pcwide .bz-ctl { position: fixed; z-index: 7; top: 118px; right: 32px; display: grid; justify-items: end; gap: 6px; color: #F4ECD8; font-family: var(--dtype); }
+html.diorama.pcwide .bz-ctl[hidden] { display: none; }
+html.diorama.pcwide .boss-bar .bb-rs { display: none; } /* (the boss bar's own Restart: the on-screen one stands in for it here; phones keep it) */
+html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: start; } /* (the panel on the right: her name and READY are on the left, so these go under them there) */
+.bz-ctl .row { display: grid; gap: 6px; width: 214px; } /* (stacked: clear of her health bar, in the open ground right of the board) */
+.bz-ctl .b { --ac: #F2B23A; position: relative; display: flex; align-items: center; gap: 9px; padding: 10px 14px 8px 12px; border: 0; border-top: 3px solid var(--ac); background: rgba(23, 20, 15, .88);
+  color: #F4ECD8; font: 700 17px/1 var(--dstencil); letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; cursor: pointer;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%); filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .4)); transition: background-color .12s, color .12s; }
+.bz-ctl .b svg { color: var(--ac); flex: none; transition: transform .25s; }
+.bz-ctl .b.restart { --ac: #FF8F78; }
+.bz-ctl .b:hover { background: rgba(52, 45, 34, .94); }
+.bz-ctl .b.restart:hover svg { transform: rotate(-50deg); }
+.bz-ctl .b:focus-visible { outline: 2px solid #F4ECD8; outline-offset: 2px; }
+.bz-ctl .b.sure, .bz-ctl .b.open { background: var(--ac); color: #17140F; }
+.bz-ctl .b.sure svg, .bz-ctl .b.open svg { color: #17140F; }
+.bz-ctl .b.sure { animation: bz-sure .9s ease-in-out infinite alternate; }
+@keyframes bz-sure { to { background: #FFB4A3; } }
+.bz-ctl .car { width: 0; height: 0; margin-left: auto; border: 5px solid transparent; border-top-color: currentColor; border-bottom: 0; transition: transform .15s; }
+.bz-ctl .b.open .car { transform: rotate(180deg); }
+.bz-ctl .list { width: 268px; margin-top: 2px; display: grid; gap: 4px; padding: 10px 10px 14px; background: rgba(23, 20, 15, .94);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%); filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .45)); animation: ddrop-in .18s cubic-bezier(.2, .9, .25, 1); }
+.bz-ctl .list[hidden] { display: none; }
+.bz-ctl .list small { padding: 0 4px 4px; font: 700 11px var(--dtype); letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.bz-ctl .list button { display: grid; grid-template-columns: 34px 1fr auto; grid-template-rows: auto auto; column-gap: 10px; align-items: center; padding: 5px 10px 5px 6px; border: 0; border-left: 3px solid var(--bc);
+  background: rgba(244, 236, 216, .06); color: #F4ECD8; text-align: left; cursor: pointer; font: inherit; }
+.bz-ctl .list button:hover, .bz-ctl .list button:focus-visible { background: rgba(244, 236, 216, .16); outline: 0; }
+.bz-ctl .list img { grid-row: 1 / 3; width: 34px; height: 34px; }
+.bz-ctl .list b { font: 700 19px/1 var(--dstencil); letter-spacing: .03em; text-transform: uppercase; }
+.bz-ctl .list em { grid-column: 2; font: 700 11px/1.3 var(--dtype); font-style: normal; letter-spacing: .06em; text-transform: uppercase; color: var(--bc); }
+.bz-ctl .list i { grid-column: 3; grid-row: 1 / 3; padding: 3px 6px 1px; background: #F2B23A; color: #17140F; font: 700 12px/1 var(--dstencil); font-style: normal; letter-spacing: .06em; text-transform: uppercase; }
+@media (prefers-reduced-motion: reduce) { .bz-ctl .b.sure { animation: none; } .bz-ctl .list { animation: none; } }
+
+/* buy and place feedback (2026-11-12): a squad placed this round as a square pip with its unit, not a diamond */
+html.diorama.pcwide .panel .trow .pips i.u { width: 20px; height: 20px; transform: none; border: 2px solid #F4ECD8; border-radius: 0; background: rgba(244,236,216,.12); display: grid; place-items: center; }
+html.diorama.pcwide .panel .trow .g2.pfx-spend { color: #FFE59A; }
 
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
@@ -2407,6 +2477,14 @@ html.pc .panel > .bar:last-child { margin: -6px -12px -12px; padding: 6px 12px 1
    under it; press and hold the row (or Enter on it) for the whole text and details (upRow) */
 .up { display: grid; gap: 1px; border-top: 1px solid var(--line); padding: 6px 4px 2px; margin: 0 -4px; border-radius: 6px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: background 0.15s; }
 .up-h { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+/* a skill with no use in this mode (the Mommy boss puzzle, Game.bossNoUse): a red cross over the row, and nothing to press */
+.up.up-off { position: relative; opacity: 0.62; cursor: default; }
+.up.up-off .up-h > b, .up.up-off .up-s { text-decoration: line-through; text-decoration-color: rgba(229, 87, 74, 0.7); }
+.up-x { position: absolute; inset: 4px 0; pointer-events: none; }
+.up-x::before, .up-x::after { content: ''; position: absolute; left: 50%; top: 50%; width: min(84%, 260px); height: 2px; border-radius: 1px; background: #E5574A; box-shadow: 0 0 6px rgba(229, 87, 74, 0.45); }
+.up-x::before { transform: translate(-50%, -50%) rotate(14deg); } .up-x::after { transform: translate(-50%, -50%) rotate(-14deg); }
+.card .boss-dmg { margin: 2px 0 6px; font-size: 18px; font-weight: 600; } .card .boss-dmg .num { font-size: 30px; font-weight: 800; color: var(--gold, #F2B23A); margin-right: 4px; } /* the Mommy's round card: X damage dealt */
+.up-no { font-size: 12px; font-weight: 700; color: #E5574A; white-space: nowrap; }
 .up-h > b { flex: 1; min-width: 0; font: 600 14px/1.2 var(--font-display); }
 .up-h > b .lab { color: var(--gold); }
 .up-h > .up-a { flex: none; display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
@@ -2547,9 +2625,30 @@ html.dock .panel.shut > .bar:last-child { margin-top: 0; padding-top: 0; }
 .uc2 .c.free { color: var(--win, #6FD08C); }
 .uc2 .st { position: absolute; top: 3px; right: 5px; font: 10px var(--font-data); color: var(--gold); }
 .uc2 .cap { position: absolute; top: 3px; left: 5px; font: 10px var(--font-data); color: var(--muted); }
+/* a full card tapped (3/3 on the board): it shakes, its count goes red, and a bubble says so (owner, 12 November) */
+.uc2.maxed { animation: uc-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+.uc2.maxed .cap { color: #FF8A80; font-weight: 700; }
+@keyframes uc-shake { 0%, 100% { transform: none; } 15% { transform: translateX(-5px) rotate(-2deg); } 30% { transform: translateX(5px) rotate(2deg); } 45% { transform: translateX(-4px) rotate(-1deg); } 60% { transform: translateX(4px) rotate(1deg); } 75% { transform: translateX(-2px); } 90% { transform: translateX(2px); } }
+.cap-toast { position: fixed; z-index: 60; transform: translate(-50%, -100%); padding: 6px 11px; border-radius: 8px; background: rgba(14, 16, 14, 0.88); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3); color: #FF8A80; font: 700 13px/1.2 var(--type, system-ui, sans-serif); white-space: nowrap; pointer-events: none; animation: cap-toast 1.8s ease forwards; }
+.cap-toast::after { content: ''; position: absolute; left: var(--ax, 50%); bottom: -5px; width: 10px; height: 10px; margin-left: -5px; background: inherit; transform: rotate(45deg); border-radius: 0 0 2px 0; }
+@keyframes cap-toast { 0% { opacity: 0; transform: translate(-50%, calc(-100% + 6px)); } 12% { opacity: 1; transform: translate(-50%, -100%); } 80% { opacity: 1; transform: translate(-50%, -100%); } 100% { opacity: 0; transform: translate(-50%, calc(-100% - 4px)); } }
+@media (prefers-reduced-motion: reduce) { .uc2.maxed { animation: none; } .cap-toast { animation-name: cap-toast-fade; } @keyframes cap-toast-fade { 0%, 100% { opacity: 0; } 10%, 80% { opacity: 1; } } }
 .uc2[aria-disabled="true"] { opacity: 0.45; }
 .uc2[aria-pressed="true"] { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45); }
 .uc2.lift { opacity: 0.3; }
+/* the picked card's Skills tab: pulled out from behind its left edge (a zero-width slot before the card, the tab hangs
+   left of it over the gap and the card before), the sheet symbol over "Skills" read top to bottom. A tap opens the sheet */
+.sk2 { flex: 0 0 0; width: 0; margin-right: -7px; position: relative; align-self: stretch; z-index: 1; }
+.sk2t { position: absolute; right: -6px; top: 8px; bottom: 6px; width: 30px; padding: 7px 6px 7px 0; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  border: 0; border-radius: 7px 0 0 7px; background: var(--gold); color: var(--bg); font: inherit; cursor: pointer; box-shadow: -3px 4px 10px rgba(0, 0, 0, 0.45); transform: translateY(-5px); }
+.sk2t svg { flex: none; }
+.sk2t b { writing-mode: vertical-rl; font: 700 10px/1 var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
+.sk2t:hover { background: color-mix(in srgb, var(--gold), #fff 14%); }
+.sk2t:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.sk2t.out { animation: sk2out 0.22s cubic-bezier(.2, .8, .3, 1.2) both; }
+@keyframes sk2out { from { transform: translate(24px, -5px); } to { transform: translateY(-5px); } }
+.uc2[aria-pressed="true"] { z-index: 2; }
+@media (prefers-reduced-motion: reduce) { .sk2t.out { animation: none; } }
 .add2 { flex: 0 0 74px; height: 104px; border-radius: 10px; border: 1.5px dashed color-mix(in srgb, var(--tier) 60%, var(--line)); color: var(--tier); background: none;
   display: grid; align-content: center; justify-items: center; gap: 2px; scroll-snap-align: start; font: inherit; }
 .add2 .p { font-size: 28px; line-height: 1; font-weight: 300; }
@@ -2653,32 +2752,54 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 .hud.bossrun .side.foe .num, .hud.bossrun .side.foe .hp { visibility: hidden; }
 .hud.bossrun .side.you .num { white-space: nowrap; }
 .hud.bossrun #you-name { display: none; } /* (the phone's top line has no room for a name next to "Round 1 of 5"; the PC layout keeps it) */
-.boss-bar { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); width: min(94%, 560px); z-index: 3; pointer-events: none; text-align: center; font-family: "IBM Plex Mono", monospace; }
-.boss-bar .bb-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 8px; margin: 0 2px 3px; }
-.boss-bar .bb-top .bb-name { justify-self: start; } .boss-bar .bb-top .bb-phase { grid-column: 3; justify-self: end; }
-.boss-bar .bb-time { grid-column: 2; display: inline-flex; align-items: baseline; gap: 5px; padding: 0 10px; border-radius: 4px; background: rgba(10, 14, 16, 0.82); border: 1px solid #56646A; color: #fff; text-shadow: 0 1px 3px #000; }
+/* the boss bar (2026-11-12, owner: "cleaner, not so in your face"): one soft panel, the game's type in sentence case,
+   a slim health bar, the time as a plain number, and her state as a quiet line; colour only where something changes */
+.boss-bar { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); width: min(94%, 520px); z-index: 3; pointer-events: none; box-sizing: border-box; padding: 8px 12px 7px; border-radius: 10px; background: rgba(14, 16, 14, 0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); font-family: var(--type, system-ui, sans-serif); color: #F4EEDF; text-align: left; }
+.boss-bar .bb-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.boss-bar .bb-name { display: inline-flex; align-items: baseline; gap: 10px; font-size: 15px; font-weight: 700; }
+.boss-bar .bb-phase { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+.boss-bar .bb-phase::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.boss-bar .bb-phase.hanging { color: #B9A6F0; } .boss-bar .bb-phase.stunned { color: #F2D36B; } .boss-bar .bb-phase.down { color: #F08A7E; } .boss-bar .bb-phase.dead { color: #9AA6A2; }
+.boss-bar .bb-right { display: inline-flex; align-items: center; gap: 10px; }
+.boss-bar .bb-time:not([hidden]) + .bb-rs { padding-left: 10px; border-left: 1px solid rgba(244, 238, 223, 0.15); }
+.boss-bar .bb-rs { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; }
+.boss-bar .bb-rs button { display: inline-flex; align-items: center; gap: 5px; margin: 0; padding: 3px 10px; border: 1px solid rgba(244, 238, 223, 0.14); border-radius: 999px; background: rgba(244, 238, 223, 0.07); color: rgba(244, 238, 223, 0.82); font: 600 12px/1.2 var(--type, system-ui, sans-serif); cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s; }
+.boss-bar .bb-rs button svg { transition: transform 0.3s ease; }
+.boss-bar .bb-rs button:hover { background: rgba(244, 238, 223, 0.15); color: #fff; }
+.boss-bar .bb-rs .bb-rsb:hover { border-color: rgba(240, 138, 126, 0.6); }
+.boss-bar .bb-rs .bb-rsb:hover svg { transform: rotate(-120deg); }
+.boss-bar .bb-rs button:active { transform: scale(0.95); }
+.boss-bar .bb-rs button:focus-visible { outline: 2px solid #F4EEDF; outline-offset: 2px; }
+.boss-bar .bb-rs .yes { background: #D8574A; border-color: transparent; color: #fff; }
+.boss-bar .bb-rs .yes:hover { background: #E5685B; }
+.boss-bar .bb-rs .bb-ask { font-size: 12px; font-weight: 600; opacity: 0.85; margin-right: 2px; animation: bb-in 0.18s ease-out; }
+@keyframes bb-in { from { opacity: 0; transform: translateX(4px); } }
+/* the ? beside the boss bar: her screen (openBossInfo). Wide: just outside the panel's right edge; narrow: in its top row */
+.boss-bar .bb-q { pointer-events: auto; position: absolute; top: 6px; right: -40px; width: 30px; height: 30px; margin: 0; padding: 0; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(244, 238, 223, 0.18); background: rgba(14, 16, 14, 0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #F4EEDF; font: 700 15px/1 var(--type, system-ui, sans-serif); cursor: pointer; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); transition: background 0.15s, border-color 0.15s, transform 0.12s; }
+.boss-bar .bb-q:hover { background: rgba(232, 150, 46, 0.85); border-color: transparent; color: #23170F; }
+.boss-bar .bb-q:active { transform: scale(0.94); }
+.boss-bar .bb-q:focus-visible { outline: 2px solid #F4EEDF; outline-offset: 2px; }
+@media (max-width: 700px) { .boss-bar .bb-top { padding-right: 34px; } .boss-bar .bb-q { right: 10px; top: 7px; width: 26px; height: 26px; font-size: 13px; box-shadow: none; } }
+.boss-bar .bb-time { display: inline-flex; align-items: baseline; gap: 1px; font-variant-numeric: tabular-nums; }
 .boss-bar .bb-time[hidden] { display: none; }
-.boss-bar .bb-time b { font-size: 34px; line-height: 1.1; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 2.6ch; text-align: right; }
-.boss-bar .bb-time small { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #C8D2D2; }
-.boss-bar .bb-time.low { border-color: #FF5A4E; color: #FF8A80; animation: bb-pulse 0.5s ease-in-out infinite alternate; }
-.boss-bar .bb-clock { height: 5px; margin-top: 2px; border-radius: 3px; background: rgba(10, 14, 16, 0.75); overflow: hidden; }
+.boss-bar .bb-time b { font-size: 20px; font-weight: 700; line-height: 1; }
+.boss-bar .bb-time small { font-size: 12px; font-weight: 600; opacity: 0.6; }
+.boss-bar .bb-time.low { color: #FF8A80; }
+.boss-bar .bb-bar { position: relative; height: 8px; border-radius: 4px; background: rgba(244, 238, 223, 0.1); overflow: hidden; }
+.boss-bar .bb-lost { position: absolute; left: 0; top: 0; bottom: 0; background: #F4EEDF; opacity: 0.35; transition: width 0.9s ease-out 0.25s; }
+.boss-bar .bb-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: #D8574A; transition: width 0.15s linear; }
+.boss-bar .bb-fill.hanging { background: #8E7BD0; }
+.boss-bar .bb-clock { height: 2px; margin-top: 3px; border-radius: 1px; overflow: hidden; }
 .boss-bar .bb-clock[hidden] { display: none; }
-.boss-bar .bb-clock i { display: block; height: 100%; background: #F4F1E8; }
-.boss-bar .bb-clock.low i { background: #FF5A4E; }
-.boss-bar .bb-name { color: #FF7A6E; font-weight: 800; letter-spacing: 0.18em; font-size: 13px; text-shadow: 0 1px 3px #000; }
-.boss-bar .bb-phase { font-weight: 800; letter-spacing: 0.08em; font-size: 11px; padding: 1px 8px; border-radius: 3px; color: #10161A; }
-.boss-bar .bb-phase.hanging { background: #B79CFF; } .boss-bar .bb-phase.stunned { background: #FFE15A; animation: bb-pulse 0.8s ease-in-out infinite alternate; }
-.boss-bar .bb-phase.down { background: #FF7A6E; } .boss-bar .bb-phase.dead { background: #8DA1A1; }
-.boss-bar .bb-bar { position: relative; height: 18px; border: 1px solid #FF7A6E; border-radius: 3px; background: rgba(10, 14, 16, 0.85); overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.6); }
-.boss-bar .bb-lost { position: absolute; left: 0; top: 0; bottom: 0; background: #F4F1E8; opacity: 0.55; transition: width 0.9s ease-out 0.25s; }
-.boss-bar .bb-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(180deg, #E8584B, #9E2A22); transition: width 0.15s linear; }
-.boss-bar .bb-fill.hanging { background: linear-gradient(180deg, #9C86D8, #5B4A92); }
-.boss-bar .bb-num { position: relative; z-index: 1; display: block; line-height: 18px; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
-.boss-bar .bb-tok { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 4px; }
-.boss-bar .bb-tok span { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 1px 6px; border-radius: 9px; background: rgba(10, 14, 16, 0.82); border: 1px solid #56646A; color: #E8EEEE; white-space: nowrap; }
-.boss-bar .bb-tok .bad { border-color: #FF5A4E; color: #FF8A80; animation: bb-pulse 0.5s ease-in-out infinite alternate; }
-.boss-bar .bb-tok .good { border-color: #6FD08C; color: #9BE8B0; }
-.boss-bar .bb-tok .fx { border-color: #E6B84A; color: #F2D27F; }
+.boss-bar .bb-clock i { display: block; height: 100%; background: rgba(244, 238, 223, 0.35); }
+.boss-bar .bb-clock.low i { background: #FF8A80; }
+.boss-bar .bb-foot { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 2px 12px; margin-top: 6px; font-size: 12px; }
+.boss-bar .bb-num { font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0.75; }
+.boss-bar .bb-tok { display: flex; flex-wrap: wrap; }
+.boss-bar .bb-num { margin-left: auto; }
+.boss-bar .bb-tok span { font-weight: 600; color: rgba(244, 238, 223, 0.72); white-space: nowrap; }
+.boss-bar .bb-tok span + span::before { content: '·'; margin: 0 6px; color: rgba(244, 238, 223, 0.4); }
+.boss-bar .bb-tok .bad { color: #FF8A80; } .boss-bar .bb-tok .good { color: #8FD9A4; } .boss-bar .bb-tok .fx { color: #F0C766; }
 @keyframes bb-pulse { from { opacity: 1; } to { opacity: 0.55; } }
 .board-banner { position: absolute; left: 0; right: 0; top: 42%; z-index: 4; pointer-events: none; text-align: center; padding: 14px 8px; background: linear-gradient(90deg, transparent, rgba(13, 19, 21, 0.88) 18%, rgba(13, 19, 21, 0.88) 82%, transparent); border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold); color: var(--gold); font-size: 26px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; animation: banner-in 3.2s ease both; }
 .board-banner small { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; color: var(--text, #e8e6df); }
@@ -2697,6 +2818,23 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 .seg.speeds button.asked { outline: 1px dashed var(--gold); outline-offset: -4px; }
 .speed-ask { display: block; margin-top: 6px; color: var(--gold); }
 .speed-ask[hidden] { display: none; }
+/* buy and place feedback (prototype, 2026-11-12): the page's effect layer (pfx*), squads placed this round (.fresh), the deploy pips as a receipt */
+.pfx { position: fixed; inset: 0; z-index: 30; pointer-events: none; overflow: hidden; }
+.pfx svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.pfx-coin { position: absolute; left: 0; top: 0; padding: 3px 8px 3px 20px; border-radius: 999px; background: #17140F; border: 1.5px solid var(--gold); color: var(--gold); font: 700 14px/1 var(--font-data); white-space: nowrap; box-shadow: 0 3px 10px rgba(0,0,0,.55); will-change: transform; }
+.pfx-coin::before { content: ''; position: absolute; left: 5px; top: 50%; width: 11px; height: 11px; margin-top: -5.5px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #FFE59A, var(--gold) 60%, #9A6E12); }
+.pfx-back { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--bg); border: 1.5px solid var(--foe); box-shadow: 0 4px 12px rgba(0,0,0,.5); will-change: transform; }
+.pfx-tagbg { fill: var(--you); stroke: #0A0E10; stroke-width: 1.5; }
+.pfx-tagbg.foe { fill: var(--foe); }
+.pfx-tag { fill: #0A0E10; font: 800 8.5px var(--font-body, sans-serif); letter-spacing: .06em; text-anchor: middle; }
+.marks .fresh { fill: var(--you); fill-opacity: .12; stroke: var(--you); stroke-width: 2.5; stroke-linejoin: round; animation: fresh-breathe 1.6s ease-in-out infinite; }
+@keyframes fresh-breathe { 0%, 100% { stroke-opacity: 1; fill-opacity: .16; } 50% { stroke-opacity: .45; fill-opacity: .04; } }
+.trow .g2 { transition: color .15s; }
+.trow .g2.pfx-spend { color: #FFE59A; text-shadow: 0 0 10px rgba(230,184,74,.7); }
+.pips i.u { width: 19px; height: 19px; border-radius: 6px; border: 1.5px solid var(--you); background: color-mix(in srgb, var(--you) 16%, var(--bg)); display: grid; place-items: center; cursor: pointer; }
+.pips i.u svg { width: 13px; height: 13px; }
+.uc2 .nw { position: absolute; top: 3px; left: 50%; transform: translateX(-50%); padding: 1px 6px; border-radius: 999px; background: var(--you); color: #0A0E10; font: 800 10px/1.3 var(--font-data); box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+@media (prefers-reduced-motion: reduce) { .marks .fresh { animation: none; } }
 .marks .tut-tile { fill: rgba(92, 198, 223, 0.28); stroke: var(--you); stroke-width: 1.5; animation: tut-blink 1.1s ease-in-out infinite; }
 @keyframes tut-blink { 50% { opacity: 0.2; } }
 .ucard.tut-glow { animation-name: tut-glow-in; } /* the shop scrolls sideways and would clip a glow outside the card */
@@ -3249,6 +3387,13 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 .rgrid .rbtn span { font-size: 11px; color: var(--muted, #9aa); text-transform: uppercase; letter-spacing: 0.06em; }
 .rgrid .rbtn.won span { color: var(--you); } .rgrid .rbtn.lost span { color: var(--foe); }
 .gg-row { align-items: center; } .gg-got { color: #C6ECFF; font-weight: 700; }
+/* the Mommy's round card: "! Next round:" with that round's bite mark and name (bossNextBite) */
+.bz-next { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px auto 2px; padding: 6px 14px 6px 8px; width: max-content; max-width: 100%;
+  border: 1.5px solid var(--bc); border-radius: 999px; background: color-mix(in srgb, var(--bc) 12%, transparent); font-weight: 700; }
+.bz-next .bang { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--bc); color: #17140F; font: 800 15px/1 var(--font-display); flex: none; }
+.bz-next span { text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; }
+.bz-next img { width: 34px; height: 34px; margin: -4px 0; }
+.bz-next .bn { color: var(--bc); text-transform: uppercase; letter-spacing: 0.04em; font-size: 15px; }
 .series-chip { display: block; margin: 0 auto 2px; width: max-content; padding: 1px 8px; border: 1px solid var(--gold); border-radius: 999px; color: var(--gold); font: 700 11px var(--font-data); letter-spacing: 0.06em; background: rgba(230, 184, 74, 0.1); }
 </style>
 <script>
@@ -8810,6 +8955,7 @@ const Game = (() => {
   function canBuySkill(m, side, ui, k) {
     const d = skillDef(m, ui, k);
     if (!d || hasSkill(m, side, ui, k)) return false;
+    if (bossNoUse(m, ui, k)) return false; // the Mommy boss puzzle: no use in her fight (Boss.NO_USE)
     if (charOf(m, side) === 'enzo') return false; // Enzo's squads come with their skill instead
     if (isAwaken(m, ui, k)) return false; // bought for one squad at a time: see awaken
     if (isEvolve(m, ui, k)) return false; // never bought: see evolveReady
@@ -8874,9 +9020,12 @@ const Game = (() => {
   // why a squad can't be awakened now ('' = it can): 'none' (no Awaken skill or already awake), 'enzo', 'type' (another
   // unit type is the one awakened this match), 'needs', 'glut', 'or', 'gold'. An Awaken skill with needs: 'glutMax' (the
   // Obelisk's) needs the squad at its most Glut
+  // the Mommy boss puzzle: why a skill does nothing in her fight ('' when it does something, or outside her fight)
+  const bossNoUse = (m, ui, k) => { if (!m || !m.boss || typeof Boss === 'undefined' || !Boss.NO_USE) return ''; const d = skillDef(m, ui, k); return (d && Boss.NO_USE[d.id]) || ''; };
   function awakenBlock(m, side, sq) {
     const k = sq ? awakenSlot(m, sq.unit) : -1;
     if (k < 0 || sq.awaken > 0) return 'none';
+    if (bossNoUse(m, sq.unit, k)) return 'boss'; // the Mommy boss puzzle: no use in her fight (Boss.NO_USE)
     if (charOf(m, side) === 'enzo') return 'enzo'; // Enzo's squads come with their skill instead
     if (wokeUnit(m, side) != null && wokeUnit(m, side) !== sq.unit) return 'type';
     if (skillNeedsMissing(m, side, sq.unit, k).length) return 'needs';
@@ -10841,7 +10990,7 @@ const Game = (() => {
   const api = {
     MAX_ROUND_DMG, TIER_DMG, bankBusy, seenAt, charShown, towerTypeShown, altarShown, elfOwnShown, shroomShown, removingShroom, movedId, canMove, moveSquad, undoMove,
     COLS, ROWS, TILE, ZONE, START_HP, LATE, startHp, capped, capOf, capCount, capFull, START_GOLD, INCOME, incomeFor, LOSER_BONUS, LOSER_BONUS_ROUND, TOWER_FALL_HP, CARRY_CAP, SHUTDOWN, shutdownGold, CREDIT_LINE, loanTerms, loanTaken, treasurySteal, SQUAD_COST, SETTINGS, XP_STEPS, xpNeeded, unitCostOf,
-    levelCost, isReady, levelUp, undoLevel, levelAllPlan, levelAll, upgradeOffer, seenLevel, aiLevel, AI, CONFIG,
+    bossNoUse, levelCost, isReady, levelUp, undoLevel, levelAllPlan, levelAll, upgradeOffer, seenLevel, aiLevel, AI, CONFIG,
     deploysAllowed, deploysLeft, deployedThisRound, canBuyDeploy, buyDeploy, refundDeploy, musterOn, deployBuyable,
     PACKAGE, allPackages, packOf, needsPack, startSeen, freeLeft, choosePack, ensurePack, DRAFT, drafting, draftFirst, needsLeaderPick, leaderTurn, leaderTaken, draftLeft, canPickLeader, pickLeader, settleLeaders,
     unlockCost, tierOf, startLevel, shopCost, mapFreeOf, mapFreeLeft, isUnlocked, unlockVisible, unlock, undoUnlock,
@@ -10991,6 +11140,9 @@ if (typeof module !== 'undefined') module.exports = Game;
     m.packages = [[], []];
     m.towers = [null, null];
     m.units.forEach((u, k) => { if (!cfg.banned.includes(u.name) && !u.building) m.unlocks[0][k] = 1; });
+    // her banned units are out of the match (Game.isOff): not in the shop, not in + Unlock (owner, 12 November: "all not
+    // unlocked units are not purchasable")
+    m.off = (Array.isArray(m.off) ? m.off : []).concat(m.units.map((u, k) => cfg.banned.includes(u.name) ? k : -1).filter(k => k >= 0));
     m.extraDeploys[0] = 1;
     m.gold = [cfg.startGold, 0];
     m.boss.run = { seed: m.seed, rounds: [] }; // the run's record, for the leaderboard (record, replay below)
@@ -11130,7 +11282,11 @@ if (typeof module !== 'undefined') module.exports = Game;
         if (!(mom.u.projSpeed > 0) && mom.lastAtk != null && mom.lastAtk !== lastAtk0) { lastAtk0 = mom.lastAtk; const tg = mom.lock; if (tg) ev.push({ k: 'bite', t: mom.lastAtk, x: tg.x, y: tg.y, land: mom.lastAtk, r: mom.u.splash || 1, bite: bs.bite }); } // (a bite that lands at once)
         let tg = null, td = mom.u.range + (mom.fallen ? cfg.mommy.size : 0); // who she bites next: the nearest body in her reach
         for (const f of api.sides[0]) if (f.alive && !f.u.aloft && !f.hidden && !(f.inside && f.inside.alive)) { const d = d2(f, mw.x, mw.y); if (d <= td) { td = d; tg = f; } }
-        if (!stunned && tg) { const cyc = 1 / Math.max(0.05, mom.u.aps), k = Math.min(1, (api.t - (mom.lastAtk == null ? -cyc * 0.5 : mom.lastAtk)) / cyc); bs.aim = { x: tg.x, y: tg.y, k, in: cyc * (1 - k), cyc, r: mom.u.splash || 1 }; }
+        if (mom.lock && mom.lock.alive && mom.lock.side === 0 && !mom.lock.hidden && d2(mom.lock, mw.x, mw.y) <= mom.u.range + (mom.fallen ? cfg.mommy.size : 0)) tg = mom.lock; // (whom she is on, while they stay in reach)
+        // when: the engine's own reload (mom.cd, slowed by attack slows), not the time since her last bite. Ready with
+        // nobody the engine lets her bite (cd at 0): no jaws, or they would hang open over that unit for good (12 November)
+        const slow = mom.atkSlow ? Math.max(0.05, 1 - mom.atkSlow / 100) : 1, cyc = 1 / Math.max(0.05, mom.u.aps), left = (mom.cd || 0) / slow;
+        if (!stunned && tg && left > 1e-6) bs.aim = { x: tg.x, y: tg.y, k: Math.max(0, Math.min(1, 1 - left / cyc)), in: left, cyc, r: mom.u.splash || 1 };
         if (ev.length > 60) ev.splice(0, ev.length - 60);
       }
       // attention: nobody close while she hangs, and the mortar winds up
@@ -11292,7 +11448,10 @@ if (typeof module !== 'undefined') module.exports = Game;
   // Spiders (the Sporespreader Spider skin), by round 3 the black Widowmaker title. Kept out of CFG so a change here
   // doesn't start a new leaderboard (rulesTag hashes CFG). The game server gives them (server/src/accounts.js)
   const REWARDS = { crawler: 5, skin: 4, widowmaker: 3 };
-  const api = { CFG, REWARDS, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
+  // skills that do nothing in her fight (owner, 12 November: a red cross over them in the unit sheet, and they can't be
+  // bought): skill id -> why. Hunter's mark needs an enemy squad, and her side has none. Kept out of CFG like REWARDS
+  const NO_USE = { hunter: 'Nothing to mark: her side has no squads' };
+  const api = { CFG, REWARDS, NO_USE, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Boss = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -17005,7 +17164,7 @@ const Render2D = (cv, view, opts = {}) => {
       }
     }
     // whom she bites next (only when her bites come slowly: the heavy bite): open jaws that follow them
-    if (bs.aim && !closing && bs.aim.cyc >= 2 && bs.aim.in < 1.5) {
+    if (bs.aim && !closing && bs.aim.cyc >= 2 && bs.aim.in < 1.5 && !(bt.isOver && bt.isOver())) { // (not once the fight is over: no jaws frozen on the last frame)
       const col = BITE_COL[bs.bite] || '#FFE15A', ax = PX(bs.aim.x), ay = PY(bs.aim.y), k = 1 - bs.aim.in / 1.5;
       ctx.strokeStyle = col; ctx.globalAlpha = 0.25 + 0.4 * k; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(ax, ay, Math.max(1, bs.aim.r) * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
       Art.bossJaws(ctx, ax, ay, Math.max(3, bs.aim.r * 1.15) * S, 1.25, col, 0.2 + 0.3 * k);
@@ -19605,6 +19764,203 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       return r;
     };
   }
+  // ---------- buy and place feedback (prototype, 2026-11-12) ----------
+  // Placing a squad by hand gets one loud moment, made to show around a thumb on a phone: a ripple on the ground
+  // spreading past the tile, the price flying off to the gold, the gold counting down, the card bumping, and on the 3D
+  // board the squad dropping in (render3d landLift). Afterwards it stays marked as new until the fight (boardMarks:
+  // freshMarks), the deploy pips list what was placed this round, and the fight's start locks them in (pfxLock).
+  // A drop on a bad tile: a red cross on the tile and the card flying back to the tray. Sounds are unchanged.
+  const landAt = {}; // squad id -> when it was placed by hand (the 3D board drops it in)
+  const pfx = { list: [], raf: 0, gold: null, flush: [] };
+  function pfxLayer() {
+    let l = $('pfx');
+    if (!l) { l = document.createElement('div'); l.id = 'pfx'; l.className = 'pfx'; l.setAttribute('aria-hidden', 'true'); l.innerHTML = '<svg></svg>'; document.body.appendChild(l); }
+    return l;
+  }
+  // board metres -> a point on the screen (client coordinates)
+  function pfxAt() { const at = wrapMap(), w = $('wrap').getBoundingClientRect(); return (x, y) => { const p = at(x, y); return [p[0] + w.left, p[1] + w.top]; }; }
+  const pfxMid = (col, row, n = 1) => Game.tileToWorld(col + (n - 1) / 2, row + (n - 1) / 2);
+  const pfxSlow = () => window.__pfxSlow || 1; // (UI tests on a slow 3D board play it in slow motion)
+  function pfxAdd(e) { e.life *= pfxSlow(); e.t0 = performance.now(); pfx.list.push(e); if (!pfx.raf) pfx.raf = requestAnimationFrame(pfxFrame); }
+  // the gold shown in the tray while a price is on its way to it: the old amount until the coin lands, then counting down
+  function pfxGold(g) {
+    const a = pfx.gold;
+    if (!a) return g;
+    const k = (performance.now() - a.t0) / a.dur;
+    if (k >= 1 || a.to !== g) { if (k >= 1) pfx.gold = null; return g; }
+    if (k <= 0) return a.from;
+    return Math.round(a.from + (a.to - a.from) * (1 - (1 - k) ** 2));
+  }
+  function goldTick() {
+    const el = document.querySelector('#panel .g2');
+    const a = pfx.gold;
+    if (!el) return;
+    const k = a ? (performance.now() - a.t0) / a.dur : 2;
+    if (el.firstChild && el.firstChild.nodeType === 3 && m) { const s = String(pfxGold(m.gold[me])); if (el.firstChild.nodeValue !== s) el.firstChild.nodeValue = s; }
+    el.classList.toggle('pfx-spend', !!a && k > -0.1 && k < 1.15);
+  }
+  const pfxSquare = (at, c, d) => [[-d, -d], [d, -d], [d, d], [-d, d]].map(([x, y]) => at(c.x + x, c.y + y).map(v => v.toFixed(1)).join(',')).join(' ');
+  const pfxCircle = (at, c, r) => Array.from({ length: 48 }, (_, k) => { const a = k / 48 * Math.PI * 2; return at(c.x + Math.cos(a) * r, c.y + Math.sin(a) * r).map(v => v.toFixed(1)).join(','); }).join(' ');
+  const easeOut = (k) => 1 - (1 - k) ** 3;
+  function pfxDraw(e, k, at) {
+    const T = Game.TILE, c = pfxMid(e.col, e.row, e.n), col = e.col_ || 'var(--you)';
+    let h = '';
+    if (e.kind === 'stamp' || e.kind === 'move') { // the tile flashes softly, and one faint ring runs out a little past it
+      const big = e.kind === 'stamp';
+      h += `<polygon points="${pfxSquare(at, c, T * e.n / 2 - 0.3)}" style="fill:${col};fill-opacity:${(0.18 * (1 - k)).toFixed(3)};stroke:#fff;stroke-opacity:${(0.35 * (1 - k)).toFixed(3)};stroke-width:1.5"/>`;
+      const reach = big ? 0.8 : 0.5;
+      h += `<polygon points="${pfxCircle(at, c, T * (0.45 * e.n + reach * easeOut(k)))}" style="fill:none;stroke:${col};stroke-opacity:${(0.3 * (1 - k)).toFixed(3)};stroke-width:${(1 + 1.5 * (1 - k)).toFixed(2)}"/>`;
+    } else if (e.kind === 'bad') { // a red cross on the tile
+      const o = (1 - k).toFixed(3), d = T / 2 - 1.2, p = (x, y) => at(c.x + x, c.y + y).map(v => v.toFixed(1)).join(' ');
+      h += `<polygon points="${pfxSquare(at, c, T / 2 - 0.3)}" style="fill:var(--foe);fill-opacity:${(0.35 * (1 - k)).toFixed(3)};stroke:var(--foe);stroke-opacity:${o};stroke-width:2"/>`;
+      h += `<path d="M${p(-d, -d)}L${p(d, d)}M${p(d, -d)}L${p(-d, d)}" style="stroke:var(--foe);stroke-opacity:${o};stroke-width:3;stroke-linecap:round"/>`;
+    } else if (e.kind === 'lock') { // the fight starts: a white square snaps in onto the squad
+      const q = easeOut(Math.min(1, k * 1.6));
+      h += `<polygon points="${pfxSquare(at, c, T * e.n / 2 * (1.5 - 0.55 * q))}" style="fill:#fff;fill-opacity:${(0.3 * (1 - k)).toFixed(3)};stroke:${col};stroke-opacity:${(1 - k * k).toFixed(3)};stroke-width:${(4 - 2 * q).toFixed(2)}"/>`;
+    } else if (e.kind === 'find') { // a pip tapped: rings close in on the squad
+      for (const d of [0, 0.35]) { const q = (k - d) / (1 - d); if (q <= 0 || q >= 1) continue; h += `<polygon points="${pfxCircle(at, c, T * (2.4 - 1.9 * easeOut(q)))}" style="fill:none;stroke:${col};stroke-opacity:${(1 - q * 0.7).toFixed(3)};stroke-width:3"/>`; }
+    } else if (e.kind === 'foeNew') { // the opponent's squads from this round, as the fight starts
+      const o = (k < 0.75 ? 1 : (1 - k) / 0.25) * (0.75 + 0.25 * Math.sin(k * Math.PI * 6));
+      const pts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([x, y]) => at(c.x + x * T * e.n / 2, c.y + y * T * e.n / 2));
+      const tr = pts.reduce((b, p) => p[0] - p[1] > b[0] - b[1] ? p : b);
+      h += `<polygon points="${pfxSquare(at, c, T * e.n / 2 - 0.3)}" style="fill:none;stroke:var(--foe);stroke-opacity:${o.toFixed(3)};stroke-width:2.5"/>`;
+      h += `<g transform="translate(${tr[0].toFixed(1)},${tr[1].toFixed(1)})" style="opacity:${o.toFixed(3)}"><rect class="pfx-tagbg foe" x="-14" y="-7" width="28" height="14" rx="7"/><text class="pfx-tag" y="3.5">NEW</text></g>`;
+    }
+    return h;
+  }
+  function pfxFrame() {
+    pfx.raf = 0;
+    const now = performance.now(), svg = pfxLayer().firstChild;
+    pfx.list = pfx.list.filter(e => now - e.t0 < e.life);
+    const cinematic = board3d && board3d.camera.level() >= 3;
+    let h = '';
+    if (m && !cinematic && ['deploy', 'battle'].includes(phase)) {
+      Game.useGrid(m);
+      const at = pfxAt();
+      for (const e of pfx.list) h += pfxDraw(e, (now - e.t0) / e.life, at);
+    }
+    svg.innerHTML = h;
+    goldTick();
+    if (pfx.list.length || pfx.gold) pfx.raf = requestAnimationFrame(pfxFrame);
+    else document.querySelector('#panel .g2') && document.querySelector('#panel .g2').classList.remove('pfx-spend');
+  }
+  // the price, flying from the tile to the gold in the tray; the gold counts down once it lands
+  function pfxCoin(c, cost) {
+    const g = document.querySelector('#panel .g2'), r = g && g.getBoundingClientRect();
+    if (!r || !r.width) return;
+    const [x0, y0] = pfxAt()(c.x, c.y), x1 = r.left + r.width / 2, y1 = r.top + r.height / 2;
+    const el = document.createElement('div'); el.className = 'pfx-coin'; el.textContent = `−${cost}`;
+    pfxLayer().appendChild(el);
+    const lift = Math.min(60, Math.abs(y1 - y0) * 0.25) + 24, D = 560 * pfxSlow();
+    const mx = x0 + (x1 - x0) * 0.25, my = Math.min(y0, y1) - lift;
+    el.animate([
+      { transform: `translate(${x0}px, ${y0}px) translate(-50%, -50%) scale(0.6)`, opacity: 0 },
+      { transform: `translate(${x0}px, ${y0 - 26}px) translate(-50%, -50%) scale(1.25)`, opacity: 1, offset: 0.18 },
+      { transform: `translate(${mx}px, ${my}px) translate(-50%, -50%) scale(1.1)`, opacity: 1, offset: 0.45 },
+      { transform: `translate(${x1}px, ${y1}px) translate(-50%, -50%) scale(0.55)`, opacity: 0.4 },
+    ], { duration: D, easing: 'cubic-bezier(.45,.05,.55,.95)', fill: 'forwards' }).onfinish = () => el.remove();
+  }
+  // the tray keeps showing the gold from before until the coin lands (set at once, before the tray is built again)
+  function pfxHoldGold(cost) {
+    const from = pfx.gold ? pfxGold(pfx.gold.to) : m.gold[me] + cost;
+    pfx.gold = { from, to: m.gold[me], t0: performance.now() + 560 * 0.85 * pfxSlow(), dur: 380 * pfxSlow() };
+  }
+  // a card bumps when one of its squads is bought
+  function pfxBump(ui) {
+    const el = document.querySelector(`#panel .uc2[data-i="${ui}"]`);
+    if (el && el.animate) el.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.86)', offset: 0.35 }, { transform: 'scale(1.06)', offset: 0.7 }, { transform: 'scale(1)' }], { duration: 320, easing: 'ease-out' });
+    const nw = el && el.querySelector('.nw');
+    if (nw && nw.animate) nw.animate([{ transform: 'translateX(-50%) scale(1.9)' }, { transform: 'translateX(-50%) scale(1)' }], { duration: 300, easing: 'cubic-bezier(.2,1.6,.4,1)' });
+  }
+  // after the call that placed it and the redraws that follow (the tray is built again, so its gold and cards are new)
+  function pfxQueue(fn) { pfx.flush.push(fn); if (pfx.flush.length === 1) requestAnimationFrame(() => { const l = pfx.flush; pfx.flush = []; l.forEach(f => f()); }); }
+  function pfxPlaced(sq, ui, cost) {
+    const n = Game.footprint(m, ui);
+    landAt[sq.id] = performance.now();
+    for (const id of Object.keys(landAt)) if (performance.now() - landAt[id] > 1500) delete landAt[id];
+    if (cost > 0) pfxHoldGold(cost);
+    pfxAdd({ kind: 'stamp', col: sq.col, row: sq.row, n, life: 650 });
+    pfxQueue(() => { if (cost > 0) { Game.useGrid(m); pfxCoin(pfxMid(sq.col, sq.row, n), cost); } pfxBump(ui); if (!pfx.raf) pfx.raf = requestAnimationFrame(pfxFrame); });
+  }
+  function pfxMoved(sq, cost) {
+    if (cost > 0) pfxHoldGold(cost);
+    pfxAdd({ kind: 'move', col: sq.col, row: sq.row, n: Game.footprint(m, sq.unit), life: 420 });
+    if (cost > 0) pfxQueue(() => { Game.useGrid(m); pfxCoin(pfxMid(sq.col, sq.row, Game.footprint(m, sq.unit)), cost); });
+  }
+  // a drop on a tile it can't go on: a red cross there, and the card flies back from the finger to its place in the tray
+  function pfxBad(t, ui, from) {
+    pfxAdd({ kind: 'bad', col: t.col, row: t.row, n: 1, life: 480 });
+    if (ui == null || !from) return;
+    pfxQueue(() => {
+      const card = document.querySelector(`#panel .uc2[data-i="${ui}"]`), r = card && card.getBoundingClientRect();
+      if (!r || !r.width) return;
+      const el = document.createElement('div'); el.className = 'pfx-back'; el.style.color = units[ui].color; el.innerHTML = Shapes.svg(units[ui].shape, 28);
+      pfxLayer().appendChild(el);
+      const x1 = r.left + r.width / 2, y1 = r.top + 26;
+      el.animate([
+        { transform: `translate(${from.x}px, ${from.y}px) translate(-50%, -50%) rotate(0)` },
+        { transform: `translate(${from.x - 7}px, ${from.y}px) translate(-50%, -50%) rotate(-8deg)`, offset: 0.12 },
+        { transform: `translate(${from.x + 7}px, ${from.y}px) translate(-50%, -50%) rotate(8deg)`, offset: 0.24 },
+        { transform: `translate(${from.x}px, ${from.y}px) translate(-50%, -50%) rotate(0)`, offset: 0.34 },
+        { transform: `translate(${x1}px, ${y1}px) translate(-50%, -50%) scale(0.8)`, opacity: 0.3 },
+      ], { duration: 520, easing: 'ease-in', fill: 'forwards' }).onfinish = () => el.remove();
+    });
+  }
+  // the fight starts: your squads from this round lock in; the opponent's new ones are marked for a moment
+  function pfxLock(pre) {
+    if (!pre || !pre.armies || net.duo) return;
+    const fresh = (side) => (pre.armies[side] || []).filter(s => s.round === pre.round && !Game.isRider(s) && !Game.mpbHeld(s));
+    Game.useGrid(pre);
+    for (const s of fresh(me)) pfxAdd({ kind: 'lock', col: s.col, row: s.row, n: Game.footprint(pre, s.unit), life: 420 });
+    if (pre.round > 1) for (const s of fresh(foe())) pfxAdd({ kind: 'foeNew', col: s.col, row: s.row, n: Game.footprint(pre, s.unit), life: 1900 });
+  }
+  // Game.place and Game.moveSquad by this player's own hand
+  {
+    const place = Game.place, move = Game.moveSquad;
+    Game.place = function (...a) {
+      const g0 = a[0] && a[0].gold ? a[0].gold[a[1]] : 0, r = place.apply(this, a);
+      if (r && a[0] === m && a[1] === me && phase === 'deploy' && byHand()) pfxPlaced({ ...r, col: a[3], row: a[4] }, a[2], g0 - m.gold[me]);
+      return r;
+    };
+    Game.moveSquad = function (...a) {
+      const g0 = a[0] && a[0].gold ? a[0].gold[a[1]] : 0, r = move.apply(this, a);
+      if (r && a[0] === m && a[1] === me && phase === 'deploy' && byHand()) { const sq = m.armies[me].find(q => q.id === a[2]); if (sq) pfxMoved(sq, g0 - m.gold[me]); }
+      return r;
+    };
+  }
+  // the squads you placed this round, marked until the fight: an outline that breathes and, on the ones you bought, a NEW
+  // tag (boardMarks; round 1's package squads get the outline only)
+  function freshMarks(at) {
+    if (!m || phase !== 'deploy' || choosingPack()) return '';
+    const T = Game.TILE, pt = (x, y) => at(x, y).map(v => v.toFixed(1)).join(','), tag = mode !== 'tutorial';
+    let h = '';
+    for (const s of m.armies[me]) {
+      if (s.round !== m.round || Game.isRider(s) || Game.mpbHeld(s) || (drag && drag.moved && drag.id === s.id)) continue;
+      const n = Game.footprint(m, s.unit), c = pfxMid(s.col, s.row, n), d = T * n / 2 - 0.35;
+      const pts = [[-d, -d], [d, -d], [d, d], [-d, d]].map(([x, y]) => at(c.x + x, c.y + y));
+      h += `<polygon class="fresh" points="${pts.map(p => p.map(v => v.toFixed(1)).join(',')).join(' ')}"/>`;
+      if (tag && !s.free) { const tr = pts.reduce((b, p) => p[0] - p[1] > b[0] - b[1] ? p : b); h += `<g class="fresh-t" transform="translate(${tr[0].toFixed(1)},${tr[1].toFixed(1)})"><rect class="pfx-tagbg" x="-14" y="-7" width="28" height="14" rx="7"/><text class="pfx-tag" y="3.5">NEW</text></g>`; }
+    }
+    return h;
+  }
+  // the deploy pips: one icon for each squad placed this round (a tap rings it on the board), then the deployments left
+  function receiptPips(allowed, left) {
+    const used = Math.max(0, allowed - Math.max(0, left));
+    const list = m.armies[me].filter(s => s.round === m.round && !s.free).sort((a, b) => a.id - b.id).slice(0, used);
+    let h = '';
+    for (let k = 0; k < used; k++) {
+      const s = list[k], u = s && units[s.unit];
+      h += u ? `<i class="u" data-find="${s.id}" role="button" aria-label="${esc(u.name)}, placed this round" style="color:${u.color}">${Shapes.svg(u.shape, 13)}</i>` : '<i class="u"></i>';
+    }
+    for (let k = 0; k < Math.min(allowed - used, Math.max(0, left)); k++) h += '<i class="on"></i>';
+    return h;
+  }
+  $('panel').addEventListener('click', (e) => {
+    const p = e.target.closest && e.target.closest('[data-find]');
+    if (!p || !m || phase !== 'deploy') return;
+    const s = m.armies[me].find(q => q.id === +p.dataset.find);
+    if (s) { Game.useGrid(m); pfxAdd({ kind: 'find', col: s.col, row: s.row, n: Game.footprint(m, s.unit), life: 760 }); if (board3d) wake3d(); }
+  });
   // the plain click, after the button's own handler (which may have made a sound of its own); in a match or not is
   // decided as the click starts, so Start (or Main menu) clicks like the screen it was on
   let clickInMatch = false;
@@ -19634,7 +19990,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · cbd1d55'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · dbe595a'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19787,7 +20143,8 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         </div>
       </div>
       <div class="bar"><span class="hint">Friends</span><button class="btn small" id="fr-open2">Friends <b class="fr-badge" hidden></b></button></div>
-      ${m && m.boss ? '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div><button class="btn primary" id="boss-restart">Restart boss</button>' : ''}
+      ${m && m.boss ? '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div>' + (bossCtlOn() ? '' : '<button class="btn primary" id="boss-restart">Restart boss</button>'
+        + `<button class="btn" id="boss-replay" aria-expanded="false" aria-controls="boss-rounds">Replay round</button><div class="bar" id="boss-rounds" hidden><span class="hint">Play again from the start of</span><div class="seg" role="group" aria-label="Replay which round">${bossReplayable().map(r => `<button data-boss-round="${r}">Round ${r}${r === m.round ? ' (now)' : ''}</button>`).join('')}</div></div>`) : ''}
       <button class="btn" id="to-menu">Main menu</button>` : ''}
       ${!inMatch ? `<div class="bar">
         <span class="hint">Stay logged in on this device</span>
@@ -19869,7 +20226,10 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     }));
     if ($('to-menu')) $('to-menu').addEventListener('click', askForfeit);
     if ($('boss-atk')) $('boss-atk').addEventListener('click', () => openBossAttacks((bossView() || {}).round || m.round)); // over the Settings, which stays open
-    if ($('boss-restart')) $('boss-restart').addEventListener('click', () => { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); startBoss(); }); // the Mommy boss puzzle: a new run at once, from round 1
+    if ($('boss-restart')) $('boss-restart').addEventListener('click', restartBoss); // the Mommy boss puzzle: a new run at once, from round 1
+    // Replay round: shows the rounds this run has played; one of them goes back to its start (replayBossRound)
+    if ($('boss-replay')) $('boss-replay').addEventListener('click', (e) => { const g = $('boss-rounds'); g.hidden = !g.hidden; $('boss-replay').setAttribute('aria-expanded', String(!g.hidden)); if (!g.hidden && e.detail === 0) { const b = g.querySelector('button'); if (b) b.focus(); } });
+    $('sheet').querySelectorAll('[data-boss-round]').forEach(b => b.addEventListener('click', () => { bossLeave(); replayBossRound(+b.dataset.bossRound); }));
     $('sheet').querySelectorAll('[data-stay]').forEach(b => b.addEventListener('click', () => {
       setStay(b.dataset.stay === '1');
       $('sheet').querySelectorAll('[data-stay]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
@@ -20118,7 +20478,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     battleCam: cam && cam.k > 0 ? { zoom: 1 + (CAM.zoom - 1) * cam.k, x: cam.x, y: cam.y, k: cam.k } : null,
     aim: phase === 'deploy' && (aimMode != null || aimDrag) ? { id: aimDrag ? aimDrag.id : aimMode, end: aimDrag ? aimDrag.end : hoverTile } : null, // (aimDrag without aimMode: a head dragged)
     placingBuilding: placingBuilding(), win: null, duo: duoBoard(),
-    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me], foeStart: foeStart(), boss: bossView() }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
+    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me], foeStart: foeStart(), boss: bossView(), landAt }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
   // the Mommy boss puzzle: what both boards draw (Boss.preview: while deploying her and the nests)
   function bossView() {
     const v = phase === 'battle' && battlePre ? battlePre : m;
@@ -20793,7 +21153,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
 
   // the Mommy boss puzzle: while her rules or the nest map are open, the clocks stand still (it is played against nobody,
   // so nobody waits): the deploy countdown here, the fight in loop()
-  const bossReading = () => !!(m && m.boss) && ((!$('sheet-back').hidden && !!$('sheet').querySelector('[data-boss-read]')) || bossAtkOpen());
+  const bossReading = () => !!(m && m.boss) && ((!$('sheet-back').hidden && !!$('sheet').querySelector('[data-boss-read]')) || bossAtkOpen() || bossInfoOpen());
   let bossReadT = 0; // when the deploy clock was last pushed on while reading (0: not reading)
   function tick() {
     const t = now();
@@ -21173,16 +21533,39 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
           <button class="info" data-info="${i}" aria-label="About ${esc(u.name)}">i</button>
         </div>`;
   }
-  // UI 2.0: a unit's card in the tray (disabled: it can't be bought now; a tap opens its sheet)
+  // the unit sheet's symbol: the outline of a sheet with a cut corner, a skill star and lines of text, in the colour of
+  // whatever it sits on (the owner picked this one, 2026-11-12)
+  const SHEET_SVG = '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 1.5h8l3 3v10h-11z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>'
+    + '<path d="M5.8 4.1l.7 1.4 1.5.2-1.1 1 .3 1.5-1.4-.7-1.4.7.3-1.5-1.1-1 1.5-.2z" fill="currentColor"/><path d="M9 6.3h2M4.8 10h6.4M4.8 12.3h6.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+  let skTabFor = null; // the card whose Skills tab last slid out (it slides out once per pick, not on every redraw)
+  // UI 2.0: a unit's card in the tray (disabled: it can't be bought now; a tap opens its sheet). The picked card has a
+  // Skills tab pulled out on its left: a tap on it opens the unit's sheet (holding the card still does too)
   function shopCard2(i, disabled) {
     const u = units[i], free = Game.freeLeft(m, me).filter(x => x === i).length, stars = Engine.SLOTS.filter(k => Game.hasSkill(m, me, i, k)).length;
-    return `<button class="uc2" data-i="${i}" style="--tier:${tierColor(tierOf(i))}" aria-pressed="${selected === i}" aria-disabled="${disabled}" aria-label="${esc(u.name)}, ${free ? `${free} free` : `${Game.shopCost(m, me, i)} gold`}">
+    const tab = selected === i ? `<span class="sk2"><button class="sk2t${skTabFor === i ? '' : ' out'}" type="button" data-sk="${i}" aria-label="Skills: open the unit sheet of ${esc(u.name)}">${SHEET_SVG}<b>Skills</b></button></span>` : '';
+    return `${tab}<button class="uc2" data-i="${i}" style="--tier:${tierColor(tierOf(i))}" aria-pressed="${selected === i}" aria-disabled="${disabled}" aria-label="${esc(u.name)}, ${free ? `${free} free` : `${Game.shopCost(m, me, i)} gold`}">
       ${stars ? `<span class="st">${'★'.repeat(stars)}</span>` : ''}
       ${Game.capped(m, i) ? `<span class="cap" aria-label="${Game.capCount(m, me, i)} of ${Game.capOf(m)} squads">${Game.capCount(m, me, i)}/${Game.capOf(m)}</span>` : ''}
+      ${(() => { const n = m.armies[me].filter(s => s.unit === i && s.round === m.round && !s.free).length; /* bought this round; package squads aren't */ return n ? `<span class="nw" aria-label="${n} placed this round">×${n}</span>` : ''; })()}
       ${Game.mpbLocked(m, me, i) ? '<span class="mpb-x" aria-label="Sabotaged: can’t be deployed this round">✕</span>' : ''}
       <span class="ic" style="color:${u.color}">${Shapes.svg(u.shape, 30)}</span>
       <span class="n">${esc(u.name)}</span>
       <span class="c${free ? ' free' : ''}">${free ? `Free ×${free}` : Game.shopCost(m, me, i)}</span></button>`;
+  }
+  // a full card tapped: it shakes and a red bubble over it says it is maxed out (the bubble lives on <body>, so a redraw
+  // of the shop doesn't cut it short)
+  let capToastT = 0;
+  function capBump(card) {
+    card.classList.remove('maxed'); void card.offsetWidth; card.classList.add('maxed');
+    card.addEventListener('animationend', () => card.classList.remove('maxed'), { once: true });
+    const old = document.querySelector('.cap-toast'); if (old) old.remove();
+    clearTimeout(capToastT);
+    const r = card.getBoundingClientRect(), t = document.createElement('div');
+    t.className = 'cap-toast'; t.setAttribute('role', 'status'); t.textContent = 'You have the max of this unit type';
+    document.body.appendChild(t);
+    const half = t.offsetWidth / 2 + 8, cx = r.left + r.width / 2, x = Math.min(innerWidth - half, Math.max(half, cx));
+    t.style.left = x + 'px'; t.style.top = (r.top - 8) + 'px'; t.style.setProperty('--ax', `calc(50% + ${cx - x}px)`);
+    capToastT = setTimeout(() => t.remove(), 1850);
   }
   let scrollTo2 = null; // a card to bring into view on the next panelDeploy (just unlocked)
   // + Unlock: that tier's locked units, each with its unlock price; a name opens the unit's sheet
@@ -21262,12 +21645,12 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     const l = f.querySelector('.l'); l.textContent = label; l.style.color = bad ? 'var(--foe)' : '';
   }
   function cardEnd(ok) {
-    const p = cpress, d = cdrag; cpress = null; cdrag = null; flyShow(null); document.documentElement.classList.remove('dcard');
+    const p = cpress, d = cdrag, fl = $('fly2'), from = fl && !fl.hidden ? { x: parseFloat(fl.style.left), y: parseFloat(fl.style.top) } : null; /* where the card was let go of, if it showed there */ cpress = null; cdrag = null; flyShow(null); document.documentElement.classList.remove('dcard');
     if (p) { clearTimeout(p.t); if (p.el) p.el.classList.remove('lift'); if (p.pan) cardDone = performance.now(); } // a sideways mouse drag ends without a tap
     if (!d) return;
     cardDone = performance.now(); hoverTile = null;
     if (ok && d.t && m && phase === 'deploy' && editable() && !Game.capFull(m, me, d.i) && (Game.canPlaceAt(m, me, d.t.col, d.t.row, d.i) || Game.boardable(m, me, d.t.col, d.t.row, d.i))) { selected = d.i; tapTile(d.t, null); }
-    else if (ok && d.t) sfx('nope');
+    else if (ok && d.t) { sfx('nope'); pfxBad(d.t, d.i, from || (p && { x: p.x, y: p.y - 60 })); }
     if (selected === d.i && d.prev !== d.i) selected = d.prev;
     if (phase === 'deploy') panelDeploy();
     render();
@@ -21446,8 +21829,8 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     const showShop = !((choosingPack() || choosingTower() || devPicking()) && can);
     const tip = inline || (selected !== null ? hint : !solo() || (mode === 'ai' && ready[foe()]) ? status : !can ? hint
       : left <= 0 ? 'No deployments left · tap a squad to level it up or buy skills'
-      : fresh ? `Drag a squad to move it · drag it ${pcLayout() ? 'onto the shop' : 'down here'} to take it back` : `Drag a card ${pcLayout() ? 'onto' : 'up onto'} your zone · hold a card for details`);
-    const pips = Array.from({ length: Math.max(allowed, 0) }, (_, k) => `<i class="${k < left ? 'on' : ''}"></i>`).join('');
+      : fresh ? `Drag a squad to move it · drag it ${pcLayout() ? 'onto the shop' : 'down here'} to take it back` : `Drag a card ${pcLayout() ? 'onto' : 'up onto'} your zone · pick one to see its Skills`);
+    const pips = receiptPips(Math.max(allowed, 0), left); // (the squads placed this round, then the deployments left)
     const xb = showShop ? extraBtns : '';
     const tiers = [...new Set(units.map((u, i) => Game.isOff(m, i, me) ? 0 : tierOf(i)))].filter(t => t > 0).sort((a, b) => a - b); // units left out of the match aren't in the shop
     const shopHtml = tiers.map((t, n) => {
@@ -21460,7 +21843,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     $('panel').innerHTML = `
       ${showShop ? `<button class="grab2" id="tray-grab" aria-expanded="${dockOpen}" aria-label="${dockOpen ? 'Fold the shop down' : 'Open the shop'}">${dockOpen ? '<i></i>' : '<i></i> Shop'}</button>` : ''}
       <div class="trow">
-        <span class="g2 num">${g}<small>gold</small></span>
+        <span class="g2 num">${pfxGold(g)}<small>gold</small></span>
         <span class="pips" aria-label="${Math.max(0, left)} of ${allowed} deployments left">${pips}</span>
         ${Game.deployBuyable(m, me) ? `<button class="chip2" id="buy-deploy" ${can && Game.canBuyDeploy(m, me) ? '' : 'disabled'} aria-label="One more deployment for ${Game.deployCost(m, me)} gold">${DIO ? `+1 deployment ${GOLD_ICON}` : '+1 '}<span class="num">${Game.deployCost(m, me)}</span></button>` : ''}
         <span class="sp"></span>
@@ -21484,12 +21867,18 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       b.addEventListener('click', () => {
         if (performance.now() - cardDone < 400) return; // the end of a drag or a hold, not a tap
         const i = +b.dataset.i;
+        if (Game.capped(m, i) && Game.capFull(m, me, i)) { capBump(b); return; } // 3/3 on the board: shake, and say so
         if (b.getAttribute('aria-disabled') === 'true') { openSheet(i); return; }
         selected = selected === i ? null : i;
         panelDeploy(); render();
       });
     });
     shop.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => openUnlockSheet(+b.dataset.add)));
+    skTabFor = selected; // (drawn: a redraw with the same pick keeps the tab out without sliding it again)
+    shop.querySelectorAll('[data-sk]').forEach(b => {
+      b.addEventListener('pointerdown', (e) => e.stopPropagation()); // (not a swipe of the tray or the drawer)
+      b.addEventListener('click', () => openSheet(+b.dataset.sk));
+    });
     // a mouse: the wheel scrolls the tray sideways, and dragging its empty space or a tier tab moves it
     shop.addEventListener('wheel', (e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && shop.scrollWidth > shop.clientWidth) { shop.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
     shop.addEventListener('pointerdown', (e) => {
@@ -21508,7 +21897,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     if (net.duo && mode === 'net') wireDuoRow();
     if (duoOn()) wireMpbPanel(); // 2v2: the artifact draft's cards
     if ($('boss-map')) $('boss-map').addEventListener('click', openBossMap); // the Mommy boss puzzle: where her nests hang, round by round
-    $('help-btn').addEventListener('click', () => { if (m && m.boss) openBossRules(); else openHelp(); }); // (the Mommy boss puzzle: her rules, with Game help inside)
+    $('help-btn').addEventListener('click', () => { if (m && m.boss) openBossInfo(); else openHelp(); }); // (the Mommy boss puzzle: her screen, as the ? on the boss bar)
     if ($('mage-gen')) $('mage-gen').addEventListener('click', () => openTowerSheet(me));
     if ($('loan')) $('loan').addEventListener('click', () => { if (editable() && Game.takeLoan(m, me)) changed(); });
     if ($('slot-open')) $('slot-open').addEventListener('click', openSlots);
@@ -21583,13 +21972,11 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         <div class="seg speeds" role="group" aria-label="Playback speed">
           ${SPEEDS.map(s => `<button data-s="${s}" aria-pressed="${playSpeed() === s}">${s}×</button>`).join('')}
         </div>
-        ${m && m.boss ? '<button class="btn small" id="boss-rules">Mommy’s rules</button>' : ''}
         <button class="btn small" id="skip">Skip to result</button>
       </div>
       ${net.duo && mode === 'net' ? duoRow(true) : ''}
       <span class="hint speed-ask" id="speed-ask" aria-live="polite" hidden></span>`;
     if (net.duo && mode === 'net') wireDuoRow();
-    if ($('boss-rules')) $('boss-rules').addEventListener('click', openBossRules);
     $('panel').querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => pickSpeed(+b.dataset.s)));
     showSpeed();
     // asks first, as selling does: the first tap turns it into "Tap again to skip" (gold) for a few seconds
@@ -24460,16 +24847,74 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   // ?mommy in the address (a link to her): straight into a run against her, for anyone
   if (/[?&]mommy\b/.test(location.search)) setTimeout(() => { if (bossOpen()) startBoss(); }, 500);
+  // Replay round (Settings in a run, under Restart boss): the whole match as each round of this run began (snapshot,
+  // taken in beginAiRound), so a round already played can be played again from its start. The run's record
+  // (m.boss.run) goes back with it, so the server's replay of the run (Boss.replay) still matches what was played
+  let bossSaves = [];
+  const bossReplayable = () => (m && m.boss ? bossSaves.map((s, r) => s && r).filter(Boolean) : []);
+  function replayBossRound(r) {
+    const s = bossSaves[r]; if (!s || !m || !m.boss) return;
+    m = { ...JSON.parse(JSON.stringify(s)), units: m.units, matrix: m.matrix };
+    bossSaves.length = r + 1; // the rounds after it were never played, as far as this run is concerned
+    report = null; undoSnap = null; nextReady = [false, false];
+    beginAiRound();
+  }
+  // out of whatever the run is showing (a fight, a round's card, a sheet), before Restart boss or Replay round
+  function bossLeave() { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); closeBossAttacks(); }
+
+  // ---------- Restart boss and Replay round on the screen (the owner, 2026-11-12) ----------
+  // The Diorama's PC layout: two buttons at the top right through the whole run (deploy, fight, the round's card, the
+  // end), under her name. Restart boss asks once more on the button itself ("Sure? Restart", 3 s). Replay round drops a
+  // list of the rounds this run has reached, each with its bite's mark and name; a pick goes back to that round's start
+  // (replayBossRound). Over a sheet, Mommy's attacks or her screen's panel (openBossInfo) they step aside. The boss bar's
+  // own Restart (bossRestartAsk) is hidden on this layout: this one stands in for it. The classic layout keeps them in Settings
+  // (openSoundSheet). Looked at from bossBar and five times a second (a sheet coming or going doesn't redraw the board); the
+  // DOM only changes when what it shows does
+  const CTL_ICON = {
+    restart: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 12.5a7.4 7.4 0 1 0 2.3-5.6"/><path d="M4.6 3.6v4.6h4.6"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M5 4.5v15" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M19.5 5.2v13.6L8.6 12z" fill="currentColor"/></svg>',
+  };
+  let ctlEl = null, ctlKey = '', ctlSure = 0, ctlOpen = false;
+  function bossCtlOn() { return DIO && document.documentElement.classList.contains('pcwide') && !!m && !!m.boss && typeof Boss !== 'undefined' && ['deploy', 'battle', 'result', 'end'].includes(phase); }
+  function bossCtl() {
+    const show = bossCtlOn() && $('sheet-back').hidden && !bossAtkOpen() && !(infoEl && !infoEl.hidden); // (not over a sheet, her attacks or her screen's panel)
+    if (!show) { if (ctlEl && !ctlEl.hidden) { ctlEl.hidden = true; ctlKey = ''; } if (!bossCtlOn()) { ctlOpen = false; ctlSure = 0; } return; }
+    if (!ctlEl) {
+      ctlEl = document.createElement('nav'); ctlEl.className = 'bz-ctl'; ctlEl.setAttribute('aria-label', 'Boss run'); document.body.appendChild(ctlEl);
+      ctlEl.addEventListener('click', (e) => {
+        const b = e.target.closest('button'); if (!b || !m || !m.boss) return;
+        if (b.dataset.ctl === 'restart') {
+          if (ctlSure > now()) { ctlSure = 0; ctlOpen = false; restartBoss(); } else { ctlSure = now() + 3000; ctlOpen = false; }
+        } else if (b.dataset.ctl === 'replay') { ctlOpen = !ctlOpen; ctlSure = 0; }
+        else if (b.dataset.round) { const r = +b.dataset.round; ctlOpen = false; bossLeave(); replayBossRound(r); }
+        ctlKey = ''; bossCtl();
+      });
+      document.addEventListener('pointerdown', (e) => { if (ctlOpen && ctlEl && !ctlEl.contains(e.target)) { ctlOpen = false; bossCtl(); } }, true);
+      addEventListener('keydown', (e) => { if (e.key === 'Escape' && ctlOpen) { ctlOpen = false; bossCtl(); } });
+    }
+    const rounds = bossReplayable(), sure = ctlSure > now();
+    const key = [m.round, phase, rounds.join(','), sure, ctlOpen].join('|');
+    if (key === ctlKey && !ctlEl.hidden) return;
+    ctlKey = key; ctlEl.hidden = false;
+    const a = document.activeElement, focus = a && ctlEl.contains(a) ? (a.dataset.ctl ? `[data-ctl="${a.dataset.ctl}"]` : `[data-round="${a.dataset.round}"]`) : '';
+    ctlEl.innerHTML = `<div class="row">
+        <button class="b restart${sure ? ' sure' : ''}" data-ctl="restart" aria-label="${sure ? 'Press again to restart the boss from round 1' : 'Restart boss: a new run from round 1'}">${CTL_ICON.restart}<span>${sure ? 'Sure? Restart' : 'Restart boss'}</span></button>
+        <button class="b replay${ctlOpen ? ' open' : ''}" data-ctl="replay" aria-expanded="${ctlOpen}" aria-controls="bz-ctl-list">${CTL_ICON.replay}<span>Replay round</span><i class="car" aria-hidden="true"></i></button>
+      </div>
+      <div class="list" id="bz-ctl-list"${ctlOpen ? '' : ' hidden'}><small>Play again from the start of</small>${rounds.map(r => { const k = Boss.byRound(Boss.CFG.biteByRound, r);
+        return `<button data-round="${r}" style="--bc:${BITE_COL[k] || '#FFC457'}"><img src="${biteMarkPic(k)}" alt=""><b>Round ${r}</b><em>${esc(/bite/i.test(BITE_NAME[k] || k) ? BITE_NAME[k] || k : (BITE_NAME[k] || k) + ' bite')}</em>${r === m.round ? '<i>Now</i>' : ''}</button>`; }).join('')}</div>`;
+    if (focus) { const f = ctlEl.querySelector(focus); if (f) f.focus(); } // (a keyboard player keeps their place)
+  }
+  setInterval(() => { if (m && m.boss || (ctlEl && !ctlEl.hidden)) bossCtl(); }, 200);
   function startBoss() {
     if (typeof Boss === 'undefined') return;
     leaveNet(); closeSheet(true);
-    mode = 'ai'; me = 0; report = null; lastAiLevels = [];
+    mode = 'ai'; me = 0; report = null; lastAiLevels = []; bossSaves = [];
     restoreSet();
     m = Game.createMatch(units, M, (now() ^ (Math.random() * 1e9)) >>> 0, 'standard', null, [], { draft: false });
     Boss.setup(m);
     nextReady = [false, false]; rematch = [false, false];
     beginAiRound();
-    openBossRules(); // what's new here, before the first deployment
   }
   const BITE_NOTE = { fast: 'Fast, quick and light: health holds her', heavy: 'Acid-Bite, slow and heavy (it leaves a green pool): many bodies, shields and wards hold her', sweep: 'Sweep, it hits all round its target: one big body holds her' };
   function bossLine() {
@@ -24481,36 +24926,54 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // tokens: how much she takes, nests left, this round's bite, the mortar's count or who holds her, the next molt, and
   // what is on her (poison, bleed, burn, frost, slow). In the fight it reads her body (mom.bs, src/boss.js); otherwise
   // the match. Drawn with every frame; the DOM only changes when its text does
+  // Restart, always on the boss bar (owner, 12 November): a quiet pill that asks "Restart? Yes / No" in its own spot
+  // before it throws the run away; the question goes back by itself after a few seconds
+  function restartBoss() { bossLeave(); startBoss(); } // a new run at once, from any phase
+  let bossAskT = 0;
+  function bossRestartAsk(ask) {
+    const rs = document.querySelector('#boss-bar .bb-rs'); if (!rs) return;
+    clearTimeout(bossAskT);
+    rs.innerHTML = ask ? '<span class="bb-ask" id="bb-ask">Restart?</span><button class="yes" data-rs="yes" aria-describedby="bb-ask">Yes</button><button data-rs="no">No</button>'
+      : '<button class="bb-rsb" data-rs="ask" aria-label="Restart the boss fight"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg>Restart</button>';
+    if (ask) { rs.querySelector('[data-rs="no"]').focus({ preventScroll: true }); bossAskT = setTimeout(() => bossRestartAsk(false), 5000); }
+  }
+  document.addEventListener('click', (e) => {
+    if (e.target.closest && e.target.closest('#boss-bar [data-bq]')) { e.stopPropagation(); openBossInfo(); return; } // the ? : her screen
+    const b = e.target.closest && e.target.closest('#boss-bar [data-rs]'); if (!b) return;
+    e.stopPropagation();
+    if (b.dataset.rs === 'ask') bossRestartAsk(true); else if (b.dataset.rs === 'yes') { bossRestartAsk(false); restartBoss(); } else bossRestartAsk(false);
+  }, true);
   let bossBarHtml = '';
   function bossBar() {
+    bossCtl(); // (Restart boss and Replay round on the screen)
     const el = $('boss-bar'); if (!el) return;
     const v = phase === 'battle' && battlePre ? battlePre : m;
     if (!v || !v.boss || typeof Boss === 'undefined' || !['deploy', 'battle', 'result', 'end'].includes(phase)) { if (!el.hidden) { el.hidden = true; bossBarHtml = ''; } return; }
     const C = Boss.CFG, max = v.boss.max, mom = bt && (phase === 'battle' || phase === 'result' || phase === 'end') ? bt.bodies.find(b => b.u.boss) : null;
     const hp = mom ? Math.max(0, mom.hp) : v.boss.hp, bs = mom && mom.alive ? mom.bs : null, p = bossView();
     const ph = hp <= 0 ? 'dead' : bs ? bs.phase : 'hanging';
-    const label = { hanging: 'HANGING', stunned: `FALLEN · STUNNED ${bs ? bs.stunLeft.toFixed(1) : ''}s`, down: 'ON THE GROUND', dead: 'DEAD' }[ph];
+    const label = { hanging: 'Hanging', stunned: `Fallen · stunned ${bs ? bs.stunLeft.toFixed(1) : ''}s`, down: 'On the ground', dead: 'Dead' }[ph];
     const t = [], s1 = (x) => x.toFixed(1);
-    if (ph === 'hanging') t.push(['', `TAKES ${Math.round((bs ? bs.take : C.mommy.hang) * 100)}%`], ['', 'UNSTOPPABLE']);
-    else if (ph !== 'dead') t.push(['good', `TAKES ${Math.round((bs ? bs.take : 1) * 100)}%`]);
+    if (ph === 'hanging') t.push(['', `Takes ${Math.round((bs ? bs.take : C.mommy.hang) * 100)}%`], ['', 'Unstoppable']);
+    else if (ph !== 'dead') t.push(['good', `Takes ${Math.round((bs ? bs.take : 1) * 100)}%`]);
     if (ph !== 'dead') {
       const left = bs ? bs.nestsLeft : p ? p.nests.length : 0, all = bs ? bs.nests : p ? p.nests.length : 0;
-      t.push([left ? '' : 'good', `NESTS ${left}/${all}`]);
-      const bite = bs ? bs.bite : p && p.bite; if (bite) t.push(['', `BITE: ${(BITE_NAME[bite] || bite).toUpperCase()}`]);
-      if (bs && bs.mortarIn != null) t.push(['bad', `MORTAR ${s1(bs.mortarIn)}s`]);
-      else if (bs && bs.holder) t.push(['', `HELD BY ${bs.holder.toUpperCase()}`]);
-      if (bs && bs.moltIn != null) t.push(['', `MOLT ${Math.ceil(bs.moltIn)}s`]);
+      t.push([left ? '' : 'good', `Nests ${left}/${all}`]);
+      const bite = bs ? bs.bite : p && p.bite; if (bite) t.push(['', `Bite: ${BITE_NAME[bite] || bite}`]);
+      if (bs && bs.mortarIn != null) t.push(['bad', `Mortar ${s1(bs.mortarIn)}s`]);
+      else if (bs && bs.holder) t.push(['', `Held by ${bs.holder}`]);
+      if (bs && bs.moltIn != null) t.push(['', `Molt ${Math.ceil(bs.moltIn)}s`]);
     }
     if (mom && mom.alive) { // what is on her right now
-      if (mom.poison && mom.poison.length) t.push(['fx', 'POISONED']);
-      if (mom.bleed && mom.bleed.n) t.push(['fx', `BLEED ×${mom.bleed.n}`]);
-      if (mom.burn && (mom.burn.left > 0 || mom.burn.amount > 0)) t.push(['fx', 'BURNING']);
-      if (mom.frost) t.push(['fx', 'FROST']);
-      if (mom.slowT > 0 && (mom.slowMove > 0 || mom.slowAtk > 0)) t.push(['fx', 'SLOWED']);
+      if (mom.poison && mom.poison.length) t.push(['fx', 'Poisoned']);
+      if (mom.bleed && mom.bleed.n) t.push(['fx', `Bleed ×${mom.bleed.n}`]);
+      if (mom.burn && (mom.burn.left > 0 || mom.burn.amount > 0)) t.push(['fx', 'Burning']);
+      if (mom.frost) t.push(['fx', 'Frost']);
+      if (mom.slowT > 0 && (mom.slowMove > 0 || mom.slowAtk > 0)) t.push(['fx', 'Slowed']);
     }
-    if (!el.querySelector('.bb-bar')) { el.innerHTML = `<div class="bb-top"><span class="bb-name">MOMMY</span><span class="bb-time" hidden><b></b><small>s left</small></span><span class="bb-phase"></span></div>
-      <div class="bb-bar"><i class="bb-lost"></i><i class="bb-fill"></i><span class="bb-num"></span></div><div class="bb-clock" hidden><i></i></div><div class="bb-tok"></div>`; bossBarHtml = ''; }
-    // the fight's time running out: a big count in the middle, and a strip under her health that drains with it
+    if (!el.querySelector('.bb-bar')) { el.innerHTML = `<div class="bb-top"><span class="bb-name">Mommy<span class="bb-phase"></span></span><span class="bb-right"><span class="bb-time" hidden><b></b><small>s</small></span><span class="bb-rs"></span></span><button class="bb-q" data-bq aria-label="The Mommy: how to play, rewards and leaderboard" title="How to play">?</button></div>
+      <div class="bb-bar"><i class="bb-lost"></i><i class="bb-fill"></i></div><div class="bb-clock" hidden><i></i></div><div class="bb-foot"><span class="bb-tok"></span><span class="bb-num"></span></div>`; bossBarHtml = ''; bossRestartAsk(false); }
+    // the fight's time running out: a count at the right of her name, and a thin strip under her health that drains with it
     const inFight = !!bt && (phase === 'battle' || phase === 'result' || phase === 'end'), total = C.fightSecs, left = inFight ? Math.max(0, total - bt.time()) : total;
     const te = el.querySelector('.bb-time'), ce = el.querySelector('.bb-clock');
     if (te.hidden !== !inFight) { te.hidden = !inFight; ce.hidden = !inFight; }
@@ -24528,52 +24991,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const num = `${Math.ceil(hp).toLocaleString('en')} / ${max.toLocaleString('en')}`; if (q('.bb-num').textContent !== num) q('.bb-num').textContent = num;
     const tok = t.map(([c, x]) => `<span class="${c}">${esc(x)}</span>`).join(''); if (tok !== bossBarHtml) { bossBarHtml = tok; q('.bb-tok').innerHTML = tok; }
   }
-  // Mommy's rules: every mechanic the boss adds, in one sheet. It opens by itself as a run starts; the ? while deploying
-  // and a button in the fight open it again. The numbers come from Boss.CFG and this round's layout
-  function openBossRules() {
-    if (!m || !m.boss || typeof Boss === 'undefined') return;
-    const C = Boss.CFG, mo = C.mommy, p = bossView() || {}, r = p.round || m.round, b = (x) => `<b>${x}</b>`; // (p: the round on the board; in the fight m.round has moved on already)
-    const hatch = Boss.byRound(C.hatch, r), bite = p.bite || Boss.byRound(C.biteByRound, r);
-    const BITES = { fast: ['Fast', 'quick, light bites: a unit with lots of health holds her best'], heavy: ['Acid-Bite', 'slow, huge bites that splash a little and leave acid: many bodies, shields and wards hold her best'], sweep: ['Sweep', 'light bites that hit everything round the target: one big body holds her best (a swarm melts)'] };
-    const acidBites = C.acid && C.acid.pct > 0 ? Object.keys(mo.bites).filter(k => mo.bites[k].acid) : [], acidRounds = C.biteByRound.map((x, k) => acidBites.includes(x) ? k + 1 : 0).filter(Boolean);
-    const sec = (title, items) => `<h4 style="margin:10px 0 2px">${title}</h4><ul class="helplist">${items.filter(Boolean).map(x => `<li>${x}</li>`).join('')}</ul>`;
-    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h" data-boss-read>Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
-      <p class="hint" style="margin:0 0 6px">The clock is paused while you read.</p>
-      <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. The faster she falls, the more you earn: ${bossRewardList().map(x => `by round ${x.round}, ${bossRewardName(x)}`).join('; ')}. A faster kill earns the ones before it too.</p>
-      ${sec('Hanging', [
-        `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage, and she can’t be stunned, slowed, rooted or moved.`,
-        mo.lastPick ? 'Your units only shoot her while she hangs if none of her nests or spiders are left to hit.' : ''])}
-      ${sec('Nests', [
-        'Her nests hang in new places every round. While you deploy you see where this round’s hang.',
-        `${b('HIGH')} nests hang up in the air on a thread: only ranged units can hit them. ${b('LOW')} nests sit on the ground: melee units can hit them too.`,
-        `Each nest hatches a spiderling every ${b(hatch + ' s')} this round (faster in later rounds). A destroyed nest bursts into ${C.nest.burst} spiderlings.`])}
-      ${sec('The fall', [
-        `When every nest is down she ${b('falls')}: she and all her spiders are stunned for ${mo.stun} s, and she takes ${b('full damage')} for the rest of the fight.`,
-        `A fight lasts ${C.fightSecs} s, so the sooner the nests fall, the longer she lies there.`])}
-      ${sec('Her reach and her bite', [
-        `She bites the nearest of your units inside her reach (the dashed ring, ${mo.near} m). A unit in her reach ${b('holds')} her: she bites it, not the rest.`,
-        mo.biteSecs > 0 ? `Her ${b('jaws')} open on the ground where that unit stands and snap shut ${mo.biteSecs} s later. Whatever stands in the ring then is bitten; a unit that has walked out of it is missed. The bite mark stays on the ground for a moment.` : '',
-        `Her bite changes each round. This round: ${b(BITES[bite] ? BITES[bite][0] : bite)}, ${BITES[bite] ? BITES[bite][1] : ''}.`,
-        acidBites.length ? `Her ${acidBites.join(' and ')} bite is ${b('acid')} (green jaws; round${acidRounds.length === 1 ? '' : 's'} ${acidRounds.join(', ')}). Where it lands it leaves a ${b('green pool')} for ${C.acid.secs} s. Your units standing in one lose ${C.acid.pct}% of their max health a second and are slowed, and it lasts ${C.acid.linger} s after they step out. Her spiders don’t mind it. Slime units (Slime Wizard, Slimeshots) drink it: it heals them.` : '',
-        `Units close to her (${mo.web.r} m) are caught in her ${b('web')}: they walk ${mo.web.slow}% slower and hit ${mo.web.dmg}% softer.`])}
-      ${sec('The web mortar', [
-        `If none of your units is inside her reach for ${mo.mortar.wind} s while she hangs, she throws a web mortar at your biggest clump, then another every ${mo.mortar.every} s.`,
-        mo.mortar.fly > 0 ? `It is in the air for ${mo.mortar.fly} s and lands where the clump stood when she threw it: the ${b('red ring')}, which fills as it comes. Everything in the ring when it lands takes ${mo.mortar.hit} damage and is caught in a web that slows it. A squad that walks on gets out of the ring.` : `${mo.mortar.hit} damage to everything in the blast, and a web that slows them.`,
-        mo.mortar.ammo ? `Each shot is ${b('one of her own nests')}, ripped loose${mo.mortar.ammoReach ? ' (only a nest inside her reach)' : ''}: her thread shows which one she throws next. It is gone, and its spiders burst out where it hung. Leaving her alone is a way to play too: spread out, and let her spend her nests.` : ''])}
-      ${sec('She sheds', [
-        mo.molt ? `Every ${mo.molt} s she molts: poison, bleed, burn, frost and slows fall off her.` : '',
-        mo.bleedPct ? '' : 'Hits that take a share of max health (bleed’s big stacks, Deadeye) don’t work on her.'])}
-      ${sec('Your side', [
-        `${C.startGold} gold to start, then the normal income each round.`,
-        `Every round: ${b('one free move')} for a squad from an earlier round, and ${b('one free extra deployment')}.`,
-        `At most ${b(m.boss.cap + ' squads')} of any one unit.`,
-        `No tower: a ${b('treasury')} instead. It pays 50 gold for each fight it stands through; her spiders go for it once your army is gone. You have no health to lose: only the rounds run out.`,
-        `Not allowed: ${esc((m.boss.banned || []).join(', '))}.`])}
-      <div class="bar"><span></span><button class="btn small" id="boss-help">Game help</button></div>`;
-    $('sheet-back').hidden = false;
-    $('close').addEventListener('click', closeSheet);
-    $('boss-help').addEventListener('click', () => { closeSheet(); openHelp(); });
-  }
+  // (Mommy's rules, the sheet with every mechanic, went on 12 November: the owner's call. Her screen says it now:
+  // openBossInfo, the ? on the boss bar and by the gold)
   // ---------- the weekly boss's leaderboard (2026-11-12; server/src/accounts.js BOSS) ----------
   // A finished run's record (m.boss.run: the seed and the player's side going into each fight, kept by Boss.record)
   // goes to the game server, which plays the run again with the game's own rules and ranks what its replay got: it
@@ -24644,6 +25063,75 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // From her screen's How to play (the Diorama) and, in a run, the cog's Settings. Left: a card for each of her attacks
   // (bite, with her bite in each round and its mark; web; web mortar; acid; shed), each with its symbol. Right: her
   // nests, round by round (bossNestBoard). The numbers are Boss.CFG's. While it's open in a run the clock waits, as
+  // ---------- the boss screen's words, shared (2026-11-12): the menu's boss screen (diorama.js drawBoss) and the same
+  // screen in a run (openBossInfo, the ? on the boss bar) say the same thing from the same place ----------
+  // How to play: her rules in five points, from Boss.CFG. The attacks link is a button with data-atk (each screen binds it)
+  function bossHowHtml() {
+    const C = Boss.CFG, mo = C.mommy, b = (x) => `<b>${x}</b>`;
+    return [
+      `Her health carries over from round to round and never comes back. You have no health to lose: only the ${b(C.rounds + ' rounds')} run out.`,
+      `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage. Bring down her ${b('nests')} first: ${b('HIGH')} ones only ranged units can hit, ${b('LOW')} ones melee units too.`,
+      `Every nest down and she ${b('falls')}: stunned for ${mo.stun} s, then full damage for the rest of the ${C.fightSecs} s fight.`,
+      `Keep a unit in her reach, or she throws ${b('web mortars')} at your biggest clump. Her bite changes every round: see <button class="bz-inl" data-atk aria-haspopup="dialog">Mommy’s attacks<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9l6-6M4.5 3H9v4.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>.`,
+      `${C.startGold} gold to start, a treasury instead of a tower, one free move and one free extra deployment a round. At most ${C.maxPerType} squads of one unit.`,
+    ].map(x => `<li>${x}</li>`).join('');
+  }
+  // the rewards ladder (bossRewardList): a tier a row, by round 5, 4 and 3, the fastest (the best) last and marked. A row:
+  // the round, a picture (a title's diamond in its colour, a skin's picture), its name and kind, and yours or locked
+  function bossTiersHtml(a) {
+    const lock = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1" fill="currentColor"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+    const tick = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="currentColor"/><path d="M4.6 8.2l2.3 2.3 4.5-4.7" fill="none" stroke="#0E2A16" stroke-width="1.9"/></svg>';
+    const list = bossRewardList(), SK = (typeof Shapes !== 'undefined' && Shapes.SKINS) || {};
+    return `<p class="bz-rw-lede">The faster she falls, the more you earn. A kill by a reward’s round earns it, and everything above it.</p>
+      <ol class="bz-tiers">${list.map((x, i) => {
+        const T = x.kind === 'title' ? TITLES[x.id] : null, K = x.kind === 'skin' ? SK[x.id] : null; if (!T && !K) return '';
+        const own = !!(a && (x.kind === 'title' ? (a.titles || []).includes(x.id) : (a.skins || []).some(k => k.id === x.id))), top = i === list.length - 1;
+        const pv = T ? `<span class="pv" style="--tc:${T.col};--tg:${T.glow}"><i></i></span>` : `<span class="pv">${K.pic ? `<img src="${esc(K.pic)}" alt="">` : ''}</span>`;
+        return `<li class="${[own ? 'own' : '', top ? 'top' : ''].filter(Boolean).join(' ')}"><span class="rd"><small>Round</small><b>${x.round}</b></span>${pv}
+          <span class="nm">${T ? `<b class="tn" style="--tc:${T.col}">${esc(T.name)}</b>` : `<b>${esc(K.name)}</b>`}<small>${T ? 'Title' : `${esc(K.unit)} skin`}${own ? '<em>· Yours</em>' : ''}</small>${top ? '<i class="best"><span>Epic</span> reward</i>' : ''}</span>
+          <span class="st" role="img" aria-label="${own ? 'Yours' : 'Not yours yet'}">${own ? tick : lock}</span></li>`; }).join('')}</ol>`;
+  }
+  // her leaderboard: the line over it and the top eight (and your own run under them)
+  function bossBoardHtml(a) {
+    const rows = bossBoard.rows, me = a ? a.id : '';
+    const leg = !rows ? (bossBoard.at ? 'The leaderboard comes from the game server, which can’t be reached right now.' : 'Loading…')
+      : !rows.length ? 'Nobody has finished a run against her yet. Be the first.' : 'Best runs: a kill in the earliest round first, then the most damage.';
+    const at = rows ? rows.findIndex(r => me && r.id === me) : -1, top = (rows || []).slice(0, 8);
+    if (at >= 8) top.push(rows[at]); // your own run, under the top eight
+    return { leg, has: !!(rows && rows.length), rows: top.map((r) => { const i = rows.indexOf(r), mine = !!me && r.id === me;
+      return `<li class="${[i === 0 ? 'first' : '', mine ? 'me' : ''].filter(Boolean).join(' ')}"><span class="r">${i + 1}</span><span class="who"><b>${esc(r.tag)}${mine ? ' <i class="you">you</i>' : ''}</b><small>${esc(bossRunText(r))}</small></span>
+        <span class="s">${r.won ? 'R' + r.round : Math.round(r.dmg / 1000) + 'k'}</span></li>`; }).join('') };
+  }
+  // ---------- the boss screen in a run (the ? on the boss bar, 2026-11-12): her screen as one scrolling panel over the
+  // board, in the attacks panel's look. The deploy has no clock and the fight waits while it is open (bossReading) ----------
+  let infoEl = null, infoFrom = null;
+  const bossInfoOpen = () => !!infoEl && !infoEl.hidden;
+  function openBossInfo() {
+    if (typeof Boss === 'undefined') return;
+    if (!infoEl) {
+      infoEl = document.createElement('div'); infoEl.className = 'bz-atk-back bz-info-back'; infoEl.hidden = true;
+      infoEl.innerHTML = `<section class="bz-atk bz-info" role="dialog" aria-modal="true" aria-labelledby="bz-info-h">
+        <header><span class="k">Limited event · weekly boss</span><h3 id="bz-info-h">The Mommy</h3><button class="x" aria-label="Close"><svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></header>
+        <p class="bz-lede"></p>
+        <div class="bz-info-in"><div class="bz-info-l"><h4 class="bz-h">How to play</h4><ol class="bz-how"></ol></div>
+          <div class="bz-info-r"><h4 class="bz-h">Rewards</h4><div class="bz-rw"></div><h4 class="bz-h">Leaderboard</h4><p class="bz-leg"></p><ol class="bz-lb"></ol></div></div>
+        <div class="bz-info-go"><button class="bz-info-back-btn">Back to the fight</button></div></section>`;
+      document.body.appendChild(infoEl);
+      infoEl.querySelector('.x').addEventListener('click', closeBossInfo);
+      infoEl.querySelector('.bz-info-back-btn').addEventListener('click', closeBossInfo);
+      infoEl.addEventListener('click', (e) => { if (e.target === infoEl) closeBossInfo(); if (e.target.closest('[data-atk]')) openBossAttacks((bossView() || {}).round || (m && m.round) || 1); });
+      addEventListener('keydown', (e) => { if (e.key === 'Escape' && bossInfoOpen() && !bossAtkOpen()) { e.preventDefault(); e.stopImmediatePropagation(); closeBossInfo(); } }, true);
+    }
+    const C = Boss.CFG, q = (c) => infoEl.querySelector(c);
+    q('.bz-lede').textContent = `A giant spider hangs over their zone. You have ${C.rounds} rounds to kill her.`;
+    q('.bz-how').innerHTML = bossHowHtml();
+    q('.bz-rw').innerHTML = bossTiersHtml(acct);
+    const board = () => { const h = bossBoardHtml(acct); q('.bz-leg').textContent = h.leg; q('.bz-lb').hidden = !h.has; q('.bz-lb').innerHTML = h.rows; };
+    board(); if (!(bossBoard.at && Date.now() - bossBoard.at < 60e3)) bossBoardLoad().then(() => { if (bossInfoOpen()) board(); });
+    q('.bz-info-back-btn').textContent = phase === 'battle' ? 'Back to the fight' : 'Back';
+    infoFrom = document.activeElement; infoEl.hidden = false; q('.bz-info').scrollTop = 0; q('.x').focus({ preventScroll: true });
+  }
+  function closeBossInfo() { if (!bossInfoOpen()) return; infoEl.hidden = true; if (infoFrom && infoFrom.focus && document.contains(infoFrom)) infoFrom.focus(); infoFrom = null; }
   // for her rules (bossReading). Made once, at the end of <body>, so it sits over the Diorama and the board alike
   const ATK_ICON = {
     bite: '<svg viewBox="0 0 24 24"><path d="M3 6h18l-2.2 4.2-2.2-3.4-2.3 4-2.3-4-2.3 4-2.2-3.4L5.2 10.2z M3 18h18l-2.2-4.2-2.2 3.4-2.3-4-2.3 4-2.3-4-2.2 3.4L5.2 13.8z" fill="currentColor"/></svg>',
@@ -24706,6 +25194,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       <ul class="key"><li><span class="l">L</span>Low nest: melee reaches it</li><li><span class="h">H</span>High nest: ranged only</li><li><span class="m"></span>The Mommy and her reach</li></ul>
       <p class="bite">This round: <b style="color:${BITE_COL[bite]}">${esc(BITE_NAME[bite] || bite)}</b></p>`;
   }
+  // the round card's warning for the next round (the owner, 2026-11-12): "! Next round:" and that round's bite, its mark
+  // (biteMarkPic, as in Mommy's attacks) and its name in its colour
+  function bossNextBite(n) {
+    const k = Boss.byRound(Boss.CFG.biteByRound, n); if (!k) return '';
+    return `<p class="bz-next" style="--bc:${BITE_COL[k] || '#FFC457'}" role="note"><b class="bang" aria-hidden="true">!</b><span>Next round</span><img src="${biteMarkPic(k)}" alt=""><b class="bn">${esc(BITE_NAME[k] || k)}</b></p>`;
+  }
   function bossResult(sum) {
     const r = sum.boss || (m.boss.log || []).slice(-1)[0];
     phase = m.over ? 'end' : 'result'; resultShownAt = now(); hud(); netStatus();
@@ -24715,7 +25209,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const lines = [
       r.fallAt != null ? `Nests down at <b class="num">${s1(r.fallAt)} s</b>: she was down for <b class="num">${s1(r.window)} s</b>.` : `<b>She never fell</b>: ${r.nestsLeft} of ${r.nests} nests still hang.`,
       `Mortar shots: <b class="num">${r.mortars}</b>${r.mortarNests ? ` (${r.mortarNests} of her nests spent on them)` : ''}.`,
-      `Damage to her: <b class="num">${r.dmg.toLocaleString('en')}</b> (${r.hang.toLocaleString('en')} while she hung).${top ? ` Most: ${top}.` : ''}`,
+      r.dmg > 0 ? `${r.hang > 0 ? `<b class="num">${r.hang.toLocaleString('en')}</b> of it while she hung.` : ''}${top ? ` Most: ${top}.` : ''}` : '', // (the round's damage is the card's headline: X damage dealt)
       `Her health: <b class="num">${r.hpLeft.toLocaleString('en')}</b> of ${m.boss.max.toLocaleString('en')}.`,
       r.treasury === false ? 'Her spiders broke your treasury.' : '',
     ].filter(Boolean).map(x => `<p>${x}</p>`).join('');
@@ -24724,8 +25218,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     overlay(`<div class="card">
       <span class="eyebrow">Mommy · weekly boss</span>
       <h2 class="${won ? 'you' : m.over ? 'foe' : ''}">${head}</h2>
+      <p class="big boss-dmg"><b class="num">${r.dmg.toLocaleString('en')}</b> damage dealt</p>
       ${won ? `<p class="big">Killed in round ${r.round}: ${earned.map(bossRewardName).join(', ').replace(/, ([^,]*)$/, ' and $1')}.${next ? ` Kill her by round ${next.round} for ${bossRewardName(next)}.` : ''}</p>` : ''}
       ${lines}
+      ${!m.over && !won ? bossNextBite(r.round + 1) : ''}
       ${m.over ? acct ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : '<p>Play as a guest or sign in (Profile) to get your runs on her leaderboard.</p>' : ''}
       <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>
     </div>`);
@@ -24738,7 +25234,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
   function beginAiRound() {
     if (mode === 'tutorial') { tutRound(); enterDeploy(0); return; } // the enemy's army is set by the script; no clock
-    if (m && m.boss) { enterDeploy(timerOn ? deployMs() : 0); bossLine(); return; } // the Mommy boss puzzle: no AI, the normal clock
+    if (m && m.boss) { bossSaves[m.round] = snapshot(m); bossSaves.length = m.round + 1; enterDeploy(0); bossLine(); return; } // the Mommy boss puzzle: no AI and no deploy clock (it's PvE: nobody waits on you; owner, 12 November); this round's start kept, for Replay round
     if (mode === 'claude') { foeLeaderTurn(); startClaudeTurn(); enterDeploy(timerOn ? deployMs() : 0); return; } // Claude picks its leader first when it won round 1
     aiWaits = Game.needsLeaderPick(m, 1) && !Game.leaderTurn(m, 1); // the player picks a leader first: the AI deploys after (foeLeaderTurn)
     if (!aiWaits) aiFoeDeploy(1); // the AI commits first; its new squads stay hidden until the fight
@@ -24830,6 +25326,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     fx = []; acc = 0; lastTs = 0;
     cam = { end: lastSummary && lastSummary.round === pre.round ? lastSummary.time : null, decided: false, on: false, k: 0, x: 0, y: 0 };
     closeSheet(); overlay(null); hud(); panelBattle(); render();
+    pfxLock(battlePre); // this round's squads lock in; the opponent's new ones are marked for a moment
     cancelAnimationFrame(raf);
     // (the fight always plays: with the device's "reduce motion" on, e.g. Windows' Animation effects off, it used to
     // skip straight to the result, so those players never saw a round, the owner's friend, 2026-11-11)
@@ -25203,7 +25700,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     // sheet, and the unit is let go (2026-11-07; every board mode above had its turn first)
     const mx = selected !== null && mpbOn() && !Game.canPlaceAt(m, me, t.col, t.row, selected) && Mpb.recAt(m, t.col, t.row);
     if (mx) { unselect(); openMpbSheet(mx.side, mx.rec.key); return; }
-    if (selected !== null && editable() && !Game.canPlaceAt(m, me, t.col, t.row, selected)) sfx('nope');
+    if (selected !== null && editable() && !Game.canPlaceAt(m, me, t.col, t.row, selected)) { sfx('nope'); pfxBad(t); }
     if (selected !== null && editable() && Game.canPlaceAt(m, me, t.col, t.row, selected)) {
       const sq = Game.place(m, me, selected, t.col, t.row);
       if (sq) {
@@ -25602,6 +26099,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const cinematic = board3d && board3d.camera.level() >= 3; // the ground view shows no markers
     Game.useGrid(m); // the board as drawn
     let html = '';
+    if (!cinematic && m && phase === 'deploy') html += freshMarks(wrapMap()); // placed this round: outlined, with a NEW tag
     if (!cinematic && m && (phase === 'deploy' || phase === 'battle')) html += intentMarks(wrapMap());
     if (net.duo) html += pingMarks(cinematic ? null : wrapMap());
     if (!cinematic && duoOn() && m && phase === 'deploy') html += mpbMarks(wrapMap()); // 2v2: where a building may go, both players' votes
@@ -25709,7 +26207,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
   // <base>, so there it looked for design/diorama/vendor/... and failed: "Importing a module script failed" (2026-11-10)
   const threeSrc = () => new URL(THREE_URL, document.baseURI).href;
-  const V3D = '391a81a22b'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '5fa24aa798'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
@@ -26142,6 +26640,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         : [anyOf.length ? `<b style="color:var(--gold)">Needs</b> ${esc(anyOf.join(' or '))} first.` : '',
         wake ? 'Bought for one squad at a time, on its own sheet. You can awaken only one unit type a match.' : label ? 'For all your squads of this unit.' : '', Game.isFlat(m, i, k) ? 'Always this price.' : ''].filter(Boolean).join(' ');
       const more = [detail, more0].filter(Boolean).join('<br>');
+      const off = Game.bossNoUse(m, i, k); // the Mommy boss puzzle: no use in her fight, crossed out and not for sale
+      if (off) return upRow({ name: d.name, label, act: '<span class="up-no">No use here</span>', text: esc(off) + '.', off });
       return upRow({ name: d.name, label, act, text: esc(Engine.describeSkill(d)), more });
     };
     // in slot order; either-or skills (owning one rules out the others) boxed together where the first of them comes
@@ -26198,7 +26698,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       return chip('Awakened', 'var(--gold)') + (phase === 'deploy' && editable() && sq.awaken === m.round ? ` <button class="btn small" data-act="unawaken">Undo</button>` : '') + hunt;
     }
     if (phase !== 'deploy') return `<span class="hint">${cost} gold</span>`;
-    const why = { enzo: 'Not with Enzo', type: other ? `Only ${esc(units[woke].name)} this match` : '', glut: `Needs ${Game.glutMax(m, me, sq)} Glut (${Game.glutOf(sq)} now)`, needs: `Needs ${Game.skillNeedsMissing(m, me, i, k).map(j => units[i].skillDefs[j].name).join(' or ')}`, or: 'Not with your skills', gold: `Need ${cost} gold` }[Game.awakenBlock(m, me, sq)] || '';
+    const why = { enzo: 'Not with Enzo', type: other ? `Only ${esc(units[woke].name)} this match` : '', glut: `Needs ${Game.glutMax(m, me, sq)} Glut (${Game.glutOf(sq)} now)`, needs: `Needs ${Game.skillNeedsMissing(m, me, i, k).map(j => units[i].skillDefs[j].name).join(' or ')}`, or: 'Not with your skills', boss: 'No use here', gold: `Need ${cost} gold` }[Game.awakenBlock(m, me, sq)] || '';
     return why || !editable() ? `<button class="btn small" disabled>${why || `Awaken · ${cost} gold`}</button>` : `<button class="btn small primary" data-act="awaken">Awaken · ${cost} gold</button>`;
   }
 
@@ -26451,7 +26951,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function wireFactoryLearn(root) { root.querySelectorAll('[data-fac-learn]').forEach(d => d.addEventListener('toggle', () => { factoryLearnOpen[d.dataset.facLearn] = d.open; })); }
   // an upgrade's row (see .up): name (esc'd here; label: a gold prefix like Master), act: its button or chip (HTML),
   // text: what it does (HTML, cut to one line until the row is held), more: details shown only once held (HTML)
-  const upRow = ({ name, label = '', act = '', text = '', more = '' }) => `<div class="up" tabindex="0" aria-expanded="false" aria-label="${esc(name)}: hold for details">
+  const upRow = ({ name, label = '', act = '', text = '', more = '', off = '' }) => `<div class="up${off ? ' up-off' : ''}" tabindex="0" aria-expanded="false" aria-label="${esc(name)}${off ? `: ${esc(off)}` : ''}: hold for details">${off ? '<i class="up-x" aria-hidden="true"></i>' : ''}
       <div class="up-h"><b>${label ? `<span class="lab">${label}:</span> ` : ''}${esc(name)}</b><span class="up-a">${act}</span></div>
       ${text ? `<span class="up-s">${text}</span>` : ''}${more ? `<span class="up-more">${more}</span>` : ''}</div>`;
   const abilityRow = (name, act, text, more) => upRow({ name, act, text, more });
@@ -31317,7 +31817,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
     // ── the weekly boss (2026-11-12): her screen before a run (the owner: "don't go into the game right away"). From her
     // Limited event note on the menu, a click on her on the island, or Puzzles' boss row. How to play (her rules in short,
-    // from Boss.CFG: the whole sheet is openBossRules, in the run), the rewards (bossRewardList: by round 5, 4 and 3) and her
+    // from Boss.CFG: bossHowHtml, shared with the run's ? panel, openBossInfo), the rewards (bossRewardList: by round 5, 4 and 3) and her
     // leaderboard (bossBoardLoad, the same board as Rankings' Mommy tab). FIGHT HER starts the run (startBoss); the end of
     // a run comes back here (home.back 'boss' → home.boss) ──
     let bzFrom = null, hollowOn = false; // where her screen was opened from, for Back: 'puz' (Puzzles) or the menu
@@ -31331,40 +31831,14 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (typeof Boss === 'undefined') return;
       const C = Boss.CFG, mo = C.mommy, b = (x) => `<b>${x}</b>`;
       $('bz-lede').textContent = `A giant spider hangs over their zone. You have ${C.rounds} rounds to kill her.`;
-      $('bz-how').innerHTML = [
-        `Her health carries over from round to round and never comes back. You have no health to lose: only the ${b(C.rounds + ' rounds')} run out.`,
-        `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage. Bring down her ${b('nests')} first: ${b('HIGH')} ones only ranged units can hit, ${b('LOW')} ones melee units too.`,
-        `Every nest down and she ${b('falls')}: stunned for ${mo.stun} s, then full damage for the rest of the ${C.fightSecs} s fight.`,
-        `Keep a unit in her reach, or she throws ${b('web mortars')} at your biggest clump. Her bite changes every round: see <button class="bz-inl" id="bz-atk-open" aria-haspopup="dialog">Mommy’s attacks<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9l6-6M4.5 3H9v4.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>.`,
-        `${C.startGold} gold to start, a treasury instead of a tower, one free move and one free extra deployment a round. At most ${C.maxPerType} squads of one unit.`,
-      ].map(x => `<li>${x}</li>`).join('');
-      $('bz-atk-open').addEventListener('click', () => openBossAttacks(1)); // (the game's panel: her attacks and nests)
-      // the rewards (bossRewardList): a tier a row, by round 5, 4 and 3, the fastest (the best) last and marked. A row:
-      // the round, a picture (a title's diamond in its colour, a skin's picture), its name and kind, and yours or locked
-      const lock = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1" fill="currentColor"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
-      const tick = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="currentColor"/><path d="M4.6 8.2l2.3 2.3 4.5-4.7" fill="none" stroke="#0E2A16" stroke-width="1.9"/></svg>';
-      const list = bossRewardList();
-      $('bz-rw').innerHTML = `<p class="bz-rw-lede">The faster she falls, the more you earn. A kill by a reward’s round earns it, and everything above it.</p>
-        <ol class="bz-tiers">${list.map((x, i) => {
-          const T = x.kind === 'title' ? TITLES[x.id] : null, K = x.kind === 'skin' ? SKIN[x.id] : null; if (!T && !K) return '';
-          const own = !!(A && (x.kind === 'title' ? (A.titles || []).includes(x.id) : (A.skins || []).some(k => k.id === x.id))), top = i === list.length - 1;
-          const pv = T ? `<span class="pv" style="--tc:${T.col};--tg:${T.glow}"><i></i></span>` : `<span class="pv">${K.pic ? `<img src="${esc(K.pic)}" alt="">` : ''}</span>`;
-          return `<li class="${[own ? 'own' : '', top ? 'top' : ''].filter(Boolean).join(' ')}"><span class="rd"><small>Round</small><b>${x.round}</b></span>${pv}
-            <span class="nm">${T ? `<b class="tn" style="--tc:${T.col}">${esc(T.name)}</b>` : `<b>${esc(K.name)}</b>`}<small>${T ? 'Title' : `${esc(K.unit)} skin`}${own ? '<em>· Yours</em>' : ''}</small>${top ? '<i class="best"><span>Epic</span> reward</i>' : ''}</span>
-            <span class="st" role="img" aria-label="${own ? 'Yours' : 'Not yours yet'}">${own ? tick : lock}</span></li>`; }).join('')}</ol>`;
+      $('bz-how').innerHTML = bossHowHtml(); // (shared with the run's ? panel: bossHowHtml, bossTiersHtml, bossBoardHtml)
+      $('bz-how').querySelector('[data-atk]').addEventListener('click', () => openBossAttacks(1)); // (the game's panel: her attacks and nests)
+      $('bz-rw').innerHTML = bossTiersHtml(A);
       drawBossBoard();
     }
     function drawBossBoard() {
-      const rows = bossBoard.rows, me = acct ? acct.id : '', list = $('bz-lb');
       if (!(bossBoard.at && Date.now() - bossBoard.at < 60e3)) bossBoardLoad().then(() => { if (body.classList.contains('bz')) drawBossBoard(); });
-      $('bz-leg').textContent = !rows ? (bossBoard.at ? 'The leaderboard comes from the game server, which can’t be reached right now.' : 'Loading…')
-        : !rows.length ? 'Nobody has finished a run against her yet. Be the first.' : 'Best runs: a kill in the earliest round first, then the most damage.';
-      list.hidden = !(rows && rows.length);
-      const at = rows ? rows.findIndex(r => me && r.id === me) : -1, top = (rows || []).slice(0, 8);
-      if (at >= 8) top.push(rows[at]); // your own run, under the top eight
-      list.innerHTML = top.map((r) => { const i = rows.indexOf(r), mine = !!me && r.id === me;
-        return `<li class="${[i === 0 ? 'first' : '', mine ? 'me' : ''].filter(Boolean).join(' ')}"><span class="r">${i + 1}</span><span class="who"><b>${esc(r.tag)}${mine ? ' <i class="you">you</i>' : ''}</b><small>${esc(bossRunText(r))}</small></span>
-          <span class="s">${r.won ? 'R' + r.round : Math.round(r.dmg / 1000) + 'k'}</span></li>`; }).join('');
+      const h = bossBoardHtml(acct); $('bz-leg').textContent = h.leg; $('bz-lb').hidden = !h.has; $('bz-lb').innerHTML = h.rows;
     }
     function openBoss() {
       if (!bossOpen()) return;
