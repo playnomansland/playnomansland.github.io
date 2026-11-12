@@ -17,6 +17,7 @@ const PLANS = {
   far: [['Sniper', 1, 14], ['Sniper', 10, 14], ['Skeleton Archers', 9, 13], ['Skeleton Archers', 10, 13], ['Skeleton Archers', 8, 13]],
   brute: [['Brute', 8, 10], ['Brute', 9, 10], ['Wisps', 1, 10], ['Skeleton Archers', 10, 11], ['Sniper', 2, 12]],
   heavy: [['Goblin Swarm', 5, 10], ['Skeleton Archers', 6, 10], ['Wisps', 10, 10], ['Sniper', 1, 11]],
+  acid: [['Brute', 5, 10, 0, -4], ['Brute', 6, 10, 0, -4], ['Steel Wizard', 5, 11], ['Skeleton Archers', 10, 11]], // (round 2 or 4: someone in her reach for the heavy, acid bite)
 };
 (async () => {
   require('fs').mkdirSync('shots', { recursive: true });
@@ -43,7 +44,7 @@ const PLANS = {
   const placed = await p.evaluate(([round, list]) => {
     const { m } = window.__pb(), ix = (n) => m.units.findIndex(u => u.name === n);
     m.round = round; m.gold[0] = 5000; m.extraDeploys[0] = 9;
-    const r = list.map(([n, c, rw]) => !!Game.place(m, 0, ix(n), c, rw));
+    const r = list.map(([n, c, rw, dc, dr]) => { const sq = Game.place(m, 0, ix(n), c, rw); if (sq && dc != null) Game.setAim(m, 0, sq.id, dc, dr); return !!sq; }); // (dc, dr: a direction arrow, in tiles)
     window.__pbRedraw(); return r;
   }, [+round, PLANS[plan]]);
   console.log('placed', placed);

@@ -306,6 +306,10 @@ html.diorama.pcwide #mp-pop.dock .mplayer .mp-vol { --vl: #F4ECD8; --vt: #F2B23A
 #dio .standings li.first::before { content: ""; position: absolute; inset: -2px -6px; z-index: -1; background: var(--saffron); clip-path: polygon(0 8%, 62% 0, 100% 6%, 98% 92%, 34% 100%, 1% 90%); }
 #dio .standings li.first .r { opacity: 1; }
 #dio .standings .leg { margin: 4px 0 0; font: 700 13px var(--type); opacity: .85; }
+/* Rankings: the Ranked / Mommy switch (developers only: the weekly boss's board) */
+#dio .standings .lb-tabs { display: inline-flex; gap: 6px; margin: -2px 0 4px; }
+#dio .standings .lb-tabs button { padding: 5px 12px 3px; border: 1px solid rgba(244,236,216,.45); background: none; color: inherit; font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+#dio .standings .lb-tabs button[aria-pressed="true"] { background: var(--saffron); border-color: var(--saffron); color: var(--ink); }
 #dio.pinned .back { display: block; } #dio.pinned .acct { display: none; }
 #dio.units .zz { opacity: 0; }
 

@@ -17,7 +17,8 @@
 //     reach, ripped loose.
 //   - Her bite changes by round: fast, heavy (Wind walk can't dodge it... unless bites.heavy.dodgeable), or a sweep.
 //   - Molt: every few seconds she sheds poison, bleed, burn, frost and slows. A hit's share of max health never works.
-//   - Poison pools: scripted tiles each round; the player's units standing in one are poisoned and slowed.
+//   - Acid: her heavy bite is acid. Where it lands it leaves a green pool for a few seconds; the player's units standing
+//     in one are poisoned and slowed (slime units drink it). (Until 2026-11-12 there were scripted poison tiles instead.)
 //   - The player: CFG.startGold, then the game's income; every allowed unit unlocked, at most CFG.maxPerType squads of a
 //     type, one free move and one free extra deployment a round, a treasury and no tower. Win: kill her by round 5.
 (function (root) {
@@ -38,7 +39,7 @@
       near: 22,         // m: her reach. A body this close holds her attention; she bites the nearest one
       bites: {          // her bite on the nearest body in reach, by style (about the same damage per second on one body)
         fast: { hit: 150, aps: 0.8, splash: 0 },    // rewards health
-        heavy: { hit: 480, aps: 0.25, splash: 2.5 }, // rewards many bodies, shields and wards
+        heavy: { hit: 480, aps: 0.25, splash: 2.5, acid: true }, // rewards many bodies, shields and wards. acid: it leaves an acid pool where it lands (CFG.acid)
         sweep: { hit: 70, aps: 1, splash: 5 },      // rewards one big body
       },
       web: { r: 14, slow: 40, dmg: 40 }, // bodies this close are slowed and hit softer
@@ -73,15 +74,10 @@
       [[0, 6, 'low'], [8, 7, 'low'], [3, 3], [11, 5]],    // a far low one, a low one in her reach, one up in her reach, one far right
     ],
     treasury: { hp: 400, col: 4, row: 15 },
-    // poison pools, by round: [[col0, row0, col1, row1], ...] (tiles, inclusive). pct: % of max health a second, past
-    // armor; linger: seconds it keeps working after the body walks out. Her spiders don't mind them; slime units drink them
-    pools: { pct: 4, linger: 2, at: [
-      [[4, 8, 7, 8]],                                     // the middle lane in front of her
-      [[4, 8, 7, 8], [10, 9, 11, 9]],                     // ...and under the right wing's firing spot
-      [[4, 7, 7, 8], [0, 8, 1, 8], [10, 8, 11, 8]],       // a wider lane, and both wings' firing spots
-      [[4, 8, 7, 8], [2, 9, 3, 9], [8, 9, 9, 9]],
-      [[4, 7, 7, 8], [1, 9, 2, 9], [10, 7, 11, 7]],
-    ] },
+    // the acid pool an acid bite (bites.<style>.acid) leaves where it lands: r m across (half), for secs seconds. A body
+    // of the player's standing in one loses pct % of its max health a second, past armor, and is slowed by the poison;
+    // linger: seconds it keeps working after the body walks out. Her spiders don't mind it; slime units drink it
+    acid: { pct: 4, linger: 2, secs: 8, r: 3 },
     late: {},           // (prototype only) ways to keep the late rounds from deciding everything: wound, groundMul, climb, income, carryNests
   };
 
@@ -120,7 +116,7 @@
     m.gold = [cfg.startGold, 0];
     return m;
   }
-  // what the boards draw for this round, while deploying and in the fight: her, the nests and the pools
+  // what the boards draw for this round, while deploying and in the fight: her and the nests
   function preview(m, cfg = CFG) {
     if (!m || !m.boss) return null;
     const round = m.round, u = m.units || [];
@@ -129,14 +125,14 @@
     return {
       mommy: { u: mommyUnit(cfg, round), ...world(cfg.mommy.col, cfg.mommy.row), reach: cfg.mommy.near },
       nests: spots.map(([c, r, kind]) => ({ u: kind === 'low' ? { ...nu, rangedOnly: 0 } : nu, low: kind === 'low', col: c, row: r, ...world(c, r) })),
-      pools: cfg.pools && cfg.pools.pct > 0 && cfg.pools.at ? byRound(cfg.pools.at, round) || [] : [],
+      acid: !!(cfg.acid && cfg.acid.pct > 0 && cfg.mommy.bites[byRound(cfg.biteByRound, round)].acid),
       bite: byRound(cfg.biteByRound, round), hp: m.boss.hp, max: m.boss.max, round, rounds: m.boss.rounds,
     };
   }
 
   // ---------- one fight ----------
   // The fight for m as it stands. o (all optional): cfg; st: her state ({ hp, falls, carry }, else m.boss); record;
-  // nests, pools (this round's instead of CFG's); fallen (true, or seconds she lies stunned: she starts on the ground);
+  // nests (this round's instead of CFG's); fallen (true, or seconds she lies stunned: she starts on the ground);
   // fallAt (she falls at this time whatever the nests); noHatch, noTreasury, secs; trace (log once a second);
   // name(sq) (a squad's name in the stats). Returns the engine's battle; its step() stops once she is dead, and its
   // result() carries `boss`: what happened (see out below), hpLeft included. Changes nothing on m.
@@ -173,7 +169,10 @@
     if (!hanging) { mom.takeMul = groundMul; mom.stunT = o.fallen === true ? 1e9 : o.fallen; out.fallAt = 0; mom.u = ground(mom.u); }
     mom.lastPick = hanging && !!cfg.mommy.lastPick; // (from the first tick: nobody aims at her while she hangs and anything else is left)
     mom.bs = { phase: hanging ? 'hanging' : 'down', stunLeft: 0, nestsLeft: spots.length, nests: spots.length, moltIn: cfg.mommy.molt || null, mortarIn: null, holder: null, take: hanging ? cfg.mommy.hang : groundMul, bite: byRound(cfg.biteByRound, round) };
-    const poolRects = (o.pools || (cfg.pools && cfg.pools.pct > 0 && cfg.pools.at ? byRound(cfg.pools.at, round) || [] : [])).map(([c0, r0, c1, r1]) => { const a = world(c0, r0), b = world(c1, r1), h = T / 2; return { x0: Math.min(a.x, b.x) - h, x1: Math.max(a.x, b.x) + h, y0: Math.min(a.y, b.y) - h, y1: Math.max(a.y, b.y) + h }; });
+    // acid: her bites on their way (biting), and the pools they left (mom.acid: { x, y, r, t0, until }, for the boards too)
+    const biteName = byRound(cfg.biteByRound, round), acidOn = !!(cfg.acid && cfg.acid.pct > 0 && cfg.mommy.bites[biteName].acid);
+    const seenBite = new WeakSet(), biting = [], acid = mom.acid = [];
+    let lastAtkA = null;
     // her attacks for the boards to draw (only in a fight that is shown: o.record): mom.ev, events with their time t
     // (bite: where the jaws are, how wide (r) and when they shut (land); mortar: where it lands, when, and the nest it
     // was (fx, fy); fall; molt), and in mom.bs whom she bites next (aim: target, k 0..1, in: seconds), the nest the
@@ -220,11 +219,18 @@
         if (fxOn && ((mom.poison && mom.poison.length) || mom.bleed || mom.burn || mom.frost || mom.slowT > 0)) ev.push({ k: 'molt', t: api.t }); // (only when something falls off her)
         mom.poison = null; mom.bleed = null; mom.burn = null; mom.frost = null; mom.web = null; mom.slowT = 0; mom.slowMove = 0; mom.slowAtk = 0; mom.shrinkT = 0; mom.shrinkM = 0; } }
       const stunned = mom.stunT > 0;
-      if (poolRects.length) for (const f of api.sides[0]) { // the poison pools
-        if (!f.alive || f.u.structure || f.u.aloft || !poolRects.some((q) => f.x >= q.x0 && f.x <= q.x1 && f.y >= q.y0 && f.y <= q.y1)) continue;
-        out.poolSecs += api.dt;
-        const pp = f.poison && f.poison.find((x) => x.pool);
-        if (pp) pp.t = cfg.pools.linger; else (f.poison || (f.poison = [])).push({ src: null, dps: f.u.hp * cfg.pools.pct / 100, t: cfg.pools.linger, pool: true });
+      if (acidOn) { // her acid bite: a pool where each one lands, and what it does to the bodies standing in one
+        const pool = (x, y) => acid.push({ x, y, r: cfg.acid.r, t0: api.t, until: api.t + cfg.acid.secs });
+        for (const p of api.projectiles || []) if (p.owner === mom && !seenBite.has(p)) { seenBite.add(p); biting.push({ land: api.t + p.left / Math.max(0.5, p.speed || mom.u.projSpeed || 1), x: p.tx, y: p.ty }); }
+        if (!(mom.u.projSpeed > 0) && mom.lastAtk != null && mom.lastAtk !== lastAtkA) { lastAtkA = mom.lastAtk; if (mom.lock) pool(mom.lock.x, mom.lock.y); } // (a bite that lands at once)
+        for (let k = 0; k < biting.length;) { if (api.t + 1e-9 >= biting[k].land) { const b = biting.splice(k, 1)[0]; pool(b.x, b.y); } else k++; }
+        while (acid.length && acid[0].until <= api.t) acid.shift();
+        if (acid.length) for (const f of api.sides[0]) {
+          if (!f.alive || f.u.structure || f.u.aloft || !acid.some((q) => d2(f, q.x, q.y) <= q.r)) continue;
+          out.poolSecs += api.dt;
+          const pp = f.poison && f.poison.find((x) => x.pool);
+          if (pp) pp.t = cfg.acid.linger; else (f.poison || (f.poison = [])).push({ src: null, dps: f.u.hp * cfg.acid.pct / 100, t: cfg.acid.linger, pool: true });
+        }
       }
       const wb = cfg.mommy.web; // her web: close to her, slower and softer (not while she lies stunned)
       for (const f of api.sides[0]) {

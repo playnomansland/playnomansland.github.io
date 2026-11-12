@@ -13,6 +13,7 @@
 //   GET /history/<MATCH>?replay=<round> -> that round's replay { pre, summary } (Match history's Replay)
 //   GET /lobby            -> WebSocket into the online lobby (LobbyRoom: the list of public rooms); without Upgrade: the list once
 //   GET /leaderboard       -> ranked players with wins, ties and losses, and whether ranked play is on (accounts.js)
+//   GET /leaderboard/boss  -> ?boss=mommy&rules=<tag>: the best runs against the weekly boss (accounts.js BOSS)
 //   POST /account/<route>  -> accounts (step 5; guest, me, google, tag, signout, delete, title, skin, ranked, invite, discord): see accounts.js
 //   GET /hub?p=<PLAYER>    -> WebSocket into that player's PlayerHub (friends: online status, invites, private messages; hub.js)
 //   GET /online?d=<DEVICE> -> WebSocket that counts this open page (OnlineRoom, online.js); the count: POST /account/online (developers)
@@ -21,7 +22,7 @@
 // Cron (wrangler.toml [triggers], hourly): month end, the Legend title for the leaderboard's top 5 (accounts.js awardLegends),
 // and skins given to a gamertag (accounts.js grantSkins)
 import { json } from './limits.js';
-import { handleAccount, leaderboard, awardLegends, grantSkins, sha256 } from './accounts.js';
+import { handleAccount, leaderboard, bossBoard, awardLegends, grantSkins, sha256 } from './accounts.js';
 import { DEVICE_RE } from './online.js';
 import { VERSION } from './version.js';
 export { Room } from './room.js';
@@ -83,6 +84,10 @@ export default {
     if (url.pathname === '/leaderboard') {
       if (!allowedOrigin(request, env)) return json({ error: 'origin' }, 403);
       return leaderboard(env, cors);
+    }
+    if (url.pathname === '/leaderboard/boss') { // the weekly boss's board (accounts.js BOSS)
+      if (!allowedOrigin(request, env)) return json({ error: 'origin' }, 403);
+      return bossBoard(env, cors, url);
     }
     if (url.pathname === '/selftest') return env.ROOM.getByName('selftest').fetch(new Request('https://room/selftest'));
 

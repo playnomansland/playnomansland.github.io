@@ -71,6 +71,23 @@ ok(shown.boss.mom.u.lob && shown.boss.mom.u.projSecs === C.mommy.biteSecs, 'her 
   ok(near(e).filter((b) => b.alive).every((b) => b.web && b.momWeb), 'what it hits and does not kill is webbed');
   ok(before.filter((b) => b.alive && Math.hypot(b.x - e.x, b.y - e.y) > e.r).every((b) => b.hp === b.u.hp && !b.momWeb), 'a body that walked out of the ring before it landed is missed');
 }
+// acid (2026-11-12): her heavy bite leaves a pool where it lands, for CFG.acid.secs; a body standing in one is poisoned.
+// The other bites leave none, and there are no poison tiles any more
+{ const fightIn = (round) => { const m7 = setup5([['Brute', 5, 10], ['Brute', 6, 10]]); m7.round = round; for (const sq of m7.armies[0]) Game.setAim(m7, 0, sq.id, 0, -4); return { m7, sim: Boss.battle(m7, { noHatch: true }) }; };
+  const { m7, sim } = fightIn(2), mom = sim.boss.mom;
+  let pools = 0, first = null, poisoned = false, gone = false;
+  for (let k = 0; k < 600 && sim.step(); k++) {
+    if (mom.acid.length && !first) first = { ...mom.acid[0], at: k * Game.SETTINGS.dt };
+    pools = Math.max(pools, mom.acid.length);
+    if (mom.acid.length && sim.bodies.some((b) => b.side === 0 && b.alive && b.poison && b.poison.some((x) => x.pool) && mom.acid.some((q) => Math.hypot(b.x - q.x, b.y - q.y) <= q.r + 1))) poisoned = true;
+    if (first && k * Game.SETTINGS.dt > first.until + 0.2 && !mom.acid.some((q) => q.t0 === first.t0)) gone = true;
+  }
+  ok(Boss.preview(m7).acid === true && !('pools' in Boss.preview(m7)), 'round 2: the heavy bite is acid; no poison tiles');
+  ok(first && first.r === C.acid.r && Math.abs(first.until - first.t0 - C.acid.secs) < 1e-6, `an acid bite leaves a pool where it lands, for ${C.acid.secs} s`);
+  ok(poisoned && gone && pools <= Math.ceil(C.acid.secs * C.mommy.bites.heavy.aps) + 1, 'a body standing in it is poisoned; the pool dries up');
+  const r1 = fightIn(1); for (let k = 0; k < 300 && r1.sim.step(); k++) { /* 15 s */ }
+  ok(Boss.preview(r1.m7).acid === false && r1.sim.boss.mom.acid.length === 0 && r1.sim.result().boss.poolSecs === 0, 'round 1 (the fast bite): no acid'); }
+
 // (prototype) a ranged squad pointed at a nest shoots that one first
 { const noMortar = { ...C, mommy: { ...C.mommy, mortar: { ...C.mommy.mortar, hit: 0 } } }; // (so she rips no nest herself)
   const hurt = (focus) => { const m6 = setup5([['Sniper', 5, 13]]); if (focus != null) m6.armies[0][0].focus = focus; const sim = Boss.battle(m6, { noHatch: true, cfg: noMortar }); for (let k = 0; k < 400 && sim.step(); k++) { /* 20 s */ } return sim.boss.nests.map((n) => n.hp < n.u.hp); };

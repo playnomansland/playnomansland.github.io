@@ -453,6 +453,10 @@ html.diorama.pcwide #mp-pop.dock .mplayer .mp-vol { --vl: #F4ECD8; --vt: #F2B23A
 #dio .standings li.first::before { content: ""; position: absolute; inset: -2px -6px; z-index: -1; background: var(--saffron); clip-path: polygon(0 8%, 62% 0, 100% 6%, 98% 92%, 34% 100%, 1% 90%); }
 #dio .standings li.first .r { opacity: 1; }
 #dio .standings .leg { margin: 4px 0 0; font: 700 13px var(--type); opacity: .85; }
+/* Rankings: the Ranked / Mommy switch (developers only: the weekly boss's board) */
+#dio .standings .lb-tabs { display: inline-flex; gap: 6px; margin: -2px 0 4px; }
+#dio .standings .lb-tabs button { padding: 5px 12px 3px; border: 1px solid rgba(244,236,216,.45); background: none; color: inherit; font: 700 13px var(--type); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+#dio .standings .lb-tabs button[aria-pressed="true"] { background: var(--saffron); border-color: var(--saffron); color: var(--ink); }
 #dio.pinned .back { display: block; } #dio.pinned .acct { display: none; }
 #dio.units .zz { opacity: 0; }
 
@@ -2241,7 +2245,17 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 .hud.bossrun .side.you .num { white-space: nowrap; }
 .hud.bossrun #you-name { display: none; } /* (the phone's top line has no room for a name next to "Round 1 of 5"; the PC layout keeps it) */
 .boss-bar { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); width: min(94%, 560px); z-index: 3; pointer-events: none; text-align: center; font-family: "IBM Plex Mono", monospace; }
-.boss-bar .bb-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 2px 2px; }
+.boss-bar .bb-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 8px; margin: 0 2px 3px; }
+.boss-bar .bb-top .bb-name { justify-self: start; } .boss-bar .bb-top .bb-phase { grid-column: 3; justify-self: end; }
+.boss-bar .bb-time { grid-column: 2; display: inline-flex; align-items: baseline; gap: 5px; padding: 0 10px; border-radius: 4px; background: rgba(10, 14, 16, 0.82); border: 1px solid #56646A; color: #fff; text-shadow: 0 1px 3px #000; }
+.boss-bar .bb-time[hidden] { display: none; }
+.boss-bar .bb-time b { font-size: 34px; line-height: 1.1; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 2.6ch; text-align: right; }
+.boss-bar .bb-time small { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #C8D2D2; }
+.boss-bar .bb-time.low { border-color: #FF5A4E; color: #FF8A80; animation: bb-pulse 0.5s ease-in-out infinite alternate; }
+.boss-bar .bb-clock { height: 5px; margin-top: 2px; border-radius: 3px; background: rgba(10, 14, 16, 0.75); overflow: hidden; }
+.boss-bar .bb-clock[hidden] { display: none; }
+.boss-bar .bb-clock i { display: block; height: 100%; background: #F4F1E8; }
+.boss-bar .bb-clock.low i { background: #FF5A4E; }
 .boss-bar .bb-name { color: #FF7A6E; font-weight: 800; letter-spacing: 0.18em; font-size: 13px; text-shadow: 0 1px 3px #000; }
 .boss-bar .bb-phase { font-weight: 800; letter-spacing: 0.08em; font-size: 11px; padding: 1px 8px; border-radius: 3px; color: #10161A; }
 .boss-bar .bb-phase.hanging { background: #B79CFF; } .boss-bar .bb-phase.stunned { background: #FFE15A; animation: bb-pulse 0.8s ease-in-out infinite alternate; }
@@ -10440,7 +10454,8 @@ if (typeof module !== 'undefined') module.exports = Game;
 //     reach, ripped loose.
 //   - Her bite changes by round: fast, heavy (Wind walk can't dodge it... unless bites.heavy.dodgeable), or a sweep.
 //   - Molt: every few seconds she sheds poison, bleed, burn, frost and slows. A hit's share of max health never works.
-//   - Poison pools: scripted tiles each round; the player's units standing in one are poisoned and slowed.
+//   - Acid: her heavy bite is acid. Where it lands it leaves a green pool for a few seconds; the player's units standing
+//     in one are poisoned and slowed (slime units drink it). (Until 2026-11-12 there were scripted poison tiles instead.)
 //   - The player: CFG.startGold, then the game's income; every allowed unit unlocked, at most CFG.maxPerType squads of a
 //     type, one free move and one free extra deployment a round, a treasury and no tower. Win: kill her by round 5.
 (function (root) {
@@ -10461,7 +10476,7 @@ if (typeof module !== 'undefined') module.exports = Game;
       near: 22,         // m: her reach. A body this close holds her attention; she bites the nearest one
       bites: {          // her bite on the nearest body in reach, by style (about the same damage per second on one body)
         fast: { hit: 150, aps: 0.8, splash: 0 },    // rewards health
-        heavy: { hit: 480, aps: 0.25, splash: 2.5 }, // rewards many bodies, shields and wards
+        heavy: { hit: 480, aps: 0.25, splash: 2.5, acid: true }, // rewards many bodies, shields and wards. acid: it leaves an acid pool where it lands (CFG.acid)
         sweep: { hit: 70, aps: 1, splash: 5 },      // rewards one big body
       },
       web: { r: 14, slow: 40, dmg: 40 }, // bodies this close are slowed and hit softer
@@ -10496,15 +10511,10 @@ if (typeof module !== 'undefined') module.exports = Game;
       [[0, 6, 'low'], [8, 7, 'low'], [3, 3], [11, 5]],    // a far low one, a low one in her reach, one up in her reach, one far right
     ],
     treasury: { hp: 400, col: 4, row: 15 },
-    // poison pools, by round: [[col0, row0, col1, row1], ...] (tiles, inclusive). pct: % of max health a second, past
-    // armor; linger: seconds it keeps working after the body walks out. Her spiders don't mind them; slime units drink them
-    pools: { pct: 4, linger: 2, at: [
-      [[4, 8, 7, 8]],                                     // the middle lane in front of her
-      [[4, 8, 7, 8], [10, 9, 11, 9]],                     // ...and under the right wing's firing spot
-      [[4, 7, 7, 8], [0, 8, 1, 8], [10, 8, 11, 8]],       // a wider lane, and both wings' firing spots
-      [[4, 8, 7, 8], [2, 9, 3, 9], [8, 9, 9, 9]],
-      [[4, 7, 7, 8], [1, 9, 2, 9], [10, 7, 11, 7]],
-    ] },
+    // the acid pool an acid bite (bites.<style>.acid) leaves where it lands: r m across (half), for secs seconds. A body
+    // of the player's standing in one loses pct % of its max health a second, past armor, and is slowed by the poison;
+    // linger: seconds it keeps working after the body walks out. Her spiders don't mind it; slime units drink it
+    acid: { pct: 4, linger: 2, secs: 8, r: 3 },
     late: {},           // (prototype only) ways to keep the late rounds from deciding everything: wound, groundMul, climb, income, carryNests
   };
 
@@ -10543,7 +10553,7 @@ if (typeof module !== 'undefined') module.exports = Game;
     m.gold = [cfg.startGold, 0];
     return m;
   }
-  // what the boards draw for this round, while deploying and in the fight: her, the nests and the pools
+  // what the boards draw for this round, while deploying and in the fight: her and the nests
   function preview(m, cfg = CFG) {
     if (!m || !m.boss) return null;
     const round = m.round, u = m.units || [];
@@ -10552,14 +10562,14 @@ if (typeof module !== 'undefined') module.exports = Game;
     return {
       mommy: { u: mommyUnit(cfg, round), ...world(cfg.mommy.col, cfg.mommy.row), reach: cfg.mommy.near },
       nests: spots.map(([c, r, kind]) => ({ u: kind === 'low' ? { ...nu, rangedOnly: 0 } : nu, low: kind === 'low', col: c, row: r, ...world(c, r) })),
-      pools: cfg.pools && cfg.pools.pct > 0 && cfg.pools.at ? byRound(cfg.pools.at, round) || [] : [],
+      acid: !!(cfg.acid && cfg.acid.pct > 0 && cfg.mommy.bites[byRound(cfg.biteByRound, round)].acid),
       bite: byRound(cfg.biteByRound, round), hp: m.boss.hp, max: m.boss.max, round, rounds: m.boss.rounds,
     };
   }
 
   // ---------- one fight ----------
   // The fight for m as it stands. o (all optional): cfg; st: her state ({ hp, falls, carry }, else m.boss); record;
-  // nests, pools (this round's instead of CFG's); fallen (true, or seconds she lies stunned: she starts on the ground);
+  // nests (this round's instead of CFG's); fallen (true, or seconds she lies stunned: she starts on the ground);
   // fallAt (she falls at this time whatever the nests); noHatch, noTreasury, secs; trace (log once a second);
   // name(sq) (a squad's name in the stats). Returns the engine's battle; its step() stops once she is dead, and its
   // result() carries `boss`: what happened (see out below), hpLeft included. Changes nothing on m.
@@ -10596,7 +10606,10 @@ if (typeof module !== 'undefined') module.exports = Game;
     if (!hanging) { mom.takeMul = groundMul; mom.stunT = o.fallen === true ? 1e9 : o.fallen; out.fallAt = 0; mom.u = ground(mom.u); }
     mom.lastPick = hanging && !!cfg.mommy.lastPick; // (from the first tick: nobody aims at her while she hangs and anything else is left)
     mom.bs = { phase: hanging ? 'hanging' : 'down', stunLeft: 0, nestsLeft: spots.length, nests: spots.length, moltIn: cfg.mommy.molt || null, mortarIn: null, holder: null, take: hanging ? cfg.mommy.hang : groundMul, bite: byRound(cfg.biteByRound, round) };
-    const poolRects = (o.pools || (cfg.pools && cfg.pools.pct > 0 && cfg.pools.at ? byRound(cfg.pools.at, round) || [] : [])).map(([c0, r0, c1, r1]) => { const a = world(c0, r0), b = world(c1, r1), h = T / 2; return { x0: Math.min(a.x, b.x) - h, x1: Math.max(a.x, b.x) + h, y0: Math.min(a.y, b.y) - h, y1: Math.max(a.y, b.y) + h }; });
+    // acid: her bites on their way (biting), and the pools they left (mom.acid: { x, y, r, t0, until }, for the boards too)
+    const biteName = byRound(cfg.biteByRound, round), acidOn = !!(cfg.acid && cfg.acid.pct > 0 && cfg.mommy.bites[biteName].acid);
+    const seenBite = new WeakSet(), biting = [], acid = mom.acid = [];
+    let lastAtkA = null;
     // her attacks for the boards to draw (only in a fight that is shown: o.record): mom.ev, events with their time t
     // (bite: where the jaws are, how wide (r) and when they shut (land); mortar: where it lands, when, and the nest it
     // was (fx, fy); fall; molt), and in mom.bs whom she bites next (aim: target, k 0..1, in: seconds), the nest the
@@ -10643,11 +10656,18 @@ if (typeof module !== 'undefined') module.exports = Game;
         if (fxOn && ((mom.poison && mom.poison.length) || mom.bleed || mom.burn || mom.frost || mom.slowT > 0)) ev.push({ k: 'molt', t: api.t }); // (only when something falls off her)
         mom.poison = null; mom.bleed = null; mom.burn = null; mom.frost = null; mom.web = null; mom.slowT = 0; mom.slowMove = 0; mom.slowAtk = 0; mom.shrinkT = 0; mom.shrinkM = 0; } }
       const stunned = mom.stunT > 0;
-      if (poolRects.length) for (const f of api.sides[0]) { // the poison pools
-        if (!f.alive || f.u.structure || f.u.aloft || !poolRects.some((q) => f.x >= q.x0 && f.x <= q.x1 && f.y >= q.y0 && f.y <= q.y1)) continue;
-        out.poolSecs += api.dt;
-        const pp = f.poison && f.poison.find((x) => x.pool);
-        if (pp) pp.t = cfg.pools.linger; else (f.poison || (f.poison = [])).push({ src: null, dps: f.u.hp * cfg.pools.pct / 100, t: cfg.pools.linger, pool: true });
+      if (acidOn) { // her acid bite: a pool where each one lands, and what it does to the bodies standing in one
+        const pool = (x, y) => acid.push({ x, y, r: cfg.acid.r, t0: api.t, until: api.t + cfg.acid.secs });
+        for (const p of api.projectiles || []) if (p.owner === mom && !seenBite.has(p)) { seenBite.add(p); biting.push({ land: api.t + p.left / Math.max(0.5, p.speed || mom.u.projSpeed || 1), x: p.tx, y: p.ty }); }
+        if (!(mom.u.projSpeed > 0) && mom.lastAtk != null && mom.lastAtk !== lastAtkA) { lastAtkA = mom.lastAtk; if (mom.lock) pool(mom.lock.x, mom.lock.y); } // (a bite that lands at once)
+        for (let k = 0; k < biting.length;) { if (api.t + 1e-9 >= biting[k].land) { const b = biting.splice(k, 1)[0]; pool(b.x, b.y); } else k++; }
+        while (acid.length && acid[0].until <= api.t) acid.shift();
+        if (acid.length) for (const f of api.sides[0]) {
+          if (!f.alive || f.u.structure || f.u.aloft || !acid.some((q) => d2(f, q.x, q.y) <= q.r)) continue;
+          out.poolSecs += api.dt;
+          const pp = f.poison && f.poison.find((x) => x.pool);
+          if (pp) pp.t = cfg.acid.linger; else (f.poison || (f.poison = [])).push({ src: null, dps: f.u.hp * cfg.acid.pct / 100, t: cfg.acid.linger, pool: true });
+        }
       }
       const wb = cfg.mommy.web; // her web: close to her, slower and softer (not while she lies stunned)
       for (const f of api.sides[0]) {
@@ -16400,11 +16420,11 @@ const Render2D = (cv, view, opts = {}) => {
     }
   }
 
-  // the Mommy boss puzzle (view.boss from the page: Boss.preview): this round's poison pools, and while deploying her,
+  // the Mommy boss puzzle (view.boss from the page: Boss.preview): her acid pools in the fight, and while deploying her,
   // her reach and this round's nests, see-through, each nest marked HIGH (only ranged units reach it) or LOW
   const BOSS_POOL = '#7FD13B';
   // her state in the fight (mom.bs, src/boss.js): hanging on her thread, the mortar winding up, stunned on the ground
-  const BITE_COL = { fast: '#FFE15A', heavy: '#FF5A4E', sweep: '#FF9A3D' }; // her bite's colour, by style
+  const BITE_COL = { fast: '#FFE15A', heavy: '#8BE04E', sweep: '#FF9A3D' }; // her bite's colour, by style (the heavy one is acid: green)
   function drawBossState() {
     const mom = bt && bt.bodies.find(b => b.u.boss && b.alive); if (!mom || !mom.bs) return;
     const bs = mom.bs, x = PX(mom.x), y = PY(mom.y), R = radius(mom.u), time = bt.time();
@@ -16525,13 +16545,14 @@ const Render2D = (cv, view, opts = {}) => {
     ctx.beginPath(); ctx.moveTo(x, y - R * 0.3); ctx.quadraticCurveTo(x + sway, y / 2, x + sway * 0.5, 0); ctx.stroke(); ctx.globalAlpha = 1;
   }
   const BITE_STAYS = 4; // seconds a bite mark stays on the ground
+  // her acid pools (mom.acid, src/boss.js: where her acid bite landed): green on the ground, under the bodies
   function drawBossPools() {
-    const t = tilePx(), time = phase === 'battle' && bt ? bt.time() : 0;
-    for (const [c0, r0, c1, r1] of boss.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
-      const x = scol(c) * t, y = srow(r) * t;
-      ctx.fillStyle = BOSS_POOL; ctx.globalAlpha = 0.2 + 0.05 * Math.sin(time * 2 + c + r); ctx.fillRect(x + 1, y + 1, t - 2, t - 2);
-      ctx.fillStyle = '#C6F27A'; ctx.globalAlpha = 0.5; // a few bubbles
-      for (let k = 0; k < 3; k++) { const ph = (time * 0.6 + k * 0.37 + (c * 7 + r * 3) * 0.13) % 1; ctx.beginPath(); ctx.arc(x + t * (0.25 + 0.25 * k), y + t * (0.8 - 0.5 * ph), t * 0.05, 0, Math.PI * 2); ctx.fill(); }
+    const mom = bt && phase !== 'deploy' ? bt.bodies.find(b => b.u.boss) : null; if (!mom || !mom.acid) return;
+    const time = bt.time();
+    for (const q of mom.acid) {
+      const a = Math.max(0, Math.min(1, (q.until - time) / 1.5)), x = PX(q.x), y = PY(q.y), r = q.r * S;
+      ctx.fillStyle = BOSS_POOL; ctx.globalAlpha = 0.3 * a; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#C6F27A'; ctx.globalAlpha = 0.8 * a; ctx.lineWidth = 1.5; ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }
@@ -19055,7 +19076,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · 4f8a23f'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · d27f37c'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19208,7 +19229,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         </div>
       </div>
       <div class="bar"><span class="hint">Friends</span><button class="btn small" id="fr-open2">Friends <b class="fr-badge" hidden></b></button></div>
-      ${m && m.boss ? '<button class="btn primary" id="boss-restart">Restart Mommy</button>' : ''}
+      ${m && m.boss ? '<button class="btn primary" id="boss-restart">Restart boss</button>' : ''}
       <button class="btn" id="to-menu">Main menu</button>` : ''}
       ${!inMatch ? `<div class="bar">
         <span class="hint">Stay logged in on this device</span>
@@ -19539,7 +19560,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     aim: phase === 'deploy' && (aimMode != null || aimDrag) ? { id: aimDrag ? aimDrag.id : aimMode, end: aimDrag ? aimDrag.end : hoverTile } : null, // (aimDrag without aimMode: a head dragged)
     placingBuilding: placingBuilding(), win: null, duo: duoBoard(),
     foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me], foeStart: foeStart(), boss: bossView() }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
-  // the Mommy boss puzzle: what both boards draw (Boss.preview: this round's pools, and while deploying her and the nests)
+  // the Mommy boss puzzle: what both boards draw (Boss.preview: while deploying her and the nests)
   function bossView() {
     const v = phase === 'battle' && battlePre ? battlePre : m;
     if (!v || !v.boss || typeof Boss === 'undefined') return null;
@@ -20825,6 +20846,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         ${mageOffer() ? `<button class="btn small" id="mage-gen" ${can ? '' : 'disabled'}>${Game.mageGenOf(m, me) || Game.mageTpOf(m, me) ? [Game.mageGenOf(m, me), Game.mageTpOf(m, me) && 'teleport'].filter(Boolean).map(id => esc(Game.mageGenInfo(id).name)).join(' + ') : 'Mage general'}…</button>` : ''}
         ${tskillOffer() ? `<button class="btn small" id="buy-tskill" ${can && Game.canBuyTowerSkill(m, me) ? '' : 'disabled'}>${esc(Game.towerType(m, me).skill.name)} · ${Game.towerSkillCost(m, me)}</button>` : ''}
         ${can && m.extraDeploys[me] > 0 && left > 0 && !m.boss ? `<button class="btn small" id="refund-deploy">Refund unused</button>` : ''}
+        ${m.boss ? '<button class="btn small" id="boss-map">Nest map</button>' : ''}
         ${Game.isDev(m) ? (() => { // Factions devtest: the building to place, spells, arrows, this round's pick
           const ub = Game.unplacedLesser(m, me), pk = Game.pickNow(m, me);
           return `${ub ? `<button class="btn small primary" id="dev-place" ${can ? '' : 'disabled'}>Place ${esc((Game.devBuilding(ub.id) || {}).name || 'building')}</button>` : ''}
@@ -20910,6 +20932,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     wireMore();
     if (net.duo && mode === 'net') wireDuoRow();
     if (duoOn()) wireMpbPanel(); // 2v2: the artifact draft's cards
+    if ($('boss-map')) $('boss-map').addEventListener('click', openBossMap); // the Mommy boss puzzle: where her nests hang, round by round
     $('help-btn').addEventListener('click', () => { if (m && m.boss) openBossRules(); else openHelp(); }); // (the Mommy boss puzzle: her rules, with Game help inside)
     if ($('mage-gen')) $('mage-gen').addEventListener('click', () => openTowerSheet(me));
     if ($('loan')) $('loan').addEventListener('click', () => { if (editable() && Game.takeLoan(m, me)) changed(); });
@@ -21591,14 +21614,31 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     $('tour-practice').addEventListener('click', () => { closeSheet(true); tourPractice(); });
   }
   // Leaderboard: ranked results from the server (wins, ties, losses), best first
-  async function openLeaderboard() {
+  // tab 'boss': the weekly boss's board (the Mommy boss puzzle, bossBoardLoad). Its tab shows to developers only, while
+  // the boss is a developer test
+  async function openLeaderboard(tab) {
+    const bossTab = devMode() && typeof Boss !== 'undefined';
+    tab = tab === 'boss' && bossTab ? 'boss' : 'ranked';
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Leaderboard</h3><button class="btn small" id="close">Close</button></div>
-      <p class="hint" id="lb-msg" aria-live="polite" style="margin:0">Loading…</p><div id="lb"></div>`;
+      ${bossTab ? `<div class="seg" id="lb-tabs" style="margin:0 0 8px"><button data-lbt="ranked" aria-pressed="${tab === 'ranked'}">Ranked</button><button data-lbt="boss" aria-pressed="${tab === 'boss'}">Weekly boss · Mommy</button></div>` : ''}
+      <p class="hint" id="lb-msg" aria-live="polite" style="margin:0">Loading…</p><div id="lb" data-tab="${tab}"></div>`;
     $('sheet-back').hidden = false;
     $('close').addEventListener('click', closeSheet);
+    if ($('lb-tabs')) $('lb-tabs').querySelectorAll('button').forEach(b => b.addEventListener('click', () => openLeaderboard(b.dataset.lbt)));
+    if (tab === 'boss') {
+      const bb = await bossBoardLoad(true);
+      if (!$('lb') || $('lb').dataset.tab !== 'boss') return;
+      if (!bb.rows) { $('lb-msg').textContent = 'Couldn’t reach the game server. Check your connection and try again.'; return; }
+      $('lb-msg').textContent = (bb.rows.length ? 'Best runs against the Mommy under her rules as they are now. A kill in the earliest round comes first, then the earliest second of that round; without a kill, the most damage.' : 'Nobody has finished a run against her under her rules as they are now. Finish one to get on the board.') + ' Developer accounts only for now.';
+      if (!bb.rows.length) return;
+      $('lb').innerHTML = `<table class="lb"><thead><tr><th>#</th><th>Player</th><th>Best run</th></tr></thead><tbody>
+        ${bb.rows.map((r, i) => `<tr class="${acct && r.id === acct.id ? 'me' : ''}"><td class="num">${i + 1}</td><td>${nameplate(r.tag, r.title, 'row')}</td><td>${esc(bossRunText(r))}</td></tr>`).join('')}
+        </tbody></table>`;
+      return;
+    }
     let j = null;
     try { const r = await fetch(`${SERVER_URL}/leaderboard`); j = r.ok ? await r.json() : null; } catch (e) { j = null; }
-    if (!$('lb')) return;
+    if (!$('lb') || $('lb').dataset.tab !== 'ranked') return;
     if (!j) { $('lb-msg').textContent = 'Couldn’t reach the game server. Check your connection and try again.'; return; }
     home.rankedOn = !!j.on; home.board = j;
     const pct = (r) => Math.round((r.w + r.t / 2) / Math.max(1, r.w + r.t + r.l) * 100);
@@ -23839,7 +23879,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     beginAiRound();
     openBossRules(); // what's new here, before the first deployment
   }
-  const BITE_NOTE = { fast: 'fast and light: health holds her', heavy: 'slow and heavy: many bodies, shields and wards hold her', sweep: 'a sweep: one big body holds her' };
+  const BITE_NOTE = { fast: 'fast and light: health holds her', heavy: 'slow, heavy and acid (it leaves a green pool): many bodies, shields and wards hold her', sweep: 'a sweep: one big body holds her' };
   function bossLine() {
     const p = bossView(); if (!p) return;
     const low = p.nests.filter(n => n.low).length;
@@ -23864,7 +23904,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (ph !== 'dead') {
       const left = bs ? bs.nestsLeft : p ? p.nests.length : 0, all = bs ? bs.nests : p ? p.nests.length : 0;
       t.push([left ? '' : 'good', `NESTS ${left}/${all}`]);
-      const bite = bs ? bs.bite : p && p.bite; if (bite) t.push(['', `BITE: ${bite.toUpperCase()}`]);
+      const bite = bs ? bs.bite : p && p.bite; if (bite) t.push(['', `BITE: ${bite.toUpperCase()}${C.acid && C.acid.pct > 0 && C.mommy.bites[bite] && C.mommy.bites[bite].acid ? ' · ACID' : ''}`]);
       if (bs && bs.mortarIn != null) t.push(['bad', `MORTAR ${s1(bs.mortarIn)}s`]);
       else if (bs && bs.holder) t.push(['', `HELD BY ${bs.holder.toUpperCase()}`]);
       if (bs && bs.moltIn != null) t.push(['', `MOLT ${Math.ceil(bs.moltIn)}s`]);
@@ -23876,8 +23916,18 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (mom.frost) t.push(['fx', 'FROST']);
       if (mom.slowT > 0 && (mom.slowMove > 0 || mom.slowAtk > 0)) t.push(['fx', 'SLOWED']);
     }
-    if (!el.querySelector('.bb-bar')) { el.innerHTML = `<div class="bb-top"><span class="bb-name">MOMMY</span><span class="bb-phase"></span><span class="bb-name" style="visibility:hidden">MOMMY</span></div>
-      <div class="bb-bar"><i class="bb-lost"></i><i class="bb-fill"></i><span class="bb-num"></span></div><div class="bb-tok"></div>`; bossBarHtml = ''; }
+    if (!el.querySelector('.bb-bar')) { el.innerHTML = `<div class="bb-top"><span class="bb-name">MOMMY</span><span class="bb-time" hidden><b></b><small>s left</small></span><span class="bb-phase"></span></div>
+      <div class="bb-bar"><i class="bb-lost"></i><i class="bb-fill"></i><span class="bb-num"></span></div><div class="bb-clock" hidden><i></i></div><div class="bb-tok"></div>`; bossBarHtml = ''; }
+    // the fight's time running out: a big count in the middle, and a strip under her health that drains with it
+    const inFight = !!bt && (phase === 'battle' || phase === 'result' || phase === 'end'), total = C.fightSecs, left = inFight ? Math.max(0, total - bt.time()) : total;
+    const te = el.querySelector('.bb-time'), ce = el.querySelector('.bb-clock');
+    if (te.hidden !== !inFight) { te.hidden = !inFight; ce.hidden = !inFight; }
+    if (inFight) {
+      const txt = left.toFixed(1), low = left <= 10 && phase === 'battle';
+      if (te.firstChild.textContent !== txt) te.firstChild.textContent = txt;
+      if (te.classList.contains('low') !== low) { te.classList.toggle('low', low); ce.classList.toggle('low', low); }
+      ce.firstChild.style.width = (left / total * 100).toFixed(2) + '%';
+    }
     el.hidden = false;
     const w = Math.min(100, hp / max * 100).toFixed(2) + '%', q = (c) => el.querySelector(c);
     const pe = q('.bb-phase'); if (pe.textContent !== label) pe.textContent = label; if (pe.className !== 'bb-phase ' + ph) pe.className = 'bb-phase ' + ph;
@@ -23892,7 +23942,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (!m || !m.boss || typeof Boss === 'undefined') return;
     const C = Boss.CFG, mo = C.mommy, p = bossView() || {}, r = p.round || m.round, b = (x) => `<b>${x}</b>`; // (p: the round on the board; in the fight m.round has moved on already)
     const hatch = Boss.byRound(C.hatch, r), bite = p.bite || Boss.byRound(C.biteByRound, r);
-    const BITES = { fast: ['Fast', 'quick, light bites: a unit with lots of health holds her best'], heavy: ['Heavy', 'slow, huge bites that splash a little: many bodies, shields and wards hold her best'], sweep: ['Sweep', 'light bites that hit everything round the target: one big body holds her best (a swarm melts)'] };
+    const BITES = { fast: ['Fast', 'quick, light bites: a unit with lots of health holds her best'], heavy: ['Heavy', 'slow, huge bites that splash a little and leave acid: many bodies, shields and wards hold her best'], sweep: ['Sweep', 'light bites that hit everything round the target: one big body holds her best (a swarm melts)'] };
+    const acidBites = C.acid && C.acid.pct > 0 ? Object.keys(mo.bites).filter(k => mo.bites[k].acid) : [], acidRounds = C.biteByRound.map((x, k) => acidBites.includes(x) ? k + 1 : 0).filter(Boolean);
     const sec = (title, items) => `<h4 style="margin:10px 0 2px">${title}</h4><ul class="helplist">${items.filter(Boolean).map(x => `<li>${x}</li>`).join('')}</ul>`;
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
       <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. Beat her within ${C.titleRound} rounds for the “Mommy” title.</p>
@@ -23910,14 +23961,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         `She bites the nearest of your units inside her reach (the dashed ring, ${mo.near} m). A unit in her reach ${b('holds')} her: she bites it, not the rest.`,
         mo.biteSecs > 0 ? `Her ${b('jaws')} open on the ground where that unit stands and snap shut ${mo.biteSecs} s later. Whatever stands in the ring then is bitten; a unit that has walked out of it is missed. The bite mark stays on the ground for a moment.` : '',
         `Her bite changes each round. This round: ${b(BITES[bite] ? BITES[bite][0] : bite)}, ${BITES[bite] ? BITES[bite][1] : ''}.`,
+        acidBites.length ? `Her ${acidBites.join(' and ')} bite is ${b('acid')} (green jaws; round${acidRounds.length === 1 ? '' : 's'} ${acidRounds.join(', ')}). Where it lands it leaves a ${b('green pool')} for ${C.acid.secs} s. Your units standing in one lose ${C.acid.pct}% of their max health a second and are slowed, and it lasts ${C.acid.linger} s after they step out. Her spiders don’t mind it. Slime units (Slime Wizard, Slimeshots) drink it: it heals them.` : '',
         `Units close to her (${mo.web.r} m) are caught in her ${b('web')}: they walk ${mo.web.slow}% slower and hit ${mo.web.dmg}% softer.`])}
       ${sec('The web mortar', [
         `If none of your units is inside her reach for ${mo.mortar.wind} s while she hangs, she throws a web mortar at your biggest clump, then another every ${mo.mortar.every} s.`,
         mo.mortar.fly > 0 ? `It is in the air for ${mo.mortar.fly} s and lands where the clump stood when she threw it: the ${b('red ring')}, which fills as it comes. Everything in the ring when it lands takes ${mo.mortar.hit} damage and is caught in a web that slows it. A squad that walks on gets out of the ring.` : `${mo.mortar.hit} damage to everything in the blast, and a web that slows them.`,
         mo.mortar.ammo ? `Each shot is ${b('one of her own nests')}, ripped loose${mo.mortar.ammoReach ? ' (only a nest inside her reach)' : ''}: her thread shows which one she throws next. It is gone, and its spiders burst out where it hung. Leaving her alone is a way to play too: spread out, and let her spend her nests.` : ''])}
-      ${sec('Poison pools', C.pools && C.pools.pct > 0 ? [
-        `The ${b('green tiles')} are poison. Your units standing in one lose ${C.pools.pct}% of their max health a second and are slowed, and it lasts ${C.pools.linger} s after they step out. Her spiders don’t mind them.`,
-        'Slime units (Slime Wizard, Slimeshots) drink poison: it heals them.'] : [])}
       ${sec('She sheds', [
         mo.molt ? `Every ${mo.molt} s she molts: poison, bleed, burn, frost and slows fall off her.` : '',
         mo.bleedPct ? '' : 'Hits that take a share of max health (bleed’s big stacks, Deadeye) don’t work on her.'])}
@@ -23931,6 +23980,58 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     $('sheet-back').hidden = false;
     $('close').addEventListener('click', closeSheet);
     $('boss-help').addEventListener('click', () => { closeSheet(); openHelp(); });
+  }
+  // ---------- the weekly boss's leaderboard (2026-11-12; server/src/accounts.js BOSS) ----------
+  // A finished run is reported to the game server (developer accounts only, as the boss is a developer test; the server
+  // takes the page's word for it: it does not replay the run yet). Runs are ranked per set of her rules: bossRulesTag is
+  // a short tag made from Boss.CFG, so any change to her numbers starts a new board.
+  const bossRulesTag = () => { const t = JSON.stringify(Boss.CFG); let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
+  const bossBoard = { rows: null, at: 0, busy: null };
+  // the board from the server (kept a minute; force: now). Resolves to bossBoard; rows stays null if it never arrived
+  function bossBoardLoad(force) {
+    if (bossBoard.busy) return bossBoard.busy;
+    if (typeof Boss === 'undefined' || (!force && bossBoard.at && now() - bossBoard.at < 60e3)) return Promise.resolve(bossBoard);
+    bossBoard.busy = (async () => {
+      try { const r = await fetch(`${SERVER_URL}/leaderboard/boss?boss=mommy&rules=${bossRulesTag()}`); const j = r.ok ? await r.json() : null; if (j && Array.isArray(j.rows)) bossBoard.rows = j.rows; } catch (e) { /* the last board stays */ }
+      bossBoard.at = now(); bossBoard.busy = null;
+      return bossBoard;
+    })();
+    return bossBoard.busy;
+  }
+  const bossRunText = (r) => r.won ? `Killed in round ${r.round}, ${(+r.secs).toFixed(1)} s in` : `${(+r.dmg).toLocaleString('en')} damage, not killed`;
+  // a finished run goes to the server; its answer (the board with this run in it) fills the result card's line
+  function bossReport(r) {
+    if (!acct || !devMode() || typeof Boss === 'undefined' || !m || !m.boss) return;
+    const run = { boss: 'mommy', rules: bossRulesTag(), won: !!r.dead, round: r.round, secs: Math.round(r.end * 100) / 100, dmg: Math.round(m.boss.max - m.boss.hp) };
+    acctCall('boss', run, true).then((res) => {
+      const el = $('boss-rank');
+      if (res.status !== 200 || !Array.isArray(res.rows)) { if (el) el.textContent = 'This run couldn’t be sent to the leaderboard.'; return; }
+      bossBoard.rows = res.rows; bossBoard.at = now();
+      const at = res.rows.findIndex(x => x.id === acct.id);
+      if (el) el.textContent = (res.improved ? 'Your best run so far' : `Your best run stays: ${bossRunText(res.best).toLowerCase()}`) + (at >= 0 ? `. You are number ${at + 1} of ${res.rows.length} on the leaderboard.` : '.');
+    });
+  }
+  // The nest map (the deploy panel's Nest map): where her nests hang in each round, on five small boards. The places
+  // are fixed (Boss.CFG.nests), the same in every run, so a round can be planned ahead
+  function openBossMap() {
+    if (!m || !m.boss || typeof Boss === 'undefined') return;
+    const C = Boss.CFG, T = 9, W = Game.COLS * T, H = Game.ROWS * T, cur = m.round, reach = C.mommy.near / (Game.TILE || 6) * T;
+    const BN = { fast: 'Fast bite', heavy: 'Heavy bite · acid', sweep: 'Sweep bite' };
+    const board = (r) => {
+      const spots = Boss.byRound(C.nests, r), bite = Boss.byRound(C.biteByRound, r), mx = (C.mommy.col + 0.5) * T, my = (C.mommy.row + 0.5) * T;
+      const nests = spots.map(([c, rw, kind]) => { const x = (c + 0.5) * T, y = (rw + 0.5) * T, low = kind === 'low';
+        return `<circle cx="${x}" cy="${y}" r="${T * 0.62}" fill="${low ? '#F4F0E6' : '#FFD23F'}" stroke="#10161A" stroke-width="1"/><text x="${x}" y="${y + 3}" text-anchor="middle" font-size="${T}" font-weight="800" font-family="IBM Plex Mono, monospace" fill="#10161A">${low ? 'L' : 'H'}</text>`; }).join('');
+      return `<figure style="margin:0;text-align:center"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Round ${r}: ${spots.length} nests" style="border-radius:4px;outline:${r === cur ? '2px solid var(--gold, #E6B84A)' : '1px solid #3A474D'}">
+        <rect width="${W}" height="${6 * T}" fill="#3A2A26"/><rect y="${6 * T}" width="${W}" height="${4 * T}" fill="#1F2A2A"/><rect y="${10 * T}" width="${W}" height="${6 * T}" fill="#1E3A44"/>
+        <circle cx="${mx}" cy="${my}" r="${reach}" fill="none" stroke="#FF7A6E" stroke-width="1" stroke-dasharray="3 3"/>
+        <circle cx="${mx}" cy="${my}" r="${T * 0.8}" fill="#151515" stroke="#FF7A6E" stroke-width="1.5"/>${nests}</svg>
+        <figcaption style="font-size:12px;margin-top:3px"><b>Round ${r}</b>${r === cur ? ' (now)' : ''}<br><span class="hint">${esc(BN[bite] || bite)}<br>a spider every ${Boss.byRound(C.hatch, r)} s</span></figcaption></figure>`;
+    };
+    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h">Nest map</h3><button class="btn small" id="close">Close</button></div>
+      <p style="margin:0">Her nests hang in the same places in every run: nothing about them is random. <b>L</b> is a LOW nest (melee units can hit it too), <b>H</b> a HIGH one (ranged units only). The black dot is Mommy, the dashed ring her reach; your zone is the blue part.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:10px">${Array.from({ length: m.boss.rounds || C.rounds }, (_, k) => board(k + 1)).join('')}</div>`;
+    $('sheet-back').hidden = false;
+    $('close').addEventListener('click', closeSheet);
   }
   function bossResult(sum) {
     const r = sum.boss || (m.boss.log || []).slice(-1)[0];
@@ -23952,8 +24053,11 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       <h2 class="${won ? 'you' : m.over ? 'foe' : ''}">${head}</h2>
       ${won ? `<p class="big">${title ? 'Within ' + Boss.CFG.titleRound + ' rounds: that is the “Mommy” title (not given out yet).' : 'Beat her within ' + Boss.CFG.titleRound + ' rounds for the “Mommy” title.'}</p>` : ''}
       ${lines}
-      <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>
+      ${m.over && acct && devMode() ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : ''}
+      <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>
     </div>`);
+    if (m.over) bossReport(r);
+    if ($('boss-board')) $('boss-board').addEventListener('click', () => openLeaderboard('boss'));
     if ($('boss-next')) $('boss-next').addEventListener('click', () => { overlay(null); beginAiRound(); });
     if ($('boss-again')) $('boss-again').addEventListener('click', () => { overlay(null); startBoss(); });
     if ($('boss-menu')) $('boss-menu').addEventListener('click', () => { overlay(null); m = null; showStart(); });
@@ -24925,7 +25029,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
-  const V3D = '9ca8512884'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '1272356b19'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);
@@ -29197,7 +29301,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   async function dioStart() {
     const body = $('dio');
-    let lbKey = '', boardAt = Date.now(); // Rankings: the leaderboard list drawn last, and when the board was fetched
+    let lbKey = '', lbTab = 'ranked', boardAt = Date.now(); // Rankings: the leaderboard list drawn last, and when the board was fetched
     const THREE = await import(THREE_URL);
     if (typeof Models3D !== 'function') for (const f of ['kaykit3d', 'models3d']) await load3d(f);
     // the island's renderer: made when the home shows, freed while a match runs. No WebGL (or ?board=2d): flat
@@ -30714,7 +30818,20 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     // Rankings: the line under STANDINGS (the Legend title and how long the month has left), then the whole
     // leaderboard right there (owner, 2026-11-11: no button to a separate sheet). The top Legend.top rows are the
     // Legend places; a row opens that player's menu (add a friend), as the old sheet's did
+    // Developers also get a second board here, the weekly boss's (the Mommy boss puzzle; bossBoardLoad): a Ranked / Mommy
+    // switch under STANDINGS (lbTab). Others see ranked only, as before
     function drawStandings() {
+      const st = body.querySelector('.standings'), bossTab = devMode() && typeof Boss !== 'undefined';
+      let tabs = st.querySelector('.lb-tabs');
+      if (bossTab && !tabs) {
+        st.querySelector('h2').insertAdjacentHTML('afterend', '<span class="lb-tabs"><button data-lb="ranked">Ranked</button><button data-lb="boss">Mommy</button></span>');
+        tabs = st.querySelector('.lb-tabs');
+        tabs.addEventListener('click', (e) => { const b = e.target.closest('[data-lb]'); if (!b || lbTab === b.dataset.lb) return; lbTab = b.dataset.lb; lbKey = ''; drawStandings(); });
+      }
+      if (!bossTab && tabs) { tabs.remove(); tabs = null; if (lbTab !== 'ranked') { lbTab = 'ranked'; lbKey = ''; } }
+      if (tabs) tabs.querySelectorAll('[data-lb]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lb === lbTab)));
+      st.querySelector('.k').textContent = lbTab === 'boss' ? 'Rankings · weekly boss · the Mommy' : 'Rankings · this month · ranked best-of-3';
+      if (lbTab === 'boss') return drawBossStandings();
       const j = home.board, lg = j && j.legend && j.legend.top ? j.legend : null, el = body.querySelector('.standings .leg');
       let when = '';
       if (lg) { const left = Math.max(0, (lg.ends - Date.now()) / 864e5); when = left >= 1 ? `${Math.floor(left)} day${Math.floor(left) === 1 ? '' : 's'} left this month.` : left * 24 >= 1 ? `${Math.floor(left * 24)} hours left this month.` : 'The month ends within the hour.'; }
@@ -30723,6 +30840,25 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         : lg ? `The top ${lg.top} when the month ends earn the gold Legend title. ${when}` : 'Ranked best-of-3 series.') + (j && !j.on ? ' Ranked is switched off right now.' : '');
       buildPodium(j && j.rows);
       drawBoardList(j, lg ? lg.top : 0);
+    }
+    // the weekly boss's board: best runs under her rules as they are now (a kill in the earliest round first)
+    function drawBossStandings() {
+      const el = body.querySelector('.standings .leg'), list = body.querySelector('.standings .lb-list'), how = body.querySelector('.standings .lb-how'), me = acct ? acct.id : '';
+      const fresh = bossBoard.at && Date.now() - bossBoard.at < 60e3;
+      if (!fresh) bossBoardLoad().then(() => { if (lbTab === 'boss') drawStandings(); });
+      const rows = bossBoard.rows;
+      el.textContent = !rows ? (bossBoard.at ? 'The standings come from the game server, which can’t be reached right now.' : 'Loading…')
+        : !rows.length ? 'Nobody has finished a run against her under her rules as they are now. Developer accounts only for now.'
+        : 'Best runs against the Mommy under her rules as they are now. Developer accounts only for now.';
+      const key = JSON.stringify(['boss', me, rows]);
+      if (key === lbKey) return fitBoardList(); lbKey = key;
+      how.hidden = true; list.hidden = !(rows && rows.length);
+      const tt = (t) => TITLES[t] ? `<span class="tt" style="--tc:${TITLES[t].col}">${esc(TITLES[t].name)}</span>` : '';
+      list.innerHTML = (rows || []).map((r, i) => { const mine = !!me && r.id === me;
+        return `<li class="${[i === 0 ? 'first' : '', 'me'].filter(Boolean).join(' ')}"><span class="r">${i + 1}</span>
+          <span class="who"><b>${esc(r.tag)}${mine ? ' <i class="you">you</i>' : ''}${tt(r.title)}</b><small>${esc(bossRunText(r))}</small></span>
+          <span class="s">${r.won ? r.round : Math.round(r.dmg / 1000) + 'k'}<small>${r.won ? 'round' : 'damage'}</small></span></li>`; }).join('');
+      fitBoardList();
     }
     function drawBoardList(j, top) {
       const list = body.querySelector('.standings .lb-list'), how = body.querySelector('.standings .lb-how'), rows = j ? j.rows : [], me = acct ? acct.id : '';
@@ -30747,7 +30883,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     }
     addEventListener('resize', fitBoardList);
     { const list = body.querySelector('.standings .lb-list');
-      const open = (li) => { const r = home.board && home.board.rows.find(x => x.id === li.dataset.pid); if (r && !(acct && r.id === acct.id)) frPlayerMenu({ id: r.id, tag: r.tag, title: r.title }); };
+      const open = (li) => { const r = lbTab === 'ranked' && home.board && home.board.rows.find(x => x.id === li.dataset.pid); if (r && !(acct && r.id === acct.id)) frPlayerMenu({ id: r.id, tag: r.tag, title: r.title }); };
       list.addEventListener('click', (e) => { const li = e.target.closest('li[data-pid]'); if (li) open(li); });
       list.addEventListener('keydown', (e) => { const li = e.target.closest('li[data-pid]'); if (li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(li); } }); }
     // the standings come fresh each time Rankings opens (at most once a minute)
