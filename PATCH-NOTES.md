@@ -20,6 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 12 November 2026 – Just a horse follows its direction
+
+- **Fix: Just a horse** now gallops along the direction you set for it before it runs for the enemy tower. Before, it ignored the arrow and went straight at the tower. Like any squad with an arrow, it gives up on one it can't get along (a wall, a crowd) after a few seconds and heads for the tower.
+
+---
+
 ## 12 November 2026 – Replay a round of the Mommy, and a Skills tab on the picked unit
 
 - **The Mommy:** **Restart boss** and **Replay round** are on the screen for the whole run, even mid-fight, at the top right under her name. Replay round lists every round you've reached with its bite: pick one to play it again from its start. Restart asks "Sure?" first. **Mommy's attacks** has moved there too, from Settings. (On phones they are all in Settings.) The card between rounds now warns you what's coming: **! Next round** with her next bite's mark and name.

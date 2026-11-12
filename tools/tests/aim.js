@@ -83,6 +83,24 @@ const fightWith = (aim) => {
   for (let k = 0; k < 60; k++) bt.step();
   assert.ok(mine.some(x => x.alive && x.intent), 'then it fights as usual');
 }
+// Just a horse (a ram) gallops its arrow first, then runs at the tower (2026-11-12: it went straight for the tower)
+{
+  const m = fresh();
+  const h = put(m, 0, 'Just a horse', 3, 12);
+  put(m, 1, 'Ether Golem', 6, 6);
+  assert.ok(Game.setAim(m, 0, h.id, 4, -2));
+  const bt = Game.startBattle(clone(m));
+  const x = bt.bodies.find(b => b.side === 0 && b.squad === h.id), x0 = x.x, y0 = x.y;
+  assert.ok(x.guide && x.guide.length === 1, 'the horse has the arrow');
+  const end = { ...x.guide[0] };
+  let k = 0;
+  for (; k < 400 && x.alive && x.guide; k++) bt.step();
+  assert.ok(!x.guide && Math.hypot(x.x - end.x, x.y - end.y) < 2, `reached its arrow's end (${k} ticks, ${Math.hypot(x.x - end.x, x.y - end.y).toFixed(1)} m off)`);
+  assert.ok(Math.abs(x.x - x0) > 3 * Game.TILE, `went sideways: ${(x.x - x0).toFixed(1)} m (from y ${y0.toFixed(1)})`);
+  let rammed = false;
+  for (let j = 0; j < 1200 && !rammed; j++) { bt.step(); if (x.rammed) rammed = true; }
+  assert.ok(rammed && x.rammed.u.structure, 'then rams the tower');
+}
 // an enemy in reach still stops it
 {
   const m = fresh();

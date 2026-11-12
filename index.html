@@ -6258,6 +6258,26 @@ const Engine = (() => {
       if (!tgt) for (const f of foes) if (pickable(b, f)) { const d = dist(f, b); if (d < td) { td = d; tgt = f; } }
       if (!tgt) return;
       b.intent = tgt;
+      // a direction arrow (b.guide, game.js AIM): it gallops the arrow first, then runs at its target as usual; it never
+      // stops for enemies, only gives up after b.guideT s without getting GUIDE_GAIN m closer (2026-11-12: it ignored it)
+      if (b.guide && b.guide.length && td > RAM_REACH) {
+        const p = b.guide[0], gx = p.x - b.x, gy = p.y - b.y, gd = hyp(gx, gy);
+        if (gd < 1.5) { b.guide.shift(); b.guideBest = null; if (!b.guide.length) { b.guide = null; b.guideT = null; } }
+        else {
+          let quit = false;
+          if (b.guideT != null) {
+            if (b.guideBest != null && gd - GUIDE_GAIN > b.guideBest) b.guideBest = gd - GUIDE_GAIN;
+            if (!(gd > (b.guideBest == null ? Infinity : b.guideBest) - GUIDE_GAIN)) { b.guideBest = gd; b.guideIdle = 0; }
+            else if ((b.guideIdle = (b.guideIdle || 0) + dt) >= b.guideT - 1e-9) { b.guide = null; b.guideT = null; b.guideBest = null; quit = true; }
+          }
+          if (!quit) {
+            const mv = Math.min(gd, spd(b) * (b.slowT > 0 ? 1 - b.slowMove / 100 : 1) * (cripple[ck(b)] > 0 ? 1 - towerDown.move / 100 : 1) * dt);
+            [b.hx, b.hy] = steer(b, p.x, p.y, gx / gd, gy / gd);
+            b.x += b.hx * mv; b.y += b.hy * mv; b.moved += mv;
+            return;
+          }
+        }
+      }
       if (td > RAM_REACH) {
         const mv = Math.min(td - RAM_REACH * 0.5, spd(b) * (b.slowT > 0 ? 1 - b.slowMove / 100 : 1) * (cripple[ck(b)] > 0 ? 1 - towerDown.move / 100 : 1) * dt);
         [b.hx, b.hy] = steer(b, tgt.x, tgt.y, (tgt.x - b.x) / td, (tgt.y - b.y) / td);
@@ -19996,7 +20016,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · f1d9859'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 6626493'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -26214,7 +26234,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
   // <base>, so there it looked for design/diorama/vendor/... and failed: "Importing a module script failed" (2026-11-10)
   const threeSrc = () => new URL(THREE_URL, document.baseURI).href;
-  const V3D = '5fa24aa798'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = 'bcaffd1e49'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);

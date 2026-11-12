@@ -2284,6 +2284,26 @@ const Engine = (() => {
       if (!tgt) for (const f of foes) if (pickable(b, f)) { const d = dist(f, b); if (d < td) { td = d; tgt = f; } }
       if (!tgt) return;
       b.intent = tgt;
+      // a direction arrow (b.guide, game.js AIM): it gallops the arrow first, then runs at its target as usual; it never
+      // stops for enemies, only gives up after b.guideT s without getting GUIDE_GAIN m closer (2026-11-12: it ignored it)
+      if (b.guide && b.guide.length && td > RAM_REACH) {
+        const p = b.guide[0], gx = p.x - b.x, gy = p.y - b.y, gd = hyp(gx, gy);
+        if (gd < 1.5) { b.guide.shift(); b.guideBest = null; if (!b.guide.length) { b.guide = null; b.guideT = null; } }
+        else {
+          let quit = false;
+          if (b.guideT != null) {
+            if (b.guideBest != null && gd - GUIDE_GAIN > b.guideBest) b.guideBest = gd - GUIDE_GAIN;
+            if (!(gd > (b.guideBest == null ? Infinity : b.guideBest) - GUIDE_GAIN)) { b.guideBest = gd; b.guideIdle = 0; }
+            else if ((b.guideIdle = (b.guideIdle || 0) + dt) >= b.guideT - 1e-9) { b.guide = null; b.guideT = null; b.guideBest = null; quit = true; }
+          }
+          if (!quit) {
+            const mv = Math.min(gd, spd(b) * (b.slowT > 0 ? 1 - b.slowMove / 100 : 1) * (cripple[ck(b)] > 0 ? 1 - towerDown.move / 100 : 1) * dt);
+            [b.hx, b.hy] = steer(b, p.x, p.y, gx / gd, gy / gd);
+            b.x += b.hx * mv; b.y += b.hy * mv; b.moved += mv;
+            return;
+          }
+        }
+      }
       if (td > RAM_REACH) {
         const mv = Math.min(td - RAM_REACH * 0.5, spd(b) * (b.slowT > 0 ? 1 - b.slowMove / 100 : 1) * (cripple[ck(b)] > 0 ? 1 - towerDown.move / 100 : 1) * dt);
         [b.hx, b.hy] = steer(b, tgt.x, tgt.y, (tgt.x - b.x) / td, (tgt.y - b.y) / td);
