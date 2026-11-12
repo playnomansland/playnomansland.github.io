@@ -104,9 +104,9 @@ Numbers are the prototype's (`CFG` in `tools/boss/mommy.js`) and are starting po
 
 ### The player
 
-- **Win:** kill her by the end of round 5. **Decided.** Fights last 30 s. The deploy clock is the game's normal one.
+- **Win:** kill her by the end of round 5. **Decided.** Fights last 30 s. No deploy clock (owner, 12 November: it's PvE, so nobody waits; take your time).
 - **Lose:** only by running out of rounds. There is no player health in this puzzle. **Decided.**
-- **Gold:** 450 to start (**decided**; 250 made round 1 a dead round), then the game's normal income.
+- **Gold:** 450 to start (**decided**; 250 made round 1 a dead round), then the game's income (`Game.incomeFor`), listed round by round in her rules (`bossIncomeText`).
 - **Units:** every allowed unit is already unlocked. Skills and level-ups are on. **At most 3 squads of one unit type. Decided.**
 - **Banned: Meteor Caller, Assassin, Rogue, Truespear, Sun Priest. Decided.** The plan is to ban few, then look at the data for more.
 - **Every round: one free reposition and one free extra deployment. Decided.** That is 4 deployments in round 1 and 3 in later rounds.
@@ -472,7 +472,7 @@ Health is set to **46,000** for now (proposed). Against the targets in section 9
 
 The owner agreed: 46,000 health with no extra late-round rule; Goblins left as they are; the round-3 ceiling to be searched further before the real launch; pools at 4% a second for now. Then asked for it on live for developer accounts, on phone and PC, with the Puzzles button named "Weekly boss - The Mommy".
 
-- **Where:** Puzzles → *Weekly boss - The Mommy* (developers only for now), and the Developer menu → *Mommy*. Phone (classic menu) and PC (Diorama). It runs on the phone against nobody: no server, no AI, the normal deploy panel and clock.
+- **Where:** Puzzles → *Weekly boss - The Mommy* (developers only for now), and the Developer menu → *Mommy*. Phone (classic menu) and PC (Diorama). It runs on the phone against nobody: no server, no AI, the normal deploy panel, no deploy clock (since 12 November).
 - **Code:** the prototype's rules moved into `src/boss.js`, which the page and `tools/boss/` both run, so the prototype's numbers are the game's. The engine patches became engine features that do nothing unless asked for. README "The Mommy boss puzzle" lists the hooks. Check: `node tools/tests/boss.js`.
 - **One change from the prototype:** the prototype's player quietly had the game's default tower (an Outpost at col 8, row 14). The design says a treasury and no tower, so the game has none, and so does the prototype now. Lines A and B and the round-3 winner came out the same (Line B 71.6k over five rounds, A 71.6k); Line C moved (59.1k).
 - **What a round shows:** a banner with the round's bite, the nests (low and high) and her health; on the board her reach (a dashed ring), the nests marked LOW or HIGH, and the poison pools (green tiles, also in the fight). After the fight a report: nests down at, how long she was down, mortar shots, damage to her (and how much while she hung), the three squads that hurt her most, her health.

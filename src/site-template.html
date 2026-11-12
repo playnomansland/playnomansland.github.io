@@ -209,6 +209,14 @@ html.pc .panel > .bar:last-child { margin: -6px -12px -12px; padding: 6px 12px 1
    under it; press and hold the row (or Enter on it) for the whole text and details (upRow) */
 .up { display: grid; gap: 1px; border-top: 1px solid var(--line); padding: 6px 4px 2px; margin: 0 -4px; border-radius: 6px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: background 0.15s; }
 .up-h { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+/* a skill with no use in this mode (the Mommy boss puzzle, Game.bossNoUse): a red cross over the row, and nothing to press */
+.up.up-off { position: relative; opacity: 0.62; cursor: default; }
+.up.up-off .up-h > b, .up.up-off .up-s { text-decoration: line-through; text-decoration-color: rgba(229, 87, 74, 0.7); }
+.up-x { position: absolute; inset: 4px 0; pointer-events: none; }
+.up-x::before, .up-x::after { content: ''; position: absolute; left: 50%; top: 50%; width: min(84%, 260px); height: 2px; border-radius: 1px; background: #E5574A; box-shadow: 0 0 6px rgba(229, 87, 74, 0.45); }
+.up-x::before { transform: translate(-50%, -50%) rotate(14deg); } .up-x::after { transform: translate(-50%, -50%) rotate(-14deg); }
+.card .boss-dmg { margin: 2px 0 6px; font-size: 18px; font-weight: 600; } .card .boss-dmg .num { font-size: 30px; font-weight: 800; color: var(--gold, #F2B23A); margin-right: 4px; } /* the Mommy's round card: X damage dealt */
+.up-no { font-size: 12px; font-weight: 700; color: #E5574A; white-space: nowrap; }
 .up-h > b { flex: 1; min-width: 0; font: 600 14px/1.2 var(--font-display); }
 .up-h > b .lab { color: var(--gold); }
 .up-h > .up-a { flex: none; display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
@@ -349,6 +357,14 @@ html.dock .panel.shut > .bar:last-child { margin-top: 0; padding-top: 0; }
 .uc2 .c.free { color: var(--win, #6FD08C); }
 .uc2 .st { position: absolute; top: 3px; right: 5px; font: 10px var(--font-data); color: var(--gold); }
 .uc2 .cap { position: absolute; top: 3px; left: 5px; font: 10px var(--font-data); color: var(--muted); }
+/* a full card tapped (3/3 on the board): it shakes, its count goes red, and a bubble says so (owner, 12 November) */
+.uc2.maxed { animation: uc-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+.uc2.maxed .cap { color: #FF8A80; font-weight: 700; }
+@keyframes uc-shake { 0%, 100% { transform: none; } 15% { transform: translateX(-5px) rotate(-2deg); } 30% { transform: translateX(5px) rotate(2deg); } 45% { transform: translateX(-4px) rotate(-1deg); } 60% { transform: translateX(4px) rotate(1deg); } 75% { transform: translateX(-2px); } 90% { transform: translateX(2px); } }
+.cap-toast { position: fixed; z-index: 60; transform: translate(-50%, -100%); padding: 6px 11px; border-radius: 8px; background: rgba(14, 16, 14, 0.88); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3); color: #FF8A80; font: 700 13px/1.2 var(--type, system-ui, sans-serif); white-space: nowrap; pointer-events: none; animation: cap-toast 1.8s ease forwards; }
+.cap-toast::after { content: ''; position: absolute; left: var(--ax, 50%); bottom: -5px; width: 10px; height: 10px; margin-left: -5px; background: inherit; transform: rotate(45deg); border-radius: 0 0 2px 0; }
+@keyframes cap-toast { 0% { opacity: 0; transform: translate(-50%, calc(-100% + 6px)); } 12% { opacity: 1; transform: translate(-50%, -100%); } 80% { opacity: 1; transform: translate(-50%, -100%); } 100% { opacity: 0; transform: translate(-50%, calc(-100% - 4px)); } }
+@media (prefers-reduced-motion: reduce) { .uc2.maxed { animation: none; } .cap-toast { animation-name: cap-toast-fade; } @keyframes cap-toast-fade { 0%, 100% { opacity: 0; } 10%, 80% { opacity: 1; } } }
 .uc2[aria-disabled="true"] { opacity: 0.45; }
 .uc2[aria-pressed="true"] { transform: translateY(-5px); border-color: var(--gold); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45); }
 .uc2.lift { opacity: 0.3; }
@@ -468,32 +484,54 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 .hud.bossrun .side.foe .num, .hud.bossrun .side.foe .hp { visibility: hidden; }
 .hud.bossrun .side.you .num { white-space: nowrap; }
 .hud.bossrun #you-name { display: none; } /* (the phone's top line has no room for a name next to "Round 1 of 5"; the PC layout keeps it) */
-.boss-bar { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); width: min(94%, 560px); z-index: 3; pointer-events: none; text-align: center; font-family: "IBM Plex Mono", monospace; }
-.boss-bar .bb-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 8px; margin: 0 2px 3px; }
-.boss-bar .bb-top .bb-name { justify-self: start; } .boss-bar .bb-top .bb-phase { grid-column: 3; justify-self: end; }
-.boss-bar .bb-time { grid-column: 2; display: inline-flex; align-items: baseline; gap: 5px; padding: 0 10px; border-radius: 4px; background: rgba(10, 14, 16, 0.82); border: 1px solid #56646A; color: #fff; text-shadow: 0 1px 3px #000; }
+/* the boss bar (2026-11-12, owner: "cleaner, not so in your face"): one soft panel, the game's type in sentence case,
+   a slim health bar, the time as a plain number, and her state as a quiet line; colour only where something changes */
+.boss-bar { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); width: min(94%, 520px); z-index: 3; pointer-events: none; box-sizing: border-box; padding: 8px 12px 7px; border-radius: 10px; background: rgba(14, 16, 14, 0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); font-family: var(--type, system-ui, sans-serif); color: #F4EEDF; text-align: left; }
+.boss-bar .bb-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.boss-bar .bb-name { display: inline-flex; align-items: baseline; gap: 10px; font-size: 15px; font-weight: 700; }
+.boss-bar .bb-phase { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+.boss-bar .bb-phase::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.boss-bar .bb-phase.hanging { color: #B9A6F0; } .boss-bar .bb-phase.stunned { color: #F2D36B; } .boss-bar .bb-phase.down { color: #F08A7E; } .boss-bar .bb-phase.dead { color: #9AA6A2; }
+.boss-bar .bb-right { display: inline-flex; align-items: center; gap: 10px; }
+.boss-bar .bb-time:not([hidden]) + .bb-rs { padding-left: 10px; border-left: 1px solid rgba(244, 238, 223, 0.15); }
+.boss-bar .bb-rs { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; }
+.boss-bar .bb-rs button { display: inline-flex; align-items: center; gap: 5px; margin: 0; padding: 3px 10px; border: 1px solid rgba(244, 238, 223, 0.14); border-radius: 999px; background: rgba(244, 238, 223, 0.07); color: rgba(244, 238, 223, 0.82); font: 600 12px/1.2 var(--type, system-ui, sans-serif); cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.12s; }
+.boss-bar .bb-rs button svg { transition: transform 0.3s ease; }
+.boss-bar .bb-rs button:hover { background: rgba(244, 238, 223, 0.15); color: #fff; }
+.boss-bar .bb-rs .bb-rsb:hover { border-color: rgba(240, 138, 126, 0.6); }
+.boss-bar .bb-rs .bb-rsb:hover svg { transform: rotate(-120deg); }
+.boss-bar .bb-rs button:active { transform: scale(0.95); }
+.boss-bar .bb-rs button:focus-visible { outline: 2px solid #F4EEDF; outline-offset: 2px; }
+.boss-bar .bb-rs .yes { background: #D8574A; border-color: transparent; color: #fff; }
+.boss-bar .bb-rs .yes:hover { background: #E5685B; }
+.boss-bar .bb-rs .bb-ask { font-size: 12px; font-weight: 600; opacity: 0.85; margin-right: 2px; animation: bb-in 0.18s ease-out; }
+@keyframes bb-in { from { opacity: 0; transform: translateX(4px); } }
+/* the ? beside the boss bar: her screen (openBossInfo). Wide: just outside the panel's right edge; narrow: in its top row */
+.boss-bar .bb-q { pointer-events: auto; position: absolute; top: 6px; right: -40px; width: 30px; height: 30px; margin: 0; padding: 0; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(244, 238, 223, 0.18); background: rgba(14, 16, 14, 0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #F4EEDF; font: 700 15px/1 var(--type, system-ui, sans-serif); cursor: pointer; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); transition: background 0.15s, border-color 0.15s, transform 0.12s; }
+.boss-bar .bb-q:hover { background: rgba(232, 150, 46, 0.85); border-color: transparent; color: #23170F; }
+.boss-bar .bb-q:active { transform: scale(0.94); }
+.boss-bar .bb-q:focus-visible { outline: 2px solid #F4EEDF; outline-offset: 2px; }
+@media (max-width: 700px) { .boss-bar .bb-top { padding-right: 34px; } .boss-bar .bb-q { right: 10px; top: 7px; width: 26px; height: 26px; font-size: 13px; box-shadow: none; } }
+.boss-bar .bb-time { display: inline-flex; align-items: baseline; gap: 1px; font-variant-numeric: tabular-nums; }
 .boss-bar .bb-time[hidden] { display: none; }
-.boss-bar .bb-time b { font-size: 34px; line-height: 1.1; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 2.6ch; text-align: right; }
-.boss-bar .bb-time small { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #C8D2D2; }
-.boss-bar .bb-time.low { border-color: #FF5A4E; color: #FF8A80; animation: bb-pulse 0.5s ease-in-out infinite alternate; }
-.boss-bar .bb-clock { height: 5px; margin-top: 2px; border-radius: 3px; background: rgba(10, 14, 16, 0.75); overflow: hidden; }
+.boss-bar .bb-time b { font-size: 20px; font-weight: 700; line-height: 1; }
+.boss-bar .bb-time small { font-size: 12px; font-weight: 600; opacity: 0.6; }
+.boss-bar .bb-time.low { color: #FF8A80; }
+.boss-bar .bb-bar { position: relative; height: 8px; border-radius: 4px; background: rgba(244, 238, 223, 0.1); overflow: hidden; }
+.boss-bar .bb-lost { position: absolute; left: 0; top: 0; bottom: 0; background: #F4EEDF; opacity: 0.35; transition: width 0.9s ease-out 0.25s; }
+.boss-bar .bb-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: #D8574A; transition: width 0.15s linear; }
+.boss-bar .bb-fill.hanging { background: #8E7BD0; }
+.boss-bar .bb-clock { height: 2px; margin-top: 3px; border-radius: 1px; overflow: hidden; }
 .boss-bar .bb-clock[hidden] { display: none; }
-.boss-bar .bb-clock i { display: block; height: 100%; background: #F4F1E8; }
-.boss-bar .bb-clock.low i { background: #FF5A4E; }
-.boss-bar .bb-name { color: #FF7A6E; font-weight: 800; letter-spacing: 0.18em; font-size: 13px; text-shadow: 0 1px 3px #000; }
-.boss-bar .bb-phase { font-weight: 800; letter-spacing: 0.08em; font-size: 11px; padding: 1px 8px; border-radius: 3px; color: #10161A; }
-.boss-bar .bb-phase.hanging { background: #B79CFF; } .boss-bar .bb-phase.stunned { background: #FFE15A; animation: bb-pulse 0.8s ease-in-out infinite alternate; }
-.boss-bar .bb-phase.down { background: #FF7A6E; } .boss-bar .bb-phase.dead { background: #8DA1A1; }
-.boss-bar .bb-bar { position: relative; height: 18px; border: 1px solid #FF7A6E; border-radius: 3px; background: rgba(10, 14, 16, 0.85); overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.6); }
-.boss-bar .bb-lost { position: absolute; left: 0; top: 0; bottom: 0; background: #F4F1E8; opacity: 0.55; transition: width 0.9s ease-out 0.25s; }
-.boss-bar .bb-fill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(180deg, #E8584B, #9E2A22); transition: width 0.15s linear; }
-.boss-bar .bb-fill.hanging { background: linear-gradient(180deg, #9C86D8, #5B4A92); }
-.boss-bar .bb-num { position: relative; z-index: 1; display: block; line-height: 18px; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
-.boss-bar .bb-tok { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 4px; }
-.boss-bar .bb-tok span { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 1px 6px; border-radius: 9px; background: rgba(10, 14, 16, 0.82); border: 1px solid #56646A; color: #E8EEEE; white-space: nowrap; }
-.boss-bar .bb-tok .bad { border-color: #FF5A4E; color: #FF8A80; animation: bb-pulse 0.5s ease-in-out infinite alternate; }
-.boss-bar .bb-tok .good { border-color: #6FD08C; color: #9BE8B0; }
-.boss-bar .bb-tok .fx { border-color: #E6B84A; color: #F2D27F; }
+.boss-bar .bb-clock i { display: block; height: 100%; background: rgba(244, 238, 223, 0.35); }
+.boss-bar .bb-clock.low i { background: #FF8A80; }
+.boss-bar .bb-foot { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 2px 12px; margin-top: 6px; font-size: 12px; }
+.boss-bar .bb-num { font-weight: 600; font-variant-numeric: tabular-nums; opacity: 0.75; }
+.boss-bar .bb-tok { display: flex; flex-wrap: wrap; }
+.boss-bar .bb-num { margin-left: auto; }
+.boss-bar .bb-tok span { font-weight: 600; color: rgba(244, 238, 223, 0.72); white-space: nowrap; }
+.boss-bar .bb-tok span + span::before { content: '·'; margin: 0 6px; color: rgba(244, 238, 223, 0.4); }
+.boss-bar .bb-tok .bad { color: #FF8A80; } .boss-bar .bb-tok .good { color: #8FD9A4; } .boss-bar .bb-tok .fx { color: #F0C766; }
 @keyframes bb-pulse { from { opacity: 1; } to { opacity: 0.55; } }
 .board-banner { position: absolute; left: 0; right: 0; top: 42%; z-index: 4; pointer-events: none; text-align: center; padding: 14px 8px; background: linear-gradient(90deg, transparent, rgba(13, 19, 21, 0.88) 18%, rgba(13, 19, 21, 0.88) 82%, transparent); border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold); color: var(--gold); font-size: 26px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; animation: banner-in 3.2s ease both; }
 .board-banner small { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; color: var(--text, #e8e6df); }
@@ -2725,7 +2763,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     }));
     if ($('to-menu')) $('to-menu').addEventListener('click', askForfeit);
     if ($('boss-atk')) $('boss-atk').addEventListener('click', () => openBossAttacks((bossView() || {}).round || m.round)); // over the Settings, which stays open
-    if ($('boss-restart')) $('boss-restart').addEventListener('click', () => { bossLeave(); startBoss(); }); // the Mommy boss puzzle: a new run at once, from round 1
+    if ($('boss-restart')) $('boss-restart').addEventListener('click', restartBoss); // the Mommy boss puzzle: a new run at once, from round 1
     // Replay round: shows the rounds this run has played; one of them goes back to its start (replayBossRound)
     if ($('boss-replay')) $('boss-replay').addEventListener('click', (e) => { const g = $('boss-rounds'); g.hidden = !g.hidden; $('boss-replay').setAttribute('aria-expanded', String(!g.hidden)); if (!g.hidden && e.detail === 0) { const b = g.querySelector('button'); if (b) b.focus(); } });
     $('sheet').querySelectorAll('[data-boss-round]').forEach(b => b.addEventListener('click', () => { bossLeave(); replayBossRound(+b.dataset.bossRound); }));
@@ -3648,7 +3686,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 
   // the Mommy boss puzzle: while her rules or the nest map are open, the clocks stand still (it is played against nobody,
   // so nobody waits): the deploy countdown here, the fight in loop()
-  const bossReading = () => !!(m && m.boss) && ((!$('sheet-back').hidden && !!$('sheet').querySelector('[data-boss-read]')) || bossAtkOpen());
+  const bossReading = () => !!(m && m.boss) && ((!$('sheet-back').hidden && !!$('sheet').querySelector('[data-boss-read]')) || bossAtkOpen() || bossInfoOpen());
   let bossReadT = 0; // when the deploy clock was last pushed on while reading (0: not reading)
   function tick() {
     const t = now();
@@ -4046,6 +4084,21 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       <span class="n">${esc(u.name)}</span>
       <span class="c${free ? ' free' : ''}">${free ? `Free ×${free}` : Game.shopCost(m, me, i)}</span></button>`;
   }
+  // a full card tapped: it shakes and a red bubble over it says it is maxed out (the bubble lives on <body>, so a redraw
+  // of the shop doesn't cut it short)
+  let capToastT = 0;
+  function capBump(card) {
+    card.classList.remove('maxed'); void card.offsetWidth; card.classList.add('maxed');
+    card.addEventListener('animationend', () => card.classList.remove('maxed'), { once: true });
+    const old = document.querySelector('.cap-toast'); if (old) old.remove();
+    clearTimeout(capToastT);
+    const r = card.getBoundingClientRect(), t = document.createElement('div');
+    t.className = 'cap-toast'; t.setAttribute('role', 'status'); t.textContent = 'You have the max of this unit type';
+    document.body.appendChild(t);
+    const half = t.offsetWidth / 2 + 8, cx = r.left + r.width / 2, x = Math.min(innerWidth - half, Math.max(half, cx));
+    t.style.left = x + 'px'; t.style.top = (r.top - 8) + 'px'; t.style.setProperty('--ax', `calc(50% + ${cx - x}px)`);
+    capToastT = setTimeout(() => t.remove(), 1850);
+  }
   let scrollTo2 = null; // a card to bring into view on the next panelDeploy (just unlocked)
   // + Unlock: that tier's locked units, each with its unlock price; a name opens the unit's sheet
   function openUnlockSheet(t) {
@@ -4346,6 +4399,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       b.addEventListener('click', () => {
         if (performance.now() - cardDone < 400) return; // the end of a drag or a hold, not a tap
         const i = +b.dataset.i;
+        if (Game.capped(m, i) && Game.capFull(m, me, i)) { capBump(b); return; } // 3/3 on the board: shake, and say so
         if (b.getAttribute('aria-disabled') === 'true') { openSheet(i); return; }
         selected = selected === i ? null : i;
         panelDeploy(); render();
@@ -4375,7 +4429,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (net.duo && mode === 'net') wireDuoRow();
     if (duoOn()) wireMpbPanel(); // 2v2: the artifact draft's cards
     if ($('boss-map')) $('boss-map').addEventListener('click', openBossMap); // the Mommy boss puzzle: where her nests hang, round by round
-    $('help-btn').addEventListener('click', () => { if (m && m.boss) openBossRules(); else openHelp(); }); // (the Mommy boss puzzle: her rules, with Game help inside)
+    $('help-btn').addEventListener('click', () => { if (m && m.boss) openBossInfo(); else openHelp(); }); // (the Mommy boss puzzle: her screen, as the ? on the boss bar)
     if ($('mage-gen')) $('mage-gen').addEventListener('click', () => openTowerSheet(me));
     if ($('loan')) $('loan').addEventListener('click', () => { if (editable() && Game.takeLoan(m, me)) changed(); });
     if ($('slot-open')) $('slot-open').addEventListener('click', openSlots);
@@ -4450,13 +4504,11 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         <div class="seg speeds" role="group" aria-label="Playback speed">
           ${SPEEDS.map(s => `<button data-s="${s}" aria-pressed="${playSpeed() === s}">${s}×</button>`).join('')}
         </div>
-        ${m && m.boss ? '<button class="btn small" id="boss-rules">Mommy’s rules</button>' : ''}
         <button class="btn small" id="skip">Skip to result</button>
       </div>
       ${net.duo && mode === 'net' ? duoRow(true) : ''}
       <span class="hint speed-ask" id="speed-ask" aria-live="polite" hidden></span>`;
     if (net.duo && mode === 'net') wireDuoRow();
-    if ($('boss-rules')) $('boss-rules').addEventListener('click', openBossRules);
     $('panel').querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => pickSpeed(+b.dataset.s)));
     showSpeed();
     // asks first, as selling does: the first tap turns it into "Tap again to skip" (gold) for a few seconds
@@ -7284,7 +7336,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // The Diorama's PC layout: two buttons at the top right through the whole run (deploy, fight, the round's card, the
   // end), under her name. Restart boss asks once more on the button itself ("Sure? Restart", 3 s). Replay round drops a
   // list of the rounds this run has reached, each with its bite's mark and name; a pick goes back to that round's start
-  // (replayBossRound). Over a sheet or Mommy's attacks they step aside. The classic layout keeps them in Settings
+  // (replayBossRound). Over a sheet, Mommy's attacks or her screen's panel (openBossInfo) they step aside. The boss bar's
+  // own Restart (bossRestartAsk) is hidden on this layout: this one stands in for it. The classic layout keeps them in Settings
   // (openSoundSheet). Looked at from bossBar and five times a second (a sheet coming or going doesn't redraw the board); the
   // DOM only changes when what it shows does
   const CTL_ICON = {
@@ -7294,14 +7347,14 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   let ctlEl = null, ctlKey = '', ctlSure = 0, ctlOpen = false;
   function bossCtlOn() { return DIO && document.documentElement.classList.contains('pcwide') && !!m && !!m.boss && typeof Boss !== 'undefined' && ['deploy', 'battle', 'result', 'end'].includes(phase); }
   function bossCtl() {
-    const show = bossCtlOn() && $('sheet-back').hidden && !bossAtkOpen();
+    const show = bossCtlOn() && $('sheet-back').hidden && !bossAtkOpen() && !(infoEl && !infoEl.hidden); // (not over a sheet, her attacks or her screen's panel)
     if (!show) { if (ctlEl && !ctlEl.hidden) { ctlEl.hidden = true; ctlKey = ''; } if (!bossCtlOn()) { ctlOpen = false; ctlSure = 0; } return; }
     if (!ctlEl) {
       ctlEl = document.createElement('nav'); ctlEl.className = 'bz-ctl'; ctlEl.setAttribute('aria-label', 'Boss run'); document.body.appendChild(ctlEl);
       ctlEl.addEventListener('click', (e) => {
         const b = e.target.closest('button'); if (!b || !m || !m.boss) return;
         if (b.dataset.ctl === 'restart') {
-          if (ctlSure > now()) { ctlSure = 0; ctlOpen = false; bossLeave(); startBoss(); } else { ctlSure = now() + 3000; ctlOpen = false; }
+          if (ctlSure > now()) { ctlSure = 0; ctlOpen = false; restartBoss(); } else { ctlSure = now() + 3000; ctlOpen = false; }
         } else if (b.dataset.ctl === 'replay') { ctlOpen = !ctlOpen; ctlSure = 0; }
         else if (b.dataset.round) { const r = +b.dataset.round; ctlOpen = false; bossLeave(); replayBossRound(r); }
         ctlKey = ''; bossCtl();
@@ -7332,7 +7385,6 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     Boss.setup(m);
     nextReady = [false, false]; rematch = [false, false];
     beginAiRound();
-    openBossRules(); // what's new here, before the first deployment
   }
   const BITE_NOTE = { fast: 'Fast, quick and light: health holds her', heavy: 'Acid-Bite, slow and heavy (it leaves a green pool): many bodies, shields and wards hold her', sweep: 'Sweep, it hits all round its target: one big body holds her' };
   function bossLine() {
@@ -7344,6 +7396,23 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // tokens: how much she takes, nests left, this round's bite, the mortar's count or who holds her, the next molt, and
   // what is on her (poison, bleed, burn, frost, slow). In the fight it reads her body (mom.bs, src/boss.js); otherwise
   // the match. Drawn with every frame; the DOM only changes when its text does
+  // Restart, always on the boss bar (owner, 12 November): a quiet pill that asks "Restart? Yes / No" in its own spot
+  // before it throws the run away; the question goes back by itself after a few seconds
+  function restartBoss() { bossLeave(); startBoss(); } // a new run at once, from any phase
+  let bossAskT = 0;
+  function bossRestartAsk(ask) {
+    const rs = document.querySelector('#boss-bar .bb-rs'); if (!rs) return;
+    clearTimeout(bossAskT);
+    rs.innerHTML = ask ? '<span class="bb-ask" id="bb-ask">Restart?</span><button class="yes" data-rs="yes" aria-describedby="bb-ask">Yes</button><button data-rs="no">No</button>'
+      : '<button class="bb-rsb" data-rs="ask" aria-label="Restart the boss fight"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"/></svg>Restart</button>';
+    if (ask) { rs.querySelector('[data-rs="no"]').focus({ preventScroll: true }); bossAskT = setTimeout(() => bossRestartAsk(false), 5000); }
+  }
+  document.addEventListener('click', (e) => {
+    if (e.target.closest && e.target.closest('#boss-bar [data-bq]')) { e.stopPropagation(); openBossInfo(); return; } // the ? : her screen
+    const b = e.target.closest && e.target.closest('#boss-bar [data-rs]'); if (!b) return;
+    e.stopPropagation();
+    if (b.dataset.rs === 'ask') bossRestartAsk(true); else if (b.dataset.rs === 'yes') { bossRestartAsk(false); restartBoss(); } else bossRestartAsk(false);
+  }, true);
   let bossBarHtml = '';
   function bossBar() {
     bossCtl(); // (Restart boss and Replay round on the screen)
@@ -7353,28 +7422,28 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const C = Boss.CFG, max = v.boss.max, mom = bt && (phase === 'battle' || phase === 'result' || phase === 'end') ? bt.bodies.find(b => b.u.boss) : null;
     const hp = mom ? Math.max(0, mom.hp) : v.boss.hp, bs = mom && mom.alive ? mom.bs : null, p = bossView();
     const ph = hp <= 0 ? 'dead' : bs ? bs.phase : 'hanging';
-    const label = { hanging: 'HANGING', stunned: `FALLEN · STUNNED ${bs ? bs.stunLeft.toFixed(1) : ''}s`, down: 'ON THE GROUND', dead: 'DEAD' }[ph];
+    const label = { hanging: 'Hanging', stunned: `Fallen · stunned ${bs ? bs.stunLeft.toFixed(1) : ''}s`, down: 'On the ground', dead: 'Dead' }[ph];
     const t = [], s1 = (x) => x.toFixed(1);
-    if (ph === 'hanging') t.push(['', `TAKES ${Math.round((bs ? bs.take : C.mommy.hang) * 100)}%`], ['', 'UNSTOPPABLE']);
-    else if (ph !== 'dead') t.push(['good', `TAKES ${Math.round((bs ? bs.take : 1) * 100)}%`]);
+    if (ph === 'hanging') t.push(['', `Takes ${Math.round((bs ? bs.take : C.mommy.hang) * 100)}%`], ['', 'Unstoppable']);
+    else if (ph !== 'dead') t.push(['good', `Takes ${Math.round((bs ? bs.take : 1) * 100)}%`]);
     if (ph !== 'dead') {
       const left = bs ? bs.nestsLeft : p ? p.nests.length : 0, all = bs ? bs.nests : p ? p.nests.length : 0;
-      t.push([left ? '' : 'good', `NESTS ${left}/${all}`]);
-      const bite = bs ? bs.bite : p && p.bite; if (bite) t.push(['', `BITE: ${(BITE_NAME[bite] || bite).toUpperCase()}`]);
-      if (bs && bs.mortarIn != null) t.push(['bad', `MORTAR ${s1(bs.mortarIn)}s`]);
-      else if (bs && bs.holder) t.push(['', `HELD BY ${bs.holder.toUpperCase()}`]);
-      if (bs && bs.moltIn != null) t.push(['', `MOLT ${Math.ceil(bs.moltIn)}s`]);
+      t.push([left ? '' : 'good', `Nests ${left}/${all}`]);
+      const bite = bs ? bs.bite : p && p.bite; if (bite) t.push(['', `Bite: ${BITE_NAME[bite] || bite}`]);
+      if (bs && bs.mortarIn != null) t.push(['bad', `Mortar ${s1(bs.mortarIn)}s`]);
+      else if (bs && bs.holder) t.push(['', `Held by ${bs.holder}`]);
+      if (bs && bs.moltIn != null) t.push(['', `Molt ${Math.ceil(bs.moltIn)}s`]);
     }
     if (mom && mom.alive) { // what is on her right now
-      if (mom.poison && mom.poison.length) t.push(['fx', 'POISONED']);
-      if (mom.bleed && mom.bleed.n) t.push(['fx', `BLEED ×${mom.bleed.n}`]);
-      if (mom.burn && (mom.burn.left > 0 || mom.burn.amount > 0)) t.push(['fx', 'BURNING']);
-      if (mom.frost) t.push(['fx', 'FROST']);
-      if (mom.slowT > 0 && (mom.slowMove > 0 || mom.slowAtk > 0)) t.push(['fx', 'SLOWED']);
+      if (mom.poison && mom.poison.length) t.push(['fx', 'Poisoned']);
+      if (mom.bleed && mom.bleed.n) t.push(['fx', `Bleed ×${mom.bleed.n}`]);
+      if (mom.burn && (mom.burn.left > 0 || mom.burn.amount > 0)) t.push(['fx', 'Burning']);
+      if (mom.frost) t.push(['fx', 'Frost']);
+      if (mom.slowT > 0 && (mom.slowMove > 0 || mom.slowAtk > 0)) t.push(['fx', 'Slowed']);
     }
-    if (!el.querySelector('.bb-bar')) { el.innerHTML = `<div class="bb-top"><span class="bb-name">MOMMY</span><span class="bb-time" hidden><b></b><small>s left</small></span><span class="bb-phase"></span></div>
-      <div class="bb-bar"><i class="bb-lost"></i><i class="bb-fill"></i><span class="bb-num"></span></div><div class="bb-clock" hidden><i></i></div><div class="bb-tok"></div>`; bossBarHtml = ''; }
-    // the fight's time running out: a big count in the middle, and a strip under her health that drains with it
+    if (!el.querySelector('.bb-bar')) { el.innerHTML = `<div class="bb-top"><span class="bb-name">Mommy<span class="bb-phase"></span></span><span class="bb-right"><span class="bb-time" hidden><b></b><small>s</small></span><span class="bb-rs"></span></span><button class="bb-q" data-bq aria-label="The Mommy: how to play, rewards and leaderboard" title="How to play">?</button></div>
+      <div class="bb-bar"><i class="bb-lost"></i><i class="bb-fill"></i></div><div class="bb-clock" hidden><i></i></div><div class="bb-foot"><span class="bb-tok"></span><span class="bb-num"></span></div>`; bossBarHtml = ''; bossRestartAsk(false); }
+    // the fight's time running out: a count at the right of her name, and a thin strip under her health that drains with it
     const inFight = !!bt && (phase === 'battle' || phase === 'result' || phase === 'end'), total = C.fightSecs, left = inFight ? Math.max(0, total - bt.time()) : total;
     const te = el.querySelector('.bb-time'), ce = el.querySelector('.bb-clock');
     if (te.hidden !== !inFight) { te.hidden = !inFight; ce.hidden = !inFight; }
@@ -7392,52 +7461,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const num = `${Math.ceil(hp).toLocaleString('en')} / ${max.toLocaleString('en')}`; if (q('.bb-num').textContent !== num) q('.bb-num').textContent = num;
     const tok = t.map(([c, x]) => `<span class="${c}">${esc(x)}</span>`).join(''); if (tok !== bossBarHtml) { bossBarHtml = tok; q('.bb-tok').innerHTML = tok; }
   }
-  // Mommy's rules: every mechanic the boss adds, in one sheet. It opens by itself as a run starts; the ? while deploying
-  // and a button in the fight open it again. The numbers come from Boss.CFG and this round's layout
-  function openBossRules() {
-    if (!m || !m.boss || typeof Boss === 'undefined') return;
-    const C = Boss.CFG, mo = C.mommy, p = bossView() || {}, r = p.round || m.round, b = (x) => `<b>${x}</b>`; // (p: the round on the board; in the fight m.round has moved on already)
-    const hatch = Boss.byRound(C.hatch, r), bite = p.bite || Boss.byRound(C.biteByRound, r);
-    const BITES = { fast: ['Fast', 'quick, light bites: a unit with lots of health holds her best'], heavy: ['Acid-Bite', 'slow, huge bites that splash a little and leave acid: many bodies, shields and wards hold her best'], sweep: ['Sweep', 'light bites that hit everything round the target: one big body holds her best (a swarm melts)'] };
-    const acidBites = C.acid && C.acid.pct > 0 ? Object.keys(mo.bites).filter(k => mo.bites[k].acid) : [], acidRounds = C.biteByRound.map((x, k) => acidBites.includes(x) ? k + 1 : 0).filter(Boolean);
-    const sec = (title, items) => `<h4 style="margin:10px 0 2px">${title}</h4><ul class="helplist">${items.filter(Boolean).map(x => `<li>${x}</li>`).join('')}</ul>`;
-    $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h" data-boss-read>Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
-      <p class="hint" style="margin:0 0 6px">The clock is paused while you read.</p>
-      <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. The faster she falls, the more you earn: ${bossRewardList().map(x => `by round ${x.round}, ${bossRewardName(x)}`).join('; ')}. A faster kill earns the ones before it too.</p>
-      ${sec('Hanging', [
-        `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage, and she can’t be stunned, slowed, rooted or moved.`,
-        mo.lastPick ? 'Your units only shoot her while she hangs if none of her nests or spiders are left to hit.' : ''])}
-      ${sec('Nests', [
-        'Her nests hang in new places every round. While you deploy you see where this round’s hang.',
-        `${b('HIGH')} nests hang up in the air on a thread: only ranged units can hit them. ${b('LOW')} nests sit on the ground: melee units can hit them too.`,
-        `Each nest hatches a spiderling every ${b(hatch + ' s')} this round (faster in later rounds). A destroyed nest bursts into ${C.nest.burst} spiderlings.`])}
-      ${sec('The fall', [
-        `When every nest is down she ${b('falls')}: she and all her spiders are stunned for ${mo.stun} s, and she takes ${b('full damage')} for the rest of the fight.`,
-        `A fight lasts ${C.fightSecs} s, so the sooner the nests fall, the longer she lies there.`])}
-      ${sec('Her reach and her bite', [
-        `She bites the nearest of your units inside her reach (the dashed ring, ${mo.near} m). A unit in her reach ${b('holds')} her: she bites it, not the rest.`,
-        mo.biteSecs > 0 ? `Her ${b('jaws')} open on the ground where that unit stands and snap shut ${mo.biteSecs} s later. Whatever stands in the ring then is bitten; a unit that has walked out of it is missed. The bite mark stays on the ground for a moment.` : '',
-        `Her bite changes each round. This round: ${b(BITES[bite] ? BITES[bite][0] : bite)}, ${BITES[bite] ? BITES[bite][1] : ''}.`,
-        acidBites.length ? `Her ${acidBites.join(' and ')} bite is ${b('acid')} (green jaws; round${acidRounds.length === 1 ? '' : 's'} ${acidRounds.join(', ')}). Where it lands it leaves a ${b('green pool')} for ${C.acid.secs} s. Your units standing in one lose ${C.acid.pct}% of their max health a second and are slowed, and it lasts ${C.acid.linger} s after they step out. Her spiders don’t mind it. Slime units (Slime Wizard, Slimeshots) drink it: it heals them.` : '',
-        `Units close to her (${mo.web.r} m) are caught in her ${b('web')}: they walk ${mo.web.slow}% slower and hit ${mo.web.dmg}% softer.`])}
-      ${sec('The web mortar', [
-        `If none of your units is inside her reach for ${mo.mortar.wind} s while she hangs, she throws a web mortar at your biggest clump, then another every ${mo.mortar.every} s.`,
-        mo.mortar.fly > 0 ? `It is in the air for ${mo.mortar.fly} s and lands where the clump stood when she threw it: the ${b('red ring')}, which fills as it comes. Everything in the ring when it lands takes ${mo.mortar.hit} damage and is caught in a web that slows it. A squad that walks on gets out of the ring.` : `${mo.mortar.hit} damage to everything in the blast, and a web that slows them.`,
-        mo.mortar.ammo ? `Each shot is ${b('one of her own nests')}, ripped loose${mo.mortar.ammoReach ? ' (only a nest inside her reach)' : ''}: her thread shows which one she throws next. It is gone, and its spiders burst out where it hung. Leaving her alone is a way to play too: spread out, and let her spend her nests.` : ''])}
-      ${sec('She sheds', [
-        mo.molt ? `Every ${mo.molt} s she molts: poison, bleed, burn, frost and slows fall off her.` : '',
-        mo.bleedPct ? '' : 'Hits that take a share of max health (bleed’s big stacks, Deadeye) don’t work on her.'])}
-      ${sec('Your side', [
-        `${C.startGold} gold to start, then the normal income each round.`,
-        `Every round: ${b('one free move')} for a squad from an earlier round, and ${b('one free extra deployment')}.`,
-        `At most ${b(m.boss.cap + ' squads')} of any one unit.`,
-        `No tower: a ${b('treasury')} instead. It pays 50 gold for each fight it stands through; her spiders go for it once your army is gone. You have no health to lose: only the rounds run out.`,
-        `Not allowed: ${esc((m.boss.banned || []).join(', '))}.`])}
-      <div class="bar"><span></span><button class="btn small" id="boss-help">Game help</button></div>`;
-    $('sheet-back').hidden = false;
-    $('close').addEventListener('click', closeSheet);
-    $('boss-help').addEventListener('click', () => { closeSheet(); openHelp(); });
-  }
+  // (Mommy's rules, the sheet with every mechanic, went on 12 November: the owner's call. Her screen says it now:
+  // openBossInfo, the ? on the boss bar and by the gold)
   // ---------- the weekly boss's leaderboard (2026-11-12; server/src/accounts.js BOSS) ----------
   // A finished run's record (m.boss.run: the seed and the player's side going into each fight, kept by Boss.record)
   // goes to the game server, which plays the run again with the game's own rules and ranks what its replay got: it
@@ -7508,6 +7533,75 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // From her screen's How to play (the Diorama) and, in a run, the cog's Settings. Left: a card for each of her attacks
   // (bite, with her bite in each round and its mark; web; web mortar; acid; shed), each with its symbol. Right: her
   // nests, round by round (bossNestBoard). The numbers are Boss.CFG's. While it's open in a run the clock waits, as
+  // ---------- the boss screen's words, shared (2026-11-12): the menu's boss screen (diorama.js drawBoss) and the same
+  // screen in a run (openBossInfo, the ? on the boss bar) say the same thing from the same place ----------
+  // How to play: her rules in five points, from Boss.CFG. The attacks link is a button with data-atk (each screen binds it)
+  function bossHowHtml() {
+    const C = Boss.CFG, mo = C.mommy, b = (x) => `<b>${x}</b>`;
+    return [
+      `Her health carries over from round to round and never comes back. You have no health to lose: only the ${b(C.rounds + ' rounds')} run out.`,
+      `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage. Bring down her ${b('nests')} first: ${b('HIGH')} ones only ranged units can hit, ${b('LOW')} ones melee units too.`,
+      `Every nest down and she ${b('falls')}: stunned for ${mo.stun} s, then full damage for the rest of the ${C.fightSecs} s fight.`,
+      `Keep a unit in her reach, or she throws ${b('web mortars')} at your biggest clump. Her bite changes every round: see <button class="bz-inl" data-atk aria-haspopup="dialog">Mommy’s attacks<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9l6-6M4.5 3H9v4.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>.`,
+      `${C.startGold} gold to start, a treasury instead of a tower, one free move and one free extra deployment a round. At most ${C.maxPerType} squads of one unit.`,
+    ].map(x => `<li>${x}</li>`).join('');
+  }
+  // the rewards ladder (bossRewardList): a tier a row, by round 5, 4 and 3, the fastest (the best) last and marked. A row:
+  // the round, a picture (a title's diamond in its colour, a skin's picture), its name and kind, and yours or locked
+  function bossTiersHtml(a) {
+    const lock = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1" fill="currentColor"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+    const tick = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="currentColor"/><path d="M4.6 8.2l2.3 2.3 4.5-4.7" fill="none" stroke="#0E2A16" stroke-width="1.9"/></svg>';
+    const list = bossRewardList(), SK = (typeof Shapes !== 'undefined' && Shapes.SKINS) || {};
+    return `<p class="bz-rw-lede">The faster she falls, the more you earn. A kill by a reward’s round earns it, and everything above it.</p>
+      <ol class="bz-tiers">${list.map((x, i) => {
+        const T = x.kind === 'title' ? TITLES[x.id] : null, K = x.kind === 'skin' ? SK[x.id] : null; if (!T && !K) return '';
+        const own = !!(a && (x.kind === 'title' ? (a.titles || []).includes(x.id) : (a.skins || []).some(k => k.id === x.id))), top = i === list.length - 1;
+        const pv = T ? `<span class="pv" style="--tc:${T.col};--tg:${T.glow}"><i></i></span>` : `<span class="pv">${K.pic ? `<img src="${esc(K.pic)}" alt="">` : ''}</span>`;
+        return `<li class="${[own ? 'own' : '', top ? 'top' : ''].filter(Boolean).join(' ')}"><span class="rd"><small>Round</small><b>${x.round}</b></span>${pv}
+          <span class="nm">${T ? `<b class="tn" style="--tc:${T.col}">${esc(T.name)}</b>` : `<b>${esc(K.name)}</b>`}<small>${T ? 'Title' : `${esc(K.unit)} skin`}${own ? '<em>· Yours</em>' : ''}</small>${top ? '<i class="best"><span>Epic</span> reward</i>' : ''}</span>
+          <span class="st" role="img" aria-label="${own ? 'Yours' : 'Not yours yet'}">${own ? tick : lock}</span></li>`; }).join('')}</ol>`;
+  }
+  // her leaderboard: the line over it and the top eight (and your own run under them)
+  function bossBoardHtml(a) {
+    const rows = bossBoard.rows, me = a ? a.id : '';
+    const leg = !rows ? (bossBoard.at ? 'The leaderboard comes from the game server, which can’t be reached right now.' : 'Loading…')
+      : !rows.length ? 'Nobody has finished a run against her yet. Be the first.' : 'Best runs: a kill in the earliest round first, then the most damage.';
+    const at = rows ? rows.findIndex(r => me && r.id === me) : -1, top = (rows || []).slice(0, 8);
+    if (at >= 8) top.push(rows[at]); // your own run, under the top eight
+    return { leg, has: !!(rows && rows.length), rows: top.map((r) => { const i = rows.indexOf(r), mine = !!me && r.id === me;
+      return `<li class="${[i === 0 ? 'first' : '', mine ? 'me' : ''].filter(Boolean).join(' ')}"><span class="r">${i + 1}</span><span class="who"><b>${esc(r.tag)}${mine ? ' <i class="you">you</i>' : ''}</b><small>${esc(bossRunText(r))}</small></span>
+        <span class="s">${r.won ? 'R' + r.round : Math.round(r.dmg / 1000) + 'k'}</span></li>`; }).join('') };
+  }
+  // ---------- the boss screen in a run (the ? on the boss bar, 2026-11-12): her screen as one scrolling panel over the
+  // board, in the attacks panel's look. The deploy has no clock and the fight waits while it is open (bossReading) ----------
+  let infoEl = null, infoFrom = null;
+  const bossInfoOpen = () => !!infoEl && !infoEl.hidden;
+  function openBossInfo() {
+    if (typeof Boss === 'undefined') return;
+    if (!infoEl) {
+      infoEl = document.createElement('div'); infoEl.className = 'bz-atk-back bz-info-back'; infoEl.hidden = true;
+      infoEl.innerHTML = `<section class="bz-atk bz-info" role="dialog" aria-modal="true" aria-labelledby="bz-info-h">
+        <header><span class="k">Limited event · weekly boss</span><h3 id="bz-info-h">The Mommy</h3><button class="x" aria-label="Close"><svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8"/></svg></button></header>
+        <p class="bz-lede"></p>
+        <div class="bz-info-in"><div class="bz-info-l"><h4 class="bz-h">How to play</h4><ol class="bz-how"></ol></div>
+          <div class="bz-info-r"><h4 class="bz-h">Rewards</h4><div class="bz-rw"></div><h4 class="bz-h">Leaderboard</h4><p class="bz-leg"></p><ol class="bz-lb"></ol></div></div>
+        <div class="bz-info-go"><button class="bz-info-back-btn">Back to the fight</button></div></section>`;
+      document.body.appendChild(infoEl);
+      infoEl.querySelector('.x').addEventListener('click', closeBossInfo);
+      infoEl.querySelector('.bz-info-back-btn').addEventListener('click', closeBossInfo);
+      infoEl.addEventListener('click', (e) => { if (e.target === infoEl) closeBossInfo(); if (e.target.closest('[data-atk]')) openBossAttacks((bossView() || {}).round || (m && m.round) || 1); });
+      addEventListener('keydown', (e) => { if (e.key === 'Escape' && bossInfoOpen() && !bossAtkOpen()) { e.preventDefault(); e.stopImmediatePropagation(); closeBossInfo(); } }, true);
+    }
+    const C = Boss.CFG, q = (c) => infoEl.querySelector(c);
+    q('.bz-lede').textContent = `A giant spider hangs over their zone. You have ${C.rounds} rounds to kill her.`;
+    q('.bz-how').innerHTML = bossHowHtml();
+    q('.bz-rw').innerHTML = bossTiersHtml(acct);
+    const board = () => { const h = bossBoardHtml(acct); q('.bz-leg').textContent = h.leg; q('.bz-lb').hidden = !h.has; q('.bz-lb').innerHTML = h.rows; };
+    board(); if (!(bossBoard.at && Date.now() - bossBoard.at < 60e3)) bossBoardLoad().then(() => { if (bossInfoOpen()) board(); });
+    q('.bz-info-back-btn').textContent = phase === 'battle' ? 'Back to the fight' : 'Back';
+    infoFrom = document.activeElement; infoEl.hidden = false; q('.bz-info').scrollTop = 0; q('.x').focus({ preventScroll: true });
+  }
+  function closeBossInfo() { if (!bossInfoOpen()) return; infoEl.hidden = true; if (infoFrom && infoFrom.focus && document.contains(infoFrom)) infoFrom.focus(); infoFrom = null; }
   // for her rules (bossReading). Made once, at the end of <body>, so it sits over the Diorama and the board alike
   const ATK_ICON = {
     bite: '<svg viewBox="0 0 24 24"><path d="M3 6h18l-2.2 4.2-2.2-3.4-2.3 4-2.3-4-2.3 4-2.2-3.4L5.2 10.2z M3 18h18l-2.2-4.2-2.2 3.4-2.3-4-2.3 4-2.3-4-2.2 3.4L5.2 13.8z" fill="currentColor"/></svg>',
@@ -7585,7 +7679,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const lines = [
       r.fallAt != null ? `Nests down at <b class="num">${s1(r.fallAt)} s</b>: she was down for <b class="num">${s1(r.window)} s</b>.` : `<b>She never fell</b>: ${r.nestsLeft} of ${r.nests} nests still hang.`,
       `Mortar shots: <b class="num">${r.mortars}</b>${r.mortarNests ? ` (${r.mortarNests} of her nests spent on them)` : ''}.`,
-      `Damage to her: <b class="num">${r.dmg.toLocaleString('en')}</b> (${r.hang.toLocaleString('en')} while she hung).${top ? ` Most: ${top}.` : ''}`,
+      r.dmg > 0 ? `${r.hang > 0 ? `<b class="num">${r.hang.toLocaleString('en')}</b> of it while she hung.` : ''}${top ? ` Most: ${top}.` : ''}` : '', // (the round's damage is the card's headline: X damage dealt)
       `Her health: <b class="num">${r.hpLeft.toLocaleString('en')}</b> of ${m.boss.max.toLocaleString('en')}.`,
       r.treasury === false ? 'Her spiders broke your treasury.' : '',
     ].filter(Boolean).map(x => `<p>${x}</p>`).join('');
@@ -7594,6 +7688,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     overlay(`<div class="card">
       <span class="eyebrow">Mommy · weekly boss</span>
       <h2 class="${won ? 'you' : m.over ? 'foe' : ''}">${head}</h2>
+      <p class="big boss-dmg"><b class="num">${r.dmg.toLocaleString('en')}</b> damage dealt</p>
       ${won ? `<p class="big">Killed in round ${r.round}: ${earned.map(bossRewardName).join(', ').replace(/, ([^,]*)$/, ' and $1')}.${next ? ` Kill her by round ${next.round} for ${bossRewardName(next)}.` : ''}</p>` : ''}
       ${lines}
       ${!m.over && !won ? bossNextBite(r.round + 1) : ''}
@@ -7609,7 +7704,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
   function beginAiRound() {
     if (mode === 'tutorial') { tutRound(); enterDeploy(0); return; } // the enemy's army is set by the script; no clock
-    if (m && m.boss) { bossSaves[m.round] = snapshot(m); bossSaves.length = m.round + 1; enterDeploy(timerOn ? deployMs() : 0); bossLine(); return; } // the Mommy boss puzzle: no AI, the normal clock (and this round's start kept, for Replay round)
+    if (m && m.boss) { bossSaves[m.round] = snapshot(m); bossSaves.length = m.round + 1; enterDeploy(0); bossLine(); return; } // the Mommy boss puzzle: no AI and no deploy clock (it's PvE: nobody waits on you; owner, 12 November); this round's start kept, for Replay round
     if (mode === 'claude') { foeLeaderTurn(); startClaudeTurn(); enterDeploy(timerOn ? deployMs() : 0); return; } // Claude picks its leader first when it won round 1
     aiWaits = Game.needsLeaderPick(m, 1) && !Game.leaderTurn(m, 1); // the player picks a leader first: the AI deploys after (foeLeaderTurn)
     if (!aiWaits) aiFoeDeploy(1); // the AI commits first; its new squads stay hidden until the fight
@@ -9013,6 +9108,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         : [anyOf.length ? `<b style="color:var(--gold)">Needs</b> ${esc(anyOf.join(' or '))} first.` : '',
         wake ? 'Bought for one squad at a time, on its own sheet. You can awaken only one unit type a match.' : label ? 'For all your squads of this unit.' : '', Game.isFlat(m, i, k) ? 'Always this price.' : ''].filter(Boolean).join(' ');
       const more = [detail, more0].filter(Boolean).join('<br>');
+      const off = Game.bossNoUse(m, i, k); // the Mommy boss puzzle: no use in her fight, crossed out and not for sale
+      if (off) return upRow({ name: d.name, label, act: '<span class="up-no">No use here</span>', text: esc(off) + '.', off });
       return upRow({ name: d.name, label, act, text: esc(Engine.describeSkill(d)), more });
     };
     // in slot order; either-or skills (owning one rules out the others) boxed together where the first of them comes
@@ -9069,7 +9166,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       return chip('Awakened', 'var(--gold)') + (phase === 'deploy' && editable() && sq.awaken === m.round ? ` <button class="btn small" data-act="unawaken">Undo</button>` : '') + hunt;
     }
     if (phase !== 'deploy') return `<span class="hint">${cost} gold</span>`;
-    const why = { enzo: 'Not with Enzo', type: other ? `Only ${esc(units[woke].name)} this match` : '', glut: `Needs ${Game.glutMax(m, me, sq)} Glut (${Game.glutOf(sq)} now)`, needs: `Needs ${Game.skillNeedsMissing(m, me, i, k).map(j => units[i].skillDefs[j].name).join(' or ')}`, or: 'Not with your skills', gold: `Need ${cost} gold` }[Game.awakenBlock(m, me, sq)] || '';
+    const why = { enzo: 'Not with Enzo', type: other ? `Only ${esc(units[woke].name)} this match` : '', glut: `Needs ${Game.glutMax(m, me, sq)} Glut (${Game.glutOf(sq)} now)`, needs: `Needs ${Game.skillNeedsMissing(m, me, i, k).map(j => units[i].skillDefs[j].name).join(' or ')}`, or: 'Not with your skills', boss: 'No use here', gold: `Need ${cost} gold` }[Game.awakenBlock(m, me, sq)] || '';
     return why || !editable() ? `<button class="btn small" disabled>${why || `Awaken · ${cost} gold`}</button>` : `<button class="btn small primary" data-act="awaken">Awaken · ${cost} gold</button>`;
   }
 
@@ -9322,7 +9419,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function wireFactoryLearn(root) { root.querySelectorAll('[data-fac-learn]').forEach(d => d.addEventListener('toggle', () => { factoryLearnOpen[d.dataset.facLearn] = d.open; })); }
   // an upgrade's row (see .up): name (esc'd here; label: a gold prefix like Master), act: its button or chip (HTML),
   // text: what it does (HTML, cut to one line until the row is held), more: details shown only once held (HTML)
-  const upRow = ({ name, label = '', act = '', text = '', more = '' }) => `<div class="up" tabindex="0" aria-expanded="false" aria-label="${esc(name)}: hold for details">
+  const upRow = ({ name, label = '', act = '', text = '', more = '', off = '' }) => `<div class="up${off ? ' up-off' : ''}" tabindex="0" aria-expanded="false" aria-label="${esc(name)}${off ? `: ${esc(off)}` : ''}: hold for details">${off ? '<i class="up-x" aria-hidden="true"></i>' : ''}
       <div class="up-h"><b>${label ? `<span class="lab">${label}:</span> ` : ''}${esc(name)}</b><span class="up-a">${act}</span></div>
       ${text ? `<span class="up-s">${text}</span>` : ''}${more ? `<span class="up-more">${more}</span>` : ''}</div>`;
   const abilityRow = (name, act, text, more) => upRow({ name, act, text, more });

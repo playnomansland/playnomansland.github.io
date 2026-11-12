@@ -813,7 +813,7 @@ const Render2D = (cv, view, opts = {}) => {
       }
     }
     // whom she bites next (only when her bites come slowly: the heavy bite): open jaws that follow them
-    if (bs.aim && !closing && bs.aim.cyc >= 2 && bs.aim.in < 1.5) {
+    if (bs.aim && !closing && bs.aim.cyc >= 2 && bs.aim.in < 1.5 && !(bt.isOver && bt.isOver())) { // (not once the fight is over: no jaws frozen on the last frame)
       const col = BITE_COL[bs.bite] || '#FFE15A', ax = PX(bs.aim.x), ay = PY(bs.aim.y), k = 1 - bs.aim.in / 1.5;
       ctx.strokeStyle = col; ctx.globalAlpha = 0.25 + 0.4 * k; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(ax, ay, Math.max(1, bs.aim.r) * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
       Art.bossJaws(ctx, ax, ay, Math.max(3, bs.aim.r * 1.15) * S, 1.25, col, 0.2 + 0.3 * k);
