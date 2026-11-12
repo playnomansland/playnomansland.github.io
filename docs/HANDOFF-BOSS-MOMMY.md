@@ -45,7 +45,7 @@ Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, me
 - The PC layout (`html.diorama.pcwide`) lays the round line over the top of the board, so anything pinned to the top of the board (`#wrap`) sits behind it unless it is moved down (`diorama.css`).
 - The boss hook runs before the tick's attacks, so the engine's `shots` are empty there; her bites are read from `api.projectiles` the tick after.
 - Server tests (`cd server && node test/accounts.test.js`) start a local server with `npx wrangler`; a test that fails or is cut short leaves it running on its port, and the next run then talks to the old one (odd 429s and 503s). `pkill -f workerd; pkill -f "wrangler dev"` first.
-- Pushing `server/**` to main deploys the game server (`.github/workflows/server-deploy.yml`, after its tests).
+- Pushing `server/**` to main deploys the game server (`.github/workflows/server-deploy.yml`, after its tests). Check the run afterwards: on 12 November `server/test/match.test.js` failed once there ("phone and server in step", in a match's first deploy) on code that passed it three times locally and passed on a re-run, so the deploy was skipped until the failed job was run again. Not looked into.
 - The page plays each fight twice (headless for the result, then on screen from the same snapshot); `Boss.battle` must stay deterministic and never change `m`. Her visual events (`mom.ev`, `mom.bs.aim`, `mom.bs.mortarAim`) are recorded only when `o.record` is set (the shown fight).
 
 The prototype tools live in `tools/boss/` and run the game's own `src/boss.js`. Run them from the repo root:
