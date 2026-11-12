@@ -20,6 +20,22 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 12 November 2026 – Eight wizards, eight shapes (branch `design/keywords`)
+
+The wizards used to be one model in eight colours, told apart only by the top of the staff. Each now has its own build, hat and a detail or two, so you can tell them apart by outline alone. Looks only: no stats or rules change. Every one keeps the team-coloured hat brim.
+
+- **Fire Mage:** the plain wizard, with a floppy hat tip bent back.
+- **Leaf Wizard:** slim and beardless, the hat swept far back, a leaf collar and two leaves in the hat band.
+- **Earth Wizard:** squat, with a flat stone cap, a beard down to the belly and a boulder on one shoulder.
+- **Flame Wizard:** wide, with iron shoulders, a big beard and a burning brazier for a hat.
+- **Steel Wizard:** a helmet with a nose guard, steel shoulders and a gorget, no beard.
+- **Slime Wizard:** the hat slumps forward with a blob on its tip; slime drips off the brim and pools round the hem.
+- **Water Mage:** no beard, long dark hair, a pale collar and hem, the hat curling forward like a wave.
+- **Frost Wizard:** a fur collar and a fur band on the hat, an icicle beard and an ice spike on the hat's tip.
+- **For makers:** `node tools/model-sheet.js out.png wizards` renders any units' models side by side (add `--dark` for outlines only) and prints their triangle counts (the wizards went from 134–162 to 150–276 each).
+
+---
+
 ## 12 November 2026 – Keywords, step one: a registry (branch `design/keywords`, nothing changes in the game)
 
 - **For players: nothing yet.** No rule, screen or number changes.
