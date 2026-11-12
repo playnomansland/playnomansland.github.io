@@ -2642,8 +2642,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         </div>
       </div>
       <div class="bar"><span class="hint">Friends</span><button class="btn small" id="fr-open2">Friends <b class="fr-badge" hidden></b></button></div>
-      ${m && m.boss ? '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div><button class="btn primary" id="boss-restart">Restart boss</button>'
-        + `<button class="btn" id="boss-replay" aria-expanded="false" aria-controls="boss-rounds">Replay round</button><div class="bar" id="boss-rounds" hidden><span class="hint">Play again from the start of</span><div class="seg" role="group" aria-label="Replay which round">${bossReplayable().map(r => `<button data-boss-round="${r}">Round ${r}${r === m.round ? ' (now)' : ''}</button>`).join('')}</div></div>` : ''}
+      ${m && m.boss ? '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div>' + (bossCtlOn() ? '' : '<button class="btn primary" id="boss-restart">Restart boss</button>'
+        + `<button class="btn" id="boss-replay" aria-expanded="false" aria-controls="boss-rounds">Replay round</button><div class="bar" id="boss-rounds" hidden><span class="hint">Play again from the start of</span><div class="seg" role="group" aria-label="Replay which round">${bossReplayable().map(r => `<button data-boss-round="${r}">Round ${r}${r === m.round ? ' (now)' : ''}</button>`).join('')}</div></div>`) : ''}
       <button class="btn" id="to-menu">Main menu</button>` : ''}
       ${!inMatch ? `<div class="bar">
         <span class="hint">Stay logged in on this device</span>
@@ -2725,10 +2725,10 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     }));
     if ($('to-menu')) $('to-menu').addEventListener('click', askForfeit);
     if ($('boss-atk')) $('boss-atk').addEventListener('click', () => openBossAttacks((bossView() || {}).round || m.round)); // over the Settings, which stays open
-    if ($('boss-restart')) $('boss-restart').addEventListener('click', () => { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); startBoss(); }); // the Mommy boss puzzle: a new run at once, from round 1
+    if ($('boss-restart')) $('boss-restart').addEventListener('click', () => { bossLeave(); startBoss(); }); // the Mommy boss puzzle: a new run at once, from round 1
     // Replay round: shows the rounds this run has played; one of them goes back to its start (replayBossRound)
     if ($('boss-replay')) $('boss-replay').addEventListener('click', (e) => { const g = $('boss-rounds'); g.hidden = !g.hidden; $('boss-replay').setAttribute('aria-expanded', String(!g.hidden)); if (!g.hidden && e.detail === 0) { const b = g.querySelector('button'); if (b) b.focus(); } });
-    $('sheet').querySelectorAll('[data-boss-round]').forEach(b => b.addEventListener('click', () => { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); replayBossRound(+b.dataset.bossRound); }));
+    $('sheet').querySelectorAll('[data-boss-round]').forEach(b => b.addEventListener('click', () => { bossLeave(); replayBossRound(+b.dataset.bossRound); }));
     $('sheet').querySelectorAll('[data-stay]').forEach(b => b.addEventListener('click', () => {
       setStay(b.dataset.stay === '1');
       $('sheet').querySelectorAll('[data-stay]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
@@ -7277,6 +7277,52 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     report = null; undoSnap = null; nextReady = [false, false];
     beginAiRound();
   }
+  // out of whatever the run is showing (a fight, a round's card, a sheet), before Restart boss or Replay round
+  function bossLeave() { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); closeBossAttacks(); }
+
+  // ---------- Restart boss and Replay round on the screen (the owner, 2026-11-12) ----------
+  // The Diorama's PC layout: two buttons at the top right through the whole run (deploy, fight, the round's card, the
+  // end), under her name. Restart boss asks once more on the button itself ("Sure? Restart", 3 s). Replay round drops a
+  // list of the rounds this run has reached, each with its bite's mark and name; a pick goes back to that round's start
+  // (replayBossRound). Over a sheet or Mommy's attacks they step aside. The classic layout keeps them in Settings
+  // (openSoundSheet). Looked at from bossBar and five times a second (a sheet coming or going doesn't redraw the board); the
+  // DOM only changes when what it shows does
+  const CTL_ICON = {
+    restart: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 12.5a7.4 7.4 0 1 0 2.3-5.6"/><path d="M4.6 3.6v4.6h4.6"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M5 4.5v15" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M19.5 5.2v13.6L8.6 12z" fill="currentColor"/></svg>',
+  };
+  let ctlEl = null, ctlKey = '', ctlSure = 0, ctlOpen = false;
+  function bossCtlOn() { return DIO && document.documentElement.classList.contains('pcwide') && !!m && !!m.boss && typeof Boss !== 'undefined' && ['deploy', 'battle', 'result', 'end'].includes(phase); }
+  function bossCtl() {
+    const show = bossCtlOn() && $('sheet-back').hidden && !bossAtkOpen();
+    if (!show) { if (ctlEl && !ctlEl.hidden) { ctlEl.hidden = true; ctlKey = ''; } if (!bossCtlOn()) { ctlOpen = false; ctlSure = 0; } return; }
+    if (!ctlEl) {
+      ctlEl = document.createElement('nav'); ctlEl.className = 'bz-ctl'; ctlEl.setAttribute('aria-label', 'Boss run'); document.body.appendChild(ctlEl);
+      ctlEl.addEventListener('click', (e) => {
+        const b = e.target.closest('button'); if (!b || !m || !m.boss) return;
+        if (b.dataset.ctl === 'restart') {
+          if (ctlSure > now()) { ctlSure = 0; ctlOpen = false; bossLeave(); startBoss(); } else { ctlSure = now() + 3000; ctlOpen = false; }
+        } else if (b.dataset.ctl === 'replay') { ctlOpen = !ctlOpen; ctlSure = 0; }
+        else if (b.dataset.round) { const r = +b.dataset.round; ctlOpen = false; bossLeave(); replayBossRound(r); }
+        ctlKey = ''; bossCtl();
+      });
+      document.addEventListener('pointerdown', (e) => { if (ctlOpen && ctlEl && !ctlEl.contains(e.target)) { ctlOpen = false; bossCtl(); } }, true);
+      addEventListener('keydown', (e) => { if (e.key === 'Escape' && ctlOpen) { ctlOpen = false; bossCtl(); } });
+    }
+    const rounds = bossReplayable(), sure = ctlSure > now();
+    const key = [m.round, phase, rounds.join(','), sure, ctlOpen].join('|');
+    if (key === ctlKey && !ctlEl.hidden) return;
+    ctlKey = key; ctlEl.hidden = false;
+    const a = document.activeElement, focus = a && ctlEl.contains(a) ? (a.dataset.ctl ? `[data-ctl="${a.dataset.ctl}"]` : `[data-round="${a.dataset.round}"]`) : '';
+    ctlEl.innerHTML = `<div class="row">
+        <button class="b restart${sure ? ' sure' : ''}" data-ctl="restart" aria-label="${sure ? 'Press again to restart the boss from round 1' : 'Restart boss: a new run from round 1'}">${CTL_ICON.restart}<span>${sure ? 'Sure? Restart' : 'Restart boss'}</span></button>
+        <button class="b replay${ctlOpen ? ' open' : ''}" data-ctl="replay" aria-expanded="${ctlOpen}" aria-controls="bz-ctl-list">${CTL_ICON.replay}<span>Replay round</span><i class="car" aria-hidden="true"></i></button>
+      </div>
+      <div class="list" id="bz-ctl-list"${ctlOpen ? '' : ' hidden'}><small>Play again from the start of</small>${rounds.map(r => { const k = Boss.byRound(Boss.CFG.biteByRound, r);
+        return `<button data-round="${r}" style="--bc:${BITE_COL[k] || '#FFC457'}"><img src="${biteMarkPic(k)}" alt=""><b>Round ${r}</b><em>${esc(/bite/i.test(BITE_NAME[k] || k) ? BITE_NAME[k] || k : (BITE_NAME[k] || k) + ' bite')}</em>${r === m.round ? '<i>Now</i>' : ''}</button>`; }).join('')}</div>`;
+    if (focus) { const f = ctlEl.querySelector(focus); if (f) f.focus(); } // (a keyboard player keeps their place)
+  }
+  setInterval(() => { if (m && m.boss || (ctlEl && !ctlEl.hidden)) bossCtl(); }, 200);
   function startBoss() {
     if (typeof Boss === 'undefined') return;
     leaveNet(); closeSheet(true);
@@ -7300,6 +7346,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // the match. Drawn with every frame; the DOM only changes when its text does
   let bossBarHtml = '';
   function bossBar() {
+    bossCtl(); // (Restart boss and Replay round on the screen)
     const el = $('boss-bar'); if (!el) return;
     const v = phase === 'battle' && battlePre ? battlePre : m;
     if (!v || !v.boss || typeof Boss === 'undefined' || !['deploy', 'battle', 'result', 'end'].includes(phase)) { if (!el.hidden) { el.hidden = true; bossBarHtml = ''; } return; }

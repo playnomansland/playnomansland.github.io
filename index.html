@@ -2244,6 +2244,41 @@ html.dsetmenu.diorama.pcwide #sheet .to-menu-ask .btn:is(#forfeit-yes, #forfeit-
 @media (max-width: 860px) { .bz-atk-in { grid-template-columns: 1fr; } .bz-nests .board svg { width: 180px; } }
 @media (max-width: 700px) { .bz-atk-body { grid-template-columns: 1fr; } .bz-atk .rounds { grid-template-columns: repeat(3, 1fr); } .bz-atk h3 { font-size: 32px; } }
 
+/* ── the Mommy run: Restart boss and Replay round at the top right, through the whole run (bossCtl). Ink chips like the
+   shop's cards (a coloured top edge, the bottom right corner cut), stencil words; Restart's edge is the danger coral,
+   Replay's the gold. Replay drops the rounds reached, each on its bite's colour with its mark ─────────────────────── */
+.bz-ctl { display: none; }
+html.diorama.pcwide .bz-ctl { position: fixed; z-index: 7; top: 118px; right: 32px; display: grid; justify-items: end; gap: 6px; color: #F4ECD8; font-family: var(--dtype); }
+html.diorama.pcwide .bz-ctl[hidden] { display: none; }
+html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: start; } /* (the panel on the right: her name and READY are on the left, so these go under them there) */
+.bz-ctl .row { display: grid; gap: 6px; width: 214px; } /* (stacked: clear of her health bar, in the open ground right of the board) */
+.bz-ctl .b { --ac: #F2B23A; position: relative; display: flex; align-items: center; gap: 9px; padding: 10px 14px 8px 12px; border: 0; border-top: 3px solid var(--ac); background: rgba(23, 20, 15, .88);
+  color: #F4ECD8; font: 700 17px/1 var(--dstencil); letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; cursor: pointer;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%); filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .4)); transition: background-color .12s, color .12s; }
+.bz-ctl .b svg { color: var(--ac); flex: none; transition: transform .25s; }
+.bz-ctl .b.restart { --ac: #FF8F78; }
+.bz-ctl .b:hover { background: rgba(52, 45, 34, .94); }
+.bz-ctl .b.restart:hover svg { transform: rotate(-50deg); }
+.bz-ctl .b:focus-visible { outline: 2px solid #F4ECD8; outline-offset: 2px; }
+.bz-ctl .b.sure, .bz-ctl .b.open { background: var(--ac); color: #17140F; }
+.bz-ctl .b.sure svg, .bz-ctl .b.open svg { color: #17140F; }
+.bz-ctl .b.sure { animation: bz-sure .9s ease-in-out infinite alternate; }
+@keyframes bz-sure { to { background: #FFB4A3; } }
+.bz-ctl .car { width: 0; height: 0; margin-left: auto; border: 5px solid transparent; border-top-color: currentColor; border-bottom: 0; transition: transform .15s; }
+.bz-ctl .b.open .car { transform: rotate(180deg); }
+.bz-ctl .list { width: 268px; margin-top: 2px; display: grid; gap: 4px; padding: 10px 10px 14px; background: rgba(23, 20, 15, .94);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%); filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .45)); animation: ddrop-in .18s cubic-bezier(.2, .9, .25, 1); }
+.bz-ctl .list[hidden] { display: none; }
+.bz-ctl .list small { padding: 0 4px 4px; font: 700 11px var(--dtype); letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.bz-ctl .list button { display: grid; grid-template-columns: 34px 1fr auto; grid-template-rows: auto auto; column-gap: 10px; align-items: center; padding: 5px 10px 5px 6px; border: 0; border-left: 3px solid var(--bc);
+  background: rgba(244, 236, 216, .06); color: #F4ECD8; text-align: left; cursor: pointer; font: inherit; }
+.bz-ctl .list button:hover, .bz-ctl .list button:focus-visible { background: rgba(244, 236, 216, .16); outline: 0; }
+.bz-ctl .list img { grid-row: 1 / 3; width: 34px; height: 34px; }
+.bz-ctl .list b { font: 700 19px/1 var(--dstencil); letter-spacing: .03em; text-transform: uppercase; }
+.bz-ctl .list em { grid-column: 2; font: 700 11px/1.3 var(--dtype); font-style: normal; letter-spacing: .06em; text-transform: uppercase; color: var(--bc); }
+.bz-ctl .list i { grid-column: 3; grid-row: 1 / 3; padding: 3px 6px 1px; background: #F2B23A; color: #17140F; font: 700 12px/1 var(--dstencil); font-style: normal; letter-spacing: .06em; text-transform: uppercase; }
+@media (prefers-reduced-motion: reduce) { .bz-ctl .b.sure { animation: none; } .bz-ctl .list { animation: none; } }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -19670,7 +19705,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 64fed36'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · c8d1631'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -19823,8 +19858,8 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
         </div>
       </div>
       <div class="bar"><span class="hint">Friends</span><button class="btn small" id="fr-open2">Friends <b class="fr-badge" hidden></b></button></div>
-      ${m && m.boss ? '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div><button class="btn primary" id="boss-restart">Restart boss</button>'
-        + `<button class="btn" id="boss-replay" aria-expanded="false" aria-controls="boss-rounds">Replay round</button><div class="bar" id="boss-rounds" hidden><span class="hint">Play again from the start of</span><div class="seg" role="group" aria-label="Replay which round">${bossReplayable().map(r => `<button data-boss-round="${r}">Round ${r}${r === m.round ? ' (now)' : ''}</button>`).join('')}</div></div>` : ''}
+      ${m && m.boss ? '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div>' + (bossCtlOn() ? '' : '<button class="btn primary" id="boss-restart">Restart boss</button>'
+        + `<button class="btn" id="boss-replay" aria-expanded="false" aria-controls="boss-rounds">Replay round</button><div class="bar" id="boss-rounds" hidden><span class="hint">Play again from the start of</span><div class="seg" role="group" aria-label="Replay which round">${bossReplayable().map(r => `<button data-boss-round="${r}">Round ${r}${r === m.round ? ' (now)' : ''}</button>`).join('')}</div></div>`) : ''}
       <button class="btn" id="to-menu">Main menu</button>` : ''}
       ${!inMatch ? `<div class="bar">
         <span class="hint">Stay logged in on this device</span>
@@ -19906,10 +19941,10 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     }));
     if ($('to-menu')) $('to-menu').addEventListener('click', askForfeit);
     if ($('boss-atk')) $('boss-atk').addEventListener('click', () => openBossAttacks((bossView() || {}).round || m.round)); // over the Settings, which stays open
-    if ($('boss-restart')) $('boss-restart').addEventListener('click', () => { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); startBoss(); }); // the Mommy boss puzzle: a new run at once, from round 1
+    if ($('boss-restart')) $('boss-restart').addEventListener('click', () => { bossLeave(); startBoss(); }); // the Mommy boss puzzle: a new run at once, from round 1
     // Replay round: shows the rounds this run has played; one of them goes back to its start (replayBossRound)
     if ($('boss-replay')) $('boss-replay').addEventListener('click', (e) => { const g = $('boss-rounds'); g.hidden = !g.hidden; $('boss-replay').setAttribute('aria-expanded', String(!g.hidden)); if (!g.hidden && e.detail === 0) { const b = g.querySelector('button'); if (b) b.focus(); } });
-    $('sheet').querySelectorAll('[data-boss-round]').forEach(b => b.addEventListener('click', () => { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); replayBossRound(+b.dataset.bossRound); }));
+    $('sheet').querySelectorAll('[data-boss-round]').forEach(b => b.addEventListener('click', () => { bossLeave(); replayBossRound(+b.dataset.bossRound); }));
     $('sheet').querySelectorAll('[data-stay]').forEach(b => b.addEventListener('click', () => {
       setStay(b.dataset.stay === '1');
       $('sheet').querySelectorAll('[data-stay]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
@@ -24520,6 +24555,52 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     report = null; undoSnap = null; nextReady = [false, false];
     beginAiRound();
   }
+  // out of whatever the run is showing (a fight, a round's card, a sheet), before Restart boss or Replay round
+  function bossLeave() { cancelAnimationFrame(raf); bt = null; battlePre = null; closeSheet(true); overlay(null); closeBossAttacks(); }
+
+  // ---------- Restart boss and Replay round on the screen (the owner, 2026-11-12) ----------
+  // The Diorama's PC layout: two buttons at the top right through the whole run (deploy, fight, the round's card, the
+  // end), under her name. Restart boss asks once more on the button itself ("Sure? Restart", 3 s). Replay round drops a
+  // list of the rounds this run has reached, each with its bite's mark and name; a pick goes back to that round's start
+  // (replayBossRound). Over a sheet or Mommy's attacks they step aside. The classic layout keeps them in Settings
+  // (openSoundSheet). Looked at from bossBar and five times a second (a sheet coming or going doesn't redraw the board); the
+  // DOM only changes when what it shows does
+  const CTL_ICON = {
+    restart: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 12.5a7.4 7.4 0 1 0 2.3-5.6"/><path d="M4.6 3.6v4.6h4.6"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M5 4.5v15" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M19.5 5.2v13.6L8.6 12z" fill="currentColor"/></svg>',
+  };
+  let ctlEl = null, ctlKey = '', ctlSure = 0, ctlOpen = false;
+  function bossCtlOn() { return DIO && document.documentElement.classList.contains('pcwide') && !!m && !!m.boss && typeof Boss !== 'undefined' && ['deploy', 'battle', 'result', 'end'].includes(phase); }
+  function bossCtl() {
+    const show = bossCtlOn() && $('sheet-back').hidden && !bossAtkOpen();
+    if (!show) { if (ctlEl && !ctlEl.hidden) { ctlEl.hidden = true; ctlKey = ''; } if (!bossCtlOn()) { ctlOpen = false; ctlSure = 0; } return; }
+    if (!ctlEl) {
+      ctlEl = document.createElement('nav'); ctlEl.className = 'bz-ctl'; ctlEl.setAttribute('aria-label', 'Boss run'); document.body.appendChild(ctlEl);
+      ctlEl.addEventListener('click', (e) => {
+        const b = e.target.closest('button'); if (!b || !m || !m.boss) return;
+        if (b.dataset.ctl === 'restart') {
+          if (ctlSure > now()) { ctlSure = 0; ctlOpen = false; bossLeave(); startBoss(); } else { ctlSure = now() + 3000; ctlOpen = false; }
+        } else if (b.dataset.ctl === 'replay') { ctlOpen = !ctlOpen; ctlSure = 0; }
+        else if (b.dataset.round) { const r = +b.dataset.round; ctlOpen = false; bossLeave(); replayBossRound(r); }
+        ctlKey = ''; bossCtl();
+      });
+      document.addEventListener('pointerdown', (e) => { if (ctlOpen && ctlEl && !ctlEl.contains(e.target)) { ctlOpen = false; bossCtl(); } }, true);
+      addEventListener('keydown', (e) => { if (e.key === 'Escape' && ctlOpen) { ctlOpen = false; bossCtl(); } });
+    }
+    const rounds = bossReplayable(), sure = ctlSure > now();
+    const key = [m.round, phase, rounds.join(','), sure, ctlOpen].join('|');
+    if (key === ctlKey && !ctlEl.hidden) return;
+    ctlKey = key; ctlEl.hidden = false;
+    const a = document.activeElement, focus = a && ctlEl.contains(a) ? (a.dataset.ctl ? `[data-ctl="${a.dataset.ctl}"]` : `[data-round="${a.dataset.round}"]`) : '';
+    ctlEl.innerHTML = `<div class="row">
+        <button class="b restart${sure ? ' sure' : ''}" data-ctl="restart" aria-label="${sure ? 'Press again to restart the boss from round 1' : 'Restart boss: a new run from round 1'}">${CTL_ICON.restart}<span>${sure ? 'Sure? Restart' : 'Restart boss'}</span></button>
+        <button class="b replay${ctlOpen ? ' open' : ''}" data-ctl="replay" aria-expanded="${ctlOpen}" aria-controls="bz-ctl-list">${CTL_ICON.replay}<span>Replay round</span><i class="car" aria-hidden="true"></i></button>
+      </div>
+      <div class="list" id="bz-ctl-list"${ctlOpen ? '' : ' hidden'}><small>Play again from the start of</small>${rounds.map(r => { const k = Boss.byRound(Boss.CFG.biteByRound, r);
+        return `<button data-round="${r}" style="--bc:${BITE_COL[k] || '#FFC457'}"><img src="${biteMarkPic(k)}" alt=""><b>Round ${r}</b><em>${esc(/bite/i.test(BITE_NAME[k] || k) ? BITE_NAME[k] || k : (BITE_NAME[k] || k) + ' bite')}</em>${r === m.round ? '<i>Now</i>' : ''}</button>`; }).join('')}</div>`;
+    if (focus) { const f = ctlEl.querySelector(focus); if (f) f.focus(); } // (a keyboard player keeps their place)
+  }
+  setInterval(() => { if (m && m.boss || (ctlEl && !ctlEl.hidden)) bossCtl(); }, 200);
   function startBoss() {
     if (typeof Boss === 'undefined') return;
     leaveNet(); closeSheet(true);
@@ -24543,6 +24624,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // the match. Drawn with every frame; the DOM only changes when its text does
   let bossBarHtml = '';
   function bossBar() {
+    bossCtl(); // (Restart boss and Replay round on the screen)
     const el = $('boss-bar'); if (!el) return;
     const v = phase === 'battle' && battlePre ? battlePre : m;
     if (!v || !v.boss || typeof Boss === 'undefined' || !['deploy', 'battle', 'result', 'end'].includes(phase)) { if (!el.hidden) { el.hidden = true; bossBarHtml = ''; } return; }
