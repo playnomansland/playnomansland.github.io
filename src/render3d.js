@@ -886,15 +886,44 @@ const Render3D = (THREE, el, view, opts = {}) => {
   function collectBoss(v, f, deploying) {
     const bs = v.boss, foe = 1 - v.me, pool = color('#7FD13B'), tc = teamColor(foe, v.me), ink = color(css('--ink') || '#E8EEEE');
     for (const [c0, r0, c1, r1] of bs.pools) for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) { const st = tileCenter(v, c, r); tileSq(st.c, st.r, pool, 0.4, 0.5, 0, 0.03); }
-    const thread = (wx, wz, t) => beam(wx + Math.sin(t * 1.3) * 0.4, 60, wz, wx, 5, wz, 0.18, color('#EDEDED'), 0.8); // her silk thread, up off the board
+    const thread = (wx, wz, t, y0 = 5, w = 0.18) => beam(wx + Math.sin(t * 1.3) * 0.4, 60, wz, wx, y0, wz, w, color('#EDEDED'), 0.8); // a silk thread, up off the board
+    // she hangs HANG m off the ground until she falls. Her nests are egg sacs, drawn NEST_SC times the model: a LOW
+    // one sits on the ground, a HIGH one hangs NEST_UP m up on its own thread, out of a melee unit's reach
+    const HANG = 3.5, NEST_UP = 3.5, NEST_SC = 1.8, LS = 1.5 * fxWide(); // LS: how tall her labels are (bigger from further up)
+    const nestLabel = (wx, wz, low, a = 0.95) => { arc(wx, wz, 2.8, tc, 0.9, 1, 0.1); icon('label|' + (low ? 'LOW' : 'HIGH'), wx + camDown.x * (3 + LS * 0.5), 0.3, wz + camDown.z * (3 + LS * 0.5), LS, low ? ink : color('#FFD23F'), a); }; // its ring on the ground, and LOW (white) or HIGH (yellow) under it
     if (!deploying) { // her state in the fight (mom.bs, src/boss.js)
       const mom = v.bt && v.bt.bodies.find(b => b.u.boss && b.alive); if (!mom || !mom.bs) return;
       const st = mom.bs, [wx, wz] = world(f, mom.x, mom.y), t = v.bt.time(), R = size(mom.u) * 1.4;
       const BC = { fast: '#FFE15A', heavy: '#FF5A4E', sweep: '#FF9A3D' }, silk = color('#EDEDED'), webR = typeof Boss !== 'undefined' ? Boss.CFG.mommy.web.r : 14;
-      if (st.phase === 'hanging') { thread(wx, wz, t); arc(wx, wz, webR, silk, 0.3, 1, 0.02, 24); } // her web round her
+      // she hangs on her thread, and drops when her last nest goes
+      const fallEv = (mom.ev || []).find(e => e.k === 'fall'), fa = fallEv ? t - fallEv.t : 1e9;
+      const momUp = st.phase === 'hanging' ? HANG + Math.sin(t * 1.3) * 0.25 : fa < 0.3 ? HANG * (1 - (fa / 0.3) * (fa / 0.3)) : 0;
+      const nextK = st.mortarIn != null && st.mortarNest ? Math.max(0, Math.min(1, 1 - st.mortarIn / (st.mortarIn > 4.05 ? 5 : 4))) : -1; // how close the next throw is (0..1), or -1
+      for (const s of bodies) {
+        if (!s.b || !s.b.alive) continue;
+        if (s.b === mom) { // stunned, she lies on her back
+          const flip = st.phase === 'stunned' ? Math.min(1, fa / 0.3, st.stunLeft / 0.4) : 0;
+          s.raise = momUp + flip * models.height(models.kindOf(mom.u)) * size(mom.u) * MODEL_SCALE * 0.75; s.tilt = flip * Math.PI;
+        }
+        else if (s.u.kind === 'nest') {
+          const low = !(s.u.rangedOnly > 0), next = nextK >= 0 && Math.abs(s.b.x - st.mortarNest.x) < 0.1 && Math.abs(s.b.y - st.mortarNest.y) < 0.1;
+          s.scale = NEST_SC; s.noRing = true; s.raise = (low ? 0 : NEST_UP) + (next ? nextK * 1.5 : 0); // (the one she is about to throw strains at her thread)
+          if (next) s.x += Math.sin(t * 40) * 0.1 * (0.3 + nextK);
+          const [nx, nz] = world(f, s.x, s.y);
+          scene_(() => { if (!low) thread(nx, nz, t + s.b.x, s.raise + 4.6 * NEST_SC, 0.08); nestLabel(nx, nz, low); });
+        }
+      }
+      if (st.phase === 'hanging') thread(wx, wz, t, momUp + 3);
+      // her reach: a body inside it holds her. Red while nobody is (the mortar is coming)
+      scene_(() => arc(wx, wz, bs.mommy.reach, st.mortarIn != null ? color('#FF5A4E') : tc, st.mortarIn != null ? 0.6 + 0.3 * Math.sin(t * 8) : 0.5, 1, 0.04 * 22 / bs.mommy.reach, 28));
+      // her web round her (inside it, slower and softer): rings and spokes of silk on the ground
+      if (st.phase !== 'stunned') scene_(() => {
+        for (const rr of [0.4, 0.7, 1]) arc(wx, wz, webR * rr, silk, 0.28, 1, 0.012 / rr);
+        for (let k = 0; k < 12; k++) { const an = k * Math.PI / 6 + 0.26; beam(wx, 0.15, wz, wx + Math.cos(an) * webR, 0.15, wz + Math.sin(an) * webR, 0.07, silk, 0.16); }
+      });
       // her bite: her jaws open where her target stands, close, and snap shut; whoever stands in the ring then is
       // bitten. The bite mark stays a few seconds (as on the 2D board: src/render2d.js drawBossState)
-      const evs = mom.ev || [], RED = color('#FF5A4E'), STAYS = 4, LS = 1.5 * fxWide(); // LS: how tall her labels are (bigger from further up)
+      const evs = mom.ev || [], RED = color('#FF5A4E'), STAYS = 4;
       const jaws = (ex, ez, JR, gap, hex, al) => { // two rows of fangs facing the camera, the far one coming down the screen and the near one up
         const off = JR * (Art.BOSS_JAW.shut + Art.BOSS_JAW.open * gap), key = 'big|fangs|' + hex;
         scene_(() => { bigIcon(key, ex - camDown.x * off, 2.2, ez - camDown.z * off, JR * 2.6, white, al); bigIcon(key, ex + camDown.x * off, 2.2, ez + camDown.z * off, JR * 2.6, white, al, true); });
@@ -906,7 +935,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
         if (t < e.land) {
           closing = true;
           const q = Math.min(1, (t - e.t) / Math.max(0.05, e.land - e.t));
-          scene_(() => { beam(wx, 4, wz, ex, 1, ez, 0.08, c, 0.25); disc(ex, ez, hitR, c, 0.12 + 0.25 * q); arc(ex, ez, hitR, c, 0.95, 1, Math.min(0.5, 0.25 / hitR)); });
+          scene_(() => { beam(wx, momUp + 2, wz, ex, 1, ez, 0.08, c, 0.25); disc(ex, ez, hitR, c, 0.12 + 0.25 * q); arc(ex, ez, hitR, c, 0.95, 1, Math.min(0.5, 0.25 / hitR)); });
           jaws(ex, ez, JR, 1 - q * q, hex, 0.6 + 0.4 * q);
         } else {
           const a = t - e.land;
@@ -926,7 +955,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
         arc(wx, wz, R, RED, 0.9, Math.max(0.02, k), 0.1); // round her: a red ring that closes as the shot comes
         if (st.mortarNest) scene_(() => {
           const [nx, nz] = world(f, st.mortarNest.x, st.mortarNest.y), wob = Math.sin(t * 22) * (0.1 + 0.25 * k);
-          beam(wx, 5, wz, nx + wob, 2.5, nz, 0.1 + 0.3 * k, silk, 0.4 + 0.5 * k);
+          beam(wx, momUp + 2.5, wz, nx + wob, 2.5 + (bs.nests.some(n => !n.low && Math.abs(n.x - st.mortarNest.x) < 0.1 && Math.abs(n.y - st.mortarNest.y) < 0.1) ? NEST_UP : 0), nz, 0.1 + 0.3 * k, silk, 0.4 + 0.5 * k);
           arc(nx, nz, 3.4, RED, 0.55 + 0.4 * Math.sin(t * 10), 1, 0.07, 14);
           icon('label|THROWS THIS', nx - camDown.x * (4 + LS * 0.5), 0.3, nz - camDown.z * (4 + LS * 0.5), LS, color('#FF8A80'), 0.95);
         });
@@ -963,13 +992,14 @@ const Render3D = (THREE, el, view, opts = {}) => {
       return;
     }
     const mo = bs.mommy, [mx, mz] = world(f, mo.x, mo.y);
-    thread(mx, mz, 0);
+    thread(mx, mz, 0, HANG + 3);
     arc(mx, mz, mo.reach, tc, 0.55, 1, 0.04, 28);
-    bodies.push({ u: mo.u, side: foe, x: mo.x, y: mo.y, look: 'ghost' });
+    bodies.push({ u: mo.u, side: foe, x: mo.x, y: mo.y, look: 'ghost', raise: HANG });
     for (const n of bs.nests) {
-      bodies.push({ u: n.u, side: foe, x: n.x, y: n.y, look: 'ghost' });
+      bodies.push({ u: n.u, side: foe, x: n.x, y: n.y, look: 'ghost', scale: NEST_SC, raise: n.low ? 0 : NEST_UP, noRing: true });
       const [wx, wz] = world(f, n.x, n.y);
-      icon('label|' + (n.low ? 'LOW' : 'HIGH'), wx + camDown.x * 4, 0.3, wz + camDown.z * 4, 2.2, n.low ? ink : tc, 0.95);
+      if (!n.low) thread(wx, wz, n.x, NEST_UP + 4.6 * NEST_SC, 0.08);
+      nestLabel(wx, wz, n.low);
     }
   }
   let v0 = null;
@@ -1001,6 +1031,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
         const bob = s.moving && !s.u.smooth && !rollAt ? Math.abs(Math.sin(clock * 9 + s.phase)) * 0.12 * r * s.moving : 0;
         const [wx, wz] = world(f, s.x, s.y);
         tmpQ.setFromAxisAngle(up, fixed ? (s.side === me ? Math.PI : 0) + ((s.u.barrierY || 0) > (s.u.barrier || 0) ? Math.PI / 2 : 0) : Math.atan2(-hx * f, hy * f)); // a model's front is its -z side; a tower's door faces its own side; a wall along y turns a quarter
+        if (s.tilt) tmpQ.multiply(tmpQ2.setFromAxisAngle(zAxis, s.tilt)); // (the Mommy boss, stunned: rolled onto her back)
         tmpP.set(wx, lift + bob + groundY(wx, wz), wz); tmpS.setScalar(sc);
         if (rollAt && s.b) { // turn the ball around its middle by how far it has rolled
           tmpQ.multiply(tmpQ2.setFromAxisAngle(xAxis, -(s.b.moved || 0) / (rollAt * sc)));

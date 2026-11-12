@@ -32,7 +32,7 @@
     maxPerType: 3,      // squads of one unit type at a time
     titleRound: 3,      // beating her by this round earns the "Mommy" title (not given out yet)
     mommy: {
-      hp: 46000, col: 5.5, row: 5, // the front edge of her zone
+      hp: 54000, col: 5.5, row: 5, // the front edge of her zone
       hang: 0.15,       // share of damage she takes while hanging
       stun: 5,          // seconds she and her spiders are stunned after the fall
       near: 22,         // m: her reach. A body this close holds her attention; she bites the nearest one
@@ -54,7 +54,7 @@
       // her bite: her jaws open where her target stands and snap shut biteSecs later. It lands there, on whoever stands
       // in it then (a body that has walked out is missed). biteSecs 0: the older bite, a web shot flying at projSpeed
       // m/s that hits the first body in its way (lob: ...that only lands where it was aimed); both 0: it lands at once
-      biteSecs: 1, projSpeed: 15, lob: false,
+      biteSecs: 0.5, projSpeed: 15, lob: false,
       lastPick: true,   // while she hangs, units pick her only when none of her nests or spiders are left
     },
     biteByRound: ['fast', 'heavy', 'sweep', 'heavy', 'sweep'],
@@ -101,7 +101,7 @@
       ...(cfg.mommy.biteSecs > 0 ? { projSpeed: cfg.mommy.projSpeed || 15, projSecs: cfg.mommy.biteSecs, lob: true } : { projSpeed: cfg.mommy.projSpeed || 0, lob: !!cfg.mommy.lob }) });
   }
   function nestUnit(units, cfg, round) {
-    return E().withTraits({ name: 'Nest', cost: 0, bodies: 1, hp: byRound(cfg.nest.hp, round), hit: 0, aps: 1, range: 0, speed: 0, splash: 0, structure: true, lesser: true, kind: 'nest', shape: 'circle', color: '#d8d0c0', level: 0,
+    return E().withTraits({ name: 'Nest', cost: 0, bodies: 1, hp: byRound(cfg.nest.hp, round), hit: 0, aps: 1, range: 0, speed: 0, splash: 0, structure: true, lesser: true, kind: 'nest', shape: 'circle', color: '#F4F0E6', level: 0,
       rangedOnly: cfg.nest.rangedOnly, ...(cfg.nest.lure > 0 ? { lure: cfg.nest.lure } : {}),
       spawn: { every: byRound(cfg.hatch, round), count: 1, max: 999, waves: 0, unit: spiderUnit(units, cfg) },
       ...(cfg.nest.burst > 0 ? { deathSpawn: { name: 'Spiderling', unit: spiderUnit(units, cfg), count: cfg.nest.burst, strength: 1 } } : {}) });

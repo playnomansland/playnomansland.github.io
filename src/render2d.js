@@ -775,6 +775,19 @@ const Render2D = (cv, view, opts = {}) => {
       ctx.globalAlpha = 1;
       bossThread(x, y, R, time);
     }
+    // her reach (a body inside it holds her): dashed, red while nobody is in it. And her nests: pale egg sacs, each
+    // marked LOW or HIGH (kept simple here: the 3D board is the one that shows them hanging)
+    const reach = boss && boss.mommy ? boss.mommy.reach : mom.u.range, alone = bs.mortarIn != null;
+    ctx.strokeStyle = alone ? '#FF5A4E' : teamCol(mom.side); ctx.globalAlpha = alone ? 0.6 + 0.3 * Math.sin(time * 8) : 0.4; ctx.lineWidth = 1.5; ctx.setLineDash([4, 5]);
+    ctx.beginPath(); ctx.arc(x, y, reach * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    for (const n of bt.bodies) {
+      if (!n.alive || n.u.kind !== 'nest') continue;
+      const nx = PX(n.x), ny = PY(n.y), nr = tilePx() * 0.4, low = !(n.u.rangedOnly > 0);
+      ctx.fillStyle = '#E9E3D3'; ctx.strokeStyle = teamCol(n.side); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(nx, ny, nr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = 'rgba(70,64,52,0.5)'; ctx.lineWidth = 1; for (let k = 0; k < 3; k++) { const an = k * Math.PI / 3 + 0.4; ctx.beginPath(); ctx.moveTo(nx - Math.cos(an) * nr, ny - Math.sin(an) * nr); ctx.lineTo(nx + Math.cos(an) * nr, ny + Math.sin(an) * nr); ctx.stroke(); }
+      ctx.font = `700 ${Math.max(8, Math.round(tilePx() * 0.22))}px "IBM Plex Mono", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(8,12,14,0.9)'; ctx.strokeText(low ? 'LOW' : 'HIGH', nx, ny + nr + tilePx() * 0.16); ctx.fillStyle = low ? css('--ink') : teamCol(n.side); ctx.fillText(low ? 'LOW' : 'HIGH', nx, ny + nr + tilePx() * 0.16);
+    }
     // --- her bite: her jaws open where her target stands, close, and snap shut; whoever stands in the ring then is
     // bitten. The bite mark stays a few seconds
     const now = time, evs = mom.ev || [];

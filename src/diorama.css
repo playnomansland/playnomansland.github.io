@@ -798,6 +798,8 @@ html.diorama.pcwide #wrap > .board-banner, html.diorama.pcwide #wrap > .note3d, 
 html.diorama.pcwide .tag-clock, html.diorama.pcwide .net, html.diorama.pcwide .dock-tab { display: none !important; }
 /* the Mommy boss puzzle's boss bar: under the round line (which sits over the top of the board here), not behind it */
 html.diorama.pcwide .boss-bar { top: 104px; z-index: 6; }
+html.diorama.pcwide .hud.bossrun .side.you .num { grid-column: 1 / -1; font-size: 26px; line-height: 1.2; text-transform: uppercase; }
+html.diorama.pcwide .hud.bossrun .side.you .hp { grid-row: 3; grid-column: 1 / -1; width: 220px; margin-top: 5px; }
 
 /* the top line: you top left, the round in the middle, the opponent top right (mirrored) */
 html.diorama.pcwide .hud { position: fixed; z-index: 7; top: 0; left: 0; right: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: 24px; padding: 18px 32px 0; pointer-events: none; color: #F4ECD8; }
