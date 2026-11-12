@@ -92,7 +92,8 @@ One panel, made once at the end of `<body>`, so it opens over the boss screen an
 - No rules sheet (removed 12 November): the boss screen says it all. In the run, the ? beside the boss bar (and the ? by
   the gold) opens it as one scrolling panel (`openBossInfo`; its words come from `bossHowHtml`, `bossTiersHtml`,
   `bossBoardHtml`, shared with the menu's screen). No deploy clock in a boss run (PvE); the fight waits while it is open.
-- The boss bar: one soft panel, sentence case, a slim health bar, the time as a number, her state as a quiet line, and
+- The boss bar: on the PC layout it sits in the opponent's corner (top right, top left when the deploy panel is on the
+  right), off the board, with Restart boss / Replay round under it; on phones, over the top of the board. One soft panel, sentence case, a slim health bar, the time as a number, her state as a quiet line, and
   on phones Restart (asks Restart? Yes / No in place; the PC layout has the on-screen Restart boss below instead). A full card (n/n) tapped shakes and says You have the max of this unit type.
 - Skills with no use in the boss's fight go in `Boss.NO_USE` (id → why): crossed out in the unit sheet, not for sale.
 - The round card's headline is X damage dealt.

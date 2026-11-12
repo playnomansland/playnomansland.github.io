@@ -810,6 +810,15 @@ html.diorama.pcwide #wrap > .board-banner, html.diorama.pcwide #wrap > .note3d, 
 html.diorama.pcwide .tag-clock, html.diorama.pcwide .net, html.diorama.pcwide .dock-tab { display: none !important; }
 /* the Mommy boss puzzle's boss bar: under the round line (which sits over the top of the board here), not behind it */
 html.diorama.pcwide .boss-bar { top: 104px; z-index: 6; }
+/* PC (owner, 12 November: it hid the top of the board): her corner instead, top right where an opponent's name and
+   health go (a boss run leaves that slot empty), off the board; top left when the deploy panel is on the right. The ?
+   goes inside its top row, and Restart boss / Replay round stack under it (--bbh: its height, from bossBar) */
+html.diorama.pcwide.pc .hud.bossrun .side.foe { visibility: hidden; }
+html.diorama.pcwide.pc .boss-bar { top: 18px; right: 32px; left: auto; transform: none; width: 320px; z-index: 7; }
+html.dright.diorama.pcwide.pc .boss-bar { right: auto; left: 32px; }
+html.diorama.pcwide.pc .boss-bar .bb-top { padding-right: 34px; }
+html.diorama.pcwide.pc .boss-bar .bb-q { right: 10px; top: 7px; width: 26px; height: 26px; font-size: 13px; box-shadow: none; }
+html.diorama.pcwide.pc .bz-ctl { top: calc(18px + var(--bbh, 96px) + 12px); }
 html.diorama.pcwide .hud.bossrun .side.you .num { grid-column: 1 / -1; font-size: 26px; line-height: 1.2; text-transform: uppercase; }
 html.diorama.pcwide .hud.bossrun .side.you .hp { grid-row: 3; grid-column: 1 / -1; width: 220px; margin-top: 5px; }
 
