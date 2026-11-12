@@ -2157,4 +2157,4 @@ html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: sta
 
 /* buy and place feedback (2026-11-12): a squad placed this round as a square pip with its unit, not a diamond */
 html.diorama.pcwide .panel .trow .pips i.u { width: 20px; height: 20px; transform: none; border: 2px solid #F4ECD8; border-radius: 0; background: rgba(244,236,216,.12); display: grid; place-items: center; }
-html.diorama.pcwide .panel .trow .g2.pfx-spend { color: #FFE59A; }
+html.diorama.pcwide .panel .trow .g2.pfx-spend { color: var(--foe); }
