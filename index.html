@@ -9381,6 +9381,7 @@ const Game = (() => {
 
   // Apply a finished battle to the match. Returns a summary for the results screen.
   function resolve(m, res) {
+    if (m.boss && res && res.boss && bossApi() && bossApi().record) bossApi().record(m); // the Mommy boss puzzle: the player's side as it went into this fight, for the leaderboard's replay
     const dmg = [0, 0]; // damage taken by each side
     // Zoe: a fight with a squad on one of her buff tiles makes the buff stronger from the next round on
     if (!m.zoeUses) m.zoeUses = [0, 0];
@@ -10551,6 +10552,7 @@ if (typeof module !== 'undefined') module.exports = Game;
     m.units.forEach((u, k) => { if (!cfg.banned.includes(u.name) && !u.building) m.unlocks[0][k] = 1; });
     m.extraDeploys[0] = 1;
     m.gold = [cfg.startGold, 0];
+    m.boss.run = { seed: m.seed, rounds: [] }; // the run's record, for the leaderboard (record, replay below)
     return m;
   }
   // what the boards draw for this round, while deploying and in the fight: her and the nests
@@ -10761,7 +10763,90 @@ if (typeof module !== 'undefined') module.exports = Game;
     return rep;
   }
 
-  const api = { CFG, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit };
+  // ---------- a run's record, and playing it again (the leaderboard: the game server replays a reported run) ----------
+  // The record is m.boss.run = { seed, rounds: [snapshot, ...] }: the match's seed and, for each round, the player's side
+  // as it went into the fight (record(m), called by Game.resolve before it pays the fight out). replay(run, units,
+  // matrix) starts the same match, and for each round works out what the player did between the last fight and this
+  // snapshot (squads sold, moved, bought, skills, level-ups, a loan, arrows), does it through the game's own rules
+  // (so gold, deployments, the cap and the free move are all enforced), checks that its side then looks exactly like
+  // the snapshot, and plays the fight. The result is what the replay got, not what anyone claims.
+  // a snapshot: { army: [[id, unit name, col, row, level, aim ([dc, dr] or 0), carrier id or 0], ...], tech: { unit
+  // name: [skill slots owned] }, loan: 1 when a loan was taken this round }
+  const techOf = (m) => { const out = {}, t = (m.tech && m.tech[0]) || {};
+    for (const ui of Object.keys(t)) { const own = t[ui].map((v, k) => v ? k : -1).filter((k) => k >= 0); if (own.length && m.units[ui]) out[m.units[ui].name] = own; }
+    return out; };
+  const snapshot = (m) => ({ army: m.armies[0].map((q) => [q.id, m.units[q.unit].name, q.col, q.row, q.level | 0, q.aim ? [q.aim.dc, q.aim.dr] : 0, q.in != null ? q.in : 0]),
+    tech: techOf(m), loan: G().loanNow(m, 0) ? 1 : 0 });
+  function record(m) { if (!m.boss) return; if (!m.boss.run) m.boss.run = { seed: m.seed, rounds: [] }; m.boss.run.rounds[m.round - 1] = snapshot(m); }
+  const sameSnap = (a, b) => { const norm = (x) => JSON.stringify([x.army, Object.keys(x.tech).sort().map((k) => [k, x.tech[k]]), x.loan ? 1 : 0]); return norm(a) === norm(b); };
+  const int = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+  // make m's player side look like snap, through the game's own rules. Returns '' when it does, else what went wrong
+  function applySnapshot(m, snap) {
+    const Gm = G(), ix = (n) => m.units.findIndex((u) => u.name === n);
+    if (!snap || !Array.isArray(snap.army) || snap.army.length > 80 || !snap.tech || typeof snap.tech !== 'object' || Array.isArray(snap.tech)) return 'a bad snapshot';
+    const want = new Map();
+    for (const a of snap.army) {
+      if (!Array.isArray(a) || a.length !== 7 || !int(a[0], 1, 1e6) || typeof a[1] !== 'string' || ix(a[1]) < 0 || !int(a[2], 0, Gm.COLS - 1) || !int(a[3], 0, Gm.ROWS - 1) || !int(a[4], 0, 20)
+        || !(a[5] === 0 || (Array.isArray(a[5]) && a[5].length === 2 && int(a[5][0], -20, 20) && int(a[5][1], -20, 20))) || !int(a[6], 0, 1e6) || want.has(a[0])) return 'a bad squad';
+      want.set(a[0], a);
+    }
+    const army = () => m.armies[0], have = (id) => army().find((q) => q.id === id);
+    for (const q of army()) { const a = want.get(q.id); if (a && (ix(a[1]) !== q.unit || a[4] < (q.level | 0))) return `squad ${q.id} isn't the squad it was`; }
+    // what is left to do. Gold only comes from the loan and from selling, so those go first, except a sale that
+    // would take the last squad of a unit whose skill is still to be bought (a skill needs one on the board)
+    const todo = [];
+    if (snap.loan && !Gm.loanNow(m, 0)) todo.push(['loan']);
+    if (!snap.loan && Gm.loanNow(m, 0)) return 'a loan it does not show';
+    for (const q of army()) if (!want.has(q.id)) todo.push(['sell', q.id, q.unit]);
+    const mine = (m.tech && m.tech[0]) || {};
+    for (const n of Object.keys(snap.tech)) { const ui = ix(n), own = snap.tech[n];
+      if (ui < 0 || !Array.isArray(own) || own.length > 8 || own.some((k) => !int(k, 0, 7))) return 'a bad skill';
+      for (const k of own) if (!(mine[ui] && mine[ui][k])) todo.push(['skill', ui, k]); }
+    for (const ui of Object.keys(mine)) mine[ui].forEach((v, k) => { if (v && !((snap.tech[m.units[ui].name] || []).includes(k))) todo.push(['bad']); });
+    if (todo.some((t) => t[0] === 'bad')) return 'a skill it had is gone';
+    for (const a of snap.army) { const q = have(a[0]); if (q && (q.col !== a[2] || q.row !== a[3] || (q.in != null ? q.in : 0) !== a[6])) todo.push(['move', a[0], a[2], a[3]]); }
+    for (const a of snap.army.filter((x) => !have(x[0])).sort((x, y) => (x[6] ? 1 : 0) - (y[6] ? 1 : 0) || x[0] - y[0])) todo.push(['buy', a[0], ix(a[1]), a[2], a[3]]); // (riders after what they ride)
+    for (const a of snap.army) { const q = have(a[0]), from = q ? q.level | 0 : 0; for (let k = from; k < a[4]; k++) todo.push(['level', a[0]]); }
+    const lastOfSkillUnit = (t) => t[0] === 'sell' && todo.some((x) => x[0] === 'skill' && x[1] === t[2]) && army().filter((q) => q.unit === t[2]).length <= 1;
+    const act = (t) => t[0] === 'loan' ? Gm.takeLoan(m, 0) : t[0] === 'sell' ? Gm.sell(m, 0, t[1]) > 0 || !have(t[1]) : t[0] === 'skill' ? Gm.buySkill(m, 0, t[1], t[2])
+      : t[0] === 'move' ? !!Gm.moveSquad(m, 0, t[1], t[2], t[3]) : t[0] === 'level' ? Gm.levelUp(m, 0, t[1])
+      : (() => { if (have(t[1])) return false; const next = m.nextId[0]; m.nextId[0] = t[1]; const sq = Gm.place(m, 0, t[2], t[3], t[4]); m.nextId[0] = Math.max(next, sq ? t[1] + 1 : 0); return !!sq; })(); // (a new squad gets the id it had: ids order the bodies in a fight; gaps are squads bought and taken back, and a rider is placed after what it rides whatever its id)
+    const ORDER = [(t) => t[0] === 'loan', (t) => t[0] === 'sell' && !lastOfSkillUnit(t), (t) => t[0] === 'skill', (t) => t[0] === 'move', (t) => t[0] === 'buy', (t) => t[0] === 'level', (t) => t[0] === 'sell'];
+    for (let guard = 0; todo.length && guard < 2000; guard++) {
+      let done = -1;
+      for (const pick of ORDER) { done = todo.findIndex((t) => pick(t) && act(t)); if (done >= 0) break; }
+      if (done < 0) return `it can't ${todo[0][0]} (${todo.length} thing${todo.length === 1 ? '' : 's'} left that the rules don't allow)`;
+      todo.splice(done, 1);
+    }
+    for (const a of snap.army) { const q = have(a[0]); if (!q) return 'a squad is missing';
+      if (a[5]) Gm.setAim(m, 0, q.id, a[5][0], a[5][1]); else if (q.aim) Gm.clearAim(m, 0, q.id); }
+    const at = new Map(snap.army.map((a, k) => [a[0], k]));
+    army().sort((x, y) => at.get(x.id) - at.get(y.id)); // (the order they stand in the list is the snapshot's)
+    return sameSnap(snapshot(m), snap) ? '' : 'its side does not come out as the snapshot shows';
+  }
+  // play a recorded run again. Returns { ok: true, won, round, secs, dmg, log } or { ok: false, why }
+  function replay(run, units, matrix, cfg = CFG) {
+    const Gm = G(), fail = (why) => ({ ok: false, why });
+    if (!run || !int(run.seed, 0, 4294967295) || !Array.isArray(run.rounds) || !run.rounds.length || run.rounds.length > cfg.rounds) return fail('a bad record');
+    const m = Gm.createMatch(units, matrix, run.seed, 'standard', null, [], { draft: false });
+    setup(m, cfg);
+    for (let r = 0; r < run.rounds.length; r++) {
+      if (m.over) return fail('rounds after the end');
+      const why = applySnapshot(m, run.rounds[r]);
+      if (why) return fail(`round ${r + 1}: ${why}`);
+      const sim = battle(m, { cfg });
+      while (sim.step()) { /* the fight */ }
+      Gm.resolve(m, sim.result());
+    }
+    if (!m.over) return fail('the run is not finished');
+    const last = m.boss.log[m.boss.log.length - 1];
+    return { ok: true, won: !!last.dead, round: last.round, secs: Math.round(last.end * 100) / 100, dmg: Math.round(m.boss.max - m.boss.hp), log: m.boss.log };
+  }
+  // a short tag for one set of her rules and the units they are played with: runs are only ranked together under the
+  // same tag, and the page and the server only agree on a run when theirs are the same
+  const rulesTag = (units, cfg = CFG) => { const t = JSON.stringify(cfg) + JSON.stringify(units); let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
+
+  const api = { CFG, setup, preview, battle, afterFight, byRound, spiderUnit, mommyUnit, nestUnit, treasuryUnit, snapshot, record, replay, rulesTag };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Boss = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -19076,7 +19161,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '11 Nov 2026 · d27f37c'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '11 Nov 2026 · 689f3ba'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -21629,7 +21714,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       const bb = await bossBoardLoad(true);
       if (!$('lb') || $('lb').dataset.tab !== 'boss') return;
       if (!bb.rows) { $('lb-msg').textContent = 'Couldn’t reach the game server. Check your connection and try again.'; return; }
-      $('lb-msg').textContent = (bb.rows.length ? 'Best runs against the Mommy under her rules as they are now. A kill in the earliest round comes first, then the earliest second of that round; without a kill, the most damage.' : 'Nobody has finished a run against her under her rules as they are now. Finish one to get on the board.') + ' Developer accounts only for now.';
+      $('lb-msg').textContent = (bb.rows.length ? 'Best runs against the Mommy under her rules as they are now. A kill in the earliest round comes first, then the earliest second of that round; without a kill, the most damage. The game server plays every run again before it counts.' : 'Nobody has finished a run against her under her rules as they are now. Finish one to get on the board.') + ' Developer accounts only for now.';
       if (!bb.rows.length) return;
       $('lb').innerHTML = `<table class="lb"><thead><tr><th>#</th><th>Player</th><th>Best run</th></tr></thead><tbody>
         ${bb.rows.map((r, i) => `<tr class="${acct && r.id === acct.id ? 'me' : ''}"><td class="num">${i + 1}</td><td>${nameplate(r.tag, r.title, 'row')}</td><td>${esc(bossRunText(r))}</td></tr>`).join('')}
@@ -23982,33 +24067,37 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     $('boss-help').addEventListener('click', () => { closeSheet(); openHelp(); });
   }
   // ---------- the weekly boss's leaderboard (2026-11-12; server/src/accounts.js BOSS) ----------
-  // A finished run is reported to the game server (developer accounts only, as the boss is a developer test; the server
-  // takes the page's word for it: it does not replay the run yet). Runs are ranked per set of her rules: bossRulesTag is
-  // a short tag made from Boss.CFG, so any change to her numbers starts a new board.
-  const bossRulesTag = () => { const t = JSON.stringify(Boss.CFG); let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
+  // A finished run's record (m.boss.run: the seed and the player's side going into each fight, kept by Boss.record)
+  // goes to the game server, which plays the run again with the game's own rules and ranks what its replay got: it
+  // takes nothing on the page's word. Developer accounts only, as the boss is a developer test. Runs are ranked per
+  // set of her rules: Boss.rulesTag is a short tag made from her numbers and the units, so a change to either starts
+  // a new board, and a page and a server on different versions don't mix their runs.
+  const bossRulesTag = () => Boss.rulesTag(m && m.boss ? m.units : units);
   const bossBoard = { rows: null, at: 0, busy: null };
   // the board from the server (kept a minute; force: now). Resolves to bossBoard; rows stays null if it never arrived
   function bossBoardLoad(force) {
     if (bossBoard.busy) return bossBoard.busy;
     if (typeof Boss === 'undefined' || (!force && bossBoard.at && now() - bossBoard.at < 60e3)) return Promise.resolve(bossBoard);
     bossBoard.busy = (async () => {
-      try { const r = await fetch(`${SERVER_URL}/leaderboard/boss?boss=mommy&rules=${bossRulesTag()}`); const j = r.ok ? await r.json() : null; if (j && Array.isArray(j.rows)) bossBoard.rows = j.rows; } catch (e) { /* the last board stays */ }
+      try { const r = await fetch(`${SERVER_URL}/leaderboard/boss?boss=mommy`); const j = r.ok ? await r.json() : null; if (j && Array.isArray(j.rows)) bossBoard.rows = j.rows; } catch (e) { /* the last board stays */ } // (the board for her rules as the server has them now)
       bossBoard.at = now(); bossBoard.busy = null;
       return bossBoard;
     })();
     return bossBoard.busy;
   }
   const bossRunText = (r) => r.won ? `Killed in round ${r.round}, ${(+r.secs).toFixed(1)} s in` : `${(+r.dmg).toLocaleString('en')} damage, not killed`;
-  // a finished run goes to the server; its answer (the board with this run in it) fills the result card's line
+  // a finished run's record goes to the server; its answer (what its replay got, and the board) fills the result card's line
   function bossReport(r) {
-    if (!acct || !devMode() || typeof Boss === 'undefined' || !m || !m.boss) return;
-    const run = { boss: 'mommy', rules: bossRulesTag(), won: !!r.dead, round: r.round, secs: Math.round(r.end * 100) / 100, dmg: Math.round(m.boss.max - m.boss.hp) };
-    acctCall('boss', run, true).then((res) => {
-      const el = $('boss-rank');
-      if (res.status !== 200 || !Array.isArray(res.rows)) { if (el) el.textContent = 'This run couldn’t be sent to the leaderboard.'; return; }
+    if (!acct || !devMode() || typeof Boss === 'undefined' || !m || !m.boss || !m.boss.run) return;
+    const body = { boss: 'mommy', rules: bossRulesTag(), run: m.boss.run };
+    acctCall('boss', body, true).then((res) => {
+      const el = $('boss-rank'), say = (t) => { if (el) el.textContent = t; };
+      if (res.status === 409) return say('The game server has other rules for her than this page right now (one of the two is being updated), so this run is not on the leaderboard.');
+      if (res.status === 422) return say(`The game server played this run again and its rules didn’t allow it, so it is not on the leaderboard${res.why ? ' (' + res.why + ')' : ''}.`);
+      if (res.status !== 200 || !Array.isArray(res.rows) || !res.run) return say('This run couldn’t be sent to the leaderboard.');
       bossBoard.rows = res.rows; bossBoard.at = now();
-      const at = res.rows.findIndex(x => x.id === acct.id);
-      if (el) el.textContent = (res.improved ? 'Your best run so far' : `Your best run stays: ${bossRunText(res.best).toLowerCase()}`) + (at >= 0 ? `. You are number ${at + 1} of ${res.rows.length} on the leaderboard.` : '.');
+      const at = res.rows.findIndex(x => x.id === acct.id), same = res.run.won === !!r.dead && res.run.round === r.round;
+      say(`The game server played your run again${same ? '' : ' and got: ' + bossRunText(res.run).toLowerCase()}. ${res.improved ? 'It is your best so far' : 'Your best stays: ' + bossRunText(res.best).toLowerCase()}${at >= 0 ? `, number ${at + 1} of ${res.rows.length} on the leaderboard.` : '.'}`);
     });
   }
   // The nest map (the deploy panel's Nest map): where her nests hang in each round, on five small boards. The places
@@ -25029,7 +25118,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // It falls back to the 2D board when it can't start (no WebGL), when the phone drops the WebGL context, and when
   // fights run under 20 fps at low quality (slower fights step the quality down first), with one line on the board.
   const THREE_URL = './vendor/three.module.min.js'; // the artifact build points this at jsDelivr
-  const V3D = '1272356b19'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '8c40de7b0e'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);

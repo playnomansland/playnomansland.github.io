@@ -94,6 +94,20 @@ ok(shown.boss.mom.u.lob && shown.boss.mom.u.projSecs === C.mommy.biteSecs, 'her 
   const f1 = hurt(1), f0 = hurt(0);
   ok(f1[1] && !f1[0] && f0[0] && !f0[1], 'a squad pointed at a nest (sq.focus) shoots that nest first, whichever it is'); }
 
+// the leaderboard's replay (2026-11-12): a run's record (m.boss.run, kept by Game.resolve) played again gives the run;
+// a record the rules don't allow is refused
+{ const res = P.runPlan(P.PLANS['Line B: read each round (no tank in round 4)']), run = res.m.boss.run, copy = () => JSON.parse(JSON.stringify(run));
+  const rp = Boss.replay(copy(), units, B.matrix);
+  ok(run.rounds.length === res.log.length && run.rounds.every((r) => r && r.army.length), 'a run keeps the player\'s side going into each fight');
+  ok(rp.ok && rp.won === !!res.won && rp.round === res.rounds && JSON.stringify(rp.log.map((f) => f.dmg)) === JSON.stringify(res.log.map((f) => Math.round(f.hang + f.ground))), `the replay gives the run: ${rp.ok ? (rp.won ? 'killed in round ' + rp.round : 'not killed') : rp.why}`);
+  const cheat = (f) => { const c = copy(); f(c); return Boss.replay(c, units, B.matrix); };
+  ok(!cheat((c) => { c.rounds[0].army[0][4] = 2; }).ok, 'a level it hasn\'t earned is refused');
+  ok(!cheat((c) => { for (let k = 0; k < 5; k++) c.rounds[0].army.push([40 + k, 'Ether Golem', k, 13, 0, 0, 0]); }).ok, 'squads the gold doesn\'t reach are refused');
+  ok(!cheat((c) => { c.rounds[0].army.push([40, 'Assassin', 0, 13, 0, 0, 0]); }).ok, 'a banned unit is refused');
+  ok(!cheat((c) => { c.rounds[1].tech = { 'Goblin Swarm': [0, 1, 2] }; }).ok, 'skills the gold doesn\'t reach are refused');
+  ok(!cheat((c) => { c.rounds.pop(); }).ok && !cheat((c) => { c.seed = -3; }).ok, 'an unfinished run and a bad seed are refused');
+  ok(Boss.rulesTag(units) === Boss.rulesTag(JSON.parse(JSON.stringify(units))) && Boss.rulesTag(units) !== Boss.rulesTag(units, { ...C, mommy: { ...C.mommy, hp: C.mommy.hp + 1 } }), 'the rules tag changes with her numbers'); }
+
 // a normal match has none of it
 const n = Game.createMatch(units, B.matrix, 1, 'standard', null, [], { draft: false });
 ok(!n.boss && Game.needsTower(n, 0) !== undefined && Game.freeMovesLeft(n, 0) === 0, 'a normal match: no boss rules');

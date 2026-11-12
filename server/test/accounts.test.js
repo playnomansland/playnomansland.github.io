@@ -97,34 +97,52 @@ setTimeout(() => { console.error('test timed out'); process.exit(1); }, 4 * 60 *
     const dv = await ok('google', { credential: idToken({ sub: devSub, email: 'dev@example.COM', email_verified: true }) });
     assert.strictEqual(dv.player.dev, true, 'a listed, verified email is a developer (case ignored)');
     assert.strictEqual((await ok('me', {}, dv.session)).player.dev, true, 'and stays one');
-    // the weekly boss's leaderboard (2026-11-12): developers only; only a better run replaces a player's row; each set
-    // of rules has its own board; best first (a kill, the earlier round, the earlier second; else the more damage)
+    // the weekly boss's leaderboard (2026-11-12): developers only. The page sends a run's record and the server plays it
+    // again (Boss.replay, in a Durable Object): the board holds what the replay got. Only a better run replaces a
+    // player's row; best first (a kill, the earlier round, the earlier second; else the more damage). The runs here are
+    // the prototype's own plans, played by tools/boss with the same rules
     {
+      const BT = require('../../tools/boss/mommy.js'), BP = require('../../tools/boss/plans.js');
+      const played = (name) => { const res = BP.runPlan(BP.PLANS[name]), last = res.log[res.log.length - 1];
+        return { run: JSON.parse(JSON.stringify(res.m.boss.run)), won: !!res.won, round: res.rounds, secs: Math.round(last.end * 100) / 100 }; };
+      const coast = played('Coaster: bank gold, burst late'), lineB = played('Line B: read each round (no tank in round 4)'), best3 = played('Search best, rounds 1-3');
+      assert.ok(!coast.won && lineB.won && best3.won && best3.round < lineB.round, 'the test\'s runs: one she survives, a kill, an earlier kill');
+      const rules = BT.Boss.rulesTag(BT.units);
       const board = async (q) => { const r = await fetch(`${srv.base}/leaderboard/boss?${q}`, { headers: { Origin: ORIGIN } }); return { status: r.status, ...(await r.json()) }; };
-      const run = (o) => ({ boss: 'mommy', rules: 'abc1', won: true, round: 4, secs: 12.5, dmg: 54000, ...o });
-      assert.strictEqual((await call('boss', run(), s1.session)).status, 403, 'an account that isn\'t a developer\'s can\'t report a boss run');
-      assert.strictEqual((await call('boss', run())).status, 401, 'nor can nobody');
-      let br = await ok('boss', run({ won: false, round: 5, secs: 30, dmg: 31000 }), dv.session);
-      assert.ok(br.improved && br.rows.length === 1 && br.rows[0].id === dv.player.id && br.rows[0].won === false && br.rows[0].dmg === 31000, 'a first run is on the board');
-      br = await ok('boss', run({ won: false, round: 5, secs: 30, dmg: 20000 }), dv.session);
-      assert.ok(!br.improved && br.best.dmg === 31000, 'less damage doesn\'t replace it');
-      br = await ok('boss', run(), dv.session);
-      assert.ok(br.improved && br.rows[0].won === true && br.rows[0].round === 4 && br.rows[0].secs === 12.5, 'a kill does');
-      br = await ok('boss', run({ round: 5, secs: 3 }), dv.session);
-      assert.ok(!br.improved && br.best.round === 4, 'a later round doesn\'t');
-      br = await ok('boss', run({ secs: 9.254 }), dv.session);
-      assert.ok(br.improved && br.best.secs === 9.25 && br.rows.length === 1, 'an earlier second in the same round does (one row a player)');
-      for (const bad of [{ boss: 'daddy' }, { boss: 'rows' }, { rules: 'ABC!' }, { rules: '' }, { round: 0 }, { round: 6 }, { round: 2.5 }, { secs: -1 }, { secs: 99 }, { secs: '3' }, { dmg: -5 }, { dmg: 1.5 }, { won: false, round: 3 }])
-        assert.strictEqual((await call('boss', run(bad), dv.session)).status, 400, 'a bad run is refused: ' + JSON.stringify(bad));
+      const send = (x, o) => ({ boss: 'mommy', rules, run: x.run, ...o });
+      assert.strictEqual((await call('boss', send(lineB), s1.session)).status, 403, 'an account that isn\'t a developer\'s can\'t report a boss run');
+      assert.strictEqual((await call('boss', send(lineB))).status, 401, 'nor can nobody');
+      assert.strictEqual((await call('boss', send(lineB, { boss: 'daddy' }), dv.session)).status, 400, 'an unknown boss is refused');
+      const other = await call('boss', send(lineB, { rules: 'abc1' }), dv.session);
+      assert.ok(other.status === 409 && other.rules === rules, 'a page with other rules than the server\'s is told so');
+      for (const bad of [null, 5, {}, { seed: 1 }, { seed: 1, rounds: [] }, { seed: -1, rounds: coast.run.rounds }, { seed: coast.run.seed, rounds: coast.run.rounds.slice(0, 2) }]) {
+        const r = await call('boss', send({ run: bad }), dv.session);
+        assert.ok(r.status === 400 || r.status === 422, 'a record that isn\'t a finished run is refused: ' + JSON.stringify(bad).slice(0, 60) + ' -> ' + r.status);
+      }
+      // cheats: a squad a level higher than its experience allows, a squad the gold doesn't reach, a kill claimed on top
+      const cheat = (f) => { const c = JSON.parse(JSON.stringify(lineB.run)); f(c); return { run: c }; };
+      for (const [what, c] of [['a level it hasn\'t earned', cheat((c) => { c.rounds[0].army[0][4] = 3; })],
+        ['squads the gold doesn\'t reach', cheat((c) => { for (let k = 0; k < 6; k++) c.rounds[0].army.push([50 + k, 'Ether Golem', k, 12, 0, 0, 0]); })],
+        ['a banned unit', cheat((c) => { c.rounds[0].army.push([60, 'Assassin', 0, 12, 0, 0, 0]); })],
+        ['a squad in her zone', cheat((c) => { c.rounds[0].army[0][3] = 3; })]]) {
+        const r = await call('boss', send(c), dv.session);
+        assert.ok(r.status === 422 && typeof r.why === 'string' && r.why, `a run with ${what} is refused: ${r.status} ${r.why || ''}`);
+      }
+      let br = await ok('boss', send(coast, { won: true, round: 1, secs: 1, dmg: 99999 }), dv.session);
+      assert.ok(br.improved && br.run.won === false && br.rows.length === 1 && br.rows[0].id === dv.player.id && br.rows[0].won === false, 'a first run is on the board as the replay found it, whatever the page claims');
+      br = await ok('boss', send(lineB), dv.session);
+      assert.ok(br.improved && br.run.won === true && br.run.round === lineB.round && br.run.secs === lineB.secs && br.rows[0].won === true, 'a kill replaces it, with the round and second the tools got');
+      br = await ok('boss', send(coast), dv.session);
+      assert.ok(!br.improved && br.run.won === false && br.best.won === true && br.best.round === lineB.round && br.rows.length === 1, 'a worse run doesn\'t (one row a player)');
       const d2 = await ok('google', { credential: idToken({ sub: '3333' + crypto.randomInt(1e9), email: 'other@example.com', email_verified: true }) });
-      await ok('boss', run({ round: 3, secs: 29.5 }), d2.session);
-      await ok('boss', run({ rules: 'zz9', won: false, round: 5, secs: 30, dmg: 100 }), d2.session);
-      const bb = await board('boss=mommy&rules=abc1');
-      assert.deepStrictEqual(bb.rows.map((r) => [r.id, r.round, r.secs]), [[d2.player.id, 3, 29.5], [dv.player.id, 4, 9.25]], 'the board: the earlier round first');
-      assert.ok(typeof bb.rows[0].tag === 'string' && bb.rows[0].tag && !('dev' in bb.rows[0]), 'rows carry the gamertag, not the account\'s flags');
-      assert.strictEqual((await board('boss=mommy&rules=zz9')).rows.length, 1, 'another set of rules is another board');
-      assert.strictEqual((await board('boss=mommy&rules=none')).rows.length, 0, 'an unknown set of rules is an empty board');
-      assert.strictEqual((await board('boss=daddy&rules=abc1')).status, 400, 'an unknown boss is refused');
+      br = await ok('boss', send(best3), d2.session);
+      assert.ok(br.improved && br.run.round === best3.round, 'another developer\'s earlier kill');
+      const bb = await board('boss=mommy');
+      assert.deepStrictEqual(bb.rows.map((r) => [r.id, r.won, r.round]), [[d2.player.id, true, best3.round], [dv.player.id, true, lineB.round]], 'the board: the earlier round first');
+      assert.ok(bb.rules === rules && typeof bb.rows[0].tag === 'string' && bb.rows[0].tag && !('dev' in bb.rows[0]), 'rows carry the gamertag, not the account\'s flags');
+      assert.strictEqual((await board(`boss=mommy&rules=${rules}`)).rows.length, 2, 'the same board by its rules');
+      assert.strictEqual((await board('boss=mommy&rules=none')).rows.length, 0, 'another set of rules is another (empty) board');
+      assert.strictEqual((await board('boss=daddy')).status, 400, 'an unknown boss is refused');
     }
     const unv = await ok('google', { credential: idToken({ email: 'other@example.com', email_verified: false }) });
     assert.strictEqual(unv.player.dev, false, 'an unverified email is not');

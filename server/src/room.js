@@ -45,6 +45,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import Game from '../../src/game.js';
 import Ref from '../../src/referee.js';
+import Boss from '../../src/boss.js';
 import { LIMITS, LOBBY, json, readMessage, secret, ipHash } from './limits.js';
 import { Chat } from './chat.js';
 import { builtin } from './units.js';
@@ -84,6 +85,7 @@ export class Room extends DurableObject {
   async fetch(request) {
     const url = new URL(request.url);
     if (url.pathname === '/selftest') return this.selftest();
+    if (url.pathname === '/bosscheck') return this.bossCheck(request); // (only the Worker reaches this: accounts.js bossCheck)
     if (this.ctx.getWebSockets().length >= LIMITS.maxSockets) return json({ error: 'room full' }, 429);
     const [client, server] = Object.values(new WebSocketPair());
     this.ctx.acceptWebSocket(server);
@@ -613,6 +615,15 @@ export class Room extends DurableObject {
       t.reported = true;
       await this.save();
     } catch (e) { console.warn('tournament report', e); }
+  }
+
+  // the weekly boss's leaderboard (accounts.js BOSS): play a reported run again and say what it came to. Here, not in
+  // the Worker, because five fights need more processor time than a Worker request gets
+  async bossCheck(request) {
+    let run = null; try { run = await request.json(); } catch (e) { /* not a record */ }
+    const { units, matrix } = builtin();
+    let res; try { res = Boss.replay(run, units, matrix); } catch (e) { console.warn('boss replay', e && e.message); res = { ok: false, why: 'the replay broke' }; }
+    return json(res.ok ? { ok: true, won: res.won, round: res.round, secs: res.secs, dmg: res.dmg } : { ok: false, why: res.why });
   }
 
   selftest() {

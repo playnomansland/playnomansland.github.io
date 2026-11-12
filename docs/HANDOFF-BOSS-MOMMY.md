@@ -1,6 +1,6 @@
 # Handoff: the Mommy boss puzzle
 
-Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, merged into `main` (live) after each step. Written 11 November 2026 over one long day; sections are in the order the work happened. **Start with section 0 (where things stand now)**, then section 7 (working with the owner); the rest is history and evidence. Section 12 is the session before last (her attacks reworked, difficulty measured again, unit priorities measured); section 13 the owner's answers and the 3D board first; section 14 the latest (countdown, acid in place of the poison tiles, nest map, leaderboard).
+Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, merged into `main` (live) after each step. Written 11 November 2026 over one long day; sections are in the order the work happened. **Start with section 0 (where things stand now)**, then section 7 (working with the owner); the rest is history and evidence. Section 12 is the session before last (her attacks reworked, difficulty measured again, unit priorities measured); section 13 the owner's answers and the 3D board first; section 14 the countdown, acid in place of the poison tiles, nest map and leaderboard; section 15 the latest (the server replays a run).
 
 ## 0. Where things stand now (12 November)
 
@@ -18,7 +18,7 @@ Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, me
 - **the 3D board is the one that counts** (owner, 12 November: "put all effort into the 3d version and keep some small functionality for 2d"). There she hangs off the ground and drops when she falls, lies on her back while stunned, her nests are egg sacs (LOW on the ground, HIGH hanging on a thread) that keep their label through the fight, her reach ring shows through the fight (red while nobody is in it), her web is silk on the ground. The 2D board has a simple version; don't spend effort on it
 - the top left says Round n of 5 (no player health), the top right only her name; the fight's time left is a big count in the middle of the boss bar
 - **no poison tiles any more** (owner, 12 November): her heavy bite is acid (green) and leaves a pool where it lands
-- a finished run goes on **the boss leaderboard** (developer accounts; the server takes the page's word for now); the result card has a Leaderboard button and the menu's leaderboard a Mommy tab
+- a finished run goes on **the boss leaderboard** (developer accounts; the game server plays the run again and ranks what its replay got: section 15); the result card has a Leaderboard button and the menu's leaderboard a Mommy tab
 - shop cards show n/3 (the squad cap); Settings in a match has *Restart Mommy*; a report after every fight
 
 **Numbers in force** (`Boss.CFG`): health 54,000 (owner agreed, 12 November); start 450 gold; 30 s fights; hang 15%; reach 22 m; web 14 m; bites fast 150×0.8/s, heavy 480×0.25/s splash 2.5, sweep 70×1/s splash 5, order fast, heavy, sweep, heavy, sweep, each landing 0.5 s after her jaws open, where they opened (owner, 12 November); mortar after 5 s with nobody in reach, every 4 s, 1.6 s in the air, 120 damage, only rips nests within her reach; nests 500 health, burst 3, hatch 6/5/4/3/3 s, lure 12 m; spiderlings 90 health; acid: the heavy bite leaves a pool 3 m across (half) for 8 s, 4%/s, linger 2 s; wing-nest layouts per round as in CFG; molt 6 s; no share-of-max-health damage on her; banned Meteor Caller, Assassin, Rogue, Truespear, Sun Priest; at most 3 squads of a type; one free move and one free extra deployment a round; a treasury, no tower.
@@ -29,11 +29,11 @@ Work branches `claude/charming-allen-kjik08`, then `claude/epic-cray-2tmw9w`, me
 
 **Owner requests on 12 November, later** (all built, section 14): the time ticking down central and obvious; a Leaderboard button on the result screen and a Mommy tab in the menu's leaderboard; the green tiles and their effects removed, one bite made green with an acid pool instead; "Restart boss"; a button in the deploy panel showing every round's nest places (confirmed: they are fixed).
 
+**Owner on 12 November, last:** acid on the heavy bite agreed; the Mommy tab stays developers only until the boss opens up; build the server-side replay (built: section 15).
+
 **Open, waiting on the owner:**
-1. The leaderboard takes the page's word for a run. Fine while only developers can report one; the server has to replay a run before the boss opens to everyone (section 14).
-2. The round-3 title at 54,000: the best plan known wins by 1% (54.6k by round 3). Search further before a real launch (already agreed).
-3. Which bite is the acid one was my choice (the heavy bite, rounds 2 and 4); the numbers (8 s, 4% a second) are the old tiles'.
-4. Not built: the "Mommy" title (the win screen mentions it), a weekly rotation (it is the one boss), a model of her own (the spider model drawn big).
+1. The round-3 title at 54,000: the best plan known wins by 1% (54.6k by round 3). Search further before a real launch (already agreed).
+2. Not built: the "Mommy" title (the win screen mentions it), a weekly rotation (it is the one boss), a model of her own (the spider model drawn big), opening her to everyone (the leaderboard's server check no longer stands in the way).
 
 **Things that bit this session (read before working):**
 - Build like live: `PB_UI_DEFAULT=pc node src/build.js` (live's `index.html` has `const DEF = 'pc'`; a plain build makes 'classic' and the merge then changes PC players' menu).
@@ -571,7 +571,7 @@ Median damage by round 5 (thousands), jaws 1 s → 0.5 s: statmax 33.4 → 31.6,
 - **Restart boss** (was Restart Mommy).
 - **Nest map** in the deploy panel: five small boards, one a round, with the nests (L / H), her reach, the bite and the hatch time. The places are fixed (`CFG.nests`), the same every run.
 - **Leaderboard.** Server: table `boss_runs`, POST /account/boss, GET /leaderboard/boss (docs/SERVER.md). Page: `bossReport` when a run ends, a line on the result card (where the run landed), a Leaderboard button there, and a Mommy tab in the menu's leaderboard (classic sheet and the PC menu's Rankings), for developers only while the boss is. Best first: a kill in the earliest round, then the earliest second; without a kill, the most damage. One row a player; each set of her rules has its own board.
-  - **Not checked by the server.** The page reports the result; the server only checks its shape and that the account is a developer's. Before the boss opens to everyone the server has to replay the run (each round's purchases, moves, levels and arrows, as `puzzleWon` does for one fight).
+  - At first the server took the page's word for a run. It replays it now (section 15).
 
 ### Difficulty now (no tiles, acid heavy bite, 0.5 s jaws; 40 games each; win by round 4 / by round 5)
 
@@ -589,4 +589,17 @@ Median damage by round 5 (thousands): random 19.1, statmax 30.5, +100 gold 40.3,
 At 54,000 this is the picture 46,000 gave when it was first agreed (aware 35% by round 5 and none by round 4, statmax and random none, statmax + 100 gold above its 5-10% target). Win rates from 40 games move by several points between runs with the same medians (aware at 54,000 read 15% in section 13).
 
 **The round-3 title at 54,000.** The best plan known does 8.0 / 29.3 / 54.6k by rounds 1 / 2 / 3. Lines (by R3 / R4 / R5): A 32.5 / 41.6 / 59.5, B 32.5 / 47.5 / 77.4, C 21.2 / 30.7 / 55.5, search best five rounds 34.6 / 51.0 / 82.0.
+
+
+---
+
+## 15. The server replays a run (12 November, last)
+
+The owner agreed to the three questions of section 14's message: acid on the heavy bite, the Mommy tab for developers only until the boss opens up, and the server-side replay.
+
+- **The record.** `m.boss.run = { seed, rounds: [...] }`: the match's seed and, for each round, the player's side as it went into the fight (`Boss.snapshot`: every squad's id, unit, tile, level, arrow and carrier; the skills owned; whether a loan was taken). `Game.resolve` calls `Boss.record(m)` before it pays the fight out, so the page and the tools both keep it without doing anything.
+- **The replay.** `Boss.replay(run, units, matrix)` starts the same match from the seed. Before each fight it works out what must have happened since the last one (squads sold, moved, bought, skills, level-ups, a loan), does it through the game's own functions (`sell`, `moveSquad`, `place`, `buySkill`, `levelUp`, `takeLoan`), then checks its side looks exactly like the record and plays the fight. Gold only comes from the loan and from sales, so those go first, except a sale that would take the last squad of a unit whose skill is still to be bought. A new squad gets the id it had (gaps are squads bought and taken back), since ids order the bodies in a fight. Anything the rules refuse, or a side that doesn't come out as recorded, fails the run with a reason.
+- **The server** (`accounts.js` BOSS, `room.js` bossCheck): POST /account/boss takes `{ boss, rules, run }`, refuses a page whose rules tag isn't its own (409), replays the run in a Durable Object (about a second of processor time, too much for the Worker itself) and ranks what the replay got; a claimed result isn't even read. `src/boss.js` is now in the server deploy's paths.
+- **Checked.** 131 recorded runs replay to exactly the same damage every round: the 11 hand lines and search plans, and 40 games each of the random, stat-max and aware players (`tools/tests/boss.js` keeps one, with five cheats that must fail). A run played on the page (an Undo all, a loan, a skill, a sale, a move, level-ups, arrows) replays the same in the page and in node, and the page's rules tag is the server's. The server's test sends the tools' runs and cheats (a level not earned, squads the gold doesn't reach, a banned unit, a squad in her zone).
+- **What would make an honest run fail:** a page and a server on different versions (answered as "other rules", not as a failure), and anything the page lets a player do that the replay doesn't know to derive. Carriers (a squad riding Just a horse: boarding, stepping out, another boarding) were tried in one run and replayed the same. The result card says why when a run fails, so it can be found.
 

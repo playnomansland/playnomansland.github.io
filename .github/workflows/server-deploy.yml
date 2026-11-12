@@ -16,6 +16,7 @@ on:
       - 'server/**'
       - 'src/engine.js'
       - 'src/game.js'
+      - 'src/boss.js'
       - 'src/referee.js'
       - 'src/duo.js'
       - 'src/tournament.js'

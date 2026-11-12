@@ -4987,7 +4987,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       const bb = await bossBoardLoad(true);
       if (!$('lb') || $('lb').dataset.tab !== 'boss') return;
       if (!bb.rows) { $('lb-msg').textContent = 'Couldn’t reach the game server. Check your connection and try again.'; return; }
-      $('lb-msg').textContent = (bb.rows.length ? 'Best runs against the Mommy under her rules as they are now. A kill in the earliest round comes first, then the earliest second of that round; without a kill, the most damage.' : 'Nobody has finished a run against her under her rules as they are now. Finish one to get on the board.') + ' Developer accounts only for now.';
+      $('lb-msg').textContent = (bb.rows.length ? 'Best runs against the Mommy under her rules as they are now. A kill in the earliest round comes first, then the earliest second of that round; without a kill, the most damage. The game server plays every run again before it counts.' : 'Nobody has finished a run against her under her rules as they are now. Finish one to get on the board.') + ' Developer accounts only for now.';
       if (!bb.rows.length) return;
       $('lb').innerHTML = `<table class="lb"><thead><tr><th>#</th><th>Player</th><th>Best run</th></tr></thead><tbody>
         ${bb.rows.map((r, i) => `<tr class="${acct && r.id === acct.id ? 'me' : ''}"><td class="num">${i + 1}</td><td>${nameplate(r.tag, r.title, 'row')}</td><td>${esc(bossRunText(r))}</td></tr>`).join('')}
@@ -7278,33 +7278,37 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     $('boss-help').addEventListener('click', () => { closeSheet(); openHelp(); });
   }
   // ---------- the weekly boss's leaderboard (2026-11-12; server/src/accounts.js BOSS) ----------
-  // A finished run is reported to the game server (developer accounts only, as the boss is a developer test; the server
-  // takes the page's word for it: it does not replay the run yet). Runs are ranked per set of her rules: bossRulesTag is
-  // a short tag made from Boss.CFG, so any change to her numbers starts a new board.
-  const bossRulesTag = () => { const t = JSON.stringify(Boss.CFG); let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
+  // A finished run's record (m.boss.run: the seed and the player's side going into each fight, kept by Boss.record)
+  // goes to the game server, which plays the run again with the game's own rules and ranks what its replay got: it
+  // takes nothing on the page's word. Developer accounts only, as the boss is a developer test. Runs are ranked per
+  // set of her rules: Boss.rulesTag is a short tag made from her numbers and the units, so a change to either starts
+  // a new board, and a page and a server on different versions don't mix their runs.
+  const bossRulesTag = () => Boss.rulesTag(m && m.boss ? m.units : units);
   const bossBoard = { rows: null, at: 0, busy: null };
   // the board from the server (kept a minute; force: now). Resolves to bossBoard; rows stays null if it never arrived
   function bossBoardLoad(force) {
     if (bossBoard.busy) return bossBoard.busy;
     if (typeof Boss === 'undefined' || (!force && bossBoard.at && now() - bossBoard.at < 60e3)) return Promise.resolve(bossBoard);
     bossBoard.busy = (async () => {
-      try { const r = await fetch(`${SERVER_URL}/leaderboard/boss?boss=mommy&rules=${bossRulesTag()}`); const j = r.ok ? await r.json() : null; if (j && Array.isArray(j.rows)) bossBoard.rows = j.rows; } catch (e) { /* the last board stays */ }
+      try { const r = await fetch(`${SERVER_URL}/leaderboard/boss?boss=mommy`); const j = r.ok ? await r.json() : null; if (j && Array.isArray(j.rows)) bossBoard.rows = j.rows; } catch (e) { /* the last board stays */ } // (the board for her rules as the server has them now)
       bossBoard.at = now(); bossBoard.busy = null;
       return bossBoard;
     })();
     return bossBoard.busy;
   }
   const bossRunText = (r) => r.won ? `Killed in round ${r.round}, ${(+r.secs).toFixed(1)} s in` : `${(+r.dmg).toLocaleString('en')} damage, not killed`;
-  // a finished run goes to the server; its answer (the board with this run in it) fills the result card's line
+  // a finished run's record goes to the server; its answer (what its replay got, and the board) fills the result card's line
   function bossReport(r) {
-    if (!acct || !devMode() || typeof Boss === 'undefined' || !m || !m.boss) return;
-    const run = { boss: 'mommy', rules: bossRulesTag(), won: !!r.dead, round: r.round, secs: Math.round(r.end * 100) / 100, dmg: Math.round(m.boss.max - m.boss.hp) };
-    acctCall('boss', run, true).then((res) => {
-      const el = $('boss-rank');
-      if (res.status !== 200 || !Array.isArray(res.rows)) { if (el) el.textContent = 'This run couldn’t be sent to the leaderboard.'; return; }
+    if (!acct || !devMode() || typeof Boss === 'undefined' || !m || !m.boss || !m.boss.run) return;
+    const body = { boss: 'mommy', rules: bossRulesTag(), run: m.boss.run };
+    acctCall('boss', body, true).then((res) => {
+      const el = $('boss-rank'), say = (t) => { if (el) el.textContent = t; };
+      if (res.status === 409) return say('The game server has other rules for her than this page right now (one of the two is being updated), so this run is not on the leaderboard.');
+      if (res.status === 422) return say(`The game server played this run again and its rules didn’t allow it, so it is not on the leaderboard${res.why ? ' (' + res.why + ')' : ''}.`);
+      if (res.status !== 200 || !Array.isArray(res.rows) || !res.run) return say('This run couldn’t be sent to the leaderboard.');
       bossBoard.rows = res.rows; bossBoard.at = now();
-      const at = res.rows.findIndex(x => x.id === acct.id);
-      if (el) el.textContent = (res.improved ? 'Your best run so far' : `Your best run stays: ${bossRunText(res.best).toLowerCase()}`) + (at >= 0 ? `. You are number ${at + 1} of ${res.rows.length} on the leaderboard.` : '.');
+      const at = res.rows.findIndex(x => x.id === acct.id), same = res.run.won === !!r.dead && res.run.round === r.round;
+      say(`The game server played your run again${same ? '' : ' and got: ' + bossRunText(res.run).toLowerCase()}. ${res.improved ? 'It is your best so far' : 'Your best stays: ' + bossRunText(res.best).toLowerCase()}${at >= 0 ? `, number ${at + 1} of ${res.rows.length} on the leaderboard.` : '.'}`);
     });
   }
   // The nest map (the deploy panel's Nest map): where her nests hang in each round, on five small boards. The places
