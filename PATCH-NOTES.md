@@ -22,6 +22,7 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ## 11 November 2026 – A tour of the menu
 
+- **2v2: tapping the Vault (or any 2v2 building) did nothing** while a unit from the shop was still picked, which it stays after you place one. It now opens the building's sheet and lets go of the pick, as buildings do in 1v1. A ranged unit can still be placed into a Tree kojja's Nest.
 - **Fixed: fights skipped straight to the result** for players whose computer or phone has *reduce motion* on (on Windows: *Animation effects* off). They never saw a round play out. Fights now always play.
 - **2v2, the Vault:** the amount to put in or take out goes in tens, 10 at least. It could offer 1 gold, or an odd amount, once less was left to move this round.
 - **2v2, Field hospital:** *Second wind* is one button now, not a list of every squad by name and tile: press it, then tap the squad on the board (yours or your teammate's), as *Mark Bounty* picks its enemy. Once bought, the same button moves it to another squad.
