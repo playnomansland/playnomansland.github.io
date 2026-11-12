@@ -215,6 +215,7 @@ html.pc .panel > .bar:last-child { margin: -6px -12px -12px; padding: 6px 12px 1
 .up-x { position: absolute; inset: 4px 0; pointer-events: none; }
 .up-x::before, .up-x::after { content: ''; position: absolute; left: 50%; top: 50%; width: min(84%, 260px); height: 2px; border-radius: 1px; background: #E5574A; box-shadow: 0 0 6px rgba(229, 87, 74, 0.45); }
 .up-x::before { transform: translate(-50%, -50%) rotate(14deg); } .up-x::after { transform: translate(-50%, -50%) rotate(-14deg); }
+.card .boss-dmg { margin: 2px 0 6px; font-size: 18px; font-weight: 600; } .card .boss-dmg .num { font-size: 30px; font-weight: 800; color: var(--gold, #F2B23A); margin-right: 4px; } /* the Mommy's round card: X damage dealt */
 .up-no { font-size: 12px; font-weight: 700; color: #E5574A; white-space: nowrap; }
 .up-h > b { flex: 1; min-width: 0; font: 600 14px/1.2 var(--font-display); }
 .up-h > b .lab { color: var(--gold); }
@@ -7576,7 +7577,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const lines = [
       r.fallAt != null ? `Nests down at <b class="num">${s1(r.fallAt)} s</b>: she was down for <b class="num">${s1(r.window)} s</b>.` : `<b>She never fell</b>: ${r.nestsLeft} of ${r.nests} nests still hang.`,
       `Mortar shots: <b class="num">${r.mortars}</b>${r.mortarNests ? ` (${r.mortarNests} of her nests spent on them)` : ''}.`,
-      `Damage to her: <b class="num">${r.dmg.toLocaleString('en')}</b> (${r.hang.toLocaleString('en')} while she hung).${top ? ` Most: ${top}.` : ''}`,
+      r.dmg > 0 ? `${r.hang > 0 ? `<b class="num">${r.hang.toLocaleString('en')}</b> of it while she hung.` : ''}${top ? ` Most: ${top}.` : ''}` : '', // (the round's damage is the card's headline: X damage dealt)
       `Her health: <b class="num">${r.hpLeft.toLocaleString('en')}</b> of ${m.boss.max.toLocaleString('en')}.`,
       r.treasury === false ? 'Her spiders broke your treasury.' : '',
     ].filter(Boolean).map(x => `<p>${x}</p>`).join('');
@@ -7585,6 +7586,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     overlay(`<div class="card">
       <span class="eyebrow">Mommy · weekly boss</span>
       <h2 class="${won ? 'you' : m.over ? 'foe' : ''}">${head}</h2>
+      <p class="big boss-dmg"><b class="num">${r.dmg.toLocaleString('en')}</b> damage dealt</p>
       ${won ? `<p class="big">Killed in round ${r.round}: ${earned.map(bossRewardName).join(', ').replace(/, ([^,]*)$/, ' and $1')}.${next ? ` Kill her by round ${next.round} for ${bossRewardName(next)}.` : ''}</p>` : ''}
       ${lines}
       ${m.over ? acct ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : '<p>Play as a guest or sign in (Profile) to get your runs on her leaderboard.</p>' : ''}
