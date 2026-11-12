@@ -2294,6 +2294,10 @@ html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: sta
 .bz-ctl .list i { grid-column: 3; grid-row: 1 / 3; padding: 3px 6px 1px; background: #F2B23A; color: #17140F; font: 700 12px/1 var(--dstencil); font-style: normal; letter-spacing: .06em; text-transform: uppercase; }
 @media (prefers-reduced-motion: reduce) { .bz-ctl .b.sure { animation: none; } .bz-ctl .list { animation: none; } }
 
+/* buy and place feedback (2026-11-12): a squad placed this round as a square pip with its unit, not a diamond */
+html.diorama.pcwide .panel .trow .pips i.u { width: 20px; height: 20px; transform: none; border: 2px solid #F4ECD8; border-radius: 0; background: rgba(244,236,216,.12); display: grid; place-items: center; }
+html.diorama.pcwide .panel .trow .g2.pfx-spend { color: #FFE59A; }
+
 [hidden] { display: none !important; }
 .panel:empty { display: none; }
 body { padding-top: calc(6px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0; }
@@ -2814,6 +2818,23 @@ html.dock .bar:has(> .task:not([hidden])) > .hint { display: none; }
 .seg.speeds button.asked { outline: 1px dashed var(--gold); outline-offset: -4px; }
 .speed-ask { display: block; margin-top: 6px; color: var(--gold); }
 .speed-ask[hidden] { display: none; }
+/* buy and place feedback (prototype, 2026-11-12): the page's effect layer (pfx*), squads placed this round (.fresh), the deploy pips as a receipt */
+.pfx { position: fixed; inset: 0; z-index: 30; pointer-events: none; overflow: hidden; }
+.pfx svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.pfx-coin { position: absolute; left: 0; top: 0; padding: 3px 8px 3px 20px; border-radius: 999px; background: #17140F; border: 1.5px solid var(--gold); color: var(--gold); font: 700 14px/1 var(--font-data); white-space: nowrap; box-shadow: 0 3px 10px rgba(0,0,0,.55); will-change: transform; }
+.pfx-coin::before { content: ''; position: absolute; left: 5px; top: 50%; width: 11px; height: 11px; margin-top: -5.5px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #FFE59A, var(--gold) 60%, #9A6E12); }
+.pfx-back { position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--bg); border: 1.5px solid var(--foe); box-shadow: 0 4px 12px rgba(0,0,0,.5); will-change: transform; }
+.pfx-tagbg { fill: var(--you); stroke: #0A0E10; stroke-width: 1.5; }
+.pfx-tagbg.foe { fill: var(--foe); }
+.pfx-tag { fill: #0A0E10; font: 800 8.5px var(--font-body, sans-serif); letter-spacing: .06em; text-anchor: middle; }
+.marks .fresh { fill: var(--you); fill-opacity: .12; stroke: var(--you); stroke-width: 2.5; stroke-linejoin: round; animation: fresh-breathe 1.6s ease-in-out infinite; }
+@keyframes fresh-breathe { 0%, 100% { stroke-opacity: 1; fill-opacity: .16; } 50% { stroke-opacity: .45; fill-opacity: .04; } }
+.trow .g2 { transition: color .15s; }
+.trow .g2.pfx-spend { color: #FFE59A; text-shadow: 0 0 10px rgba(230,184,74,.7); }
+.pips i.u { width: 19px; height: 19px; border-radius: 6px; border: 1.5px solid var(--you); background: color-mix(in srgb, var(--you) 16%, var(--bg)); display: grid; place-items: center; cursor: pointer; }
+.pips i.u svg { width: 13px; height: 13px; }
+.uc2 .nw { position: absolute; top: 3px; left: 50%; transform: translateX(-50%); padding: 1px 6px; border-radius: 999px; background: var(--you); color: #0A0E10; font: 800 10px/1.3 var(--font-data); box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+@media (prefers-reduced-motion: reduce) { .marks .fresh { animation: none; } }
 .marks .tut-tile { fill: rgba(92, 198, 223, 0.28); stroke: var(--you); stroke-width: 1.5; animation: tut-blink 1.1s ease-in-out infinite; }
 @keyframes tut-blink { 50% { opacity: 0.2; } }
 .ucard.tut-glow { animation-name: tut-glow-in; } /* the shop scrolls sideways and would clip a glow outside the card */
@@ -19743,6 +19764,203 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
       return r;
     };
   }
+  // ---------- buy and place feedback (prototype, 2026-11-12) ----------
+  // Placing a squad by hand gets one loud moment, made to show around a thumb on a phone: a ripple on the ground
+  // spreading past the tile, the price flying off to the gold, the gold counting down, the card bumping, and on the 3D
+  // board the squad dropping in (render3d landLift). Afterwards it stays marked as new until the fight (boardMarks:
+  // freshMarks), the deploy pips list what was placed this round, and the fight's start locks them in (pfxLock).
+  // A drop on a bad tile: a red cross on the tile and the card flying back to the tray. Sounds are unchanged.
+  const landAt = {}; // squad id -> when it was placed by hand (the 3D board drops it in)
+  const pfx = { list: [], raf: 0, gold: null, flush: [] };
+  function pfxLayer() {
+    let l = $('pfx');
+    if (!l) { l = document.createElement('div'); l.id = 'pfx'; l.className = 'pfx'; l.setAttribute('aria-hidden', 'true'); l.innerHTML = '<svg></svg>'; document.body.appendChild(l); }
+    return l;
+  }
+  // board metres -> a point on the screen (client coordinates)
+  function pfxAt() { const at = wrapMap(), w = $('wrap').getBoundingClientRect(); return (x, y) => { const p = at(x, y); return [p[0] + w.left, p[1] + w.top]; }; }
+  const pfxMid = (col, row, n = 1) => Game.tileToWorld(col + (n - 1) / 2, row + (n - 1) / 2);
+  const pfxSlow = () => window.__pfxSlow || 1; // (UI tests on a slow 3D board play it in slow motion)
+  function pfxAdd(e) { e.life *= pfxSlow(); e.t0 = performance.now(); pfx.list.push(e); if (!pfx.raf) pfx.raf = requestAnimationFrame(pfxFrame); }
+  // the gold shown in the tray while a price is on its way to it: the old amount until the coin lands, then counting down
+  function pfxGold(g) {
+    const a = pfx.gold;
+    if (!a) return g;
+    const k = (performance.now() - a.t0) / a.dur;
+    if (k >= 1 || a.to !== g) { if (k >= 1) pfx.gold = null; return g; }
+    if (k <= 0) return a.from;
+    return Math.round(a.from + (a.to - a.from) * (1 - (1 - k) ** 2));
+  }
+  function goldTick() {
+    const el = document.querySelector('#panel .g2');
+    const a = pfx.gold;
+    if (!el) return;
+    const k = a ? (performance.now() - a.t0) / a.dur : 2;
+    if (el.firstChild && el.firstChild.nodeType === 3 && m) { const s = String(pfxGold(m.gold[me])); if (el.firstChild.nodeValue !== s) el.firstChild.nodeValue = s; }
+    el.classList.toggle('pfx-spend', !!a && k > -0.1 && k < 1.15);
+  }
+  const pfxSquare = (at, c, d) => [[-d, -d], [d, -d], [d, d], [-d, d]].map(([x, y]) => at(c.x + x, c.y + y).map(v => v.toFixed(1)).join(',')).join(' ');
+  const pfxCircle = (at, c, r) => Array.from({ length: 48 }, (_, k) => { const a = k / 48 * Math.PI * 2; return at(c.x + Math.cos(a) * r, c.y + Math.sin(a) * r).map(v => v.toFixed(1)).join(','); }).join(' ');
+  const easeOut = (k) => 1 - (1 - k) ** 3;
+  function pfxDraw(e, k, at) {
+    const T = Game.TILE, c = pfxMid(e.col, e.row, e.n), col = e.col_ || 'var(--you)';
+    let h = '';
+    if (e.kind === 'stamp' || e.kind === 'move') { // the tile flashes softly, and one faint ring runs out a little past it
+      const big = e.kind === 'stamp';
+      h += `<polygon points="${pfxSquare(at, c, T * e.n / 2 - 0.3)}" style="fill:${col};fill-opacity:${(0.18 * (1 - k)).toFixed(3)};stroke:#fff;stroke-opacity:${(0.35 * (1 - k)).toFixed(3)};stroke-width:1.5"/>`;
+      const reach = big ? 0.8 : 0.5;
+      h += `<polygon points="${pfxCircle(at, c, T * (0.45 * e.n + reach * easeOut(k)))}" style="fill:none;stroke:${col};stroke-opacity:${(0.3 * (1 - k)).toFixed(3)};stroke-width:${(1 + 1.5 * (1 - k)).toFixed(2)}"/>`;
+    } else if (e.kind === 'bad') { // a red cross on the tile
+      const o = (1 - k).toFixed(3), d = T / 2 - 1.2, p = (x, y) => at(c.x + x, c.y + y).map(v => v.toFixed(1)).join(' ');
+      h += `<polygon points="${pfxSquare(at, c, T / 2 - 0.3)}" style="fill:var(--foe);fill-opacity:${(0.35 * (1 - k)).toFixed(3)};stroke:var(--foe);stroke-opacity:${o};stroke-width:2"/>`;
+      h += `<path d="M${p(-d, -d)}L${p(d, d)}M${p(d, -d)}L${p(-d, d)}" style="stroke:var(--foe);stroke-opacity:${o};stroke-width:3;stroke-linecap:round"/>`;
+    } else if (e.kind === 'lock') { // the fight starts: a white square snaps in onto the squad
+      const q = easeOut(Math.min(1, k * 1.6));
+      h += `<polygon points="${pfxSquare(at, c, T * e.n / 2 * (1.5 - 0.55 * q))}" style="fill:#fff;fill-opacity:${(0.3 * (1 - k)).toFixed(3)};stroke:${col};stroke-opacity:${(1 - k * k).toFixed(3)};stroke-width:${(4 - 2 * q).toFixed(2)}"/>`;
+    } else if (e.kind === 'find') { // a pip tapped: rings close in on the squad
+      for (const d of [0, 0.35]) { const q = (k - d) / (1 - d); if (q <= 0 || q >= 1) continue; h += `<polygon points="${pfxCircle(at, c, T * (2.4 - 1.9 * easeOut(q)))}" style="fill:none;stroke:${col};stroke-opacity:${(1 - q * 0.7).toFixed(3)};stroke-width:3"/>`; }
+    } else if (e.kind === 'foeNew') { // the opponent's squads from this round, as the fight starts
+      const o = (k < 0.75 ? 1 : (1 - k) / 0.25) * (0.75 + 0.25 * Math.sin(k * Math.PI * 6));
+      const pts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([x, y]) => at(c.x + x * T * e.n / 2, c.y + y * T * e.n / 2));
+      const tr = pts.reduce((b, p) => p[0] - p[1] > b[0] - b[1] ? p : b);
+      h += `<polygon points="${pfxSquare(at, c, T * e.n / 2 - 0.3)}" style="fill:none;stroke:var(--foe);stroke-opacity:${o.toFixed(3)};stroke-width:2.5"/>`;
+      h += `<g transform="translate(${tr[0].toFixed(1)},${tr[1].toFixed(1)})" style="opacity:${o.toFixed(3)}"><rect class="pfx-tagbg foe" x="-14" y="-7" width="28" height="14" rx="7"/><text class="pfx-tag" y="3.5">NEW</text></g>`;
+    }
+    return h;
+  }
+  function pfxFrame() {
+    pfx.raf = 0;
+    const now = performance.now(), svg = pfxLayer().firstChild;
+    pfx.list = pfx.list.filter(e => now - e.t0 < e.life);
+    const cinematic = board3d && board3d.camera.level() >= 3;
+    let h = '';
+    if (m && !cinematic && ['deploy', 'battle'].includes(phase)) {
+      Game.useGrid(m);
+      const at = pfxAt();
+      for (const e of pfx.list) h += pfxDraw(e, (now - e.t0) / e.life, at);
+    }
+    svg.innerHTML = h;
+    goldTick();
+    if (pfx.list.length || pfx.gold) pfx.raf = requestAnimationFrame(pfxFrame);
+    else document.querySelector('#panel .g2') && document.querySelector('#panel .g2').classList.remove('pfx-spend');
+  }
+  // the price, flying from the tile to the gold in the tray; the gold counts down once it lands
+  function pfxCoin(c, cost) {
+    const g = document.querySelector('#panel .g2'), r = g && g.getBoundingClientRect();
+    if (!r || !r.width) return;
+    const [x0, y0] = pfxAt()(c.x, c.y), x1 = r.left + r.width / 2, y1 = r.top + r.height / 2;
+    const el = document.createElement('div'); el.className = 'pfx-coin'; el.textContent = `−${cost}`;
+    pfxLayer().appendChild(el);
+    const lift = Math.min(60, Math.abs(y1 - y0) * 0.25) + 24, D = 560 * pfxSlow();
+    const mx = x0 + (x1 - x0) * 0.25, my = Math.min(y0, y1) - lift;
+    el.animate([
+      { transform: `translate(${x0}px, ${y0}px) translate(-50%, -50%) scale(0.6)`, opacity: 0 },
+      { transform: `translate(${x0}px, ${y0 - 26}px) translate(-50%, -50%) scale(1.25)`, opacity: 1, offset: 0.18 },
+      { transform: `translate(${mx}px, ${my}px) translate(-50%, -50%) scale(1.1)`, opacity: 1, offset: 0.45 },
+      { transform: `translate(${x1}px, ${y1}px) translate(-50%, -50%) scale(0.55)`, opacity: 0.4 },
+    ], { duration: D, easing: 'cubic-bezier(.45,.05,.55,.95)', fill: 'forwards' }).onfinish = () => el.remove();
+  }
+  // the tray keeps showing the gold from before until the coin lands (set at once, before the tray is built again)
+  function pfxHoldGold(cost) {
+    const from = pfx.gold ? pfxGold(pfx.gold.to) : m.gold[me] + cost;
+    pfx.gold = { from, to: m.gold[me], t0: performance.now() + 560 * 0.85 * pfxSlow(), dur: 380 * pfxSlow() };
+  }
+  // a card bumps when one of its squads is bought
+  function pfxBump(ui) {
+    const el = document.querySelector(`#panel .uc2[data-i="${ui}"]`);
+    if (el && el.animate) el.animate([{ transform: 'scale(1)' }, { transform: 'scale(0.86)', offset: 0.35 }, { transform: 'scale(1.06)', offset: 0.7 }, { transform: 'scale(1)' }], { duration: 320, easing: 'ease-out' });
+    const nw = el && el.querySelector('.nw');
+    if (nw && nw.animate) nw.animate([{ transform: 'translateX(-50%) scale(1.9)' }, { transform: 'translateX(-50%) scale(1)' }], { duration: 300, easing: 'cubic-bezier(.2,1.6,.4,1)' });
+  }
+  // after the call that placed it and the redraws that follow (the tray is built again, so its gold and cards are new)
+  function pfxQueue(fn) { pfx.flush.push(fn); if (pfx.flush.length === 1) requestAnimationFrame(() => { const l = pfx.flush; pfx.flush = []; l.forEach(f => f()); }); }
+  function pfxPlaced(sq, ui, cost) {
+    const n = Game.footprint(m, ui);
+    landAt[sq.id] = performance.now();
+    for (const id of Object.keys(landAt)) if (performance.now() - landAt[id] > 1500) delete landAt[id];
+    if (cost > 0) pfxHoldGold(cost);
+    pfxAdd({ kind: 'stamp', col: sq.col, row: sq.row, n, life: 650 });
+    pfxQueue(() => { if (cost > 0) { Game.useGrid(m); pfxCoin(pfxMid(sq.col, sq.row, n), cost); } pfxBump(ui); if (!pfx.raf) pfx.raf = requestAnimationFrame(pfxFrame); });
+  }
+  function pfxMoved(sq, cost) {
+    if (cost > 0) pfxHoldGold(cost);
+    pfxAdd({ kind: 'move', col: sq.col, row: sq.row, n: Game.footprint(m, sq.unit), life: 420 });
+    if (cost > 0) pfxQueue(() => { Game.useGrid(m); pfxCoin(pfxMid(sq.col, sq.row, Game.footprint(m, sq.unit)), cost); });
+  }
+  // a drop on a tile it can't go on: a red cross there, and the card flies back from the finger to its place in the tray
+  function pfxBad(t, ui, from) {
+    pfxAdd({ kind: 'bad', col: t.col, row: t.row, n: 1, life: 480 });
+    if (ui == null || !from) return;
+    pfxQueue(() => {
+      const card = document.querySelector(`#panel .uc2[data-i="${ui}"]`), r = card && card.getBoundingClientRect();
+      if (!r || !r.width) return;
+      const el = document.createElement('div'); el.className = 'pfx-back'; el.style.color = units[ui].color; el.innerHTML = Shapes.svg(units[ui].shape, 28);
+      pfxLayer().appendChild(el);
+      const x1 = r.left + r.width / 2, y1 = r.top + 26;
+      el.animate([
+        { transform: `translate(${from.x}px, ${from.y}px) translate(-50%, -50%) rotate(0)` },
+        { transform: `translate(${from.x - 7}px, ${from.y}px) translate(-50%, -50%) rotate(-8deg)`, offset: 0.12 },
+        { transform: `translate(${from.x + 7}px, ${from.y}px) translate(-50%, -50%) rotate(8deg)`, offset: 0.24 },
+        { transform: `translate(${from.x}px, ${from.y}px) translate(-50%, -50%) rotate(0)`, offset: 0.34 },
+        { transform: `translate(${x1}px, ${y1}px) translate(-50%, -50%) scale(0.8)`, opacity: 0.3 },
+      ], { duration: 520, easing: 'ease-in', fill: 'forwards' }).onfinish = () => el.remove();
+    });
+  }
+  // the fight starts: your squads from this round lock in; the opponent's new ones are marked for a moment
+  function pfxLock(pre) {
+    if (!pre || !pre.armies || net.duo) return;
+    const fresh = (side) => (pre.armies[side] || []).filter(s => s.round === pre.round && !Game.isRider(s) && !Game.mpbHeld(s));
+    Game.useGrid(pre);
+    for (const s of fresh(me)) pfxAdd({ kind: 'lock', col: s.col, row: s.row, n: Game.footprint(pre, s.unit), life: 420 });
+    if (pre.round > 1) for (const s of fresh(foe())) pfxAdd({ kind: 'foeNew', col: s.col, row: s.row, n: Game.footprint(pre, s.unit), life: 1900 });
+  }
+  // Game.place and Game.moveSquad by this player's own hand
+  {
+    const place = Game.place, move = Game.moveSquad;
+    Game.place = function (...a) {
+      const g0 = a[0] && a[0].gold ? a[0].gold[a[1]] : 0, r = place.apply(this, a);
+      if (r && a[0] === m && a[1] === me && phase === 'deploy' && byHand()) pfxPlaced({ ...r, col: a[3], row: a[4] }, a[2], g0 - m.gold[me]);
+      return r;
+    };
+    Game.moveSquad = function (...a) {
+      const g0 = a[0] && a[0].gold ? a[0].gold[a[1]] : 0, r = move.apply(this, a);
+      if (r && a[0] === m && a[1] === me && phase === 'deploy' && byHand()) { const sq = m.armies[me].find(q => q.id === a[2]); if (sq) pfxMoved(sq, g0 - m.gold[me]); }
+      return r;
+    };
+  }
+  // the squads you placed this round, marked until the fight: an outline that breathes and, on the ones you bought, a NEW
+  // tag (boardMarks; round 1's package squads get the outline only)
+  function freshMarks(at) {
+    if (!m || phase !== 'deploy' || choosingPack()) return '';
+    const T = Game.TILE, pt = (x, y) => at(x, y).map(v => v.toFixed(1)).join(','), tag = mode !== 'tutorial';
+    let h = '';
+    for (const s of m.armies[me]) {
+      if (s.round !== m.round || Game.isRider(s) || Game.mpbHeld(s) || (drag && drag.moved && drag.id === s.id)) continue;
+      const n = Game.footprint(m, s.unit), c = pfxMid(s.col, s.row, n), d = T * n / 2 - 0.35;
+      const pts = [[-d, -d], [d, -d], [d, d], [-d, d]].map(([x, y]) => at(c.x + x, c.y + y));
+      h += `<polygon class="fresh" points="${pts.map(p => p.map(v => v.toFixed(1)).join(',')).join(' ')}"/>`;
+      if (tag && !s.free) { const tr = pts.reduce((b, p) => p[0] - p[1] > b[0] - b[1] ? p : b); h += `<g class="fresh-t" transform="translate(${tr[0].toFixed(1)},${tr[1].toFixed(1)})"><rect class="pfx-tagbg" x="-14" y="-7" width="28" height="14" rx="7"/><text class="pfx-tag" y="3.5">NEW</text></g>`; }
+    }
+    return h;
+  }
+  // the deploy pips: one icon for each squad placed this round (a tap rings it on the board), then the deployments left
+  function receiptPips(allowed, left) {
+    const used = Math.max(0, allowed - Math.max(0, left));
+    const list = m.armies[me].filter(s => s.round === m.round && !s.free).sort((a, b) => a.id - b.id).slice(0, used);
+    let h = '';
+    for (let k = 0; k < used; k++) {
+      const s = list[k], u = s && units[s.unit];
+      h += u ? `<i class="u" data-find="${s.id}" role="button" aria-label="${esc(u.name)}, placed this round" style="color:${u.color}">${Shapes.svg(u.shape, 13)}</i>` : '<i class="u"></i>';
+    }
+    for (let k = 0; k < Math.min(allowed - used, Math.max(0, left)); k++) h += '<i class="on"></i>';
+    return h;
+  }
+  $('panel').addEventListener('click', (e) => {
+    const p = e.target.closest && e.target.closest('[data-find]');
+    if (!p || !m || phase !== 'deploy') return;
+    const s = m.armies[me].find(q => q.id === +p.dataset.find);
+    if (s) { Game.useGrid(m); pfxAdd({ kind: 'find', col: s.col, row: s.row, n: Game.footprint(m, s.unit), life: 760 }); if (board3d) wake3d(); }
+  });
   // the plain click, after the button's own handler (which may have made a sound of its own); in a match or not is
   // decided as the click starts, so Start (or Main menu) clicks like the screen it was on
   let clickInMatch = false;
@@ -19772,7 +19990,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · c4656e8'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 3d6a941'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -20260,7 +20478,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     battleCam: cam && cam.k > 0 ? { zoom: 1 + (CAM.zoom - 1) * cam.k, x: cam.x, y: cam.y, k: cam.k } : null,
     aim: phase === 'deploy' && (aimMode != null || aimDrag) ? { id: aimDrag ? aimDrag.id : aimMode, end: aimDrag ? aimDrag.end : hoverTile } : null, // (aimDrag without aimMode: a head dragged)
     placingBuilding: placingBuilding(), win: null, duo: duoBoard(),
-    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me], foeStart: foeStart(), boss: bossView() }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
+    foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me], foeStart: foeStart(), boss: bossView(), landAt }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
   // the Mommy boss puzzle: what both boards draw (Boss.preview: while deploying her and the nests)
   function bossView() {
     const v = phase === 'battle' && battlePre ? battlePre : m;
@@ -21324,6 +21542,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     return `${tab}<button class="uc2" data-i="${i}" style="--tier:${tierColor(tierOf(i))}" aria-pressed="${selected === i}" aria-disabled="${disabled}" aria-label="${esc(u.name)}, ${free ? `${free} free` : `${Game.shopCost(m, me, i)} gold`}">
       ${stars ? `<span class="st">${'★'.repeat(stars)}</span>` : ''}
       ${Game.capped(m, i) ? `<span class="cap" aria-label="${Game.capCount(m, me, i)} of ${Game.capOf(m)} squads">${Game.capCount(m, me, i)}/${Game.capOf(m)}</span>` : ''}
+      ${(() => { const n = m.armies[me].filter(s => s.unit === i && s.round === m.round && !s.free).length; /* bought this round; package squads aren't */ return n ? `<span class="nw" aria-label="${n} placed this round">×${n}</span>` : ''; })()}
       ${Game.mpbLocked(m, me, i) ? '<span class="mpb-x" aria-label="Sabotaged: can’t be deployed this round">✕</span>' : ''}
       <span class="ic" style="color:${u.color}">${Shapes.svg(u.shape, 30)}</span>
       <span class="n">${esc(u.name)}</span>
@@ -21422,12 +21641,12 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     const l = f.querySelector('.l'); l.textContent = label; l.style.color = bad ? 'var(--foe)' : '';
   }
   function cardEnd(ok) {
-    const p = cpress, d = cdrag; cpress = null; cdrag = null; flyShow(null); document.documentElement.classList.remove('dcard');
+    const p = cpress, d = cdrag, fl = $('fly2'), from = fl && !fl.hidden ? { x: parseFloat(fl.style.left), y: parseFloat(fl.style.top) } : null; /* where the card was let go of, if it showed there */ cpress = null; cdrag = null; flyShow(null); document.documentElement.classList.remove('dcard');
     if (p) { clearTimeout(p.t); if (p.el) p.el.classList.remove('lift'); if (p.pan) cardDone = performance.now(); } // a sideways mouse drag ends without a tap
     if (!d) return;
     cardDone = performance.now(); hoverTile = null;
     if (ok && d.t && m && phase === 'deploy' && editable() && !Game.capFull(m, me, d.i) && (Game.canPlaceAt(m, me, d.t.col, d.t.row, d.i) || Game.boardable(m, me, d.t.col, d.t.row, d.i))) { selected = d.i; tapTile(d.t, null); }
-    else if (ok && d.t) sfx('nope');
+    else if (ok && d.t) { sfx('nope'); pfxBad(d.t, d.i, from || (p && { x: p.x, y: p.y - 60 })); }
     if (selected === d.i && d.prev !== d.i) selected = d.prev;
     if (phase === 'deploy') panelDeploy();
     render();
@@ -21607,7 +21826,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     const tip = inline || (selected !== null ? hint : !solo() || (mode === 'ai' && ready[foe()]) ? status : !can ? hint
       : left <= 0 ? 'No deployments left · tap a squad to level it up or buy skills'
       : fresh ? `Drag a squad to move it · drag it ${pcLayout() ? 'onto the shop' : 'down here'} to take it back` : `Drag a card ${pcLayout() ? 'onto' : 'up onto'} your zone · pick one to see its Skills`);
-    const pips = Array.from({ length: Math.max(allowed, 0) }, (_, k) => `<i class="${k < left ? 'on' : ''}"></i>`).join('');
+    const pips = receiptPips(Math.max(allowed, 0), left); // (the squads placed this round, then the deployments left)
     const xb = showShop ? extraBtns : '';
     const tiers = [...new Set(units.map((u, i) => Game.isOff(m, i, me) ? 0 : tierOf(i)))].filter(t => t > 0).sort((a, b) => a - b); // units left out of the match aren't in the shop
     const shopHtml = tiers.map((t, n) => {
@@ -21620,7 +21839,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
     $('panel').innerHTML = `
       ${showShop ? `<button class="grab2" id="tray-grab" aria-expanded="${dockOpen}" aria-label="${dockOpen ? 'Fold the shop down' : 'Open the shop'}">${dockOpen ? '<i></i>' : '<i></i> Shop'}</button>` : ''}
       <div class="trow">
-        <span class="g2 num">${g}<small>gold</small></span>
+        <span class="g2 num">${pfxGold(g)}<small>gold</small></span>
         <span class="pips" aria-label="${Math.max(0, left)} of ${allowed} deployments left">${pips}</span>
         ${Game.deployBuyable(m, me) ? `<button class="chip2" id="buy-deploy" ${can && Game.canBuyDeploy(m, me) ? '' : 'disabled'} aria-label="One more deployment for ${Game.deployCost(m, me)} gold">${DIO ? `+1 deployment ${GOLD_ICON}` : '+1 '}<span class="num">${Game.deployCost(m, me)}</span></button>` : ''}
         <span class="sp"></span>
@@ -25103,6 +25322,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     fx = []; acc = 0; lastTs = 0;
     cam = { end: lastSummary && lastSummary.round === pre.round ? lastSummary.time : null, decided: false, on: false, k: 0, x: 0, y: 0 };
     closeSheet(); overlay(null); hud(); panelBattle(); render();
+    pfxLock(battlePre); // this round's squads lock in; the opponent's new ones are marked for a moment
     cancelAnimationFrame(raf);
     // (the fight always plays: with the device's "reduce motion" on, e.g. Windows' Animation effects off, it used to
     // skip straight to the result, so those players never saw a round, the owner's friend, 2026-11-11)
@@ -25476,7 +25696,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     // sheet, and the unit is let go (2026-11-07; every board mode above had its turn first)
     const mx = selected !== null && mpbOn() && !Game.canPlaceAt(m, me, t.col, t.row, selected) && Mpb.recAt(m, t.col, t.row);
     if (mx) { unselect(); openMpbSheet(mx.side, mx.rec.key); return; }
-    if (selected !== null && editable() && !Game.canPlaceAt(m, me, t.col, t.row, selected)) sfx('nope');
+    if (selected !== null && editable() && !Game.canPlaceAt(m, me, t.col, t.row, selected)) { sfx('nope'); pfxBad(t); }
     if (selected !== null && editable() && Game.canPlaceAt(m, me, t.col, t.row, selected)) {
       const sq = Game.place(m, me, selected, t.col, t.row);
       if (sq) {
@@ -25875,6 +26095,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const cinematic = board3d && board3d.camera.level() >= 3; // the ground view shows no markers
     Game.useGrid(m); // the board as drawn
     let html = '';
+    if (!cinematic && m && phase === 'deploy') html += freshMarks(wrapMap()); // placed this round: outlined, with a NEW tag
     if (!cinematic && m && (phase === 'deploy' || phase === 'battle')) html += intentMarks(wrapMap());
     if (net.duo) html += pingMarks(cinematic ? null : wrapMap());
     if (!cinematic && duoOn() && m && phase === 'deploy') html += mpbMarks(wrapMap()); // 2v2: where a building may go, both players' votes
@@ -25982,7 +26203,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
   // <base>, so there it looked for design/diorama/vendor/... and failed: "Importing a module script failed" (2026-11-10)
   const threeSrc = () => new URL(THREE_URL, document.baseURI).href;
-  const V3D = '5d2e77409c'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '5fa24aa798'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);

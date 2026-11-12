@@ -2146,3 +2146,7 @@ html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: sta
 .bz-ctl .list em { grid-column: 2; font: 700 11px/1.3 var(--dtype); font-style: normal; letter-spacing: .06em; text-transform: uppercase; color: var(--bc); }
 .bz-ctl .list i { grid-column: 3; grid-row: 1 / 3; padding: 3px 6px 1px; background: #F2B23A; color: #17140F; font: 700 12px/1 var(--dstencil); font-style: normal; letter-spacing: .06em; text-transform: uppercase; }
 @media (prefers-reduced-motion: reduce) { .bz-ctl .b.sure { animation: none; } .bz-ctl .list { animation: none; } }
+
+/* buy and place feedback (2026-11-12): a squad placed this round as a square pip with its unit, not a diamond */
+html.diorama.pcwide .panel .trow .pips i.u { width: 20px; height: 20px; transform: none; border: 2px solid #F4ECD8; border-radius: 0; background: rgba(244,236,216,.12); display: grid; place-items: center; }
+html.diorama.pcwide .panel .trow .g2.pfx-spend { color: #FFE59A; }

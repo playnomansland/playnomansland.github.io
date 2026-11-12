@@ -27,6 +27,18 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 12 November 2026 – You can see what you just bought
+
+Placing a squad is now obvious at a glance, even with your thumb over the tile. Sounds are unchanged.
+
+- **The moment it lands:** a soft ring runs out on the ground from the tile, and on the 3D board the squad drops onto it. The price flies off as a coin into your gold, which counts down once the coin arrives. The card you bought from gives a little bump.
+- **New until the fight:** every squad you bought this round has a gently pulsing outline and a **NEW** tag until the fight starts (your free starting squads in round 1 get the outline only). The shop card shows how many you've bought from it this round (×1, ×2…).
+- **The deploy pips are a receipt:** each used pip now shows the unit you placed with it, followed by the deployments you have left. Tap one to find that squad on the board.
+- **A drop that doesn't work:** dropping a card where it can't go puts a red cross on the tile and sends the card back to the tray.
+- **The fight starts:** your new squads snap into place. From round 2, the opponent's squads from this round are outlined in red with a NEW tag for a couple of seconds, so you can see what they just added.
+
+---
+
 ## 12 November 2026 – The Hollow's brood: a look for the Mommy and her spiders, and a skin to win (developers only)
 
 - **Their look:** the Mommy and her spiderlings are no longer plain black spiders. They carry their lair on them: bark-brown bodies, the Hollow's orange shelf fungus growing in a ridge down their backs, red eyes in a cluster and feet pale with silk. The Mommy has more of all of it: a crown of fungus shelves, eight eyes, fangs, amber sacs along her sides and silk wound round her knees.

@@ -13869,6 +13869,8 @@ const Render3D = (THREE, el, view, opts = {}) => {
   const arc = (wx, wz, r, c, a, fill = 1, thick = 0.12, dashes = 0, soft = 0, y = 0.07) => spr(MODE.arc, wx, y, wz, r * 2, r * 2, c, a, fill, thick, dashes, soft);
   const disc = (wx, wz, r, c, a, soft = 0) => arc(wx, wz, r, c, a, 1, 1, 0, soft, 0.06);
   // a tile square (screen column / row as this side sees the board): thick = 1 fills it
+  // a squad just placed by hand (the page's v.landAt: squad id -> when) drops onto its tile with a small bounce
+  const landLift = (v, side, sq) => { const t0 = side === v.me && v.landAt && v.landAt[sq.id]; if (!t0) return 0; const ms = performance.now() - t0, D = 240, B = 160; return ms < 0 ? 9 : ms < D ? 9 * (1 - (ms / D) ** 2) : ms < D + B ? 0.9 * Math.sin(Math.PI * (ms - D) / B) : 0; };
   const tileSq = (sc, sr, c, a, thick = 0.07, dashes = 0, inset = 0.06) => spr(MODE.square, (sc + 0.5) * T - BW / 2, 0.08, (sr + 0.5) * T - BD / 2, T * (1 - inset * 2), T * (1 - inset * 2), c, a, 0, thick, dashes);
   // a row of icons above a point, spread along the screen's horizontal
   function iconRow(keys, x, y, z, s, c, a = 1) {
@@ -14224,7 +14226,8 @@ const Render3D = (THREE, el, view, opts = {}) => {
       const held = typeof Mpb !== 'undefined' && Mpb.on(m) ? Mpb.recAt(m, sq.col, sq.row) : null; // a 2v2 building holding it (a Tree kojja's Nest)
       const raise = Game.garrisonAt(m, side, sq.col, sq.row) ? roofOf(Game.towerAt(m, side, sq.col, sq.row) ? towerUnit(m, side, Game.towerTypeShown(m, me, deploying, side))
         : Game.treasuryAt(m, side, sq.col, sq.row) ? Game.treasuryUnit() : held ? Mpb.unitOf(m, held.side, held.rec) : { building: 'factory' }) : 0; // Overwatch: it stands on top of the building it is in
-      for (const b of list) bodies.push({ u, side, x: b.x, y: b.y, look: 'solid', tag: side + '|' + sq.id, tile: sq, raise });
+      const drop = landLift(v, side, sq); // (just placed: falling in)
+      for (const b of list) bodies.push({ u, side, x: b.x, y: b.y, look: 'solid', tag: side + '|' + sq.id, tile: sq, raise: raise + drop });
       if (fresh) tileSq(st.c, st.r, teamColor(side, me), 0.8, 0.05, 14);
       // badges over the squad: level pips, charisma pips (or the Gentleman's hat), ready to level up (its tag goes
       // under it, see labels)
