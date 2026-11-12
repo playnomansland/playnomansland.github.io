@@ -20009,7 +20009,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 07b9023'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 60f8912'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -24946,7 +24946,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     replay: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M5 4.5v15" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><path d="M19.5 5.2v13.6L8.6 12z" fill="currentColor"/></svg>',
     attacks: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M3 6h18l-2.2 4.2-2.2-3.4-2.3 4-2.3-4-2.3 4-2.2-3.4L5.2 10.2z M3 18h18l-2.2-4.2-2.2 3.4-2.3-4-2.3 4-2.3-4-2.2 3.4L5.2 13.8z" fill="currentColor"/></svg>', // (her jaws: Mommy's attacks' Bite)
     save: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v10.5"/><path d="M7.5 9.8 12 14.3l4.5-4.5"/><path d="M4 15.5v4.5h16v-4.5"/></svg>', // (into the tray: kept)
-    again: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.64 16.75A8.5 8.5 0 1 0 4.64 8.25"/><path d="M3.55 4.19 4.64 8.25 8.7 7.16"/></svg>', // (a circle arrow, turning back: Play this round again on the round card)
+    again: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.64 16.75A8.5 8.5 0 1 0 4.64 8.25"/><path d="M5 4.07 4.64 8.25 8.82 8.62"/></svg>', // (a circle arrow, turning back: Play this round again on the round card; its head turned off the circle so it stands clear)
     store: '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.5v9M5 9.5l3 3 3-3"/><path d="M16 12.5v-9M13 6.5l3-3 3 3"/><path d="M4 15.5v4.5h16v-4.5"/></svg>', // (Save/Load board: into the tray and out of it)
   };
   let ctlEl = null, ctlKey = '', ctlSure = 0, ctlOpen = false, ctlLoad = false, ctlSaved = 0, ctlSavedR = 0, ctlAt = '';
