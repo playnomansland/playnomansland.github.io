@@ -20,6 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 12 November 2026 – Graphics adjust to your frame rate
+
+- **Low frame rate? The graphics step down by themselves.** If a fight runs under 20 frames a second for a few seconds, the 3D board switches to lower graphics right away, mid-fight (High → Medium → Low), and says so on the board: "Low frame rate detected, switched to Low graphics." Tap the line to close it. The new setting is kept; you can put it back up in Settings → 3D quality. If it's still too slow on Low, the board goes to 2D until you close the game, as before.
+
+---
+
 ## 12 November 2026 – Replay a round of the Mommy, and a Skills tab on the picked unit
 
 - **The Mommy:** **Restart boss** and **Replay round** are on the screen for the whole run, even mid-fight, at the top right under her name. Replay round lists every round you've reached with its bite: pick one to play it again from its start. Restart asks "Sure?" first. (On phones they are in Settings.) The card between rounds now warns you what's coming: **! Next round** with her next bite's mark and name.

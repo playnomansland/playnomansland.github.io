@@ -12,7 +12,7 @@ Already in place, keep it:
 - Every small marker (health bars, rings, icons, labels) is one sprite draw call. Beams, flame fans and walls are batched too.
 - Scenery: real models near the board, instanced impostor cards further out, blob shadows under impostors.
 - The 3D board only draws during fights, while the camera moves, and shortly after a change.
-- Quality setting: high (pixel ratio up to 2, shadows), medium (1.5, shadows), low (1, no shadows). A "too slow" rule drops to 2D for the visit. A speed meter (forced 3D) shows fps, slowest frame, live bodies and draw calls.
+- Quality setting: high (pixel ratio up to 2, shadows), medium (1.5, shadows), low (1, no shadows). A low frame rate (4 s of a fight under 20 fps) steps the quality down mid-fight with a line on the board ("Low frame rate detected, switched to Low graphics."); slow at low drops to 2D for the visit. A speed meter (forced 3D) shows fps, slowest frame, live bodies and draw calls.
 
 Likely costs (to be confirmed by measurement):
 

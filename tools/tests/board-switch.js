@@ -76,16 +76,22 @@ const URL = 'http://127.0.0.1:8766/?test';
   await p.reload(); await on3d(p);
   check(await is3d(p), 'saved 3D: the 3D board starts at load');
 
-  // too slow: a fight under 20 fps steps the quality down (medium -> low), the next one at low goes back to 2D.
+  // too slow: 4 seconds of a fight under 20 fps step the quality down there and then (medium -> low) with a line on
+  // the board; a fight at low that stays slow goes back to 2D when it ends.
   // Headless speed depends on the board's size, so a slow phone is played: each frame takes 60 ms more.
   const slowPhone = () => p.evaluate(() => { if (window.__slow) return; window.__slow = true; const raf = window.requestAnimationFrame; window.requestAnimationFrame = (cb) => raf((t) => { const e = performance.now() + 60; while (performance.now() < e); cb(t); }); });
   await solo(p);
   await slowPhone();
-  await fight(p);
-  check(await is3d(p) && (await stored(p))[1] === 'low' && await p.evaluate(() => window.__pb().board3d.pixelRatio()) === 1, `slow fight at medium: still 3D, quality now ${(await stored(p))[1]}`);
-  await p.click('#next'); await p.waitForTimeout(800);
-  await fight(p); await on2d(p).catch(() => {});
-  check(!(await is3d(p)) && /too slow/.test(await note(p)), `slow fight at low -> 2D: "${await note(p)}"`);
+  await p.click('#ready');
+  await p.waitForFunction(() => localStorage.getItem('phone-bellum-3d-quality') === 'low', null, { timeout: 60000 }).catch(() => {});
+  const mid = await p.evaluate(() => window.__pb().phase);
+  check(mid === 'battle' && await is3d(p) && (await stored(p))[1] === 'low' && await p.evaluate(() => window.__pb().board3d.pixelRatio()) === 1, `slow fight at medium: still 3D, quality now ${(await stored(p))[1]} during the fight (${mid})`);
+  check(/^Low frame rate detected, switched to Low graphics\.$/.test(await note(p)), `the line: "${await note(p)}"`);
+  await p.screenshot({ path: 'board-switch-step.png' });
+  await p.waitForSelector('#next', { timeout: 120000 }); await p.waitForTimeout(300);
+  if (await is3d(p)) { await p.click('#next'); await p.waitForTimeout(800); await fight(p); }
+  await on2d(p).catch(() => {});
+  check(!(await is3d(p)) && /^Low frame rate detected, switched to the 2D board\.$/.test(await note(p)), `slow fight at low -> 2D: "${await note(p)}"`);
   check((await stored(p))[0] === '3d' && await p.evaluate(() => sessionStorage.getItem('phone-bellum-board')) === '2d', 'too slow: 2D for this visit only, the setting stays 3D');
   await p.screenshot({ path: 'board-switch-slow.png' });
   await p.context().close();

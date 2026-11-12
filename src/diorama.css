@@ -808,6 +808,8 @@ html.diorama.pcwide #wrap::after { left: 0; right: 0; top: 0; height: 150px; bac
 html.diorama.pcwide #wrap > .overlay, html.diorama.pcwide #wrap > .pick, html.diorama.pcwide #wrap > .pick-peek, html.diorama.pcwide #wrap > .coach, html.diorama.pcwide #wrap > .task,
 html.diorama.pcwide #wrap > .board-banner, html.diorama.pcwide #wrap > .note3d, html.diorama.pcwide #wrap > .meter3d { z-index: 6; }
 html.diorama.pcwide .tag-clock, html.diorama.pcwide .net, html.diorama.pcwide .dock-tab { display: none !important; }
+/* the 3D board's one line (low frame rate: lower graphics or 2D; 3D stopped): at the bottom, clear of the round line at the top */
+html.diorama.pcwide #wrap > .note3d { top: auto; bottom: 22px; border: 0; border-radius: 0; background: #17140F; color: #F4ECD8; font: 700 14px/1.4 var(--dtype); padding: 8px 14px; }
 /* the Mommy boss puzzle's boss bar: under the round line (which sits over the top of the board here), not behind it */
 html.diorama.pcwide .boss-bar { top: 104px; z-index: 6; }
 html.diorama.pcwide .hud.bossrun .side.you .num { grid-column: 1 / -1; font-size: 26px; line-height: 1.2; text-transform: uppercase; }

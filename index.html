@@ -955,6 +955,8 @@ html.diorama.pcwide #wrap::after { left: 0; right: 0; top: 0; height: 150px; bac
 html.diorama.pcwide #wrap > .overlay, html.diorama.pcwide #wrap > .pick, html.diorama.pcwide #wrap > .pick-peek, html.diorama.pcwide #wrap > .coach, html.diorama.pcwide #wrap > .task,
 html.diorama.pcwide #wrap > .board-banner, html.diorama.pcwide #wrap > .note3d, html.diorama.pcwide #wrap > .meter3d { z-index: 6; }
 html.diorama.pcwide .tag-clock, html.diorama.pcwide .net, html.diorama.pcwide .dock-tab { display: none !important; }
+/* the 3D board's one line (low frame rate: lower graphics or 2D; 3D stopped): at the bottom, clear of the round line at the top */
+html.diorama.pcwide #wrap > .note3d { top: auto; bottom: 22px; border: 0; border-radius: 0; background: #17140F; color: #F4ECD8; font: 700 14px/1.4 var(--dtype); padding: 8px 14px; }
 /* the Mommy boss puzzle's boss bar: under the round line (which sits over the top of the board here), not behind it */
 html.diorama.pcwide .boss-bar { top: 104px; z-index: 6; }
 html.diorama.pcwide .hud.bossrun .side.you .num { grid-column: 1 / -1; font-size: 26px; line-height: 1.2; text-transform: uppercase; }
@@ -19990,7 +19992,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · 3d6a941'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 4c5753e'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -26279,7 +26281,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (why === 'slow' && !force3d) { try { sessionStorage.setItem(B3D_STORE, '2d'); } catch (e) {} } // this visit only: 3D again next time
     else if (why !== 'lost' && why !== 'load' && !force3d) save3d(false);
     stop3d();
-    note3d(why === 'slow' ? '3D was too slow here, so the board is back to 2D.'
+    note3d(why === 'slow' ? 'Low frame rate detected, switched to the 2D board.'
       : why === 'lost' ? 'The 3D board stopped, so it’s back to 2D.'
       : why === 'load' ? 'The 3D board couldn’t load, so it’s 2D for now.'
       : '3D can’t run on this device, so the board is 2D.');
@@ -26524,7 +26526,16 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     meter.q = Q3D.includes(q) ? q : 'high';
     try { localStorage.setItem(Q3D_STORE, meter.q); } catch (e) {}
     if (board3d) { board3d.quality(meter.q); wake3d(); }
+    document.querySelectorAll('[data-q3d]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.q3d === meter.q))); // (Settings, if open)
     showMeter();
+  }
+  // Low frame rate: one step down in quality (saved, so the next visit starts there too), with one line on the board.
+  // The player can put it back up in Settings → 3D quality.
+  const SLOW_FPS = 20, SLOW_SECS = 4;
+  function slowStep() {
+    const q = Q3D[Q3D.indexOf(meter.q) + 1];
+    setQuality(q);
+    note3d(`Low frame rate detected, switched to ${q[0].toUpperCase() + q.slice(1)} graphics.`);
   }
   function startMeter(at) {
     board3d.quality(meter.q);
@@ -26548,20 +26559,28 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     meter.last = ts; meter.n++;
     const live = phase === 'battle' && bt;
     if (live) {
-      const f = meter.fight || (meter.fight = { t0: ts, n: 0, sn: 0, st: ts, secs: [], bodies: 0, paused: false });
+      const f = meter.fight || (meter.fight = { t0: ts, n: 0, sn: 0, st: ts, secs: [], win: [], bodies: 0, paused: false, restart: 0 });
+      if (gap > 1000) { f.paused = true; f.win = []; } // the page was hidden (rAF stops), so the average says nothing
+      // after a step down mid-fight the count starts over, two frames later (the new quality's first frame can hitch)
+      if (f.restart > 0 && --f.restart === 0) Object.assign(f, { t0: ts, st: ts, n: 0, sn: 0, win: [], paused: false });
       f.n++; f.sn++; f.end = ts;
-      if (gap > 1000) f.paused = true; // the page was hidden (rAF stops), so the average says nothing
       f.bodies = Math.max(f.bodies, bt.bodies.reduce((k, b) => k + (b.alive ? 1 : 0), 0));
-      if (ts - f.st >= 1000) { f.secs.push(f.sn * 1000 / (ts - f.st)); f.sn = 0; f.st = ts; }
+      if (ts - f.st >= 1000) { const s = f.sn * 1000 / (ts - f.st); f.secs.push(s); f.win.push(s); if (f.win.length > SLOW_SECS) f.win.shift(); f.sn = 0; f.st = ts; }
+      // too slow during the fight: its last 4 seconds under 20 fps on average: a step down in quality now, not after
+      // the fight (at low it waits for the fight's end, below)
+      if (!force3d && !f.restart && meter.q !== 'low' && f.win.length >= SLOW_SECS && f.win.reduce((a, s) => a + s, 0) / f.win.length < SLOW_FPS) {
+        slowStep(); f.win = []; f.restart = 2;
+      }
     } else if (meter.fight) {
       const f = meter.fight; meter.fight = null;
       const avg = f.n * 1000 / Math.max(1, f.end - f.t0), low = f.secs.length ? Math.min(...f.secs) : avg;
       meter.lastFight = `last fight ${Math.round(avg)} fps · slowest second ${Math.round(low)} · ${f.bodies} bodies`;
       console.log('No Mans Land 3D:', meter.lastFight, '·', meter.q);
-      // too slow: a fight of 4 s or more, on screen the whole time, under 20 fps: a step down in quality, then 2D
-      if (!force3d && !f.paused && f.end - f.t0 >= 4000 && avg < 20) {
+      // too slow: a fight (since its last step down) of 4 s or more, on screen the whole time, under 20 fps: a step
+      // down in quality, then 2D
+      if (!force3d && !f.restart && !f.paused && f.end - f.t0 >= SLOW_SECS * 1000 && avg < SLOW_FPS) {
         if (meter.q === 'low') fallback2d('slow');
-        else setQuality(Q3D[Q3D.indexOf(meter.q) + 1]);
+        else slowStep();
       }
     }
   }
