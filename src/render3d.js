@@ -961,7 +961,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
           if (a < STAYS) scene_(() => decal(`big|bite|${hex}|${(hitR / JR).toFixed(2)}`, ex, ez, JR * 2, white, Math.min(1, (STAYS - a) / 1.5) * 0.9));
         }
       }
-      if (st.aim && !closing && st.aim.cyc >= 2 && st.aim.in < 1.5) { // whom she bites next (the heavy bite): open jaws that follow them
+      if (st.aim && !closing && st.aim.cyc >= 2 && st.aim.in < 1.5 && !(v.bt.isOver && v.bt.isOver())) { // (not once the fight is over: no jaws frozen on the last frame) // whom she bites next (the heavy bite): open jaws that follow them
         const hex = BC[st.bite] || '#FFE15A', [ax, az] = world(f, st.aim.x, st.aim.y), k = 1 - st.aim.in / 1.5;
         scene_(() => arc(ax, az, Math.max(1, st.aim.r), color(hex), 0.3 + 0.4 * k, 1, 0.08, 14));
         jaws(ax, az, Math.max(3, st.aim.r * 1.15), 1.25, hex, 0.25 + 0.3 * k);

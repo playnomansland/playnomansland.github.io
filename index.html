@@ -10991,6 +10991,9 @@ if (typeof module !== 'undefined') module.exports = Game;
     m.packages = [[], []];
     m.towers = [null, null];
     m.units.forEach((u, k) => { if (!cfg.banned.includes(u.name) && !u.building) m.unlocks[0][k] = 1; });
+    // her banned units are out of the match (Game.isOff): not in the shop, not in + Unlock (owner, 12 November: "all not
+    // unlocked units are not purchasable")
+    m.off = (Array.isArray(m.off) ? m.off : []).concat(m.units.map((u, k) => cfg.banned.includes(u.name) ? k : -1).filter(k => k >= 0));
     m.extraDeploys[0] = 1;
     m.gold = [cfg.startGold, 0];
     m.boss.run = { seed: m.seed, rounds: [] }; // the run's record, for the leaderboard (record, replay below)
@@ -11130,7 +11133,11 @@ if (typeof module !== 'undefined') module.exports = Game;
         if (!(mom.u.projSpeed > 0) && mom.lastAtk != null && mom.lastAtk !== lastAtk0) { lastAtk0 = mom.lastAtk; const tg = mom.lock; if (tg) ev.push({ k: 'bite', t: mom.lastAtk, x: tg.x, y: tg.y, land: mom.lastAtk, r: mom.u.splash || 1, bite: bs.bite }); } // (a bite that lands at once)
         let tg = null, td = mom.u.range + (mom.fallen ? cfg.mommy.size : 0); // who she bites next: the nearest body in her reach
         for (const f of api.sides[0]) if (f.alive && !f.u.aloft && !f.hidden && !(f.inside && f.inside.alive)) { const d = d2(f, mw.x, mw.y); if (d <= td) { td = d; tg = f; } }
-        if (!stunned && tg) { const cyc = 1 / Math.max(0.05, mom.u.aps), k = Math.min(1, (api.t - (mom.lastAtk == null ? -cyc * 0.5 : mom.lastAtk)) / cyc); bs.aim = { x: tg.x, y: tg.y, k, in: cyc * (1 - k), cyc, r: mom.u.splash || 1 }; }
+        if (mom.lock && mom.lock.alive && mom.lock.side === 0 && !mom.lock.hidden && d2(mom.lock, mw.x, mw.y) <= mom.u.range + (mom.fallen ? cfg.mommy.size : 0)) tg = mom.lock; // (whom she is on, while they stay in reach)
+        // when: the engine's own reload (mom.cd, slowed by attack slows), not the time since her last bite. Ready with
+        // nobody the engine lets her bite (cd at 0): no jaws, or they would hang open over that unit for good (12 November)
+        const slow = mom.atkSlow ? Math.max(0.05, 1 - mom.atkSlow / 100) : 1, cyc = 1 / Math.max(0.05, mom.u.aps), left = (mom.cd || 0) / slow;
+        if (!stunned && tg && left > 1e-6) bs.aim = { x: tg.x, y: tg.y, k: Math.max(0, Math.min(1, 1 - left / cyc)), in: left, cyc, r: mom.u.splash || 1 };
         if (ev.length > 60) ev.splice(0, ev.length - 60);
       }
       // attention: nobody close while she hangs, and the mortar winds up
@@ -17005,7 +17012,7 @@ const Render2D = (cv, view, opts = {}) => {
       }
     }
     // whom she bites next (only when her bites come slowly: the heavy bite): open jaws that follow them
-    if (bs.aim && !closing && bs.aim.cyc >= 2 && bs.aim.in < 1.5) {
+    if (bs.aim && !closing && bs.aim.cyc >= 2 && bs.aim.in < 1.5 && !(bt.isOver && bt.isOver())) { // (not once the fight is over: no jaws frozen on the last frame)
       const col = BITE_COL[bs.bite] || '#FFE15A', ax = PX(bs.aim.x), ay = PY(bs.aim.y), k = 1 - bs.aim.in / 1.5;
       ctx.strokeStyle = col; ctx.globalAlpha = 0.25 + 0.4 * k; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(ax, ay, Math.max(1, bs.aim.r) * S, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
       Art.bossJaws(ctx, ax, ay, Math.max(3, bs.aim.r * 1.15) * S, 1.25, col, 0.2 + 0.3 * k);
@@ -19634,7 +19641,7 @@ Floors.glacier = (c, W, H, t, y0, y1, L, rr, blob) => {
   // ----- Report a bug (2026-11-04): a new post in the Discord forum #bug-reports with the game version and match id
   // filled in. The server posts it through a webhook (/account/bug, accounts.js BUG); when that's off or fails, the report
   // is copied and the Discord server opens, so it can be pasted there by hand.
-  const GAME_VERSION = '12 Nov 2026 · cfc1633'; // src/build.js: the newest patch notes date and a hash of this page
+  const GAME_VERSION = '12 Nov 2026 · 096cfdc'; // src/build.js: the newest patch notes date and a hash of this page
   const DISCORD_FALLBACK = 'https://discord.gg/TBpDKSBWsY';
   const bug = { draft: '', busy: false };
   // the id the server's match history uses (room.js historyInfo: <room>-<seed>), or one made the same way for other matches
@@ -24526,6 +24533,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
   // Mommy's rules: every mechanic the boss adds, in one sheet. It opens by itself as a run starts; the ? while deploying
   // and a button in the fight open it again. The numbers come from Boss.CFG and this round's layout
+  // the gold each round brings in a boss run, from the game's own income (Game.incomeFor): "+250 in round 2, +350 in round 3..."
+  function bossIncomeText() {
+    const n = (m && m.boss && m.boss.rounds) || Boss.CFG.rounds, parts = [];
+    for (let r = 2; r <= n; r++) parts.push(`+${Game.incomeFor(r)} in round ${r}`);
+    return parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts.join('');
+  }
   function openBossRules() {
     if (!m || !m.boss || typeof Boss === 'undefined') return;
     const C = Boss.CFG, mo = C.mommy, p = bossView() || {}, r = p.round || m.round, b = (x) => `<b>${x}</b>`; // (p: the round on the board; in the fight m.round has moved on already)
@@ -24534,7 +24547,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const acidBites = C.acid && C.acid.pct > 0 ? Object.keys(mo.bites).filter(k => mo.bites[k].acid) : [], acidRounds = C.biteByRound.map((x, k) => acidBites.includes(x) ? k + 1 : 0).filter(Boolean);
     const sec = (title, items) => `<h4 style="margin:10px 0 2px">${title}</h4><ul class="helplist">${items.filter(Boolean).map(x => `<li>${x}</li>`).join('')}</ul>`;
     $('sheet').innerHTML = `<div class="bar"><h3 id="sheet-h" data-boss-read>Mommy’s rules</h3><button class="btn small" id="close">Got it</button></div>
-      <p class="hint" style="margin:0 0 6px">The clock is paused while you read.</p>
+      <p class="hint" style="margin:0 0 6px">${phase === 'battle' ? 'The fight is paused while you read.' : 'No clock while you deploy: take your time.'}</p>
       <p style="margin:0">A giant spider hangs at the front of her zone. Kill her within ${b(m.boss.rounds + ' rounds')}. Her health carries over from round to round and never comes back. The faster she falls, the more you earn: ${bossRewardList().map(x => `by round ${x.round}, ${bossRewardName(x)}`).join('; ')}. A faster kill earns the ones before it too.</p>
       ${sec('Hanging', [
         `While she hangs she takes only ${b(Math.round(mo.hang * 100) + '%')} of any damage, and she can’t be stunned, slowed, rooted or moved.`,
@@ -24560,7 +24573,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         mo.molt ? `Every ${mo.molt} s she molts: poison, bleed, burn, frost and slows fall off her.` : '',
         mo.bleedPct ? '' : 'Hits that take a share of max health (bleed’s big stacks, Deadeye) don’t work on her.'])}
       ${sec('Your side', [
-        `${C.startGold} gold to start, then the normal income each round.`,
+        `${C.startGold} gold to start, then ${bossIncomeText()}.`,
         `Every round: ${b('one free move')} for a squad from an earlier round, and ${b('one free extra deployment')}.`,
         `At most ${b(m.boss.cap + ' squads')} of any one unit.`,
         `No tower: a ${b('treasury')} instead. It pays 50 gold for each fight it stands through; her spiders go for it once your army is gone. You have no health to lose: only the rounds run out.`,
@@ -24734,7 +24747,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
 
   function beginAiRound() {
     if (mode === 'tutorial') { tutRound(); enterDeploy(0); return; } // the enemy's army is set by the script; no clock
-    if (m && m.boss) { enterDeploy(timerOn ? deployMs() : 0); bossLine(); return; } // the Mommy boss puzzle: no AI, the normal clock
+    if (m && m.boss) { enterDeploy(0); bossLine(); return; } // the Mommy boss puzzle: no AI and no deploy clock (it's PvE: nobody waits on you; owner, 12 November)
     if (mode === 'claude') { foeLeaderTurn(); startClaudeTurn(); enterDeploy(timerOn ? deployMs() : 0); return; } // Claude picks its leader first when it won round 1
     aiWaits = Game.needsLeaderPick(m, 1) && !Game.leaderTurn(m, 1); // the player picks a leader first: the AI deploys after (foeLeaderTurn)
     if (!aiWaits) aiFoeDeploy(1); // the AI commits first; its new squads stay hidden until the fight
@@ -25705,7 +25718,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   // has <base href="../../">). Safari resolves an inline script's import() against the page's own address, ignoring
   // <base>, so there it looked for design/diorama/vendor/... and failed: "Importing a module script failed" (2026-11-10)
   const threeSrc = () => new URL(THREE_URL, document.baseURI).href;
-  const V3D = '391a81a22b'; // the 3D code's version (src/build.js puts a hash of it here)
+  const V3D = '9483a29a37'; // the 3D code's version (src/build.js puts a hash of it here)
   const B3D_STORE = 'phone-bellum-board';
   const force2d = /[?&]board=2d\b/.test(location.search);
   const force3d = !force2d && (/[?&]board=3d\b/.test(location.search) || window.PB_FORCE3D === true);

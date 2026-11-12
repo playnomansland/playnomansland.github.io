@@ -85,11 +85,11 @@ One panel, made once at the end of `<body>`, so it opens over the boss screen an
 - Right: a **spawn side panel** (the Mommy: **Nest spawns**): round tabs R1-R5 (the round in play marked "now"), the
   board for that round (`bossNestBoard`), one line on what spawns and how often, and a key.
 - Opened from the boss screen (point 4 link, round 1) and in a run from the cog's Settings (the current round).
-  **The deploy clock and the fight wait while it is open** (`bossReading` checks `bossAtkOpen`). Esc, ✕ or a click
+  **The fight waits while it is open** (there is no deploy clock: a boss run is PvE) (`bossReading` checks `bossAtkOpen`). Esc, ✕ or a click
   outside closes it; Esc closes only it.
 
 ### E-G. In the run, result card, leaderboard
-- The rules sheet opens as the run starts; the clock waits while it is read (`data-boss-read`).
+- The rules sheet opens as the run starts. No deploy clock in a boss run (PvE); the fight waits while the sheet is read (`data-boss-read`).
 - Cog Settings in a run: a row "The Mommy · <Boss>'s attacks", and "Restart boss".
 - The result card's eyebrow: `<Boss> · weekly boss`. After a kill: "Killed in round n:" and the rewards earned; the
   next reward to chase.
@@ -152,7 +152,7 @@ Work on a branch, check each step in the browser, merge when the owner says so.
 9. **Check in a browser** (Playwright, `?ui=diorama`, an account in `localStorage` `phonebellum.account.v1`, the
    `/account/` routes aborted and `/leaderboard/boss` mocked): the menu note, her screen at 1440×900 and 1280×720 and
    on a phone, Back from Puzzles and from the menu, her attacks panel (Esc closes only it), FIGHT HER, the cog's
-   attacks button (the clock says "paused"), the result card. Send the owner screenshots.
+   attacks button (no deploy clock; in the fight it waits), the result card. Send the owner screenshots.
 10. **Merge to main**: both the Pages and the Server deploy workflows run on a push to `main`, so the page and the
     server ship together.
 

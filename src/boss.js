@@ -112,6 +112,9 @@
     m.packages = [[], []];
     m.towers = [null, null];
     m.units.forEach((u, k) => { if (!cfg.banned.includes(u.name) && !u.building) m.unlocks[0][k] = 1; });
+    // her banned units are out of the match (Game.isOff): not in the shop, not in + Unlock (owner, 12 November: "all not
+    // unlocked units are not purchasable")
+    m.off = (Array.isArray(m.off) ? m.off : []).concat(m.units.map((u, k) => cfg.banned.includes(u.name) ? k : -1).filter(k => k >= 0));
     m.extraDeploys[0] = 1;
     m.gold = [cfg.startGold, 0];
     m.boss.run = { seed: m.seed, rounds: [] }; // the run's record, for the leaderboard (record, replay below)
@@ -251,7 +254,11 @@
         if (!(mom.u.projSpeed > 0) && mom.lastAtk != null && mom.lastAtk !== lastAtk0) { lastAtk0 = mom.lastAtk; const tg = mom.lock; if (tg) ev.push({ k: 'bite', t: mom.lastAtk, x: tg.x, y: tg.y, land: mom.lastAtk, r: mom.u.splash || 1, bite: bs.bite }); } // (a bite that lands at once)
         let tg = null, td = mom.u.range + (mom.fallen ? cfg.mommy.size : 0); // who she bites next: the nearest body in her reach
         for (const f of api.sides[0]) if (f.alive && !f.u.aloft && !f.hidden && !(f.inside && f.inside.alive)) { const d = d2(f, mw.x, mw.y); if (d <= td) { td = d; tg = f; } }
-        if (!stunned && tg) { const cyc = 1 / Math.max(0.05, mom.u.aps), k = Math.min(1, (api.t - (mom.lastAtk == null ? -cyc * 0.5 : mom.lastAtk)) / cyc); bs.aim = { x: tg.x, y: tg.y, k, in: cyc * (1 - k), cyc, r: mom.u.splash || 1 }; }
+        if (mom.lock && mom.lock.alive && mom.lock.side === 0 && !mom.lock.hidden && d2(mom.lock, mw.x, mw.y) <= mom.u.range + (mom.fallen ? cfg.mommy.size : 0)) tg = mom.lock; // (whom she is on, while they stay in reach)
+        // when: the engine's own reload (mom.cd, slowed by attack slows), not the time since her last bite. Ready with
+        // nobody the engine lets her bite (cd at 0): no jaws, or they would hang open over that unit for good (12 November)
+        const slow = mom.atkSlow ? Math.max(0.05, 1 - mom.atkSlow / 100) : 1, cyc = 1 / Math.max(0.05, mom.u.aps), left = (mom.cd || 0) / slow;
+        if (!stunned && tg && left > 1e-6) bs.aim = { x: tg.x, y: tg.y, k: Math.max(0, Math.min(1, 1 - left / cyc)), in: left, cyc, r: mom.u.splash || 1 };
         if (ev.length > 60) ev.splice(0, ev.length - 60);
       }
       // attention: nobody close while she hangs, and the mortar winds up
