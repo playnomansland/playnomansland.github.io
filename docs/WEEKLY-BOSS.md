@@ -20,7 +20,7 @@ Every boss has all of these, in this order of discovery. Do not add a surface or
 | B | **The boss screen** (before a run), opened from the note, a click on the model, or Puzzles' "Weekly boss" row | HTML `section.bz` in `src/site-template.html`; `openBoss` / `drawBoss` / `drawBossBoard` / `bzView` / `buildBossStage` in `src/diorama.js`; CSS `#dio.bz`, `#dio .bz…` in `src/diorama.css` |
 | C | **Rewards ladder** on the boss screen (three tiers by round) | `bossRewardList` (page), `drawBoss` (Diorama), `Boss.REWARDS` (`src/boss.js`), `bossRewards` / `bossBackfill` (server) |
 | D | **"<Boss>'s attacks" panel**: attack cards + spawn map side panel; from How to play point 4 and from the fight's cog Settings | `openBossAttacks` / `drawBossAttacks` / `drawBossNests` / `bossNestBoard` / `ATK_ICON` / `BITE_NAME` / `BITE_COL` in `src/site-template.html`; CSS `.bz-atk…`, `.bz-nests…` |
-| E | **In the run**: rules sheet as the run starts, boss bar, round banner, spawn map in the deploy panel, cog Settings with "<Boss>'s attacks" and "Restart boss" | `startBoss`, `openBossRules`, `bossBar`, `bossLine`, `openBossMap`, `openSoundSheet` |
+| E | **In the run**: rules sheet as the run starts, boss bar, round banner, spawn map in the deploy panel, cog Settings with "<Boss>'s attacks", "Restart boss" and "Replay round", a "! Next round" bite line on the round card | `startBoss`, `replayBossRound`, `bossNextBite`, `openBossRules`, `bossBar`, `bossLine`, `openBossMap`, `openSoundSheet` |
 | F | **Result card** after each fight / at the end | `bossResult` |
 | G | **Leaderboard**: replayed by the server; on the boss screen, Rankings' boss tab, and the leaderboard sheet | `bossBoardLoad`, `bossReport`, `bossRunText`, `drawBossStandings`, `openLeaderboard('boss')`; server `bossBoard` / `bossRows` / route `boss` in `server/src/accounts.js`, replay in `server/src/room.js` `bossCheck` |
 
@@ -90,7 +90,9 @@ One panel, made once at the end of `<body>`, so it opens over the boss screen an
 
 ### E-G. In the run, result card, leaderboard
 - The rules sheet opens as the run starts; the clock waits while it is read (`data-boss-read`).
-- Cog Settings in a run: a row "The Mommy · <Boss>'s attacks", and "Restart boss".
+- Cog Settings in a run: a row "The Mommy · <Boss>'s attacks", "Restart boss", and under it "Replay round", which shows
+  the rounds this run has reached ("Round n", the current one "(now)") and goes back to the start of the one picked.
+- The round card (between rounds): "! Next round" with the next round's attack mark and name, in its colour.
 - The result card's eyebrow: `<Boss> · weekly boss`. After a kill: "Killed in round n:" and the rewards earned; the
   next reward to chase.
 - A kill on the leaderboard reads **"Finished round X, Y seconds"**; no kill reads "N damage, not killed".

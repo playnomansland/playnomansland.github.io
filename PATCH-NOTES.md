@@ -20,8 +20,9 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
-## 12 November 2026 – A Skills tab on the picked unit
+## 12 November 2026 – Replay a round of the Mommy, and a Skills tab on the picked unit
 
+- **The Mommy:** Settings in a run has **Replay round** under Restart boss: pick any round you've reached this run and play it again from its start. The card between rounds now warns you what's coming: **! Next round** with her next bite's mark and name.
 - **Shop:** pick a unit in the deploy panel and a gold **Skills** tab slides out on the left of its card, with the unit sheet's symbol (a sheet with a skill star). Tap it to open the unit's sheet: its stats, skills and what it's strong and weak against. Holding a card still opens it as well, but you no longer have to know that.
 
 ---
