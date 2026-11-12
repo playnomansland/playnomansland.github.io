@@ -6,8 +6,8 @@ Nothing in the game reads the registry yet. This page only shows how well a smal
 
 ## In short
 
-- **17 keywords** in wave 1 (the cap is 17). 0 have their full kit (icon, fight effect, sound, demo).
-- **27 of 28 units** have a wave 1 keyword as their verb.
+- **18 keywords** in wave 1 (the cap is 18). 0 have their full kit (icon, fight effect, sound, demo).
+- **27 of 28 units** have a wave 1 keyword as their verb, or are their role alone (a Guard with no keyword is a tank).
 - **85 skills** of 59 types: **26** read with wave 1 keywords alone, **28** are plain stat changes that need no keyword, **19** need a wave 2 keyword, **12** fit no keyword.
 
 ## Wave 1 keywords
@@ -19,9 +19,10 @@ Nothing in the game reads the registry yet. This page only shows how well a smal
 | Splash | Damage | Hits everything in a small circle. | Ember Imps, Fire Mage, Flame Wizard, Slime Wizard, Meteor Caller, Slimeshots | 1: Snow storm |
 | Pierce | Damage | Hits every enemy in a line. | Earth Wizard | none |
 | Shred | Damage | Cuts a share of the target's health. | Truespear | none |
-| Tank | Guard | Takes a lot of damage. | Steel Wizard, Ether Golem, Ent | none |
 | Rush | Guard | Charges in and knocks enemies back. | War Mammoth | 1: Bullhead |
+| Taunt | Guard | Enemies nearby must attack it. | none | none |
 | Pull | Control | Drags an enemy to it. | none | 1: Grasping roots |
+| Teleport | Control or Support | Moves a squad somewhere else at once. | none | none |
 | Burn | Afflict | Fire damage over a short time. | none | 1: Spitfire |
 | Slow | Afflict | Enemies move and attack slower. | Frost Wizard | 4: Slow, Web-shots, Deepfreeze, Snow storm |
 | Poison | Afflict | Damage over time, past armor. | none | 4: Poison shot, Poisonous fangs, Graverot arrows, Eye of the Obelisk |
@@ -48,14 +49,14 @@ Verb = what the unit does in today's build. Planned = the job in the Roster doc,
 | Leaf Wizard | Shoot |  |  |  |
 | Earth Wizard | Pierce |  | Hurl: a boulder that stops at the first unit it hits. |  |
 | Flame Wizard | Splash |  | Burn | A flame cone with no burn built in today; Spitfire is a skill. |
-| Steel Wizard | Tank |  | Pierce |  |
+| Steel Wizard | Guard (the role alone) |  | Pierce |  |
 | Slime Wizard | Splash |  |  |  |
-| Ether Golem | Tank |  |  |  |
+| Ether Golem | Guard (the role alone) |  |  |  |
 | Sun Priest | Shoot |  |  |  |
 | Meteor Caller | Splash |  |  |  |
 | War Mammoth | Rush |  |  |  |
 | Necromancer | Spawn |  |  |  |
-| Ent | Tank |  |  |  |
+| Ent | Guard (the role alone) |  |  |  |
 | Slimeshots | Splash |  | Shoot | Has 3 m splash today; the Verbs doc lists it as Shoot. |
 | Just a horse | Carry |  |  |  |
 | Rogue | Strike |  |  |  |
@@ -115,5 +116,7 @@ These need no keyword: on a card they show as a change in pips.
 Armor and health, Rapid fire, Swift strikes, Heavy shot, Long reach, Gallop, Frenzy, Ember Mortar, Steel plating, Aeroblades, Waterbomb, Flow state, Heavy metal, Stone spikes, AAARGH!, Tuff skin, Rampager, Longbones, Reinforced Bark, Ranger scope, Deadeye, Assaultgunner, Sightweavers, Flare, Death Flurry, Petalburst, Glacial gaze, Crushing maw.
 
 ## Wave 2 keywords used above
+
+Units that are their role alone: Steel Wizard (Guard), Ether Golem (Guard), Ent (Guard).
 
 Stun (3 skills), Blind (1 skills), Shield (4 skills), Mark (1 skills), Boost (1 skills), Arrive elsewhere (2 skills), Grow (2 skills), Leave behind (4 skills), Chain (1 skills).

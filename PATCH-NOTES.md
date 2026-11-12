@@ -20,28 +20,21 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
-## 12 November 2026 – Eight wizards, eight shapes (branch `design/keywords`)
+## 12 November 2026 – Wizards: cleaner staffs, and a real leaf (branch `design/keywords`)
 
-The wizards used to be one model in eight colours, told apart only by the top of the staff. Each now has its own build, hat and a detail or two, so you can tell them apart by outline alone. Looks only: no stats or rules change. Every one keeps the team-coloured hat brim.
-
-- **Fire Mage:** the plain wizard, with a floppy hat tip bent back.
-- **Leaf Wizard:** slim and beardless, the hat swept far back, a leaf collar and two leaves in the hat band.
-- **Earth Wizard:** squat, with a flat stone cap, a beard down to the belly and a boulder on one shoulder.
-- **Flame Wizard:** wide, with iron shoulders, a big beard and a burning brazier for a hat.
-- **Steel Wizard:** a helmet with a nose guard, steel shoulders and a gorget, no beard.
-- **Slime Wizard:** the hat slumps forward with a blob on its tip; slime drips off the brim and pools round the hem.
-- **Water Mage:** no beard, long dark hair, a pale collar and hem, the hat curling forward like a wave.
-- **Frost Wizard:** a fur collar and a fur band on the hat, an icicle beard and an ice spike on the hat's tip.
-- **For makers:** `node tools/model-sheet.js out.png wizards` renders any units' models side by side (add `--dark` for outlines only) and prints their triangle counts (the wizards went from 134–162 to 150–276 each).
+- **Wizards:** nothing floats beside a staff any more (the Earth Wizard's pebble, the Water Mage's bubble and the Frost Wizard's snowball are gone). Each wizard is told apart by its colour and the top of its staff, as before.
+- **Leaf Wizard:** the staff's top is now one flat leaf with a pale midrib, in place of the three small spikes.
+- An earlier try the same day gave every wizard its own hat and build; it was taken back, on the owner's word.
+- **For makers:** `node tools/model-sheet.js out.png wizards` renders any units' models side by side (add `--dark` for outlines only) and prints their triangle counts.
 
 ---
 
 ## 12 November 2026 – Keywords, step one: a registry (branch `design/keywords`, nothing changes in the game)
 
 - **For players: nothing yet.** No rule, screen or number changes.
-- **Keyword registry:** `src/keyword-registry.json` lists 17 first keywords (Strike, Shoot, Splash, Pierce, Shred, Tank, Rush, Pull, Burn, Slow, Poison, Bleed, Heal, Carry, Hide, Reveal, Spawn), each with a role and a line of at most 8 words, and tags every unit and skill in today's game with them.
-- **What it shows:** 27 of 28 units have one of the 17 as their verb. Of 85 skills, 26 read with these keywords alone, 28 are plain stat changes, 19 need a keyword from a later wave and 12 fit none. The full lists are in `docs/KEYWORDS-TAGGING.md`.
-- **Icons, first drawings:** each of the 17 keywords has an icon in the registry, drawn in one colour so its role colour comes from the page. `node tools/keyword-sheet.js` writes `docs/keyword-icons.html`, a page that shows them all at three sizes. No screen in the game uses them yet.
+- **Keyword registry:** `src/keyword-registry.json` lists 18 first keywords (Strike, Shoot, Splash, Pierce, Shred, Rush, Taunt, Pull, Teleport, Burn, Slow, Poison, Bleed, Heal, Carry, Hide, Reveal, Spawn), each with a role and a line of at most 8 words. Tank is not a keyword: a Guard with no keyword is a tank. Teleport is Control or Support, by what the ability does, and tags every unit and skill in today's game with them.
+- **What it shows:** 27 of 28 units have one of the 18 as their verb, or are a plain Guard. Of 85 skills, 26 read with these keywords alone, 28 are plain stat changes, 19 need a keyword from a later wave and 12 fit none. The full lists are in `docs/KEYWORDS-TAGGING.md`.
+- **Icons, second drawings:** each keyword is a glyph, and its role is the plate behind it: a diamond for Damage, a shield for Guard, a hexagon for Control, a triangle for Afflict, a circle for Support, an arch for Summon. Splash, Shred and Spawn were redrawn; Taunt and Teleport are new. Armor weight (none, light, medium, heavy, fortified) is its own set: a meter of four steel plates, never on a role plate. `node tools/keyword-sheet.js` writes `docs/keyword-icons.html`, a page that shows them all at three sizes. No screen in the game uses them yet.
 - **A check:** `node tools/tests/keywords.js` fails when a unit has no verb, a skill is not sorted, or a keyword line is too long.
 
 ---

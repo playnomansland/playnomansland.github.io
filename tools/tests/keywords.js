@@ -13,6 +13,8 @@ const reg = require('../../src/keyword-registry.json');
 
 const own = (o) => Object.keys(o).filter(k => k[0] !== '_');
 const KW = reg.keywords, ROLES = reg.roles, UNITS = reg.units, ST = reg.skillTypes, R = reg.rules;
+const rolesOf = (w) => [].concat(w.role);
+const roleNames = (w) => rolesOf(w).map(r => ROLES[r].name).join(' or ');
 const words = (s) => String(s || '').trim().split(/\s+/).filter(Boolean).length;
 const skills = Array.isArray(roster.skills) ? roster.skills : Object.values(roster.skills);
 const skillById = Object.fromEntries(skills.map(s => [s.id, s]));
@@ -22,7 +24,7 @@ const wave1 = own(KW).filter(k => KW[k].wave === 1);
 assert(wave1.length <= R.wave1Cap, `wave 1 has ${wave1.length} keywords, the cap is ${R.wave1Cap}: retire one before adding one`);
 for (const k of own(KW)) {
   const w = KW[k];
-  assert(ROLES[w.role], `keyword ${k}: unknown role "${w.role}"`);
+  for (const r of rolesOf(w)) assert(ROLES[r], `keyword ${k}: unknown role "${r}"`);
   assert(w.wave === 1 || w.wave === 2, `keyword ${k}: wave must be 1 or 2`);
   if (w.wave !== 1) continue;
   assert(w.line && words(w.line) <= R.maxWords, `keyword ${k}: its line needs 1 to ${R.maxWords} words ("${w.line || ''}")`);
@@ -34,7 +36,8 @@ const rosterNames = roster.units.map(u => u.name);
 for (const n of rosterNames) {
   const t = UNITS[n];
   assert(t, `unit "${n}" is in the roster but has no entry in keyword-registry.json`);
-  assert(KW[t.verb], `unit "${n}": verb "${t.verb}" is not a keyword`);
+  if (t.verb) assert(KW[t.verb], `unit "${n}": verb "${t.verb}" is not a keyword`);
+  else assert(ROLES[t.role], `unit "${n}": needs a verb (a keyword) or a role alone`);
   for (const a of t.also || []) assert(KW[a], `unit "${n}": also "${a}" is not a keyword`);
 }
 for (const n of own(UNITS)) assert(rosterNames.includes(n), `keyword-registry.json has a unit "${n}" that is not in the roster`);
@@ -57,7 +60,10 @@ for (const type of own(ST)) assert(skills.some(s => s.type === type), `keyword-r
 
 const count = (kind) => all.filter(x => x.kind === kind).length;
 const types = (kind) => [...new Set(all.filter(x => x.kind === kind).map(x => x.s.type))];
-const unitsW1 = rosterNames.filter(n => KW[UNITS[n].verb].wave === 1);
+const unitsW1 = rosterNames.filter(n => UNITS[n].verb ? KW[UNITS[n].verb].wave === 1 : true);
+// ---------- role plates and the armor set ----------
+for (const r of own(ROLES)) assert(ROLES[r].plate && ROLES[r].glyph, `role ${r}: needs a plate and a glyph placement`);
+for (const a of own(reg.armor).filter(k => k !== 'color')) assert(reg.armor[a].name && reg.armor[a].icon, `armor ${a}: needs a name and an icon`);
 const kitDone = wave1.filter(k => R.kit.every(p => KW[k][p]));
 
 const sum = {
@@ -66,7 +72,7 @@ const sum = {
   wave1: count('wave1'), wave2: count('wave2'), stat: count('stat'), unfit: count('unfit'), kitDone: kitDone.length,
 };
 console.log(`keywords: ${sum.keywords} in wave 1 (cap ${sum.cap}), ${sum.kitDone} with a full kit`);
-console.log(`units: ${sum.unitsW1} of ${sum.units} have a wave 1 verb`);
+console.log(`units: ${sum.unitsW1} of ${sum.units} have a wave 1 verb or a role alone`);
 console.log(`skills: ${sum.skills} (${sum.skillTypes} types): ${sum.wave1} read with wave 1 keywords, ${sum.stat} are plain stat changes, ${sum.wave2} need a wave 2 keyword, ${sum.unfit} fit no keyword`);
 console.log('keywords check passed');
 
@@ -81,18 +87,18 @@ if (process.argv.includes('--report')) {
   L.push('Nothing in the game reads the registry yet. This page only shows how well a small keyword list describes the game as it is.', '');
   L.push('## In short', '');
   L.push(`- **${sum.keywords} keywords** in wave 1 (the cap is ${sum.cap}). ${sum.kitDone} have their full kit (icon, fight effect, sound, demo).`);
-  L.push(`- **${sum.unitsW1} of ${sum.units} units** have a wave 1 keyword as their verb.`);
+  L.push(`- **${sum.unitsW1} of ${sum.units} units** have a wave 1 keyword as their verb, or are their role alone (a Guard with no keyword is a tank).`);
   L.push(`- **${sum.skills} skills** of ${sum.skillTypes} types: **${sum.wave1}** read with wave 1 keywords alone, **${sum.stat}** are plain stat changes that need no keyword, **${sum.wave2}** need a wave 2 keyword, **${sum.unfit}** fit no keyword.`, '');
   L.push('## Wave 1 keywords', '', '| Keyword | Role | Line | Units with it as their verb | Skills that give it |', '| --- | --- | --- | --- | --- |');
   for (const k of wave1) {
     const us = rosterNames.filter(n => UNITS[n].verb === k);
     const ss = all.filter(x => (ST[x.s.type].keywords || []).includes(k)).map(x => x.s.name);
-    L.push(`| ${kwName(k)} | ${ROLES[KW[k].role].name} | ${KW[k].line} | ${us.join(', ') || 'none'} | ${ss.length ? ss.length + ': ' + ss.join(', ') : 'none'} |`);
+    L.push(`| ${kwName(k)} | ${roleNames(KW[k])} | ${KW[k].line} | ${us.join(', ') || 'none'} | ${ss.length ? ss.length + ': ' + ss.join(', ') : 'none'} |`);
   }
   L.push('', '## Units', '', 'Verb = what the unit does in today\'s build. Planned = the job in the Roster doc, where it differs.', '', '| Unit | Verb today | Also built in | Planned | Note |', '| --- | --- | --- | --- | --- |');
   for (const n of rosterNames) {
     const t = UNITS[n];
-    L.push(`| ${n} | ${kwName(t.verb)}${KW[t.verb].wave === 2 ? ' (wave 2)' : ''} | ${(t.also || []).map(kwName).join(', ')} | ${t.planned ? (KW[t.planned] ? kwName(t.planned) : t.planned) : ''} | ${t.note || ''} |`);
+    L.push(`| ${n} | ${t.verb ? kwName(t.verb) + (KW[t.verb].wave === 2 ? ' (wave 2)' : '') : ROLES[t.role].name + ' (the role alone)'} | ${(t.also || []).map(kwName).join(', ')} | ${t.planned ? (KW[t.planned] ? kwName(t.planned) : t.planned) : ''} | ${t.note || ''} |`);
   }
   const table = (kind, last, cell) => {
     L.push('| Skill | On | What it says today | ' + last + ' |', '| --- | --- | --- | --- |');
@@ -107,6 +113,8 @@ if (process.argv.includes('--report')) {
   L.push(all.filter(x => x.kind === 'stat').map(x => x.s.name).join(', ') + '.', '');
   L.push('## Wave 2 keywords used above', '');
   const w2 = own(KW).filter(k => KW[k].wave === 2 && (all.some(x => (ST[x.s.type].keywords || []).includes(k)) || rosterNames.some(n => UNITS[n].verb === k)));
+  const lone = rosterNames.filter(n => !UNITS[n].verb);
+  if (lone.length) L.push('Units that are their role alone: ' + lone.map(n => `${n} (${ROLES[UNITS[n].role].name})`).join(', ') + '.', '');
   L.push(w2.map(k => `${kwName(k)} (${all.filter(x => (ST[x.s.type].keywords || []).includes(k)).length} skills)`).join(', ') + '.', '');
   fs.writeFileSync(path.join(__dirname, '../../docs/KEYWORDS-TAGGING.md'), L.join('\n'));
   console.log('wrote docs/KEYWORDS-TAGGING.md');
