@@ -39,7 +39,7 @@ The weekly boss now has a home of her own. Every Mommy run is drawn in **the Hol
 - **The light:** one warm column of light falls through the hole onto the middle of the board, with dust glinting in it. The floor is packed earth with dry leaves, roots and silk strands.
 - **What each fight leaves behind:** every nest you burst leaves a torn, empty egg sac on the ground that stays for the rest of the run, so you can see what you've cleared. Her shed skins pile up by the nursery, a few more after every fight.
 - **The nursery:** a dark tunnel mouth at the foot of the right wall near the far end, framed by a root, half behind torn silk, with small red eyes blinking inside.
-- **Spiderlings on the walls:** a handful of baby spiders crawl along the walls while you deploy (and sit still when nothing moves). When the fight starts they pour down to the foot of the walls. Once she drops below a third of her health, they flee back into the nursery.
+- **Spiderlings on the walls:** a handful of baby spiders in the Hollow Brood look (the same bark-brown spiders with orange fungus on their backs as her spiders in the fight) crawl along the walls while you deploy (and sit still when nothing moves). When the fight starts they pour down to the foot of the walls. Once she drops below a third of her health, they flee back into the nursery.
 - **Her health shows in the lair:** below two thirds, her orb webs hang torn. Below a third, while she still hangs, bark chips fall from the bridge as it creaks under her. When she dies, the light from the hole grows, the walls come out of the dark and the eyes go out.
 - Only the look has changed: the board, her rules and her numbers are exactly the same. The 3D board has it all; the 2D board gets the new floor.
 

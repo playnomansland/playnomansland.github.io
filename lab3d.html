@@ -12787,10 +12787,11 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
   const lingGeo = colGeo([[new THREE.SphereGeometry(0.3, 7, 5).scale(0.9, 0.7, 1.3), '#2C221B', M4(0, 0.25, -0.35)], [new THREE.SphereGeometry(0.2, 6, 4), '#3A2D23', M4(0, 0.22, 0.12)],
     [new THREE.SphereGeometry(0.05, 4, 3), '#C2453A', M4(0.08, 0.32, 0.28)], [new THREE.SphereGeometry(0.05, 4, 3), '#C2453A', M4(-0.08, 0.32, 0.28)], ...legParts(1.3, 0.05, '#241C16')]);
   const lingMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }); lingMat.onBeforeCompile = shadeLit; lingMat.customProgramCacheKey = () => 'pb-ling';
+  const lingMats = {}; // (the band's material, made once the model is first used)
   const leftGroup = new THREE.Group(); hollow.add(leftGroup); // what stays from round to round (husks, molts): rebuilt when a fight ends
   let leftKey = '';
   function clearHollow() {
-    for (const o of [...hollow.children]) { if (o === leftGroup) continue; hollow.remove(o); o.traverse((q) => { if (q.geometry && q.geometry !== lingGeo) q.geometry.dispose(); }); }
+    for (const o of [...hollow.children]) { if (o === leftGroup) continue; hollow.remove(o); o.traverse((q) => { if (q.geometry && q.geometry !== lingGeo && !(q.parent && q.parent.lingFlip)) q.geometry.dispose(); }); } // (the model library's geometry is shared)
     for (const o of [...leftGroup.children]) { leftGroup.remove(o); o.dispose(); } leftKey = '';
     hol = null; holRound = 0;
   }
@@ -12842,7 +12843,15 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
         tg.add(pair); (h.eyes || (h.eyes = [])).push([pair, i * 1.9]); }
       const cur = new THREE.Mesh(webGeo, webMats[1]); cur.position.set(w * 0.18, ht * 0.45, back(ht * 0.45) + 0.8); cur.rotation.set(-lean, 0.08, 0.1, 'YXZ'); cur.scale.set(w * 0.62, ht * 0.75, 1); cur.renderOrder = 3; tg.add(cur);
       tg.traverse((o) => { o.raycast = () => {}; });
-      lings = (h.lanes || []).map((lane, i) => { const m = new THREE.Mesh(lingGeo, lingMat); m.scale.setScalar(1.8 + (i % 3) * 0.3); m.visible = false; add(m);
+      // the spiderlings wear the same look as her spiders in the fight: the game's 'spider:hollow' model (opts.models;
+      // the Hollow Brood skin), its band in the enemy's colour; it faces -z, so lingFlip turns it round (tickLings)
+      const pt = opts.models && opts.models.parts('spider:hollow');
+      if (pt && !lingMats.team) lingMats.team = new THREE.MeshLambertMaterial({ flatShading: true });
+      if (pt) lingMats.team.color.set(h.teamCol || '#D9534F').multiplyScalar(0.8);
+      lings = (h.lanes || []).map((lane, i) => {
+        const m = pt ? new THREE.Group() : new THREE.Mesh(lingGeo, lingMat);
+        if (pt) { if (pt.fixed) m.add(new THREE.Mesh(pt.fixed, lingMat)); for (const g of [pt.team, pt.tint]) if (g) m.add(new THREE.Mesh(g, lingMats.team)); m.lingFlip = true; }
+        m.scale.setScalar(pt ? 1.05 + (i % 3) * 0.15 : 1.8 + (i % 3) * 0.3); m.visible = false; add(m);
         return { m, lane, p: 1 + (i * 7) % Math.max(2, lane.drop - 1), to: 1, wait: i * 0.4, spd: 1.6 + (i % 4) * 0.35 }; });
     }
     hol = { bridge, webs, anchor: h.anchor, sway: h.sway || [], eyes: h.eyes || [], lings, moltAt: h.moltAt, fight: false, hpK: 1 };
@@ -12901,7 +12910,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
       const i = Math.min(last - 1, Math.floor(s.p)), f = s.p - i, a = L[i], b = L[i + 1], moving = Math.abs(d) > 0.01;
       lN.set(a[3] + (b[3] - a[3]) * f, a[4] + (b[4] - a[4]) * f, a[5] + (b[5] - a[5]) * f).normalize();
       lF.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]).multiplyScalar(d < 0 ? -1 : 1); lF.addScaledVector(lN, -lF.dot(lN)).normalize();
-      lX.crossVectors(lN, lF).normalize(); lM.makeBasis(lX, lN, lF);
+      lX.crossVectors(lN, lF).normalize(); if (s.m.lingFlip) { lX.negate(); lF.negate(); } lM.makeBasis(lX, lN, lF);
       s.m.quaternion.setFromRotationMatrix(lM);
       s.m.position.set(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f).addScaledVector(lN, 0.12 + (moving ? Math.abs(Math.sin(holT * 26 + s.spd * 9)) * 0.06 : 0));
     }
@@ -13276,7 +13285,7 @@ vec3 pbNight(vec3 c, vec2 xz) { float hz = pbHaze(xz); if (hz > 0.0) return mix(
         lanes.push({ pts: pts.map((q) => [...q, ...nrmAt(q[0], q[2])]), drop });
       }
       const sun = (bi.light && bi.light.pos) || [-16, 74, -12];
-      holo = { tunnel, lanes, moltAt, bridge: bp, silkAt, anchor: [top.x, top.y - radAt(silkAt) * 0.9, top.z], roots, tendrils, webs, strands, beam: [mx * 0.15, -hd * 0.06, 14, 23], sun };
+      holo = { teamCol: typeof Art !== 'undefined' && Art.teamCol ? Art.teamCol(v.me === 1 ? 0 : 1, v.me || 0) : '#D9534F', tunnel, lanes, moltAt, bridge: bp, silkAt, anchor: [top.x, top.y - radAt(silkAt) * 0.9, top.z], roots, tendrils, webs, strands, beam: [mx * 0.15, -hd * 0.06, 14, 23], sun };
     }
     // 1. the edge: a frame of bushes, rocks and tall grass hugging the board, so its edge doesn't end in a hard line
     for (let s = 0; s < 2 * (BW + BD); s += 2.6) {
