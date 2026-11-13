@@ -42,8 +42,20 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ## 12 November 2026 – Replay a round of the Mommy, and a Skills tab on the picked unit
 
-- **The Mommy:** **Restart boss** and **Replay round** are on the screen for the whole run, even mid-fight, at the top right under her name. Replay round lists every round you've reached with its bite: pick one to play it again from its start. Restart asks "Sure?" first. (On phones they are in Settings.) The card between rounds now warns you what's coming: **! Next round** with her next bite's mark and name.
+- **The Mommy:** **Restart boss** and **Replay round** are on the screen for the whole run, even mid-fight, at the top right under her name. Replay round lists every round you've reached with its bite: pick one to play it again from its start. Restart asks "Sure?" first. **Mommy's attacks** has moved there too, from Settings. (On phones they are all in Settings.) The card between rounds now warns you what's coming: **! Next round** with her next bite's mark and name.
 - **Shop:** pick a unit in the deploy panel and a gold **Skills** tab slides out on the left of its card, with the unit sheet's symbol (a sheet with a skill star). Tap it to open the unit's sheet: its stats, skills and what it's strong and weak against. Holding a card still opens it as well, but you no longer have to know that.
+
+---
+
+## 12 November 2026 – You can see what you just bought
+
+Placing a squad is now obvious at a glance, even with your thumb over the tile. Sounds are unchanged.
+
+- **The moment it lands:** a soft ring runs out on the ground from the tile, and on the 3D board the squad drops onto it. Your gold turns red and counts down, and the price falls away below it, so you can see what it cost. The card you bought from gives a little bump.
+- **New until the fight:** every squad you bought this round has a gently pulsing outline and a **NEW** tag until the fight starts (your free starting squads in round 1 get the outline only). The shop card shows how many you've bought from it this round (×1, ×2…).
+- **The deploy pips are a receipt:** each used pip now shows the unit you placed with it, followed by the deployments you have left. Tap one to find that squad on the board.
+- **A drop that doesn't work:** dropping a card where it can't go puts a red cross on the tile and sends the card back to the tray.
+- **The fight starts:** your new squads snap into place. From round 2, the opponent's squads from this round are outlined in red with a NEW tag for a couple of seconds, so you can see what they just added.
 
 ---
 

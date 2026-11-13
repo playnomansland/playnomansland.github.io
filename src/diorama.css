@@ -810,6 +810,15 @@ html.diorama.pcwide #wrap > .board-banner, html.diorama.pcwide #wrap > .note3d, 
 html.diorama.pcwide .tag-clock, html.diorama.pcwide .net, html.diorama.pcwide .dock-tab { display: none !important; }
 /* the Mommy boss puzzle's boss bar: under the round line (which sits over the top of the board here), not behind it */
 html.diorama.pcwide .boss-bar { top: 104px; z-index: 6; }
+/* PC (owner, 12 November: it hid the top of the board): her corner instead, top right where an opponent's name and
+   health go (a boss run leaves that slot empty), off the board; top left when the deploy panel is on the right. The ?
+   goes inside its top row, and Restart boss / Replay round stack under it (--bbh: its height, from bossBar) */
+html.diorama.pcwide.pc .hud.bossrun .side.foe { visibility: hidden; }
+html.diorama.pcwide.pc .boss-bar { top: 18px; right: 32px; left: auto; transform: none; width: 320px; z-index: 7; }
+html.dright.diorama.pcwide.pc .boss-bar { right: auto; left: 32px; }
+html.diorama.pcwide.pc .boss-bar .bb-top { padding-right: 34px; }
+html.diorama.pcwide.pc .boss-bar .bb-q { right: 10px; top: 7px; width: 26px; height: 26px; font-size: 13px; box-shadow: none; }
+html.diorama.pcwide.pc .bz-ctl { top: calc(18px + var(--bbh, 96px) + 12px); }
 html.diorama.pcwide .hud.bossrun .side.you .num { grid-column: 1 / -1; font-size: 26px; line-height: 1.2; text-transform: uppercase; }
 html.diorama.pcwide .hud.bossrun .side.you .hp { grid-row: 3; grid-column: 1 / -1; width: 220px; margin-top: 5px; }
 
@@ -914,7 +923,6 @@ html.diorama.pcwide .panel .uc2[aria-pressed="true"] { transform: none; color: #
 html.diorama.pcwide .panel .uc2[aria-pressed="true"] .c, html.diorama.pcwide .panel .uc2[aria-pressed="true"] .st { color: #17140F; }
 html.diorama.pcwide .panel .uc2[aria-disabled="true"] { opacity: .5; }
 /* the picked card's Skills tab (the game's .sk2): square, gold like the picked card, ink symbol and stencil letters, its top corner cut */
-html.diorama.pcwide .panel .sk2 { margin-right: -8px; }
 html.diorama.pcwide .panel .sk2t { --skc: #F2B23A; right: -4px; top: 9px; bottom: 9px; width: 28px; border-radius: 0; color: #17140F;
   background: linear-gradient(to left, var(--skc) 4px, rgba(23,20,15,.4) 4px 6px, var(--skc) 6px); /* (a seam where it meets the gold card) */ transform: none; box-shadow: -4px 0 0 rgba(13,19,21,.55);
   clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px); padding-top: 9px; }
@@ -1000,6 +1008,10 @@ html.diorama.pcwide .overlay > .card .btn:hover:not(:disabled) { opacity: 1; }
 html.diorama.pcwide .overlay > .card .btn.primary { order: -1; flex: 0 0 auto; opacity: 1; color: #17140F; text-shadow: none; font-size: 46px; padding: 12px 24px 4px 18px; }
 html.diorama.pcwide .overlay > .card .btn.primary::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #F2B23A; clip-path: polygon(0 12%, 97% 0, 100% 84%, 2% 100%); }
 html.diorama.pcwide .overlay > .card .btn.primary:disabled { opacity: .5; }
+/* the Mommy's round card: Play this round again, a replay mark left of Next round (the primary goes first: order -1),
+   in the card's own plain button look (below), as tall as Next round, the mark in gold */
+html.diorama.pcwide .overlay > .card .btn.boss-retry { order: -2; align-self: stretch; padding: 0 12px; opacity: 1; }
+html.diorama.pcwide .overlay > .card .btn.boss-retry svg { width: 22px; height: 22px; color: #F2B23A; }
 html.diorama.pcwide .overlay > .card .status { font: 700 15px var(--dtype); color: #F4ECD8; }
 html.diorama.pcwide .board-banner { left: var(--dsx0, 380px); right: var(--dsx1, 24px); background: linear-gradient(90deg, transparent, rgba(23,20,15,.86) 18%, rgba(23,20,15,.86) 82%, transparent); font-family: var(--dstencil); }
 html.diorama.pcwide .board-banner small { font-family: var(--dtype); font-weight: 700; }
@@ -1306,7 +1318,6 @@ html.diorama.pcwide .droom .say .invite { justify-self: start; margin: 3px 0 5px
   html.diorama.pcwide .panel .uc2, html.diorama.pcwide .panel .add2 { flex-basis: 62px; height: 82px; }
   html.diorama.pcwide .panel .tier2 { height: 82px; }
   html.diorama.pcwide .panel .uc2 .ic svg { width: 24px; height: 24px; }
-  html.diorama.pcwide .panel .sk2 { margin-right: -6px; }
   html.diorama.pcwide .panel .sk2t { top: 5px; bottom: 5px; padding-top: 7px; gap: 4px; }
   html.diorama.pcwide .panel .sk2t b { letter-spacing: .06em; font-size: 10px; }
   html.diorama.pcwide .panel #ready, html.diorama.pcwide .panel #fight { font-size: 44px; bottom: 18px; padding: 10px 20px 4px 16px; }
@@ -2125,6 +2136,14 @@ html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: sta
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%); filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .4)); transition: background-color .12s, color .12s; }
 .bz-ctl .b svg { color: var(--ac); flex: none; transition: transform .25s; }
 .bz-ctl .b.restart { --ac: #FF8F78; }
+.bz-ctl .b.attacks { --ac: #F4ECD8; width: 214px; } /* (her attacks, moved here from Settings: a plain cream edge, it only shows things) */
+.bz-ctl .b.store { --ac: #9FE0B0; width: 214px; } /* (Save/Load board under her attacks: the owned green, it keeps things) */
+.bz-ctl .list .ic { grid-row: 1 / 3; display: grid; place-items: center; width: 34px; height: 34px; color: var(--bc); }
+.bz-ctl .list .ic svg { width: 22px; height: 22px; }
+.bz-ctl .list .sv.done { background: rgba(159, 224, 176, .16); }
+.bz-ctl .list button:disabled { cursor: default; opacity: .45; background: rgba(244, 236, 216, .04); }
+.bz-ctl .list small + small, .bz-ctl .list button + small { margin-top: 6px; }
+.bz-ctl .list .none { margin: 0; padding: 2px 4px 0; font: 500 12.5px/1.3 var(--dtype); opacity: .7; }
 .bz-ctl .b:hover { background: rgba(52, 45, 34, .94); }
 .bz-ctl .b.restart:hover svg { transform: rotate(-50deg); }
 .bz-ctl .b:focus-visible { outline: 2px solid #F4ECD8; outline-offset: 2px; }
@@ -2146,3 +2165,7 @@ html.dright.diorama.pcwide .bz-ctl { right: auto; left: 32px; justify-items: sta
 .bz-ctl .list em { grid-column: 2; font: 700 11px/1.3 var(--dtype); font-style: normal; letter-spacing: .06em; text-transform: uppercase; color: var(--bc); }
 .bz-ctl .list i { grid-column: 3; grid-row: 1 / 3; padding: 3px 6px 1px; background: #F2B23A; color: #17140F; font: 700 12px/1 var(--dstencil); font-style: normal; letter-spacing: .06em; text-transform: uppercase; }
 @media (prefers-reduced-motion: reduce) { .bz-ctl .b.sure { animation: none; } .bz-ctl .list { animation: none; } }
+
+/* buy and place feedback (2026-11-12): a squad placed this round as a square pip with its unit, not a diamond */
+html.diorama.pcwide .panel .trow .pips i.u { width: 20px; height: 20px; transform: none; border: 2px solid #F4ECD8; border-radius: 0; background: rgba(244,236,216,.12); display: grid; place-items: center; }
+html.diorama.pcwide .panel .trow .g2.pfx-spend { color: var(--foe); }
