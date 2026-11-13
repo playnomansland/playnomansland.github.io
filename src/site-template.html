@@ -7982,12 +7982,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       ${lines}
       ${!m.over && !won ? bossNextBite(r.round + 1) : ''}
       ${m.over ? acct ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : '<p>Play as a guest or sign in (Profile) to get your runs on her leaderboard.</p>' : ''}
-      <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : `<button class="btn boss-retry" id="boss-retry" aria-label="Play this round again" title="Play this round again">${CTL_ICON.again}</button><button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>`}</div>
+      <div class="btnrow">${lastPre && lastPre.boss ? `<button class="btn boss-retry" id="boss-retry" aria-label="Play this round again" title="Play this round again">${CTL_ICON.again}</button>` : ''}${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>
     </div>`);
     if (m.over) bossReport(r);
     if ($('boss-board')) $('boss-board').addEventListener('click', () => openLeaderboard('boss'));
     if ($('boss-next')) $('boss-next').addEventListener('click', () => { overlay(null); beginAiRound(); });
-    if ($('boss-retry')) $('boss-retry').addEventListener('click', againBossRound); // (the round just fought, from its board as it went in)
+    if ($('boss-retry')) $('boss-retry').addEventListener('click', againBossRound); // (the round just fought, from its board as it went in; on the final card too: the run goes on from there, and its end goes to the leaderboard again)
     if ($('boss-again')) $('boss-again').addEventListener('click', () => { overlay(null); startBoss(); });
     if ($('boss-menu')) $('boss-menu').addEventListener('click', () => { overlay(null); m = null; showStart(); });
   }
