@@ -6,8 +6,14 @@ Written 13 November 2026 for the next session. Read this first, then the three f
 
 - **Branch `design/keywords`** has everything below. **Nothing is on `main`, and nothing may be merged to `main`
   without the owner's word.** He said so for this whole piece of work.
-- `main` has moved on since the branch was cut (15 commits on 13 Nov). **Merge `origin/main` into the branch before
-  starting.** `index.html` and `lab3d.html` will conflict: take main's, then rebuild with `node src/build.js`.
+- `main` was merged into the branch on 13 Nov (its 15 commits of that day). If main has moved again, merge it again
+  before starting: `index.html` and `lab3d.html` conflict, take main's, then rebuild with `node src/build.js`.
+- **Portraits have started** (13 Nov): `tools/unit-pic.js` renders a unit's portrait in three framings (full, half =
+  waist up, bust = head and shoulders); `docs/unit-portraits-proto.jpg` shows the Fire Mage, the Shiv and the War
+  Mammoth in all three. The owner has **not yet picked a framing**; `img/units/` holds the half ones meanwhile. He
+  wants the unit cards to become playing cards (Marvel Snap, Gwent, Pokemon, Riftbound as inspiration), with
+  overlays and art later: portraits first. A model's face point is set per model in `FACE` in the tool; only the
+  wizards and the mammoth are tuned, the other 25 use the default and need a look.
 - No screen in the game uses the keywords or symbols yet. The only change a player could see on this branch is the
   wizards' staffs (below).
 - The plan this belongs to: the Claude doc **"No Mans Land: design audit and keyword plan"**,
@@ -22,6 +28,7 @@ Written 13 November 2026 for the next session. Read this first, then the three f
 | `tools/tests/keywords.js` | The check. Fails when a unit has no verb or role, a skill type is unsorted, a keyword is unknown, wave 1 is over its cap (18), or a line is over 8 words. `--report` writes `docs/KEYWORDS-TAGGING.md`. |
 | `docs/KEYWORDS-TAGGING.md` | Generated. Today's game in the keywords: 27 of 28 units fit (the Obelisk's verb, Grow, is wave 2); of 85 skills 26 read with wave 1 keywords, 28 are plain stat changes, 19 need a wave 2 keyword, 12 fit none. |
 | `tools/keyword-sheet.js` | Writes `docs/keyword-icons.html` (every symbol at three sizes) and, with a path, a screenshot. This is how the owner judges symbols. |
+| `tools/unit-pic.js` | Renders units' portraits from their 3D models to `img/units/<unit>.png` (`--frame=full|half|bust`, `--sheet=out.png` for all three framings side by side, `--dry` for the sheet only) and prints the units with no model of their own. |
 | `tools/model-sheet.js` | Renders units' 3D models side by side to a PNG (`wizards` = the eight wizards, `--dark` = outlines only) and prints triangle counts. |
 
 Icons are the inside of an svg on a 24 by 24 grid, drawn in `currentColor`, so the colour comes from the page.

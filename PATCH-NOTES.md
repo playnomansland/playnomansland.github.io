@@ -20,6 +20,15 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 13 November 2026 – Unit portraits: three prototypes (branch `design/keywords`, nothing changes in the game)
+
+- **Portraits, first try:** the Fire Mage, the Shiv and the War Mammoth each have a picture made from their 3D model, in the unit's colour (`img/units/`). No screen uses them yet: they are for judging the look before the unit cards are drawn as playing cards.
+- **Three framings to choose from:** the whole figure, from the waist up, and head and shoulders. All nine pictures are on one sheet, `docs/unit-portraits-proto.jpg`. The files in `img/units/` are the waist-up ones for now; the framing is the owner's call.
+- **For makers:** `node tools/unit-pic.js "Fire Mage" Shiv --frame=half --sheet=out.png` renders any units' portraits (no names = all 28) and lists the units that have no model of their own.
+- The branch has main's 15 commits from 13 November merged in.
+
+---
+
 ## 12 November 2026 – Wizards: cleaner staffs, and a real leaf (branch `design/keywords`)
 
 - **Wizards:** nothing floats beside a staff any more (the Earth Wizard's pebble, the Water Mage's bubble and the Frost Wizard's snowball are gone). Each wizard is told apart by its colour and the top of its staff, as before.
