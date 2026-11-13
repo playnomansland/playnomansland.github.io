@@ -20,6 +20,18 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 13 November 2026 – V2WIP: a roster in the works, with two new units (developers only)
+
+A new developer mode, **V2WIP** (Developer menu, against the AI), for trying roster changes before they reach the live game. The live roster is unchanged.
+
+- **Out in V2WIP:** Slime Wizard, Slimeshots and the Slime tower (and Mubarak, the Slime Lord, who has no slime units left to lead there).
+- **Warper** (tier 2, 200 gold: 900 health, hits for 60, range 20): **Teleport**. Pick a tile in your zone from its sheet. When the fight starts, the enemy squad on the tile straight across the board is rooted, and 1.5 s later it is teleported onto your tile. Buildings and towers stay. The opponent doesn't see your tile until the fight.
+- **Catcher** (tier 3, 300 gold: 2000 health, hits for 300 every 2.5 s, slow, no armor): **Hook**. It throws a hook up to 30 m at 20 m/s: the first enemy the hook touches takes 100 damage and is reeled into melee, helpless on the way. Give its first throw a direction with a hook arrow from its sheet (it throws as soon as an enemy stands on that line); after that it throws every 8 s at the nearest enemy in range. Its skills, one or the other: **Netcaster** (the hook pulls up to 4, and its strikes splash) or **Gutter** (35 m, 30 m/s, and its strikes add bleed).
+- **On the board:** your teleport tile and the tile across are marked in violet, the hook arrow is a chain with a hook at its end. In the fight a ring closes on a rooted squad, and the hook flies on its chain.
+- The AI buys both units and picks tiles for its Warpers.
+
+---
+
 ## 12 November 2026 – Replay a round of the Mommy, and a Skills tab on the picked unit
 
 - **The Mommy:** **Restart boss** and **Replay round** are on the screen for the whole run, even mid-fight, at the top right under her name. Replay round lists every round you've reached with its bite: pick one to play it again from its start. Restart asks "Sure?" first. **Mommy's attacks** has moved there too, from Settings. (On phones they are all in Settings.) The card between rounds now warns you what's coming: **! Next round** with her next bite's mark and name.

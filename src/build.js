@@ -39,7 +39,7 @@ const game0 = src('site-template.html').replace('/*BASECSS*/', () => src('game.c
   .replace('/*GAME*/', () => src('game.js')).replace('/*BOSS*/', () => src('boss.js')).replace('/*REFEREE*/', () => src('referee.js')).replace('/*MPB*/', () => src('mpb.js')).replace('/*DUO*/', () => src('duo.js')).replace('/*TOUR*/', () => src('tournament.js'))
   .replace('/*EXPLOITBOT*/', () => src('exploit-bot.js'))
   .replace('/*ART*/', () => src('art.js')).replace('/*RENDER2D*/', () => src('render2d.js') + '\n' + src('floors.js')).replace('/*DATA*/', () => src('demo-units.json'))
-  .replace('/*FACTIONS*/', () => src('faction-units.json')).replace('/*PUZZLES*/', () => src('puzzles.json'))
+  .replace('/*FACTIONS*/', () => src('faction-units.json')).replace('/*V2WIP*/', () => src('v2wip-units.json')).replace('/*PUZZLES*/', () => src('puzzles.json'))
   .replace('/*V3D*/', () => require('crypto').createHash('sha1').update(['camera3d.js', 'kaykit3d.js', 'models3d.js', 'scenery3d.js', 'render3d.js', 'game.js', 'engine.js', 'floors.js'].map(src).join('')).digest('hex').slice(0, 10));
 // the game version shown in bug reports: the newest date in PATCH-NOTES.md and a hash of the page, e.g. "4 Nov 2026 · 1a2b3c4"
 const noteDate = (() => { try { const d = fs.readFileSync(path.join(__dirname, '..', 'PATCH-NOTES.md'), 'utf8').match(/^## (\d{1,2}) (\w{3})\w* (\d{4})/m); return d ? `${d[1]} ${d[2]} ${d[3]}` : ''; } catch (e) { return ''; } })();

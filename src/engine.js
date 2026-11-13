@@ -149,6 +149,18 @@ const Engine = (() => {
   // reach metres of the last one, up to jumps times, dealing chain.hit each time (lightning).
   // mend: the body never attacks; each attack heals the most wounded ally in range (not structures) by this much
   // pctHit: every hit also deals this share of the target's max health (not to structures); that part ignores armor (ward still caps the hit)
+  // hook = { range, hit, speed, cd, max, net, reel } (the Catcher, V2WIP): apart from its own attack it throws a hook
+  // every cd s: speed m/s in a straight line, at most range m. The first enemy body the hook touches takes hit (armor
+  // counts) and is reeled in at reel m/s until it stands in the Catcher's reach; on the way it can't walk or attack. A
+  // structure, or a body that can't be displaced (see hookable), takes the hit and stays. max > 1 (Netcaster): the
+  // bodies nearest the first, within net m of it, are caught with it (max in all). The Catcher holds still while its
+  // hook is out. Where it throws: at the nearest enemy within range it can pick and that is not in its reach yet; a
+  // body with hookDir = { x, y } (the game sets it from the squad's hook arrow) keeps its first throw for that line: it
+  // throws as soon as an enemy stands on it, and gives the arrow up HOOK_WAIT s after an enemy first came within range.
+  // A body with warp = { t, dx, dy, side, squad } (the Warper's Teleport, V2WIP; the game sets it on the enemy squad
+  // standing on the tile across from the Warper's): it is rooted (it can't walk, it still attacks) for t s, then it is
+  // moved by (dx, dy), if a Warper (u.warper) of that side's squad still stands; otherwise it is just let go.
+  const HOOK_WAIT = 2;
   // Bleed (u.bleedEvery = n: every n-th hit a body lands on the same target gives it a stack of bleed; Titanium spears
   // give one too). A bleeding body loses BLEED.dmg every BLEED.pulse s for BLEED.secs s (each new stack starts that time
   // again); each stack doubles the damage, up to BLEED.max stacks, and from 3 stacks it also loses a share of its max
@@ -323,6 +335,8 @@ const Engine = (() => {
     glut:    { label: 'Glut', params: [['max', 'Most stacks', 12, 1], ['cap', 'Most stacks eaten per round', 2, 1], ['hp', 'Health per stack (+%)', 5, 1], ['hit', 'Hit per stack (+%)', 5, 1]] },
     glutCap: { label: 'Bigger appetite', params: [['add', 'More stacks eaten per round (+)', 1, 1]] },
     glutSpeed: { label: 'Glut speed', params: [['speed', 'Move speed per stack (+m/s)', 0.05, 0.01], ['aps', 'Attack speed per stack (+%)', 1, 0.5]] },
+    netcaster: { label: 'Netcaster', params: [['max', 'Bodies pulled per throw', 4, 1], ['net', 'Net radius (m)', 4, 0.5], ['splash', 'Melee splash (m)', 3, 0.5]] },
+    gutter:  { label: 'Gutter', params: [['range', 'Hook range (becomes, m)', 35, 1], ['speed', 'Hook speed (becomes, m/s)', 30, 1], ['bleed', 'Bleed stacks per melee hit', 2, 1]] },
     ranged:  { label: 'Ranged attack', params: [['range', 'Range (becomes, m)', 18, 1], ['speed', 'Projectile speed (m/s)', 25, 1], ['poison', 'Poison (% of hit, in total; 0 = none)', 50, 10], ['duration', 'Poison lasts (s)', 4, 0.5]] },
   };
   const skillParam = (d, k) => {
@@ -430,6 +444,8 @@ const Engine = (() => {
       case 'glut': return `Eats kills: +${n('hp')}% health, +${n('hit')}% hit each (max ${n('max')}).`;
       case 'glutCap': return `Eats +${n('add')} a round.`;
       case 'glutSpeed': return `Glut also gives +${n('speed')} m/s, +${n('aps')}% attack speed.`;
+      case 'netcaster': return `Hook pulls up to ${n('max')}. Strikes splash ${n('splash')} m.`;
+      case 'gutter': return `Hook: ${n('range')} m, ${n('speed')} m/s. Strikes add ${n('bleed')} bleed.`;
       case 'ranged': return `Ranged: ${n('range')} m.${+P('poison') > 0 ? ` Hits poison: ${n('poison')}% over ${n('duration')} s.` : ''}`;
     }
     return '';
@@ -522,6 +538,8 @@ const Engine = (() => {
         case 'killStack': u.killStack = { speed: P('speed'), aps: P('aps'), max: Math.max(0, Math.round(P('max'))) }; break;
         case 'killSpawn': u.killSpawn = (u.killSpawn || 0) + Math.max(1, Math.round(P('count'))); break;
         case 'bleedHit': u.bleedHit = Math.max(u.bleedHit || 0, Math.max(0, Math.round(P('n')))); break;
+        case 'netcaster': if (u.hook) u.hook = { ...u.hook, max: Math.max(u.hook.max || 1, Math.round(P('max'))), net: Math.max(0, P('net')) }; u.splash = Math.max(u.splash || 0, P('splash')); break;
+        case 'gutter': if (u.hook) u.hook = { ...u.hook, range: Math.max(u.hook.range, P('range')), speed: Math.max(u.hook.speed, P('speed')) }; u.bleedHit = Math.max(u.bleedHit || 0, Math.max(0, Math.round(P('bleed')))); break;
         case 'bull': u.bull = { every: Math.max(1, Math.round(P('every'))), hit: Math.max(0, P('hit')), push: Math.max(0, P('push')), armor: P('armor'), run: Math.max(0, P('run')) }; break;
         case 'flare': u.flare = { per: Math.max(0, P('per')), max: Math.max(0, P('max')), shot: Math.max(1, P('shot')) }; break;
         case 'portal': {
@@ -1666,7 +1684,7 @@ const Engine = (() => {
         kn.set(v, c);
         if (c % owner.u.bleedEvery === 0) bleedOn(owner, v, 1);
       }
-      if (owner.u.bleedHit > 0) bleedOn(owner, v, owner.u.bleedHit); // Bloodrush: stacks of bleed with every hit
+      if (owner.u.bleedHit > 0 && !owner.hooking) bleedOn(owner, v, owner.u.bleedHit); // Bloodrush: stacks of bleed with every hit (not a Catcher's hook: Gutter's bleed is its strikes')
       if (owner.u.stunHit > 0 && !v.u.structure) v.stunT = Math.max(v.stunT, owner.u.stunHit);
       if (owner.u.poisonPct > 0) {
         // poison: a share of the hit, spread over its duration. Each attacker keeps one dose on the target;
@@ -1845,6 +1863,137 @@ const Engine = (() => {
       const before = poolHp(v);
       hurt(p.owner, v, p.hit, p.fx, p.fy);
       if (v.alive && poolHp(v) < before) bleedOn(p.owner, v, p.bleed); // a shield or a dodge stops the bleed too
+    }
+
+    // ---------- the Catcher's hook and the Warper's Teleport (V2WIP; see hook and warp at the top) ----------
+    // a body the hook can reel in (as roots, knockback and pushes: not a structure, nor one that can't be displaced)
+    const hookable = (f) => !f.u.structure && !f.u.building && !f.u.anchored && !f.u.barrier && !f.u.construct && !f.u.unstoppable;
+    let hookLive = false; // a hook has been thrown in this fight (reelStep has nothing to do before)
+    const hookEnd = (b) => { b.hookOut = false; b.hookTgts = null; };
+    function hookStep(b) {
+      const hk = b.u.hook;
+      if (b.hookCd > 0) b.hookCd = Math.max(0, b.hookCd - dt);
+      if (b.hookOut || b.hookCd > 1e-9) return;
+      let dx = 0, dy = 0, go = false;
+      const foes = sides[1 - b.side], reach = R(b) + 0.5;
+      const can = (f) => pickable(b, f) && !f.u.aloft && !f.hooked && inSight(b, f);
+      if (b.hookDir) { // its first throw, kept for the arrow's line: an enemy on it within range sets it off
+        const ux = b.hookDir.x, uy = b.hookDir.y;
+        let inRange = false;
+        for (const f of foes) {
+          if (!can(f)) continue;
+          if (gap(f, b) <= hk.range + 1e-9) inRange = true;
+          const along = (f.x - b.x) * ux + (f.y - b.y) * uy, off = Math.abs((f.x - b.x) * uy - (f.y - b.y) * ux);
+          if (along > 0 && along <= hk.range + 1e-9 && off <= (f.u.barrier > 0 ? Math.max(halfX(f), halfY(f)) : PROJ_HIT_RADIUS * 0.8)) { go = true; break; }
+        }
+        if (go) { dx = ux; dy = uy; b.hookDir = null; }
+        else {
+          if (inRange) b.hookWait = (b.hookWait || 0) + dt;
+          if (!(b.hookWait >= HOOK_WAIT - 1e-9)) return;
+          b.hookDir = null; // nobody stepped onto the line: it picks for itself from here
+        }
+      }
+      if (!go) { // the nearest enemy it can reel in, within range and not in its reach already
+        let tgt = null, bd = hk.range + 1e-9;
+        for (const f of foes) {
+          if (!can(f) || !hookable(f)) continue;
+          const d = gap(f, b);
+          if (d > reach && d <= bd) { bd = d; tgt = f; }
+        }
+        if (!tgt) return;
+        dx = tgt.x - b.x; dy = tgt.y - b.y;
+      }
+      const d = hyp(dx, dy);
+      if (d < 1e-6) return;
+      projectiles.push({ owner: b, x: b.x, y: b.y, fx: b.x, fy: b.y, tx: b.x + dx / d * hk.range, ty: b.y + dy / d * hk.range, dirX: dx / d, dirY: dy / d, left: hk.range, hit: hk.hit, hook: true, speed: hk.speed });
+      b.hookOut = true; b.hookCd = hk.cd; b.hookTgts = null; b.hx = dx / d; b.hy = dy / d; hookLive = true;
+      if (b.hidden && !b.u.aloft) b.hidden = false;
+    }
+    // the hook in flight: true once it is done (it caught something, hit a wall or ran out of rope)
+    function hookFly(p) {
+      const b = p.owner, foes = sides[1 - b.side];
+      if (!b.alive) { hookEnd(b); return true; } // its Catcher fell: the hook drops
+      let mv = p.speed * dt;
+      while (mv > 0) {
+        const sub = Math.min(0.5, mv, p.left);
+        p.x += p.dirX * sub; p.y += p.dirY * sub; p.left -= sub; mv -= sub;
+        if (terSight && wallCell(cellOf(p.x, p.y))) { hookEnd(b); return true; }
+        let v = null, bd = PROJ_HIT_RADIUS + 1e-9;
+        for (const f of foes) {
+          if (!f.alive || f.turning || f.boarded || f.u.aloft || sheltered(f)) continue;
+          const d = gap(f, p);
+          if (d <= bd) { bd = d; v = f; }
+        }
+        if (v) { hookCatch(p, v); return true; }
+        if (p.left <= 1e-6) { hookEnd(b); return true; }
+      }
+      return false;
+    }
+    // the hook touched v: its hit to v (and, with a net, to the bodies nearest v), and those that can be moved are reeled in
+    function hookCatch(p, v) {
+      const b = p.owner, hk = b.u.hook, caught = [v];
+      if (hk.max > 1 && hk.net > 0) {
+        const near = [];
+        for (const f of sides[1 - b.side]) {
+          if (f === v || !f.alive || f.turning || f.boarded || f.u.aloft || f.u.structure || sheltered(f)) continue;
+          const d = dist(f, v);
+          if (d <= hk.net + 1e-9) near.push({ d, f });
+        }
+        near.sort((x, y) => x.d - y.d); // (a stable sort: equal distances keep the fight's own order, the same on every device)
+        for (const n of near) { if (caught.length >= hk.max) break; caught.push(n.f); }
+      }
+      const got = [];
+      for (const x of caught) {
+        b.hooking = true; hurt(b, x, hk.hit, p.fx, p.fy); b.hooking = false;
+        if (opts.record) shots.push([p.x, p.y, x.x, x.y, b.side, 0, 0, 0, 0, 1, 0, 0, 0, 5]); // [13] 5: caught on a hook
+        if (!x.alive || x.turning || x.side === b.side || !hookable(x)) continue;
+        if (x.hooked && x.hooked !== b && x.hooked.hookTgts) x.hooked.hookTgts = x.hooked.hookTgts.filter(y => y !== x); // (taken off another Catcher's hook)
+        x.hooked = b; got.push(x);
+        if (x.u.windUp > 0) { x.setUp = false; if (x.windTarget) { x.windTarget = null; stats[x.side].windLost++; } }
+      }
+      if (got.length) b.hookTgts = got; else hookEnd(b);
+    }
+    // reeling in, once a tick after everyone has moved: each hooked body is pulled toward its Catcher until it stands in
+    // the Catcher's reach (it fights that one); the Catcher is free again when its hook is empty
+    function reelStep() {
+      let moved = false;
+      for (const b of all) {
+        if (!b.hookTgts) continue;
+        const hk = b.u.hook, stop = Math.max(0.5, R(b) * 0.8);
+        let left = 0;
+        for (const v of b.hookTgts) {
+          if (v.hooked !== b) continue;
+          if (!b.alive || !v.alive || v.turning || v.side === b.side || !hk) { v.hooked = null; continue; }
+          const d = dist(v, b), mv = Math.min(hk.reel * dt, Math.max(0, d - stop));
+          if (d > 1e-6 && mv > 0) { v.x -= (v.x - b.x) / d * mv; v.y -= (v.y - b.y) / d * mv; moved = true; }
+          if (d - mv <= stop + 1e-6) { v.hooked = null; if (!(b.lock && b.lock.alive && dist(b.lock, b) <= R(b))) b.lock = v; continue; }
+          left++;
+        }
+        if (!left) hookEnd(b);
+      }
+      if (moved) invalidateTargetIndex();
+    }
+    // the Warper's Teleport: bodies with b.warp (set by the game) stay rooted until their time is up, then jump
+    const warped = all.filter(b => b.warp);
+    function warpStep() {
+      for (const b of warped) {
+        const w = b.warp;
+        if (!w) continue;
+        if (!b.alive) { b.warp = null; continue; }
+        w.t -= dt;
+        if (w.t > 1e-9) continue;
+        b.warp = null;
+        if (b.turning || b.boarded || sheltered(b)) continue;
+        if (!sides[w.side].some(a => a.alive && a.squad === w.squad && a.u.warper)) continue; // its Warpers fell first: it is let go where it stands
+        const fx = b.x, fy = b.y;
+        b.x += w.dx; b.y += w.dy;
+        if (g.bounds) { b.x = Math.max(g.bounds.x0, Math.min(g.bounds.x1, b.x)); b.y = Math.max(g.bounds.y0, Math.min(g.bounds.y1, b.y)); }
+        b.engaged = false; b.intent = null; b.lock = null; b.guide = null; b.guideT = null; b.spreadTo = null; b.march = null; b.warped = true;
+        if (b.u.windUp > 0) { b.setUp = false; if (b.windTarget) { b.windTarget = null; stats[b.side].windLost++; } }
+        if (terBlock && !b.u.aloft) keepOut(b);
+        if (opts.record) shots.push([fx, fy, b.x, b.y, w.side, 0, 0, 0, 0, 1, 0, 0, 0, 4]); // [13] 4: teleported
+        invalidateTargetIndex();
+      }
     }
 
     // Experimental broad-phase target index. Exact targeting filters remain in validTargets.
@@ -2549,6 +2698,7 @@ const Engine = (() => {
         if (!b.alive || b.u.structure || b.u.aloft) continue;
         for (const tl of tiles) if (b.alive && b.x >= tl.x0 && b.x < tl.x1 && b.y >= tl.y0 && b.y < tl.y1) onTile(b, tl);
       }
+      if (warped.length) warpStep(); // the Warper's Teleport (V2WIP)
       // stealth: hidden until it attacks, and again after STEALTH_BACK s without attacking (roster rules can turn either off)
       const lit = discover ? discover.filter(d => d.squad == null || all.some(a => a.alive && a.side === d.side && a.squad === d.squad)) : null; // 2v2 Jail: the Skywatches still standing
       for (const b of all) {
@@ -2622,6 +2772,7 @@ const Engine = (() => {
         if (b.stunT > 0) { b.stunT = Math.max(0, b.stunT - dt); continue; } // stunned: can't move (or attack, below)
         if (b.channel) continue; // summoning through its portal: it holds still (and doesn't attack, below)
         if (b.rootedBy && b.rootedBy.alive && b.rootedBy.rootTgt === b) continue; // dragged by roots: it can't walk (it still attacks)
+        if (b.warp || b.hooked || b.hookOut) continue; // rooted by a Warper, reeled in on a hook, or a Catcher with its hook out: it can't walk
         if (b.u.lone > 0) { // Shadow hunter: hunting while there are lone enemies; none for u.lone s and it gives up until its next lone kill
           if (b.hunt == null) { b.hunt = true; b.huntT = 0; }
           if (b.hunt) {
@@ -2831,6 +2982,7 @@ const Engine = (() => {
         }
       }
       if (stepsOut) for (const a of sides[first]) { a.x += a.mvX; a.y += a.mvY; } // the first side's steps (on top of any knockback since)
+      if (hookLive) reelStep(); // hooked bodies are reeled in (V2WIP)
       for (const b of rammed) if (b.alive) { b.hp = 0; b.alive = false; b.diedTick = tick; fell(b); } // rams that hit fall
       rammed.length = 0;
       // Flow state: a body that walked since its last attack has lost its stacks
@@ -3080,7 +3232,7 @@ const Engine = (() => {
       // next tick (atkStun, atkSlow: as they were when the attacks began), and heals wait for the end (healLater)
       targetIndex = null; targetIndexDirty = true; // movement phase has finished for this tick
       const attackers = turnOrder();
-      for (const b of attackers) { b.atkStun = b.stunT > 0; b.atkSlow = b.slowT > 0 ? b.slowAtk : 0; }
+      for (const b of attackers) { b.atkStun = b.stunT > 0 || !!b.hooked; b.atkSlow = b.slowT > 0 ? b.slowAtk : 0; } // (on a hook: it can't attack either)
       healLater = [];
       for (const b of attackers) {
         if ((!b.alive && b.diedTick !== tick) || b.delay > 0 || b.u.ram || b.boarded || b.turning) continue;
@@ -3092,6 +3244,7 @@ const Engine = (() => {
         if (b.u.spear && b.alive) forgeSpear(b); // Titanium spears: forged and thrown apart from its own attack
         if (b.u.storm && b.alive) stormStep(b); // Snow storm: apart from its own attack
         if (b.u.web) webStep(b); // Web shots: apart from its own attack (a body killed this tick still shoots, like its attack)
+        if (b.u.hook && b.alive) hookStep(b); // the Catcher's hook: apart from its own attack
         if (b.u.missiles && b.alive) { // Leafblade: a salvo at the start and every missiles.every s
           b.missileT = (b.missileT || 0) - dt;
           if (b.missileT <= 1e-9) { if (salvo(b)) b.missileT = b.u.missiles.every; else b.missileT = 0; }
@@ -3259,6 +3412,7 @@ const Engine = (() => {
         // if it reaches its aim point without touching anyone, it lands there (and may miss)
         const next = [];
         for (const p of projectiles) {
+          if (p.hook) { if (!hookFly(p)) next.push(p); continue; } // the Catcher's hook
           const foes = sides[1 - p.owner.side];
           let mv = (p.speed || p.owner.u.projSpeed) * dt, done = false;
           const land = () => p.spear ? spearLand(p) : p.homing ? homingLand(p) : impact(p.owner, p.x, p.y, null, p.hit, p.dirX, p.dirY, p.fx, p.fy);

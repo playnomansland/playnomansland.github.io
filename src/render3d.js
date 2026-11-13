@@ -165,7 +165,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     if (!v.m) return;
     // while deploying, the board changes with what the player buys (mushrooms, buff tiles, the altar): look again twice a second
     floorAge += dt;
-    const key = [idOf(v.m), idOf(v.battlePre), v.m.round, v.me, v.phase, uiOff, v.dev ? JSON.stringify([v.dev, v.editable, v.m.dev.casts.length, v.m.armies[v.me].map(q => q.guide || 0)]) : '', v.phase === 'deploy' ? JSON.stringify([v.aim, v.m.armies[v.me].map(q => q.aim ? [q.col, q.row, q.aim.dc, q.aim.dr] : 0), v.duo ? Game.teamArmy(v.m, v.me).map(q => q.aim ? [q.col, q.row, q.aim.dc, q.aim.dr] : 0) : 0]) : ''].join('|'); // devtest: arrows, spells and placing show at once; direction arrows too
+    const key = [idOf(v.m), idOf(v.battlePre), v.m.round, v.me, v.phase, uiOff, v.dev ? JSON.stringify([v.dev, v.editable, v.m.dev.casts.length, v.m.armies[v.me].map(q => q.guide || 0)]) : '', v.phase === 'deploy' ? JSON.stringify([v.aim, v.m.armies[v.me].map(q => q.aim ? [q.col, q.row, q.aim.dc, q.aim.dr] : 0), v.duo ? Game.teamArmy(v.m, v.me).map(q => q.aim ? [q.col, q.row, q.aim.dc, q.aim.dr] : 0) : 0, v.order || 0, v.m.armies[v.me].map(q => q.warp || q.hookAim ? [q.col, q.row, q.warp || 0, q.hookAim || 0] : 0)]) : ''].join('|'); // devtest: arrows, spells and placing show at once; direction arrows too
     if (key === floorKey && !(v.phase === 'deploy' && floorAge > 0.5)) return;
     floorKey = key; floorAge = 0;
     floorView = { ...v, bt: v.phase === 'battle' ? null : v.bt, fx: [], selected: null, moving: null, drag: null, hoverTile: null, placingElf: false, placingTower: false, placingWall: false, placingBuilding: null };
@@ -870,6 +870,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
   // what belongs to the scene itself, shown in every view: stun, mushroom spores, Zoe's stars
   function sceneMarkers(b, wx, wz, r, top, t) {
     if (b.frozenT > 0) { disc(wx, wz, r * 1.25, color(FROST_COL), 0.45, 0.2); arc(wx, wz, r * 1.25, color('#E8FAFF'), 0.9, 1, 0.12); } // frozen solid: ice round its feet
+    if (b.warp) arc(wx, wz, r * 1.2 + 1.6 * Math.max(0, Math.min(1, b.warp.t / Game.WARP.secs)), color('#B39DDB'), 0.9, 1, 0.1, 10); // V2WIP: rooted by a Warper: a violet ring closing in on it
     if (b.stunT > 0) for (let k = 0; k < 3; k++) { // stunned: three dots circling over its head
       const a = t * 6 + k * 2.094; icon('dot', wx + Math.cos(a) * r * 0.7, top + 0.25, wz + Math.sin(a) * r * 0.7, 0.35, color('#FFD23F'));
     }
@@ -1120,6 +1121,10 @@ const Render3D = (THREE, el, view, opts = {}) => {
       if (p.missile) beam(p.x * f, 2.2, -p.y * f, (p.x - p.dirX * 2.5) * f, 2.0, -(p.y - p.dirY * 2.5) * f, 0.25 * fxWide(), FLAME, 0.8); // its trail
     });
     finish(sg, rest.length);
+    // V2WIP: the Catcher's hook on its chain, and the chains to the bodies it is reeling in
+    const HOOKC = color('#D9C49A');
+    for (const p of ps) if (p.hook) beam(p.owner.x * f, 1.3, -p.owner.y * f, p.x * f, 1.3, -p.y * f, 0.16 * fxWide(), HOOKC, 0.95);
+    for (const b of v.bt.bodies) if (b.hooked && b.alive && b.hooked.alive) beam(b.hooked.x * f, 1.3, -b.hooked.y * f, b.x * f, 1.0, -b.y * f, 0.16 * fxWide(), HOOKC, 0.95);
     const sp = models.parts('spear'), spT = group('spear:tint', sp.tint, tintMat, spears.length), spF = group('spear:fixed', sp.fixed, fixedMat, spears.length);
     spears.forEach((p, i) => {
       tmpD.set(p.dirX * f, 0, -p.dirY * f).normalize(); tmpQ.setFromUnitVectors(tmpS.set(0, 0, -1), tmpD);
@@ -1156,6 +1161,8 @@ const Render3D = (THREE, el, view, opts = {}) => {
       if (e.kind === 'death') { arc(e.x * f, -e.y * f, size(e.u) * (1 + e.age / e.life), team, 0.6 * a, 1, 0.1); continue; }
       if (e.kind === 'freeze') { arc(e.x * f, -e.y * f, 1 + 2 * (1 - a), color(FROST_COL), a, 1, 0.15); continue; } // frozen solid: an icy ring bursts out
       if (e.kind === 'roar') { arc(e.x * f, -e.y * f, e.r * (0.25 + 0.75 * e.age / e.life), team, 0.75 * a, 1, 0.18); continue; } // Berserkers: a ring sweeping out
+      if (e.kind === 'warp') { const wc = color('#B39DDB'); arc(e.x1 * f, -e.y1 * f, 0.2 + 1.8 * a, wc, a, 1, 0.14); arc(e.x2 * f, -e.y2 * f, 0.6 + 2.4 * (1 - a), wc, a, 1, 0.14); continue; } // V2WIP: teleported: a ring closes where it stood, one opens where it lands
+      if (e.kind === 'hookhit') { arc(e.x * f, -e.y * f, 0.6 + 1.6 * (1 - a), color('#D9C49A'), a, 1, 0.14); continue; } // V2WIP: a hook bites
       const x1 = e.x1 * f, z1 = -e.y1 * f, x2 = e.x2 * f, z2 = -e.y2 * f;
       if (e.kind === 'shot') {
         beam(x1, 1.1, z1, x2, 0.9, z2, k * Math.max(e.charged ? 0.28 : 0.1, 0.1 + ((e.spin || 1) - 1) * 0.16), team, 0.85 * a);

@@ -1,5 +1,6 @@
-// After editing src/default-roster.json or src/factions.json: recompute the unit counter tables
-// (src/demo-units.json for the standard roster, src/faction-units.json for the Factions gamemode)
+// After editing src/default-roster.json, src/factions.json or src/v2wip.json: recompute the unit counter tables
+// (src/demo-units.json for the standard roster, src/faction-units.json for the Factions gamemode,
+// src/v2wip-units.json for the V2WIP developer mode)
 // and print each unit's average score old -> new. Run from the repo root: node tools/counter-table.js
 // Fast path: each output file keeps a signature per unit (its battle stats, display text left out) and one for the
 // engine and settings. A pair whose two units and engine are unchanged keeps its old score, so a text-only change
@@ -95,4 +96,10 @@ meta.forEach((a) => {
   });
   console.log(`${a.name.padEnd(18)} vs ${row.join(', ') || '(no other factions)'}`);
 });
+// V2WIP (a developer mode, src/v2wip.json): the standard roster without the units it removes, plus its own units and
+// skills. Its table is src/v2wip-units.json; the standard roster's is not touched by it.
+const v2 = read('src/v2wip.json');
+const v2Units = r.units.filter(u => !(v2.remove || []).includes(u.name)).concat(v2.units || []);
+const v2Skills = r.skills.filter(sk => !(v2.skills || []).some(x => x.id === sk.id)).concat(v2.skills || []);
+await table('V2WIP roster', 'src/v2wip-units.json', v2Units, v2Skills, { name: v2.name || 'V2WIP', offTowers: v2.offTowers || [], offChars: v2.offChars || [] });
 })().catch(e => { console.error(e); process.exit(1); });
