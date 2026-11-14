@@ -25,8 +25,8 @@ Written 13 November 2026 for the next session. Read this first, then the three f
 
 | File | What it is |
 |---|---|
-| `src/keyword-registry.json` | The one list: rules, six roles (colour, plate shape), 18 wave 1 keywords (role, line of at most 8 words, icon), wave 2 names, every unit's verb, every skill type sorted (keywords / stat / unfit), the armor set, the levels idea. Nothing in the game reads it yet. **Not** `src/keywords.json` (that one feeds the Miro board). |
-| `tools/tests/keywords.js` | The check. Fails when a unit has no verb or role, a skill type is unsorted, a keyword is unknown, wave 1 is over its cap (18), or a line is over 8 words. `--report` writes `docs/KEYWORDS-TAGGING.md`. |
+| `src/keyword-registry.json` | The one list: rules, six roles (colour, plate shape), 20 wave 1 keywords (role, line of at most 8 words, icon), wave 2 names, every unit's verb, every skill type sorted (keywords / mechanic / stat / unfit), the passive mechanics (Shield), the V2WIP units, the armor set, the levels idea. Nothing in the game reads it yet. **Not** `src/keywords.json` (that one feeds the Miro board). |
+| `tools/tests/keywords.js` | The check. Fails when a unit has no verb or role, a skill type is unsorted, a keyword is unknown, wave 1 is over its cap (20), or a line is over 8 words. `--report` writes `docs/KEYWORDS-TAGGING.md`. |
 | `docs/KEYWORDS-TAGGING.md` | Generated. Today's game in the keywords: 27 of 28 units fit (the Obelisk's verb, Grow, is wave 2); of 85 skills 32 read with wave 1 keywords, 4 give a passive mechanic, 28 are plain stat changes, 9 need a wave 2 keyword, 12 fit none. Also the V2WIP units. |
 | `tools/keyword-sheet.js` | Writes `docs/keyword-icons.html` (every symbol at three sizes) and, with a path, a screenshot. This is how the owner judges symbols. |
 | `tools/unit-pic.js` | Renders units' portraits from their 3D models to `img/units/<unit>.png` (`--frame=full|half|bust`, `--sheet=out.png` for all three framings side by side, `--dry` for the sheet only) and prints the units with no model of their own. |
