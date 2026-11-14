@@ -27,7 +27,7 @@ Written 13 November 2026 for the next session. Read this first, then the three f
 |---|---|
 | `src/keyword-registry.json` | The one list: rules, six roles (colour, plate shape), 18 wave 1 keywords (role, line of at most 8 words, icon), wave 2 names, every unit's verb, every skill type sorted (keywords / stat / unfit), the armor set, the levels idea. Nothing in the game reads it yet. **Not** `src/keywords.json` (that one feeds the Miro board). |
 | `tools/tests/keywords.js` | The check. Fails when a unit has no verb or role, a skill type is unsorted, a keyword is unknown, wave 1 is over its cap (18), or a line is over 8 words. `--report` writes `docs/KEYWORDS-TAGGING.md`. |
-| `docs/KEYWORDS-TAGGING.md` | Generated. Today's game in the keywords: 27 of 28 units fit (the Obelisk's verb, Grow, is wave 2); of 85 skills 26 read with wave 1 keywords, 28 are plain stat changes, 19 need a wave 2 keyword, 12 fit none. |
+| `docs/KEYWORDS-TAGGING.md` | Generated. Today's game in the keywords: 27 of 28 units fit (the Obelisk's verb, Grow, is wave 2); of 85 skills 32 read with wave 1 keywords, 4 give a passive mechanic, 28 are plain stat changes, 9 need a wave 2 keyword, 12 fit none. Also the V2WIP units. |
 | `tools/keyword-sheet.js` | Writes `docs/keyword-icons.html` (every symbol at three sizes) and, with a path, a screenshot. This is how the owner judges symbols. |
 | `tools/unit-pic.js` | Renders units' portraits from their 3D models to `img/units/<unit>.png` (`--frame=full|half|bust`, `--sheet=out.png` for all three framings side by side, `--dry` for the sheet only) and prints the units with no model of their own. |
 | `tools/model-sheet.js` | Renders units' 3D models side by side to a PNG (`wizards` = the eight wizards, `--dark` = outlines only) and prints triangle counts. |
@@ -36,8 +36,19 @@ Icons are the inside of an svg on a 24 by 24 grid, drawn in `currentColor`, so t
 
 ## What the owner has decided
 
-- **18 keywords in wave 1**: Strike, Shoot, Splash, Pierce, Shred (Damage) · Rush, Taunt (Guard) · Pull, Teleport
-  (Control) · Burn, Slow, Poison, Bleed (Afflict) · Heal, Carry, Hide, Reveal, Teleport (Support) · Spawn (Conjure).
+- **20 keywords in wave 1**: Strike, Shoot, Splash, Pierce, Shred (Damage) · Rush, Taunt (Guard) · Pull, Teleport,
+  Displace (Control) · Burn, Slow, Poison, Bleed (Afflict) · Heal, Carry, Hide, Reveal, Teleport (Support) · Spawn
+  (Conjure) · Deatheffect (by what happens: Damage or Conjure, **our guess, not his word**).
+- **14 Nov: Displace and Deatheffect added.** He wrote: add "Deatheffect", "Displace" (Stun, root). Read as: Stun
+  and Root are kinds of Displace and no longer keywords of their own. Push is still a wave 2 keyword (he did not name
+  it; his older Miro list defines Displace as knockback and pushes, so ask before folding it in). Neither has an icon.
+- **14 Nov: Shield is not a keyword.** It is a passive mechanic like armor (blocks X hits): `mechanics` in the
+  registry, and skill types can be sorted as `mechanic`.
+- **14 Nov: armor weights per unit come from the new Verbs and class doc**, which he has not finished. Do not assign.
+- **14 Nov: everything visual about units is pushed to later**: portraits, cards, unit pictures. Do not start the
+  unit card (the "Next task" below) until he says so.
+- **The V2WIP units** (Warper, Catcher; `src/v2wip.json`) are tagged under `v2wip` in the registry, and the check
+  covers them.
 - **Tank is not a keyword.** A Guard with no keyword is a tank (Ent, Steel Wizard, Ether Golem: `role: "guard"`, no verb).
 - **Teleport is Control or Support**, by what the ability does.
 - **The Summon role is called Conjure in the registry** (making anything on the board, not only units). The Verbs and
@@ -65,10 +76,10 @@ Icons are the inside of an svg on a 24 by 24 grid, drawn in `currentColor`, so t
 - Questions 1, 4, 5, 6, 7, 8, 9 and 10 in the audit doc (device priority, pips for numbers, portraits, a lighter
   first game, level-up per squad, one aim gesture, the setting, counter hints). Each has a default there; none is
   confirmed.
-- Whether Shield, Leave behind or Stun (the most used wave 2 keywords) join wave 1, and what happens to the 12
-  skills that fit no keyword.
+- Whether Push belongs to Displace, and which role Deatheffect has. Symbols for Displace and Deatheffect.
+- Whether Leave behind (now only Pool shaper) stays a keyword, and what happens to the 12 skills that fit no keyword.
 
-## Next task: unit portraits, then the unit card
+## Next task (on hold since 14 Nov, see above): unit portraits, then the unit card
 
 This is the rest of phase 1. It needs a real screen, which is why it was handed over.
 

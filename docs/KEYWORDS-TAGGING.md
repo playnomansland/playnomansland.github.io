@@ -6,9 +6,9 @@ Nothing in the game reads the registry yet. This page only shows how well a smal
 
 ## In short
 
-- **18 keywords** in wave 1 (the cap is 18). 0 have their full kit (icon, fight effect, sound, demo).
+- **20 keywords** in wave 1 (the cap is 20). 0 have their full kit (icon, fight effect, sound, demo).
 - **27 of 28 units** have a wave 1 keyword as their verb, or are their role alone (a Guard with no keyword is a tank).
-- **85 skills** of 59 types: **26** read with wave 1 keywords alone, **28** are plain stat changes that need no keyword, **19** need a wave 2 keyword, **12** fit no keyword.
+- **85 skills** of 59 types: **32** read with wave 1 keywords alone, **4** give a passive mechanic (Shield: not a keyword), **28** are plain stat changes that need no keyword, **9** need a wave 2 keyword, **12** fit no keyword.
 
 ## Wave 1 keywords
 
@@ -21,8 +21,9 @@ Nothing in the game reads the registry yet. This page only shows how well a smal
 | Shred | Damage | Cuts a share of the target's health. | Truespear | none |
 | Rush | Guard | Charges in and knocks enemies back. | War Mammoth | 1: Bullhead |
 | Taunt | Guard | Enemies nearby must attack it. | none | none |
-| Pull | Control | Drags an enemy to it. | none | 1: Grasping roots |
-| Teleport | Control or Support | Moves a squad somewhere else at once. | none | none |
+| Pull | Control | Drags an enemy to it. | Catcher (V2WIP) | 1: Grasping roots |
+| Teleport | Control or Support | Moves a squad somewhere else at once. | Warper (V2WIP) | none |
+| Displace (covers Stun, Root) | Control | Stops an enemy from moving or acting. | none | 3: Anemia, Living armor, Deepfreeze |
 | Burn | Afflict | Fire damage over a short time. | none | 1: Spitfire |
 | Slow | Afflict | Enemies move and attack slower. | Frost Wizard | 4: Slow, Web-shots, Deepfreeze, Snow storm |
 | Poison | Afflict | Damage over time, past armor. | none | 4: Poison shot, Poisonous fangs, Graverot arrows, Eye of the Obelisk |
@@ -32,6 +33,7 @@ Nothing in the game reads the registry yet. This page only shows how well a smal
 | Hide | Support | Unseen until it attacks. | none | 5: Stealth, Cavestalkers, Hunter, Shadowborn, Silent blade |
 | Reveal | Support | Sees hidden enemies. | none | 2: Overwatch, Hunter |
 | Spawn | Conjure | Brings more bodies into the fight. | Necromancer | 6: Spawn goblins, Raise dead, Spiderlings, Summon water elemental, More where that came from, Summon hellfiend |
+| Deatheffect | Damage or Conjure | Something happens when it dies. | none | 4: Spiderlings, Death burst, Explode on death, Explode on death |
 
 ## Units
 
@@ -68,29 +70,44 @@ Verb = what the unit does in today's build. Planned = the job in the Roster doc,
 | Frost Wizard | Slow |  |  |  |
 | Obelisk | Grow (wave 2) | Heal |  | Grow is wave 2, so the Obelisk has no wave 1 verb. On hold in the Roster doc as well. |
 
-## Skills that need a wave 2 keyword (19)
+## Skills that need a wave 2 keyword (9)
 
 | Skill | On | What it says today | Keywords |
 | --- | --- | --- | --- |
 | Shortsight | Sun Priest | Hits cut enemy range by 6 m for 4 s. | Blind (wave 2) |
-| Ward | Rogue | Takes at most 40 damage per hit. | Shield (wave 2) |
 | Forward planting | no unit | Can deploy in no man’s land. | Arrive elsewhere (wave 2) |
-| Death burst | Just a horse | Explodes on death: its hit within 7 m. | Leave behind (wave 2) |
-| Bone shield | no unit | Blocks the first hit each fight. | Shield (wave 2) |
-| Explode on death | no unit | Explodes on death: 30% of its health within 5 m. | Leave behind (wave 2) |
-| Anemia | Shiv | 4 bleed stacks stun for 1.2 s. | Bleed, Stun (wave 2) |
 | Pool shaper | Water Mage | Attacks leave pools: they hurt enemies, heal and speed up allies. +2 m splash, −0.2 attacks/s. | Leave behind (wave 2), Heal |
 | Reforge | Steel Wizard | +2 armor. Allies within 8 m: +20 hit, +0.1 attacks/s. | Boost (wave 2) |
-| Living armor | Earth Wizard | Slams a cone for 200 and stuns 1 s. +8 armor, −13 m range. | Stun (wave 2) |
-| Dread rangers | Skeleton Archers | Blocks the first hit each fight. +2 m range. | Shield (wave 2) |
 | Forward planting | Ent | Can deploy in no man’s land. +10% health. | Arrive elsewhere (wave 2) |
-| Explode on death | Ent | Explodes on death: 30% of its health within 5 m. | Leave behind (wave 2) |
 | Hunter | Sniper | Marks an enemy squad. Always shoots a marked enemy in its range, for +100% damage, and sees it through stealth. Hidden until it attacks. Hides again 1.5 s after it stops attacking. | Mark (wave 2), Hide, Reveal |
-| Transphysical | Wisps | Takes at most 40 damage per hit. | Shield (wave 2) |
 | Bouncing blade | Leaf Wizard | Shots bounce 2 times for 30%. | Chain (wave 2) |
-| Deepfreeze | Frost Wizard | 4th Frost stack freezes for 2 s. | Slow, Stun (wave 2) |
 | Gluttony | Obelisk | Eats +1 a round. | Grow (wave 2) |
 | Hunger’s haste | Obelisk | Glut also gives +0.1 m/s, +1.5% attack speed. | Grow (wave 2) |
+
+## Skills that give a passive mechanic (4)
+
+Mechanics are bonuses a body carries, like armor: not keywords.
+
+| Skill | On | What it says today | Mechanic |
+| --- | --- | --- | --- |
+| Ward | Rogue | Takes at most 40 damage per hit. | Shield: A cap on each hit, not a count of blocked hits: Shield is the nearest mechanic. |
+| Bone shield | no unit | Blocks the first hit each fight. | Shield |
+| Dread rangers | Skeleton Archers | Blocks the first hit each fight. +2 m range. | Shield |
+| Transphysical | Wisps | Takes at most 40 damage per hit. | Shield: A cap on each hit, not a count of blocked hits: Shield is the nearest mechanic. |
+
+## V2WIP: the new units and skills
+
+From `src/v2wip.json` (a developer roster; the live roster is unchanged).
+
+| Unit | Verb | Role | Also built in | Note |
+| --- | --- | --- | --- | --- |
+| Warper | Teleport | Control | Displace | Roots the enemy squad straight across for 1.5 s, then teleports it to a chosen tile. |
+| Catcher | Pull | Control |  | A hook reels the first enemy it touches into melee. |
+
+| Skill | Keywords | Note |
+| --- | --- | --- |
+| Netcaster | Pull, Splash | The hook pulls up to 4 bodies; its strikes splash. |
+| Gutter | Bleed | Strikes add bleed; the longer, faster hook is a stat change. |
 
 ## Skills that fit no keyword (12)
 
@@ -119,4 +136,4 @@ Armor and health, Rapid fire, Swift strikes, Heavy shot, Long reach, Gallop, Fre
 
 Units that are their role alone: Steel Wizard (Guard), Ether Golem (Guard), Ent (Guard).
 
-Stun (3 skills), Blind (1 skills), Shield (4 skills), Mark (1 skills), Boost (1 skills), Arrive elsewhere (2 skills), Grow (2 skills), Leave behind (4 skills), Chain (1 skills).
+Blind (1 skills), Mark (1 skills), Boost (1 skills), Arrive elsewhere (2 skills), Grow (2 skills), Leave behind (1 skills), Chain (1 skills).

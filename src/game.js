@@ -1349,6 +1349,7 @@ const Game = (() => {
       offTowers: !factions && opts && Array.isArray(opts.offTowers) ? opts.offTowers.filter(id => TOWER_TYPES.some(x => x.id === id)) : [], // tower types left out (Standard pack)
     };
     if (opts && opts.late && !factions && !dev) { m.late = true; m.hp = [startHp(m), startHp(m)]; } // DEVTESTLATEGAME
+    if (opts && opts.v2 && !factions && !dev) m.v2 = true; // V2WIP (developer mode): the match is on the V2WIP roster (src/v2wip.json)
     if (opts && opts.mirror && !factions) { m.mirror = true; m.packages[1] = JSON.parse(JSON.stringify(m.packages[0])); } // the same rolls for both
     if (opts && opts.noChars) { m.noChars = true; for (const ps of m.packages) for (const p of ps) p.char = null; } // no leaders (2v2)
     if (!factions && !dev && !(opts && opts.noChars) && !(opts && opts.draft === false)) { // the leader draft before round 2 (DRAFT)
@@ -2120,6 +2121,9 @@ const Game = (() => {
         const cl = (v, lo, hi) => Math.max(lo + 1, Math.min(hi - 1, v));
         for (const x of b) { x.guide = [{ x: cl(x.x + dx, BOUNDS.x0 + XOFF, BOUNDS.x1 + XOFF), y: cl(x.y + dy, BOUNDS.y0, BOUNDS.y1) }]; x.guideT = AIM.stall; }
       }
+      const wq = warpedBy(m, side, sq); // V2WIP: an enemy Warper squad takes it: rooted, then moved to the Warper's tile
+      if (wq) { const to = tileToWorld(wq.warp.col, wq.warp.row), fr = tileToWorld(warpFrom(wq.warp).col, warpFrom(wq.warp).row); for (const x of b) x.warp = { t: WARP.secs, dx: to.x - fr.x, dy: to.y - fr.y, side: 1 - side, squad: wq.id }; }
+      if (sq.hookAim && canHook(m, side, sq)) { const hx = sq.hookAim.dc * TILE, hy = -sq.hookAim.dr * TILE, hl = Math.sqrt(hx * hx + hy * hy) || 1; for (const x of b) x.hookDir = { x: hx / hl, y: hy / hl }; } // V2WIP: the Catcher's hook arrow
       if (markOn(m, side)) for (const x of b) x.sniperMark = MARK.hit; // Mark Bounty: all its units hunt the mark (since 2026-11-03; Snipers only before)
       if (markOn(m, 1 - side) && markOf(m, 1 - side).squad === sq.id) for (const x of b) x.marked = true;
       if (preyOn(m, side, sq.id)) for (const x of b) x.prey = true; // a Hunter's mark (the Sniper's Awaken skill)
@@ -2412,6 +2416,7 @@ const Game = (() => {
     v.armies = two(m.armies, foeSeen(m, fo).map(s => {
       const p = seenAt(m, s), q = { ...s, col: p.col, row: p.row, level: seenLevel(m, s) };
       delete q.from; delete q.movedRound; delete q.soldRound; delete q.aim; // (its direction arrow shows in the fight)
+      delete q.warp; delete q.hookAim; // V2WIP: a Warper's tile and a Catcher's hook arrow, likewise
       if (!seenAwake(m, s)) delete q.awaken;
       if (q.charmGiven === now) { delete q.charm; delete q.charmGiven; }
       return q;
@@ -3301,6 +3306,74 @@ const Game = (() => {
   // the tile its arrow ends on (for the page), or null
   const aimEnd = (m, sq) => { const a = sq && sq.aim && aimUse(m, sq, sq.aim); return a ? { col: Math.max(0, Math.min(COLS - 1, sq.col + a.dc)), row: Math.max(0, Math.min(ROWS - 1, sq.row + a.dr)) } : null; }; // (on the board: a squad moved since keeps its arrow)
 
+  // ---------- V2WIP (a developer mode, src/v2wip.json): the Warper's teleport tile and the Catcher's hook arrow ----------
+  // Warper (a unit with `warper`): each squad may pick one tile in its own zone (sq.warp = { col, row }; kept from round
+  // to round until cleared, and it stays put when the squad moves). When the fight starts, the enemy squad standing on
+  // the tile straight across the board (the same column, the row mirrored: warpFrom) is rooted, and WARP.secs later its
+  // bodies still standing are moved to the picked tile, keeping their places in the formation (Engine: b.warp). Not
+  // buildings or towers. One squad is only taken by one Warper squad (the first in the army's order).
+  // Catcher (a unit with `hook`): each squad may get a hook arrow (sq.hookAim = { dc, dr } in tiles from its tile, so it
+  // moves with the squad; only its direction counts). Its first throw is kept for that line (Engine: b.hookDir).
+  // Both are hidden from the opponent while deploying (seenBy) and show in the fight. The referee and the server don't
+  // know these actions yet: V2WIP is played against the AI on this device only.
+  const WARP = { secs: 1.5 };
+  const canWarp = (m, side, sq) => !!sq && !isRider(sq) && m.armies[side].includes(sq) && !!(m.units[sq.unit] || {}).warper;
+  const warpOk = (m, side, col, row) => Number.isInteger(col) && Number.isInteger(row) && col >= 0 && col < COLS && inZone(side, row);
+  const warpFrom = (t) => ({ col: t.col, row: ROWS - 1 - t.row }); // the tile straight across the board
+  function setWarp(m, side, sqId, col, row) {
+    const sq = m.armies[side].find(s => s.id === sqId);
+    if (!canWarp(m, side, sq) || !warpOk(m, side, col, row)) return false;
+    if (sq.warp && sq.warp.col === col && sq.warp.row === row) return false;
+    sq.warp = { col, row };
+    return true;
+  }
+  function clearWarp(m, side, sqId) {
+    const sq = m.armies[side].find(s => s.id === sqId);
+    if (!sq || !sq.warp) return false;
+    delete sq.warp;
+    return true;
+  }
+  // the Warper squad of `by` (the other side) that takes squad sq of `side` in this fight, or null
+  function warpedBy(m, side, sq) {
+    if (!sq || isRider(sq) || (m.units[sq.unit] || {}).building) return null;
+    for (const wq of m.armies[1 - side]) {
+      if (!wq.warp || !canWarp(m, 1 - side, wq) || !warpOk(m, 1 - side, wq.warp.col, wq.warp.row)) continue;
+      const f = warpFrom(wq.warp);
+      if (covers(m, sq, f.col, f.row)) return wq;
+    }
+    return null;
+  }
+  const canHook = (m, side, sq) => !!sq && !isRider(sq) && m.armies[side].includes(sq) && !!(m.units[sq.unit] || {}).hook;
+  function setHook(m, side, sqId, dc, dr) {
+    const sq = m.armies[side].find(s => s.id === sqId);
+    if (!canHook(m, side, sq)) return false;
+    dc = Math.max(-COLS, Math.min(COLS, Math.round(+dc) || 0)); dr = Math.max(-ROWS, Math.min(ROWS, Math.round(+dr) || 0));
+    if (!dc && !dr) return false;
+    if (sq.hookAim && sq.hookAim.dc === dc && sq.hookAim.dr === dr) return false;
+    sq.hookAim = { dc, dr };
+    return true;
+  }
+  function clearHook(m, side, sqId) {
+    const sq = m.armies[side].find(s => s.id === sqId);
+    if (!sq || !sq.hookAim) return false;
+    delete sq.hookAim;
+    return true;
+  }
+  // how far the squad's hook flies, in metres (with its skills: Gutter throws further)
+  const hookRange = (m, side, sq) => { const u = sq && unitFor(m, side, sq.unit, sq); return u && u.hook ? u.hook.range : 0; };
+  // the AI: each of its Warper squads takes the priciest enemy squad it can see in the enemy's zone (a different one each)
+  function aiOrders(m, side) {
+    const mine = m.armies[side].filter(q => canWarp(m, side, q));
+    if (!mine.length) return;
+    const foes = foeSeen(m, 1 - side).filter(q => m.armies[1 - side].includes(q) && !isRider(q) && !(m.units[q.unit] || {}).building && inZone(1 - side, seenAt(m, q).row))
+      .sort((a, b) => (m.units[b.unit].cost - m.units[a.unit].cost) || ((b.level || 0) - (a.level || 0)) || a.id - b.id);
+    mine.forEach((wq, k) => {
+      const f = foes[k]; if (!f) return;
+      const p = seenAt(m, f), t = warpFrom(p);
+      if (warpOk(m, side, t.col, t.row)) setWarp(m, side, wq.id, t.col, t.row);
+    });
+  }
+
   // ---- disguise ----
   // a unit with "disguise": "Unit name" looks like that unit to its opponent: on the board, in its sheet, and in the
   // fight until its first attack. The unit index viewer is shown for side's unit ui.
@@ -3510,6 +3583,7 @@ const Game = (() => {
       own[best] = (own[best] || 0) + 1;
       bought.push(sq);
     }
+    aiOrders(m, side); // V2WIP: its Warpers' tiles (nothing without a Warper)
     return bought;
   }
 
@@ -3583,6 +3657,7 @@ const Game = (() => {
     lessersOf, placedLessers, unplacedLesser, lesserAt, lesserSpotOk, placeLesser, lesserUnit, auraFor, modUnit, powersOf, devGold, devDeploys,
     spellsOf, casts, activeCasts, castActive, castRounds, castNow, wallAt, castSpotOk, spellCost, canCast, castSpell, undoCast, castTiles, castEffects,
     canGuide, setGuide, clearGuide, shownUnit, settleDev, aiDev,
+    WARP, canWarp, warpOk, warpFrom, setWarp, clearWarp, warpedBy, canHook, setHook, clearHook, hookRange, aiOrders,
   };
   // a call from outside with a match first puts the board on that match's grid
   const isMatch = (x) => x && typeof x === 'object' && Array.isArray(x.armies) && x.map;

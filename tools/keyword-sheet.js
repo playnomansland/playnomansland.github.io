@@ -12,7 +12,7 @@ const rolesOf = (k) => [].concat(KW[k].role);
 const box = (px, inner, style = '') => `<svg width="${px}" height="${px}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="${style}">${inner}</svg>`;
 // the bare glyph (for the smallest sizes), and the glyph in ink on its role's plate
 const glyph = (k, px) => box(px, KW[k].icon || '');
-const plate = (role, k, px) => { const r = ROLES[role], g = r.glyph; return box(px, `<path d="${r.plate}" fill="${r.color}"/>` + (k ? `<g transform="translate(12 ${g.y}) scale(${g.scale}) translate(-12 -12)" color="#17140F" fill="#17140F">${KW[k].icon}</g>` : '')); };
+const plate = (role, k, px) => { const r = ROLES[role], g = r.glyph; return box(px, `<path d="${r.plate}" fill="${r.color}"/>` + (k ? `<g transform="translate(12 ${g.y}) scale(${g.scale}) translate(-12 -12)" color="#17140F" fill="#17140F">${KW[k].icon || ''}</g>` : '')); };
 // the bare glyph leads (the default); the plate is shown once, small, as the sparing extra
 const card = (k, role) => { const r = ROLES[role]; return `<div class="k"><div class="big" style="color:${r.color}">${glyph(k, 76)}</div>
   <div class="row"><span style="color:${r.color};display:inline-flex;gap:9px;align-items:center">${glyph(k, 30)}${glyph(k, 18)}</span><span class="pl">${plate(role, k, 30)}</span></div>

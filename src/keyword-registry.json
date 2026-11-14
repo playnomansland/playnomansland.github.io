@@ -2,10 +2,10 @@
   "_about": "The keyword registry (phase 1 of the design plan, 2026-11-12). One list of keywords that every screen, the Units page and the docs are meant to read from. Nothing in the game reads this file yet: it changes no rules and no screens. Checked by tools/tests/keywords.js, which also writes docs/KEYWORDS-TAGGING.md. Not the same file as src/keywords.json (that one feeds the Miro board).",
   "rules": {
     "maxWords": 8,
-    "wave1Cap": 18,
+    "wave1Cap": 20,
     "kit": ["icon","fx","sound","demo"],
     "_kit": "Every keyword ships as a kit: an icon, a role colour (from its role), an effect seen on bodies in the fight (fx), a sound, a three-second demo on the island, and a line of at most maxWords words. null = not made yet. icon = the inside of an svg on a 24 by 24 grid, drawn in currentColor so the role colour comes from the page.",
-    "_cap": "Raised from 17 to 18 on 2026-11-12: Tank left (the Guard role says it), Taunt and Teleport joined."
+    "_cap": "Raised from 17 to 18 on 2026-11-12: Tank left (the Guard role says it), Taunt and Teleport joined. Raised to 20 on 2026-11-14: Displace and Deatheffect joined (owner)."
   },
   "roles": {
     "_about": "The role is the glyph's colour. A plate (plate: a path on the 24 by 24 grid) can also stand behind the glyph, but sparingly: the bare glyph is the default (owner, 2026-11-12; where plates are used is not decided). glyph = how big the icon sits on the plate and at what height. A plate with no glyph is the role alone: a Guard with no keyword is a tank. Colours are placeholders.",
@@ -17,7 +17,7 @@
     "conjure": {"name":"Conjure","color":"#E0B25A","line":"Makes new things on the board.","plate":"M2.6 23.200V10.200a9.4 9.4 0 0 1 18.8 0v13z","glyph":{"scale":0.54,"y":12.8}}
   },
   "keywords": {
-    "_about": "wave 1 = the launch set a new player meets. wave 2 = in today's game or the Verbs doc, waiting. Only wave 1 needs a line and a kit. A role can be a list (Teleport is Control or Support, by what the ability does): the unit or skill that uses it says which. alts = other candidate drawings for a keyword that the owner has not chosen between yet.",
+    "_about": "wave 1 = the launch set a new player meets. wave 2 = in today's game or the Verbs doc, waiting. Only wave 1 needs a line and a kit. A role can be a list (Teleport is Control or Support, by what the ability does): the unit or skill that uses it says which. alts = other candidate drawings for a keyword that the owner has not chosen between yet. covers = older keyword names that are now kinds of this one (Displace covers Stun and Root), kept so the docs can be matched.",
     "strike": {"name":"Strike","role":"damage","wave":1,"line":"Hits one enemy up close.","icon":"<path d='M21 3l-4.2.6L7.4 13l3.6 3.6 9.4-9.4z'/><path d='M4.8 11.2l8 8-1.9 1.9-8-8z'/><path d='M6.3 16l1.7 1.7-3.6 3.6-1.7-1.7z'/>","fx":null,"sound":null,"demo":null},
     "shoot": {"name":"Shoot","role":"damage","wave":1,"line":"Hits one enemy from range.","icon":"<path d='M21.5 2.5l-8.3 2 2.3 2.3L4.6 17.7l1.7 1.7L17.2 8.5l2.3 2.3z'/><path d='M2.5 16.8l3.2-1 2.5 2.5-1 3.2-2.2.4.5-2.4-2.4.5z'/>","fx":null,"sound":null,"demo":null},
     "splash": {"name":"Splash","role":"damage","wave":1,"line":"Hits everything in a small circle.","icon":"<circle cx='12' cy='12' r='10.2' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' stroke-dasharray='11 5'/>","fx":null,"sound":null,"demo":null},
@@ -27,6 +27,7 @@
     "taunt": {"name":"Taunt","role":"guard","wave":1,"line":"Enemies nearby must attack it.","icon":"<path d='M10.3 3.400h3.400l-.7 10h-2z'/><circle cx='12' cy='17.9' r='2'/><path d='M6.6 7.600a7.2 7.2 0 0 0 0 8.800M3 5a12 12 0 0 0 0 14M17.4 7.600a7.2 7.2 0 0 1 0 8.800M21 5a12 12 0 0 1 0 14' fill='none' stroke='currentColor' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'/>","fx":null,"sound":null,"demo":null},
     "pull": {"name":"Pull","role":"control","wave":1,"line":"Drags an enemy to it.","icon":"<path d='M17.5 2.8v10.4a5.7 5.7 0 0 1-11.4 0v-1.6' fill='none' stroke='currentColor' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/><path d='M1.6 13.2l4.5-6 4.5 6z'/><circle cx='17.5' cy='3.2' r='2.2'/>","fx":null,"sound":null,"demo":null},
     "teleport": {"name":"Teleport","role":["control","support"],"wave":1,"line":"Moves a squad somewhere else at once.","icon":"<circle cx='4.6' cy='18' r='2.5' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M5 13.2C6.2 6.2 15 4.4 18.6 11' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' stroke-dasharray='2.8 3'/><path d='M14.8 10.6h7.4l-3.7 5.2z'/><circle cx='18.5' cy='20.2' r='2.7'/>","fx":null,"sound":null,"demo":null},
+    "displace": {"name":"Displace","role":"control","wave":1,"line":"Stops an enemy from moving or acting.","covers":["Stun","Root"],"_note":"Added by the owner, 2026-11-14, with Stun and Root as its kinds (both were wave 2 Afflict keywords before). Stun = cannot move or attack; Root = cannot move, can still attack. Push is still its own wave 2 keyword: not named by the owner.","icon":null,"fx":null,"sound":null,"demo":null},
     "burn": {"name":"Burn","role":"afflict","wave":1,"line":"Fire damage over a short time.","icon":"<path d='M12.6 1.5c.6 4.3 6.2 6.4 6.2 12.4a6.8 6.8 0 0 1-13.6 0c0-2.8 1.3-4.8 2.9-6.2.2 2.2 1 3.4 2.3 3.8C9.9 7.6 10.6 4.4 12.6 1.5z'/>","fx":null,"sound":null,"demo":null},
     "slow": {"name":"Slow","role":"afflict","wave":1,"line":"Enemies move and attack slower.","icon":"<path d='M5.5 1.8h13v2.6c0 3.2-2.8 5.2-4.6 7.6 1.8 2.4 4.6 4.4 4.6 7.6v2.6h-13v-2.6c0-3.2 2.8-5.2 4.6-7.6C8.3 9.6 5.5 7.6 5.5 4.400z'/>","fx":null,"sound":null,"demo":null},
     "poison": {"name":"Poison","role":"afflict","wave":1,"line":"Damage over time, past armor.","icon":"<path fill-rule='evenodd' d='M12 1.8a8.4 8.4 0 0 0-8.4 8.400c0 2.7 1.3 4.9 3.2 6.300v2.700h10.400v-2.700c1.9-1.4 3.2-3.6 3.2-6.300A8.4 8.4 0 0 0 12 1.8zM8.7 8.300a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.400zm6.6 0a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.400z'/><path d='M7.6 20.400h8.800v2H7.600z'/>","fx":null,"sound":null,"demo":null},
@@ -36,10 +37,8 @@
     "hide": {"name":"Hide","role":"support","wave":1,"line":"Unseen until it attacks.","icon":"<circle cx='12' cy='7.2' r='4.2' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' stroke-dasharray='2.6 2.5'/><path d='M3.8 21.500c.6-4.8 3.8-7.6 8.2-7.600s7.6 2.8 8.2 7.6' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' stroke-dasharray='2.6 2.5'/>","fx":null,"sound":null,"demo":null},
     "reveal": {"name":"Reveal","role":"support","wave":1,"line":"Sees hidden enemies.","icon":"<path fill-rule='evenodd' d='M1.5 12c2.7-4.8 6.3-7.3 10.5-7.300s7.8 2.5 10.5 7.300c-2.7 4.8-6.3 7.3-10.5 7.300S4.2 16.8 1.5 12zM12 8.200a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.600z'/><circle cx='12' cy='12' r='1.7'/>","fx":null,"sound":null,"demo":null},
     "spawn": {"name":"Spawn","role":"conjure","wave":1,"line":"Brings more bodies into the fight.","icon":"<path d='M3.2 16.6L4.6 13.4' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round'/><path d='M5.4 11.9L7.2 9.1' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/><path d='M5.2 18.3L13.7 13.4' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/><path d='M14.5 12.2L15.1 9' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/><path d='M15.1 7.4L14.9 5.8' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/><path d='M6.6 19.9L18 15.1' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/><path d='M19.1 14L20.1 11.2' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/><path d='M20.4 9.6L20.2 7.8' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/><path d='M8.1 21.4L19.8 18.8' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round'/><path d='M21.1 17.9L22.1 16.1' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/><path d='M9.2 7.9L9.4 4.8L7 6.8zM15.4 3.4L13.4 2L13.2 4.4zM20.8 5.4L18.8 4.2L18.6 6.5zM23.4 13.9L21.6 12.4L21 14.7zM1.2 17.2l7 5.4-1.2 1.5-7-5.400z'/>","fx":null,"sound":null,"demo":null},
-    "stun": {"name":"Stun","role":"afflict","wave":2},
+    "deatheffect": {"name":"Deatheffect","role":["damage","conjure"],"wave":1,"line":"Something happens when it dies.","_note":"Added by the owner, 2026-11-14. The role goes by what happens (a blast is Damage, new bodies are Conjure), as with Teleport: not confirmed by the owner.","icon":null,"fx":null,"sound":null,"demo":null},
     "blind": {"name":"Blind","role":"afflict","wave":2},
-    "root": {"name":"Root","role":"afflict","wave":2},
-    "shield": {"name":"Shield","role":"guard","wave":2},
     "protect": {"name":"Protect","role":"guard","wave":2},
     "block": {"name":"Block","role":"conjure","wave":2},
     "push": {"name":"Push","role":"control","wave":2},
@@ -84,12 +83,12 @@
     "Assassin": {"verb":"bleed","also":["hide"]}
   },
   "skillTypes": {
-    "_about": "Every skill type in the roster, sorted three ways. keywords = it gives the unit these keywords. stat = a plain numbers change that needs no keyword (it shows as pips). unfit = a mechanic no keyword covers yet, with a note on what it would need.",
+    "_about": "Every skill type in the roster, sorted four ways. keywords = it gives the unit these keywords. mechanic = it gives a passive defence from the mechanics list below (not a keyword). stat = a plain numbers change that needs no keyword (it shows as pips). unfit = a mechanic no keyword covers yet, with a note on what it would need.",
     "poison": {"keywords":["poison"]},
     "stealth": {"keywords":["hide"]},
     "silent": {"keywords":["hide"]},
     "spawn": {"keywords":["spawn"]},
-    "deathSpawn": {"keywords":["spawn"]},
+    "deathSpawn": {"keywords":["deatheffect","spawn"]},
     "killSpawn": {"keywords":["spawn"]},
     "elemental": {"keywords":["spawn"]},
     "portal": {"keywords":["spawn"]},
@@ -106,17 +105,17 @@
     "roots": {"keywords":["pull"]},
     "overwatch": {"keywords":["reveal"]},
     "ranged": {"keywords":["shoot","poison"]},
-    "bleedStun": {"keywords":["bleed","stun"]},
-    "deepfreeze": {"keywords":["slow","stun"]},
-    "slam": {"keywords":["stun"]},
+    "bleedStun": {"keywords":["bleed","displace"]},
+    "deepfreeze": {"keywords":["slow","displace"]},
+    "slam": {"keywords":["displace"]},
     "hunter": {"keywords":["mark","hide","reveal"]},
     "shrink": {"keywords":["blind"],"note":"Cuts enemy range; Blind is the nearest word in the Verbs doc."},
-    "ward": {"keywords":["shield"]},
-    "shield": {"keywords":["shield"]},
+    "ward": {"mechanic":["shield"],"note":"A cap on each hit, not a count of blocked hits: Shield is the nearest mechanic."},
+    "shield": {"mechanic":["shield"]},
     "aura": {"keywords":["boost"]},
     "forward": {"keywords":["arrive"]},
-    "blast": {"keywords":["leave"]},
-    "explode": {"keywords":["leave"]},
+    "blast": {"keywords":["deatheffect"]},
+    "explode": {"keywords":["deatheffect"]},
     "pools": {"keywords":["leave","heal"]},
     "glutCap": {"keywords":["grow"]},
     "glutSpeed": {"keywords":["grow"]},
@@ -146,13 +145,28 @@
     "berserk": {"unfit":"Immune to Slow and Push, plus a small enemy debuff. Would need an Immune rule."}
   },
   "armor": {
-    "_about": "Armor weight: a different kind of symbol from the keywords, in steel grey, never on a role plate: a flat-topped shield that fills up (none, a third, two thirds, full, full with battlements). Chosen by the owner, 2026-11-12. Which units get which weight is not decided.",
+    "_about": "Armor weight: a different kind of symbol from the keywords, in steel grey, never on a role plate: a flat-topped shield that fills up (none, a third, two thirds, full, full with battlements). Chosen by the owner, 2026-11-12. Which units get which weight will come from the new Verbs and class doc, which is not finished (owner, 2026-11-14): do not assign weights before it is.",
     "color": "#B8C0C8",
     "none": {"name":"No armor","icon":"<path opacity='.5' d='M3.7 4h16.6v7.200c0 4.9-3.3 8.3-8.3 10.5-5-2.2-8.3-5.6-8.3-10.500z' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/>"},
     "light": {"name":"Lightly armored","icon":"<path d='M3.7 4h16.6v7.200c0 4.9-3.3 8.3-8.3 10.5-5-2.2-8.3-5.6-8.3-10.500z' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M5.9 16.6h12.2c-1.4 2-3.5 3.7-6.1 5.1-2.6-1.4-4.7-3.1-6.1-5.1z'/>"},
     "medium": {"name":"Medium armored","icon":"<path d='M3.7 4h16.6v7.200c0 4.9-3.3 8.3-8.3 10.5-5-2.2-8.3-5.6-8.3-10.500z' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='M3.7 11.6h16.6c-.2 4.7-3.4 7.9-8.3 10.1-4.9-2.2-8.1-5.4-8.3-10.100z'/>"},
     "heavy": {"name":"Heavily armored","icon":"<path d='M3.7 4h16.6v7.200c0 4.9-3.3 8.3-8.3 10.5-5-2.2-8.3-5.6-8.3-10.500z' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/>"},
     "fortified": {"name":"Fortified","icon":"<path d='M3.7 4h16.6v7.200c0 4.9-3.3 8.3-8.3 10.5-5-2.2-8.3-5.6-8.3-10.500z' stroke='currentColor' stroke-width='2' stroke-linejoin='round'/><path d='M2.7 0h4.400v4H2.700zM9.8 0h4.400v4H9.800zM16.9 0h4.400v4h-4.400z'/>"}
+  },
+  "mechanics": {
+    "_about": "Passive defences: mechanics, like armor, not keywords. A keyword is a job (what a unit does); a mechanic is a bonus a body carries. The owner moved Shield here from the keywords on 2026-11-14. No symbols yet.",
+    "shield": {"name":"Shield","line":"Blocks a set number of hits.","icon":null}
+  },
+  "v2wip": {
+    "_about": "The V2WIP developer roster (src/v2wip.json, docs/V2WIP.md): its new units and skill types, tagged like the ones above. A unit whose verb has two roles says which one it is.",
+    "units": {
+      "Warper": {"verb":"teleport","role":"control","also":["displace"],"note":"Roots the enemy squad straight across for 1.5 s, then teleports it to a chosen tile."},
+      "Catcher": {"verb":"pull","note":"A hook reels the first enemy it touches into melee."}
+    },
+    "skillTypes": {
+      "netcaster": {"keywords":["pull","splash"],"note":"The hook pulls up to 4 bodies; its strikes splash."},
+      "gutter": {"keywords":["bleed"],"note":"Strikes add bleed; the longer, faster hook is a stat change."}
+    }
   },
   "levels": {
     "1": {"name":"Level 1","icon":"<path d='M3.5 15l8.5 5 8.5-5v3.800l-8.5 5-8.5-5z'/><path opacity='.28' d='M3.5 9l8.5 5 8.5-5v3.800l-8.5 5-8.5-5zM3.5 3l8.5 5 8.5-5v3.800l-8.5 5-8.5-5z'/>"},

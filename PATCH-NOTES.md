@@ -20,6 +20,17 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 14 November 2026 – Keywords: Displace and Deatheffect join, Shield becomes a mechanic (branch `design/keywords`, nothing changes in the game)
+
+- **Two new keywords, 20 in all:** **Displace** (Control: stops an enemy from moving or acting; Stun and Root are now kinds of Displace, not keywords of their own) and **Deatheffect** (something happens when it dies). Neither has a symbol yet.
+- **Shield is no longer a keyword.** It is a passive mechanic, like armor: a bonus a body carries (it blocks a set number of hits), not a job. Bone shield, Dread rangers, Ward and Transphysical are sorted under it.
+- **Skills re-sorted:** Anemia, Living armor and Deepfreeze now read as Displace; Death burst, Explode on death and Spiderlings as Deatheffect. Of 85 skills, 32 now read with the first keywords alone (26 before), 4 give a passive mechanic, 28 are plain stat changes, 9 need a later keyword (19 before) and 12 fit none.
+- **The V2WIP units are tagged:** Warper is Teleport (Control) with Displace built in (its root), Catcher is Pull. Netcaster reads as Pull and Splash, Gutter as Bleed.
+- **Armor weights wait** for the new Verbs and class doc. **Portraits, cards and every other unit visual are pushed to later.**
+- The branch has main merged in again (the V2WIP mode).
+
+---
+
 ## 13 November 2026 – Unit portraits: three prototypes (branch `design/keywords`, nothing changes in the game)
 
 - **Portraits, first try:** the Fire Mage, the Shiv and the War Mammoth each have a picture made from their 3D model, in the unit's colour (`img/units/`). No screen uses them yet: they are for judging the look before the unit cards are drawn as playing cards.
@@ -27,6 +38,18 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 - **For makers:** `node tools/unit-pic.js "Fire Mage" Shiv --frame=half --sheet=out.png` renders any units' portraits (no names = all 28) and lists the units that have no model of their own.
 - **On hold since 14 November:** the 3D models are to be redone by a human first, so no framing was picked and the other 25 units have no portrait.
 - The branch has main's 15 commits from 13 November merged in.
+
+---
+
+## 13 November 2026 – V2WIP: a roster in the works, with two new units (developers only)
+
+A new developer mode, **V2WIP** (Developer menu, against the AI), for trying roster changes before they reach the live game. The live roster is unchanged.
+
+- **Out in V2WIP:** Slime Wizard, Slimeshots and the Slime tower (and Mubarak, the Slime Lord, who has no slime units left to lead there).
+- **Warper** (tier 2, 200 gold: 900 health, hits for 60, range 20): **Teleport**. Pick a tile in your zone from its sheet. When the fight starts, the enemy squad on the tile straight across the board is rooted, and 1.5 s later it is teleported onto your tile. Buildings and towers stay. The opponent doesn't see your tile until the fight.
+- **Catcher** (tier 3, 300 gold: 2000 health, hits for 300 every 2.5 s, slow, no armor): **Hook**. It throws a hook up to 30 m at 20 m/s: the first enemy the hook touches takes 100 damage and is reeled into melee, helpless on the way. Give its first throw a direction with a hook arrow from its sheet (it throws as soon as an enemy stands on that line); after that it throws every 8 s at the nearest enemy in range. Its skills, one or the other: **Netcaster** (the hook pulls up to 4, and its strikes splash) or **Gutter** (35 m, 30 m/s, and its strikes add bleed).
+- **On the board:** your teleport tile and the tile across are marked in violet, the hook arrow is a chain with a hook at its end. In the fight a ring closes on a rooted squad, and the hook flies on its chain.
+- The AI buys both units and picks tiles for its Warpers.
 
 ---
 

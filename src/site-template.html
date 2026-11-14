@@ -1296,7 +1296,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <span class="dk"><b>Developer</b>every mode and tool · only developers see this</span>
     <div class="dv">
       <span class="lab">Vs computer</span>
-      <span class="seg"><button data-dv="factions">Factions</button><button data-dv="devtest">Devtest</button><button data-dv="late">Late game</button><button data-dv="mommy">Mommy</button><button data-dv="claude">Vs Claude</button></span>
+      <span class="seg"><button data-dv="factions">Factions</button><button data-dv="devtest">Devtest</button><button data-dv="late">Late game</button><button data-dv="v2wip">V2WIP</button><button data-dv="mommy">Mommy</button><button data-dv="claude">Vs Claude</button></span>
       <span class="lab">Exploit bot</span>
       <span class="seg" role="group" aria-label="Exploit bot"><button data-xb="" aria-pressed="true">Off</button><button data-xb="flank">Flank</button><button data-xb="steel">Steel</button><button data-xb="necro">Necro</button><button data-xb="wizards">Wizards</button><button data-xb="hoard">Hoard</button><button data-xb="arrow">Arrow</button></span>
       <span class="lab">Tools</span>
@@ -1463,7 +1463,8 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
 <script>
 (() => {
   const DATA = /*DATA*/;
-  const FDATA = /*FACTIONS*/; // the Factions gamemode: { factions, units (each with its faction), matrix, skills } (tools/counter-table.js)
+  const FDATA = /*FACTIONS*/;
+  const V2DATA = /*V2WIP*/; // the V2WIP developer mode's roster: { name, units, matrix, skills, offTowers, offChars } (src/v2wip.json, tools/counter-table.js) // the Factions gamemode: { factions, units (each with its faction), matrix, skills } (tools/counter-table.js)
   Game.setFactions(FDATA.factions);
   Game.setDevData(FDATA); // the Factions devtest: buildings, Powers, spells
   Game.setBuildings(FDATA.buildings || []); // the factions' buildings (the Mechites' Factory)
@@ -1708,6 +1709,9 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   // a melee squad's direction arrow (Game.AIM): aimMode is the id of the squad getting one (the next tap sets its end);
   // aimDrag { id, end } while one is dragged out of it (head: its head was grabbed, see aimHead)
   let aimMode = null, aimDrag = null;
+  // V2WIP: orderMode = { kind: 'warp' | 'hook', id } while a Warper squad's teleport tile or a Catcher squad's hook
+  // direction is being set (the next tap on the board sets it)
+  let orderMode = null;
   // the free moves left are March order's only (it reaches Game.MARCH.tiles; the horseshoe's goes anywhere)
   const marchOnly = () => !!m && Game.marchMoves(m, me) > 0 && !Game.shoeMoves(m, me);
   // the hint's "(up to N tiles)": none for a squad whose arrow is cut shorter where it stands (a flank, Game.aimCap: the
@@ -3236,6 +3240,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     dev: m && m.dev ? { bPlacing, castMode, guideMode, guideId: guideDrag ? guideDrag.id : guideMode !== 'pick' ? guideMode : null, guide: guideDrag ? guideDrag.pts : guideMode != null && guideMode !== 'pick' ? guideDraft : null } : null,
     battleCam: cam && cam.k > 0 ? { zoom: 1 + (CAM.zoom - 1) * cam.k, x: cam.x, y: cam.y, k: cam.k } : null,
     aim: phase === 'deploy' && (aimMode != null || aimDrag) ? { id: aimDrag ? aimDrag.id : aimMode, end: aimDrag ? aimDrag.end : hoverTile } : null, // (aimDrag without aimMode: a head dragged)
+    order: phase === 'deploy' && orderMode ? { kind: orderMode.kind, id: orderMode.id, at: hoverTile ? { col: hoverTile.col, row: hoverTile.row } : null } : null, // V2WIP: a teleport tile or a hook arrow being set
     placingBuilding: placingBuilding(), win: null, duo: duoBoard(),
     foeReady: phase === 'deploy' && !fightBtn() && !!ready[foe()] && !ready[me], foeStart: foeStart(), boss: bossView(), landAt }); // (Savanna: the vultures circle your tower while the opponent waits on you) // duo (2v2): this phone's lane and each player's ring colour
   // the Mommy boss puzzle: what both boards draw (Boss.preview: while deploying her and the nests)
@@ -3347,7 +3352,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   function stopTask() {
     if (guideMode != null && guideMode !== 'pick' && guideDraft.length && m && editable()) Game.setGuide(m, me, guideMode, guideDraft); // the ✕ finishes an arrow
     selected = null; moveMode = false; moving = null; charmMode = false; elfPlacing = false; wallPlacing = false; fortPlacing = false; markPicking = false; huntPicking = null;
-    bPlacing = null; castMode = null; guideMode = null; guideDraft = []; guideDrag = null; aimMode = null; aimDrag = null;
+    bPlacing = null; castMode = null; guideMode = null; guideDraft = []; guideDrag = null; aimMode = null; aimDrag = null; orderMode = null;
     if (phase === 'deploy') panelDeploy();
     render();
   }
@@ -4532,18 +4537,20 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
       if (guideMode === 'pick') hint = 'Tap one of your squads, or drag from it to draw its path.';
       else if (guideMode != null) hint = `Tap tiles for its path (${guideDraft.length} of ${Game.DEV.guidePoints}), or drag from the squad. ✕ when done.`;
       if (aimMode != null) hint = `Direction: tap where it walks first${aimUpTo()}, or drag from the squad. Until it gets there it ignores enemies, except ones in reach.`;
+      if (orderMode) hint = orderMode.kind === 'warp' ? 'Teleport: tap a tile in your zone. The enemy squad straight across is pulled onto it.' : 'Hook: tap where its first throw goes.';
       if (placingBuilding()) hint = `Tap a tile in your zone for your ${esc(buildingName(placingBuilding().id))}.`;
       if (placingTower()) hint = 'Tap a gold tile to place your tower.';
     }
     // Only hints about what the next tap does (or why it can't) stay on the panel; the rest (tips, this round's
     // news) go to the Help sheet, whose button turns gold while there's news not read yet this round.
-    const devTask = bPlacing != null || castMode != null || guideMode != null || aimMode != null; // (aimMode: every gamemode)
+    const devTask = bPlacing != null || castMode != null || guideMode != null || aimMode != null || orderMode != null; // (aimMode: every gamemode; orderMode: V2WIP)
     const inline = !can || placingTower() || placingElf() || placingWall() || placingBuilding() || choosingTower() || choosingPack() || devPicking() || devTask || moveMode || (charmMode && Game.canGiveCharm(m, me))
       || (selected !== null && !canBuy(selected)) ? hint : '';
     helpTip = inline ? '' : hint;
     // phone: the task the next board tap is for, shown over the board while the drawer is down (dock())
     dockTask = !can ? null : placingTower() ? { text: hint, x: false }
       : aimMode != null ? { text: `Direction: tap where it walks first${aimUpTo()}, or drag from the squad.`, x: true, through: true } // short, and a tap on it reaches the tile under it (a far tap on a phone lands there)
+      : orderMode ? { text: hint, x: true, through: true }
       : moveMode || (charmMode && Game.canGiveCharm(m, me)) || placingElf() || placingWall() || placingBuilding() || devTask ? { text: hint, x: !(bPlacing != null && Game.unplacedLesser(m, me)) } : null;
     const news = can && selected === null && !fresh && !inline && (Game.hailRound(m) || Game.altarRound(m) || m.round === Game.FLANK.round || (tskillOffer() && m.round === Game.TOWER_PICK_ROUND));
     if (can && !choosingPack() && !choosingTower() && !devPicking()) takeUndoSnap();
@@ -4697,7 +4704,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if (!editable() || !undoSnap || undoSnap.key !== undoKey()) return;
     undoRestore();
     if (mode === 'net') srvAct('undoAll', []);
-    selected = null; moveMode = false; moving = null; charmMode = false; elfPlacing = false; wallPlacing = false; fortPlacing = false; markPicking = false; huntPicking = null; bPlacing = null; castMode = null; guideMode = null; guideDraft = []; guideDrag = null; aimMode = null; aimDrag = null; rangeOf = null;
+    selected = null; moveMode = false; moving = null; charmMode = false; elfPlacing = false; wallPlacing = false; fortPlacing = false; markPicking = false; huntPicking = null; bPlacing = null; castMode = null; guideMode = null; guideDraft = []; guideDrag = null; aimMode = null; aimDrag = null; orderMode = null; rangeOf = null;
     closeSheet(); changed();
   }
   function changed() {
@@ -5238,6 +5245,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
         <div class="bar"><span class="hint">${factionsReady() ? 'Factions: draft two factions each.' : 'Factions mode: coming soon.'}</span><button class="btn small" id="factions-ai" ${factionsReady() ? '' : 'disabled'}>Factions vs AI</button></div>
         <div class="bar"><span class="hint">${devReady() ? 'Buildings, Powers and spells on the big board.' : 'No factions yet.'}</span><button class="btn small" id="devtest-ai" ${devReady() ? '' : 'disabled'}>Factions – devtest</button></div>
         <div class="bar"><span class="hint">DEVTESTLATEGAME on Standard (with treasuries): ${Game.START_HP + Game.LATE.hp} health each, at most ${Game.LATE.cap} squads of any one tier 3 or tier 4 unit.</span><span class="btnrow"><button class="btn small" id="late-friend">vs Friend</button><button class="btn small" id="late-ai">vs AI</button></span></div>
+        <div class="bar"><span class="hint">V2WIP: the roster in the works. No Slime Wizard, Slimeshots or Slime tower; adds Warper and Catcher.</span><button class="btn small" id="v2wip-ai">V2WIP vs AI</button></div>
         <div class="bar"><span class="hint">Mommy: the boss puzzle. Five rounds against a giant spider and her nests, on this phone.</span><button class="btn small" id="boss-ai">Mommy</button></div>
         <div class="bar"><span class="hint">2v2: two boards side by side. Invite three players, set the teams.</span><button class="btn small" id="duo-new">2v2 lobby</button></div>
         <div class="bar"><span class="hint">Exploit bot: the AI opponent plays one of the strongest lines the exploit lab found (docs/EXPLOITS-2026-11.md) instead of its normal self. Off is the normal AI. Applies to any match against the computer.</span>
@@ -5268,6 +5276,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     if ($('duo-new')) $('duo-new').addEventListener('click', () => duoHost());
     if ($('late-friend')) $('late-friend').addEventListener('click', () => { matchKind = 'standard'; lateGame = true; hostLobby(); });
     if ($('late-ai')) $('late-ai').addEventListener('click', () => { matchKind = 'standard'; lateGame = true; startAiMatch(); });
+    if ($('v2wip-ai')) $('v2wip-ai').addEventListener('click', () => { matchKind = 'v2wip'; lateGame = false; startAiMatch(); });
     if ($('boss-ai')) $('boss-ai').addEventListener('click', () => { if (devMode()) startBoss(); });
     if ($('vs-claude')) $('vs-claude').addEventListener('click', startClaudeMatch);
     if ($('load-units')) $('load-units').addEventListener('click', openLoader);
@@ -7144,6 +7153,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     useSet(matchKind === 'devtest' ? FALL : Game.factionSet(FALL, [...picks[0], ...picks[1]]), false);
   }
   function restoreSet() { if (standardSet) { useSet(standardSet.set, standardSet.custom); standardSet = null; } }
+  // V2WIP (developer mode, vs AI on this device): the roster in the works (src/v2wip.json). The player's own units come
+  // back after the match, as after a Factions match (restoreSet).
+  const V2SET = { units: V2DATA.units, matrix: V2DATA.matrix, skills: V2DATA.skills || [] };
+  function useV2Set() { if (!standardSet) standardSet = { set: rawSet, custom: customSet }; useSet(V2SET, false); }
   function startDraft() {
     restoreSet();
     m = null; bt = null; battlePre = null; deadline = 0; draftSel = null;
@@ -7517,7 +7530,14 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (matchKind === 'factions' && factionsReady()) { startDraft(); return; }
     if (matchKind === 'devtest' && devReady()) { startDraft(); return; }
     restoreSet();
-    m = Game.createMatch(units, M, (now() ^ (Math.random() * 1e9)) >>> 0, playMap(), m && m.map ? m.map.id : null, matchChars(), matchOpts());
+    const lastMap = m && m.map ? m.map.id : null;
+    if (matchKind === 'v2wip' && devMode()) { // V2WIP: its roster, without its towers and leaders that are out
+      useV2Set();
+      m = Game.createMatch(units, M, (now() ^ (Math.random() * 1e9)) >>> 0, playMap(), lastMap, [...new Set(matchChars().concat(V2DATA.offChars || []))], { ...matchOpts(), offTowers: V2DATA.offTowers || [], v2: true });
+    } else {
+      if (matchKind === 'v2wip') matchKind = 'standard';
+      m = Game.createMatch(units, M, (now() ^ (Math.random() * 1e9)) >>> 0, playMap(), lastMap, matchChars(), matchOpts());
+    }
     nextReady = [false, false]; rematch = [false, false];
     startReport();
     beginAiRound();
@@ -7982,12 +8002,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       ${lines}
       ${!m.over && !won ? bossNextBite(r.round + 1) : ''}
       ${m.over ? acct ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : '<p>Play as a guest or sign in (Profile) to get your runs on her leaderboard.</p>' : ''}
-      <div class="btnrow">${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : `<button class="btn boss-retry" id="boss-retry" aria-label="Play this round again" title="Play this round again">${CTL_ICON.again}</button><button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>`}</div>
+      <div class="btnrow">${lastPre && lastPre.boss ? `<button class="btn boss-retry" id="boss-retry" aria-label="Play this round again" title="Play this round again">${CTL_ICON.again}</button>` : ''}${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>
     </div>`);
     if (m.over) bossReport(r);
     if ($('boss-board')) $('boss-board').addEventListener('click', () => openLeaderboard('boss'));
     if ($('boss-next')) $('boss-next').addEventListener('click', () => { overlay(null); beginAiRound(); });
-    if ($('boss-retry')) $('boss-retry').addEventListener('click', againBossRound); // (the round just fought, from its board as it went in)
+    if ($('boss-retry')) $('boss-retry').addEventListener('click', againBossRound); // (the round just fought, from its board as it went in; on the final card too: the run goes on from there, and its end goes to the leaderboard again)
     if ($('boss-again')) $('boss-again').addEventListener('click', () => { overlay(null); startBoss(); });
     if ($('boss-menu')) $('boss-menu').addEventListener('click', () => { overlay(null); m = null; showStart(); });
   }
@@ -8101,6 +8121,8 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     else if (s[13] === 1) Art.frostBeam(fx, s); // a frost beam, held on its target
     else if (s[13] === 2) fx.push({ kind: 'freeze', x: s[0], y: s[1], side: s[4], age: 0, life: 0.6 }); // frozen solid
     else if (s[13] === 3) fx.push({ kind: 'eat', x1: s[0], y1: s[1], x2: s[2], y2: s[3], side: s[4], age: 0, life: 0.6 }); // eaten by the Obelisk
+    else if (s[13] === 4) fx.push({ kind: 'warp', x1: s[0], y1: s[1], x2: s[2], y2: s[3], side: s[4], age: 0, life: 0.7 }); // V2WIP: teleported by a Warper
+    else if (s[13] === 5) fx.push({ kind: 'hookhit', x: s[2], y: s[3], side: s[4], age: 0, life: 0.35 }); // V2WIP: caught on a Catcher's hook
     else if (s[12] === 1) fx.push({ kind: 'roar', x: s[0], y: s[1], r: s[5], side: s[4], age: 0, life: 0.8 });
     else if (s[8] > 0) fx.push({ kind: 'flame', x1: s[0], y1: s[1], x2: s[2], y2: s[3], side: s[4], half: s[8], slam: s[11] === 1, spin: s[11] === 2, age: 0, life: s[11] === 1 ? 0.45 : 0.3 });
     else if (s[10] === 1) fx.push({ kind: 'bolt', x1: s[0], y1: s[1], x2: s[2], y2: s[3], side: s[4], age: 0, life: 0.22, seed: Math.random() });
@@ -8353,6 +8375,12 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     }
     if (placingTower()) { if (editable() && Game.placeTower(m, me, t.col, t.row)) changed(); return; }
     if (placingElf()) { if (editable() && Game.buyElfOwn(m, me, t.col, t.row)) { elfPlacing = false; changed(); } else if (!Game.elfOwnSpotOk(m, me, t.col, t.row)) { elfPlacing = false; render(); hud(); panelDeploy(); } return; }
+    if (orderMode) { // V2WIP: this tile is a Warper's teleport tile, or where a Catcher's first hook goes; a tile that can't be cancels
+      const om = orderMode, sq = m.armies[me].find(q => q.id === om.id);
+      orderMode = null;
+      if (sq && editable() && (om.kind === 'warp' ? Game.setWarp(m, me, sq.id, t.col, t.row) : Game.setHook(m, me, sq.id, t.col - sq.col, t.row - sq.row))) changed(); else { panelDeploy(); render(); }
+      return;
+    }
     if (aimMode != null) { // a direction arrow: this tile is its end (cut down to its most), the squad's own tile cancels
       const sq = m.armies[me].find(q => q.id === aimMode), end = sq && Game.aimTo(m, sq, t.col, t.row);
       aimMode = null; aimDrag = null;
@@ -8807,7 +8835,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       if (!it) { watchSq = null; return ''; }
       from = it.from;
     } else if (phase === 'deploy') {
-      if (aimMode != null || aimDrag) return ''; // setting a direction arrow: the floor shows it
+      if (aimMode != null || aimDrag || orderMode) return ''; // setting a direction arrow (or a V2WIP order): the floor shows it
       const ask = intentAsk();
       if (!ask) return '';
       const asq = ask.q.id != null && m.armies[me].find(s => s.id === ask.q.id);
@@ -10021,6 +10049,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         if (editable() && sq.guide) btns.push(`<button class="btn" data-act="unguide">Clear path</button>`);
         if (editable() && Game.canAim(m, me, sq)) btns.push(`<button class="btn" data-act="aim">${sq.aim ? 'Change direction' : 'Set direction'}</button>`);
         if (editable() && sq.aim) btns.push(`<button class="btn" data-act="unaim">Clear direction</button>`);
+        if (editable() && Game.canWarp(m, me, sq)) btns.push(`<button class="btn" data-act="warp">${sq.warp ? 'Change teleport tile' : 'Set teleport tile'}</button>`); // V2WIP
+        if (editable() && sq.warp && Game.canWarp(m, me, sq)) btns.push(`<button class="btn" data-act="unwarp">Clear teleport tile</button>`);
+        if (editable() && Game.canHook(m, me, sq)) btns.push(`<button class="btn" data-act="hook">${sq.hookAim ? 'Change hook direction' : 'Set hook direction'}</button>`);
+        if (editable() && sq.hookAim && Game.canHook(m, me, sq)) btns.push(`<button class="btn" data-act="unhook">Clear hook direction</button>`);
         if (btns.length) lvl += `<div style="display:flex;gap:8px;flex-wrap:wrap">${btns.join('')}</div>`;
         else if (next) lvl += `<p class="hint" style="margin:0">Earns XP by dealing and taking damage.</p>`;
       }
@@ -10109,6 +10141,10 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     on('unguide', () => { if (editable() && Game.clearGuide(m, me, sq.id)) after(); });
     on('aim', () => { if (!editable()) return; closeSheet(); stopTask(); aimMode = sq.id; panelDeploy(); render(); });
     on('unaim', () => { if (editable() && Game.clearAim(m, me, sq.id)) after(); });
+    on('warp', () => { if (!editable()) return; closeSheet(); stopTask(); orderMode = { kind: 'warp', id: sq.id }; panelDeploy(); render(); }); // V2WIP
+    on('unwarp', () => { if (editable() && Game.clearWarp(m, me, sq.id)) after(); });
+    on('hook', () => { if (!editable()) return; closeSheet(); stopTask(); orderMode = { kind: 'hook', id: sq.id }; panelDeploy(); render(); });
+    on('unhook', () => { if (editable() && Game.clearHook(m, me, sq.id)) after(); });
     on('sell', (btn) => {
       if (!btn.dataset.sure) { btn.dataset.sure = '1'; btn.textContent = `Tap again to sell for ${Game.sellValue(m, sq)}`; btn.classList.add('primary'); return; }
       if (editable() && Game.sell(m, me, sq.id)) { closeSheet(); changed(); }

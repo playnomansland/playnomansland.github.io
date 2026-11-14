@@ -4,6 +4,8 @@
 //   { m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf,
 //     editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev }
 // aim: { id, end } while a melee squad's direction arrow is being set (end: the tile under the finger, or null); see aimFloor.
+// order (V2WIP): { kind: 'warp' | 'hook', id, at } while a Warper's tile or a Catcher's hook arrow is being set (at: the
+// tile under the finger, or null); see ordersFloor.
 // dev (Factions devtest only): { bPlacing, castMode, guideMode, guideId, guide }: the building being placed, the spell being
 // cast, and the arrow being drawn (guide: its points so far, for squad guideId).
 // fx: short-lived battle effects as plain data (shots, flames, bolts, heals, deaths, and 'gold': the text over a
@@ -22,8 +24,8 @@
 const Render2D = (cv, view, opts = {}) => {
   let ctx = cv.getContext('2d'); // swapped for a moment while drawing map thumbnails (thumb)
   let m = null, me = 0, phase = 'start', units = [], mode = 'ai', bt = null, battlePre = null, fx = [], battleCam = null, win = null;
-  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, duo = null, foeStart = null, boss = null;
-  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, win = null, duo = null, foeStart = null, boss = null } = view()); };
+  let selected = null, moving = null, drag = null, hoverTile = null, rangeOf = null, editable = false, placingUnit = null, placingElf = false, placingTower = false, placingWall = false, dev = null, placingBuilding = null, aim = null, order = null, duo = null, foeStart = null, boss = null;
+  const pull = () => { ({ m, me, phase, units, mode, bt, battlePre, fx, selected, moving, drag, hoverTile, rangeOf, editable, placingUnit, placingElf, placingTower, placingWall, placingBuilding, battleCam, dev, aim = null, order = null, win = null, duo = null, foeStart = null, boss = null } = view()); };
   // win (a 2v2 fight on a phone): { aspect, cols, x } the canvas is shaped for `aspect` columns, shows `cols` of them
   // (zoomed out up to the whole wide board) and starts at screen column x; the board sits in the middle top to bottom
   const foe = () => 1 - me;
@@ -504,7 +506,7 @@ const Render2D = (cv, view, opts = {}) => {
     }
     if (v && v.dev) devFloor(v, plain);
     if (v && v.mpb) drawMpbFloor(v); // 2v2 buildings on the floor (the Oak's moss)
-    if (v && !plain && phase === 'deploy') aimFloor(v);
+    if (v && !plain && phase === 'deploy') { aimFloor(v); ordersFloor(v); }
     if (plain) return;
     if (v && v.buff) for (const side of [0, 1]) { // Zoe's buff tiles: a gold tile with a star
       if (!charVisible(side)) continue;
@@ -600,6 +602,67 @@ const Render2D = (cv, view, opts = {}) => {
     ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
     const end = aim.end ? Game.aimTo(v, draft, aim.end.col, aim.end.row) : Game.aimEnd(v, draft);
     if (end) drawArrow(v, draft, [end], 1);
+  }
+  // V2WIP, yours only (on the floor, so the 3D board gets them too):
+  // - a Warper's teleport tile: a violet tile in your zone with a ring, the tile straight across the board outlined the
+  //   same way, and a thin dashed line from one to the other (what stands there comes here). While one is being picked
+  //   (order.kind 'warp'): your zone is outlined and the tile under the finger shows as it would be.
+  // - a Catcher's hook arrow: a chain of links from the squad along its line, as long as the hook flies, with a hook
+  //   at the end (not the walking arrow's dashes and head, so the two can't be mixed up).
+  const WARP_COL = '#B39DDB', HOOK_COL = '#D9C49A';
+  function warpTile(col, row, a, land) {
+    const t = tilePx(), x = scol(col) * t, y = srow(row) * t;
+    ctx.globalAlpha = a * (land ? 0.3 : 0.14); ctx.fillStyle = WARP_COL; ctx.fillRect(x, y, t, t);
+    ctx.globalAlpha = a; ctx.strokeStyle = WARP_COL; ctx.lineWidth = Math.max(1.5, t * 0.05);
+    ctx.setLineDash(land ? [] : [t * 0.14, t * 0.1]); ctx.strokeRect(x + 2, y + 2, t - 4, t - 4); ctx.setLineDash([]);
+    if (land) { // where they arrive: two rings, like a ripple
+      ctx.lineWidth = Math.max(1.2, t * 0.04);
+      for (const r of [0.16, 0.3]) { ctx.beginPath(); ctx.arc(x + t / 2, y + t / 2, t * r, 0, Math.PI * 2); ctx.stroke(); }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function warpMark(to, a) {
+    const t = tilePx(), fr = Game.warpFrom(to);
+    warpTile(to.col, to.row, a, true); warpTile(fr.col, fr.row, a, false);
+    ctx.strokeStyle = WARP_COL; ctx.globalAlpha = a * 0.6; ctx.lineWidth = Math.max(1, t * 0.03); ctx.setLineDash([t * 0.08, t * 0.14]);
+    ctx.beginPath(); ctx.moveTo((scol(fr.col) + 0.5) * t, (srow(fr.row) + 0.5) * t); ctx.lineTo((scol(to.col) + 0.5) * t, (srow(to.row) + 0.5) * t); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+  }
+  // a chain from (x1, y1) to (x2, y2) in pixels: links, and a hook at the far end when `head`
+  function chainLine(x1, y1, x2, y2, col, a, w, head) {
+    const L = Math.hypot(x2 - x1, y2 - y1); if (L < 1) return;
+    const ux = (x2 - x1) / L, uy = (y2 - y1) / L, link = Math.max(4, w * 3.2), n = Math.max(1, Math.floor(L / link));
+    ctx.strokeStyle = col; ctx.globalAlpha = a; ctx.lineWidth = Math.max(1.6, w * 0.8); ctx.lineCap = 'round';
+    for (let k = 0; k < n; k++) { // links: long and short in turn
+      const c = (k + 0.5) * L / n, half = (k % 2 ? 0.22 : 0.42) * L / n;
+      ctx.beginPath(); ctx.moveTo(x1 + ux * (c - half), y1 + uy * (c - half)); ctx.lineTo(x1 + ux * (c + half), y1 + uy * (c + half)); ctx.stroke();
+    }
+    if (head) { // the hook: a barbed J, open toward the Catcher
+      const r = Math.max(4, w * 2.6), ang = Math.atan2(uy, ux);
+      ctx.lineWidth = Math.max(1.5, w); ctx.beginPath(); ctx.arc(x2 - uy * r, y2 + ux * r, r, ang - Math.PI / 2, ang + Math.PI * 0.75); ctx.stroke();
+      const bx = x2 - uy * r + Math.cos(ang + Math.PI * 0.75) * r, by = y2 + ux * r + Math.sin(ang + Math.PI * 0.75) * r;
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + ux * r * 0.7 + uy * r * 0.2, by + uy * r * 0.7 - ux * r * 0.2); ctx.stroke();
+    }
+    ctx.lineCap = 'butt'; ctx.globalAlpha = 1;
+  }
+  function hookMark(v, sq, dc, dr, a) {
+    const t = tilePx(), len = Math.hypot(dc, dr); if (!len) return;
+    const sx = (scol(sq.col) + 0.5) * t, sy = (srow(sq.row) + 0.5) * t, k = flip(), R = (Game.hookRange(v, me, sq) || 30) * S;
+    chainLine(sx, sy, sx + dc / len * k * R, sy + dr / len * k * R, HOOK_COL, a, Math.max(2, t * 0.07), true);
+  }
+  function ordersFloor(v) {
+    const t = tilePx(), draft = order && v.armies[me].find(q => q.id === order.id);
+    for (const sq of v.armies[me]) {
+      if (sq.warp && Game.canWarp(v, me, sq) && !(draft === sq && order.kind === 'warp' && order.at)) warpMark(sq.warp, draft === sq ? 0.45 : 0.85);
+      if (sq.hookAim && Game.canHook(v, me, sq) && !(draft === sq && order.kind === 'hook' && order.at)) hookMark(v, sq, sq.hookAim.dc, sq.hookAim.dr, draft === sq ? 0.45 : 0.85);
+    }
+    if (!draft) return;
+    if (order.kind === 'warp') { // your zone: where the tile may go
+      const rows = Game.zoneRows(me).map(srow), y0 = Math.min(...rows) * t, y1 = (Math.max(...rows) + 1) * t;
+      ctx.strokeStyle = WARP_COL; ctx.globalAlpha = 0.6; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
+      ctx.strokeRect(1.5, y0 + 1.5, Game.COLS * t - 3, y1 - y0 - 3); ctx.setLineDash([]); ctx.globalAlpha = 1;
+      if (order.at && Game.warpOk(v, me, order.at.col, order.at.row)) warpMark(order.at, 1);
+    } else if (order.at && (order.at.col !== draft.col || order.at.row !== draft.row)) hookMark(v, draft, order.at.col - draft.col, order.at.row - draft.row, 1);
   }
   // a squad's arrow: from its tile through its points, with a head at the end, and the squad's speed written along
   // its longest leg
@@ -1898,6 +1961,11 @@ const Render2D = (cv, view, opts = {}) => {
         ctx.strokeStyle = '#C9D1D9'; ctx.lineWidth = 2; ctx.setLineDash([3, 2]);
         ctx.beginPath(); ctx.arc(PX(b.x), PY(b.y), r + 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - b.forgeT / b.forgeFull)); ctx.stroke(); ctx.setLineDash([]);
       }
+      if (b.warp) { // V2WIP: rooted by a Warper until it is teleported: a violet ring closing in on it
+        const k = Math.max(0, Math.min(1, b.warp.t / Game.WARP.secs));
+        ctx.strokeStyle = WARP_COL; ctx.globalAlpha = 0.9; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.arc(PX(b.x), PY(b.y), r + 2 + 8 * k, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+      }
       if (b.stunT > 0) { // stunned after a charge: three dots circling over its head
         ctx.fillStyle = '#FFD23F';
         for (let k = 0; k < 3; k++) { const a = bt.time() * 6 + k * 2.094; ctx.beginPath(); ctx.arc(PX(b.x) + Math.cos(a) * r * 0.8, PY(b.y) - r * 1.2 + Math.sin(a) * r * 0.3, Math.max(1.5, r * 0.2), 0, Math.PI * 2); ctx.fill(); }
@@ -1968,6 +2036,17 @@ const Render2D = (cv, view, opts = {}) => {
         const x = PX(e.x), y = PY(e.y), d = tilePx() * (0.2 + 0.35 * (1 - a));
         for (let k = 0; k < 6; k++) { const an = k * Math.PI / 3 + 0.3; ctx.beginPath(); ctx.moveTo(x + Math.cos(an) * d * 0.4, y + Math.sin(an) * d * 0.4); ctx.lineTo(x + Math.cos(an) * d, y + Math.sin(an) * d); ctx.stroke(); }
       }
+      if (e.kind === 'warp') { // V2WIP: teleported: a ring closing where it stood, a ring opening where it lands
+        ctx.strokeStyle = WARP_COL; ctx.lineWidth = 2;
+        ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(PX(e.x1), PY(e.y1), tilePx() * 0.3 * a, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(PX(e.x2), PY(e.y2), tilePx() * (0.1 + 0.4 * (1 - a)), 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 0.25 * a; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(PX(e.x1), PY(e.y1)); ctx.lineTo(PX(e.x2), PY(e.y2)); ctx.stroke();
+      }
+      if (e.kind === 'hookhit') { // V2WIP: a hook bites: a short burst of sparks
+        ctx.strokeStyle = HOOK_COL; ctx.globalAlpha = a; ctx.lineWidth = 2;
+        const x = PX(e.x), y = PY(e.y), d = tilePx() * (0.12 + 0.25 * (1 - a));
+        for (let k = 0; k < 5; k++) { const an = k * Math.PI * 0.4 + 0.5; ctx.beginPath(); ctx.moveTo(x + Math.cos(an) * d * 0.5, y + Math.sin(an) * d * 0.5); ctx.lineTo(x + Math.cos(an) * d, y + Math.sin(an) * d); ctx.stroke(); }
+      }
       if (e.kind === 'eat') { // eaten by the Obelisk: a violet wisp drawn from the fallen body into it
         const p = 1 - a, x = PX(e.x1) + (PX(e.x2) - PX(e.x1)) * p, y = PY(e.y1) + (PY(e.y2) - PY(e.y1)) * p;
         ctx.strokeStyle = GLUT_COL; ctx.globalAlpha = 0.8 * a; ctx.lineWidth = 2; ctx.setLineDash([3, 3]);
@@ -1991,7 +2070,9 @@ const Render2D = (cv, view, opts = {}) => {
     }
     ctx.globalAlpha = 1;
     if (boss) drawBossState();
+    for (const b of bt.bodies) if (b.hooked && b.alive && b.hooked.alive) chainLine(PX(b.hooked.x), PY(b.hooked.y), PX(b.x), PY(b.y), HOOK_COL, 0.95, Math.max(2, 0.35 * S), false); // V2WIP: reeled in
     for (const p of bt.projectiles()) {
+      if (p.hook) { chainLine(PX(p.owner.x), PY(p.owner.y), PX(p.x), PY(p.y), HOOK_COL, 0.95, Math.max(2, 0.35 * S), true); continue; } // V2WIP: the Catcher's hook on its chain
       if (p.spear || p.owner.u.shape === 'spear') { // a thrown spear (Truespear, a titanium spear): shaft and head along its flight, in the unit's colour
         const L = Math.max(12, 3 * S), dx = p.dirX * flip(), dy = -p.dirY * flip(), hx = PX(p.x), hy = PY(p.y), tx = hx - dx * L, ty = hy - dy * L;
         ctx.strokeStyle = teamCol(p.owner.side); ctx.lineWidth = 3.5; ctx.lineCap = 'round';
