@@ -5,7 +5,7 @@
   "offChars": ["mubarak"],
   "skills": [
     { "id": "netcaster", "type": "netcaster", "name": "Netcaster", "cost": 150, "params": { "max": 4, "net": 4, "splash": 3 } },
-    { "id": "gutter", "type": "gutter", "name": "Gutter", "cost": 150, "params": { "range": 35, "speed": 30, "bleed": 2 } }
+    { "id": "gutter", "type": "gutter", "name": "Gutter", "cost": 150, "params": { "range": 50, "speed": 30, "bleed": 2 } }
   ],
   "units": [
     {
@@ -22,8 +22,8 @@
       "defense": "none", "defVal": 0, "level": 0, "unlock": 100,
       "name": "Catcher", "cost": 300, "bodies": 1, "hp": 2000, "hit": 300, "aps": 0.4, "range": 2, "speed": 2, "splash": 0,
       "shape": "cross", "color": "#5E8F8C",
-      "hook": { "range": 30, "hit": 100, "speed": 20, "cd": 8, "max": 1, "net": 0, "reel": 30 },
-      "trait": { "name": "Hook", "text": "Throws a hook up to 30 m: 100 damage, and the first enemy it touches is reeled into melee. Set its first throw with an arrow." },
+      "hook": { "range": 42, "hit": 100, "speed": 20, "cd": 8, "max": 1, "net": 0, "reel": 30 },
+      "trait": { "name": "Hook", "text": "Throws a hook up to 42 m: 100 damage, and the first enemy it touches, or that shares a tile with it, is reeled into melee. Set its first throw with an arrow." },
       "skills": ["netcaster", "gutter"], "skillsOn": [false, false], "skillMods": [null, null], "skillsInnate": [false, false],
       "skillOr": [[0, 1]]
     }

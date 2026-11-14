@@ -609,11 +609,17 @@ const Render2D = (cv, view, opts = {}) => {
   //   (order.kind 'warp'): your zone is outlined and the tile under the finger shows as it would be.
   // - a Catcher's hook arrow: a chain of links from the squad along its line, as long as the hook flies, with a hook
   //   at the end (not the walking arrow's dashes and head, so the two can't be mixed up).
-  const WARP_COL = '#B39DDB', HOOK_COL = '#D9C49A';
+  //   The tile is a strong violet with a glow at its heart; the page adds drifting motes over it (warpFx).
+  const WARP_COL = '#A77BFF', HOOK_COL = '#D9C49A';
   function warpTile(col, row, a, land) {
     const t = tilePx(), x = scol(col) * t, y = srow(row) * t;
-    ctx.globalAlpha = a * (land ? 0.3 : 0.14); ctx.fillStyle = WARP_COL; ctx.fillRect(x, y, t, t);
-    ctx.globalAlpha = a; ctx.strokeStyle = WARP_COL; ctx.lineWidth = Math.max(1.5, t * 0.05);
+    ctx.globalAlpha = a * (land ? 0.5 : 0.26); ctx.fillStyle = WARP_COL; ctx.fillRect(x, y, t, t);
+    if (land) { // a glow at its heart
+      const g = ctx.createRadialGradient(x + t / 2, y + t / 2, 0, x + t / 2, y + t / 2, t * 0.5);
+      g.addColorStop(0, 'rgba(226, 208, 255, 0.85)'); g.addColorStop(0.55, 'rgba(167, 123, 255, 0.35)'); g.addColorStop(1, 'rgba(167, 123, 255, 0)');
+      ctx.globalAlpha = a; ctx.fillStyle = g; ctx.fillRect(x, y, t, t);
+    }
+    ctx.globalAlpha = a; ctx.strokeStyle = WARP_COL; ctx.lineWidth = Math.max(2, t * 0.06);
     ctx.setLineDash(land ? [] : [t * 0.14, t * 0.1]); ctx.strokeRect(x + 2, y + 2, t - 4, t - 4); ctx.setLineDash([]);
     if (land) { // where they arrive: two rings, like a ripple
       ctx.lineWidth = Math.max(1.2, t * 0.04);

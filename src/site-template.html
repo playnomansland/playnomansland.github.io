@@ -1177,6 +1177,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     <button class="task" id="task" hidden><span class="task-t"><span id="task-text"></span><small id="task-cancel">Tap here to cancel</small></span><span class="task-x" id="task-x" aria-hidden="true">✕</span></button>
     <div class="coach" id="coach" role="status" aria-live="polite" hidden><button class="coach-x" id="coach-x" aria-label="Leave the tutorial">✕</button><p id="coach-text"></p><span class="btnrow" id="coach-btns"></span></div>
     <div class="coach-ring" id="coach-ring" hidden></div>
+    <svg class="marks" id="warpfx" aria-hidden="true"></svg>
     <svg class="marks" id="marks" aria-hidden="true"></svg>
     <div class="unx" id="unx"></div>
     <div class="boss-bar" id="boss-bar" hidden></div>
@@ -8878,7 +8879,45 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const z = 1 + (CAM.zoom - 1) * cam.k, o = at(cam.x, cam.y); // the 2D battle cam zooms around its focus
     return (x, y) => { const p = at(x, y); return [o[0] + (p[0] - o[0]) * z, o[1] + (p[1] - o[1]) * z]; };
   }
+  // V2WIP: motes over your Warper squads' teleport tiles while deploying, on either board (the floor under them is
+  // drawn once, so they live on their own layer and frame loop): on the tile they land on, motes spiral in to its
+  // glowing heart; on the tile straight across, a few drift out of it. Reduced motion: still motes, no loop.
+  let warpRaf = 0;
+  function warpTiles() {
+    if (!m || !m.v2 || phase !== 'deploy' || lookPre()) return [];
+    const picking = orderMode && orderMode.kind === 'warp' ? orderMode : null, l = [];
+    for (const sq of m.armies[me]) if (sq.warp && Game.canWarp(m, me, sq) && !(picking && picking.id === sq.id && hoverTile)) l.push(sq.warp);
+    if (picking && hoverTile && Game.warpOk(m, me, hoverTile.col, hoverTile.row)) l.push({ col: hoverTile.col, row: hoverTile.row });
+    return l;
+  }
+  function warpFx() { if (!warpRaf) warpRaf = requestAnimationFrame(warpFxFrame); }
+  function warpFxFrame(ts) {
+    warpRaf = 0;
+    const svg = $('warpfx');
+    if (!svg) return;
+    const tiles = board3d && board3d.camera.level() >= 3 ? [] : warpTiles(); // (the ground view shows no markers)
+    if (!tiles.length) { if (svg.firstChild) svg.innerHTML = ''; return; }
+    Game.useGrid(m);
+    const at = wrapMap(), T = Game.TILE, still = reduceMotion(), now = still ? 0 : ts / 1000, TAU = Math.PI * 2;
+    let h = '';
+    for (const w of tiles) for (const [tl, land] of [[w, true], [Game.warpFrom(w), false]]) {
+      const c = Game.tileToWorld(tl.col, tl.row), o = at(c.x, c.y), e = at(c.x + T / 2, c.y), px = Math.max(8, Math.hypot(e[0] - o[0], e[1] - o[1])); // px: half a tile on the screen
+      const n = land ? 12 : 6, per = land ? 1.8 : 2.4;
+      for (let k = 0; k < n; k++) {
+        const seed = (k * 0.6180339 + tl.col * 0.137 + tl.row * 0.291) % 1, ph = ((now / per + k / n + seed * 0.5) % 1 + 1) % 1;
+        const r = land ? 0.95 * (1 - ph) ** 1.3 : 0.2 + 0.75 * ph, ang = seed * TAU + (land ? ph * 2.4 : 0); // (in: a vortex; out: straight away from the middle)
+        const p = at(c.x + Math.cos(ang) * r * T / 2, c.y + Math.sin(ang) * r * T / 2);
+        const a = Math.sin(ph * Math.PI) * (land ? 1 : 0.65), sz = px * (land ? 0.05 + 0.05 * ph : 0.07 - 0.03 * ph);
+        h += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${(sz * 2.6).toFixed(2)}" style="fill:#A77BFF;fill-opacity:${(a * 0.3).toFixed(3)}"/>`
+          + `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${sz.toFixed(2)}" style="fill:#F1E8FF;fill-opacity:${a.toFixed(3)}"/>`;
+      }
+      if (land) { const q = still ? 0.5 : 0.5 + 0.5 * Math.sin(now * 3); h += `<circle cx="${o[0].toFixed(1)}" cy="${o[1].toFixed(1)}" r="${(px * (0.22 + 0.06 * q)).toFixed(2)}" style="fill:#C9A8FF;fill-opacity:${(0.18 + 0.14 * q).toFixed(3)}"/>`; } // its heart pulses
+    }
+    svg.innerHTML = h;
+    if (!still) warpRaf = requestAnimationFrame(warpFxFrame);
+  }
   function boardMarks() {
+    warpFx(); // (V2WIP)
     const svg = $('marks');
     if (!svg) return;
     const h = hoverRange(), tiles = mode === 'tutorial' ? tutTiles() : [], ring = mode === 'tutorial' ? tutTarget() : null;

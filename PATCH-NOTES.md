@@ -20,6 +20,13 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 14 November 2026 – V2WIP: a brighter teleport tile and a longer, wider hook (developers only)
+
+- **Warper:** the teleport tile is a stronger violet with a glowing heart, and motes swirl into it while you deploy (a few drift out of the tile across the board).
+- **Catcher:** the hook reaches **42 m** (was 30) and **Gutter** takes it to **50 m** (was 35). The hook is also easier to land: an enemy that shares a tile with the hook as it flies is caught, not only one it touches.
+
+---
+
 ## 13 November 2026 – V2WIP: a roster in the works, with two new units (developers only)
 
 A new developer mode, **V2WIP** (Developer menu, against the AI), for trying roster changes before they reach the live game. The live roster is unchanged.

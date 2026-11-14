@@ -123,7 +123,7 @@ const of = (bt, side, sq) => bt.bodies.filter(b => b.side === side && b.squad ==
   assert.ok(!Game.setHook(m, 0, br.id, 0, -1) && !Game.setHook(m, 0, c.id, 0, 0));
   assert.ok(Game.setHook(m, 0, c.id, 1, -3));
   assert.deepStrictEqual(c.hookAim, { dc: 1, dr: -3 });
-  assert.strictEqual(Game.hookRange(m, 0, c), 30);
+  assert.strictEqual(Game.hookRange(m, 0, c), 42);
   c.round = 1;
   assert.ok(!Game.seenBy(m, 1).armies[0].find(q => q.id === c.id).hookAim, 'the opponent does not see the arrow');
   // either-or skills
@@ -132,7 +132,7 @@ const of = (bt, side, sq) => bt.bodies.filter(b => b.side === side && b.squad ==
   assert.ok(Game.canBuySkill(m, 0, ui, 0) && Game.canBuySkill(m, 0, ui, 1));
   assert.ok(Game.buySkill(m, 0, ui, 1), 'Gutter');
   assert.ok(!Game.canBuySkill(m, 0, ui, 0), 'Netcaster is closed once Gutter is bought');
-  assert.strictEqual(Game.hookRange(m, 0, c), 35, 'Gutter: 35 m');
+  assert.strictEqual(Game.hookRange(m, 0, c), 50, 'Gutter: 50 m');
   assert.ok(Game.clearHook(m, 0, c.id) && !c.hookAim);
 }
 
@@ -168,20 +168,20 @@ const duel = (cu, foes, hookDir) => {
 }
 // out of range: no throw
 {
-  const { bt } = duel({ ...catcher, speed: 0 }, [[dummy({ speed: 0 }), 0, 33]]);
+  const { bt } = duel({ ...catcher, speed: 0 }, [[dummy({ speed: 0 }), 0, 45]]);
   let any = false;
   while (bt.time() < 3 && bt.step()) if (bt.projectiles().some(p => p.hook)) any = true;
-  assert.ok(!any, '33 m is out of the hook\'s 30 m');
+  assert.ok(!any, '45 m is out of the hook\'s 42 m');
 }
-// Gutter: 35 m, faster, and bleed from its strikes only
+// Gutter: 50 m, faster, and bleed from its strikes only
 {
   const gu = withSkill('gutter');
-  assert.strictEqual(gu.hook.range, 35); assert.strictEqual(gu.hook.speed, 30); assert.strictEqual(gu.bleedHit, 2);
-  const { bt, c, B } = duel({ ...gu, speed: 0 }, [[dummy({ speed: 0 }), 0, 33]]);
+  assert.strictEqual(gu.hook.range, 50); assert.strictEqual(gu.hook.speed, 30); assert.strictEqual(gu.bleedHit, 2);
+  const { bt, c, B } = duel({ ...gu, speed: 0 }, [[dummy({ speed: 0 }), 0, 47]]);
   const v = B[0];
   let caught = false, bledOnHook = false;
   while (bt.time() < 4 && bt.step()) { if (v.hooked) { caught = true; if (v.bleed) bledOnHook = true; } if (caught && !v.hooked) break; }
-  assert.ok(caught, 'Gutter reaches 33 m');
+  assert.ok(caught, 'Gutter reaches 47 m');
   assert.ok(!bledOnHook, 'the hook itself adds no bleed');
   while (bt.time() < 8 && bt.step()) if (v.bleed) break;
   assert.ok(v.bleed && v.bleed.n >= 2, 'its strike adds 2 bleed');
@@ -197,6 +197,15 @@ const duel = (cu, foes, hookDir) => {
   run(bt, 3);
   assert.ok(Math.abs((5000 - v.hp) - 100) < 1e-6 && Math.abs(v.y - 20) < 1e-6 && !v.hooked, 'hit, not moved');
   assert.ok(!c.hookOut, 'the Catcher is free again');
+}
+// the catch box: a body that shares a tile with the hook is caught, though the hook passes 2.5 m beside it; 4 m off is missed
+{
+  const { bt, B } = duel({ ...catcher, speed: 0 }, [[dummy({ speed: 0 }), 2.5, 20]], { x: 0, y: 1 });
+  run(bt, 2);
+  assert.ok(B[0].hp < 5000, 'caught 2.5 m off the line');
+  const far = duel({ ...catcher, speed: 0 }, [[dummy({ speed: 0 }), 4, 20]], { x: 0, y: 1 });
+  run(far.bt, 1.5);
+  assert.strictEqual(far.B[0].hp, 5000, '4 m off the line: the arrow waits for the line');
 }
 // the first thing on the line is what it catches
 {

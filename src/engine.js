@@ -150,8 +150,8 @@ const Engine = (() => {
   // mend: the body never attacks; each attack heals the most wounded ally in range (not structures) by this much
   // pctHit: every hit also deals this share of the target's max health (not to structures); that part ignores armor (ward still caps the hit)
   // hook = { range, hit, speed, cd, max, net, reel } (the Catcher, V2WIP): apart from its own attack it throws a hook
-  // every cd s: speed m/s in a straight line, at most range m. The first enemy body the hook touches takes hit (armor
-  // counts) and is reeled in at reel m/s until it stands in the Catcher's reach; on the way it can't walk or attack. A
+  // every cd s: speed m/s in a straight line, at most range m. The first enemy body the hook touches (or that shares a
+  // tile with it: HOOK_HIT) takes hit (armor counts) and is reeled in at reel m/s until it stands in the Catcher's reach; on the way it can't walk or attack. A
   // structure, or a body that can't be displaced (see hookable), takes the hit and stays. max > 1 (Netcaster): the
   // bodies nearest the first, within net m of it, are caught with it (max in all). The Catcher holds still while its
   // hook is out. Where it throws: at the nearest enemy within range it can pick and that is not in its reach yet; a
@@ -161,6 +161,9 @@ const Engine = (() => {
   // standing on the tile across from the Warper's): it is rooted (it can't walk, it still attacks) for t s, then it is
   // moved by (dx, dy), if a Warper (u.warper) of that side's squad still stands; otherwise it is just let go.
   const HOOK_WAIT = 2;
+  // the hook's catch box: an enemy within HOOK_HIT m of it on both axes (a tile's width, 6 m, centred on the hook) is
+  // caught, so it can't slip past one that shares a tile with it
+  const HOOK_HIT = 3;
   // Bleed (u.bleedEvery = n: every n-th hit a body lands on the same target gives it a stack of bleed; Titanium spears
   // give one too). A bleeding body loses BLEED.dmg every BLEED.pulse s for BLEED.secs s (each new stack starts that time
   // again); each stack doubles the damage, up to BLEED.max stacks, and from 3 stacks it also loses a share of its max
@@ -336,7 +339,7 @@ const Engine = (() => {
     glutCap: { label: 'Bigger appetite', params: [['add', 'More stacks eaten per round (+)', 1, 1]] },
     glutSpeed: { label: 'Glut speed', params: [['speed', 'Move speed per stack (+m/s)', 0.05, 0.01], ['aps', 'Attack speed per stack (+%)', 1, 0.5]] },
     netcaster: { label: 'Netcaster', params: [['max', 'Bodies pulled per throw', 4, 1], ['net', 'Net radius (m)', 4, 0.5], ['splash', 'Melee splash (m)', 3, 0.5]] },
-    gutter:  { label: 'Gutter', params: [['range', 'Hook range (becomes, m)', 35, 1], ['speed', 'Hook speed (becomes, m/s)', 30, 1], ['bleed', 'Bleed stacks per melee hit', 2, 1]] },
+    gutter:  { label: 'Gutter', params: [['range', 'Hook range (becomes, m)', 50, 1], ['speed', 'Hook speed (becomes, m/s)', 30, 1], ['bleed', 'Bleed stacks per melee hit', 2, 1]] },
     ranged:  { label: 'Ranged attack', params: [['range', 'Range (becomes, m)', 18, 1], ['speed', 'Projectile speed (m/s)', 25, 1], ['poison', 'Poison (% of hit, in total; 0 = none)', 50, 10], ['duration', 'Poison lasts (s)', 4, 0.5]] },
   };
   const skillParam = (d, k) => {
@@ -1884,7 +1887,7 @@ const Engine = (() => {
           if (!can(f)) continue;
           if (gap(f, b) <= hk.range + 1e-9) inRange = true;
           const along = (f.x - b.x) * ux + (f.y - b.y) * uy, off = Math.abs((f.x - b.x) * uy - (f.y - b.y) * ux);
-          if (along > 0 && along <= hk.range + 1e-9 && off <= (f.u.barrier > 0 ? Math.max(halfX(f), halfY(f)) : PROJ_HIT_RADIUS * 0.8)) { go = true; break; }
+          if (along > 0 && along <= hk.range + 1e-9 && off <= (f.u.barrier > 0 ? Math.max(halfX(f), halfY(f), HOOK_HIT) : HOOK_HIT)) { go = true; break; }
         }
         if (go) { dx = ux; dy = uy; b.hookDir = null; }
         else {
@@ -1918,11 +1921,12 @@ const Engine = (() => {
         const sub = Math.min(0.5, mv, p.left);
         p.x += p.dirX * sub; p.y += p.dirY * sub; p.left -= sub; mv -= sub;
         if (terSight && wallCell(cellOf(p.x, p.y))) { hookEnd(b); return true; }
-        let v = null, bd = PROJ_HIT_RADIUS + 1e-9;
-        for (const f of foes) {
+        let v = null, bd = Infinity;
+        for (const f of foes) { // the nearest enemy in its catch box (see HOOK_HIT), or touching it
           if (!f.alive || f.turning || f.boarded || f.u.aloft || sheltered(f)) continue;
           const d = gap(f, p);
-          if (d <= bd) { bd = d; v = f; }
+          if (d > PROJ_HIT_RADIUS + 1e-9 && !(Math.abs(f.x - p.x) <= HOOK_HIT + 1e-9 && Math.abs(f.y - p.y) <= HOOK_HIT + 1e-9)) continue;
+          if (d < bd) { bd = d; v = f; }
         }
         if (v) { hookCatch(p, v); return true; }
         if (p.left <= 1e-6) { hookEnd(b); return true; }

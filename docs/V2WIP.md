@@ -19,6 +19,7 @@ Added 2026-11-13. A developer mode for trying roster changes while the live rost
 | `src/game.js` | The section "V2WIP": `setWarp` / `clearWarp` / `warpedBy`, `setHook` / `clearHook` / `hookRange`, `aiOrders`; `bodiesFor` puts `b.warp` and `b.hookDir` on the bodies; `seenBy` hides both from the opponent; `createMatch` opts `v2`. |
 | `src/site-template.html` | `V2DATA`, `useV2Set`, `matchKind 'v2wip'` in `startAiMatch`, `orderMode` (the next board tap sets a tile or an arrow), the squad sheet's buttons, the fight effects (`warp`, `hookhit`). |
 | `src/render2d.js`, `src/render3d.js` | `ordersFloor` (the tile, the tile across, the hook chain: on the floor, so both boards get them), the root ring, the chain in the fight. |
+| `src/site-template.html` `warpFx` | The motes over the teleport tiles while deploying (layer `#warpfx`, its own frame loop; still motes with reduced motion). |
 | `tools/tests/v2wip.js`, `tools/tests/v2wip-ui.js` | Headless rules and fights; the browser flow on the 2D and 3D board. |
 
 After changing `src/v2wip.json`: `node tools/counter-table.js` (only the changed unit's row is fought again), then
@@ -44,9 +45,13 @@ Counter table average **-15** (tier 2 units run from -79 to +57): a little under
 1 body, 2000 health, hit 300, 0.4 attacks/s (one strike every 2.5 s), range 2, speed 2, no armor.
 Counter table average **+20**: beats single big units, loses to swarms.
 
-**Hook (Control).** `hook: { range: 30, hit: 100, speed: 20, cd: 8, max: 1, net: 0, reel: 30 }`
-- The hook flies in a straight line, 20 m/s, at most 30 m. The first enemy body it touches takes 100 (armor counts)
-  and is reeled in at 30 m/s until it stands in the Catcher's reach. On the hook it can't walk or attack.
+**Hook (Control).** `hook: { range: 42, hit: 100, speed: 20, cd: 8, max: 1, net: 0, reel: 30 }`
+- The hook flies in a straight line, 20 m/s, at most 42 m (7 tiles; 30 m until 2026-11-14). The first enemy body it
+  touches takes 100 (armor counts) and is reeled in at 30 m/s until it stands in the Catcher's reach. On the hook it
+  can't walk or attack.
+- Its catch box is a tile wide (`HOOK_HIT`: 3 m either side of the hook on both axes; 1 m around it until
+  2026-11-14): an enemy that shares a tile with the hook as it flies is caught, it can't slip past beside it. The
+  arrow's line counts an enemy as on it within the same 3 m.
 - The Catcher holds still while its hook is out. It still strikes what is in its reach.
 - A body that can't be displaced (unstoppable, anchored, a structure) takes the hit and stays.
 - **The hook arrow** (from the sheet: Set hook direction, then tap a tile; only the direction counts): the first
@@ -57,7 +62,7 @@ Counter table average **+20**: beats single big units, loses to swarms.
 Either-or skills (150 gold each):
 - **Netcaster:** the hook pulls up to 4 bodies (those nearest the first, within 4 m of it; each takes the 100), and
   the Catcher's strikes splash 3 m.
-- **Gutter:** hook range 35 m, hook speed 30 m/s, and the Catcher's strikes add 2 bleed (the hook's own hit doesn't).
+- **Gutter:** hook range 50 m, hook speed 30 m/s, and the Catcher's strikes add 2 bleed (the hook's own hit doesn't).
 
 ## Decisions taken while building (say if any should change)
 
