@@ -43,9 +43,9 @@ Icons are the inside of an svg on a 24 by 24 grid, drawn in `currentColor`, so t
   any more; Push is gone from wave 2). No icon yet.
 - **14 Nov: Death effect is not a keyword. It is a modifier**: a smaller skull with bones beside the keyword that
   happens when the body dies (beside Spawn for Spiderlings), "kind of like how splash gets modified by hit type".
-  `modifiers.death` in the registry; skill types say `"on":"death"`. Three drawings (A corner bones, B bones crossed
-  below, C one level bone) are on the icon sheet's Death effect section; **he has not picked one** (we suggested C).
-  It sits to the keyword's left like Splash's weapon: our choice, not confirmed.
+  `modifiers.death` in the registry; skill types say `"on":"death"`. **He picked the drawing**: the skull with bone
+  ends at its four corners ("it reads the clearest"), out of three. It sits to the keyword's left like Splash's
+  weapon: our choice, he saw it and did not object.
 - **14 Nov: Shield and Ward are not keywords.** Both are passive mechanics like armor (`mechanics` in the registry;
   skill types can be sorted as `mechanic`), **each with its own symbol**. Shield blocks X hits, Ward caps each hit.
   Neither symbol is drawn.
@@ -81,7 +81,7 @@ Icons are the inside of an svg on a 24 by 24 grid, drawn in `currentColor`, so t
 - Questions 1, 4, 5, 6, 7, 8, 9 and 10 in the audit doc (device priority, pips for numbers, portraits, a lighter
   first game, level-up per squad, one aim gesture, the setting, counter hints). Each has a default there; none is
   confirmed.
-- Which Death effect drawing. Symbols for Displace, Shield and Ward.
+- Symbols for Displace, Shield and Ward.
 - Whether Leave behind (now only Pool shaper) stays a keyword, and what happens to the 12 skills that fit no keyword.
 
 ## Next task (on hold since 14 Nov, see above): unit portraits, then the unit card
