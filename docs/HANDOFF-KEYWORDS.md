@@ -10,7 +10,8 @@ Written 13 November 2026 for the next session. Read this first, then the three f
   before starting: `index.html` and `lab3d.html` conflict, take main's, then rebuild with `node src/build.js`.
 - **Portraits have started** (13 Nov): `tools/unit-pic.js` renders a unit's portrait in three framings (full, half =
   waist up, bust = head and shoulders); `docs/unit-portraits-proto.jpg` shows the Fire Mage, the Shiv and the War
-  Mammoth in all three. The owner has **not yet picked a framing**; `img/units/` holds the half ones meanwhile. He
+  Mammoth in all three. **On hold (14 Nov): the owner wants the 3D models redone by a human before any portraits.**
+  No framing was picked; `img/units/` holds the half ones, unused. Do not render the other 25 or wire any in. He
   wants the unit cards to become playing cards (Marvel Snap, Gwent, Pokemon, Riftbound as inspiration), with
   overlays and art later: portraits first. A model's face point is set per model in `FACE` in the tool; only the
   wizards and the mammoth are tuned, the other 25 use the default and need a look.

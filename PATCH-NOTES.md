@@ -25,6 +25,7 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 - **Portraits, first try:** the Fire Mage, the Shiv and the War Mammoth each have a picture made from their 3D model, in the unit's colour (`img/units/`). No screen uses them yet: they are for judging the look before the unit cards are drawn as playing cards.
 - **Three framings to choose from:** the whole figure, from the waist up, and head and shoulders. All nine pictures are on one sheet, `docs/unit-portraits-proto.jpg`. The files in `img/units/` are the waist-up ones for now; the framing is the owner's call.
 - **For makers:** `node tools/unit-pic.js "Fire Mage" Shiv --frame=half --sheet=out.png` renders any units' portraits (no names = all 28) and lists the units that have no model of their own.
+- **On hold since 14 November:** the 3D models are to be redone by a human first, so no framing was picked and the other 25 units have no portrait.
 - The branch has main's 15 commits from 13 November merged in.
 
 ---
