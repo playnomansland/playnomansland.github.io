@@ -111,8 +111,11 @@ One panel, made once at the end of `<body>`, so it opens over the boss screen an
   `loadBossBoard`, localStorage `phonebellum.bossBoards.v1`, under `bossRulesTag()` so new rules drop old saves; the
   run's record goes with it, so the server's replay still matches). They step aside for a sheet, surface D or her
   screen's panel. The classic layout (phones) keeps all four in the cog's Settings.
-- The round card: left of **Next round** (on the final card, left of **Try again**) a circle arrow with no words (aria-label and title "Play this round again",
+- The round card: left of **Next round** a circle arrow with no words (aria-label and title "Play this round again",
   `againBossRound`): the round just fought again, from its board as it went into the fight.
+- The final card (`bossEndBtns`): the same arrow, captioned **Replay round n** (gold), left of **New run**, captioned
+  **Back to round 1** (it was "Try again", which read like a replay; owner, 14 November: the difference must be
+  impossible to miss), then Leaderboard and Main menu.
 - The round card (between rounds): "! Next round" with the next round's attack mark and name, in its colour.
 - The result card's eyebrow: `<Boss> · weekly boss`. After a kill: "Killed in round n:" and the rewards earned; the
   next reward to chase.

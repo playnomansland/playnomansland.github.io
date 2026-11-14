@@ -48,6 +48,10 @@ html:not(.pc) #panel .btn.small { padding: 5px 10px; }
 .btnrow { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .btn.boss-retry { display: inline-grid; place-items: center; padding-left: 12px; padding-right: 12px; } /* (the Mommy's round card: Play this round again, a replay mark only) */
 .btn.boss-retry svg { width: 22px; height: 22px; }
+.btnrow:has(.bz-opt) { align-items: flex-start; } /* (the Mommy's final card: a caption under the replay arrow and the new run, bossEndBtns) */
+.bz-opt { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
+.bz-opt > small { font-size: 12.5px; font-weight: 600; line-height: 1.2; white-space: nowrap; opacity: .85; }
+.bz-opt.again > small { color: #F2B23A; }
 .joinrow { display: flex; gap: 8px; justify-content: center; }
 .joinrow input { width: 9ch; font: 500 18px var(--font-data); letter-spacing: 0.16em; text-transform: uppercase; text-align: center; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 8px; }
 .card .stack { display: grid; gap: 8px; justify-items: center; width: 100%; }
@@ -7979,6 +7983,16 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     const k = Boss.byRound(Boss.CFG.biteByRound, n); if (!k) return '';
     return `<p class="bz-next" style="--bc:${BITE_COL[k] || '#FFC457'}" role="note"><b class="bang" aria-hidden="true">!</b><span>Next round</span><img src="${biteMarkPic(k)}" alt=""><b class="bn">${esc(BITE_NAME[k] || k)}</b></p>`;
   }
+  // the final card's buttons. The replay arrow and the new run sit side by side, so each says under it which round it
+  // takes you to (the owner, 2026-11-14: make the difference impossible to miss): the arrow "Replay round n" (the last
+  // round fought, from its board as it went in: the run goes on from there), the new run "Back to round 1" (it was
+  // "Try again", which reads like a replay)
+  function bossEndBtns() {
+    const r = lastPre && lastPre.boss ? lastPre.round : 0;
+    return (r ? `<span class="bz-opt again"><button class="btn boss-retry" id="boss-retry" aria-label="Replay round ${r}: play it again from your board as it went in" title="Replay round ${r}">${CTL_ICON.again}</button><small aria-hidden="true">Replay round ${r}</small></span>` : '')
+      + '<span class="bz-opt fresh"><button class="btn primary" id="boss-again" aria-label="New run: start over at round 1">New run</button><small aria-hidden="true">Back to round 1</small></span>'
+      + '<button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>';
+  }
   function bossResult(sum) {
     const r = sum.boss || (m.boss.log || []).slice(-1)[0];
     phase = m.over ? 'end' : 'result'; resultShownAt = now(); hud(); netStatus();
@@ -8002,7 +8016,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
       ${lines}
       ${!m.over && !won ? bossNextBite(r.round + 1) : ''}
       ${m.over ? acct ? '<p id="boss-rank" aria-live="polite">Sending this run to the leaderboard…</p>' : '<p>Play as a guest or sign in (Profile) to get your runs on her leaderboard.</p>' : ''}
-      <div class="btnrow">${lastPre && lastPre.boss ? `<button class="btn boss-retry" id="boss-retry" aria-label="Play this round again" title="Play this round again">${CTL_ICON.again}</button>` : ''}${m.over ? '<button class="btn primary" id="boss-again">Try again</button><button class="btn" id="boss-board">Leaderboard</button><button class="btn" id="boss-menu">Main menu</button>' : '<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>'}</div>
+      <div class="btnrow">${m.over ? bossEndBtns() : `${lastPre && lastPre.boss ? `<button class="btn boss-retry" id="boss-retry" aria-label="Play this round again" title="Play this round again">${CTL_ICON.again}</button>` : ''}<button class="btn primary" id="boss-next">Next round</button><button class="btn" id="boss-menu">Leave</button>`}</div>
     </div>`);
     if (m.over) bossReport(r);
     if ($('boss-board')) $('boss-board').addEventListener('click', () => openLeaderboard('boss'));

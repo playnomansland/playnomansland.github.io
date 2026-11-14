@@ -1012,6 +1012,13 @@ html.diorama.pcwide .overlay > .card .btn.primary:disabled { opacity: .5; }
    in the card's own plain button look (below), as tall as Next round, the mark in gold */
 html.diorama.pcwide .overlay > .card .btn.boss-retry { order: -2; align-self: stretch; padding: 0 12px; opacity: 1; }
 html.diorama.pcwide .overlay > .card .btn.boss-retry svg { width: 22px; height: 22px; color: #F2B23A; }
+/* the final card (bossEndBtns): the arrow and New run each with a caption under it, the pair first in the row (the arrow
+   left), the plain buttons lined up with their tops */
+html.diorama.pcwide .overlay > .card .btnrow:has(.bz-opt) { align-items: flex-start; }
+html.diorama.pcwide .overlay > .card .bz-opt.again { order: -2; }
+html.diorama.pcwide .overlay > .card .bz-opt.fresh { order: -1; }
+html.diorama.pcwide .overlay > .card .bz-opt .btn.boss-retry { align-self: center; box-sizing: border-box; height: 40px; min-width: 54px; }
+html.diorama.pcwide .overlay > .card .bz-opt > small { font: 700 12px/1.2 var(--dtype); letter-spacing: .06em; text-transform: uppercase; text-shadow: var(--dhalo); }
 html.diorama.pcwide .overlay > .card .status { font: 700 15px var(--dtype); color: #F4ECD8; }
 html.diorama.pcwide .board-banner { left: var(--dsx0, 380px); right: var(--dsx1, 24px); background: linear-gradient(90deg, transparent, rgba(23,20,15,.86) 18%, rgba(23,20,15,.86) 82%, transparent); font-family: var(--dstencil); }
 html.diorama.pcwide .board-banner small { font-family: var(--dtype); font-weight: 700; }
