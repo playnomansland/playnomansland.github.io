@@ -77,12 +77,13 @@ const SHOTS = process.env.PB_SHOTS || '.';
     await p.evaluate(() => { const { m } = window.__pb(); m.gold = [0, 0]; window.__pbRedraw(); }); await sleep(200); // (no gold left: Ready doesn't ask about the carry cap)
     await p.evaluate(() => { const r = document.querySelector('#ready') || document.querySelector('#fight'); r.click(); });
     await p.waitForFunction(() => window.__pb().phase === 'battle', null, { timeout: 15000 });
+    await p.evaluate(() => { const look = () => { const bt = window.__pb().bt; if (bt && (bt.projectiles().some(x => x.hook) || bt.bodies.some(x => x.hooked))) { window.__sawHook = (window.__sawHook || 0) + 1; if (window.__sawHook === 1) window.__hookAt = bt.time(); } if (window.__pb().phase === 'battle') requestAnimationFrame(look); }; look(); }); // (with its 42 m reach the first throw can land before the teleport)
     await p.waitForFunction(() => window.__pb().bt && window.__pb().bt.bodies.some(x => x.warp), null, { timeout: 8000 });
     await p.screenshot({ path: path.join(SHOTS, `v2wip-${board}-root.png`) });
     await p.waitForFunction(() => window.__pb().bt && window.__pb().bt.bodies.some(x => x.warped), null, { timeout: 15000 });
     await sleep(150);
     await p.screenshot({ path: path.join(SHOTS, `v2wip-${board}-teleport.png`) });
-    const hooked = await p.waitForFunction(() => { const bt = window.__pb().bt; return bt && (bt.projectiles().some(x => x.hook) || bt.bodies.some(x => x.hooked)); }, null, { timeout: 30000 }).then(() => true, () => false);
+    const hooked = await p.waitForFunction(() => window.__sawHook > 0, null, { timeout: 30000 }).then(() => true, () => false);
     assert.ok(hooked, 'the hook flies');
     await p.screenshot({ path: path.join(SHOTS, `v2wip-${board}-hook.png`) });
     if (board === '2d') await p.waitForFunction(() => window.__pb().phase !== 'battle', null, { timeout: 120000 }); // (the 3D board without a graphics card: not to the end)

@@ -180,7 +180,7 @@ const duel = (cu, foes, hookDir) => {
   const { bt, c, B } = duel({ ...gu, speed: 0 }, [[dummy({ speed: 0 }), 0, 47]]);
   const v = B[0];
   let caught = false, bledOnHook = false;
-  while (bt.time() < 4 && bt.step()) { if (v.hooked) { caught = true; if (v.bleed) bledOnHook = true; } if (caught && !v.hooked) break; }
+  while (bt.time() < 4 && bt.step()) { if (v.hooked) { caught = true; if (v.bleed && Math.hypot(v.x - c.x, v.y - c.y) > gu.range + 0.5) bledOnHook = true; } /* (out of its strikes' reach: only the hook could have) */ if (caught && !v.hooked) break; }
   assert.ok(caught, 'Gutter reaches 47 m');
   assert.ok(!bledOnHook, 'the hook itself adds no bleed');
   while (bt.time() < 8 && bt.step()) if (v.bleed) break;
