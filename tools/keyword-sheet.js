@@ -2,6 +2,7 @@
 // three sizes, on the dark card and on saffron, with its name and line. A page to judge the icon set by eye.
 // Run: node tools/keyword-sheet.js            (writes the page)
 //      node tools/keyword-sheet.js out.png    (also a screenshot, with headless Chromium)
+//      node tools/keyword-sheet.js out.png death   (a screenshot of one section: death)
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
 const reg = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/keyword-registry.json'), 'utf8'));
@@ -34,6 +35,11 @@ const weapon = (wk, x, y, sc) => `<g transform="translate(${x} ${y}) scale(${sc}
 const wide = (wk) => weapon(wk, 0, 4.6, 0.62) + `<g transform="translate(17 0)">${KW.splash.icon}</g>`;
 const wbox = (h, inner) => `<svg width="${h * 41 / 24}" height="${h}" viewBox="0 0 41 24" fill="currentColor" aria-hidden="true">${inner}</svg>`;
 const combo = (wk, label) => { const c = ROLES.damage.color; return `<div class="k wide"><div class="strip" style="color:${c};align-items:center">${wbox(72, wide(wk))}${wbox(30, wide(wk))}${wbox(18, wide(wk))}</div><b>${label}</b></div>`; };
+// a modifier beside a keyword (owner, 2026-11-14): the Death effect skull, smaller, to the keyword's left, never touching
+const MOD = reg.modifiers, deaths = [MOD.death.icon, ...(MOD.death.alts || [])];
+const marked = (ic, k) => `<g transform="translate(0 4.6) scale(.62)">${ic}</g><g transform="translate(17 0)">${KW[k].icon}</g>`;
+const deathCard = (ic, i) => `<div class="k wide"><div class="strip" style="align-items:center;gap:26px"><span style="color:#EEF3F1;display:inline-flex;align-items:center;gap:9px">${box(64, ic)}${box(22, ic)}</span>
+  ${['spawn', 'splash'].map(k => `<span style="color:${ROLES[rolesOf(k)[0]].color};display:inline-flex;align-items:center;gap:10px">${wbox(64, marked(ic, k))}${wbox(30, marked(ic, k))}${wbox(18, marked(ic, k))}</span>`).join('')}</div><b>Death effect ${'ABCD'[i]}</b><p>alone · beside Spawn (Spiderlings) · beside Splash (Explode on death)</p></div>`;
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>No Mans Land: keyword icons</title>
 <style>body{margin:0;padding:28px;background:#17140F;color:#EEF3F1;font:14px/1.35 system-ui,sans-serif}h1{font-size:22px;margin:0 0 4px;text-transform:uppercase;letter-spacing:.02em}h2{font-size:15px;margin:26px 0 4px;text-transform:uppercase;letter-spacing:.08em;color:#F2B23A}
 .sub{color:#B9B2A2;margin:0 0 14px;max-width:900px}.g{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}.k{background:#211D16;border:1px solid #3A3327;padding:16px 12px 12px;text-align:center}
@@ -43,6 +49,8 @@ b{display:block;font-size:16px;text-transform:uppercase;letter-spacing:.03em}i{d
 <h1>Keyword icons, wave 1</h1><p class="sub">Drawn from src/keyword-registry.json. The bare glyph in its role's colour is the default, at 76, 30 and 18 px. The small plate on the right of each row is the sparing extra. Colours are placeholders.</p>
 ${withAlts.length ? `<h2>To choose between</h2><p class="sub">Candidates for the ones being redone. A is what the registry uses now.</p>
 <div class="g">${withAlts.map(cand).join('')}</div>` : ''}
+<section id="death"><h2>Death effect: a mark beside the keyword</h2><p class="sub">Not a keyword: a small skull with bones beside the keyword that happens when the body dies. A is what the registry uses now.</p>
+<div class="g" style="grid-template-columns:1fr">${deaths.map(deathCard).join('')}</div></section>
 <h2>Idea: Splash with its weapon</h2><p class="sub">The sword or the arrow, striking or aiming at the Splash ring. Built from the keywords' own icons, so it follows them when they change.</p>
 <div class="g">${combo('strike', 'Melee splash')}${combo('shoot', 'Ranged splash')}</div>
 <h2>Keywords</h2><p class="sub">Teleport appears twice: Control when it moves enemies, Support when it moves your own.</p>
@@ -60,6 +68,8 @@ if (out) (async () => {
   let pw; try { pw = require('playwright-core'); } catch (e) { pw = require('playwright'); }
   const EXE = ['/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'].find(f => fs.existsSync(f));
   const b = await pw.chromium.launch(EXE ? { executablePath: EXE } : {});
-  const pg = await b.newPage({ viewport: { width: 1320, height: 900 } });
-  await pg.setContent(html); await pg.screenshot({ path: out, fullPage: true }); await b.close(); console.log('wrote', out);
+  const pg = await b.newPage({ viewport: { width: 1320, height: 900 }, deviceScaleFactor: 2 });
+  await pg.setContent(html);
+  const only = process.argv[3]; // an id on the page: a picture of that section alone
+  if (only) await (await pg.$('#' + only)).screenshot({ path: out }); else await pg.screenshot({ path: out, fullPage: true }); await b.close(); console.log('wrote', out);
 })();

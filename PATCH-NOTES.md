@@ -20,11 +20,12 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
-## 14 November 2026 – Keywords: Displace and Deatheffect join, Shield becomes a mechanic (branch `design/keywords`, nothing changes in the game)
+## 14 November 2026 – Keywords: Displace joins, Shield and Ward become mechanics, a Death effect mark (branch `design/keywords`, nothing changes in the game)
 
-- **Two new keywords, 20 in all:** **Displace** (Control: stops an enemy from moving or acting; Stun and Root are now kinds of Displace, not keywords of their own) and **Deatheffect** (something happens when it dies). Neither has a symbol yet.
-- **Shield is no longer a keyword.** It is a passive mechanic, like armor: a bonus a body carries (it blocks a set number of hits), not a job. Bone shield, Dread rangers, Ward and Transphysical are sorted under it.
-- **Skills re-sorted:** Anemia, Living armor and Deepfreeze now read as Displace; Death burst, Explode on death and Spiderlings as Deatheffect. Of 85 skills, 32 now read with the first keywords alone (26 before), 4 give a passive mechanic, 28 are plain stat changes, 9 need a later keyword (19 before) and 12 fit none.
+- **Displace, the 19th keyword** (Control): pushes, roots or stuns an enemy. Stun, Root and Knockback are now kinds of Displace, not keywords of their own. No symbol yet.
+- **Death effect is a mark, not a keyword:** a small skull with bones set beside the symbol of whatever happens when the body dies, the way Splash gets its weapon. Spiderlings reads as Spawn with the skull; Death burst and Explode on death as Splash with the skull. Three drawings to choose from are on the icon sheet (`docs/keyword-icons.html`).
+- **Shield and Ward are no longer keywords.** They are passive mechanics, like armor: bonuses a body carries, not jobs. Shield blocks a set number of hits (Bone shield, Dread rangers); Ward caps the damage of each hit (Ward, Transphysical). Each gets its own symbol; neither is drawn yet.
+- **Skills re-sorted:** Anemia, Living armor and Deepfreeze now read as Displace. Of 85 skills, 32 now read with the first keywords alone (26 before), 4 give a passive mechanic, 28 are plain stat changes, 9 need a later keyword (19 before) and 12 fit none.
 - **The V2WIP units are tagged:** Warper is Teleport (Control) with Displace built in (its root), Catcher is Pull. Netcaster reads as Pull and Splash, Gutter as Bleed.
 - **Armor weights wait** for the new Verbs and class doc. **Portraits, cards and every other unit visual are pushed to later.**
 - The branch has main merged in again (the V2WIP mode).

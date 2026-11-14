@@ -25,10 +25,10 @@ Written 13 November 2026 for the next session. Read this first, then the three f
 
 | File | What it is |
 |---|---|
-| `src/keyword-registry.json` | The one list: rules, six roles (colour, plate shape), 20 wave 1 keywords (role, line of at most 8 words, icon), wave 2 names, every unit's verb, every skill type sorted (keywords / mechanic / stat / unfit), the passive mechanics (Shield), the V2WIP units, the armor set, the levels idea. Nothing in the game reads it yet. **Not** `src/keywords.json` (that one feeds the Miro board). |
-| `tools/tests/keywords.js` | The check. Fails when a unit has no verb or role, a skill type is unsorted, a keyword is unknown, wave 1 is over its cap (20), or a line is over 8 words. `--report` writes `docs/KEYWORDS-TAGGING.md`. |
+| `src/keyword-registry.json` | The one list: rules, six roles (colour, plate shape), 19 wave 1 keywords (role, line of at most 8 words, icon), wave 2 names, every unit's verb, every skill type sorted (keywords / mechanic / stat / unfit), the passive mechanics (Shield, Ward), the modifiers (Death effect), the V2WIP units, the armor set, the levels idea. Nothing in the game reads it yet. **Not** `src/keywords.json` (that one feeds the Miro board). |
+| `tools/tests/keywords.js` | The check. Fails when a unit has no verb or role, a skill type is unsorted, a keyword is unknown, wave 1 is over its cap (19), or a line is over 8 words. `--report` writes `docs/KEYWORDS-TAGGING.md`. |
 | `docs/KEYWORDS-TAGGING.md` | Generated. Today's game in the keywords: 27 of 28 units fit (the Obelisk's verb, Grow, is wave 2); of 85 skills 32 read with wave 1 keywords, 4 give a passive mechanic, 28 are plain stat changes, 9 need a wave 2 keyword, 12 fit none. Also the V2WIP units. |
-| `tools/keyword-sheet.js` | Writes `docs/keyword-icons.html` (every symbol at three sizes) and, with a path, a screenshot. This is how the owner judges symbols. |
+| `tools/keyword-sheet.js` | Writes `docs/keyword-icons.html` (every symbol at three sizes) and, with a path, a screenshot (add a section id such as `death` for that section alone). This is how the owner judges symbols. |
 | `tools/unit-pic.js` | Renders units' portraits from their 3D models to `img/units/<unit>.png` (`--frame=full|half|bust`, `--sheet=out.png` for all three framings side by side, `--dry` for the sheet only) and prints the units with no model of their own. |
 | `tools/model-sheet.js` | Renders units' 3D models side by side to a PNG (`wizards` = the eight wizards, `--dark` = outlines only) and prints triangle counts. |
 
@@ -36,14 +36,19 @@ Icons are the inside of an svg on a 24 by 24 grid, drawn in `currentColor`, so t
 
 ## What the owner has decided
 
-- **20 keywords in wave 1**: Strike, Shoot, Splash, Pierce, Shred (Damage) · Rush, Taunt (Guard) · Pull, Teleport,
+- **19 keywords in wave 1**: Strike, Shoot, Splash, Pierce, Shred (Damage) · Rush, Taunt (Guard) · Pull, Teleport,
   Displace (Control) · Burn, Slow, Poison, Bleed (Afflict) · Heal, Carry, Hide, Reveal, Teleport (Support) · Spawn
-  (Conjure) · Deatheffect (by what happens: Damage or Conjure, **our guess, not his word**).
-- **14 Nov: Displace and Deatheffect added.** He wrote: add "Deatheffect", "Displace" (Stun, root). Read as: Stun
-  and Root are kinds of Displace and no longer keywords of their own. Push is still a wave 2 keyword (he did not name
-  it; his older Miro list defines Displace as knockback and pushes, so ask before folding it in). Neither has an icon.
-- **14 Nov: Shield is not a keyword.** It is a passive mechanic like armor (blocks X hits): `mechanics` in the
-  registry, and skill types can be sorted as `mechanic`.
+  (Conjure).
+- **14 Nov: Displace added**, with Stun, Root and Knockback as its kinds (none of the three is a keyword of its own
+  any more; Push is gone from wave 2). No icon yet.
+- **14 Nov: Death effect is not a keyword. It is a modifier**: a smaller skull with bones beside the keyword that
+  happens when the body dies (beside Spawn for Spiderlings), "kind of like how splash gets modified by hit type".
+  `modifiers.death` in the registry; skill types say `"on":"death"`. Three drawings (A corner bones, B bones crossed
+  below, C one level bone) are on the icon sheet's Death effect section; **he has not picked one** (we suggested C).
+  It sits to the keyword's left like Splash's weapon: our choice, not confirmed.
+- **14 Nov: Shield and Ward are not keywords.** Both are passive mechanics like armor (`mechanics` in the registry;
+  skill types can be sorted as `mechanic`), **each with its own symbol**. Shield blocks X hits, Ward caps each hit.
+  Neither symbol is drawn.
 - **14 Nov: armor weights per unit come from the new Verbs and class doc**, which he has not finished. Do not assign.
 - **14 Nov: everything visual about units is pushed to later**: portraits, cards, unit pictures. Do not start the
   unit card (the "Next task" below) until he says so.
@@ -76,7 +81,7 @@ Icons are the inside of an svg on a 24 by 24 grid, drawn in `currentColor`, so t
 - Questions 1, 4, 5, 6, 7, 8, 9 and 10 in the audit doc (device priority, pips for numbers, portraits, a lighter
   first game, level-up per squad, one aim gesture, the setting, counter hints). Each has a default there; none is
   confirmed.
-- Whether Push belongs to Displace, and which role Deatheffect has. Symbols for Displace and Deatheffect.
+- Which Death effect drawing. Symbols for Displace, Shield and Ward.
 - Whether Leave behind (now only Pool shaper) stays a keyword, and what happens to the 12 skills that fit no keyword.
 
 ## Next task (on hold since 14 Nov, see above): unit portraits, then the unit card

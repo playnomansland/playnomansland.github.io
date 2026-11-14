@@ -12,7 +12,7 @@ const roster = require('../../src/default-roster.json');
 const reg = require('../../src/keyword-registry.json');
 
 const own = (o) => Object.keys(o).filter(k => k[0] !== '_');
-const KW = reg.keywords, ROLES = reg.roles, UNITS = reg.units, ST = reg.skillTypes, R = reg.rules, MECH = reg.mechanics, V2 = reg.v2wip;
+const KW = reg.keywords, ROLES = reg.roles, UNITS = reg.units, ST = reg.skillTypes, R = reg.rules, MECH = reg.mechanics, MOD = reg.modifiers, V2 = reg.v2wip;
 const v2 = require('../../src/v2wip.json');
 const rolesOf = (w) => [].concat(w.role);
 const roleNames = (w) => rolesOf(w).map(r => ROLES[r].name).join(' or ');
@@ -69,6 +69,7 @@ const kindOf = (type) => {
   if (t.mechanic) { for (const k of t.mechanic) assert(MECH[k], `skill type "${type}": "${k}" is not a mechanic`); return 'mechanic'; }
   if (t.stat) return 'stat';
   if (t.unfit) return 'unfit';
+  if (t.on) assert(MOD[t.on], `skill type "${type}": on "${t.on}" is not a modifier`);
   for (const k of t.keywords) assert(KW[k], `skill type "${type}": "${k}" is not a keyword`);
   return t.keywords.every(k => KW[k].wave === 1) ? 'wave1' : 'wave2';
 };
@@ -82,6 +83,7 @@ const types = (kind) => [...new Set(all.filter(x => x.kind === kind).map(x => x.
 const unitsW1 = rosterNames.filter(n => UNITS[n].verb ? KW[UNITS[n].verb].wave === 1 : true);
 // ---------- role plates and the armor set ----------
 for (const r of own(ROLES)) assert(ROLES[r].plate && ROLES[r].glyph, `role ${r}: needs a plate and a glyph placement`);
+for (const m of own(MECH).concat(own(MOD))) assert((MECH[m] || MOD[m]).name && words((MECH[m] || MOD[m]).line) <= R.maxWords, `mechanic or modifier ${m}: needs a name and a line of at most ${R.maxWords} words`);
 for (const set of ['armor', 'levels']) for (const a of own(reg[set]).filter(k => k !== 'color')) assert(reg[set][a].name && reg[set][a].icon, `${set} ${a}: needs a name and an icon`);
 const kitDone = wave1.filter(k => R.kit.every(p => KW[k][p]));
 
@@ -108,11 +110,11 @@ if (process.argv.includes('--report')) {
   L.push('## In short', '');
   L.push(`- **${sum.keywords} keywords** in wave 1 (the cap is ${sum.cap}). ${sum.kitDone} have their full kit (icon, fight effect, sound, demo).`);
   L.push(`- **${sum.unitsW1} of ${sum.units} units** have a wave 1 keyword as their verb, or are their role alone (a Guard with no keyword is a tank).`);
-  L.push(`- **${sum.skills} skills** of ${sum.skillTypes} types: **${sum.wave1}** read with wave 1 keywords alone, **${sum.mech}** give a passive mechanic (Shield: not a keyword), **${sum.stat}** are plain stat changes that need no keyword, **${sum.wave2}** need a wave 2 keyword, **${sum.unfit}** fit no keyword.`, '');
+  L.push(`- **${sum.skills} skills** of ${sum.skillTypes} types: **${sum.wave1}** read with wave 1 keywords alone, **${sum.mech}** give a passive mechanic (Shield or Ward: not keywords), **${sum.stat}** are plain stat changes that need no keyword, **${sum.wave2}** need a wave 2 keyword, **${sum.unfit}** fit no keyword.`, '');
   L.push('## Wave 1 keywords', '', '| Keyword | Role | Line | Units with it as their verb | Skills that give it |', '| --- | --- | --- | --- | --- |');
   for (const k of wave1) {
     const us = rosterNames.filter(n => UNITS[n].verb === k).concat(v2Names.filter(n => V2.units[n].verb === k).map(n => n + ' (V2WIP)'));
-    const ss = all.filter(x => (ST[x.s.type].keywords || []).includes(k)).map(x => x.s.name);
+    const ss = all.filter(x => (ST[x.s.type].keywords || []).includes(k)).map(x => x.s.name + (ST[x.s.type].on ? ' (' + MOD[ST[x.s.type].on].name.toLowerCase() + ')' : ''));
     L.push(`| ${kwName(k)}${KW[k].covers ? ' (covers ' + KW[k].covers.join(', ') + ')' : ''} | ${roleNames(KW[k])} | ${KW[k].line} | ${us.join(', ') || 'none'} | ${ss.length ? ss.length + ': ' + ss.join(', ') : 'none'} |`);
   }
   L.push('', '## Units', '', 'Verb = what the unit does in today\'s build. Planned = the job in the Roster doc, where it differs.', '', '| Unit | Verb today | Also built in | Planned | Note |', '| --- | --- | --- | --- | --- |');
@@ -128,7 +130,7 @@ if (process.argv.includes('--report')) {
   L.push('', `## Skills that need a wave 2 keyword (${sum.wave2})`, '');
   table('wave2', 'Keywords', (s) => ST[s.type].keywords.map(k => kwName(k) + (KW[k].wave === 2 ? ' (wave 2)' : '')).join(', '));
   L.push(`## Skills that give a passive mechanic (${sum.mech})`, '', 'Mechanics are bonuses a body carries, like armor: not keywords.', '');
-  table('mechanic', 'Mechanic', (s) => ST[s.type].mechanic.map(k => MECH[k].name).join(', ') + (ST[s.type].note ? ': ' + ST[s.type].note : ''));
+  table('mechanic', 'Mechanic', (s) => ST[s.type].mechanic.map(k => MECH[k].name + ': ' + MECH[k].line).join(', '));
   L.push('## V2WIP: the new units and skills', '', 'From `src/v2wip.json` (a developer roster; the live roster is unchanged).', '', '| Unit | Verb | Role | Also built in | Note |', '| --- | --- | --- | --- | --- |');
   for (const n of v2Names) { const t = V2.units[n]; L.push(`| ${n} | ${kwName(t.verb)} | ${ROLES[t.role || rolesOf(KW[t.verb])[0]].name} | ${(t.also || []).map(kwName).join(', ')} | ${t.note || ''} |`); }
   L.push('', '| Skill | Keywords | Note |', '| --- | --- | --- |');

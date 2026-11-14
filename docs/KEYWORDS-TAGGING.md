@@ -6,9 +6,9 @@ Nothing in the game reads the registry yet. This page only shows how well a smal
 
 ## In short
 
-- **20 keywords** in wave 1 (the cap is 20). 0 have their full kit (icon, fight effect, sound, demo).
+- **19 keywords** in wave 1 (the cap is 19). 0 have their full kit (icon, fight effect, sound, demo).
 - **27 of 28 units** have a wave 1 keyword as their verb, or are their role alone (a Guard with no keyword is a tank).
-- **85 skills** of 59 types: **32** read with wave 1 keywords alone, **4** give a passive mechanic (Shield: not a keyword), **28** are plain stat changes that need no keyword, **9** need a wave 2 keyword, **12** fit no keyword.
+- **85 skills** of 59 types: **32** read with wave 1 keywords alone, **4** give a passive mechanic (Shield or Ward: not keywords), **28** are plain stat changes that need no keyword, **9** need a wave 2 keyword, **12** fit no keyword.
 
 ## Wave 1 keywords
 
@@ -16,14 +16,14 @@ Nothing in the game reads the registry yet. This page only shows how well a smal
 | --- | --- | --- | --- | --- |
 | Strike | Damage | Hits one enemy up close. | Goblin Swarm, Brute, Rogue, Spiders | none |
 | Shoot | Damage | Hits one enemy from range. | Skeleton Archers, Sniper, Wisps, Leaf Wizard, Sun Priest | 1: Eye of the Obelisk |
-| Splash | Damage | Hits everything in a small circle. | Ember Imps, Fire Mage, Flame Wizard, Slime Wizard, Meteor Caller, Slimeshots | 1: Snow storm |
+| Splash | Damage | Hits everything in a small circle. | Ember Imps, Fire Mage, Flame Wizard, Slime Wizard, Meteor Caller, Slimeshots | 4: Death burst (death effect), Explode on death (death effect), Explode on death (death effect), Snow storm |
 | Pierce | Damage | Hits every enemy in a line. | Earth Wizard | none |
 | Shred | Damage | Cuts a share of the target's health. | Truespear | none |
 | Rush | Guard | Charges in and knocks enemies back. | War Mammoth | 1: Bullhead |
 | Taunt | Guard | Enemies nearby must attack it. | none | none |
 | Pull | Control | Drags an enemy to it. | Catcher (V2WIP) | 1: Grasping roots |
 | Teleport | Control or Support | Moves a squad somewhere else at once. | Warper (V2WIP) | none |
-| Displace (covers Stun, Root) | Control | Stops an enemy from moving or acting. | none | 3: Anemia, Living armor, Deepfreeze |
+| Displace (covers Stun, Root, Knockback) | Control | Pushes, roots or stuns an enemy. | none | 3: Anemia, Living armor, Deepfreeze |
 | Burn | Afflict | Fire damage over a short time. | none | 1: Spitfire |
 | Slow | Afflict | Enemies move and attack slower. | Frost Wizard | 4: Slow, Web-shots, Deepfreeze, Snow storm |
 | Poison | Afflict | Damage over time, past armor. | none | 4: Poison shot, Poisonous fangs, Graverot arrows, Eye of the Obelisk |
@@ -32,8 +32,7 @@ Nothing in the game reads the registry yet. This page only shows how well a smal
 | Carry | Support | Carries a squad into the fight. | Just a horse | none |
 | Hide | Support | Unseen until it attacks. | none | 5: Stealth, Cavestalkers, Hunter, Shadowborn, Silent blade |
 | Reveal | Support | Sees hidden enemies. | none | 2: Overwatch, Hunter |
-| Spawn | Conjure | Brings more bodies into the fight. | Necromancer | 6: Spawn goblins, Raise dead, Spiderlings, Summon water elemental, More where that came from, Summon hellfiend |
-| Deatheffect | Damage or Conjure | Something happens when it dies. | none | 4: Spiderlings, Death burst, Explode on death, Explode on death |
+| Spawn | Conjure | Brings more bodies into the fight. | Necromancer | 6: Spawn goblins, Raise dead, Spiderlings (death effect), Summon water elemental, More where that came from, Summon hellfiend |
 
 ## Units
 
@@ -90,10 +89,10 @@ Mechanics are bonuses a body carries, like armor: not keywords.
 
 | Skill | On | What it says today | Mechanic |
 | --- | --- | --- | --- |
-| Ward | Rogue | Takes at most 40 damage per hit. | Shield: A cap on each hit, not a count of blocked hits: Shield is the nearest mechanic. |
-| Bone shield | no unit | Blocks the first hit each fight. | Shield |
-| Dread rangers | Skeleton Archers | Blocks the first hit each fight. +2 m range. | Shield |
-| Transphysical | Wisps | Takes at most 40 damage per hit. | Shield: A cap on each hit, not a count of blocked hits: Shield is the nearest mechanic. |
+| Ward | Rogue | Takes at most 40 damage per hit. | Ward: Caps the damage of each hit. |
+| Bone shield | no unit | Blocks the first hit each fight. | Shield: Blocks a set number of hits. |
+| Dread rangers | Skeleton Archers | Blocks the first hit each fight. +2 m range. | Shield: Blocks a set number of hits. |
+| Transphysical | Wisps | Takes at most 40 damage per hit. | Ward: Caps the damage of each hit. |
 
 ## V2WIP: the new units and skills
 
