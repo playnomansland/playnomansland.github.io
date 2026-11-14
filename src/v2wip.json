@@ -1,0 +1,31 @@
+{
+  "name": "V2WIP",
+  "remove": ["Slime Wizard", "Slimeshots"],
+  "offTowers": ["slime"],
+  "offChars": ["mubarak"],
+  "skills": [
+    { "id": "netcaster", "type": "netcaster", "name": "Netcaster", "cost": 150, "params": { "max": 4, "net": 4, "splash": 3 } },
+    { "id": "gutter", "type": "gutter", "name": "Gutter", "cost": 150, "params": { "range": 35, "speed": 30, "bleed": 2 } }
+  ],
+  "units": [
+    {
+      "burst": 1, "pellets": 1, "spinUp": 0, "pierce": 0, "projSpeed": 30, "minRange": 0, "charge": 1, "knockback": 0, "windUp": 0, "flame": 0,
+      "defense": "none", "defVal": 0, "level": 0, "unlock": 50,
+      "name": "Warper", "cost": 200, "bodies": 1, "hp": 900, "hit": 60, "aps": 0.9, "range": 20, "speed": 3, "splash": 0,
+      "shape": "star", "color": "#9C8AC9",
+      "warper": true,
+      "trait": { "name": "Teleport", "text": "Pick a tile in your zone. The enemy squad on the tile straight across is rooted, then teleported to your tile after 1.5 s." },
+      "skills": [], "skillsOn": [], "skillMods": [], "skillsInnate": []
+    },
+    {
+      "burst": 1, "pellets": 1, "spinUp": 0, "pierce": 0, "projSpeed": 0, "minRange": 0, "charge": 1, "knockback": 0, "windUp": 0, "flame": 0,
+      "defense": "none", "defVal": 0, "level": 0, "unlock": 100,
+      "name": "Catcher", "cost": 300, "bodies": 1, "hp": 2000, "hit": 300, "aps": 0.4, "range": 2, "speed": 2, "splash": 0,
+      "shape": "cross", "color": "#5E8F8C",
+      "hook": { "range": 30, "hit": 100, "speed": 20, "cd": 8, "max": 1, "net": 0, "reel": 30 },
+      "trait": { "name": "Hook", "text": "Throws a hook up to 30 m: 100 damage, and the first enemy it touches is reeled into melee. Set its first throw with an arrow." },
+      "skills": ["netcaster", "gutter"], "skillsOn": [false, false], "skillMods": [null, null], "skillsInnate": [false, false],
+      "skillOr": [[0, 1]]
+    }
+  ]
+}
