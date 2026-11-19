@@ -13,6 +13,9 @@ Live at `https://playnomansland.github.io/turncoat/`.
 - One sabotage brings a tower down, except tower 4 with 7-8 players, which needs two.
 - First side to three towers wins. Five refused proposals in a row on one tower: the turncoats win.
 
+Bots: the host can add bots to any lobby, and "Practice vs bots" on the start screen runs a game on one device with
+no relay. Loyal bots judge squads only from what everyone can see; turncoat bots know their own side.
+
 Not in yet: timers, text chat, spectators, the extra roles of Mainframe mode.
 
 ## How it is put together

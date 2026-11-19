@@ -188,6 +188,7 @@ const RULES = {
   proposals: 5,                                                         // the 5th refused proposal on one node: hackers win
   voteShow: 7000, nodeShow: 9000,                                       // how long a result stays up before play moves on
 };
+const BOT_NAMES = ['Goblin', 'Skeleton', 'Ember Imp', 'Fire Mage', 'Ent', 'Warper', 'Catcher', 'Shiv', 'Mammoth', 'Golem'];
 const CRESTS = ['cage', 'zoe', 'emile', 'wilhelm', 'blixten', 'noah', 'phil', 'mubarak', 'felix', 'enzo', 'otto', 'matteo'];
 const BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt', 'wss://test.mosquitto.org:8081/mqtt'];
 const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -282,6 +283,10 @@ const Engine = {
       case 'start': if (!host || !(S.phase === 'lobby' || S.phase === 'over') || n < RULES.min || n > RULES.max) return false; Engine.start(S); return true;
       case 'lobby': if (!host) return false; S.phase = 'lobby'; S.until = 0; return true;
       case 'kick': if (!host || !(S.phase === 'lobby' || S.phase === 'over') || a.id === S.host) return false; S.players = P.filter(p => p.id !== a.id); S.banned = (S.banned || []).concat(a.id); return true;
+      case 'addbot': { if (!host || !(S.phase === 'lobby' || S.phase === 'over') || n >= RULES.max) return false;
+        const usedN = new Set(P.map(p => p.name)), usedC = new Set(P.map(p => p.crest));
+        const nm = shuffle(BOT_NAMES.filter(x => !usedN.has(x)))[0] || 'Bot ' + (n + 1), cr = shuffle(CRESTS.filter(c => !usedC.has(c)))[0];
+        P.push({ id: 'bot-' + Math.random().toString(36).slice(2, 10), name: nm, crest: cr, bot: true }); return true; }
       case 'crest': { if (S.phase !== 'lobby' && S.phase !== 'over') return false;
         const used = new Set(P.map(p => p.crest)); let i = CRESTS.indexOf(me.crest);
         for (let k = 0; k < CRESTS.length; k++) { i = (i + 1) % CRESTS.length; if (!used.has(CRESTS[i])) { me.crest = CRESTS[i]; return true; } } return false; }
@@ -314,7 +319,7 @@ const Engine = {
   pub(S, now, on, hpub) {
     const n = S.players.length, sizes = RULES.sizes[n] || [];
     return { room: S.room, seq: S.seq, game: S.game, now, phase: S.phase, host: S.host, hpub,
-      players: S.players.map(p => ({ id: p.id, name: p.name, crest: p.crest, on: p.id === S.host || !!on[p.id] })),
+      players: S.players.map(p => ({ id: p.id, name: p.name, crest: p.crest, bot: !!p.bot, on: p.id === S.host || !!p.bot || !!on[p.id] })),
       node: S.node, sizes, needs: sizes.map((_, i) => RULES.need(n, i)), results: S.results, bads: RULES.bad[n] || 0,
       proposer: S.players[S.proposer] ? S.players[S.proposer].id : null, rejects: S.rejects, canPass: Engine.canPass(S), team: S.team,
       ready: Object.keys(S.ready), voted: Object.keys(S.votes), chosen: Object.keys(S.choices),
@@ -326,6 +331,48 @@ const Engine = {
     const role = S.roles[id] || null;
     return { game: S.game, role, mates: role === 'bad' ? S.players.filter(p => S.roles[p.id] === 'bad' && p.id !== id).map(p => p.id) : [],
       vote: id in S.votes ? S.votes[id] : null, choice: S.choices[id] || null };
+  },
+};
+
+const Bots = { key: '', due: {}, plan: null,
+  // how shady each player looks from the towers so far (public information only)
+  sus(S) { const s = {}; S.players.forEach(p => s[p.id] = 0);
+    S.results.forEach(r => { if (r) r.team.forEach(id => { if (id in s) s[id] += r.hacked ? 2 / r.team.length : r.hacks ? .6 : -.4; }); }); return s; },
+  step(S, now) {
+    const P = S.players, bots = P.filter(p => p.bot); if (!bots.length) return false;
+    const key = [S.game, S.phase, S.node, S.rejects, S.proposer, S.passes].join();
+    if (key !== Bots.key) { Bots.key = key; Bots.due = {}; Bots.plan = null; }
+    const due = (id, lo, hi) => { if (!(id in Bots.due)) { Bots.due[id] = now + (lo + rnd(hi - lo)) * (Bots.speed || 1); return false; } if (now < Bots.due[id]) return false; delete Bots.due[id]; return true; };
+    const bad = id => S.roles[id] === 'bad', sus = Bots.sus(S), chance = p => Math.random() < p;
+    let changed = false;
+    if (S.phase === 'roles') { for (const b of bots) if (!S.ready[b.id] && due(b.id, 500, 2000)) changed = Engine.apply(S, b.id, { k: 'ready' }, now) || changed; }
+    else if (S.phase === 'propose') {
+      const b = P[S.proposer]; if (!b.bot || !due(b.id, 650, 1250)) return false;
+      if (!Bots.plan) { const jit = {}; P.forEach(p => jit[p.id] = Math.random() * .5);
+        // itself first, then the least shady; a turncoat bot keeps its own side off the squad so one sabotage is enough
+        const w = p => sus[p.id] + jit[p.id] + (bad(b.id) && bad(p.id) ? 5 : 0);
+        Bots.plan = [b.id].concat(P.filter(p => p.id !== b.id).sort((x, y) => w(x) - w(y)).map(p => p.id)); }
+      if (S.team.length < Engine.size(S)) changed = Engine.apply(S, b.id, { k: 'pick', id: Bots.plan.find(id => !S.team.includes(id)) }, now);
+      else changed = Engine.apply(S, b.id, { k: 'propose' }, now);
+    } else if (S.phase === 'vote') {
+      for (const b of bots) { if (b.id in S.votes || !due(b.id, 900, 3200)) continue;
+        const T = S.team, last = S.rejects >= RULES.proposals - 1; let p;
+        if (bad(b.id)) p = T.some(bad) ? .85 : S.rejects >= 3 ? .7 : .35;
+        else { const worst = Math.max(-1, ...T.filter(id => id !== b.id).map(id => sus[id])); p = worst > .3 ? .1 : T.includes(b.id) ? .9 : .6; if (S.rejects >= 3) p = Math.max(p, .8); }
+        changed = Engine.apply(S, b.id, { k: 'vote', v: last || chance(p) }, now) || changed; if (S.phase !== 'vote') break; }
+    } else if (S.phase === 'node') {
+      for (const b of bots) { if (!S.team.includes(b.id) || S.choices[b.id] || !due(b.id, 900, 2600)) continue;
+        let c = 'secure';
+        if (bad(b.id)) { const mates = P.filter(p => S.team.includes(p.id) && bad(p.id)), need = RULES.need(P.length, S.node);
+          const won = S.results.filter(r => r && r.hacked).length, lost = S.results.filter(r => r && !r.hacked).length;
+          if (need > mates.length) c = 'secure';                          // cannot fall this time: stay hidden
+          else if (need > 1) c = 'hack';
+          else if (mates.some(p => !p.bot)) c = 'secure';                 // a human turncoat is here: their call
+          else if (mates[0].id !== b.id) c = 'secure';                    // one sabotage is enough: the first in seat order does it
+          else c = chance(won === 2 || lost === 2 ? 1 : S.node === 0 ? .6 : .9) ? 'hack' : 'secure'; }
+        changed = Engine.apply(S, b.id, { k: 'choose', c }, now) || changed; if (S.phase !== 'node') break; }
+    }
+    return changed;
   },
 };
 
@@ -373,14 +420,28 @@ async function createRoom() {
 }
 async function beHost(room, name, ident, net) {
   Object.assign(App, { room, ident, me: ident.id, isHost: true, net, screen: 'game', keys: {}, seen: {}, lastN: App.lastN || {} });
-  store.set('tc:last', { room, name, host: true }); try { sessionStorage.setItem('tc:tab', JSON.stringify({ room, name })); } catch (e) {}
-  history.replaceState(null, '', location.pathname + '?room=' + room + (DEV_BROKER ? '&broker=' + encodeURIComponent(DEV_BROKER) : ''));
-  net.on('connect', () => net.subscribe(TOPIC(room) + '/up'));
-  net.subscribe(TOPIC(room) + '/up');
-  net.on('message', (t, buf) => { let m; try { m = JSON.parse(buf.toString()); } catch (e) { return; } queue(() => hostMsg(m)); });
+  if (net) {
+    store.set('tc:last', { room, name, host: true }); try { sessionStorage.setItem('tc:tab', JSON.stringify({ room, name })); } catch (e) {}
+    history.replaceState(null, '', location.pathname + '?room=' + room + (DEV_BROKER ? '&broker=' + encodeURIComponent(DEV_BROKER) : ''));
+    net.on('connect', () => net.subscribe(TOPIC(room) + '/up'));
+    net.subscribe(TOPIC(room) + '/up');
+    net.on('message', (t, buf) => { let m; try { m = JSON.parse(buf.toString()); } catch (e) { return; } queue(() => hostMsg(m)); });
+  }
+  setInterval(() => queue(async () => { if (Bots.step(App.S, Date.now())) await broadcast(); }), 300);
   setInterval(() => queue(async () => { if (Engine.tick(App.S, Date.now())) await broadcast(); }), 300);
   setInterval(() => queue(broadcast), 3500);
   await broadcast();
+}
+// practice: a room on this device only, the other seats filled with bots. No relay, no code.
+async function practice() {
+  if (App.busy) return; App.busy = true; App.err = ''; draw();
+  try {
+    const name = cleanName(App.name.trim() || 'You'), ident = await makeIdentity(); ident.id = await idOf(ident.pub);
+    App.offline = true; App.S = Engine.create('PRACTICE', { id: ident.id, name, crest: CRESTS[rnd(CRESTS.length)], pub: ident.pub });
+    for (let i = 0; i < 4; i++) Engine.apply(App.S, ident.id, { k: 'addbot' }, Date.now());
+    await beHost('PRACTICE', name, ident, null);
+  } catch (e) { App.err = e.message || String(e); App.offline = false; }
+  App.busy = false; draw();
 }
 async function keyFor(p) { return App.keys[p.id] || (App.keys[p.id] = await sharedKey(App.ident.jwk, p.pub)); }
 async function hostMsg(m) {
@@ -411,8 +472,8 @@ async function broadcast() {
   const S = App.S, now = Date.now(); S.seq++;
   const on = {}; for (const p of S.players) on[p.id] = now - (App.seen[p.id] || 0) < 12000;
   const pv = Engine.pub(S, now, on, App.ident.pub);
-  store.set('tc:host:' + S.room, { S, lastN: App.lastN });
-  for (const p of S.players) if (p.id !== S.host) { try { send(TOPIC(S.room) + '/to/' + p.id, await seal(await keyFor(p), Engine.priv(S, p.id))); } catch (e) {} }
+  if (!App.offline) store.set('tc:host:' + S.room, { S, lastN: App.lastN });
+  for (const p of S.players) if (p.id !== S.host && !p.bot && !App.offline) { try { send(TOPIC(S.room) + '/to/' + p.id, await seal(await keyFor(p), Engine.priv(S, p.id))); } catch (e) {} }
   send(TOPIC(S.room) + '/pub', pv);
   take(pv, Engine.priv(S, S.host));
 }
@@ -517,7 +578,7 @@ function waitText() {
 }
 function topHTML() {
   return `<div class="top"><div><img class="logo" src="../img/title.png" alt="No Mans Land"><div class="st wm">${W.title}</div></div><div class="sp"></div>
-    ${App.room ? `<button class="chip" data-a="share">${esc(App.room)} ⧉</button>` : ''}
+    ${App.offline ? `<span class="chip">Practice</span>` : App.room ? `<button class="chip" data-a="share">${esc(App.room)} ⧉</button>` : ''}
     <button class="icon" data-a="mute" aria-label="Sound">${App.mute ? '\u{1F507}' : '\u{1F50A}'}</button>
     <button class="icon" data-a="rules" aria-label="Rules">?</button></div>`;
 }
@@ -531,6 +592,7 @@ function startHTML() {
     <div class="row"><input class="inp code" id="code" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" value="${esc(App.codeIn)}">
       <button class="btn cream" data-a="join" ${App.busy ? 'disabled' : ''}>Join</button></div>
     <button class="btn" data-a="create" ${App.busy ? 'disabled' : ''}>${App.busy ? 'Connecting…' : 'Host a new room'}</button>
+    <button class="btn ghost" data-a="practice" ${App.busy ? 'disabled' : ''}>Practice vs bots</button>
     ${canResume ? `<button class="btn ghost" data-a="resume">Back into room ${esc(last.room)} as ${esc(last.name)}</button>` : ''}
     <div class="err">${esc(App.err)}</div>
   </div>`;
@@ -562,9 +624,9 @@ function gameHTML() {
   const waitingOn = ids => { const w = pub.players.filter(p => !ids.includes(p.id)); return w.length ? 'Waiting for ' + w.map(p => esc(p.name)).join(', ') : ''; };
   if (ph === 'lobby') {
     h1 = n < RULES.min ? `${n} of ${RULES.min} needed` : `${n} players <em>ready</em>`;
-    h2 = `Room code <b>${esc(pub.room)}</b>. Friends open this page and type the code, or use the link.`;
-    dk = `<button class="btn ghost" data-a="share">Copy invite link</button>` +
-      (inGame ? `<button class="btn ghost" data-a="crest">Change my crest</button>` : '') +
+    h2 = App.offline ? 'Just you and the bots. Add bots or tap one to remove it (5 to 8 seats), then start.' : `Room code <b>${esc(pub.room)}</b>. Friends open this page and type the code, or use the link.`;
+    dk = (App.offline ? '' : `<button class="btn ghost" data-a="share">Copy invite link</button>`) +
+      `<div class="row">` + (host ? `<button class="btn ghost" data-a="addbot" ${n >= RULES.max ? 'disabled' : ''}>Add a bot</button>` : '') + (inGame ? `<button class="btn ghost" data-a="crest">Change crest</button>` : '') + `</div>` +
       (host ? `<button class="btn" data-a="start" ${n < RULES.min || n > RULES.max ? 'disabled' : ''}>Start game<small>${n < RULES.min ? 'Needs ' + RULES.min + ' to ' + RULES.max + ' players' : pub.bads + ' ' + W.bads.toLowerCase() + ' among ' + n}</small></button>`
         : `<div class="hint">${hostName} starts the game.</div>`);
   } else if (!inGame) {
@@ -600,7 +662,7 @@ function gameHTML() {
     const mine = priv && priv.role, won = mine && mine === pub.winner;
     h1 = pub.winner === 'bad' ? `${W.bads} win` : `${W.goods} win`;
     h2 = (pub.reason === 'hammer' ? 'Five proposals in a row were refused.' : pub.winner === 'bad' ? `Three ${W.nodes.toLowerCase()} fell.` : `Three ${W.nodes.toLowerCase()} held.`) + (mine ? (won ? ' <b>You won.</b>' : ' You lost.') : '');
-    dk = host ? `<button class="btn" data-a="start" ${n < RULES.min || n > RULES.max ? 'disabled' : ''}>Play again<small>New roles, same players</small></button><button class="btn ghost" data-a="lobby">Back to the lobby</button>`
+    dk = host ? `<button class="btn" data-a="start" ${n < RULES.min || n > RULES.max ? 'disabled' : ''}>Play again<small>New roles, same players</small></button><div class="row"><button class="btn ghost" data-a="addbot" ${n >= RULES.max ? 'disabled' : ''}>Add a bot</button><button class="btn ghost" data-a="lobby">Lobby</button></div>`
       : `<div class="hint">${hostName} can start the next game.</div>`;
   }
   const hk = ph + pub.rejects + pub.node + pub.proposer + pub.game; if (hk !== App.headKey) { App.headKey = hk; App.popUntil = Date.now() + 450; setTimeout(draw, 500); }
@@ -615,13 +677,14 @@ function gameHTML() {
     const inTeam = (ph === 'propose' || ph === 'vote' || ph === 'node' || ph === 'voteResult') && pub.team.includes(p.id) || (ph === 'nodeResult' && pub.lastNode.team.includes(p.id));
     let bd = '', mk = '';
     if (ph === 'lobby' && p.id === pub.host) bd = `<span class="tag cream">Host</span>`;
+    if ((ph === 'lobby' || ph === 'over') && p.bot) bd = `<span class="tag cream">Bot</span>`;
     if ((ph === 'propose' || ph === 'vote' || ph === 'voteResult') && p.id === prop) bd = `<span class="tag">Picks</span>`;
     if (ph === 'roles' && pub.ready.includes(p.id)) mk = `<span class="mk">✓</span>`;
     if (ph === 'vote' && pub.voted.includes(p.id)) mk = `<span class="mk">✓</span>`;
     if (ph === 'voteResult') mk = pub.lastVote.votes[p.id] ? `<span class="mk y">✓</span>` : `<span class="mk n">✕</span>`;
     if (ph === 'node' && pub.chosen.includes(p.id)) mk = `<span class="mk">✓</span>`;
     const role = pub.roles && pub.roles[p.id] ? `<div class="rl"><span class="tag ${pub.roles[p.id] === 'bad' ? 'red' : 'blue'}">${pub.roles[p.id] === 'bad' ? W.bad : W.good}</span></div>` : '';
-    const src = crestImg(p.crest), tap = iProp ? ` tap" data-a="pick" data-id="${p.id}` : (host && ph === 'lobby' && p.id !== me ? ` tap" data-a="kickask" data-id="${p.id}` : '');
+    const src = crestImg(p.crest), tap = iProp ? ` tap" data-a="pick" data-id="${p.id}` : (host && (ph === 'lobby' || (ph === 'over' && p.bot)) && p.id !== me ? ` tap" data-a="kickask" data-id="${p.id}` : '');
     return `<div class="pl ${inTeam ? 'in' : ''} ${p.on ? '' : 'off'}${tap}">${bd ? '<span class="bd">' + bd + '</span>' : ''}${ham && ham.id === p.id && pub.rejects < 4 ? '<span class="ham" title="Has the last proposal">\u{1F528}</span>' : ''}
       ${src ? `<img class="cr" src="${src}" alt="">` : `<div class="fb">${esc(p.name[0].toUpperCase())}</div>`}${mk}
       <div class="nm ${p.id === me ? 'me' : ''}">${esc(p.name)}${p.on ? '' : ' · off'}</div>${role}</div>`; }).join('') + `</div>`;
@@ -674,6 +737,7 @@ document.addEventListener('click', async e => {
   if (!['pick', 'close'].includes(a)) sfx('button');
   if (a === 'create') { if (!cleanName(App.name) || !App.name.trim()) { App.err = 'Type your name first.'; return draw(); } createRoom(); }
   else if (a === 'join') { if (!App.name.trim()) { App.err = 'Type your name first.'; return draw(); } joinRoom(); }
+  else if (a === 'practice') practice();
   else if (a === 'resume') { const l = store.get('tc:last'); App.name = l.name; App.codeIn = l.room; joinRoom(); }
   else if (a === 'rules') { App.sheet = { k: 'rules' }; draw(); }
   else if (a === 'mute') { App.mute = !App.mute; store.set('tc:mute', App.mute); draw(); }
@@ -686,7 +750,7 @@ document.addEventListener('click', async e => {
   else if (a === 'vote') act({ k: 'vote', v: el.dataset.v === '1' });
   else if (a === 'choose') { if (el.dataset.c === 'hack' && App.V.priv && App.V.priv.role !== 'bad') { sfx('nope'); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); return; } act({ k: 'choose', c: el.dataset.c }); }
   else if (a === 'crest') act({ k: 'crest' });
-  else if (['start', 'lobby', 'ready', 'propose', 'pass'].includes(a)) act({ k: a });
+  else if (['start', 'lobby', 'ready', 'propose', 'pass', 'addbot'].includes(a)) act({ k: a });
   if (navigator.wakeLock && !App.wake) { try { App.wake = await navigator.wakeLock.request('screen'); App.wake.addEventListener('release', () => App.wake = null); } catch (x) {} }
 });
 // press and hold to see your role; let go and it is hidden again
@@ -707,7 +771,7 @@ draw();
 try { const t = JSON.parse(sessionStorage.getItem('tc:tab')); if (t && t.room && (!App.codeIn || App.codeIn === t.room) && window.mqtt) { App.name = t.name; App.codeIn = t.room; joinRoom(); } } catch (e) {}
 if (!window.mqtt) { App.err = 'The network part did not load. Reload the page.'; draw(); }
 if (!(window.crypto && crypto.subtle)) { App.err = 'This page needs a secure (https) address.'; draw(); }
-window.__tc = { App, Engine, RULES };
+window.__tc = { App, Engine, RULES, Bots };
 </script>
 </body>
 </html>
