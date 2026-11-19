@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2E3E9C">
+<title>Turncoat · No Mans Land</title>
+<link rel="icon" href="../icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil:wght@700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@700;900&display=swap">
+<style>
+/* Turncoat: a hidden-role game on the No Mans Land look (the Diorama palette: one field colour, cream type, a saffron shard). */
+:root {
+  --field: #2E3E9C; --field-lo: #24317F; --cream: #F4ECD8; --cream-2: rgba(244,236,216,.72); --cream-3: rgba(244,236,216,.16);
+  --ink: #17140F; --saffron: #F2B23A; --you: #6FB3E0; --foe: #E5674B;
+  --stencil: "Big Shoulders Stencil", "Big Shoulders Stencil Display", "Arial Narrow", Impact, sans-serif;
+  --sans: "Bricolage Grotesque", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--field); color: var(--cream); font: 500 16px/1.4 var(--sans); -webkit-font-smoothing: antialiased; transition: background-color .5s; overscroll-behavior-y: none; }
+body.bad { --field: #7E2F2A; --field-lo: #5E211D; }
+body.good { --field: #24608C; --field-lo: #1A4A6E; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; touch-action: manipulation; }
+input { font: inherit; }
+.field { position: fixed; inset: 0; pointer-events: none; z-index: -1;
+  background: radial-gradient(90% 70% at 50% 35%, transparent, var(--field-lo) 120%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+#app { max-width: 560px; margin: 0 auto; padding: calc(10px + env(safe-area-inset-top)) 14px calc(250px + env(safe-area-inset-bottom)); }
+.st { font-family: var(--stencil); font-weight: 900; text-transform: uppercase; letter-spacing: .01em; line-height: .92; }
+.tag { display: inline-block; padding: 3px 7px 2px; font: 800 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: var(--saffron); clip-path: polygon(0 8%, 97% 0, 100% 88%, 3% 100%); }
+.tag.blue { background: var(--you); } .tag.red { background: var(--foe); } .tag.cream { background: var(--cream); }
+.dim { color: var(--cream-2); }
+
+/* top bar */
+.top { display: flex; align-items: center; gap: 10px; min-height: 40px; }
+.top img.logo { height: 15px; opacity: .9; filter: drop-shadow(0 2px 0 rgba(0,0,0,.35)); }
+.top .wm { font-size: 30px; }
+.top .sp { flex: 1; }
+.chip { font: 800 13px var(--sans); letter-spacing: .12em; padding: 6px 10px; border: 2px solid var(--cream-3); border-radius: 3px; }
+.icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 3px; font-size: 18px; opacity: .85; }
+.icon:active { transform: scale(.92); }
+
+/* start screen */
+.hero { margin: 22px 0 8px; }
+.hero .big { font-size: clamp(56px, 20vw, 118px); line-height: .8; }
+.hero p { max-width: 420px; margin: 14px 0 0; color: var(--cream-2); }
+.units { display: flex; margin: 4px -8px 0; }
+.units img { width: 20%; filter: drop-shadow(0 6px 0 rgba(0,0,0,.25)); }
+.form { display: grid; gap: 10px; margin-top: 14px; }
+.inp { width: 100%; padding: 14px; background: rgba(0,0,0,.22); color: var(--cream); border: 2px solid var(--cream-3); border-radius: 3px; font-weight: 700; font-size: 18px; outline: none; }
+.inp:focus { border-color: var(--saffron); }
+.inp.code { letter-spacing: .3em; text-transform: uppercase; }
+.row { display: flex; gap: 10px; } .row > * { flex: 1; }
+.btn { position: relative; display: block; width: 100%; padding: 15px 14px 13px; font: 900 26px/1 var(--stencil); text-transform: uppercase; letter-spacing: .02em; color: var(--ink); background: var(--saffron); clip-path: polygon(0 5%, 98.5% 0, 100% 93%, 1.5% 100%); transition: transform .12s; }
+.btn:active { transform: scale(.96); }
+.btn.cream { background: var(--cream); } .btn.blue { background: var(--you); } .btn.red { background: var(--foe); }
+.btn.ghost { background: none; color: var(--cream); border: 2px solid var(--cream-3); clip-path: none; border-radius: 3px; font-size: 20px; padding: 11px; }
+.btn[disabled] { background: #55598F; color: rgba(244,236,216,.55); pointer-events: none; }
+.btn.ghost[disabled] { background: none; opacity: .4; }
+.btn small { display: block; font: 700 12px var(--sans); letter-spacing: .02em; text-transform: none; margin-top: 4px; opacity: .8; }
+.err { color: #FFD0C4; font-weight: 700; min-height: 22px; }
+
+/* towers */
+.towers { display: flex; justify-content: space-between; align-items: flex-end; margin: 14px 2px 4px; }
+.tw { position: relative; flex: 1; text-align: center; }
+.tw svg { width: 82%; max-width: 74px; height: auto; display: block; margin: 0 auto; overflow: visible; }
+.tw .body { fill: var(--cream); opacity: .22; transition: fill .4s, opacity .4s; }
+.tw .flag { opacity: 0; transition: opacity .4s; }
+.tw.cur .body { fill: var(--saffron); opacity: 1; }
+.tw.cur svg { animation: bob 1.6s ease-in-out infinite; }
+.tw.good .body { fill: var(--you); opacity: 1; } .tw.good .flag { opacity: 1; fill: var(--cream); }
+.tw.bad .body { fill: var(--foe); opacity: 1; } .tw.bad .crack { opacity: 1; }
+.tw .crack { opacity: 0; stroke: var(--ink); stroke-width: 3; fill: none; }
+.tw .n { font: 900 22px/1 var(--stencil); margin-top: 4px; }
+.tw .sub { font: 700 10px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--cream-2); min-height: 14px; }
+.tw .sub b { color: var(--saffron); }
+@keyframes bob { 50% { transform: translateY(-5px); } }
+.score { display: flex; align-items: center; justify-content: center; gap: 12px; font: 800 13px var(--sans); letter-spacing: .08em; text-transform: uppercase; margin-top: 6px; }
+.score .v { font: 900 30px/1 var(--stencil); }
+.score .g { color: var(--you); } .score .b { color: var(--foe); }
+
+/* proposals */
+.pips { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 10px 0 2px; font: 700 12px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--cream-2); }
+.pip { width: 15px; height: 15px; border: 2px solid var(--cream-2); transform: rotate(45deg); }
+.pip.x { background: var(--foe); border-color: var(--foe); }
+.pip.now { background: var(--saffron); border-color: var(--saffron); }
+.pip.h { border-color: var(--foe); }
+
+/* headline */
+.head { margin: 16px 0 10px; text-align: center; }
+.head .h1 { font-size: clamp(34px, 10.5vw, 52px); }
+.head .h2 { margin-top: 6px; color: var(--cream-2); font-size: 15px; }
+.head .h1 em { font-style: normal; color: var(--saffron); }
+.cd { height: 4px; background: var(--cream-3); margin: 10px auto 0; max-width: 240px; overflow: hidden; }
+.cd i { display: block; height: 100%; width: 100%; background: var(--saffron); transform-origin: left; }
+
+/* players */
+.players { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+.players.few { grid-template-columns: repeat(3, 1fr); }
+.pl { position: relative; padding: 9px 2px 7px; text-align: center; border: 2px solid transparent; border-radius: 4px; background: rgba(0,0,0,.16); transition: transform .12s, border-color .15s, background .15s; min-width: 0; }
+.pl.tap { cursor: pointer; border-color: var(--cream-3); }
+.pl.tap:active { transform: scale(.94); }
+.pl.in { border-color: var(--saffron); background: rgba(242,178,58,.2); }
+.pl.off { opacity: .45; }
+.pl img.cr { width: 44px; height: 53px; display: block; margin: 0 auto; filter: drop-shadow(0 3px 0 rgba(0,0,0,.3)); }
+.pl .fb { width: 44px; height: 53px; margin: 0 auto; display: grid; place-items: center; font: 900 26px var(--stencil); background: var(--cream); color: var(--ink); clip-path: polygon(0 0,100% 0,100% 55%,50% 100%,0 55%); }
+.pl .nm { margin-top: 5px; font: 800 13px/1.1 var(--sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 3px; }
+.pl .me { color: var(--saffron); }
+.pl .bd { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+.pl .mk { position: absolute; top: 34px; right: calc(50% - 34px); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 900 14px var(--sans); color: var(--ink); background: var(--cream); box-shadow: 0 2px 0 rgba(0,0,0,.3); }
+.pl .mk.y { background: var(--you); } .pl .mk.n { background: var(--foe); }
+.pl .ham { position: absolute; top: 4px; right: 5px; font-size: 13px; opacity: .9; }
+.pl .rl { margin-top: 4px; }
+
+/* role card */
+.role .shown, body.peeking .role .hid { display: none; } body.peeking .role .shown { display: block; }
+#peekover { display: none; } body.peeking #peekover { display: grid; }
+.role { touch-action: none; margin: 18px auto 0; max-width: 340px; text-align: center; padding: 18px 14px; border: 2px solid var(--cream-3); border-radius: 4px; background: rgba(0,0,0,.2); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.role img { width: 150px; height: 150px; }
+.role .name { font-size: 54px; }
+.role .hid { padding: 46px 0; font: 800 15px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--cream-2); }
+.role .hid b { display: block; font: 900 46px/1 var(--stencil); color: var(--cream); margin-bottom: 8px; }
+
+/* action dock */
+.dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--field-lo) 26%); }
+.dock .in { max-width: 532px; margin: 0 auto; display: grid; gap: 8px; }
+.dock .hint { text-align: center; font-weight: 700; font-size: 14px; color: var(--cream-2); }
+.peek { display: block; margin: 0 auto; font: 800 11px var(--sans); letter-spacing: .1em; text-transform: uppercase; padding: 8px 14px; border: 2px solid var(--cream-3); border-radius: 3px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; }
+.peek + .peek { margin-top: 2px; }
+
+/* log */
+.log { margin-top: 22px; }
+.log h3 { margin: 0 0 8px; font: 800 12px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--cream-2); }
+.lg { padding: 9px 10px; margin-bottom: 6px; background: rgba(0,0,0,.18); border-left: 4px solid var(--cream-3); font-size: 13.5px; line-height: 1.45; }
+.lg.ok { border-color: var(--cream); } .lg.no { border-color: var(--foe); } .lg.good { border-color: var(--you); } .lg.bad { border-color: var(--foe); }
+.lg b { font-weight: 800; } .lg .y { color: #A9D6F2; } .lg .n { color: #F3A190; }
+.lg .t { font: 800 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--cream-2); }
+
+/* sheets */
+.sheet { position: fixed; inset: 0; z-index: 20; background: rgba(10,12,30,.72); display: grid; place-items: end center; }
+.sheet .box { width: 100%; max-width: 560px; max-height: 88vh; overflow: auto; background: var(--cream); color: var(--ink); padding: 20px 18px calc(20px + env(safe-area-inset-bottom)); clip-path: polygon(0 1.2%, 100% 0, 100% 100%, 0 100%); }
+.sheet h2 { margin: 0 0 10px; font: 900 40px/1 var(--stencil); text-transform: uppercase; }
+.sheet p, .sheet li { font-size: 15px; } .sheet ul { padding-left: 20px; margin: 8px 0; }
+.sheet table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 14px; } .sheet td, .sheet th { border-bottom: 1px solid rgba(23,20,15,.2); padding: 5px 4px; text-align: center; } .sheet th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.sheet .btn { background: var(--ink); color: var(--cream); margin-top: 12px; }
+.sheet .btn.line { background: none; color: var(--ink); border: 2px solid var(--ink); clip-path: none; font-size: 20px; padding: 11px; }
+.toast { position: fixed; top: calc(12px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 30; background: var(--ink); color: var(--cream); padding: 10px 14px; font-weight: 700; font-size: 14px; border-radius: 3px; max-width: 92vw; text-align: center; }
+.shake { animation: shake .35s; } @keyframes shake { 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
+.pop { animation: pop .45s cubic-bezier(.3,1.6,.5,1); } @keyframes pop { from { transform: scale(.7); opacity: 0; } }
+@media (min-width: 900px) { #app { max-width: 620px; } .dock .in { max-width: 592px; } }
+</style>
+</head>
+<body>
+<div class="field"></div>
+<div id="app"></div>
+<div id="dock"></div>
+<div id="over"></div>
+<script src="../src/art.js"></script>
+<script src="mqtt.min.js"></script>
+<script>
+'use strict';
+/* =====================================================================================================================
+   TURNCOAT, a prototype. Same mechanics as MINDNIGHT / The Resistance, dressed in No Mans Land.
+   One player hosts (their page runs the game); everyone else joins with the room code. Messages go through a public
+   MQTT relay; everything secret (roles, votes, hold/sabotage) is encrypted between each player and the host.
+   ===================================================================================================================== */
+
+// ---- Every word the game uses for its theme. Rename here; nothing else needs to change. ----
+const W = {
+  title: 'Turncoat',
+  good: 'Loyal', goods: 'Loyalists', bad: 'Turncoat', bads: 'Turncoats',
+  node: 'Tower', nodes: 'Towers', team: 'Squad',
+  secure: 'Hold', secured: 'Held', hack: 'Sabotage', hacked: 'Sabotaged', hacks: n => n === 1 ? '1 sabotage' : n + ' sabotages',
+  pitch: 'Five towers in no man’s land. Most of you are loyal. A few are not.',
+};
+
+// ---- The rules, as in MINDNIGHT (which uses The Resistance's tables). ----
+const RULES = {
+  min: 5, max: 8,
+  bad: { 5: 2, 6: 2, 7: 3, 8: 3 },                                      // hackers per player count
+  sizes: { 5: [2, 3, 2, 3, 3], 6: [2, 3, 4, 3, 4], 7: [2, 3, 3, 4, 4], 8: [3, 4, 4, 5, 5] }, // team size per node
+  need: (n, node) => (n >= 7 && node === 3) ? 2 : 1,                    // node 4 needs two hacks with 7-8 players
+  proposals: 5,                                                         // the 5th refused proposal on one node: hackers win
+  voteShow: 7000, nodeShow: 9000,                                       // how long a result stays up before play moves on
+};
+const CRESTS = ['cage', 'zoe', 'emile', 'wilhelm', 'blixten', 'noah', 'phil', 'mubarak', 'felix', 'enzo', 'otto', 'matteo'];
+const BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt', 'wss://test.mosquitto.org:8081/mqtt'];
+const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+const QS = new URLSearchParams(location.search);
+const DEV_BROKER = QS.get('broker');
+const TOPIC = room => 'nml-turncoat/v1/' + room;
+
+// ---- small helpers ----
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const b64 = buf => { let s = ''; for (const b of new Uint8Array(buf)) s += String.fromCharCode(b); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const rnd = n => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; };
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+const cleanName = s => String(s || '').replace(/\s+/g, ' ').trim().slice(0, 12) || 'Player';
+const cleanRoom = s => String(s || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5);
+
+// ---- crypto: each player and the host make a key pair; a shared key per player seals what only those two may read ----
+const EC = { name: 'ECDH', namedCurve: 'P-256' };
+async function makeIdentity() {
+  const kp = await crypto.subtle.generateKey(EC, true, ['deriveKey']);
+  return { jwk: await crypto.subtle.exportKey('jwk', kp.privateKey), pub: b64(await crypto.subtle.exportKey('raw', kp.publicKey)) };
+}
+async function sharedKey(jwk, otherPub) {
+  const priv = await crypto.subtle.importKey('jwk', jwk, EC, false, ['deriveKey']);
+  const pub = await crypto.subtle.importKey('raw', unb64(otherPub), EC, false, []);
+  return crypto.subtle.deriveKey({ name: 'ECDH', public: pub }, priv, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function seal(key, obj) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  return { iv: b64(iv), ct: b64(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(obj)))) };
+}
+async function unseal(key, m) {
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(m.iv) }, key, unb64(m.ct))));
+}
+async function idOf(pub) { return [...new Uint8Array(await crypto.subtle.digest('SHA-256', unb64(pub))).slice(0, 6)].map(b => b.toString(16).padStart(2, '0')).join(''); }
+
+/* =====================================================================================================================
+   The game itself. Runs only on the host's page. S holds everything, secrets included.
+   ===================================================================================================================== */
+const Engine = {
+  create(room, hostPlayer) {
+    return { room, phase: 'lobby', players: [hostPlayer], host: hostPlayer.id, roles: {}, node: 0, results: [null, null, null, null, null],
+      proposer: 0, rejects: 0, passes: 0, team: [], votes: {}, choices: {}, ready: {}, history: [], lastVote: null, lastNode: null,
+      until: 0, winner: null, reason: null, seq: 0, game: 0 };
+  },
+  size: S => (RULES.sizes[S.players.length] || [])[S.node],
+  canPass: S => S.passes < S.players.length - 1,
+  start(S) {
+    const n = S.players.length, ids = shuffle(S.players.map(p => p.id));
+    S.roles = {}; ids.forEach((id, i) => S.roles[id] = i < RULES.bad[n] ? 'bad' : 'good');
+    Object.assign(S, { phase: 'roles', node: 0, results: [null, null, null, null, null], proposer: rnd(n), rejects: 0, passes: 0, team: [], votes: {},
+      choices: {}, ready: {}, history: [], lastVote: null, lastNode: null, until: 0, winner: null, reason: null, game: S.game + 1 });
+  },
+  end(S, winner, reason) { Object.assign(S, { phase: 'over', winner, reason, until: 0 }); },
+  nextProposal(S) { S.proposer = (S.proposer + 1) % S.players.length; S.team = []; S.votes = {}; S.choices = {}; S.phase = 'propose'; S.until = 0; },
+  resolveVote(S, now) {
+    const n = S.players.length, yes = S.players.filter(p => S.votes[p.id]).length, ok = yes > n / 2;
+    S.lastVote = { node: S.node, by: S.players[S.proposer].id, team: S.team.slice(), votes: Object.assign({}, S.votes), yes, no: n - yes, ok, try: S.rejects + 1 };
+    S.history.push(Object.assign({ k: 'vote' }, S.lastVote));
+    S.phase = 'voteResult'; S.until = now + RULES.voteShow;
+  },
+  afterVote(S) {
+    if (S.lastVote.ok) { S.phase = 'node'; S.choices = {}; S.until = 0; return; }
+    S.rejects++;
+    if (S.rejects >= RULES.proposals) return Engine.end(S, 'bad', 'hammer');
+    S.passes = 0; Engine.nextProposal(S);
+  },
+  resolveNode(S, now) {
+    const n = S.players.length, hacks = S.team.filter(id => S.choices[id] === 'hack').length, need = RULES.need(n, S.node), hacked = hacks >= need;
+    S.lastNode = { node: S.node, team: S.team.slice(), hacks, need, hacked };
+    S.results[S.node] = S.lastNode; S.history.push(Object.assign({ k: 'node' }, S.lastNode));
+    S.phase = 'nodeResult'; S.until = now + RULES.nodeShow;
+  },
+  afterNode(S) {
+    const bad = S.results.filter(r => r && r.hacked).length, good = S.results.filter(r => r && !r.hacked).length;
+    if (bad >= 3) return Engine.end(S, 'bad', 'nodes');
+    if (good >= 3) return Engine.end(S, 'good', 'nodes');
+    S.node++; S.rejects = 0; S.passes = 0; Engine.nextProposal(S);
+  },
+  // one player's move. Returns true if anything changed.
+  apply(S, id, a, now) {
+    const P = S.players, n = P.length, host = id === S.host, me = P.find(p => p.id === id);
+    if (!me || !a) return false;
+    const proposing = S.phase === 'propose' && P[S.proposer].id === id;
+    switch (a.k) {
+      case 'start': if (!host || !(S.phase === 'lobby' || S.phase === 'over') || n < RULES.min || n > RULES.max) return false; Engine.start(S); return true;
+      case 'lobby': if (!host) return false; S.phase = 'lobby'; S.until = 0; return true;
+      case 'kick': if (!host || !(S.phase === 'lobby' || S.phase === 'over') || a.id === S.host) return false; S.players = P.filter(p => p.id !== a.id); S.banned = (S.banned || []).concat(a.id); return true;
+      case 'crest': { if (S.phase !== 'lobby' && S.phase !== 'over') return false;
+        const used = new Set(P.map(p => p.crest)); let i = CRESTS.indexOf(me.crest);
+        for (let k = 0; k < CRESTS.length; k++) { i = (i + 1) % CRESTS.length; if (!used.has(CRESTS[i])) { me.crest = CRESTS[i]; return true; } } return false; }
+      case 'ready': if (S.phase !== 'roles' || S.ready[id]) return false; S.ready[id] = 1; if (P.every(p => S.ready[p.id])) { S.proposer = (S.proposer + n - 1) % n; Engine.nextProposal(S); } return true;
+      case 'pick': { if (!proposing || !P.some(p => p.id === a.id)) return false; const i = S.team.indexOf(a.id);
+        if (i >= 0) S.team.splice(i, 1); else if (S.team.length < Engine.size(S)) S.team.push(a.id); else return false; return true; }
+      case 'propose': if (!proposing || S.team.length !== Engine.size(S)) return false; S.phase = 'vote'; S.votes = {}; return true;
+      case 'pass': if (!proposing || !Engine.canPass(S)) return false; S.passes++; Engine.nextProposal(S); return true;
+      case 'vote': if (S.phase !== 'vote' || id in S.votes) return false; S.votes[id] = !!a.v; if (P.every(p => p.id in S.votes)) Engine.resolveVote(S, now); return true;
+      case 'choose': if (S.phase !== 'node' || !S.team.includes(id) || S.choices[id]) return false;
+        if (a.c === 'hack' && S.roles[id] !== 'bad') return false;       // the loyal can only hold
+        S.choices[id] = a.c === 'hack' ? 'hack' : 'secure'; if (S.team.every(t => S.choices[t])) Engine.resolveNode(S, now); return true;
+      case 'force': if (!host) return false;                               // the host moves a stuck game along
+        if (S.phase === 'roles') { P.forEach(p => S.ready[p.id] = 1); S.proposer = (S.proposer + n - 1) % n; Engine.nextProposal(S); return true; }
+        if (S.phase === 'vote') { P.forEach(p => { if (!(p.id in S.votes)) S.votes[p.id] = false; }); Engine.resolveVote(S, now); return true; }
+        if (S.phase === 'node') { S.team.forEach(t => { if (!S.choices[t]) S.choices[t] = 'secure'; }); Engine.resolveNode(S, now); return true; }
+        if (S.phase === 'voteResult') { Engine.afterVote(S); return true; }
+        if (S.phase === 'nodeResult') { Engine.afterNode(S); return true; }
+        return false;
+    }
+    return false;
+  },
+  tick(S, now) {
+    if (!S.until || now < S.until) return false;
+    if (S.phase === 'voteResult') { Engine.afterVote(S); return true; }
+    if (S.phase === 'nodeResult') { Engine.afterNode(S); return true; }
+    return false;
+  },
+  // what everyone may see
+  pub(S, now, on, hpub) {
+    const n = S.players.length, sizes = RULES.sizes[n] || [];
+    return { room: S.room, seq: S.seq, game: S.game, now, phase: S.phase, host: S.host, hpub,
+      players: S.players.map(p => ({ id: p.id, name: p.name, crest: p.crest, on: p.id === S.host || !!on[p.id] })),
+      node: S.node, sizes, needs: sizes.map((_, i) => RULES.need(n, i)), results: S.results, bads: RULES.bad[n] || 0,
+      proposer: S.players[S.proposer] ? S.players[S.proposer].id : null, rejects: S.rejects, canPass: Engine.canPass(S), team: S.team,
+      ready: Object.keys(S.ready), voted: Object.keys(S.votes), chosen: Object.keys(S.choices),
+      lastVote: S.lastVote, lastNode: S.lastNode, history: S.history, until: S.until, winner: S.winner, reason: S.reason,
+      roles: S.phase === 'over' ? S.roles : null };
+  },
+  // what only one player may see
+  priv(S, id) {
+    const role = S.roles[id] || null;
+    return { game: S.game, role, mates: role === 'bad' ? S.players.filter(p => S.roles[p.id] === 'bad' && p.id !== id).map(p => p.id) : [],
+      vote: id in S.votes ? S.votes[id] : null, choice: S.choices[id] || null };
+  },
+};
+
+/* =====================================================================================================================
+   The session: connection, host duties, and the one view the page draws from.
+   ===================================================================================================================== */
+const App = { screen: 'start', err: '', busy: false, name: (store.get('tc:name') || ''), codeIn: cleanRoom(QS.get('room')),
+  room: null, me: null, ident: null, isHost: false, S: null, V: { pub: null, priv: null }, net: null, keys: {}, seen: {}, lastN: {},
+  hostKey: null, lastPub: 0, skew: 0, sheet: null, peek: false, mute: !!store.get('tc:mute'), joinErr: '', chain: Promise.resolve(), revealed: false };
+const queue = fn => (App.chain = App.chain.then(fn).catch(e => console.warn('[turncoat]', e)));
+
+function brokerFor(room) { return DEV_BROKER || BROKERS[ALPHA.indexOf(room[0]) % BROKERS.length]; }
+function connect(url) {
+  return new Promise((res, rej) => {
+    const c = mqtt.connect(url, { clientId: 'tc_' + Math.random().toString(36).slice(2, 12), clean: true, keepalive: 20, reconnectPeriod: 1500, connectTimeout: 7000 });
+    const t = setTimeout(() => { try { c.end(true); } catch (e) {} rej(new Error('timeout')); }, 8000);
+    c.once('connect', () => { clearTimeout(t); res(c); });
+    c.once('error', e => { clearTimeout(t); try { c.end(true); } catch (x) {} rej(e); });
+  });
+}
+const send = (topic, obj) => { if (App.net && App.net.connected) App.net.publish(topic, JSON.stringify(obj)); };
+
+async function identityFor(room, name) {
+  const k = 'tc:id:' + room + ':' + name.toLowerCase();
+  let id = store.get(k); if (!id || !id.jwk) { id = await makeIdentity(); store.set(k, id); }
+  id.id = await idOf(id.pub); return id;
+}
+
+// ---- host ----
+async function createRoom() {
+  if (App.busy) return; App.busy = true; App.err = ''; draw();
+  try {
+    const name = cleanName(App.name); store.set('tc:name', name);
+    let net = null, bi = 0;
+    if (DEV_BROKER) net = await connect(DEV_BROKER);
+    else for (bi = 0; bi < BROKERS.length && !net; bi++) { try { net = await connect(BROKERS[bi]); break; } catch (e) {} }
+    if (!net) throw new Error('Could not reach the relay. Check your connection and try again.');
+    const firsts = [...ALPHA].filter((_, i) => i % BROKERS.length === bi);
+    let room = firsts[rnd(firsts.length)]; for (let i = 0; i < 4; i++) room += ALPHA[rnd(ALPHA.length)];
+    const ident = await identityFor(room, name);
+    App.S = Engine.create(room, { id: ident.id, name, crest: CRESTS[rnd(CRESTS.length)], pub: ident.pub });
+    await beHost(room, name, ident, net);
+  } catch (e) { App.err = e.message || String(e); }
+  App.busy = false; draw();
+}
+async function beHost(room, name, ident, net) {
+  Object.assign(App, { room, ident, me: ident.id, isHost: true, net, screen: 'game', keys: {}, seen: {}, lastN: App.lastN || {} });
+  store.set('tc:last', { room, name, host: true }); try { sessionStorage.setItem('tc:tab', JSON.stringify({ room, name })); } catch (e) {}
+  history.replaceState(null, '', location.pathname + '?room=' + room + (DEV_BROKER ? '&broker=' + encodeURIComponent(DEV_BROKER) : ''));
+  net.on('connect', () => net.subscribe(TOPIC(room) + '/up'));
+  net.subscribe(TOPIC(room) + '/up');
+  net.on('message', (t, buf) => { let m; try { m = JSON.parse(buf.toString()); } catch (e) { return; } queue(() => hostMsg(m)); });
+  setInterval(() => queue(async () => { if (Engine.tick(App.S, Date.now())) await broadcast(); }), 300);
+  setInterval(() => queue(broadcast), 3500);
+  await broadcast();
+}
+async function keyFor(p) { return App.keys[p.id] || (App.keys[p.id] = await sharedKey(App.ident.jwk, p.pub)); }
+async function hostMsg(m) {
+  const S = App.S, now = Date.now();
+  if (m.t === 'join' && typeof m.pub === 'string' && m.pub.length < 200) {
+    const id = await idOf(m.pub); let p = S.players.find(x => x.id === id), changed = false;
+    if ((S.banned || []).includes(id)) return;
+    if (!p) {
+      const open = S.phase === 'lobby' || S.phase === 'over';
+      if (!open || S.players.length >= RULES.max) { const key = await sharedKey(App.ident.jwk, m.pub); send(TOPIC(S.room) + '/to/' + id, await seal(key, { err: open ? 'full' : 'started' })); return; }
+      let name = cleanName(m.name), k = 2; const base = name; while (S.players.some(x => x.name.toLowerCase() === name.toLowerCase())) name = base.slice(0, 10) + ' ' + k++;
+      const used = new Set(S.players.map(x => x.crest)), free = CRESTS.filter(c => !used.has(c));
+      p = { id, name, crest: free.includes(m.crest) ? m.crest : free[rnd(free.length)], pub: m.pub }; S.players.push(p); changed = true;
+    }
+    const was = now - (App.seen[id] || 0) < 12000; App.seen[id] = now;
+    if (changed || !was || m.need) await broadcast();
+  } else if (m.t === 'hi' && S.players.some(p => p.id === m.id)) {
+    const was = now - (App.seen[m.id] || 0) < 12000; App.seen[m.id] = now; if (!was || m.need) await broadcast();
+  } else if (m.t === 'act' && typeof m.id === 'string') {
+    const p = S.players.find(x => x.id === m.id); if (!p) return;
+    let d; try { d = await unseal(await keyFor(p), m); } catch (e) { return; }
+    if (!d || !(d.n > (App.lastN[p.id] || 0))) return;                   // an old or replayed move
+    App.lastN[p.id] = d.n; App.seen[p.id] = now;
+    if (Engine.apply(S, p.id, d.a, now)) await broadcast();
+  }
+}
+async function broadcast() {
+  const S = App.S, now = Date.now(); S.seq++;
+  const on = {}; for (const p of S.players) on[p.id] = now - (App.seen[p.id] || 0) < 12000;
+  const pv = Engine.pub(S, now, on, App.ident.pub);
+  store.set('tc:host:' + S.room, { S, lastN: App.lastN });
+  for (const p of S.players) if (p.id !== S.host) { try { send(TOPIC(S.room) + '/to/' + p.id, await seal(await keyFor(p), Engine.priv(S, p.id))); } catch (e) {} }
+  send(TOPIC(S.room) + '/pub', pv);
+  take(pv, Engine.priv(S, S.host));
+}
+
+// ---- guest ----
+async function joinRoom() {
+  if (App.busy) return; const room = cleanRoom(App.codeIn);
+  if (room.length !== 5) { App.err = 'The room code is 5 letters.'; return draw(); }
+  App.busy = true; App.err = ''; draw();
+  try {
+    const name = cleanName(App.name); store.set('tc:name', name);
+    const saved = store.get('tc:host:' + room), ident = await identityFor(room, name);
+    const net = await connect(brokerFor(room)).catch(() => { throw new Error('Could not reach the relay. Check your connection and try again.'); });
+    if (saved && saved.S && saved.S.host === ident.id) {                 // this device hosted this room: pick it back up
+      App.S = saved.S; App.lastN = saved.lastN || {}; await beHost(room, name, ident, net);
+    } else {
+      Object.assign(App, { room, ident, me: ident.id, isHost: false, net, screen: 'game' });
+      store.set('tc:last', { room, name }); try { sessionStorage.setItem('tc:tab', JSON.stringify({ room, name })); } catch (e) {}
+      history.replaceState(null, '', location.pathname + '?room=' + room + (DEV_BROKER ? '&broker=' + encodeURIComponent(DEV_BROKER) : ''));
+      const T = TOPIC(room), subs = () => net.subscribe([T + '/pub', T + '/to/' + ident.id]);
+      net.on('connect', () => { subs(); hello(true); }); subs();
+      net.on('message', (t, buf) => { let m; try { m = JSON.parse(buf.toString()); } catch (e) { return; } queue(() => guestMsg(t.endsWith('/pub'), m)); });
+      hello(true); setInterval(() => hello(false), 4000);
+    }
+  } catch (e) { App.err = e.message || String(e); }
+  App.busy = false; draw();
+}
+function hello(need) {
+  const pub = App.V.pub, inRoom = pub && pub.players.some(p => p.id === App.me);
+  if (inRoom) send(TOPIC(App.room) + '/up', { t: 'hi', id: App.me, need: need || !App.V.priv ? 1 : 0 });
+  else send(TOPIC(App.room) + '/up', { t: 'join', pub: App.ident.pub, name: cleanName(App.name), crest: store.get('tc:crest'), need: 1 });
+}
+async function guestMsg(isPub, m) {
+  if (isPub) {
+    if (!m || m.room !== App.room || !Array.isArray(m.players)) return;
+    if (m.hpub && (!App.hostKey || App.hostPub !== m.hpub)) { App.hostPub = m.hpub; App.hostKey = await sharedKey(App.ident.jwk, m.hpub); }
+    const first = !App.V.pub; take(m, App.V.priv && App.V.priv.game === m.game ? App.V.priv : null); if (first) hello(true);
+  } else {
+    if (!App.hostKey) return; let d; try { d = await unseal(App.hostKey, m); } catch (e) { return; }
+    if (d.err) { App.joinErr = d.err; draw(); return; }
+    App.joinErr = ''; if (App.V.pub) take(App.V.pub, d); else App.V.priv = d;
+  }
+}
+// a move: the host plays it straight in; a guest seals it and sends it to the host
+function act(a) {
+  if (App.isHost) queue(async () => { if (Engine.apply(App.S, App.me, a, Date.now())) await broadcast(); });
+  else queue(async () => { if (App.hostKey) send(TOPIC(App.room) + '/up', Object.assign({ t: 'act', id: App.me }, await seal(App.hostKey, { n: Date.now(), a }))); });
+}
+
+// ---- new state arrives: note what changed (for sounds), then draw ----
+function take(pub, priv) {
+  const old = App.V.pub; App.V = { pub, priv }; App.lastPub = Date.now(); App.skew = pub.now - Date.now();
+  if (old && (old.phase !== pub.phase || old.proposer !== pub.proposer || old.game !== pub.game)) {
+    if (pub.phase === 'roles') { App.revealed = false; sfx('battle-start'); }
+    else if (pub.phase === 'propose') sfx(pub.proposer === App.me ? 'ready' : 'room');
+    else if (pub.phase === 'vote') sfx('pick');
+    else if (pub.phase === 'voteResult') sfx(pub.lastVote.ok ? 'level-up' : 'nope');
+    else if (pub.phase === 'node') sfx('drop-unit');
+    else if (pub.phase === 'nodeResult') sfx(pub.lastNode.hacked ? 'sell' : 'evolve');
+    else if (pub.phase === 'over') sfx('battle-start');
+    if (navigator.vibrate && (pub.phase === 'vote' || (pub.phase === 'propose' && pub.proposer === App.me) || (pub.phase === 'node' && pub.team.includes(App.me)))) { try { navigator.vibrate(60); } catch (e) {} }
+  }
+  draw();
+}
+const sounds = {};
+function sfx(n) { if (App.mute) return; try { const a = sounds[n] || (sounds[n] = new Audio('../audio/sfx/' + n + '.mp3')); a.currentTime = 0; a.volume = .6; a.play().catch(() => {}); } catch (e) {} }
+
+/* =====================================================================================================================
+   Drawing. The page is rebuilt from the view whenever the view changes.
+   ===================================================================================================================== */
+const crestCache = {};
+function crestImg(id) {
+  if (!(id in crestCache)) {
+    try { const c = document.createElement('canvas'); c.width = 120; c.height = 144; Art.arms(c.getContext('2d'), id, 60, 67, 104); crestCache[id] = c.toDataURL(); }
+    catch (e) { crestCache[id] = ''; }
+  }
+  return crestCache[id];
+}
+const towerSVG = `<svg viewBox="0 0 60 78"><path class="flag" d="M30 2v16M30 3l14 4-14 5z" stroke="#F4ECD8" stroke-width="2.5"/><path class="body" d="M10 20h8v6h6v-6h12v6h6v-6h8v16l-5 5v31H15V41l-5-5z"/><path d="M25 72V58a5 5 0 0 1 10 0v14z" fill="#17140F" opacity=".55"/><path class="crack" d="M22 26l7 10-5 8 8 9-4 9"/></svg>`;
+const nameOf = (pub, id) => { const p = pub.players.find(p => p.id === id); return p ? esc(p.name) : '?'; };
+const names = (pub, ids) => ids.map(id => nameOf(pub, id)).join(', ');
+
+function draw() {
+  const app = $('#app'), dock = $('#dock'), over = $('#over');
+  let html, dk = '';
+  if (App.screen === 'start') html = startHTML();
+  else if (!App.V.pub) html = topHTML() + `<div class="head"><div class="st h1">${App.joinErr ? 'Hold on' : 'Joining ' + esc(App.room)}</div><div class="h2">${waitText()}</div></div>`;
+  else { const r = gameHTML(); html = r[0]; dk = r[1]; }
+  const sh = sheetHTML();
+  const key = html + '\u0000' + dk + '\u0000' + sh;
+  if (key === draw.last) return; draw.last = key;
+  const ae = document.activeElement, focusId = ae && ae.id, sel = ae && ae.selectionStart;
+  app.innerHTML = html; dock.innerHTML = dk ? `<div class="dock"><div class="in">${dk}</div></div>` : ''; over.innerHTML = sh;
+  if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); try { el.setSelectionRange(sel, sel); } catch (e) {} } }
+  const pub = App.V.pub, w = pub && pub.phase === 'over' && App.screen === 'game' ? pub.winner : '';
+  document.body.classList.toggle('good', w === 'good'); document.body.classList.toggle('bad', w === 'bad');
+}
+function waitText() {
+  if (App.joinErr === 'started') return 'A game is running in this room. You will be let in when it ends.';
+  if (App.joinErr === 'full') return 'This room is full (8 players).';
+  return 'Looking for the host… If this takes long, check the code with whoever made the room.';
+}
+function topHTML() {
+  return `<div class="top"><div><img class="logo" src="../img/title.png" alt="No Mans Land"><div class="st wm">${W.title}</div></div><div class="sp"></div>
+    ${App.room ? `<button class="chip" data-a="share">${esc(App.room)} ⧉</button>` : ''}
+    <button class="icon" data-a="mute" aria-label="Sound">${App.mute ? '\u{1F507}' : '\u{1F50A}'}</button>
+    <button class="icon" data-a="rules" aria-label="Rules">?</button></div>`;
+}
+function startHTML() {
+  const last = store.get('tc:last'), canResume = last && last.room && (!App.codeIn || App.codeIn === last.room);
+  return `<div class="top"><img class="logo" src="../img/title.png" alt="No Mans Land"><div class="sp"></div><button class="icon" data-a="rules">?</button></div>
+  <div class="hero"><div class="st big">${W.title}</div><p>${W.pitch} 5–8 players, one phone each.</p></div>
+  <div class="units"><img src="../img/skins/brute-champion.png" alt=""><img src="../img/skins/firemage-ember.png" alt=""><img src="../img/skins/golem-aquamarine.png" alt=""><img src="../img/skins/brute-omniper.png" alt=""><img src="../img/skins/spiders-hollow.png" alt=""></div>
+  <div class="form">
+    <input class="inp" id="name" maxlength="12" placeholder="Your name" autocomplete="off" value="${esc(App.name)}">
+    <div class="row"><input class="inp code" id="code" maxlength="5" placeholder="CODE" autocomplete="off" autocapitalize="characters" value="${esc(App.codeIn)}">
+      <button class="btn cream" data-a="join" ${App.busy ? 'disabled' : ''}>Join</button></div>
+    <button class="btn" data-a="create" ${App.busy ? 'disabled' : ''}>${App.busy ? 'Connecting…' : 'Host a new room'}</button>
+    ${canResume ? `<button class="btn ghost" data-a="resume">Back into room ${esc(last.room)} as ${esc(last.name)}</button>` : ''}
+    <div class="err">${esc(App.err)}</div>
+  </div>`;
+}
+
+function gameHTML() {
+  const { pub, priv } = App.V, me = App.me, n = pub.players.length, host = App.isHost, ph = pub.phase;
+  const inGame = pub.players.some(p => p.id === me), playing = !(ph === 'lobby');
+  const hostName = nameOf(pub, pub.host), prop = pub.proposer, size = pub.sizes[pub.node], iProp = prop === me && ph === 'propose';
+  const good = pub.results.filter(r => r && !r.hacked).length, bad = pub.results.filter(r => r && r.hacked).length;
+  let h = topHTML();
+  if (Date.now() - App.lastPub > 13000 && !host) h += `<div class="toast">Lost contact with the host. Reconnecting…</div>`;
+
+  // towers and score
+  if (playing) {
+    h += `<div class="towers">` + pub.sizes.map((s, i) => { const r = pub.results[i];
+      const cls = r ? (r.hacked ? 'bad' : 'good') : (i === pub.node && ph !== 'over' ? 'cur' : '');
+      const sub = r ? (r.hacked ? W.hacked : W.secured) + (r.hacks && !r.hacked ? ' <b>(' + r.hacks + '!)</b>' : r.hacked && r.hacks > 1 ? ' <b>×' + r.hacks + '</b>' : '') : pub.needs[i] > 1 ? '<b>needs 2</b>' : '';
+      return `<div class="tw ${cls}">${towerSVG}<div class="n">${s}</div><div class="sub">${sub}</div></div>`; }).join('') + `</div>
+      <div class="score"><span class="g">${W.goods}</span><span class="st v g">${good}</span><span class="dim">–</span><span class="st v b">${bad}</span><span class="b">${W.bads}</span></div>`;
+    if (ph !== 'over' && ph !== 'roles') {
+      h += `<div class="pips">` + [0, 1, 2, 3, 4].map(i => `<span class="pip ${i < pub.rejects ? 'x' : i === pub.rejects ? 'now' : ''} ${i === 4 ? 'h' : ''}"></span>`).join('') +
+        `<span style="margin-left:6px">${pub.rejects === 4 ? '<b style="color:#FFD0C4">Last proposal: refuse it and the ' + W.bads + ' win</b>' : 'Proposal ' + (pub.rejects + 1) + ' of 5'}</span></div>`;
+    }
+  }
+
+  // headline
+  let h1 = '', h2 = '', cd = false, dk = '';
+  const waitingOn = ids => { const w = pub.players.filter(p => !ids.includes(p.id)); return w.length ? 'Waiting for ' + w.map(p => esc(p.name)).join(', ') : ''; };
+  if (ph === 'lobby') {
+    h1 = n < RULES.min ? `${n} of ${RULES.min} needed` : `${n} players <em>ready</em>`;
+    h2 = `Room code <b>${esc(pub.room)}</b>. Friends open this page and type the code, or use the link.`;
+    dk = `<button class="btn ghost" data-a="share">Copy invite link</button>` +
+      (inGame ? `<button class="btn ghost" data-a="crest">Change my crest</button>` : '') +
+      (host ? `<button class="btn" data-a="start" ${n < RULES.min || n > RULES.max ? 'disabled' : ''}>Start game<small>${n < RULES.min ? 'Needs ' + RULES.min + ' to ' + RULES.max + ' players' : pub.bads + ' ' + W.bads.toLowerCase() + ' among ' + n}</small></button>`
+        : `<div class="hint">${hostName} starts the game.</div>`);
+  } else if (!inGame) {
+    h1 = 'Game running'; h2 = 'You are watching. You will be let in for the next game.';
+  } else if (ph === 'roles') {
+    const rdy = pub.ready.includes(me);
+    h1 = 'Your orders'; h2 = rdy ? (waitingOn(pub.ready) || 'Starting…') : 'Keep your screen to yourself.';
+    if (!rdy) dk = `<button class="btn" data-a="ready" ${App.revealed ? '' : 'disabled'}>I’m ready<small>${App.revealed ? 'Remember it. You can peek again any time.' : 'Look at your role first'}</small></button>`;
+  } else if (ph === 'propose') {
+    h1 = iProp ? `Pick a <em>${W.team.toLowerCase()} of ${size}</em>` : `<em>${nameOf(pub, prop)}</em> picks ${size}`;
+    h2 = `${W.node} ${pub.node + 1}` + (pub.needs[pub.node] > 1 ? `: it takes <b>two</b> sabotages to bring this one down.` : `: one sabotage brings it down.`);
+    if (iProp) dk = `<div class="hint">Tap players. ${pub.team.length} of ${size} picked.</div><div class="row"><button class="btn ghost" data-a="pass" ${pub.canPass ? '' : 'disabled'}>Pass</button><button class="btn" data-a="propose" ${pub.team.length === size ? '' : 'disabled'}>Propose</button></div>`;
+    else dk = `<div class="hint">Talk it over. ${nameOf(pub, prop)} is choosing.</div>`;
+  } else if (ph === 'vote') {
+    const voted = priv && priv.vote != null;
+    h1 = `Send this <em>${W.team.toLowerCase()}</em>?`; h2 = `${nameOf(pub, prop)} proposes ${names(pub, pub.team)}. ` + (voted ? waitingOn(pub.voted) : 'Everyone votes, in secret, at once.');
+    dk = voted ? `<div class="hint">You voted <b>${priv.vote ? 'Accept' : 'Refuse'}</b>. ${pub.voted.length} of ${n} in.</div>`
+      : `<div class="row"><button class="btn red" data-a="vote" data-v="0">Refuse</button><button class="btn blue" data-a="vote" data-v="1">Accept</button></div>`;
+  } else if (ph === 'voteResult') {
+    const v = pub.lastVote; cd = true;
+    h1 = v.ok ? `<em>Accepted</em> ${v.yes}–${v.no}` : `Refused ${v.yes}–${v.no}`;
+    h2 = v.ok ? `${names(pub, v.team)} go to ${W.node.toLowerCase()} ${v.node + 1}.` : (pub.rejects + 1 >= 5 ? 'That was the last proposal.' : 'The pick moves on to the next player.');
+  } else if (ph === 'node') {
+    const on = pub.team.includes(me), done = priv && priv.choice;
+    h1 = `At <em>${W.node.toLowerCase()} ${pub.node + 1}</em>`; h2 = `${names(pub, pub.team)} decide in secret. ` + (pub.chosen.length ? pub.chosen.length + ' of ' + pub.team.length + ' done.' : '');
+    if (on && !done) dk = `<div class="hint">${W.goods} can only ${W.secure.toLowerCase()}.</div><div class="row"><button class="btn blue" data-a="choose" data-c="secure">${W.secure}</button><button class="btn red" data-a="choose" data-c="hack">${W.hack}</button></div>`;
+    else dk = `<div class="hint">${on ? 'Done. Keep a straight face.' : 'You are not on this ' + W.team.toLowerCase() + '. Watch them.'}</div>`;
+  } else if (ph === 'nodeResult') {
+    const r = pub.lastNode; cd = true;
+    h1 = r.hacked ? `${W.node} ${r.node + 1} <em style="color:#FFB4A3">${W.hacked.toLowerCase()}</em>` : `${W.node} ${r.node + 1} <em>${W.secured.toLowerCase()}</em>`;
+    h2 = r.hacked ? `<b>${W.hacks(r.hacks)}</b>. ${W.team}: ${names(pub, r.team)}.` : (r.hacks ? `It stands, but there was <b>${W.hacks(r.hacks)}</b> (this one needed ${r.need}). ${W.team}: ${names(pub, r.team)}.` : `No sabotage. ${W.team}: ${names(pub, r.team)}.`);
+  } else if (ph === 'over') {
+    const mine = priv && priv.role, won = mine && mine === pub.winner;
+    h1 = pub.winner === 'bad' ? `${W.bads} win` : `${W.goods} win`;
+    h2 = (pub.reason === 'hammer' ? 'Five proposals in a row were refused.' : pub.winner === 'bad' ? `Three ${W.nodes.toLowerCase()} fell.` : `Three ${W.nodes.toLowerCase()} held.`) + (mine ? (won ? ' <b>You won.</b>' : ' You lost.') : '');
+    dk = host ? `<button class="btn" data-a="start" ${n < RULES.min || n > RULES.max ? 'disabled' : ''}>Play again<small>New roles, same players</small></button><button class="btn ghost" data-a="lobby">Back to the lobby</button>`
+      : `<div class="hint">${hostName} can start the next game.</div>`;
+  }
+  const hk = ph + pub.rejects + pub.node + pub.proposer + pub.game; if (hk !== App.headKey) { App.headKey = hk; App.popUntil = Date.now() + 450; setTimeout(draw, 500); }
+  h += `<div class="head ${Date.now() < App.popUntil ? 'pop' : ''}"><div class="st h1">${h1}</div><div class="h2">${h2}</div>${cd ? '<div class="cd"><i id="cd"></i></div>' : ''}</div>`;
+
+  // role card (the roles phase)
+  if (ph === 'roles' && inGame) h += roleCard(pub, priv);
+
+  // players
+  const ham = ph === 'propose' || ph === 'vote' ? pub.players[(pub.players.findIndex(p => p.id === prop) + (4 - pub.rejects)) % n] : null;
+  h += `<div class="players ${n <= 6 ? 'few' : ''}">` + pub.players.map(p => {
+    const inTeam = (ph === 'propose' || ph === 'vote' || ph === 'node' || ph === 'voteResult') && pub.team.includes(p.id) || (ph === 'nodeResult' && pub.lastNode.team.includes(p.id));
+    let bd = '', mk = '';
+    if (ph === 'lobby' && p.id === pub.host) bd = `<span class="tag cream">Host</span>`;
+    if ((ph === 'propose' || ph === 'vote' || ph === 'voteResult') && p.id === prop) bd = `<span class="tag">Picks</span>`;
+    if (ph === 'roles' && pub.ready.includes(p.id)) mk = `<span class="mk">✓</span>`;
+    if (ph === 'vote' && pub.voted.includes(p.id)) mk = `<span class="mk">✓</span>`;
+    if (ph === 'voteResult') mk = pub.lastVote.votes[p.id] ? `<span class="mk y">✓</span>` : `<span class="mk n">✕</span>`;
+    if (ph === 'node' && pub.chosen.includes(p.id)) mk = `<span class="mk">✓</span>`;
+    const role = pub.roles && pub.roles[p.id] ? `<div class="rl"><span class="tag ${pub.roles[p.id] === 'bad' ? 'red' : 'blue'}">${pub.roles[p.id] === 'bad' ? W.bad : W.good}</span></div>` : '';
+    const src = crestImg(p.crest), tap = iProp ? ` tap" data-a="pick" data-id="${p.id}` : (host && ph === 'lobby' && p.id !== me ? ` tap" data-a="kickask" data-id="${p.id}` : '');
+    return `<div class="pl ${inTeam ? 'in' : ''} ${p.on ? '' : 'off'}${tap}">${bd ? '<span class="bd">' + bd + '</span>' : ''}${ham && ham.id === p.id && pub.rejects < 4 ? '<span class="ham" title="Has the last proposal">\u{1F528}</span>' : ''}
+      ${src ? `<img class="cr" src="${src}" alt="">` : `<div class="fb">${esc(p.name[0].toUpperCase())}</div>`}${mk}
+      <div class="nm ${p.id === me ? 'me' : ''}">${esc(p.name)}${p.on ? '' : ' · off'}</div>${role}</div>`; }).join('') + `</div>`;
+
+  // peek, host tools
+  if (inGame && playing && ph !== 'roles' && ph !== 'over') dk += `<button class="peek" data-hold="peek">Hold to peek at your role</button>`;
+  if (host && ['roles', 'vote', 'node', 'voteResult', 'nodeResult'].includes(ph)) dk += `<button class="peek" data-a="forceask" style="border-style:dashed">Host: ${ph.endsWith('Result') ? 'continue now' : 'skip whoever is missing'}</button>`;
+
+  // log
+  if (pub.history.length) {
+    h += `<div class="log"><h3>What happened</h3>` + pub.history.slice().reverse().map(e => {
+      if (e.k === 'node') return `<div class="lg ${e.hacked ? 'bad' : 'good'}"><div class="t">${W.node} ${e.node + 1}</div><b>${e.hacked ? W.hacked : W.secured}</b>${e.hacks ? ' · ' + W.hacks(e.hacks) : ''} · ${W.team.toLowerCase()}: ${names(pub, e.team)}</div>`;
+      const y = pub.players.filter(p => e.votes[p.id]).map(p => esc(p.name)).join(', '), no = pub.players.filter(p => e.votes[p.id] === false).map(p => esc(p.name)).join(', ');
+      return `<div class="lg ${e.ok ? 'ok' : 'no'}"><div class="t">${W.node} ${e.node + 1} · proposal ${e.try}</div><b>${nameOf(pub, e.by)}</b> proposed <b>${names(pub, e.team)}</b>: ${e.ok ? 'accepted' : 'refused'} ${e.yes}–${e.no}<br><span class="y">✓ ${y || 'nobody'}</span><br><span class="n">✕ ${no || 'nobody'}</span></div>`;
+    }).join('') + `</div>`;
+  }
+  return [h, dk];
+}
+function roleCard(pub, priv) {
+  if (!priv || !priv.role) return `<div class="role"><div class="hid">Getting your role\u2026</div></div>`;
+  const bad = priv.role === 'bad';
+  return `<div class="role" data-hold="peek"><div class="hid"><b>Secret</b>Press and hold to look</div><div class="shown">
+      <img src="../img/skins/${bad ? 'spiders-hollow' : 'brute-champion'}.png" alt="" draggable="false"><div><span class="tag ${bad ? 'red' : 'blue'}">You are</span></div><div class="st name" style="color:${bad ? '#FFB4A3' : '#BFE3FA'}">${bad ? W.bad : W.good}</div>
+      <p style="margin:8px 0 0">${bad ? `Bring down three ${W.nodes.toLowerCase()} without being found out.` + (priv.mates.length ? `<br>With you: <b>${names(pub, priv.mates)}</b>` : '') : `${W.secure} three ${W.nodes.toLowerCase()}. There are ${pub.bads} ${W.bads.toLowerCase()} among you, and you don\u2019t know who.`}</p></div></div>`;
+}
+function sheetHTML() {
+  const s = App.sheet, pub = App.V.pub; if (!s) return App.screen === 'game' && pub && pub.phase !== 'roles' && pub.phase !== 'lobby' && App.V.priv && App.V.priv.role ? `<div class="sheet" id="peekover" style="place-items:center"><div style="width:100%;padding:0 14px">${roleCard(pub, App.V.priv)}</div></div>` : '';
+  if (s.k === 'rules') return `<div class="sheet" data-a="close"><div class="box" data-stop="1"><h2>How it works</h2>
+    <ul><li>Everyone gets a secret role. <b>${W.goods}</b> are the majority and know nothing. <b>${W.bads}</b> know each other.</li>
+    <li>Five ${W.nodes.toLowerCase()}, one at a time. The player whose turn it is picks a ${W.team.toLowerCase()} (or passes the pick on).</li>
+    <li>Everyone votes Accept or Refuse. More than half must accept. Votes are shown afterwards.</li>
+    <li>An accepted ${W.team.toLowerCase()} decides in secret: <b>${W.secure}</b> or <b>${W.hack}</b>. ${W.goods} can only ${W.secure.toLowerCase()}. Only the number of sabotages is shown.</li>
+    <li>First side to three ${W.nodes.toLowerCase()} wins. If five proposals in a row are refused on one ${W.node.toLowerCase()}, the ${W.bads} win at once. The \u{1F528} marks who would get that last proposal.</li>
+    <li>Roles stay secret: press and hold the peek button to check yours.</li></ul>
+    <table><tr><th>Players</th><th>${W.bads}</th><th>T1</th><th>T2</th><th>T3</th><th>T4</th><th>T5</th></tr>
+    ${[5, 6, 7, 8].map(n => `<tr><td>${n}</td><td>${RULES.bad[n]}</td>${RULES.sizes[n].map((x, i) => `<td>${x}${RULES.need(n, i) > 1 ? '*' : ''}</td>`).join('')}</tr>`).join('')}</table>
+    <p>* needs two sabotages to fall.</p><button class="btn" data-a="close">Got it</button></div></div>`;
+  if (s.k === 'confirm') return `<div class="sheet" data-a="close"><div class="box" data-stop="1"><h2>${esc(s.title)}</h2><p>${esc(s.text)}</p><button class="btn" data-a="yes">${esc(s.yes)}</button><button class="btn line" data-a="close">Cancel</button></div></div>`;
+  if (s.k === 'share') return `<div class="sheet" data-a="close"><div class="box" data-stop="1"><h2>Room ${esc(App.room)}</h2><p>Send this link, or tell people the code:</p><input class="inp" style="color:#17140F;border-color:#17140F;background:#fff;font-size:14px" readonly value="${esc(s.url)}" onfocus="this.select()"><button class="btn" data-a="close">${s.copied ? 'Copied' : 'Close'}</button></div></div>`;
+  return '';
+}
+
+// ---- input ----
+document.addEventListener('input', e => { if (e.target.id === 'name') App.name = e.target.value; if (e.target.id === 'code') { App.codeIn = cleanRoom(e.target.value); if (e.target.value !== App.codeIn) e.target.value = App.codeIn; } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && App.screen === 'start') { App.codeIn.length === 5 ? joinRoom() : createRoom(); } });
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-a]'); if (!el) return;
+  if (el.dataset.a === 'close' && e.target.closest('[data-stop]') && !e.target.closest('button')) return;
+  const a = el.dataset.a, pub = App.V.pub;
+  if (!['pick', 'close'].includes(a)) sfx('button');
+  if (a === 'create') { if (!cleanName(App.name) || !App.name.trim()) { App.err = 'Type your name first.'; return draw(); } createRoom(); }
+  else if (a === 'join') { if (!App.name.trim()) { App.err = 'Type your name first.'; return draw(); } joinRoom(); }
+  else if (a === 'resume') { const l = store.get('tc:last'); App.name = l.name; App.codeIn = l.room; joinRoom(); }
+  else if (a === 'rules') { App.sheet = { k: 'rules' }; draw(); }
+  else if (a === 'mute') { App.mute = !App.mute; store.set('tc:mute', App.mute); draw(); }
+  else if (a === 'close') { App.sheet = null; draw(); }
+  else if (a === 'share') { const url = location.origin + location.pathname + '?room=' + App.room; let copied = false; try { await navigator.clipboard.writeText(url); copied = true; } catch (x) {} App.sheet = { k: 'share', url, copied }; draw(); }
+  else if (a === 'kickask') { App.sheet = { k: 'confirm', title: 'Remove player?', text: ((pub.players.find(p => p.id === el.dataset.id) || {}).name || 'This player') + ' will be taken out of the room.', yes: 'Remove', act: { k: 'kick', id: el.dataset.id } }; draw(); }
+  else if (a === 'forceask') { App.sheet = { k: 'confirm', title: 'Move on?', text: pub.phase === 'vote' ? 'Missing votes count as Refuse.' : pub.phase === 'node' ? 'Missing choices count as ' + W.secure + '.' : 'Continue without waiting.', yes: 'Move on', act: { k: 'force' } }; draw(); }
+  else if (a === 'yes') { const s = App.sheet; App.sheet = null; if (s && s.act) act(s.act); draw(); }
+  else if (a === 'pick') { sfx('press-card'); act({ k: 'pick', id: el.dataset.id }); }
+  else if (a === 'vote') act({ k: 'vote', v: el.dataset.v === '1' });
+  else if (a === 'choose') { if (el.dataset.c === 'hack' && App.V.priv && App.V.priv.role !== 'bad') { sfx('nope'); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); return; } act({ k: 'choose', c: el.dataset.c }); }
+  else if (a === 'crest') act({ k: 'crest' });
+  else if (['start', 'lobby', 'ready', 'propose', 'pass'].includes(a)) act({ k: a });
+  if (navigator.wakeLock && !App.wake) { try { App.wake = await navigator.wakeLock.request('screen'); App.wake.addEventListener('release', () => App.wake = null); } catch (x) {} }
+});
+// press and hold to see your role; let go and it is hidden again
+const holdOn = e => { if (e.target.closest('[data-hold]')) { e.preventDefault(); App.peek = true; document.body.classList.add('peeking'); } else holdOff(); };
+const holdOff = () => { if (App.peek) { App.peek = false; document.body.classList.remove('peeking'); App.revealed = true; draw(); } };
+document.addEventListener('pointerdown', holdOn); ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => document.addEventListener(t, holdOff)); window.addEventListener('blur', holdOff);
+document.addEventListener('contextmenu', e => { if (e.target.closest('[data-hold]') || App.peek) e.preventDefault(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && App.screen === 'game' && !App.isHost) hello(true); });
+
+// the countdown bar and the lost-contact notice tick on their own
+setInterval(() => {
+  const pub = App.V.pub, el = $('#cd');
+  if (el && pub && pub.until) { const total = pub.phase === 'voteResult' ? RULES.voteShow : RULES.nodeShow, left = pub.until - (Date.now() + App.skew); el.style.transform = 'scaleX(' + Math.max(0, Math.min(1, left / total)) + ')'; }
+  if (App.screen === 'game' && pub && !App.isHost) draw();
+}, 250);
+
+draw();
+try { const t = JSON.parse(sessionStorage.getItem('tc:tab')); if (t && t.room && (!App.codeIn || App.codeIn === t.room) && window.mqtt) { App.name = t.name; App.codeIn = t.room; joinRoom(); } } catch (e) {}
+if (!window.mqtt) { App.err = 'The network part did not load. Reload the page.'; draw(); }
+if (!(window.crypto && crypto.subtle)) { App.err = 'This page needs a secure (https) address.'; draw(); }
+window.__tc = { App, Engine, RULES };
+</script>
+</body>
+</html>
