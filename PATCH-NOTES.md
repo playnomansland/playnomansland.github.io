@@ -20,6 +20,14 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 
 ---
 
+## 25 November 2026 – New unit models to try (a setting, off unless you turn it on)
+
+- **Unit models: New (test)** in Settings (in a match, on the 3D board) swaps 26 of the 28 units for new animated models: they idle, walk, attack and fall with their own animation, and turn to face what they attack. Slime Wizard and Slimeshots keep their classic models, and so does a unit wearing a skin. **Classic** is the default: nothing changes unless you switch.
+- Looks only: fights, stats and online play are the same either way. The new models' own projectiles and hit effects come later; the game's are drawn for now.
+- Developers: `?models=new` or `?models=classic` in the address sets it for one visit without saving. How the models get into the game: `docs/UNIT-MODELS.md`.
+
+---
+
 ## 14 November 2026 – V2WIP: a brighter teleport tile and a longer, wider hook (developers only)
 
 - **Warper:** the teleport tile is a stronger violet with a glowing heart, and motes swirl into it while you deploy (a few drift out of the tile across the board).

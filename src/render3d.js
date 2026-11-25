@@ -1033,11 +1033,13 @@ const Render3D = (THREE, el, view, opts = {}) => {
     }
   }
   let v0 = null;
+  let unitN = {}; // (the animated unit models: how many bodies of each squad tag have been placed this frame)
   function placeBodies(v, dt) {
     const f = v.me === 1 ? -1 : 1, me = v.me;
     bodies.length = 0;
     if (!v.m) return;
     const battle = v.bt && (v.phase === 'battle' || v.phase === 'result' || v.phase === 'end');
+    if (opts.units) { opts.units.begin(battle ? v.bt : null); unitN = {}; }
     if (battle) collectBattle(v, dt, f); else collectDeploy(v, f);
     if (v.boss) collectBoss(v, f, !battle);
     const byKey = {};
@@ -1070,6 +1072,16 @@ const Render3D = (THREE, el, view, opts = {}) => {
         // what the Mechites build rattles (in fights)
         if (s.b && (s.u.construct || s.u.building) && s.look === 'solid') { tmpP.x += Math.sin(clock * 47 + (s.phase || 0) * 13) * 0.04 * sc; tmpP.z += Math.cos(clock * 53 + (s.phase || 0) * 7) * 0.04 * sc; }
         tmpM.compose(tmpP, tmpQ, tmpS);
+        // The animated unit models (src/units3d.js; opts.units is set when the player chose Unit models: New). Each
+        // body is offered to it: where it stands (without the classic bob: its walk is its own), its heading, size
+        // and look, a name that stays the same from frame to frame for a body that is not in a fight (its squad's tag
+        // and its number in the squad, so a squad keeps its models while it is dragged), and whether a skin's own
+        // model is on it (those stay classic). When it draws the body, the classic model here is shrunk to nothing;
+        // rings, tags and markers are drawn as always.
+        if (opts.units && !s.u.structure && !s.u.building && look !== 'ruin') {
+          const id = s.b ? null : (s.tag || s.side) + '#' + (unitN[s.tag || s.side] = (unitN[s.tag || s.side] || 0) + 1);
+          if (opts.units.body({ kind, s, x: tmpP.x, y: tmpP.y - bob, z: tmpP.z, q: tmpQ.clone(), sc, top, look: s.look, id, skin: kind !== models.kindOf(s.u) })) tmpM.makeScale(0, 0, 0);
+        }
         const team = s.flag || teamColor(s.side, me);
         for (const [p, g] of gs) {
           g.setMatrixAt(i, tmpM);
@@ -1281,6 +1293,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     const near = Math.max(0, Math.min(1, (cam.zoom() - 1) / 2)); // fog only at the ground view: the strategic, tilted and angled views see the whole board
     const lk = cam.lensK(); // (a longer overview lens stands further back: the fog with it)
     scene.fog.near = (400 - 310 * near) * lk; scene.fog.far = (600 - 380 * near) * lk;
+    if (opts.units) opts.units.frame(scene, dt, camera); // the animated unit models: their clips move on, the fallen play out
     renderer.render(scene, camera);
   }
   // where a touch meets the ground, raised or lowered (a couple of steps toward the ground's height there)
@@ -1332,12 +1345,13 @@ const Render3D = (THREE, el, view, opts = {}) => {
   const drawn = () => bodies.map(s => ({ name: s.u.name || null, kind: s.u.kind || null, shape: s.u.shape || null, color: s.u.color || null,
     side: s.side, look: s.look, crest: s.crest || null, edge: s.edge || null, structure: !!s.u.structure, building: s.u.building || null, spire: !!s.u.spire, aloft: !!s.u.aloft, marked: !!s.marked }));
   function dispose() {
+    if (opts.units) opts.units.dispose();
     cam.dispose();
     if (scenery) scenery.dispose();
     renderer.dispose();
     renderer.forceContextLoss();
   }
   return { size: sizeTo, draw, tileAt, thumb: (match) => floor2d.thumb(match), camera: cam, cam3: camera, info: () => renderer.info.render,
-    still: () => !cam.busy(), alive: () => !!(scenery && scenery.alive && scenery.alive()), explore: (x0) => scenery && scenery.explore && scenery.explore(x0), _scenery: () => scenery, // (tests) // (tests: send Forest Glade's explorer out) // alive: the scenery moves on its own (Savanna's vultures) kinds: () => [...new Set(Object.keys(groups).filter(k => used.has(groups[k])).map(k => k.split('#')[0]))], // the models drawn in the last frame (UI tests)
+    still: () => !cam.busy() && !(opts.units && opts.units.busy()), // (busy: a fallen unit model is still playing its death) alive: () => !!(scenery && scenery.alive && scenery.alive()), explore: (x0) => scenery && scenery.explore && scenery.explore(x0), _scenery: () => scenery, // (tests) // (tests: send Forest Glade's explorer out) // alive: the scenery moves on its own (Savanna's vultures) kinds: () => [...new Set(Object.keys(groups).filter(k => used.has(groups[k])).map(k => k.split('#')[0]))], // the models drawn in the last frame (UI tests)
     quality, pixelRatio: () => renderer.getPixelRatio(), dispose, drawn, screenAt, pickAt, scenery };
 };

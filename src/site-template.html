@@ -1656,7 +1656,7 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
   const foe = () => 1 - me;
   let m = null;             // match state (on the guest: a copy kept in step by the host)
   let phase = 'start';      // start | lobby | draft | deploy | battle | result | end
-  try { if (/[?&]test\b/.test(location.search)) window.__tour = () => tour.t && JSON.parse(JSON.stringify(tour.t)); if (/[?&]test\b/.test(location.search)) window.__pb = () => ({ m, me, board3d, board, bt, phase, fx, summary: lastSummary, liveSpeed: liveSpeed.slice(), playSpeed: playSpeed(), away, timeUp, ready: ready.slice(), team: m && m.team ? JSON.parse(JSON.stringify(m.team)) : null, pings: duoPings.slice(), rings: duoOn() ? [0, 1, 2, 3].map(k => duoRing(k).col) : null, expireDeploy: () => { deadline = now() - 400; tick(); } }); } catch (e) {} // read-only peek and countdown trigger for UI tests
+  try { if (/[?&]test\b/.test(location.search)) window.__tour = () => tour.t && JSON.parse(JSON.stringify(tour.t)); if (/[?&]test\b/.test(location.search)) window.__pb = () => ({ m, me, board3d, units3d, board, bt, phase, fx, summary: lastSummary, liveSpeed: liveSpeed.slice(), playSpeed: playSpeed(), away, timeUp, ready: ready.slice(), team: m && m.team ? JSON.parse(JSON.stringify(m.team)) : null, pings: duoPings.slice(), rings: duoOn() ? [0, 1, 2, 3].map(k => duoRing(k).col) : null, expireDeploy: () => { deadline = now() - 400; tick(); } }); } catch (e) {} // read-only peek and countdown trigger for UI tests
   try { if (/[?&]test\b/.test(location.search)) window.__pbRedraw = () => { if (phase === 'deploy') panelDeploy(); render(); }; } catch (e) {} // UI tests that set up a board state: draw it
   try { if (/[?&]test\b/.test(location.search)) window.__pbView = () => JSON.parse(JSON.stringify({ foeStart: boardView().foeStart, foeReady: boardView().foeReady })); } catch (e) {} // UI tests: what the boards are told
   try { if (/[?&]test\b/.test(location.search)) window.__pbSheet = (side, key) => openMpbSheet(side, key); } catch (e) {} // UI tests: open a 2v2 building's sheet (every kind, either team's)
@@ -2898,6 +2898,12 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
           ${Q3D.map(q => `<button data-q3d="${q}" aria-pressed="${meter.q === q}">${q[0].toUpperCase() + q.slice(1)}</button>`).join('')}
         </div>
       </div>
+      <div class="bar q3d-bar"${want3d ? '' : ' hidden'}>
+        <span class="hint">Unit models</span>
+        <div class="seg" role="group" aria-label="Unit models: the classic ones, or the new animated ones (being tried out)">
+          <button data-umod="classic" aria-pressed="${!wantUnits}">Classic</button><button data-umod="new" aria-pressed="${wantUnits}">New (test)</button>
+        </div>
+      </div>
       <div class="bar"><span class="hint">Friends</span><button class="btn small" id="fr-open2">Friends <b class="fr-badge" hidden></b></button></div>
       ${m && m.boss ? (bossCtlOn() ? '' : '<div class="bar"><span class="hint">The Mommy</span><button class="btn small" id="boss-atk">Mommy’s attacks</button></div><button class="btn primary" id="boss-restart">Restart boss</button>'
         + `<button class="btn" id="boss-replay" aria-expanded="false" aria-controls="boss-rounds">Replay round</button><div class="bar" id="boss-rounds" hidden><span class="hint">Play again from the start of</span><div class="seg" role="group" aria-label="Replay which round">${bossReplayable().map(r => `<button data-boss-round="${r}">Round ${r}${r === m.round ? ' (now)' : ''}</button>`).join('')}</div></div>`
@@ -3029,6 +3035,10 @@ html.pc .app:has(#talk-fab:not([hidden])) .hud { padding-left: 56px; } /* the na
     $('sheet').querySelectorAll('[data-q3d]').forEach(b => b.addEventListener('click', () => {
       setQuality(b.dataset.q3d);
       $('sheet').querySelectorAll('[data-q3d]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    }));
+    $('sheet').querySelectorAll('[data-umod]').forEach(b => b.addEventListener('click', () => {
+      setUnitModels(b.dataset.umod === 'new');
+      $('sheet').querySelectorAll('[data-umod]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     }));
   }
   let mapPick = '';         // the map the host picked for the next match ('' = random). Only developers pick: see curMap
@@ -8117,6 +8127,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   }
 
   function absorb() {
+    if (units3d) for (const s of bt.lastShots()) units3d.aimSeen(s); // the animated unit models: a body faces what it shot at
     const bossAt = battlePre && battlePre.boss ? bt.bodies.find(b => b.u.boss) : null; // (the Mommy boss puzzle: her bite has its own look, src/render2d drawBossState / render3d collectBoss)
     for (const s of bt.lastShots()) if (bossAt && s[0] === bossAt.x && s[1] === bossAt.y && s[4] === bossAt.side) continue;
     else if (s[13] === 1) Art.frostBeam(fx, s); // a frost beam, held on its target
@@ -8174,6 +8185,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (cam && cam.on) { cam.k = Math.min(1, cam.k + dtReal / CAM.ease); camFollow(dtReal); }
     const boost = (bt.time() > 20 ? 2 : 1) * (cam && cam.on ? 1 - (1 - CAM.slow) * cam.k : 1);
     const sp = playSpeed();
+    unitSpeed = sp * boost; // (the animated unit models play their clips at the fight's speed)
     acc += dtReal * sp * boost;
     while (acc >= Game.SETTINGS.dt) {
       acc -= Game.SETTINGS.dt;
@@ -9051,6 +9063,22 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   let want3d = !force2d;
   try { want3d = force3d || (!force2d && localStorage.getItem(B3D_STORE) !== '2d' && sessionStorage.getItem(B3D_STORE) !== '2d'); } catch (e) {}
   const save3d = (on) => { try { localStorage.setItem(B3D_STORE, on ? '3d' : '2d'); sessionStorage.removeItem(B3D_STORE); } catch (e) {} };
+  // ---------- the animated unit models (src/units3d.js, models/units/*.glb): a setting, OFF unless chosen ----------
+  // Settings (in a match) has Unit models: Classic / New (test), saved on this device (pb-unit-models). ?models=new in
+  // the address turns them on for this visit and ?models=classic off, without saving. On, the 3D board draws each unit
+  // that has one as its animated model; a unit without one, a skin, and anything that fails to load keep the classic
+  // model. Looks only: nothing about a match changes and nothing is sent. three.js's loader (vendor/addons/) and the
+  // models' code load only when the setting is on, so nobody else downloads them.
+  const UMOD_STORE = 'pb-unit-models';
+  const umodQ = /[?&]models=(new|classic)\b/.exec(location.search);
+  let wantUnits = !!(umodQ && umodQ[1] === 'new');
+  try { if (!umodQ) wantUnits = localStorage.getItem(UMOD_STORE) === 'new'; } catch (e) {}
+  let units3d = null, unitSpeed = 1; // the board's unit models while they are on; the fight's speed now (see loop)
+  function setUnitModels(on) {
+    wantUnits = on;
+    try { localStorage.setItem(UMOD_STORE, on ? 'new' : 'classic'); } catch (e) {}
+    if (board3d) { stop3d(); if (want3d) start3d(); } // the board starts again with or without them
+  }
   let starting3d = null;
   // one load per 3D source file, shared by the board and the main menu's wizard
   const loaded3d = {};
@@ -9069,11 +9097,19 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
         el.className = 'board3d';
         cv.after(el);
         { const v0 = boardView(); if (v0.m) Game.useGrid(v0.m); } // its ground and camera are built for one grid: the one it draws
-        b = Render3D(THREE, el, boardView, { onTap: boardTap, onPress: boardPress, onDrag: boardDrag, onDrop: boardDrop, onHover: boardHover, placing: () => phase === 'deploy', onInput: wake3d });
+        let units = null;
+        if (wantUnits && THREE_URL.startsWith('./vendor/')) try { // (a build that takes three.js from elsewhere has no loader files beside it: classic there)
+          const addon = (f) => new URL('./vendor/addons/' + f, document.baseURI).href;
+          const [gl, sk] = await Promise.all([import(addon('GLTFLoader.js')), import(addon('SkeletonUtils.js'))]);
+          if (typeof Units3D !== 'function') await load3d('units3d');
+          units = Units3D(THREE, gl.GLTFLoader, sk, { base: 'models/units/', v: V3D, speed: () => phase === 'battle' ? unitSpeed : 1, wake: wake3d });
+        } catch (e) { units = null; console.warn('No Mans Land: the new unit models could not load, so the classic ones are drawn.', e); }
+        if (!want3d) return; // switched back to 2D while they loaded
+        b = Render3D(THREE, el, boardView, { onTap: boardTap, onPress: boardPress, onDrag: boardDrag, onDrop: boardDrop, onHover: boardHover, placing: () => phase === 'deploy', onInput: wake3d, units });
         const can = el.querySelector('canvas');
         can.setAttribute('aria-label', cv.getAttribute('aria-label'));
         can.addEventListener('webglcontextlost', () => { if (board3d === b) fallback2d('lost'); });
-        board3d = b;
+        board3d = b; units3d = units;
         cv.style.display = 'none';
         startMeter(el);
         size(); dock(); wake3d();
@@ -9089,7 +9125,7 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
   function stop3d() {
     const b = board3d;
     if (!b) return;
-    board3d = null;
+    board3d = null; units3d = null;
     if (raf3d) { cancelAnimationFrame(raf3d); raf3d = 0; }
     stopMeter();
     try { b.dispose(); } catch (e) {}
