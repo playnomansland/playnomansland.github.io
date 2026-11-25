@@ -8130,14 +8130,16 @@ Actions run in this order: package (round 1 only), sell, levelUp, unlock, skills
     if (units3d) for (const s of bt.lastShots()) units3d.aimSeen(s); // the animated unit models: a body faces what it shot at
     const bossAt = battlePre && battlePre.boss ? bt.bodies.find(b => b.u.boss) : null; // (the Mommy boss puzzle: her bite has its own look, src/render2d drawBossState / render3d collectBoss)
     for (const s of bt.lastShots()) if (bossAt && s[0] === bossAt.x && s[1] === bossAt.y && s[4] === bossAt.side) continue;
-    else if (s[13] === 1) Art.frostBeam(fx, s); // a frost beam, held on its target
+    else if (s[13] === 1) { if (!(units3d && units3d.beamFx(s))) Art.frostBeam(fx, s); } // a frost beam, held on its target (not one the animated unit models draw)
     else if (s[13] === 2) fx.push({ kind: 'freeze', x: s[0], y: s[1], side: s[4], age: 0, life: 0.6 }); // frozen solid
     else if (s[13] === 3) fx.push({ kind: 'eat', x1: s[0], y1: s[1], x2: s[2], y2: s[3], side: s[4], age: 0, life: 0.6 }); // eaten by the Obelisk
     else if (s[13] === 4) fx.push({ kind: 'warp', x1: s[0], y1: s[1], x2: s[2], y2: s[3], side: s[4], age: 0, life: 0.7 }); // V2WIP: teleported by a Warper
     else if (s[13] === 5) fx.push({ kind: 'hookhit', x: s[2], y: s[3], side: s[4], age: 0, life: 0.35 }); // V2WIP: caught on a Catcher's hook
     else if (s[12] === 1) fx.push({ kind: 'roar', x: s[0], y: s[1], r: s[5], side: s[4], age: 0, life: 0.8 });
+    else if (s[8] > 0 && units3d && units3d.flameFx(s)) {} // (the animated unit models draw this flame as a jet)
     else if (s[8] > 0) fx.push({ kind: 'flame', x1: s[0], y1: s[1], x2: s[2], y2: s[3], side: s[4], half: s[8], slam: s[11] === 1, spin: s[11] === 2, age: 0, life: s[11] === 1 ? 0.45 : 0.3 });
     else if (s[10] === 1) fx.push({ kind: 'bolt', x1: s[0], y1: s[1], x2: s[2], y2: s[3], side: s[4], age: 0, life: 0.22, seed: Math.random() });
+    else if (units3d && units3d.shotFx(s)) {} // (the animated unit models draw this shot: its own projectile, tracer or beam)
     else fx.push({ kind: s[7] === 1 ? 'heal' : 'shot', x1: s[0], y1: s[1], x2: s[2], y2: s[3], side: s[4], splash: s[5], charged: s[6], spin: s[9] || 1, age: 0, life: s[7] === 1 ? 0.35 : 0.18 });
     for (const b of bt.bodies) if (!b.alive && !b._gone) {
       b._gone = true;

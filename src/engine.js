@@ -1678,6 +1678,10 @@ const Engine = (() => {
       // experience: damage dealt, half of damage absorbed, and a bounty for killing leveled bodies
       owner.xp += applied;
       v.xp += applied * (g.absorbXp == null ? 0.5 : g.absorbXp);
+      // a direct hit, noted on the body for the board to show (the animated unit models' hit spark and flinch, src/
+      // units3d.js): how many it has taken, the last one's size, where it came from and who dealt it. Burn, bleed and
+      // poison ticks do not come this way. Nothing in a fight reads these: no outcome changes.
+      v.hitN = (v.hitN || 0) + 1; v.hitDmg = dmg; v.hitFrom = [fromX, fromY]; v.hitBy = owner;
       loseHp(v, dmg);
       if (poolHp(v) <= 0 && finishing(owner, v)) return;
       if (poolHp(v) <= 0) { kill(owner, v); return; }

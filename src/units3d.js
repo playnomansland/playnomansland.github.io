@@ -4,9 +4,11 @@
 //
 // What it does: each unit named in UNITS below is drawn as its own animated model (models/units/<file>.glb) in place
 // of the game's code-built one: Idle, Walk at the speed the body really moves, Attack on each strike, a Death clip
-// where it falls, and it turns to face the enemy it attacks. Looks only: the engine and the rules are not touched,
-// nothing is sent between players. NOT in this version yet: the models' own projectiles, hit effects, burn / bleed /
-// poison looks and dashes (the game's own are drawn as before).
+// where it falls, and it turns to face the enemy it attacks. Its shots are its own too (UNITS[..].proj: a projectile
+// model from models/units/proj_<glb>.glb flying from its hand, a tracer, a beam, a flame jet, a hook on a chain), and
+// its dashes (a Dash / Charge clip, a streak). Any body that takes a direct hit shows a small spark (HIT), and a
+// model that is hit tips back a little. Looks only: the rules are not touched and nothing is sent between players.
+// NOT in this version: the burn / bleed / poison looks (the game's own dots are drawn).
 //
 //   const units = Units3D(THREE, GLTFLoader, SkeletonUtils, host);
 //   host: { base: 'models/units/', v: '<cache tag>', speed: () => the fight's speed now (1 outside a fight),
@@ -14,7 +16,11 @@
 //   units.begin(bt)  render3d, before it places the bodies: the battle on the board, or null
 //   units.body(d)    render3d, for each body it is about to draw: true = drawn here (render3d hides its own)
 //   units.frame(scene, dt, camera)   render3d, once a frame after the bodies are placed
+//   units.proj(p, f, groundY, bt)    render3d, for each projectile in flight: true = drawn here
+//   units.hooked(b) / units.ownDash(b)   render3d: true = this body's reeling chain / dash streaks are drawn here
 //   units.aimSeen(s) the page, for each shot the engine records (what a body really shot at: it faces that)
+//   units.shotFx(s) / units.beamFx(s) / units.flameFx(s)   the page, for a recorded shot / held frost beam / flame
+//                    wedge: true = drawn here, so the page leaves its own line, beam or wedge out
 //   units.busy()     true while a fallen model is still playing its death (the board keeps drawing meanwhile)
 //   units.dispose()  the board is going away: its models leave the scene
 function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
@@ -26,7 +32,148 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.0,
   "refH": null,
   "launch": 0.4,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "glb": "waterbomb",
+   "variant": "A",
+   "size": 1.0,
+   "far": 1.6,
+   "from": "_drop_gem$",
+   "hit_y": 0.2,
+   "launch": 0.4,
+   "lob": 0.22,
+   "roll": 0.0,
+   "trail": {
+    "colors": [
+     "#9AD8FF",
+     "#4AB0F0",
+     "#D4F0FF",
+     "#2A8CD8"
+    ],
+    "shape": "octa",
+    "per_m": 2.2,
+    "size": [
+     0.035,
+     0.07
+    ],
+    "life": [
+     0.3,
+     0.55
+    ],
+    "spread": 0.07,
+    "drift": 0.25,
+    "rise": 0.0,
+    "back": -0.5,
+    "gravity": 3.0
+   },
+   "splash": {
+    "radius": 0.85,
+    "flash": {
+     "color": "#FFFFFF",
+     "r": 0.22,
+     "life": 0.14
+    },
+    "ring": {
+     "color": "#D4F0FF",
+     "life": 0.45,
+     "opacity": 0.5
+    },
+    "blobs": [
+     {
+      "count": 8,
+      "ramp": [
+       "#FFFFFF",
+       "#D4F0FF",
+       "#9AD8FF",
+       "#4AB0F0",
+       "#2A8CD8"
+      ],
+      "r": [
+       0.1,
+       0.18
+      ],
+      "out": [
+       0.3,
+       0.7
+      ],
+      "up": [
+       0.1,
+       0.45
+      ],
+      "rise": -0.35,
+      "life": [
+       0.4,
+       0.65
+      ],
+      "delay": 0.04
+     },
+     {
+      "count": 3,
+      "ramp": [
+       "#FFFFFF",
+       "#D4F0FF",
+       "#9AD8FF",
+       "#4AB0F0",
+       "#2A8CD8"
+      ],
+      "r": [
+       0.16,
+       0.24
+      ],
+      "out": [
+       0.0,
+       0.12
+      ],
+      "up": [
+       0.35,
+       0.7
+      ],
+      "rise": -0.5,
+      "life": [
+       0.45,
+       0.65
+      ],
+      "delay": 0.03
+     }
+    ],
+    "embers": {
+     "count": 22,
+     "colors": [
+      "#9AD8FF",
+      "#4AB0F0",
+      "#D4F0FF",
+      "#2A8CD8"
+     ],
+     "shape": "octa",
+     "size": [
+      0.05,
+      0.11
+     ],
+     "life": [
+      0.45,
+      0.85
+     ],
+     "speed": [
+      2.0,
+      5.5
+     ],
+     "up": [
+      3.0,
+      7.0
+     ],
+     "gravity": 12.0
+    }
+   },
+   "water": {
+    "jiggle": 0.17,
+    "hz": 3.2,
+    "ripple": 0.11,
+    "ripple_k": 8.0,
+    "tail": 0.1,
+    "opacity": 0.9
+   }
+  }
  },
  "Assassin": {
   "file": "assassin",
@@ -35,7 +182,41 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 2.947,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "dash": {
+    "clip": "Dash",
+    "time": null,
+    "lean": 4,
+    "sink": 0.0,
+    "streak": {
+     "y": 0.45,
+     "colors": [
+      "#3A3550",
+      "#57507A",
+      "#7448AE",
+      "#1E1C24"
+     ],
+     "shape": "sliver",
+     "per_m": 2.2,
+     "size": [
+      0.1,
+      0.2
+     ],
+     "life": [
+      0.18,
+      0.32
+     ],
+     "spread": 0.22,
+     "drift": 0.1,
+     "rise": 0.0,
+     "back": -4.0
+    },
+    "min_speed": 15,
+    "min_gap": 5
+   }
+  }
  },
  "Brute": {
   "file": "brute",
@@ -44,7 +225,42 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 1.926,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "charge": {
+    "clip": "Charge",
+    "rate": 1.0,
+    "dust_y": 0.06,
+    "dust": {
+     "colors": [
+      "#B9A27C",
+      "#9C8660",
+      "#D2C3A0"
+     ],
+     "shape": "puff",
+     "per_m": 1.3,
+     "size": [
+      0.09,
+      0.16
+     ],
+     "life": [
+      0.3,
+      0.5
+     ],
+     "spread": 0.22,
+     "drift": 0.3,
+     "rise": 0.5,
+     "back": 0.0,
+     "opacity": 0.4,
+     "grow": 1.2
+    },
+    "tint": {
+     "color": "#FF7060",
+     "w": 0.42
+    }
+   }
+  }
  },
  "Catcher": {
   "file": "catcher",
@@ -53,7 +269,32 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.733,
   "refH": null,
   "launch": 0.5,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "hook": {
+    "size": 1.0,
+    "fly_y": 0.5,
+    "bite_y": 0.55,
+    "sag": 0.03,
+    "home": 0.28,
+    "far": 1.8,
+    "min_px": 2.4,
+    "cap": 1600,
+    "link": {
+     "len": 0.22,
+     "thick": 0.05,
+     "most": 260,
+     "tones": [
+      "#F4EAD2",
+      "#DDD0B2",
+      "#B8AA8C",
+      "#DDD0B2"
+     ]
+    },
+    "hand": "_fist_L$"
+   }
+  }
  },
  "Earth Wizard": {
   "file": "earthwizard",
@@ -62,7 +303,179 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.0,
   "refH": null,
   "launch": 0.6,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "glb": "rock",
+   "variant": "D",
+   "size": 1.5,
+   "far": 1.5,
+   "hit_y": 0.3,
+   "lob": 0.0,
+   "roll": 0.0,
+   "ground": {
+    "radius": 0.3,
+    "bump": 0.22,
+    "bump_hz": 0.55,
+    "sunk": 0.12,
+    "max_spin": 16
+   },
+   "rise": {
+    "ahead": 1.0,
+    "dirt": {
+     "rate": 26,
+     "count": 1,
+     "colors": [
+      "#74502F",
+      "#4E3220",
+      "#987048",
+      "#7E7E86",
+      "#55555B"
+     ],
+     "shape": "tetra",
+     "size": [
+      0.04,
+      0.09
+     ],
+     "life": [
+      0.35,
+      0.7
+     ],
+     "speed": [
+      1.0,
+      2.6
+     ],
+     "up": 0.9,
+     "gravity": 7.0
+    }
+   },
+   "plough": true,
+   "trail": {
+    "colors": [
+     "#74502F",
+     "#4E3220",
+     "#987048",
+     "#7E7E86",
+     "#55555B"
+    ],
+    "shape": "tetra",
+    "per_m": 4.5,
+    "size": [
+     0.035,
+     0.085
+    ],
+    "life": [
+     0.3,
+     0.65
+    ],
+    "spread": 0.16,
+    "drift": 0.5,
+    "rise": 1.3,
+    "back": -1.0,
+    "gravity": 6.0
+   },
+   "splash": {
+    "radius": 1.0,
+    "scorch": {
+     "color": "#3A2A1C",
+     "life": 1.6,
+     "opacity": 0.38,
+     "r": 0.9
+    },
+    "ring": {
+     "color": "#A98558",
+     "life": 0.4,
+     "opacity": 0.4
+    },
+    "blobs": [
+     {
+      "count": 7,
+      "ramp": [
+       "#C9A678",
+       "#A98558",
+       "#8A6A44",
+       "#6E5338",
+       "#5A4632"
+      ],
+      "r": [
+       0.22,
+       0.36
+      ],
+      "out": [
+       0.35,
+       0.85
+      ],
+      "up": [
+       0.05,
+       0.3
+      ],
+      "rise": 0.35,
+      "life": [
+       0.55,
+       0.9
+      ],
+      "delay": 0.05
+     },
+     {
+      "count": 3,
+      "ramp": [
+       "#C9A678",
+       "#A98558",
+       "#8A6A44",
+       "#6E5338",
+       "#5A4632"
+      ],
+      "r": [
+       0.26,
+       0.4
+      ],
+      "out": [
+       0.0,
+       0.2
+      ],
+      "up": [
+       0.25,
+       0.5
+      ],
+      "rise": 0.5,
+      "life": [
+       0.6,
+       0.95
+      ],
+      "delay": 0.04
+     }
+    ],
+    "embers": {
+     "count": 16,
+     "colors": [
+      "#7E7E86",
+      "#55555B",
+      "#A9A9B2",
+      "#74502F",
+      "#4E3220"
+     ],
+     "shape": "puff",
+     "size": [
+      0.09,
+      0.2
+     ],
+     "life": [
+      0.5,
+      0.95
+     ],
+     "speed": [
+      2.0,
+      5.5
+     ],
+     "up": [
+      2.5,
+      6.0
+     ],
+     "gravity": 13.0
+    }
+   },
+   "launch": 0.6
+  }
  },
  "Ember Imps": {
   "file": "emberimp",
@@ -71,6 +484,7 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 2.857,
   "refH": null,
   "launch": 0.43,
+  "skyDrop": false,
   "deathFx": {
    "puff": {
     "at": 0.17,
@@ -87,7 +501,8 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
      "#7A3A1C"
     ]
    }
-  }
+  },
+  "proj": null
  },
  "Ent": {
   "file": "ent",
@@ -96,7 +511,9 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.8,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": null
  },
  "Ether Golem": {
   "file": "ethergolem",
@@ -105,7 +522,9 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.96,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": null
  },
  "Fire Mage": {
   "file": "firemage",
@@ -114,7 +533,163 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.0,
   "refH": null,
   "launch": 0.3,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "glb": "fireball",
+   "variant": "A",
+   "size": 1.0,
+   "far": 1.6,
+   "from": "_hand_R$",
+   "hit_y": 0.95,
+   "launch": 0.3,
+   "lob": 0.0,
+   "roll": 1.5,
+   "trail": {
+    "colors": [
+     "#FFC24A",
+     "#F07A28",
+     "#F07A28",
+     "#D9481F",
+     "#FFE9A8"
+    ],
+    "shape": "tetra",
+    "per_m": 5.0,
+    "size": [
+     0.04,
+     0.1
+    ],
+    "life": [
+     0.25,
+     0.55
+    ],
+    "spread": 0.09,
+    "drift": 0.35,
+    "rise": 0.5,
+    "back": -1.2
+   },
+   "splash": {
+    "radius": 0.9,
+    "flash": {
+     "color": "#FFF2C0",
+     "r": 0.3,
+     "life": 0.16
+    },
+    "ring": {
+     "color": "#FFC24A",
+     "life": 0.4,
+     "opacity": 0.45
+    },
+    "blobs": [
+     {
+      "count": 7,
+      "ramp": [
+       "#FFF2C0",
+       "#FFD25A",
+       "#F79A2E",
+       "#E2541E",
+       "#8A3A26",
+       "#4A3B36",
+       "#332B29"
+      ],
+      "r": [
+       0.17,
+       0.28
+      ],
+      "out": [
+       0.3,
+       0.62
+      ],
+      "up": [
+       0.05,
+       0.3
+      ],
+      "rise": 0.45,
+      "life": [
+       0.6,
+       0.9
+      ],
+      "delay": 0.05
+     },
+     {
+      "count": 4,
+      "ramp": [
+       "#FFF2C0",
+       "#FFD25A",
+       "#F79A2E",
+       "#E2541E",
+       "#8A3A26",
+       "#4A3B36",
+       "#332B29"
+      ],
+      "r": [
+       0.2,
+       0.3
+      ],
+      "out": [
+       0.0,
+       0.18
+      ],
+      "up": [
+       0.2,
+       0.45
+      ],
+      "rise": 0.6,
+      "life": [
+       0.7,
+       1.0
+      ],
+      "delay": 0.04
+     }
+    ],
+    "embers": {
+     "count": 18,
+     "colors": [
+      "#FFC24A",
+      "#F07A28",
+      "#D9481F",
+      "#FFE9A8"
+     ],
+     "shape": "tetra",
+     "size": [
+      0.05,
+      0.12
+     ],
+     "life": [
+      0.4,
+      0.8
+     ],
+     "speed": [
+      2.0,
+      6.0
+     ],
+     "up": [
+      2.0,
+      5.5
+     ],
+     "gravity": 9.0
+    },
+    "scorch": {
+     "color": "#2A1D17",
+     "life": 1.0,
+     "opacity": 0.32,
+     "r": 0.8
+    },
+    "flames": {
+     "count": 12,
+     "area": 0.8,
+     "h": [
+      0.16,
+      0.3
+     ],
+     "life": [
+      0.45,
+      0.75
+     ],
+     "delay": 0.22
+    }
+   }
+  }
  },
  "Flame Wizard": {
   "file": "flamewizard",
@@ -123,7 +698,37 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.0,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "jet": {
+    "from": "_fire$",
+    "hold": 0.3,
+    "per_s": 70,
+    "spread": 0.8,
+    "drop": 0.05,
+    "drag": 3.0,
+    "ramp": [
+     "#FFF2B0",
+     "#FFC24A",
+     "#F07A28",
+     "#D9481F",
+     "#6B2E22",
+     "#3A2622"
+    ],
+    "shape": "blob",
+    "size": [
+     0.14,
+     0.22
+    ],
+    "life": [
+     0.34,
+     0.5
+    ],
+    "grow": 2.1,
+    "opacity": 0.9
+   }
+  }
  },
  "Frost Wizard": {
   "file": "frostwizard",
@@ -132,7 +737,57 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.0,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "beam": {
+    "from": "_staff_shard$",
+    "sides": 4,
+    "tones": [
+     "#F5FCFF",
+     "#CDEEFF",
+     "#9ED8F5",
+     "#CDEEFF"
+    ],
+    "core": [
+     "#FFFFFF",
+     "#F5FCFF"
+    ],
+    "width": 0.075,
+    "core_k": 0.42,
+    "speed": 110,
+    "opacity": 0.8,
+    "rot": 2.4,
+    "tip": 2.6,
+    "tip_color": "#D6ECF7",
+    "hit_y": 0.6,
+    "far": 1.8,
+    "chips": {
+     "per_s": 7,
+     "colors": [
+      "#F5FCFF",
+      "#CDEEFF",
+      "#9ED8F5"
+     ],
+     "shape": "sliver",
+     "size": [
+      0.03,
+      0.055
+     ],
+     "life": [
+      0.2,
+      0.36
+     ],
+     "speed": [
+      1.4,
+      3.2
+     ],
+     "gravity": 2.0,
+     "opacity": 0.9
+    },
+    "min_px": 3.0
+   }
+  }
  },
  "Goblin Swarm": {
   "file": "goblin",
@@ -141,7 +796,9 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 2.895,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": null
  },
  "Just a horse": {
   "file": "horse",
@@ -150,7 +807,9 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 2.262,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": null
  },
  "Leaf Wizard": {
   "file": "leafwizard",
@@ -159,7 +818,93 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.0,
   "refH": 2.4691,
   "launch": 0.33,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "glb": "leaf",
+   "variant": "A",
+   "size": 1.4,
+   "far": 1.6,
+   "from": "_hand_R$",
+   "from_alt": "_hand_L$",
+   "hit_y": 0.95,
+   "launch": 0.33,
+   "lob": 0.0,
+   "flutter": {
+    "deg": 10,
+    "hz": 5.0,
+    "sway": 4
+   },
+   "trail": {
+    "colors": [
+     "#C9E04A",
+     "#9DBB24",
+     "#9DBB24",
+     "#6F842B",
+     "#4B5E1F"
+    ],
+    "shape": "leaf",
+    "per_m": 3.0,
+    "size": [
+     0.05,
+     0.1
+    ],
+    "life": [
+     0.35,
+     0.7
+    ],
+    "spread": 0.07,
+    "drift": 0.3,
+    "rise": 0.0,
+    "back": -0.8,
+    "gravity": 1.6
+   },
+   "burst": {
+    "count": 14,
+    "colors": [
+     "#C9E04A",
+     "#9DBB24",
+     "#9DBB24",
+     "#6F842B",
+     "#4B5E1F"
+    ],
+    "shape": "leaf",
+    "size": [
+     0.07,
+     0.14
+    ],
+    "life": [
+     0.45,
+     0.9
+    ],
+    "speed": [
+     1.5,
+     3.6
+    ],
+    "up": 0.3,
+    "gravity": 4.0
+   },
+   "windwalk": {
+    "glide": 0.14,
+    "lean": 20,
+    "settle": 0.34,
+    "band": {
+     "color": "#9CFF6E",
+     "opacity": 0.4,
+     "width": 0.045,
+     "flat": 0.5,
+     "y": 0.5,
+     "fade": 0.28,
+     "px": 4.0,
+     "glow": {
+      "color": "#5CFF3C",
+      "k": 2.0,
+      "opacity": 0.18
+     },
+     "additive": true
+    }
+   }
+  }
  },
  "War Mammoth": {
   "file": "mammoth",
@@ -168,7 +913,9 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 1.636,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": null
  },
  "Meteor Caller": {
   "file": "meteorcaller",
@@ -177,7 +924,9 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.0,
   "refH": null,
   "launch": 0.3,
-  "deathFx": null
+  "skyDrop": true,
+  "deathFx": null,
+  "proj": null
  },
  "Necromancer": {
   "file": "necromancer",
@@ -186,7 +935,73 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.0,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "glb": "skullbolt",
+   "variant": "A",
+   "size": 1.3,
+   "far": 1.6,
+   "from": "_staff_orb$",
+   "hit_y": 0.95,
+   "lob": 0.0,
+   "roll": 0.0,
+   "upright": true,
+   "spin": {
+    "part": "coil",
+    "rps": 2.2
+   },
+   "trail": {
+    "colors": [
+     "#3A2440",
+     "#58365E",
+     "#7A2EC0",
+     "#231629"
+    ],
+    "shape": "puff",
+    "per_m": 1.6,
+    "size": [
+     0.05,
+     0.1
+    ],
+    "life": [
+     0.25,
+     0.45
+    ],
+    "spread": 0.06,
+    "drift": 0.15,
+    "rise": 0.12,
+    "back": 0.0,
+    "opacity": 0.4,
+    "grow": 0.5
+   },
+   "burst": {
+    "count": 8,
+    "colors": [
+     "#C68CF5",
+     "#9D4EDD",
+     "#58365E",
+     "#231629"
+    ],
+    "shape": "puff",
+    "size": [
+     0.06,
+     0.11
+    ],
+    "life": [
+     0.25,
+     0.45
+    ],
+    "speed": [
+     0.8,
+     2.0
+    ],
+    "up": 0.4,
+    "gravity": 0.0,
+    "opacity": 0.5,
+    "grow": 0.7
+   }
+  }
  },
  "Obelisk": {
   "file": "obelisk",
@@ -195,7 +1010,9 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 2.6,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": null
  },
  "Rogue": {
   "file": "rogue",
@@ -204,7 +1021,11 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 2.444,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "hide_shot": true
+  }
  },
  "Shiv": {
   "file": "shiv",
@@ -213,7 +1034,19 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 1.429,
   "refH": null,
   "launch": 0.27,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "glb": "kunai",
+   "variant": "A",
+   "size": 0.7,
+   "far": 1.4,
+   "from": "_kunai_R$",
+   "hit_y": 0.95,
+   "launch": 0.27,
+   "lob": 0.0,
+   "roll": 2.5
+  }
  },
  "Skeleton Archers": {
   "file": "skeletonarcher",
@@ -222,7 +1055,27 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 1.091,
   "refH": null,
   "launch": 0.65,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "glb": "arrow",
+   "variant": "S",
+   "size": 1.25,
+   "far": 1.8,
+   "from": "_bow_grip$",
+   "hit_y": 0.9,
+   "launch": 0.65,
+   "lob": 0.035,
+   "roll": 0.0,
+   "instanced": true,
+   "streak": {
+    "color": "#FFFFFF",
+    "opacity": 0.5,
+    "width": 0.05,
+    "length": 2.6,
+    "back": 0.38
+   }
+  }
  },
  "Sniper": {
   "file": "sniper",
@@ -231,7 +1084,23 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 1.145,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "tracer": {
+    "from": "_rifle_muzzle$",
+    "color": "#F2BE3C",
+    "core": "#FFF6D8",
+    "width": 0.085,
+    "length": 9.0,
+    "speed": 230.0,
+    "flash": {
+     "color": "#FFF2C0",
+     "r": 0.085,
+     "life": 0.09
+    }
+   }
+  }
  },
  "Spiders": {
   "file": "spider",
@@ -240,7 +1109,9 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 3.3,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": null
  },
  "Steel Wizard": {
   "file": "steelwizard",
@@ -249,7 +1120,26 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.75,
   "refH": null,
   "launch": 0.37,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "glb": "steelspike",
+   "variant": "A",
+   "size": 1.0,
+   "far": 1.5,
+   "from": "_staff_(spike|ingot)$",
+   "hit_y": 1.0,
+   "launch": 0.37,
+   "lob": 0.0,
+   "roll": 0.0,
+   "streak": {
+    "color": "#D2CFD8",
+    "opacity": 0.4,
+    "width": 0.06,
+    "length": 2.8,
+    "back": 0.3
+   }
+  }
  },
  "Sun Priest": {
   "file": "sunpriest",
@@ -258,7 +1148,60 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.0,
   "refH": null,
   "launch": null,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "beam": {
+    "from": "_hand_[LR]$",
+    "sides": 6,
+    "tones": [
+     "#FFF4C2",
+     "#FFE58A",
+     "#FFD23F",
+     "#FFE58A",
+     "#FFF4C2",
+     "#E9B92C"
+    ],
+    "core": [
+     "#FFFFFF",
+     "#FFF9EC"
+    ],
+    "width": 0.065,
+    "core_k": 0.42,
+    "spin_k": 0.4,
+    "speed": 110,
+    "opacity": 0.8,
+    "rot": 1.6,
+    "tip": 2.3,
+    "tip_color": "#FFE58A",
+    "hit_y": 0.6,
+    "far": 1.8,
+    "min_px": 3.0,
+    "chips": {
+     "per_s": 6,
+     "colors": [
+      "#FFF4C2",
+      "#FFE58A",
+      "#FFD23F"
+     ],
+     "shape": "tetra",
+     "size": [
+      0.02,
+      0.04
+     ],
+     "life": [
+      0.2,
+      0.36
+     ],
+     "speed": [
+      1.4,
+      3.0
+     ],
+     "gravity": 0.8,
+     "opacity": 0.9
+    }
+   }
+  }
  },
  "Truespear": {
   "file": "truespear",
@@ -267,7 +1210,31 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.877,
   "refH": null,
   "launch": 0.4,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "glb": "spear",
+   "variant": "A",
+   "size": 1.0,
+   "far": 1.4,
+   "from": "_spear$",
+   "hit_y": 0.85,
+   "launch": 0.4,
+   "lob": 0.02,
+   "roll": 0.0,
+   "vanish": {
+    "node": "spear",
+    "from": 0.4,
+    "to": 0.58
+   },
+   "streak": {
+    "color": "#F3E9D2",
+    "opacity": 0.35,
+    "width": 0.05,
+    "length": 3.2,
+    "back": 1.25
+   }
+  }
  },
  "Warper": {
   "file": "warper",
@@ -276,7 +1243,65 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.0,
   "refH": null,
   "launch": 0.4,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "glb": "warpshot",
+   "variant": "A",
+   "size": 1.0,
+   "far": 1.7,
+   "from": "_sigil_R$",
+   "hit_y": 0.95,
+   "launch": 0.4,
+   "lob": 0.0,
+   "roll": 2.0,
+   "trail": {
+    "colors": [
+     "#DDD0F4",
+     "#B9A3E0",
+     "#8E78BC",
+     "#FFFFFF"
+    ],
+    "shape": "octa",
+    "per_m": 2.4,
+    "size": [
+     0.03,
+     0.06
+    ],
+    "life": [
+     0.25,
+     0.5
+    ],
+    "spread": 0.06,
+    "drift": 0.2,
+    "rise": 0.0,
+    "back": -0.6
+   },
+   "burst": {
+    "count": 10,
+    "colors": [
+     "#DDD0F4",
+     "#B9A3E0",
+     "#8E78BC",
+     "#FFFFFF"
+    ],
+    "shape": "sliver",
+    "size": [
+     0.05,
+     0.09
+    ],
+    "life": [
+     0.2,
+     0.38
+    ],
+    "speed": [
+     2.0,
+     4.5
+    ],
+    "up": 0.2,
+    "gravity": 0.0
+   }
+  }
  },
  "Wisps": {
   "file": "wisp",
@@ -285,7 +1310,128 @@ function Units3D(THREE, GLTFLoader, SkeletonUtils, host) {
   "walk": 0.0,
   "refH": null,
   "launch": 0.36,
-  "deathFx": null
+  "skyDrop": false,
+  "deathFx": null,
+  "proj": {
+   "glb": "wispbolt",
+   "variant": "A",
+   "size": 0.8,
+   "far": 1.7,
+   "from": "_orb$",
+   "hit_y": 0.9,
+   "launch": 0.36,
+   "lob": 0.0,
+   "roll": 0.6,
+   "trail": {
+    "colors": [
+     "#F2B2F7",
+     "#E58BF2",
+     "#D27BE6",
+     "#B451D0"
+    ],
+    "shape": "puff",
+    "per_m": 3.0,
+    "size": [
+     0.07,
+     0.13
+    ],
+    "life": [
+     0.2,
+     0.38
+    ],
+    "spread": 0.08,
+    "drift": 0.18,
+    "rise": 0.1,
+    "back": 0.0,
+    "opacity": 0.3,
+    "grow": 0.6,
+    "follow": 0.8
+   },
+   "burst": {
+    "count": 6,
+    "colors": [
+     "#F2B2F7",
+     "#E58BF2",
+     "#D27BE6",
+     "#B451D0"
+    ],
+    "shape": "puff",
+    "size": [
+     0.06,
+     0.11
+    ],
+    "life": [
+     0.22,
+     0.4
+    ],
+    "speed": [
+     0.8,
+     2.2
+    ],
+    "up": 0.3,
+    "gravity": 0.0,
+    "opacity": 0.45,
+    "grow": 0.8
+   },
+   "glow": {
+    "color": "#E58BF2",
+    "size": 0.75,
+    "opacity": 0.6,
+    "pulse": 0.15,
+    "hz": 7
+   }
+  }
+ }
+};
+  const HIT = {
+ "_about": "The small HIT effect on any body that takes a DIRECT hit (2026-11-24; the user: 'a small effect for hit when a unit gets hit by anything/takes damage ... for all units attacks as a start'; direct hits only, 'different effect for anything else that we make later' (burn, bleed, poison ticks); 'scale but 2x size at most'). Drawn by every battlefield page (battlefield_anim.js + proj_fx.js hit()). Sizes are shares of the hit body's drawn height, speeds are heights per second, times in s. big_share: the share of the body's full health a hit must take to be drawn at max_scale. min_gap: at most one effect per body in this many s. variants: the look in use (the user picked A 'Impact spark' 2026-11-24; B 'Hit puff' and C 'Team-colour pop' are in build/proj_bak/hit_fx_variants_ABC.json; with more than one here the page shows a 'Hit' button to switch); team: the shards take the attacker's team colour. flinch (OVERNIGHT PASS, presumed): the page's own animated bodies rock away from a direct hit, laid over the playing clip: root / chest / head = degrees at full strength, push = share of its height it is shoved back, rise / life = s to the peak / to the end, lag = s the chest (x1) and head (x2) trail the body, min = strength of the smallest hit (a big one is 1), again = s before a new hit can restart it.",
+ "default": "A",
+ "max_scale": 2.0,
+ "big_share": 0.25,
+ "min_gap": 0.15,
+ "variants": {
+  "A": {
+   "label": "A  Impact spark",
+   "flash": {
+    "color": "#FFF6D8",
+    "r": 0.06,
+    "life": 0.11
+   },
+   "shards": {
+    "count": 6,
+    "colors": [
+     "#FFF6D8",
+     "#FFE08A",
+     "#FFFFFF"
+    ],
+    "shape": "sliver",
+    "size": [
+     0.022,
+     0.042
+    ],
+    "life": [
+     0.16,
+     0.28
+    ],
+    "speed": [
+     1.3,
+     2.6
+    ],
+    "spread": 0.75,
+    "gravity": 2.0
+   }
+  }
+ },
+ "flinch": {
+  "root": 5.0,
+  "chest": 7.0,
+  "head": 10.0,
+  "push": 0.012,
+  "rise": 0.06,
+  "life": 0.36,
+  "lag": 0.035,
+  "min": 0.55,
+  "again": 0.16
  }
 };
 
@@ -678,14 +1824,14 @@ function createProjFx(THREE) {
   const LAUNCH = CFG.launch;
   // SKY_DROP: this unit's shots are drawn as its meteor dropping from the sky onto the target, landing when the
   // engine's projectile arrives (the game's own flat shot for them is not drawn)
-  const SKY_DROP = false, DROP_SIZE = 3.2, DROP_H = 26, PROJ_HIT = 1;   // (PROJ_HIT: the engine's PROJ_HIT_RADIUS)
+  const SKY_DROP = !!CFG.skyDrop, DROP_SIZE = 3.2, DROP_H = 26, PROJ_HIT = 1;   // (PROJ_HIT: the engine's PROJ_HIT_RADIUS)
   // PROJ (scripts/projectile_fx.json; null: none): this unit's shots are drawn as its own projectile model (a GLB from
   // scripts/projectiles.py), flying from its hand to where the engine's projectile will land (the game's blob for them
   // is not drawn), shedding the particles of PROJ.trail (scripts/proj_fx.js)
-  const PROJ = null;
+  const PROJ = CFG.proj || null;
   // HIT (scripts/hit_fx.json): the small effect on ANY body that takes a direct hit (this page's copy of the engine
   // marks them: b.hitN counts its direct hits, b.hitDmg / b.hitFrom / b.hitBy are the last one's size, origin, attacker)
-  const HIT = null;
+  const HIT = CFG.hit || null;
   let hitVar = HIT && HIT.default, hitCount = 0, frameN = 0, clockT = 0;
   const bodiesSeen = new Map();   // engine body -> where it is drawn (x, y, z, height), its hits already shown
   const PFX = createProjFx(THREE);
@@ -695,7 +1841,7 @@ function createProjFx(THREE) {
   // how many pixels one world unit covers on screen at p, as the page's camera sees it now (0: not known)
   function wwPpu(p) {
     if (!camLast) return 0;
-    const cv = document.querySelector('#view canvas'), vh = (cv && cv.clientHeight) || 600;
+    const cv = document.querySelector('.board3d canvas'), vh = (cv && cv.clientHeight) || 600;
     if (camLast.isOrthographicCamera) return vh * (camLast.zoom || 1) / Math.max(1e-6, camLast.top - camLast.bottom);
     // (a chase view moves the camera after the bodies are placed: where it was put last frame, not the game's own view)
     const cp = window.__anim.chasing && window.__anim._cam ? window.__anim._cam : camLast.getWorldPosition(new THREE.Vector3());
@@ -861,7 +2007,9 @@ function createProjFx(THREE) {
     return sk;
   }
   let template = null, clips = {}, H = 1, famCols = {};
-  if (PROJ && PROJ.glb_b64) new GLTFLoader().parse(Uint8Array.from(atob(PROJ.glb_b64), c => c.charCodeAt(0)).buffer, '', g => {
+  // (PROJ.glb_bytes: the projectile model's bytes handed over as they are; the game does that (scripts/
+  // make_game_units.py: models/units/proj_<key>.glb, fetched beside the unit's model), the pages embed it as base64)
+  if (PROJ && PROJ.glb_b64) new GLTFLoader().parse(PROJ.glb_bytes || Uint8Array.from(atob(PROJ.glb_b64), c => c.charCodeAt(0)).buffer, '', g => {
     const cols = {};
     g.scene.updateMatrixWorld(true);
     g.scene.traverse(o => { if (o.isMesh) { const k = /^SL_(.+)_(dark|mid|lit)$/.exec(o.material.name); if (k) (cols[k[1]] ||= {})[k[2]] = o.material.color; } });
@@ -1857,7 +3005,7 @@ function createProjFx(THREE) {
       if (PROJ && PROJ.hook && hookGeo) {
         const HK = PROJ.hook, sdt = dt * (window.__slow || 1); let nl = 0, nh = 0;
         if (!chainInst) { chainInst = chainMesh(HK); scene.add(chainInst); }
-        const cv = document.querySelector('#view canvas'), vh = (cv && cv.clientHeight) || 600, cp = camPos();
+        const cv = document.querySelector('.board3d canvas'), vh = (cv && cv.clientHeight) || 600, cp = camPos();
         for (const [b, e] of live) {
           if (!b || typeof b !== 'object' || !e.added) continue;
           const k = e.root.scale.x, ends = [];
@@ -1928,7 +3076,7 @@ function createProjFx(THREE) {
           B.len = Math.min(dist, B.len + BE.speed * sdt);   // it shoots out to its target, then stays on it
           const cp = camPos(), far = cp ? Math.max(1, Math.min(BE.far || 1.8, cp.distanceTo(a) / 30)) : 1;
           // (never thinner on screen than BE.min_px pixels: from the far top-down view a beam of its true width is a hair)
-          const cv = document.querySelector('#view canvas'), vh = (cv && cv.clientHeight) || 600;
+          const cv = document.querySelector('.board3d canvas'), vh = (cv && cv.clientHeight) || 600;
           const ppu = cp && camLast && camLast.isPerspectiveCamera ? vh / 2 / (Math.tan(camLast.fov * Math.PI / 360) * Math.max(0.1, cp.distanceTo(a))) : 0;
           const W0 = Math.max(BE.width * k * far, ppu > 0 ? (BE.min_px || 0) / 2 / ppu : 0);
           const W = W0 * (1 + (BE.spin_k || 0) * Math.max(0, (B.spin || 1) - 1)) * B.w * (1 + 0.06 * Math.sin(clockT * 31 + B.ang));
@@ -2053,7 +3201,11 @@ function createProjFx(THREE) {
   }
 
   const drivers = new Map();   // unit name -> { state: 'none' | 'loading' | 'ready' | 'failed', api }
-  let scene0 = null, btNow = null;
+  let scene0 = null, btNow = null, keeper = null;
+  let drawn = new WeakSet();   // the engine bodies a driver draws (only their shots, chains and dashes are its to draw)
+  const NOBODY = { name: '\u0000' };
+  const get = (file) => fetch(new URL((host.base || 'models/units/') + file + '.glb' + (host.v ? '?v=' + host.v : ''), document.baseURI).href)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + file); return r.arrayBuffer(); });
   function driverFor(name) {
     let D = drivers.get(name);
     if (D) return D;
@@ -2061,12 +3213,15 @@ function createProjFx(THREE) {
     D = { state: CFG ? 'loading' : 'none', api: null };
     drivers.set(name, D);
     if (!CFG) return D;
-    fetch(new URL((host.base || 'models/units/') + CFG.file + '.glb' + (host.v ? '?v=' + host.v : ''), document.baseURI).href)
-      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
-      .then(buf => {
+    // its model, and its projectile's model when it has one (without that one its shots stay the game's own)
+    const pglb = CFG.proj && CFG.proj.glb ? get('proj_' + CFG.proj.glb).catch(e => { console.warn('No Mans Land: the projectile model for ' + name + ' could not load; the classic shot is drawn.', e); return null; }) : Promise.resolve(null);
+    Promise.all([get(CFG.file), pglb])
+      .then(([buf, pbuf]) => {
         const win = { __anim: null, __slow: 1, get __battleSpeed() { return host.speed ? host.speed() : 1; },
                       get __lab3d() { return btNow ? { bt: btNow } : null; } };
-        const api = makeDriver(CFG, buf, win);
+        let proj = CFG.proj ? Object.assign({}, CFG.proj) : null;
+        if (proj && proj.glb) { if (pbuf) { proj.glb_b64 = 'bytes'; proj.glb_bytes = pbuf; } else proj = null; }
+        const api = makeDriver(Object.assign({}, CFG, { proj, hit: HIT }), buf, win);
         const t0 = Date.now();
         (function wait() {   // (the model is parsed a moment after: the driver sets `info` when it is ready to draw)
           if (D.gone) return;
@@ -2078,21 +3233,44 @@ function createProjFx(THREE) {
       .catch(e => { D.state = 'failed'; console.warn('No Mans Land: the model for ' + name + ' could not load; its classic model is drawn.', e); });
     return D;
   }
+  const ready = (D) => !!D && D.state === 'ready';
+  const of = (b) => b && b.u && drawn.has(b) ? drivers.get(b.u.name) : null;   // the driver that draws this body, if one does
   return {
     UNITS,
-    begin(bt) { btNow = bt || null; },   // render3d, before it places the bodies: the battle on the board, or none
+    begin(bt) { if (btNow !== (bt || null)) drawn = new WeakSet(); btNow = bt || null; },
     body(d) {
       const u = d && d.s && d.s.u;
-      if (!u || !u.name || d.skin) return false;   // (a skin keeps its own classic model: the new models have no skins yet)
-      const D = driverFor(u.name);
-      return D.state === 'ready' ? !!D.api.body(d) : false;
+      if (!u) return false;
+      // (a skin keeps its own classic model: the new models have no skins yet)
+      const D = u.name && !d.skin && !u.structure && !u.building ? driverFor(u.name) : null;
+      if (ready(D)) { const on = !!D.api.body(d); if (on && d.s.b) drawn.add(d.s.b); return on; }
+      // a body the models do not draw (a tower, a unit without a model, a skin, one still loading): its direct hits
+      // get their spark all the same. One ready driver keeps count of those bodies (it is shown the body under a
+      // name that is nobody's, so it never draws it).
+      if (d.s.b) {
+        if (!ready(keeper)) { keeper = null; for (const K of drivers.values()) if (ready(K)) { keeper = K; break; } }
+        if (keeper) keeper.api.body(Object.assign({}, d, { s: { b: d.s.b, u: NOBODY, side: d.s.side } }));
+      }
+      return false;
     },
-    frame(scene, dt, camera) { scene0 = scene; for (const D of drivers.values()) if (D.state === 'ready') D.api.frame(scene, dt, camera); },
-    aimSeen(s) { const b = s && s[14], D = b && b.u ? drivers.get(b.u.name) : null; if (D && D.state === 'ready' && D.api.aimSeen) D.api.aimSeen(s); },
-    busy() { for (const D of drivers.values()) if (D.state === 'ready' && D.api.dead().length) return true; return false; },
-    // (tests) per unit: its state and how many models are standing
+    frame(scene, dt, camera) { scene0 = scene; for (const D of drivers.values()) if (ready(D)) D.api.frame(scene, dt, camera); },
+    proj(p, f, gy, bt) { const D = p ? of(p.owner) : null; return ready(D) && !!D.api.proj(p, f, gy, bt); },
+    hooked(b) { const D = b ? of(b.hooked) : null; return ready(D) && !!D.api.hooked(b); },
+    ownDash(b) { const D = of(b); return ready(D) && !!D.api.ownDash(b); },
+    aimSeen(s) { const b = s && s[14], D = b && b.u ? drivers.get(b.u.name) : null; if (ready(D)) D.api.aimSeen(s); },
+    shotFx(s) { const D = s ? of(s[14]) : null; return ready(D) && !!D.api.shotFx(s); },
+    beamFx(s) { const D = s ? of(s[14]) : null; return ready(D) && !!D.api.beamFx(s); },
+    flameFx(s) { for (const D of drivers.values()) if (ready(D) && D.api.flameFx(s)) return true; return false; },   // (a wedge names no shooter: each driver looks among its own)
+    busy() { for (const D of drivers.values()) if (ready(D) && D.api.dead().length) return true; return false; },
+    // (tests) per unit: its state and how many models are standing; the fallen still on show; what has been drawn
     stats() { const o = {}; for (const [n, D] of drivers) if (D.state !== 'none') o[n] = { state: D.state, live: D.api ? D.api.stats().live : 0 }; return o; },
-    dead() { const o = {}; for (const [n, D] of drivers) if (D.api) { const d = D.api.dead(); if (d.length) o[n] = d; } return o; },   // (tests) the fallen still on show
-    dispose() { for (const D of drivers.values()) { D.gone = true; if (D.api && D.api.clear) D.api.clear(scene0); } drivers.clear(); },
+    dead() { const o = {}; for (const [n, D] of drivers) if (D.api) { const d = D.api.dead(); if (d.length) o[n] = d; } return o; },
+    fx() { const o = { hits: 0, flinches: 0, shots: 0, particles: 0, tracers: 0, beams: 0, jets: 0, hooks: 0, dashes: 0, charges: 0, windwalks: 0, keeper: null };
+      for (const [n, D] of drivers) if (D.api) { const a = D.api; if (D === keeper) o.keeper = n;
+        o.hits += a.hits().total; o.flinches += a.flinches().total; o.shots += a.shotLog().length; o.particles += a.particles(); o.tracers += a.tracers().total;
+        o.beams += a.beams().starts; o.jets += a.jets().shots; o.hooks += a.hooks().throws; o.dashes += a.dashes().starts; o.charges += a.charges().starts; o.windwalks += a.windwalks().dodges; }
+      return o; },
+    api(name) { const D = drivers.get(name); return D ? D.api : null; },
+    dispose() { for (const D of drivers.values()) { D.gone = true; if (D.api && D.api.clear) D.api.clear(scene0); } drivers.clear(); keeper = null; },
   };
 }

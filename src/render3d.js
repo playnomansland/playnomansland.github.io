@@ -853,7 +853,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     else if (ch > 0) dots.push(color(CHARM_COL));
     if (dots.length) iconRow(dots.map(() => 'dot'), wx, y + 0.1, wz, 0.4, dots);
     scene_(() => sceneMarkers(b, wx, wz, r, top, t));
-    if (b.dashing || b.charging) { // a dash or a Bullhead charge: streaks in the team colour behind it
+    if ((b.dashing || b.charging) && !(opts.units && opts.units.ownDash(b))) { // a dash or a Bullhead charge (not one the animated unit models draw themselves): streaks in the team colour behind it
       const hx = (b.hx || 0) * f, hz = -(b.hy || 0) * f;
       for (const o of [-0.5, 0, 0.5]) beam(wx - hx * r * 1.2 - hz * r * o, 0.7 * r, wz - hz * r * 1.2 + hx * r * o, wx - hx * r * 3 - hz * r * o, 0.7 * r, wz - hz * r * 3 + hx * r * o, 0.07, team, 0.6);
     }
@@ -1077,8 +1077,9 @@ const Render3D = (THREE, el, view, opts = {}) => {
         // and look, a name that stays the same from frame to frame for a body that is not in a fight (its squad's tag
         // and its number in the squad, so a squad keeps its models while it is dragged), and whether a skin's own
         // model is on it (those stay classic). When it draws the body, the classic model here is shrunk to nothing;
-        // rings, tags and markers are drawn as always.
-        if (opts.units && !s.u.structure && !s.u.building && look !== 'ruin') {
+        // rings, tags and markers are drawn as always. Every body is offered, towers too: one it does not draw
+        // still gets its spark when it takes a direct hit.
+        if (opts.units && look !== 'ruin') {
           const id = s.b ? null : (s.tag || s.side) + '#' + (unitN[s.tag || s.side] = (unitN[s.tag || s.side] || 0) + 1);
           if (opts.units.body({ kind, s, x: tmpP.x, y: tmpP.y - bob, z: tmpP.z, q: tmpQ.clone(), sc, top, look: s.look, id, skin: kind !== models.kindOf(s.u) })) tmpM.makeScale(0, 0, 0);
         }
@@ -1120,7 +1121,8 @@ const Render3D = (THREE, el, view, opts = {}) => {
     finish(rg, rings.length);
     if (!battle) return;
     // projectiles in flight: thrown spears, and team-coloured shot for the rest
-    const ps = v.phase === 'battle' ? v.bt.projectiles() : [];
+    let ps = v.phase === 'battle' ? v.bt.projectiles() : [];
+    if (opts.units) ps = ps.filter(p => !opts.units.proj(p, f, groundY, v.bt)); // the animated unit models draw their own units' shots
     const isSpear = (p) => p.spear || p.owner.u.shape === 'spear'; // Truespear, and titanium spears
     const spears = ps.filter(isSpear), rest = ps.filter(p => !isSpear(p) && !(p.owner.u.boss && p.owner.u.lob)); // (the Mommy boss's bite is her jaws on the ground: collectBoss)
     const sg = group('projectiles', shotGeo, flatMat, rest.length);
@@ -1136,7 +1138,7 @@ const Render3D = (THREE, el, view, opts = {}) => {
     // V2WIP: the Catcher's hook on its chain, and the chains to the bodies it is reeling in
     const HOOKC = color('#D9C49A');
     for (const p of ps) if (p.hook) beam(p.owner.x * f, 1.3, -p.owner.y * f, p.x * f, 1.3, -p.y * f, 0.16 * fxWide(), HOOKC, 0.95);
-    for (const b of v.bt.bodies) if (b.hooked && b.alive && b.hooked.alive) beam(b.hooked.x * f, 1.3, -b.hooked.y * f, b.x * f, 1.0, -b.y * f, 0.16 * fxWide(), HOOKC, 0.95);
+    for (const b of v.bt.bodies) if (b.hooked && b.alive && b.hooked.alive && !(opts.units && opts.units.hooked(b))) beam(b.hooked.x * f, 1.3, -b.hooked.y * f, b.x * f, 1.0, -b.y * f, 0.16 * fxWide(), HOOKC, 0.95);
     const sp = models.parts('spear'), spT = group('spear:tint', sp.tint, tintMat, spears.length), spF = group('spear:fixed', sp.fixed, fixedMat, spears.length);
     spears.forEach((p, i) => {
       tmpD.set(p.dirX * f, 0, -p.dirY * f).normalize(); tmpQ.setFromUnitVectors(tmpS.set(0, 0, -1), tmpD);

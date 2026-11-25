@@ -23,7 +23,8 @@ Planned for the next updates (details in `docs/ROADMAP.md`):
 ## 25 November 2026 – New unit models to try (a setting, off unless you turn it on)
 
 - **Unit models: New (test)** in Settings (in a match, on the 3D board) swaps 26 of the 28 units for new animated models: they idle, walk, attack and fall with their own animation, and turn to face what they attack. Slime Wizard and Slimeshots keep their classic models, and so does a unit wearing a skin. **Classic** is the default: nothing changes unless you switch.
-- Looks only: fights, stats and online play are the same either way. The new models' own projectiles and hit effects come later; the game's are drawn for now.
+- With the new models on, units also shoot their own projectiles (arrows, fireballs, leaves, water, rocks, a skull bolt, a spear, the Sniper's tracer, the Frost Wizard's and Sun Priest's beams, the Flame Wizard's jet of fire), the Assassin lunges into its dash, and a direct hit shows a small spark and makes the model flinch. Burn, bleed and poison keep the game's own marks for now.
+- Looks only: fights, stats and online play are the same either way.
 - **Steel Wizard** and **Necromancer:** their shots now fly to the target (60 m/s and 35 m/s) instead of landing the instant they attack, so a target that moves away or dies first is no longer hit. Nothing else about them changed.
 - Developers: `?models=new` or `?models=classic` in the address sets it for one visit without saving. How the models get into the game: `docs/UNIT-MODELS.md`.
 
